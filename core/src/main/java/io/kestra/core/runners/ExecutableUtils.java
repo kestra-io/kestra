@@ -132,7 +132,7 @@ public final class ExecutableUtils {
                         }
                         ExecutionService executionService = ((DefaultRunContext) runContext).services().additionalService(ExecutionService.class);
                         try {
-                            Flow flow = flowMetaStore.findByExecutionThenInjectDefaults(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
+                            Flow flow = flowMetaStore.findByExecutionForRuntime(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
                             Execution restartedChild = executionService.restart(subflowExecution, flow, null);
 
                             // In a loop context, the restarted child execution still has trigger variables
@@ -173,7 +173,7 @@ public final class ExecutableUtils {
                 String subflowId = runContext.render(currentTask.subflowId().flowId());
                 Optional<Integer> subflowRevision = currentTask.subflowId().revision();
 
-                FlowInterface flow = flowMetaStore.findByIdFromTask(
+                FlowInterface flow = flowMetaStore.findByIdFromTaskForRuntime(
                     currentExecution.getTenantId(),
                     subflowNamespace,
                     subflowId,

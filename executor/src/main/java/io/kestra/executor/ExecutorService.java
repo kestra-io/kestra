@@ -1180,18 +1180,20 @@ public class ExecutorService {
                         .taskRun(
                             fixtureAndTaskRun.taskRun()
                                 .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                                .withAssets(
-                                    new AssetsInOut(
-                                        Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
-                                            .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
-                                            .stream()
-                                            .flatMap(Collection::stream)
-                                            .map(throwFunction(assetIdentifier -> assetIdentifier.withTenantId(executor.getFlow().getTenantId())))
-                                            .toList(),
-                                        fixtureAndTaskRun.fixture().getAssets() == null ? null
-                                            : fixtureAndTaskRun.fixture().getAssets().stream()
-                                                .map(asset -> asset.withTenantId(executor.getFlow().getTenantId()))
-                                                .toList()
+                                .withAssetEmits(
+                                    List.of(
+                                        new AssetsInOut(
+                                            Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
+                                                .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
+                                                .stream()
+                                                .flatMap(Collection::stream)
+                                                .map(throwFunction(assetIdentifier -> assetIdentifier.withTenantId(executor.getFlow().getTenantId())))
+                                                .toList(),
+                                            fixtureAndTaskRun.fixture().getAssets() == null ? null
+                                                : fixtureAndTaskRun.fixture().getAssets().stream()
+                                                    .map(asset -> asset.withTenantId(executor.getFlow().getTenantId()))
+                                                    .toList()
+                                        )
                                     )
                                 )
                         )
@@ -1469,9 +1471,10 @@ public class ExecutorService {
                 taskOutputService.saveOutputs(taskRun, workerTaskResult.getOutputs());
 
                 ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
+                boolean hasAssets = taskRun.getAssetEmits() != null && taskRun.getAssetEmits().stream()
+                    .anyMatch(bundle -> !bundle.getInputs().isEmpty() || !bundle.getOutputs().isEmpty());
                 if (
-                    taskRun.getAssets() != null &&
-                        (!taskRun.getAssets().getInputs().isEmpty() || !taskRun.getAssets().getOutputs().isEmpty())
+                    hasAssets
                         && executionKind != ExecutionKind.TEST
                 ) {
                     AssetUser assetUser = new AssetUser(

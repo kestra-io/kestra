@@ -27,10 +27,7 @@ export function useFlowRoot() {
     const user = computed(() => authStore.user)
     const activeTabName = useActiveTab()
 
-    // The store already excludes the flow's own node from this count, and the tab badge used
-    // to subtract one again on top of that - so it read one below the editor's toolbar stat,
-    // and `disabled: !dependenciesCount` hid the tab of a flow with exactly one dependency.
-    // Reading the store keeps the two in step; the watcher below is only a fetch trigger.
+    // The store owns this count; deriving it again here subtracted the flow's own node twice.
     const dependenciesCount = computed(() => flowStore.dependenciesCount)
 
     function flowKey(): string {
@@ -125,15 +122,7 @@ export function useFlowRoot() {
         }
     }, {immediate: true})
 
-    // Keyed on which flow and which revision rather than `deep: true`: the count only moves
-    // when the open flow changes or gets saved, and the revision bump is what
-    // https://github.com/kestra-io/kestra/issues/10484 needs this watcher to see. The deep
-    // watch also traversed the whole flow object and re-fired on nested mutations that cannot
-    // change the count.
-    //
-    // The debounce is what gives the backend a moment to index the new dependencies after a
-    // save, and unlike the setTimeout it replaces it collapses a burst of triggers into one
-    // request instead of queueing one per trigger.
+    // Debounced so a save's burst collapses into one refetch, once the backend has indexed (#10484).
     watchDebounced(
         () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision] as const,
         ([namespace, id]) => {

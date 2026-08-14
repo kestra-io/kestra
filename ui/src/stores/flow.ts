@@ -559,11 +559,7 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    // Opening the flow editor asks for the same dependency count twice - once for the
-    // Dependencies tab badge (useFlowRoot) and once for the editor toolbar stat
-    // (FlowEditorStats) - so count-only callers share whichever request is still in flight
-    // instead of each paying for the graph. Nothing is cached past settlement: the count
-    // changes as the flow is edited, and a save has to be able to re-read it.
+    // The editor wants this count twice - tab badge and toolbar stat - so they share one request.
     const inFlightDependencyCounts = new Map<string, ReturnType<typeof requestDependencies>>()
 
     function requestDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount: boolean) {
@@ -591,8 +587,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         const request = requestDependencies(options, onlyCount)
         inFlightDependencyCounts.set(key, request)
-        // Both handlers, so this derived promise never surfaces as an unhandled rejection -
-        // the rejection stays the caller's to handle, on the promise we returned them.
+        // Both handlers, so this derived promise never becomes an unhandled rejection.
         const settle = () => {
             if (inFlightDependencyCounts.get(key) === request) {
                 inFlightDependencyCounts.delete(key)

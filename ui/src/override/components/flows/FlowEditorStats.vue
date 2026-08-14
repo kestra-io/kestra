@@ -83,9 +83,7 @@
         flowStore.loadFlowStats({namespace: flow.namespace, id: flow.id})
     }
 
-    // Nothing on screen waits for these two counters, but fetching them straight from
-    // onMounted put them in the editor's boot tick, competing for the browser's per-origin
-    // connection budget with the panels and schemas the editor needs in order to paint.
+    // Decoration nothing on screen waits for, so keep it off the editor's boot tick.
     let cancelPendingRefresh: (() => void) | undefined
 
     function scheduleRefresh() {

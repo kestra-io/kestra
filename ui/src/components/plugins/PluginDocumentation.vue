@@ -1,64 +1,66 @@
 <template>
     <div class="plugin-doc">
         <template v-if="fetchPluginDocumentation && currentPlugin">
-            <div class="dp-header">
-                <div class="dp-kicker">{{ packagePath }}</div>
-                <div class="dp-title-row">
-                    <TaskIcon
-                        class="dp-icon"
-                        :cls="currentPlugin.cls"
-                        onlyIcon
-                        :loadIcon="pluginsStore.loadIcon"
-                    />
-                    <span class="dp-name text-truncate">{{ pluginName }}</span>
-                    <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
-                    <div class="dp-actions">
-                        <KsButton
-                            v-if="releaseNotesUrl"
-                            :icon="GitHub"
-                            :tooltip="$t('plugins.release')"
-                            size="small"
-                            link
-                            @click="openReleaseNotes"
+            <div class="dp-sticky">
+                <div class="dp-header">
+                    <div class="dp-kicker">{{ packagePath }}</div>
+                    <div class="dp-title-row">
+                        <TaskIcon
+                            class="dp-icon"
+                            :cls="currentPlugin.cls"
+                            onlyIcon
+                            :loadIcon="pluginsStore.loadIcon"
                         />
+                        <span class="dp-name text-truncate">{{ pluginName }}</span>
+                        <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
+                        <div class="dp-actions">
+                            <KsButton
+                                v-if="releaseNotesUrl"
+                                :icon="GitHub"
+                                :tooltip="$t('plugins.release')"
+                                size="small"
+                                link
+                                @click="openReleaseNotes"
+                            />
+                        </div>
                     </div>
+                    <div class="dp-type">
+                        <span class="dp-cls text-truncate">{{ currentPlugin.cls }}</span>
+                        <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
+                            {{ currentPlugin.version }}
+                        </KsTag>
+                        <KsTooltip
+                            trigger="click"
+                            :content="$t('copied')"
+                            :autoClose="2000"
+                            placement="top"
+                        >
+                            <KsButton
+                                :icon="ContentCopy"
+                                :aria-label="$t('plugins.copy_type')"
+                                size="small"
+                                link
+                                @click="copyType"
+                            />
+                        </KsTooltip>
+                    </div>
+                    <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
                 </div>
-                <div class="dp-type">
-                    <span class="dp-cls text-truncate">{{ currentPlugin.cls }}</span>
-                    <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
-                        {{ currentPlugin.version }}
-                    </KsTag>
-                    <KsTooltip
-                        trigger="click"
-                        :content="$t('copied')"
-                        :autoClose="2000"
-                        placement="top"
-                    >
-                        <KsButton
-                            :icon="ContentCopy"
-                            :aria-label="$t('plugins.copy_type')"
-                            size="small"
-                            link
-                            @click="copyType"
-                        />
-                    </KsTooltip>
-                </div>
-                <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
-            </div>
 
-            <nav class="dp-nav" aria-label="Documentation sections">
-                <button
-                    type="button"
-                    v-for="chip in navChips"
-                    :key="chip.id"
-                    class="dp-navchip"
-                    :class="{active: activeSection === chip.id}"
-                    @click="selectSection(chip.id)"
-                >
-                    {{ chip.label }}
-                    <span v-if="chip.count !== undefined" class="dp-navchip-count">{{ chip.count }}</span>
-                </button>
-            </nav>
+                <nav class="dp-nav" aria-label="Documentation sections">
+                    <button
+                        type="button"
+                        v-for="chip in navChips"
+                        :key="chip.id"
+                        class="dp-navchip"
+                        :class="{active: activeSection === chip.id}"
+                        @click="selectSection(chip.id)"
+                    >
+                        {{ chip.label }}
+                        <span v-if="chip.count !== undefined" class="dp-navchip-count">{{ chip.count }}</span>
+                    </button>
+                </nav>
+            </div>
 
             <Suspense>
                 <SchemaToHtml
@@ -114,7 +116,7 @@
                 </KsInput>
             </div>
 
-            <nav class="dp-nav dp-intro-nav" aria-label="Documentation sections">
+            <nav class="dp-nav" aria-label="Documentation sections">
                 <button
                     type="button"
                     v-for="tab in introTabs"
@@ -572,14 +574,18 @@
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 
-  .dp-header {
+  .dp-sticky {
     position: sticky;
     top: 0;
     z-index: 5;
     background: var(--ks-bg-surface);
+    box-shadow: var(--ks-shadow-sm);
+  }
+
+  .dp-header {
+    background: var(--ks-bg-surface);
     padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-3);
     border-bottom: 1px solid var(--ks-border-default);
-    box-shadow: var(--ks-shadow-sm);
   }
 
   .dp-kicker {
@@ -661,9 +667,6 @@
   }
 
   .dp-nav {
-    position: sticky;
-    top: 0;
-    z-index: 4;
     display: flex;
     gap: var(--ks-spacing-1);
     padding: var(--ks-spacing-3) var(--ks-spacing-4);
@@ -783,10 +786,6 @@
 
   .dp-intro-search {
     width: 100%;
-  }
-
-  .dp-intro-nav {
-    top: 0;
   }
 
   .dp-intro-body {

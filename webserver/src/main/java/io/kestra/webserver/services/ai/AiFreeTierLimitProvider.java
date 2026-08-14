@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -41,20 +42,13 @@ public class AiFreeTierLimitProvider {
     }
 
     /**
-     * The limit to apply to hosted spend, or {@link AiUsageLimitConfiguration#DISABLED} when there is none to
-     * apply yet.
+     * The limit to apply to hosted spend, or empty when there is none to apply yet.
      *
      * <p>A limit the operator configured themselves wins over the relay's. They may want to spend less of their
      * allowance than we would let them — the reverse is not theirs to grant, and the relay enforces that anyway.
      */
-    public AiUsageLimitConfiguration limit() {
-        AiUsageLimitConfiguration configured = configuration.usageLimit();
-        if (configured.enabled()) {
-            return configured;
-        }
-
-        AiUsageLimitConfiguration fromRelay = fetched.get();
-        return fromRelay != null ? fromRelay : AiUsageLimitConfiguration.DISABLED;
+    public Optional<AiUsageLimitConfiguration> limit() {
+        return configuration.usageLimit().or(() -> Optional.ofNullable(fetched.get()));
     }
 
     /**

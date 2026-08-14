@@ -59,7 +59,7 @@ class AiFreeTierLimitProviderTest {
 
         // Then the instance holds the relay's own ceilings, rate card and window — none of which an operator
         // could have known, and all of which change when we re-price without any instance being redeployed.
-        AiUsageLimitConfiguration limit = provider.limit();
+        AiUsageLimitConfiguration limit = provider.limit().orElseThrow();
         assertThat(limit.enabled()).isTrue();
         assertThat(limit.maxWeight()).isEqualTo(2_000_000);
         assertThat(limit.userMaxWeight()).isEqualTo(600_000);
@@ -81,8 +81,8 @@ class AiFreeTierLimitProviderTest {
         // Then the fields it does understand are read. The two sides are deployed independently and the server
         // moves first, so rejecting an unrecognised field would mean every older instance silently losing its
         // budget the day we extend the response.
-        assertThat(provider.limit().enabled()).isTrue();
-        assertThat(provider.limit().maxWeight()).isEqualTo(2_000_000);
+        assertThat(provider.limit()).isPresent();
+        assertThat(provider.limit().orElseThrow().maxWeight()).isEqualTo(2_000_000);
     }
 
     @Test
@@ -94,7 +94,7 @@ class AiFreeTierLimitProviderTest {
 
         // Then the instance's own default applies rather than binding as zero, which would have meant a warning
         // that only appears once the allowance is already gone
-        assertThat(provider.limit().warningThresholdPercent()).isEqualTo(10);
+        assertThat(provider.limit().orElseThrow().warningThresholdPercent()).isEqualTo(10);
     }
 
     @Test
@@ -105,7 +105,7 @@ class AiFreeTierLimitProviderTest {
         // Then nothing is shown or enforced. Failing open matters here: the relay enforces its own budget and
         // answers 429, so not knowing the limit costs a user a surprise, where inventing one would refuse turns
         // the relay would have served.
-        assertThat(provider.limit()).isEqualTo(AiUsageLimitConfiguration.DISABLED);
+        assertThat(provider.limit()).isEmpty();
     }
 
     @Test
@@ -113,7 +113,7 @@ class AiFreeTierLimitProviderTest {
         // Given a provider that has fetched successfully...
         AiFreeTierLimitProvider provider = provider(relay.getURI() + "/stand-in/v1/ai/relay/gemini");
         provider.refresh();
-        AiUsageLimitConfiguration fetched = provider.limit();
+        AiUsageLimitConfiguration fetched = provider.limit().orElseThrow();
 
         // ...and then loses the relay
         AiFreeTierLimitProvider offline = provider("http://localhost:1/v1/ai/relay/gemini");
@@ -122,8 +122,8 @@ class AiFreeTierLimitProviderTest {
         // When each is read
         // Then a failed refresh neither throws nor clears what was known. This runs on a schedule and its result
         // is read before every model call, so an outage at api.kestra.io must not change what Copilot does.
-        assertThat(provider.limit()).isEqualTo(fetched);
-        assertThat(offline.limit()).isEqualTo(AiUsageLimitConfiguration.DISABLED);
+        assertThat(provider.limit()).contains(fetched);
+        assertThat(offline.limit()).isEmpty();
     }
 
     @Test
@@ -133,7 +133,7 @@ class AiFreeTierLimitProviderTest {
 
         // Then the refresh absorbs it rather than propagating out of a scheduled method
         provider.refresh();
-        assertThat(provider.limit()).isEqualTo(AiUsageLimitConfiguration.DISABLED);
+        assertThat(provider.limit()).isEmpty();
     }
 
     @Test
@@ -148,7 +148,7 @@ class AiFreeTierLimitProviderTest {
 
         // Then theirs wins. Spending less of an allowance than we grant is theirs to decide; spending more is
         // not, and the relay refuses that regardless of what an instance believes.
-        assertThat(provider.limit().maxWeight()).isEqualTo(50_000);
+        assertThat(provider.limit().orElseThrow().maxWeight()).isEqualTo(50_000);
     }
 
     /**

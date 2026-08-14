@@ -71,17 +71,6 @@ class AiUsageLimitConfigurationTest {
     }
 
     @Test
-    void shouldRecordButNeitherShowNorEnforceByDefault() {
-        // Given a provider that has said nothing about limits
-
-        // Then nothing is shown or enforced. Recording is not gated on this, so switching limits on later
-        // reports against history that already exists rather than starting from zero. Asserted on the constant
-        // itself because this is its contract: it is what every provider gets until someone configures one.
-        assertThat(AiUsageLimitConfiguration.DISABLED.enabled()).isFalse();
-        assertThat(AiUsageLimitConfiguration.DISABLED.isEnforceable()).isFalse();
-    }
-
-    @Test
     void shouldEnforceNothingWhenEnabledWithoutACeiling() {
         // Given limits switched on but no ceiling set
         AiUsageLimitConfiguration configuration =

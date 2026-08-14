@@ -40,9 +40,6 @@ public record GeminiConfiguration(
             temperature = 0.7;
         if (maxOutputTokens == 0)
             maxOutputTokens = 8000;
-
-        if (usageLimit == null)
-            usageLimit = AiUsageLimitConfiguration.DISABLED;
     }
 
     @Override

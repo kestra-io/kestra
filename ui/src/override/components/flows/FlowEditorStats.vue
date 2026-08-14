@@ -86,7 +86,6 @@
     // Nothing on screen waits for these two counters, but fetching them straight from
     // onMounted put them in the editor's boot tick, competing for the browser's per-origin
     // connection budget with the panels and schemas the editor needs in order to paint.
-    // Idle also collapses a save (flow object replaced, then revision bumped) into one refresh.
     let cancelPendingRefresh: (() => void) | undefined
 
     function scheduleRefresh() {

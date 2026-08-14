@@ -12,14 +12,16 @@ import FlowFileEditorTab from "../../../components/inputs/FlowFileEditorTab.vue"
 import PluginListWrapper from "../../../components/plugins/PluginListWrapper.vue"
 import {EditorElement} from "../../../utils/multiPanelTypes"
 
-// `code` and `doc` are the tabs DEFAULT_ACTIVE_TABS opens on arrival, so they stay eager:
-// deferring them would only add a round trip before the editor can paint.
+// `doc` always opens on arrival, and `code`'s editor tab sits in the boot graph either way
+// since useFilesPanels imports it for its injection keys - so deferring those two would buy a
+// round trip and nothing else.
 //
-// The others are behind a tab the user has to open, yet importing them here dragged their
-// whole subtree into the editor's boot graph anyway - topology pulls @vue-flow/core and
-// @kestra-io/topology, blueprints pulls the blueprint browser and its stores, files pulls
-// the file explorer. Loading them on first open keeps the editor's entry to what the first
-// paint actually needs.
+// The rest are behind a tab, yet importing them here dragged their whole subtree into the boot
+// graph regardless: topology pulls @vue-flow/core and @kestra-io/topology, blueprints pulls the
+// blueprint browser and its stores, files pulls the file explorer. `nocode` is deferred too,
+// even though the editor-view-type setting can make it a boot tab, because the engine that
+// actually renders no-code tabs is loaded on demand anyway (see RawNoCode in
+// MultiPanelFlowEditorView).
 const NoCode = markRaw(defineAsyncComponent(() => import("../../../components/no-code/NoCode.vue")))
 const LowCodeEditorWrapper = markRaw(defineAsyncComponent(() => import("../../../components/inputs/LowCodeEditorWrapper.vue")))
 const FileExplorerWrapper = markRaw(defineAsyncComponent(() => import("../../../components/inputs/FileExplorerWrapper.vue")))

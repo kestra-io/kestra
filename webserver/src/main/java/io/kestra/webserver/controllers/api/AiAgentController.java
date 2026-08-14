@@ -20,6 +20,8 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.AiUsageService;
+import io.kestra.webserver.services.ai.AiUsageStatus;
 import io.kestra.webserver.services.ai.agent.AgentConfiguration;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
 import io.kestra.webserver.services.ActorResolver;
@@ -36,6 +38,7 @@ import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
@@ -62,8 +65,10 @@ public class AiAgentController {
     private final AiMessageRepositoryInterface messageStore;
     protected final AiThreadManager threadManager;
     private final AgentOrchestrator orchestrator;
+
     private final AgentPrincipalResolver principalResolver;
     private final ActorResolver actorResolver;
+    private final AiUsageService usageService;
     private final int maxTurnsPerThread;
     private final int maxConcurrentTurns;
     private final Semaphore turnGate;
@@ -79,6 +84,7 @@ public class AiAgentController {
         final AgentOrchestrator orchestrator,
         final AgentPrincipalResolver principalResolver,
         final ActorResolver actorResolver,
+        final AiUsageService usageService,
         final AgentConfiguration configuration,
         final ExecutorsUtils executorsUtils) {
         this.tenantService = tenantService;
@@ -89,6 +95,7 @@ public class AiAgentController {
         this.orchestrator = orchestrator;
         this.principalResolver = principalResolver;
         this.actorResolver = actorResolver;
+        this.usageService = usageService;
         this.maxTurnsPerThread = configuration.maxTurnsPerThread();
         this.maxConcurrentTurns = configuration.maxConcurrentTurns();
         this.turnGate = new Semaphore(maxConcurrentTurns, false);
@@ -132,7 +139,7 @@ public class AiAgentController {
 
     @Post(uri = "/{threadId}/chat", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = { "AI" }, summary = "Open a streaming agent chat turn (SSE)")
-    public Flux<Event<Object>> chat(
+    public HttpResponse<Flux<Event<Object>>> chat(
         @PathVariable final String threadId,
         @Body final ApiChatTurnRequest request) {
         String tenant = tenantService.resolveTenant();
@@ -149,14 +156,21 @@ public class AiAgentController {
         }
 
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
+        // Resolved on the request thread and carried through the turn: a turn need not run on this thread, so a
+        // request-scoped lookup made later would come back empty.
+        AgentPrincipal principal = principalResolver.resolve();
+
+        AiUsageStatus usage = usageService.status(tenant, request.providerId(), principal == null ? null : principal.userId());
+        if (usage.isExceeded()) {
+            throw new HttpStatusException(HttpStatus.TOO_MANY_REQUESTS, usage.exceededMessage());
+        }
 
         acquireTurnPermit();
         try {
             AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
                 .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
 
-            AgentPrincipal principal = principalResolver.resolve();
-            return stream(
+            return HttpResponse.ok(stream(
                 sink -> orchestrator.runTurn(
                     AgentTurnContext.builder()
                         .thread(running)
@@ -170,7 +184,7 @@ public class AiAgentController {
                         .build(),
                     sink
                 )
-            );
+            ));
         } catch (RuntimeException e) {
             turnGate.release();
             throw e;

@@ -79,7 +79,8 @@ class AiServiceManagerTest {
             flowParsingService,
             // The hosted provider is not the subject of these cases: they assert how *configured* providers are
             // resolved, and leaving it enabled would register a fallback for the no-provider case.
-            freeTierDisabled()
+            freeTierDisabled(),
+            null
         );
     }
 

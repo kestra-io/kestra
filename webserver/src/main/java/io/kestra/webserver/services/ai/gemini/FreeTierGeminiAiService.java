@@ -25,12 +25,9 @@ import java.util.Optional;
 /**
  * The Gemini provider pointed at Kestra's hosted relay instead of Google directly.
  *
- * <p>Identical to {@link GeminiAiService} in every respect that matters to the agent — same prompts, same
- * tools, same streaming, same thought-signature round-trip — because it <em>is</em> that service, with a
- * different base URL and an added identity header. That is deliberate: a separate implementation would be a
- * way for the free tier to drift from the paid one.
- *
- * <p>The identity header is what lets the relay meter spend.
+ * <p>Extends {@link GeminiAiService} rather than reimplementing it, so the free tier cannot drift from the
+ * configured one: same prompts, tools, streaming and thought-signature round-trip, with a different base URL
+ * and an identity header the relay meters spend against.
  */
 public class FreeTierGeminiAiService extends GeminiAiService {
     private static final String INSTANCE_ID_HEADER = "X-Kestra-Instance-Id";
@@ -62,17 +59,12 @@ public class FreeTierGeminiAiService extends GeminiAiService {
     }
 
     /**
-     * The relay's budget, and nothing else's.
+     * The relay's budget, and nothing else's — this provider's ceiling is set and enforced at the relay, so
+     * {@link AiFreeTierLimitProvider#limit()} has to be its single source.
      *
-     * <p>Alone among the providers, this one's ceiling is not the operator's to set: the allowance belongs to
-     * Kestra and is enforced at the relay, so the figure shown here has to be the one that will refuse the turn.
-     * {@link AiFreeTierLimitProvider#limit()} is the single source of it, and is also what lets an operator cap
-     * their own spend lower than the allowance.
-     *
-     * <p>Deliberately does not fall back to {@code super.usageLimit()}. The configuration this service is built
-     * from is synthesized by {@code AiServiceManager} and carries no ceiling, so consulting it would read as a
-     * second source while returning nothing — and one caller reading a stale second source is exactly how the
-     * ceiling enforced mid-turn stops matching the one the client was shown.
+     * <p>Deliberately no fallback to {@code super.usageLimit()}: the configuration this service is built from
+     * is synthesized by {@code AiServiceManager} and carries no ceiling, so it would be a second source
+     * returning nothing.
      */
     @Override
     public Optional<AiUsageLimitConfiguration> usageLimit() {
@@ -82,14 +74,10 @@ public class FreeTierGeminiAiService extends GeminiAiService {
     /**
      * Identity for a turn: the instance always, the user when the caller has one.
      *
-     * <p>The user id travels on the principal rather than being looked up here, and that is the whole point.
-     * This supplier runs while the client library builds each request, on whichever thread the agent turn is
-     * executing — so a request-scoped lookup such as {@code CurrentUserContext} would come back empty and
-     * quietly degrade to instance-only metering while appearing to work. The principal is resolved on the
-     * request thread by the controller and carried through the turn, so reading it here is safe.
-     *
-     * <p>In OSS the principal is always {@code null} ({@code DefaultAgentPrincipalResolver}), so only the
-     * instance is sent and the relay meters the instance — which is what it does when no user is named.
+     * <p>The user id has to travel on the principal. This supplier runs while the client builds each request,
+     * on whichever thread the turn is executing, so a request-scoped lookup would come back empty and degrade
+     * to instance-only metering while appearing to work. Where no principal names a user, only the instance is
+     * sent and the relay meters that.
      */
     @Override
     public StreamingChatModel streamingChatModel(@Nullable AgentPrincipal principal, List<ChatModelListener> listeners) {

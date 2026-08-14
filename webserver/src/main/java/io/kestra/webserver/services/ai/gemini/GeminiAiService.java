@@ -107,11 +107,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
     }
 
     /**
-     * The headers attached to every request, resolved per call rather than once.
-     *
-     * <p>A {@link Supplier} because langchain4j evaluates it while building each request, which lets a
-     * subclass send a value that is not known at startup — the free tier's instance identity, for one, which
-     * comes from a setting that may not be readable yet while beans are still being created.
+     * The headers attached to every request. A {@link Supplier} because langchain4j evaluates it while
+     * building each request, which lets a subclass send a value not knowable at bean-creation time.
      */
     protected Supplier<Map<String, String>> customHeaders() {
         Map<String, String> configured = getAiConfiguration().customHeaders();
@@ -124,11 +121,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
     }
 
     /**
-     * Builds the streaming model with a given header source.
-     *
-     * <p>Separated from {@link #streamingChatModel(List)} so a subclass can vary the headers per turn without
-     * holding per-turn state on a shared service — models are built per turn, services are singletons, and
-     * turns run concurrently.
+     * Builds the streaming model with a given header source, so a subclass can vary headers per turn without
+     * holding per-turn state on the service — services are singletons and turns run concurrently.
      */
     protected StreamingChatModel buildStreamingChatModel(
         Supplier<Map<String, String>> customHeaders,

@@ -17,8 +17,7 @@ import java.time.ZoneOffset;
 
 /**
  * The token counts are generated columns, so a window's total is one {@code SUM} over an index rather than a
- * scan that deserialises every row. That matters because these queries sit on the path of a turn once limits are
- * enforced, and a turn is a dozen or more model calls.
+ * scan that deserialises every row — these queries sit on the path of every model call once limits are enforced.
  */
 public abstract class AbstractJdbcAiUsageRepository extends AbstractJdbcCrudRepository<AiUsage>
     implements AiUsageRepositoryInterface {
@@ -36,10 +35,8 @@ public abstract class AbstractJdbcAiUsageRepository extends AbstractJdbcCrudRepo
     }
 
     /**
-     * Tenant isolation without the soft-delete predicate the base class adds.
-     *
-     * <p>A usage row is a record of money already spent, so it is never deleted or superseded — the table has no
-     * {@code deleted} column, and the inherited filter would query one that does not exist.
+     * Tenant isolation without the soft-delete predicate the base class adds: a usage row is never deleted, so
+     * the table has no {@code deleted} column for the inherited filter to query.
      */
     @Override
     protected Condition defaultFilter(String tenantId) {
@@ -52,33 +49,27 @@ public abstract class AbstractJdbcAiUsageRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
-    public AiUsageTotals totals(String tenant, String providerId, Instant from) {
-        return sum(tenant, PROVIDER_ID_FIELD.eq(providerId).and(recordedSince(from)));
+    public AiUsageTotals totals(String providerId, Instant from) {
+        return sum(window(providerId, from));
     }
 
     @Override
-    public AiUsageTotals totalsForUser(String tenant, String providerId, @Nullable String userId, Instant from) {
+    public AiUsageTotals totalsForUser(String providerId, @Nullable String userId, Instant from) {
         return sum(
-            tenant,
-            PROVIDER_ID_FIELD.eq(providerId)
-                // Null is a real value here, not a missing filter: OSS records usage with no user at all, and
-                // those rows are exactly the ones a null query should return.
+            window(providerId, from)
+                // Null is a real value here, not a missing filter: unattributed rows are exactly what a null
+                // query is asking for.
                 .and(eqOrIsNull(USER_ID_FIELD, userId))
-                .and(recordedSince(from))
         );
     }
 
-    private Condition recordedSince(Instant from) {
-        return RECORDED_AT_FIELD.greaterOrEqual(from.atOffset(ZoneOffset.UTC));
+    private Condition window(String providerId, Instant from) {
+        return PROVIDER_ID_FIELD.eq(providerId)
+            .and(RECORDED_AT_FIELD.greaterOrEqual(from.atOffset(ZoneOffset.UTC)));
     }
 
-    /**
-     * One round trip for all four counts.
-     *
-     * <p>{@code SUM} over no rows is null rather than zero, so each is coalesced — an installation that has
-     * recorded nothing yet has spent nothing, which is not the same as having no answer.
-     */
-    private AiUsageTotals sum(String tenant, Condition condition) {
+    /** One round trip for all four counts. {@code SUM} over no rows is null, so each is coalesced to zero. */
+    private AiUsageTotals sum(Condition condition) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -92,8 +83,7 @@ public abstract class AbstractJdbcAiUsageRepository extends AbstractJdbcCrudRepo
                         DSL.coalesce(DSL.sum(THOUGHT_TOKENS_FIELD), DSL.zero()).cast(Long.class)
                     )
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenant))
-                    .and(condition)
+                    .where(condition)
                     .fetchOne();
 
                 return summed == null

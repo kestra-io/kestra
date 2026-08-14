@@ -7,15 +7,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The arithmetic a spend ceiling is judged by, and the defaults it is judged by when nobody configured one.
+ * The arithmetic a spend ceiling is judged by, and the defaults applied when nobody configured one.
  *
- * <p>The weighing cases state their own weights rather than borrowing {@link AiUsageLimitConfiguration#DISABLED}'s:
- * those figures track a rate card and will be re-priced, and a test that reads them from the constant would then
- * fail for a reason that has nothing to do with the arithmetic it is checking. Only
- * {@link #shouldRecordButNeitherShowNorEnforceByDefault()} names the constant, because the constant is its subject.
+ * <p>The weighing cases state their own weights rather than reading the shipped defaults, which track a rate
+ * card and will be re-priced — otherwise they would fail for reasons unrelated to the arithmetic under test.
  */
 class AiUsageLimitConfigurationTest {
-    /** Limits switched on with an explicit rate card, so each expected total is derivable from the case itself. */
+    /** Limits on with an explicit rate card, so each expected total is derivable from the case itself. */
     private static AiUsageLimitConfiguration weights(
         final double coldInput, final double cachedInput, final double output) {
         return new AiUsageLimitConfiguration(
@@ -33,8 +31,7 @@ class AiUsageLimitConfigurationTest {
         // When weighed
         long weighted = configuration.weigh(totals);
 
-        // Then it costs 1,000 + 100 + 6,000 units. A raw sum would have said 4,000 and been wrong by more than
-        // a factor of two — which is the entire reason the ceiling is expressed in weighted units.
+        // Then it costs 1,000 + 100 + 6,000 units, where a raw sum would have said 4,000
         assertThat(weighted).isEqualTo(7_100);
     }
 
@@ -59,14 +56,37 @@ class AiUsageLimitConfigurationTest {
 
     @Test
     void shouldApplyTheConfiguredWeightsRatherThanAnyFixedRateCard() {
-        // Given a provider priced differently from the defaults — a self-hosted model with no cache discount and
-        // cheap output, which is exactly why the weights are per provider
+        // Given a provider priced differently from the defaults, which is why the weights are per provider
         AiUsageLimitConfiguration configuration = weights(1.0, 1.0, 2.0);
         AiUsageTotals totals = new AiUsageTotals(2_000, 1_000, 1_000, 0);
 
-        // Then the configured card is what is charged: 1,000 + 1,000 + 2,000, not the 7,100 the defaults give.
-        // This is the case that would keep passing if weigh() ignored the configuration and hardcoded the rates.
+        // Then the configured card is charged: 1,000 + 1,000 + 2,000, not the 7,100 the defaults give
         assertThat(configuration.weigh(totals)).isEqualTo(4_000);
+    }
+
+    @Test
+    void shouldHonourAWeightExplicitlySetToZero() {
+        // Given a self-hosted model whose input costs nothing, priced as such
+        AiUsageLimitConfiguration configuration =
+            new AiUsageLimitConfiguration(true, 0.0, 0.0, 2.0, 1_000_000, 0, 10, AiUsageWindow.MONTHLY);
+        AiUsageTotals totals = new AiUsageTotals(5_000, 2_000, 1_000, 0);
+
+        // Then only output is charged. Rewriting an explicit zero to the default would bill 3,000 free input
+        // tokens at the cold rate and put the operator against a ceiling they priced themselves out of.
+        assertThat(configuration.weigh(totals)).isEqualTo(2_000);
+    }
+
+    @Test
+    void shouldFallBackToTheDefaultWeightsWhenNoneAreGiven() {
+        // Given the relay's JSON, or a configuration block, that names ceilings and no rate card at all
+        AiUsageLimitConfiguration configuration =
+            new AiUsageLimitConfiguration(null, null, null, null, 1_000_000, 0, null, null);
+
+        // Then the defaults apply — absent is still absent, which is the distinction the boxing exists to keep
+        assertThat(configuration.coldInputWeight()).isEqualTo(1.0);
+        assertThat(configuration.cachedInputWeight()).isEqualTo(0.1);
+        assertThat(configuration.outputWeight()).isEqualTo(6.0);
+        assertThat(configuration.warningThresholdPercent()).isEqualTo(10);
     }
 
     @Test
@@ -75,9 +95,7 @@ class AiUsageLimitConfigurationTest {
         AiUsageLimitConfiguration configuration =
             new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 0, 0, 10, null);
 
-        // Then there is nothing to enforce. Failing open here is deliberate: a zero ceiling is far more likely
-        // to be an unset property than an operator asking for no AI at all, and reading it as the latter would
-        // break Copilot for anyone who enabled limits before sizing them.
+        // Then there is nothing to enforce: a zero ceiling reads as unset rather than as "no AI at all"
         assertThat(configuration.isEnforceable()).isFalse();
     }
 }

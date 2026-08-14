@@ -1,12 +1,16 @@
 package io.kestra.webserver.services.ai;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.model.chat.listener.ChatModelListener;
 
+import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
@@ -43,12 +47,12 @@ public class AiServiceManager {
         AiProvidersConfiguration providersConfiguration,
         Environment environment,
         // inject dependencies needed for AiService
-        io.kestra.core.plugins.PluginRegistry pluginRegistry,
-        io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
+        PluginRegistry pluginRegistry,
+        JsonSchemaGenerator jsonSchemaGenerator,
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        List<ChatModelListener> listeners,
         @Nullable NamespaceContextTool namespaceContextTool,
         @Nullable KestraDocsContextTool kestraDocsContextTool,
         ExpressionContextService expressionContextService,
@@ -61,7 +65,7 @@ public class AiServiceManager {
         this.namespaceContextTool = namespaceContextTool;
         this.kestraDocsContextTool = kestraDocsContextTool;
 
-        List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
+        List<AiProviderConfiguration> configs = new ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
         );
         int declaredProviderCount = configs.size();
@@ -112,11 +116,9 @@ public class AiServiceManager {
             hasConfiguredProvider = true;
         }
 
-        // Gated on whether a provider was *declared*, not on whether one could be built. Those differ:
-        // createAiService returns null for a provider it cannot construct, and the loop above skips it without
-        // marking one as configured. Falling back on that would route an operator's prompts and flow source to
-        // api.kestra.io because their own provider had a bad key — a data-flow change triggered by an unrelated
-        // misconfiguration. A declared provider is an expressed intent, so it is respected even when broken.
+        // Gated on whether a provider was *declared*, not on whether one could be built: falling back because
+        // an operator's own provider had a bad key would send their prompts and flow source off-instance on
+        // account of an unrelated misconfiguration.
         if (configs.isEmpty()) {
             registerFreeTier(
                 freeTierConfiguration, freeTierLimitProvider, pluginRegistry, jsonSchemaGenerator, versionProvider,
@@ -134,21 +136,17 @@ public class AiServiceManager {
 
     /**
      * Falls back to Kestra's hosted provider so an instance with no key of its own still has a Copilot.
-     *
-     * <p>Reached only when nothing else is configured: an explicitly configured provider always wins, so this
-     * can never divert traffic away from a key someone chose. Enterprise ships it disabled — everything on
-     * this path leaves the deployment, which is a fair trade for a demo or trial and a surprise for a
-     * deployment with its own provider contract.
+     * Reached only when nothing else is configured, so it can never divert traffic away from a chosen key.
      */
     private void registerFreeTier(
         AiFreeTierConfiguration freeTier,
         @Nullable AiFreeTierLimitProvider limitProvider,
-        io.kestra.core.plugins.PluginRegistry pluginRegistry,
-        io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
+        PluginRegistry pluginRegistry,
+        JsonSchemaGenerator jsonSchemaGenerator,
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        List<ChatModelListener> listeners,
         ExpressionContextService expressionContextService,
         FlowParsingService flowParsingService
     ) {
@@ -157,21 +155,16 @@ public class AiServiceManager {
             return;
         }
 
-        GeminiConfiguration configuration = new GeminiConfiguration(
-            freeTier.getBaseUrl(),
-            freeTier.getToken(),
-            freeTier.getModelName(),
-            null, null, null, null, null,
-            0,
-            false,
-            false,
-            true,
-            null,
-            null,
-            null,
-            freeTier.getTimeout(),
-            null
-        );
+        // Unset fields take the record's defaults; the relay decides the thinking budget, so naming one here
+        // would only be overridden. No api key either — the relay presents its own credential, and langchain4j
+        // omits the header entirely when it is null.
+        GeminiConfiguration configuration = GeminiConfiguration.builder()
+            .baseUrl(freeTier.getBaseUrl())
+            .apiKey(null)
+            .modelName(AiFreeTierConfiguration.MODEL_NAME)
+            .thinkingEnabled(true)
+            .timeout(freeTier.getTimeout())
+            .build();
 
         aiServices.put(
             AiFreeTierConfiguration.PROVIDER_ID,
@@ -194,12 +187,12 @@ public class AiServiceManager {
 
     protected AiServiceInterface createAiService(
         AiProviderConfiguration provider,
-        io.kestra.core.plugins.PluginRegistry pluginRegistry,
-        io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
+        PluginRegistry pluginRegistry,
+        JsonSchemaGenerator jsonSchemaGenerator,
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        List<ChatModelListener> listeners,
         ExpressionContextService expressionContextService,
         FlowParsingService flowParsingService) {
         String type = provider.type();

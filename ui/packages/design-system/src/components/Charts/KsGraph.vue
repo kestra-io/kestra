@@ -26,7 +26,8 @@
     export interface KsGraphNode {
         id: string
         name?: string
-        symbolSize?: number
+        /** A single number for round symbols, or `[width, height]` for rectangular ones. */
+        symbolSize?: number | number[]
         value?: number
         itemStyle?: Record<string, unknown>
         label?: Record<string, unknown>

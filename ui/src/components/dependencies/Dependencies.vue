@@ -21,8 +21,17 @@
                     :nodes="chartNodes"
                     :edges="chartEdges"
                     :loading="isRendering"
+                    :layout="graphLayout"
                     :options="{series: [{emphasis: {focus: 'none'}}]}"
                     @node-click="handleNodeClick"
+                />
+
+                <KsSegmented
+                    v-if="dagView"
+                    v-model="layoutMode"
+                    class="layout-toggle"
+                    size="small"
+                    :options="layoutOptions"
                 />
 
                 <div class="controls">
@@ -73,7 +82,14 @@
             </KsSplitterPanel>
 
             <KsSplitterPanel id="table">
+                <NodeDetails
+                    v-if="selectedNode"
+                    :node="selectedNode"
+                    :subtype="SUBTYPE"
+                    @close="handlers.clearSelection"
+                />
                 <Table
+                    v-else
                     :elements="getElements()"
                     :highlightShown="handlers.highlightShown"
                     :selected="selectedNodeID"
@@ -89,6 +105,7 @@
     import {ref, computed, useTemplateRef, watch} from "vue"
 
     import Table from "./components/Table.vue"
+    import NodeDetails from "./components/NodeDetails.vue"
     import Empty from "../layout/empty/Empty.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
     import ChartDurationSelect from "../executions/date-select/ChartDurationSelect.vue"
@@ -97,9 +114,14 @@
     import {KsGraph} from "@kestra-io/design-system"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
+    import {useI18n} from "vue-i18n"
+
     import {useDependencies} from "./composables/useDependencies"
+    import type {LayoutMode} from "./composables/useDependencies"
     import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types"
-    import type {Types} from "./utils/types"
+    import type {Types, Node} from "./utils/types"
+
+    const {t} = useI18n({useScope: "global"})
 
     const PANEL = {size: "70%", min: "30%", max: "80%"}
 
@@ -120,7 +142,16 @@
             data: any[];
             count: number;
         }>;
+        /** Opt in to the force / layered-DAG layout toggle. */
+        dagView?: boolean;
     }>()
+
+    const layoutMode = ref<LayoutMode>("force")
+
+    const layoutOptions = computed(() => [
+        {label: t("dependency.dag.force"), value: "force"},
+        {label: t("dependency.dag.layered"), value: "dag"},
+    ])
 
     const SUBTYPE: Types = ((): Types => {
         switch (routeFamily(route.name)) {
@@ -140,13 +171,22 @@
         getElements,
         chartNodes,
         chartEdges,
+        graphLayout,
         isLoading,
         isRendering,
         selectedNodeID,
         selectNode,
         handleNodeClick,
         handlers,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies)
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, layoutMode)
+
+    /** DAG view swaps the table for the selected node's details, keeping the canvas in place. */
+    const selectedNode = computed(() => {
+        if (!props.dagView || !selectedNodeID.value) return undefined
+        const element = getElements()
+            .find((el): el is {data: Node} => el.data.type === "NODE" && el.data.id === selectedNodeID.value)
+        return element?.data
+    })
 
     const showExecutionChart = computed(() => SUBTYPE === FLOW || SUBTYPE === NAMESPACE)
 
@@ -267,6 +307,12 @@
             .dark & {
                 background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 20%, transparent) 1px, transparent 1px);
             }
+        }
+
+        & .layout-toggle {
+            position: absolute;
+            top: var(--ks-spacing-2);
+            left: var(--ks-spacing-2);
         }
 
         & .controls {

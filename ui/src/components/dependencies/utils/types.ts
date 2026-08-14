@@ -24,6 +24,12 @@ type Namespace = {
 
 type Asset = {
     subtype: typeof ASSET;
+    /** Source system of the asset, e.g. `bigquery`. Shown as the kind badge in DAG view. */
+    system?: string;
+    /** ISO timestamp of the last lineage event, shown as the node age in DAG view. */
+    updated?: string;
+    /** How the asset is materialised, e.g. `seed`, `view` or `table`. */
+    kind?: string;
 };
 
 export type Node = {

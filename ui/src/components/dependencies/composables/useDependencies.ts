@@ -20,6 +20,10 @@ import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
 import type {Types, Node, Edge, Element} from "../utils/types"
 
+import {computeDagLayout} from "../utils/dagLayout"
+
+import moment from "moment"
+
 // ─── CSS variable maps ────────────────────────────────────────────────────────
 
 const NODE_BG = {
@@ -68,6 +72,50 @@ function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string
         `<path transform="translate(12 12) scale(0.55) translate(-12 -12)" fill="${iconColor}" d="${ASSET_ICON_PATH}"/>` +
         "</svg>"
     return `image://data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+// ─── DAG view ─────────────────────────────────────────────────────────────────
+
+export type LayoutMode = "force" | "dag"
+
+/** Card footprint in graph coordinates; must stay inside the layout row/column gaps. */
+const CARD_SIZE = [180, 54]
+const HEADER_OFFSET = 64
+const HEADER_ID_PREFIX = "dag-column-header-"
+
+// Material Design glyphs marking how an asset is materialised. Same `image://`
+// trick as the asset symbol above: ECharts draws labels on a canvas and cannot
+// mount a Vue <KsIcon>, so the glyph rides in as an SVG data URI.
+const KIND_ICONS: Record<string, string> = {
+    seed:  "M2,22V20C2,20 7,18 12,18C17,18 22,20 22,20V22H2M11.3,9.1C10.1,5.2 4,6.1 4,6.1C4,6.1 4.2,13.9 9.9,12.7C9.5,9.8 8,9 8,9C10.8,9 11,12.4 11,12.4V17C11.3,17 11.7,17 12,17C12.3,17 12.7,17 13,17V12.8C13,12.8 13,8.9 16,7.9C16,7.9 14,10.9 14,12.9C21,13.6 21,4 21,4C21,4 12.1,3 11.3,9.1Z",
+    view:  "M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z",
+    table: "M4,3H20A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5A2,2 0 0,1 4,3M4,7V10H8V7H4M10,7V10H14V7H10M20,10V7H16V10H20M4,12V15H8V12H4M4,20H8V17H4V20M10,12V15H14V12H10M10,20H14V17H10V20M20,20V17H16V20H20M20,15V12H16V15H20Z",
+    flow:  "M4,2A2,2 0 0,0 2,4V8A2,2 0 0,0 4,10H8A2,2 0 0,0 10,8V7H14V8A2,2 0 0,0 16,10H20A2,2 0 0,0 22,8V4A2,2 0 0,0 20,2H16A2,2 0 0,0 14,4V5H10V4A2,2 0 0,0 8,2H4M4,14A2,2 0 0,0 2,16V20A2,2 0 0,0 4,22H8A2,2 0 0,0 10,20V16A2,2 0 0,0 8,14H4M16,14A2,2 0 0,0 14,16V20A2,2 0 0,0 16,22H20A2,2 0 0,0 22,20V16A2,2 0 0,0 20,14H16Z",
+}
+
+/** Inline SVG data URI for a kind glyph, tinted to the given colour. */
+function kindIcon(kind: string, color: string): string | undefined {
+    const path = KIND_ICONS[kind]
+    if (!path) return undefined
+    const svg =
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+        `<path fill="${color}" d="${path}"/>` +
+        "</svg>"
+    // Plain data URI, not the `image://` form: that prefix is symbol syntax, and a rich
+    // text fragment takes the URL directly.
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+/** Trailing segment of a dotted asset id (`db.schema.stg_customers` → `stg_customers`). */
+function shortName(id: string): string {
+    const segments = id.split(".")
+    return segments[segments.length - 1] || id
+}
+
+/** Schema segment of a fully qualified asset id, used for the kind badge and column headers. */
+function schemaName(id: string): string | undefined {
+    const segments = id.split(".")
+    return segments.length >= 3 ? segments[segments.length - 2] : undefined
 }
 
 // ─── KsGraph instance contract ────────────────────────────────────────────────
@@ -142,6 +190,7 @@ export function transformResponse(
  * @param params      - Vue Router params (id, namespace, flowId).
  * @param isTesting   - When true, uses generated fixture data instead of the API.
  * @param fetchAssetDependencies - Custom async fetcher for ASSET subtypes.
+ * @param layoutMode  - Force simulation (default) or the layered DAG layout.
  */
 export function useDependencies(
     graphRef: Ref<KsGraphRef | null>,
@@ -149,6 +198,7 @@ export function useDependencies(
     initialNodeID: string,
     params: RouteParams,
     fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
+    layoutMode: Ref<LayoutMode> = ref<LayoutMode>("force"),
 ) {
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -169,12 +219,55 @@ export function useDependencies(
     // ECharts never re-runs the force simulation.
     const chartNodes = ref<KsGraphNode[] | null>(null)
     const chartEdges = ref<KsGraphEdge[] | null>(null)
-    const storedPositions = ref(new Map<string, {x: number; y: number}>())
+    /** Positions read back from ECharts once the force simulation has settled. */
+    const capturedPositions = ref(new Map<string, {x: number; y: number}>())
+    /** KsGraph's layout prop: "force" only for the very first render, explicit coordinates after. */
+    const graphLayout = ref<"force" | "none">("force")
 
     /** IDs of nodes that belong to the current table-filter result (null = no filter). */
     const shownNodeIDs = ref<Set<string> | null>(null)
 
     const elements = ref<{data: Element[]; count: number}>({data: [], count: 0})
+
+    // ─── Layout ───────────────────────────────────────────────────────────────
+
+    const isDag = computed(() => layoutMode.value === "dag")
+
+    const dagLayout = computed(() => {
+        const nodes = elements.value.data.filter((el): el is {data: Node} => el.data.type === NODE)
+        const flows = new Set(nodes.filter(({data}) => data.metadata.subtype === FLOW).map(({data}) => data.id))
+
+        return computeDagLayout(
+            nodes.map(({data}) => data.id),
+            elements.value.data
+                .filter((el): el is {data: Edge} => el.data.type === EDGE)
+                .map(({data}) => data)
+                // A flow produces its assets, so it belongs at the head of the graph.
+                // Ignoring what feeds it keeps it in the first column instead of the middle.
+                .filter((edge) => !flows.has(edge.target)),
+                {
+                columnGap: CARD_SIZE[0] + 70,
+                rowGap:    CARD_SIZE[1] + 46,
+                // Flows head their column: they orchestrate the assets beside them.
+                priority:  (id) => (flows.has(id) ? -1 : 0),
+            },
+        )
+    })
+
+    /** Column labels: the schema the column's assets share, else a generic layer number. */
+    const dagColumnLabels = computed(() => dagLayout.value.columns.map((column, index) => {
+        const schemas = new Set(column.map((id) => {
+            const node = elements.value.data.find(
+                (el): el is {data: Node} => el.data.type === NODE && el.data.id === id,
+            )
+            return node ? schemaName(node.data.flow) : undefined
+        }))
+        const [only] = [...schemas]
+        return schemas.size === 1 && only ? only : t("dependency.dag.layer", {n: index + 1})
+    }))
+
+    /** Node coordinates in play: computed in DAG view, read back from the simulation otherwise. */
+    const storedPositions = computed(() => (isDag.value ? dagLayout.value.positions : capturedPositions.value))
 
     // ─── Derived graph topology ───────────────────────────────────────────────
 
@@ -226,7 +319,7 @@ export function useDependencies(
         // asset background in both light and dark themes.
         const assetIconColor = cssVar("--ks-text-primary")
 
-        return elements.value.data
+        const nodes = elements.value.data
             .filter((el): el is {data: Node} => el.data.type === NODE)
             .map(({data: node}) => {
                 const isSelected = node.id === selectedNodeID.value
@@ -267,6 +360,68 @@ export function useDependencies(
                 const baseItemStyle = {color: bgColor, borderColor, borderWidth: 2, opacity}
                 const labelColor    = cssVar("--ks-text-primary", isDimmed ? 0.35 : isFaded ? 0.75 : undefined)
 
+                // DAG view draws a card instead of a bubble: the fill stays a neutral
+                // surface so the label is legible, and the border carries the state colour.
+                if (isDag.value) {
+                    const kind = isAsset
+                        ? ((node.metadata as {kind?: string}).kind ?? (node.metadata as {system?: string}).system ?? schemaName(node.flow))
+                        : node.namespace
+                    const updated = (node.metadata as {updated?: string}).updated
+                    const glyph = kindIcon(isAsset ? String(kind) : "flow", cssVar("--ks-text-secondary"))
+                    const meta = [
+                        glyph ? "{glyph| }" : "",
+                        kind ? `{badge|${kind}}` : "",
+                        updated ? `{age|${moment(updated).fromNow()}}` : "",
+                    ].filter(Boolean).join(" ")
+                    const cardItemStyle = {
+                        color:       cssVar("--ks-bg-surface"),
+                        borderColor,
+                        borderWidth: isSelected ? 2 : 1,
+                        opacity,
+                    }
+
+                    return {
+                        id:         node.id,
+                        name:       node.id,
+                        symbol:     "roundRect",
+                        symbolSize: CARD_SIZE,
+                        itemStyle:  cardItemStyle,
+                        emphasis:   {itemStyle: {...cardItemStyle, borderColor: cssVar(NODE_BORDER.hovered), opacity: 1}},
+                        blur:       {itemStyle: cardItemStyle},
+                        label: {
+                            show:            true,
+                            position:        "inside",
+                            formatter:       [`{name|${shortName(node.flow)}}`, meta].filter(Boolean).join("\n"),
+                            textBorderWidth: 0,
+                            rich: {
+                                name: {
+                                    fontSize:   13,
+                                    fontWeight: "bold",
+                                    color:      labelColor,
+                                    padding:    [0, 0, 6, 0],
+                                },
+                                badge: {
+                                    fontSize:        10,
+                                    color:           cssVar("--ks-text-secondary"),
+                                    backgroundColor: cssVar("--ks-bg-tag"),
+                                    borderRadius:    3,
+                                    padding:         [3, 6],
+                                },
+                                age: {
+                                    fontSize: 10,
+                                    color:    cssVar("--ks-text-secondary"),
+                                    padding:  [3, 0],
+                                },
+                                glyph: {
+                                    height:          12,
+                                    width:           12,
+                                    backgroundColor: glyph ? {image: glyph} : undefined,
+                                },
+                            },
+                        },
+                    }
+                }
+
                 return {
                     id:         node.id,
                     name:       node.id,
@@ -301,7 +456,39 @@ export function useDependencies(
                     },
                 }
             })
+
+        return isDag.value ? [...nodes, ...columnHeaderNodes()] : nodes
     })
+
+    /**
+     * Label-only nodes sitting above each DAG column. They ride the graph's own
+     * coordinate space, so headers pan and zoom with the columns they name.
+     */
+    const columnHeaderNodes = (): KsGraphNode[] => {
+        const {positions, columns} = dagLayout.value
+        const ys = [...positions.values()].map((position) => position.y)
+        const top = (ys.length ? Math.min(...ys) : 0) - HEADER_OFFSET
+
+        return columns.map((column, index) => ({
+            id:         `${HEADER_ID_PREFIX}${index}`,
+            name:       `${HEADER_ID_PREFIX}${index}`,
+            x:          positions.get(column[0])?.x ?? 0,
+            y:          top,
+            symbol:     "circle",
+            symbolSize: 1,
+            itemStyle:  {opacity: 0},
+            tooltip:    {show: false},
+            label: {
+                show:            true,
+                position:        "top",
+                formatter:       dagColumnLabels.value[index],
+                color:           cssVar("--ks-text-secondary"),
+                fontSize:        11,
+                fontWeight:      "bold",
+                textBorderWidth: 0,
+            },
+        }))
+    }
 
     const graphEdges: ComputedRef<KsGraphEdge[]> = computed(() => {
         void miscStore.theme // recompute cssVar calls when theme switches
@@ -373,7 +560,8 @@ export function useDependencies(
         chart.dispatchAction({type: "downplay", seriesIndex: 0})
         // For ECharts graph series, `center` is in data coordinates.
         // Setting center=[pos.x, pos.y] places the selected node at canvas centre.
-        chart.setOption({series: [{zoom: 1.8, center: [pos.x, pos.y]}]}, false)
+        // DAG cards are sized in pixels, so zooming past 1:1 only pushes them apart.
+        chart.setOption({series: [{type: "graph", zoom: isDag.value ? 1 : 1.8, center: [pos.x, pos.y]}]}, false)
     }
 
     // Trigger focus after all reactive updates (applyStylesToChart) have flushed.
@@ -420,7 +608,7 @@ export function useDependencies(
                     positions.set(String(name), {x, y})
                 }
             }
-            if (positions.size > 0) storedPositions.value = positions
+            if (positions.size > 0) capturedPositions.value = positions
         } catch {
             // Internal ECharts API unavailable — style updates will skip layout:none.
         }
@@ -440,13 +628,36 @@ export function useDependencies(
             return pos ? {...n, x: pos.x, y: pos.y} : n
         })
         const layout = positions.size > 0 ? "none" : "force"
-        chart.setOption({series: [{data: nodesWithPos, links: graphEdges.value, layout}]}, false)
+        chart.setOption({series: [{type: "graph", data: nodesWithPos, links: graphEdges.value, layout}]}, false)
+    }
+
+    /**
+     * Pushes nodes and edges back through KsGraph's props with their coordinates
+     * baked in. DAG view renders this way rather than patching the chart in place:
+     * positions are known up front, so a plain re-render is enough and no
+     * simulation can run.
+     */
+    const renderGraph = (): void => {
+        const positions = storedPositions.value
+        chartNodes.value = graphNodes.value.map((node) => {
+            const position = positions.get(node.id as string)
+            return position ? {...node, x: position.x, y: position.y} : node
+        })
+        chartEdges.value = graphEdges.value
+        graphLayout.value = positions.size > 0 ? "none" : "force"
     }
 
     watch([graphNodes, graphEdges], () => {
         if (chartNodes.value === null) return
-        applyStylesToChart()
+        if (isDag.value) renderGraph()
+        else applyStylesToChart()
     })
+
+    // The two layouts occupy very different extents, so re-frame on every switch.
+    watch(layoutMode, () => {
+        renderGraph()
+        nextTick(() => fitGraph())
+    }, {flush: "post"})
 
     // ─── Data loading ─────────────────────────────────────────────────────────
 
@@ -615,14 +826,21 @@ export function useDependencies(
         const padding = 20
         const W = chart.getWidth()  as number
         const H = chart.getHeight() as number
-        const zoom = Math.min(
+        // Positions are node centres, so DAG cards and their column headers stick out
+        // beyond the extent and have to be added back before fitting.
+        const spreadX = (Math.max(...xs) - Math.min(...xs)) + (isDag.value ? CARD_SIZE[0] : 0)
+        const spreadY = (Math.max(...ys) - Math.min(...ys)) + (isDag.value ? CARD_SIZE[1] + HEADER_OFFSET : 0)
+        // Card symbols are sized in screen pixels while positions are data coordinates,
+        // so zooming out would close the gaps the layout just opened. DAG view stays at
+        // 1:1 and pans instead.
+        const zoom = isDag.value ? 1 : Math.min(
             1,
-            (W - padding * 2) / (Math.max(...xs) - Math.min(...xs) || 1),
-            (H - padding * 2) / (Math.max(...ys) - Math.min(...ys) || 1),
+            (W - padding * 2) / (spreadX || 1),
+            (H - padding * 2) / (spreadY || 1),
         )
         const cx = (Math.min(...xs) + Math.max(...xs)) / 2
-        const cy = (Math.min(...ys) + Math.max(...ys)) / 2
-        chart.setOption({series: [{zoom, center: [cx, cy]}]}, false)
+        const cy = (Math.min(...ys) + Math.max(...ys)) / 2 - (isDag.value ? HEADER_OFFSET / 2 : 0)
+        chart.setOption({series: [{type: "graph", zoom, center: [cx, cy]}]}, false)
     }
 
     return {
@@ -636,6 +854,8 @@ export function useDependencies(
         chartNodes,
         /** Frozen snapshot for KsGraph :edges — set once after initial render. */
         chartEdges,
+        /** Layout to hand KsGraph: explicit coordinates once any are known. */
+        graphLayout,
         isLoading,
         isRendering,
         selectedNodeID,

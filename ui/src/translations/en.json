@@ -2039,6 +2039,14 @@
         "clear_selection": "Clear selection",
         "fit_view": "Fit to screen"
       },
+      "dag": {
+        "force": "Force",
+        "layered": "Layered",
+        "layer": "Layer {n}",
+        "kind": "Kind",
+        "system": "System",
+        "last_update": "Last update"
+      },
       "search": {
         "placeholders": {
           "default": "Search by flow or namespace...",
@@ -2463,6 +2471,7 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
-    }
+    },
+    "asset": "Asset"
   }
 }

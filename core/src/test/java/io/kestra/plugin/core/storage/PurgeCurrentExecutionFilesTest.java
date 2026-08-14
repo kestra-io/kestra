@@ -1,12 +1,20 @@
 package io.kestra.plugin.core.storage;
 
+import java.io.ByteArrayOutputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 
 import jakarta.inject.Inject;
 
@@ -20,7 +28,6 @@ class PurgeCurrentExecutionFilesTest {
 
     @Test
     void run() throws Exception {
-        // create a file
         var flow = Flow.builder()
             .namespace("namespace")
             .id("flowId")
@@ -34,12 +41,30 @@ class PurgeCurrentExecutionFilesTest {
             )
         );
         var file = runContext.workingDir().createFile("test.txt", "Hello World".getBytes());
-        runContext.storage().putFile(file.toFile());
+        URI executionFileUri = runContext.storage().putFile(file.toFile());
+        URI cacheUri = createTaskCache(runContext, executionFileUri.toString());
 
         var purge = PurgeCurrentExecutionFiles.builder()
             .build();
-        var output = purge.run(runContext);
+        purge.run(runContext);
 
-        assertThat(output.getUris().size()).isEqualTo(2);
+        assertThat(runContext.storage().isFileExist(executionFileUri)).isFalse();
+        assertThat(runContext.storage().isFileExist(cacheUri)).isFalse();
+        assertThat(runContext.storage().getCacheFile("task-cache", null)).isEmpty();
+    }
+
+    private URI createTaskCache(RunContext runContext, String executionFileUri) throws Exception {
+        byte[] outputs = JacksonMapper.ofIon().writeValueAsBytes(Map.of("uri", executionFileUri));
+        Path archiveFile = runContext.workingDir().createTempFile(".zip");
+
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ZipOutputStream archive = new ZipOutputStream(bos)) {
+            archive.putNextEntry(new ZipEntry("outputs.ion"));
+            archive.write(outputs);
+            archive.closeEntry();
+            archive.finish();
+            Files.write(archiveFile, bos.toByteArray());
+        }
+
+        return runContext.storage().putCacheFile(archiveFile.toFile(), "task-cache", null);
     }
 }

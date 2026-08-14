@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +30,7 @@ import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
 public class InternalStorage implements Storage {
 
     private static final String PATH_SEPARATOR = "/";
+    private static final String CACHE_EXECUTION_ID_METADATA_KEY = "executionId";
 
     private final Logger logger;
     private final StorageContext context;
@@ -141,7 +144,9 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public List<URI> deleteExecutionFiles() throws IOException {
-        return this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI());
+        List<URI> deletedUris = new ArrayList<>(this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI()));
+        deletedUris.addAll(this.deleteExecutionCacheFiles());
+        return deletedUris;
     }
 
     /**
@@ -224,13 +229,47 @@ public class InternalStorage implements Storage {
         return isFileExist(uri) ? Optional.of(this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri).getLastModifiedTime()) : Optional.empty();
     }
 
+    private List<URI> deleteExecutionCacheFiles() throws IOException {
+        if (context.getExecutionId() == null) {
+            return List.of();
+        }
+
+        List<URI> deletedCacheFiles = new ArrayList<>();
+        List<URI> flowFiles = this.storage.allByPrefix(context.getTenantId(), context.getNamespace(), context.getFlowStorageURI(), false);
+
+        for (URI candidate : flowFiles) {
+            if (!isCacheArchive(candidate)) {
+                continue;
+            }
+
+            try {
+                if (cacheBelongsToExecution(candidate, context.getExecutionId()) && this.storage.delete(context.getTenantId(), context.getNamespace(), candidate)) {
+                    deletedCacheFiles.add(candidate);
+                }
+            } catch (IOException | RuntimeException e) {
+                logger.warn("Failed to inspect cache file '{}' while purging execution '{}'", candidate, context.getExecutionId(), e);
+            }
+        }
+
+        return deletedCacheFiles;
+    }
+
+    private boolean isCacheArchive(URI candidate) {
+        return candidate.getPath() != null && candidate.getPath().contains("/cache/") && candidate.getPath().endsWith("/cache.zip");
+    }
+
+    private boolean cacheBelongsToExecution(URI cacheUri, String executionId) throws IOException {
+        Map<String, String> metadata = this.storage.getAttributes(context.getTenantId(), context.getNamespace(), cacheUri).getMetadata();
+        return metadata != null && executionId.equals(metadata.get(CACHE_EXECUTION_ID_METADATA_KEY));
+    }
+
     /**
      * {@inheritDoc}
      **/
     @Override
     public URI putCacheFile(File file, String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
-        return this.putFileAndDelete(file, uri);
+        return this.putFileAndDelete(file, uri, cacheMetadata());
     }
 
     /**
@@ -243,8 +282,12 @@ public class InternalStorage implements Storage {
     }
 
     private URI putFileAndDelete(File file, URI uri) throws IOException {
+        return putFileAndDelete(file, uri, null);
+    }
+
+    private URI putFileAndDelete(File file, URI uri, @Nullable Map<String, String> metadata) throws IOException {
         try (InputStream is = new FileInputStream(file)) {
-            return this.putFile(is, uri);
+            return this.putFile(is, uri, metadata);
         } finally {
             FileUtils.deleteWithRetry(file.toPath())
                 .ifPresent(e -> logger.warn("Failed to delete temporary file '{}'", file.toPath(), e));
@@ -261,6 +304,23 @@ public class InternalStorage implements Storage {
         URI uri = URI.create(prefix);
         URI resolve = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream));
+    }
+
+    private URI putFile(InputStream inputStream, URI uri, @Nullable Map<String, String> metadata) throws IOException {
+        return this.storage.put(
+            context.getTenantId(),
+            context.getNamespace(),
+            uri,
+            new StorageObject(metadata, new BufferedInputStream(inputStream))
+        );
+    }
+
+    private @Nullable Map<String, String> cacheMetadata() {
+        if (context.getExecutionId() == null) {
+            return null;
+        }
+
+        return Map.of(CACHE_EXECUTION_ID_METADATA_KEY, context.getExecutionId());
     }
 
     @Override

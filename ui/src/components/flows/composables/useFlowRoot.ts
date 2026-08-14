@@ -21,12 +21,17 @@ export function useFlowRoot() {
     const routeTabsStore = useRouteTabsStore()
 
     const previousFlow = ref<string | undefined>(undefined)
-    const dependenciesCount = ref<number | undefined>(undefined)
     const deleted = ref(false)
     const tabsOwnerId = Symbol("flow-root-tabs")
 
     const user = computed(() => authStore.user)
     const activeTabName = useActiveTab()
+
+    // The store already excludes the flow's own node from this count, and the tab badge used
+    // to subtract one again on top of that - so it read one below the editor's toolbar stat,
+    // and `disabled: !dependenciesCount` hid the tab of a flow with exactly one dependency.
+    // Reading the store keeps the two in step; the watcher below is only a fetch trigger.
+    const dependenciesCount = computed(() => flowStore.dependenciesCount)
 
     function flowKey(): string {
         return route.params.namespace + "/" + route.params.id
@@ -133,9 +138,7 @@ export function useFlowRoot() {
         () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision] as const,
         ([namespace, id]) => {
             if (!namespace || !id) return
-            flowStore
-                .loadDependencies({subtype: "FLOW", namespace, id}, true)
-                .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
+            flowStore.loadDependencies({subtype: "FLOW", namespace, id}, true)
         },
         {debounce: 1000},
     )

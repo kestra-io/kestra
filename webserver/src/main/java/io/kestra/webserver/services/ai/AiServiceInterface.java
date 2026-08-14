@@ -38,6 +38,10 @@ public interface AiServiceInterface {
         return streamingChatModel(listeners);
     }
 
+    default AiUsageLimitConfiguration usageLimit() {
+        return AiUsageLimitConfiguration.DISABLED;
+    }
+
     default AiService.GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName, Map<String, String> inputState) {
         return null;
     }

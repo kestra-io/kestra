@@ -209,6 +209,11 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         return displayName;
     }
 
+    @Override
+    public AiUsageLimitConfiguration usageLimit() {
+        return aiConfiguration.usageLimit();
+    }
+
     public ExpressionContextService expressionContextService() {
         return expressionContextService;
     }

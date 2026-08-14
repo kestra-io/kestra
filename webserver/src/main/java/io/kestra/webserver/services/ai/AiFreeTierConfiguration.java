@@ -1,10 +1,17 @@
 package io.kestra.webserver.services.ai;
 
+import io.kestra.core.serializers.JacksonMapper;
+
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.format.MapFormat;
+import io.micronaut.core.naming.conventions.StringConvention;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * The hosted Copilot provider used when an instance has configured none of its own.
@@ -52,4 +59,48 @@ public class AiFreeTierConfiguration {
 
     /** Generous by default: a relayed agent turn streams, and can sit quiet between chunks. */
     private Duration timeout = Duration.ofMinutes(5);
+
+    @Getter(AccessLevel.NONE)
+    private AiUsageLimitConfiguration usageLimit = AiUsageLimitConfiguration.DISABLED;
+
+    /**
+     * The instance's own ceiling on hosted spend, disabled by default like every other provider's.
+     *
+     * <p>Not the relay's quota, which lives at Kestra's end and answers 429 when exhausted — this is what the
+     * instance decides to spend of it, so an operator can cap or subdivide the allowance they are given.
+     */
+    public AiUsageLimitConfiguration usageLimit() {
+        return usageLimit;
+    }
+
+    /**
+     * Taken as a map and converted here, exactly as a declared provider's own {@code usage-limit} is: Micronaut's
+     * property binder cannot construct a record as a property of a configuration class — it binds silently to
+     * nothing, so every value an operator wrote would be lost while appearing to be accepted.
+     *
+     * <p>Converting once, here, rather than per read: the ceiling is consulted on every model call, and an
+     * unreadable one is worth failing the instance at startup rather than the turn that reads it.
+     *
+     * <p>The keys are camel-cased on the way in because configuration is written in kebab-case and the record's
+     * components are not: without it {@code max-weight} would be an unknown property, and a ceiling an operator
+     * wrote would read as absent.
+     */
+    public void setUsageLimit(
+        @Nullable
+        @MapFormat(transformation = MapFormat.MapTransformation.NESTED, keyFormat = StringConvention.CAMEL_CASE)
+        final Map<String, Object> usageLimit) {
+        if (usageLimit == null || usageLimit.isEmpty()) {
+            this.usageLimit = AiUsageLimitConfiguration.DISABLED;
+            return;
+        }
+
+        try {
+            this.usageLimit = JacksonMapper.ofJson().convertValue(usageLimit, AiUsageLimitConfiguration.class);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                "Cannot read the AI free tier usage limit from 'kestra.ai.free-tier.usage-limit': %s.".formatted(e.getMessage()),
+                e
+            );
+        }
+    }
 }

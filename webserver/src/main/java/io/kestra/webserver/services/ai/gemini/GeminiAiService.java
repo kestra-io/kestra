@@ -17,6 +17,7 @@ import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
 import io.kestra.webserver.utils.HttpClientUtils;
 
+import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.http.client.HttpClientBuilderLoader;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
@@ -133,7 +134,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
         Supplier<Map<String, String>> customHeaders,
         List<ChatModelListener> listeners
     ) {
-        return GoogleAiGeminiStreamingChatModel.builder()
+        GoogleAiGeminiStreamingChatModel.GoogleAiGeminiStreamingChatModelBuilder builder =
+            GoogleAiGeminiStreamingChatModel.builder()
             .baseUrl(getAiConfiguration().baseUrl())
             .listeners(listeners)
             .modelName(getAiConfiguration().modelName())
@@ -148,7 +150,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .returnThinking(true)
             .sendThinking(true)
             .customHeaders(customHeaders)
-            .timeout(getAiConfiguration().timeout())
-            .build();
+            .timeout(getAiConfiguration().timeout());
+
+        return builder.build();
     }
 }

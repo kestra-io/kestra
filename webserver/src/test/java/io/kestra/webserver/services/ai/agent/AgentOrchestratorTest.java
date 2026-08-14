@@ -13,6 +13,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+import java.time.Duration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,8 +30,13 @@ import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.ai.usage.models.AiUsage;
+import io.kestra.core.ai.usage.models.AiUsageTotals;
+import io.kestra.core.ai.usage.repositories.AiUsageRepositoryInterface;
+import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.AiUsageLimitConfiguration;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.DefaultAgentToolPermissionEvaluator;
@@ -45,6 +52,8 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.googleai.GoogleAiGeminiTokenUsage;
+import dev.langchain4j.model.output.TokenUsage;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -59,7 +68,16 @@ import static org.mockito.Mockito.when;
 class AgentOrchestratorTest {
     private static final String TENANT = TenantService.MAIN_TENANT;
 
+    /**
+     * Spelled out rather than reusing {@link AiUsageLimitConfiguration#DISABLED}, so that a change to the
+     * production defaults cannot silently turn limits on for every test that does not set its own.
+     */
+    private static final AiUsageLimitConfiguration NO_LIMIT =
+        new AiUsageLimitConfiguration(false, 1.0, 0.1, 6.0, 0, 0, 10, Duration.ofDays(30));
+
     private final ScriptedStreamingChatModel scriptedModel = new ScriptedStreamingChatModel();
+
+    private final AtomicReference<AiUsageLimitConfiguration> usageLimit = new AtomicReference<>(NO_LIMIT);
 
     @Inject
     AgentOrchestrator orchestrator;
@@ -73,10 +91,16 @@ class AgentOrchestratorTest {
     @Inject
     AiThreadManager threadManager;
 
+    @Inject
+    AiUsageRepositoryInterface usageStore;
+
     @MockBean(AiServiceManager.class)
     AiServiceManager aiServiceManager() {
         AiServiceInterface service = mock(AiServiceInterface.class);
-        when(service.streamingChatModel(any())).thenReturn(scriptedModel);
+        // The orchestrator asks for the principal-carrying overload. Stubbing only the other one leaves this
+        // returning null, and every turn then dies on a null model — which is exactly what was happening.
+        when(service.streamingChatModel(any(), any())).thenReturn(scriptedModel);
+        when(service.usageLimit()).thenAnswer(invocation -> usageLimit.get());
         AiServiceManager manager = mock(AiServiceManager.class);
         when(manager.getAiService(any())).thenReturn(service);
         return manager;
@@ -100,6 +124,7 @@ class AgentOrchestratorTest {
     void resetScript() {
         scriptedModel.clear();
         deniedTools.clear();
+        usageLimit.set(NO_LIMIT);
     }
 
     @Test
@@ -646,6 +671,159 @@ class AgentOrchestratorTest {
         assertThat(log.getLast().content()).contains("maximum number of tool steps");
     }
 
+
+    @Test
+    void shouldRecordWhatTheModelCallCostWhenTheProviderReportsIt() {
+        // Given a turn whose single call reports Gemini's four counts
+        String provider = "provider-" + IdUtils.create();
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(
+            AiMessage.from("A trigger starts a flow."),
+            GoogleAiGeminiTokenUsage.builder()
+                .inputTokenCount(1_000)
+                .outputTokenCount(19)
+                .cachedContentTokenCount(400)
+                .thoughtsTokenCount(128)
+                .build()
+        );
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, null, null), new CollectingSink());
+
+        // Then all four counts reach the durable store, keyed to the provider that served the turn. Recording is
+        // not gated on limits being enabled, so this holds for the default configuration.
+        AiUsageTotals totals = usageStore.totals(TENANT, provider, Instant.now().minus(Duration.ofHours(1)));
+        assertThat(totals.promptTokens()).isEqualTo(1_000);
+        assertThat(totals.cachedPromptTokens()).isEqualTo(400);
+        assertThat(totals.completionTokens()).isEqualTo(19);
+        assertThat(totals.thoughtTokens()).isEqualTo(128);
+    }
+
+    @Test
+    void shouldRecordEveryCallOfAMultiCallTurnWhenToolsAreUsed() {
+        // Given a turn that calls a tool and then answers — two model calls, each with its own cache hit rate
+        String provider = "provider-" + IdUtils.create();
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(
+            AiMessage.from(ToolExecutionRequest.builder().id("1").name("listFlows").arguments("{}").build()),
+            new TokenUsage(500, 40, 540)
+        );
+        scriptedModel.enqueue(AiMessage.from("You have no flows."), new TokenUsage(900, 60, 960));
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "list my flows", AgentMode.ASK, TENANT, provider, null, null), new CollectingSink());
+
+        // Then both calls are booked. Recording per turn instead would lose the fact that a turn is a dozen calls,
+        // and with it any chance of weighting each call's cached share correctly.
+        AiUsageTotals totals = usageStore.totals(TENANT, provider, Instant.now().minus(Duration.ofHours(1)));
+        assertThat(totals.promptTokens()).isEqualTo(1_400);
+        assertThat(totals.completionTokens()).isEqualTo(100);
+    }
+
+    @Test
+    void shouldStopTheTurnWithoutCallingTheModelWhenTheInstallationCeilingIsReached() {
+        // Given a provider whose installation-wide ceiling is already spent
+        String provider = "provider-" + IdUtils.create();
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000, 0, 10, Duration.ofDays(30)));
+        seedUsage(provider, null, 2_000);
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("this must never be sent"));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, null, null), sink);
+
+        // Then the model is never called, which is the only thing that actually saves money...
+        assertThat(scriptedModel.callCount()).isZero();
+        // ...the turn is stopped rather than failed, so the thread stays usable...
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        // ...and the reason is both streamed and persisted, naming the axis that ran out
+        assertThat(sink.names()).contains(AgentEvents.TOKEN);
+        assertThat(messageStore.load(thread.tenant(), thread.uid()).getLast().content())
+            .contains("This installation has reached its AI usage limit");
+    }
+
+    @Test
+    void shouldStopTheTurnWhenTheCallersOwnCeilingIsReached() {
+        // Given room in the installation's allowance but none in this user's
+        String provider = "provider-" + IdUtils.create();
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000_000, 500, 10, Duration.ofDays(30)));
+        seedUsage(provider, "user-42", 1_000);
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("this must never be sent"));
+        CollectingSink sink = new CollectingSink();
+
+        // When that user takes a turn
+        orchestrator.runTurn(
+            new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, new TestPrincipal("user-42"), null), sink
+        );
+
+        // Then they are refused on their own axis, and told so — an exhausted personal allowance is something they
+        // can act on, where an exhausted installation-wide one is not about them at all.
+        assertThat(scriptedModel.callCount()).isZero();
+        assertThat(messageStore.load(thread.tenant(), thread.uid()).getLast().content())
+            .contains("You have reached your AI usage limit");
+    }
+
+    @Test
+    void shouldLetAnotherUserRunWhenOnlyOneUsersCeilingIsSpent() {
+        // Given the same per-user ceiling, spent by one user only
+        String provider = "provider-" + IdUtils.create();
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000_000, 500, 10, Duration.ofDays(30)));
+        seedUsage(provider, "user-42", 1_000);
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("A trigger starts a flow."));
+        CollectingSink sink = new CollectingSink();
+
+        // When a different user takes a turn
+        orchestrator.runTurn(
+            new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, new TestPrincipal("user-7"), null), sink
+        );
+
+        // Then it runs. The per-user axis has to be per user: summing every user's spend into it would turn the
+        // first heavy user into an outage for everyone.
+        assertThat(scriptedModel.callCount()).isEqualTo(1);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldStopMidTurnWhenACeilingIsReachedBetweenCalls() {
+        // Given a ceiling with just enough room for one call, and a turn that wants two
+        String provider = "provider-" + IdUtils.create();
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000, 0, 10, Duration.ofDays(30)));
+        AgentThread thread = newThread(AgentMode.ASK);
+        // the first call spends the whole ceiling: 1,000 prompt + 6 x 100 output
+        scriptedModel.enqueue(
+            AiMessage.from(ToolExecutionRequest.builder().id("1").name("listFlows").arguments("{}").build()),
+            new TokenUsage(1_000, 100, 1_100)
+        );
+        scriptedModel.enqueue(AiMessage.from("this second call must never be sent"));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "list my flows", AgentMode.ASK, TENANT, provider, null, null), sink);
+
+        // Then the first call runs and the second does not. Checking once per turn instead would let one runaway
+        // turn spend an installation's whole allowance and only notice on the next one.
+        assertThat(scriptedModel.callCount()).isEqualTo(1);
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(messageStore.load(thread.tenant(), thread.uid()).getLast().content())
+            .contains("reached its AI usage limit");
+    }
+
+    /** Puts weighted spend on the books for one provider, as completed turns would have. */
+    private void seedUsage(final String provider, final String userId, final long promptTokens) {
+        usageStore.save(new AiUsage(
+            IdUtils.create(), TENANT, provider, userId, "gemini-3.1-flash-lite", Instant.now(),
+            promptTokens, 0, 0, 0
+        ));
+    }
+
+    /** AgentPrincipal has no abstract method, so a lambda cannot stand in for one. */
+    private record TestPrincipal(String userId) implements AgentPrincipal {
+    }
+
     private AgentThread newThread(final AgentMode mode) {
         return threadStore.create(
             AgentThread.builder()
@@ -746,11 +924,22 @@ class AgentOrchestratorTest {
 
     private static final class ScriptedStreamingChatModel implements StreamingChatModel {
         private final Deque<AiMessage> responses = new ArrayDeque<>();
+        private final Deque<TokenUsage> usages = new ArrayDeque<>();
         private final List<List<ChatMessage>> requestMessages = new java.util.concurrent.CopyOnWriteArrayList<>();
         private volatile boolean hang;
 
         private void enqueue(final AiMessage message) {
             responses.addLast(message);
+        }
+
+        /** Enqueues a response that reports what it cost, as a real provider does. */
+        private void enqueue(final AiMessage message, final TokenUsage usage) {
+            responses.addLast(message);
+            usages.addLast(usage);
+        }
+
+        private int callCount() {
+            return requestMessages.size();
         }
 
         private void hang() {
@@ -759,6 +948,7 @@ class AgentOrchestratorTest {
 
         private void clear() {
             responses.clear();
+            usages.clear();
             requestMessages.clear();
             this.hang = false;
         }
@@ -788,7 +978,7 @@ class AgentOrchestratorTest {
             if (ai.text() != null && !ai.text().isEmpty()) {
                 handler.onPartialResponse(ai.text());
             }
-            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).build());
+            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).tokenUsage(usages.pollFirst()).build());
         }
     }
 }

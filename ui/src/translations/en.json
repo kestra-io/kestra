@@ -1889,6 +1889,13 @@
         "title": "AI Copilot",
         "placeholder": "Tell me what to build…",
         "send": "Send",
+        "usage": {
+          "remaining": "{percent}% left",
+          "help": "Share of this provider's AI usage limit left in the current window.",
+          "warning": "You are close to this provider's AI usage limit. Turns are refused once it is reached.",
+          "exceeded": "This provider's AI usage limit has been reached. It resets when the current period ends.",
+          "exceededUntil": "This provider's AI usage limit has been reached. It resets on {when}."
+        },
         "mode": {
           "ask": "Ask",
           "edit": "Edit",

@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Property(name = "kestra.ai.providers[1].configuration.usage-limit.max-weight", value = "5000000")
 @Property(name = "kestra.ai.providers[1].configuration.usage-limit.user-max-weight", value = "250000")
 @Property(name = "kestra.ai.providers[1].configuration.usage-limit.output-weight", value = "8.0")
-@Property(name = "kestra.ai.providers[1].configuration.usage-limit.window", value = "P7D")
+@Property(name = "kestra.ai.providers[1].configuration.usage-limit.window", value = "WEEKLY")
 @Property(name = "kestra.ai.providers[2].id", value = AiProviderConfigurationBindingTest.DISABLED_LIMIT_PROVIDER_ID)
 @Property(name = "kestra.ai.providers[2].type", value = "gemini")
 @Property(name = "kestra.ai.providers[2].configuration.api-key", value = "fake-key")
@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Property(name = "kestra.ai.free-tier.usage-limit.max-weight", value = "1000000")
 @Property(name = "kestra.ai.free-tier.usage-limit.user-max-weight", value = "100000")
 @Property(name = "kestra.ai.free-tier.usage-limit.warning-threshold-percent", value = "25")
-@Property(name = "kestra.ai.free-tier.usage-limit.window", value = "P14D")
+@Property(name = "kestra.ai.free-tier.usage-limit.window", value = "DAILY")
 class AiProviderConfigurationBindingTest {
     static final String HEADERLESS_PROVIDER_ID = "gemini-without-headers";
     static final String LIMITED_PROVIDER_ID = "gemini-with-a-ceiling";
@@ -70,7 +70,7 @@ class AiProviderConfigurationBindingTest {
         assertThat(limit.maxWeight()).isEqualTo(5_000_000);
         assertThat(limit.userMaxWeight()).isEqualTo(250_000);
         assertThat(limit.outputWeight()).isEqualTo(8.0);
-        assertThat(limit.window()).isEqualTo(java.time.Duration.ofDays(7));
+        assertThat(limit.window()).isEqualTo(AiUsageWindow.WEEKLY);
         assertThat(limit.isEnforceable()).isTrue();
         // unset weights keep their defaults rather than binding as zero, which would weigh input at nothing
         assertThat(limit.coldInputWeight()).isEqualTo(1.0);
@@ -104,7 +104,7 @@ class AiProviderConfigurationBindingTest {
         // Every multi-word key, since configuration is written in kebab-case and the record's components are not
         assertThat(limit.userMaxWeight()).isEqualTo(100_000);
         assertThat(limit.warningThresholdPercent()).isEqualTo(25);
-        assertThat(limit.window()).isEqualTo(java.time.Duration.ofDays(14));
+        assertThat(limit.window()).isEqualTo(AiUsageWindow.DAILY);
         // and unset weights keep the record's defaults rather than binding as zero
         assertThat(limit.coldInputWeight()).isEqualTo(1.0);
         assertThat(limit.cachedInputWeight()).isEqualTo(0.1);

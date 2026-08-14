@@ -77,4 +77,31 @@ describe("CopilotComposer", () => {
         await input(w).setValue("hello")
         expect(w.emitted("update:modelValue")?.at(-1)).toEqual(["hello"])
     })
+
+    it("shows nothing about usage for a provider with no ceiling configured", () => {
+        const w = mountComposer({usage: {enabled: false, remainingPercent: 100, warning: false, exceeded: false, warningThresholdPercent: 10}})
+        expect(w.find("[data-test=\"copilot-usage\"]").exists()).toBe(false)
+    })
+
+    it("shows what is left, and warns once inside the threshold", () => {
+        const w = mountComposer({usage: {enabled: true, remainingPercent: 8, warning: true, exceeded: false, warningThresholdPercent: 10}})
+        const tag = w.find("[data-test=\"copilot-usage\"]")
+
+        expect(tag.text()).toBe("8% left")
+        expect(tag.attributes("data-type")).toBe("warning")
+        expect(w.find(".ks-tooltip-content").text()).toContain("close to this provider's AI usage limit")
+        // Still sendable: a warning is a heads-up, not a refusal.
+        expect(sendBtn(w).attributes("disabled")).toBeDefined()
+    })
+
+    it("stops a turn being sent once the ceiling is reached", async () => {
+        const w = mountComposer({usage: {enabled: true, remainingPercent: 0, warning: true, exceeded: true, warningThresholdPercent: 10}})
+        await input(w).setValue("make a flow")
+
+        // The server refuses this before calling the model, so sending would spend a round trip to be told so.
+        expect(sendBtn(w).attributes("disabled")).toBeDefined()
+        expect(w.find("[data-test=\"copilot-usage\"]").attributes("data-type")).toBe("danger")
+        await sendBtn(w).trigger("click")
+        expect(w.emitted("submit")).toBeUndefined()
+    })
 })

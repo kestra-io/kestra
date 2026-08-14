@@ -37,6 +37,7 @@ import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.AiUsageLimitConfiguration;
+import io.kestra.webserver.services.ai.AiUsageWindow;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.DefaultAgentToolPermissionEvaluator;
@@ -73,7 +74,7 @@ class AgentOrchestratorTest {
      * production defaults cannot silently turn limits on for every test that does not set its own.
      */
     private static final AiUsageLimitConfiguration NO_LIMIT =
-        new AiUsageLimitConfiguration(false, 1.0, 0.1, 6.0, 0, 0, 10, Duration.ofDays(30));
+        new AiUsageLimitConfiguration(false, 1.0, 0.1, 6.0, 0, 0, 10, AiUsageWindow.MONTHLY);
 
     private final ScriptedStreamingChatModel scriptedModel = new ScriptedStreamingChatModel();
 
@@ -100,7 +101,7 @@ class AgentOrchestratorTest {
         // The orchestrator asks for the principal-carrying overload. Stubbing only the other one leaves this
         // returning null, and every turn then dies on a null model — which is exactly what was happening.
         when(service.streamingChatModel(any(), any())).thenReturn(scriptedModel);
-        when(service.usageLimit()).thenAnswer(invocation -> usageLimit.get());
+        when(service.usageLimit()).thenAnswer(invocation -> Optional.ofNullable(usageLimit.get()));
         AiServiceManager manager = mock(AiServiceManager.class);
         when(manager.getAiService(any())).thenReturn(service);
         return manager;
@@ -724,7 +725,7 @@ class AgentOrchestratorTest {
     void shouldStopTheTurnWithoutCallingTheModelWhenTheInstallationCeilingIsReached() {
         // Given a provider whose installation-wide ceiling is already spent
         String provider = "provider-" + IdUtils.create();
-        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000, 0, 10, Duration.ofDays(30)));
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000, 0, 10, AiUsageWindow.MONTHLY));
         seedUsage(provider, null, 2_000);
         AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("this must never be sent"));
@@ -748,7 +749,7 @@ class AgentOrchestratorTest {
     void shouldStopTheTurnWhenTheCallersOwnCeilingIsReached() {
         // Given room in the installation's allowance but none in this user's
         String provider = "provider-" + IdUtils.create();
-        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000_000, 500, 10, Duration.ofDays(30)));
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000_000, 500, 10, AiUsageWindow.MONTHLY));
         seedUsage(provider, "user-42", 1_000);
         AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("this must never be sent"));
@@ -770,7 +771,7 @@ class AgentOrchestratorTest {
     void shouldLetAnotherUserRunWhenOnlyOneUsersCeilingIsSpent() {
         // Given the same per-user ceiling, spent by one user only
         String provider = "provider-" + IdUtils.create();
-        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000_000, 500, 10, Duration.ofDays(30)));
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000_000, 500, 10, AiUsageWindow.MONTHLY));
         seedUsage(provider, "user-42", 1_000);
         AgentThread thread = newThread(AgentMode.ASK);
         scriptedModel.enqueue(AiMessage.from("A trigger starts a flow."));
@@ -791,7 +792,7 @@ class AgentOrchestratorTest {
     void shouldStopMidTurnWhenACeilingIsReachedBetweenCalls() {
         // Given a ceiling with just enough room for one call, and a turn that wants two
         String provider = "provider-" + IdUtils.create();
-        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000, 0, 10, Duration.ofDays(30)));
+        usageLimit.set(new AiUsageLimitConfiguration(true, 1.0, 0.1, 6.0, 1_000, 0, 10, AiUsageWindow.MONTHLY));
         AgentThread thread = newThread(AgentMode.ASK);
         // the first call spends the whole ceiling: 1,000 prompt + 6 x 100 output
         scriptedModel.enqueue(

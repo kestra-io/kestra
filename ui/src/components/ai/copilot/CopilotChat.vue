@@ -35,6 +35,7 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     :placeholder="$t('ai.copilot.emptyHelper')"
                     :rows="3"
@@ -112,6 +113,7 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     @submit="onSubmit"
                 />
@@ -136,6 +138,7 @@
     import CopilotContextChip from "./CopilotContextChip.vue"
     import CopilotHelp from "./CopilotHelp.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
+    import {useAiUsage} from "./useAiUsage"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
     import type {ScopeBinding, ContextPart} from "./types"
@@ -217,6 +220,10 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
+    // Where the selected provider stands against its ceiling, so an exhausted allowance is visible before a
+    // turn is spent finding out. Re-read after each turn, which is the only thing that moves the figure.
+    const {status: usage, refresh: refreshUsage} = useAiUsage(selectedProvider)
+
     onMounted(async () => {
         try {
             const list = await AiApi.providers()
@@ -295,6 +302,7 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            refreshUsage()
             ending.value = true
             // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
             endTimer = setTimeout(() => (ending.value = false), 4300)

@@ -10,7 +10,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,9 +64,9 @@ class AiFreeTierLimitProviderTest {
         assertThat(limit.userMaxWeight()).isEqualTo(600_000);
         assertThat(limit.outputWeight()).isEqualTo(6.0);
         assertThat(limit.cachedInputWeight()).isEqualTo(0.1);
-        // A day, matching the relay's window: summing a different period would compare this instance's total
-        // against a ceiling reckoned over another span, and the figure shown would not be the one enforced.
-        assertThat(limit.window()).isEqualTo(Duration.ofDays(1));
+        // The one period the relay serves. Its name is the whole contract between the two repositories, so a
+        // rename on either side leaves every instance reporting no ceiling at all.
+        assertThat(limit.window()).isEqualTo(AiUsageWindow.DAILY);
     }
 
     @Test
@@ -163,7 +162,7 @@ class AiFreeTierLimitProviderTest {
         Map<String, Object> limits() {
             return Map.of(
                 "enabled", true,
-                "window", "PT24H",
+                "window", "DAILY",
                 "maxWeight", 2_000_000,
                 "userMaxWeight", 600_000,
                 "coldInputWeight", 1.0,

@@ -104,7 +104,7 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().labels()).hasSize(4);
+        assertThat(evaluate.get().labels()).hasSize(2);
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
         var vars = evaluate.get().trigger().getVariables();
@@ -113,8 +113,12 @@ class ScheduleTest {
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
-        assertThat(evaluate.get().labels()).contains(new Label("flow-label-1", "flow-label-1"));
-        assertThat(evaluate.get().labels()).contains(new Label("flow-label-2", "flow-label-2"));
+        // the flow's labels are deliberately absent: the execution takes them from the flow processed for
+        // runtime when it is created, so carrying the raw flow's here would let them override governance
+        assertThat(evaluate.get().labels()).doesNotContain(
+            new Label("flow-label-1", "flow-label-1"),
+            new Label("flow-label-2", "flow-label-2")
+        );
         assertThat(inputs.size()).isEqualTo(2);
         assertThat(inputs.get("input1")).isNull();
         assertThat(inputs.get("input2")).isEqualTo("default");
@@ -138,7 +142,7 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().labels()).hasSize(4);
+        assertThat(evaluate.get().labels()).hasSize(2);
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
         assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
         var inputs = evaluate.get().inputs();

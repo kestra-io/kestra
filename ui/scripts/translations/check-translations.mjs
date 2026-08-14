@@ -21,14 +21,15 @@
 // With no --scope, both run in sequence (OSS first, then EE) for local use.
 //
 // Both scopes additionally verify that every message's interpolation
-// placeholders are well-formed and match the English source — see the
-// "Interpolation placeholders" section below.
+// placeholders are well-formed and match the English source, and that no
+// non-Latin-script locale is still carrying the untouched English text - the
+// shape a failed generator run leaves behind, which every other check passes.
 //
 // --report <path> writes a JSON summary ({missing: {lang: [keys]},
-// duplicates: [keys], placeholders: {lang: [problems]}}) for
-// build-comment.mjs to turn into a PR comment. Always written, even
-// on a passing run, so the comment builder can tell "no report" (check didn't
-// run) apart from "report, but empty".
+// duplicates: [keys], placeholders: {lang: [problems]},
+// untranslated: {lang: [keys]}}) for build-comment.mjs to turn into a PR
+// comment. Always written, even on a passing run, so the comment builder can
+// tell "no report" (check didn't run) apart from "report, but empty".
 //
 // Usage: node ui/scripts/translations/check-translations.mjs [--scope oss|ee] [--ee-root <path>] [--report <path>]
 //
@@ -39,8 +40,8 @@
 import fs from "node:fs"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
-import {flattenStrings, leafKeys, placeholderProblems} from "./translationRules.mjs"
-import {staleLocaleEntries} from "./localeFiles.mjs"
+import {flattenStrings, leafKeys, placeholderProblems, untranslatedKeys} from "./translationRules.mjs"
+import {staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 // ui/scripts/translations -> the OSS repo root
@@ -102,6 +103,24 @@ function checkPlaceholders(result, label, dir, fixPath) {
     }
 }
 
+/**
+ * Adds `result.untranslated[lang]` for every language still carrying the English text verbatim.
+ *
+ * Only the non-Latin-script locales are examined, and only prose is considered - see
+ * `untranslatedKeys` in ./translationRules.mjs for why.
+ */
+function checkUntranslated(result, label, dir, fixPath) {
+    const english = flattenStrings(readLanguage(dir, "en"))
+
+    for (const lang of listLanguages(dir)) {
+        const keys = untranslatedKeys(lang, flattenStrings(readLanguage(dir, lang)), english)
+        if (keys.length === 0) continue
+
+        result.untranslated[lang] = keys
+        annotate("error", `[${label}] Translation "${lang}" still holds the English text for ${keys.length} key(s): ${keys.join(", ")} - re-translate them in ${fixPath.replace("{lang}", lang)} by blanking the values and running \`npm run translations:generate\``)
+    }
+}
+
 function annotate(level, message) {
     console.log(`::${level}::${message}`)
 }
@@ -117,8 +136,15 @@ function readLanguage(dir, lang) {
 // indefinitely. OSS-only — EE has no design-system locale files.
 function checkDesignSystem(result) {
     const localeFiles = fs.globSync(path.join(ossRoot, "ui/packages/design-system/**/*.locale.ts"))
+    if (localeFiles.length === 0) return
+
+    for (const {file, lang, key} of untranslatedLocaleEntries(localeFiles)) {
+        (result.untranslated[lang] ??= []).push(`${file}: ${key}`)
+        annotate("error", `[OSS] Design-system string "${key}" in ${file} still holds the English text in "${lang}" - blank the value and run \`npm run translations:generate\` in ui/`)
+    }
+
     const fingerprintsFile = path.join(here, "fingerprints-design-system.json")
-    if (localeFiles.length === 0 || !fs.existsSync(fingerprintsFile)) return
+    if (!fs.existsSync(fingerprintsFile)) return
 
     const stale = staleLocaleEntries(localeFiles, fingerprintsFile)
     if (stale.length === 0) return
@@ -132,7 +158,7 @@ function checkDesignSystem(result) {
 // --- OSS scope: OSS languages must match OSS's own en.json ----------------
 // A failure here is an OSS-repo issue - fix it in kestra-io/kestra, not here.
 function checkOss() {
-    const result = {missing: {}, duplicates: [], placeholders: {}, stale: []}
+    const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}}
 
     if (!fs.existsSync(ossTranslationsDir)) {
         annotate("warning", `OSS translations directory not found at ${ossTranslationsDir} - skipping OSS check.`)
@@ -140,6 +166,7 @@ function checkOss() {
     }
 
     checkPlaceholders(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
+    checkUntranslated(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
     checkDesignSystem(result)
 
     const ossEn = readLanguage(ossTranslationsDir, "en")
@@ -162,8 +189,9 @@ function checkOss() {
 // --- EE scope: EE languages must match EE's own en.json, and no EE key ----
 // may shadow one OSS already defines. A failure here is fixed in this repo.
 function checkEe() {
-    const result = {missing: {}, duplicates: [], placeholders: {}, stale: []}
+    const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}}
     checkPlaceholders(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
+    checkUntranslated(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
     const eeEn = readLanguage(eeTranslationsDir, "en")
     const eeEnKeys = leafKeys(eeEn)
 
@@ -199,9 +227,10 @@ function hasIssues(result) {
         || result.duplicates.length > 0
         || Object.keys(result.placeholders).length > 0
         || result.stale.length > 0
+        || Object.keys(result.untranslated).length > 0
 }
 
-const report = {scope, missing: {}, duplicates: [], placeholders: {}, stale: []}
+const report = {scope, missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}}
 let hasFailure = false
 
 if (scope === "oss" || scope === "all") {
@@ -211,6 +240,7 @@ if (scope === "oss" || scope === "all") {
     Object.assign(report.placeholders, result.placeholders)
     report.duplicates.push(...result.duplicates)
     report.stale.push(...result.stale)
+    Object.assign(report.untranslated, result.untranslated)
 }
 if (scope === "ee" || scope === "all") {
     const result = checkEe()
@@ -219,6 +249,7 @@ if (scope === "ee" || scope === "all") {
     Object.assign(report.placeholders, result.placeholders)
     report.duplicates.push(...result.duplicates)
     report.stale.push(...result.stale)
+    Object.assign(report.untranslated, result.untranslated)
 }
 
 if (reportPath) {

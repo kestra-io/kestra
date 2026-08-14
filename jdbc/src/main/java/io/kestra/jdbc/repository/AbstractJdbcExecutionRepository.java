@@ -312,11 +312,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
     @Override
     public Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters) {
-        if (filters == null || filters.isEmpty()) {
-            return findAllAsync(tenantId);
-        }
-        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION);
-        return findAsync(defaultFilter(tenantId), condition);
+        // same condition as find(Pageable, String, List) so that streaming consumers see exactly what the search returns
+        return findAsync(defaultFilter(tenantId), this.computeFindCondition(filters, null));
     }
 
     private <T extends Record> SelectConditionStep<T> filteringQuery(

@@ -1792,31 +1792,18 @@
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
       "labels": {
-        "singular": "仪表板",
         "plural": "仪表板"
       },
       "default": "默认仪表板",
-      "switch": "切换仪表板",
-      "preview": "预览仪表板",
       "empty": "没有结果显示。",
-      "creation": {
-        "label": "创建仪表板",
-        "confirmation": "仪表板 <code>{title}</code> 已创建。"
-      },
       "edition": {
         "label": "编辑仪表板",
-        "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
-        "chart": "编辑此图表",
-        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。"
-      },
-      "deletion": {
-        "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
+        "chart": "编辑此图表"
       },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
       "viewAll": "查看全部",
-      "chart_preview": "单击图表源代码以查看其预览",
       "export": "导出",
       "exportTo": {
         "csv": "导出为 CSV",

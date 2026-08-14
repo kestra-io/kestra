@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,6 +29,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.AssetCacheService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
@@ -36,6 +38,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
@@ -46,7 +49,6 @@ import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
-import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -91,6 +93,9 @@ public class PluginController {
     @Inject
     @Named("withIcons")
     protected PluginCatalogService pluginCatalogService;
+
+    @Inject
+    protected AssetCacheService assetCacheService;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -533,7 +538,8 @@ public class PluginController {
     @Get(value = "/{group}/pluginUi/{path:.*}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins group by subgroups")
-    public HttpResponse<StreamedFile> getPluginUi(
+    public HttpResponse<byte[]> getPluginUi(
+        HttpRequest<?> request,
         @Parameter(description = "The plugin group") @PathVariable String group,
         @Parameter(description = "The file path") @PathVariable String path) {
         if (path.contains("..") || path.startsWith("/") || path.startsWith("\\") || path.contains("\0")) {
@@ -545,21 +551,33 @@ public class PluginController {
             .findFirst()
             .orElseThrow(NotFoundException::new);
 
-        String resourcePath = path.startsWith("/") ? "plugin-ui" + path : "plugin-ui/" + path;
-
-        InputStream in = plugin.getClassLoader().getResourceAsStream(resourcePath);
-        if (in == null) {
-            throw new NotFoundException();
-        }
+        String resourcePath = "plugin-ui/" + path;
 
         MediaType mediaType = MediaType
             .forExtension(NameUtils.extension(resourcePath))
             .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
 
-        StreamedFile streamedFile = new StreamedFile(in, mediaType);
+        // The key includes the plugin UI source hash and the classloader identity so a reloaded or
+        // upgraded plugin never serves stale bytes from the cache.
+        String cacheKey = "plugin-ui:" + plugin.group()
+            + ":" + plugin.getPluginUiSourceHash()
+            + ":" + System.identityHashCode(plugin.getClassLoader())
+            + ":" + path;
 
-        //todo add front cache later
-        return HttpResponse.ok(streamedFile);
+        // Only the plugin-ui entry file is cache-busted by the frontend (via a sourceHash query parameter),
+        // so every plugin UI response must be revalidated; 304s are answered from memory.
+        return assetCacheService
+            .get(cacheKey, mediaType, () -> readPluginUiResource(plugin, resourcePath))
+            .map(asset -> (HttpResponse<byte[]>) assetCacheService.respond(request, asset, REVALIDATE_CACHE_DIRECTIVE))
+            .orElseThrow(NotFoundException::new);
+    }
+
+    private static Optional<byte[]> readPluginUiResource(RegisteredPlugin plugin, String resourcePath) {
+        try (InputStream in = plugin.getClassLoader().getResourceAsStream(resourcePath)) {
+            return in == null ? Optional.empty() : Optional.of(in.readAllBytes());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {

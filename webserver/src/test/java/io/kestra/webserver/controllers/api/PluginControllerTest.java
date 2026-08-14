@@ -440,6 +440,30 @@ class PluginControllerTest {
     }
 
     @Test
+    void should_serve_plugin_ui_from_cache_with_etag_and_answer_304() {
+        // Given
+        HttpResponse<String> first = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/io.kestra.plugin.redis/pluginUi/plugin-ui.js"),
+            String.class
+        );
+        String etag = first.header(HttpHeaders.ETAG);
+        assertThat(etag).isNotBlank();
+        assertThat(first.header(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
+        assertThat(first.header(HttpHeaders.VARY)).isEqualTo(HttpHeaders.ACCEPT_ENCODING);
+
+        // When
+        HttpResponse<String> second = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/io.kestra.plugin.redis/pluginUi/plugin-ui.js").header(HttpHeaders.IF_NONE_MATCH, etag),
+            String.class
+        );
+
+        // Then
+        assertThat(second.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
+        assertThat(second.getBody()).isEmpty();
+        assertThat(second.header(HttpHeaders.ETAG)).isEqualTo(etag);
+    }
+
+    @Test
     void should_not_get_plugin_ui_for_task() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(

@@ -9,10 +9,6 @@ micronaut:
       swagger:
         paths: classpath:META-INF/swagger
         mapping: /swagger/**
-      ui:
-        paths: classpath:ui
-        mapping: /ui/**
-        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**
@@ -152,6 +148,11 @@ kestra:
       # content-security-policy: "default-src 'self'; ..." # tune for the UI before enforcing
       # content-security-policy-report-only: true # report-only intermediate step
       # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
+
+    # UI and plugin-UI static assets are served from a bounded in-memory cache holding raw bytes,
+    # precompressed variants and ETags, so requests never re-read or re-compress files from the jar.
+    asset-cache:
+      max-size: 64mb
 
   retries:
     attempts: 5

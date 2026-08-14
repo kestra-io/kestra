@@ -521,7 +521,9 @@
       "detail": {
         "category": "Category type",
         "links": "Link & Resources",
-        "openInEditor": "Open in Edit Flow"
+        "openInEditor": "Open in Edit Flow",
+        "openInAppsEditor": "Open in Apps Editor",
+        "openInDashboardEditor": "Open in Dashboard Editor"
       },
       "missingPlugins": {
         "title": "Missing plugins",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Build custom Apps with Kestra",
-        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval."
+        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval.",
+        "blueprints": {
+          "title": "Start from an app blueprint.",
+          "message": "App blueprints are ready-made apps for common use cases such as forms, approvals and data submission. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt it to build custom UIs on top of your workflows."
+        }
       },
       "tests": {
         "label": "Tests",

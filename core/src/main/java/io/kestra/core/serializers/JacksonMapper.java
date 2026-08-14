@@ -57,9 +57,10 @@ public final class JacksonMapper {
         );
     }
 
-    private static final ObjectMapper MAPPER = JacksonMapper.configure(
-        new ObjectMapper()
-    );
+    // Registered the KestraDateTimeModule only for the JSON mapper.
+    // YAML should not change the date format as it would break compatibility, and ION has its own date format.
+    private static final ObjectMapper MAPPER = JacksonMapper.configure(new ObjectMapper())
+        .registerModule(new KestraDateTimeModule());
 
     private static final ObjectMapper NON_STRICT_MAPPER = MAPPER
         .copy()

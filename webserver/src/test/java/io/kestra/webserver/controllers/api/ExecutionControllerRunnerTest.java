@@ -391,6 +391,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs-defaults-from-labels.yaml" }, tenantId = "inputdefaultsfromlabels")
+    void shouldResolveInputDefaultsFromExecutionLabelsWhenCreatingExecution() {
+        String tenantId = "inputdefaultsfromlabels";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/inputs-defaults-from-labels?labels=caller:me&wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getInputs().get("fromFlowLabel")).isEqualTo("kestra");
+        assertThat(result.getInputs().get("fromExecutionLabel")).isEqualTo("me");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputsmall")
     void triggerExecutionInputSmall() {
         String tenantId = "triggerexecutioninputsmall";

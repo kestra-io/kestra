@@ -18,6 +18,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.DefaultFlowMetaStore;
 import io.kestra.core.runners.DeserializationIssuesCaseTest;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -112,7 +113,7 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
             }
 
             @Override
-            public Optional<FlowWithSource> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+            public Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
                 return Optional.empty();
             }
 

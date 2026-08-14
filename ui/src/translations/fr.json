@@ -521,7 +521,9 @@
       "detail": {
         "category": "Type de catégorie",
         "links": "Liens et ressources",
-        "openInEditor": "Ouvrir dans Modifier Flow"
+        "openInEditor": "Ouvrir dans Modifier Flow",
+        "openInAppsEditor": "Ouvrir dans l'éditeur d'applications",
+        "openInDashboardEditor": "Ouvrir dans l'éditeur de tableau de bord"
       },
       "missingPlugins": {
         "title": "Plugins manquants",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Créez des applications personnalisées avec Kestra",
-        "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation."
+        "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation.",
+        "blueprints": {
+          "title": "Démarrer à partir d'un blueprint d'application.",
+          "message": "Les blueprints d'application sont des applications prêtes à l'emploi pour des cas d'utilisation courants tels que les formulaires, les approbations et la soumission de données. Avec Kestra Enterprise Edition, vous pouvez utiliser n'importe quel blueprint comme point de départ et l'adapter pour créer des interfaces utilisateur personnalisées sur vos workflows."
+        }
       },
       "tests": {
         "label": "Tests",

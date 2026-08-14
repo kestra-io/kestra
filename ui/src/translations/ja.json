@@ -521,7 +521,9 @@
       "detail": {
         "category": "カテゴリタイプ",
         "links": "リンクとリソース",
-        "openInEditor": "フローを編集で開く"
+        "openInEditor": "フローを編集で開く",
+        "openInAppsEditor": "Appsエディターで開く",
+        "openInDashboardEditor": "ダッシュボードエディターで開く"
       },
       "missingPlugins": {
         "title": "不足しているplugin",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Kestraでカスタムアプリを構築する",
-        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。"
+        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
+        "blueprints": {
+          "title": "アプリのblueprintから開始します。",
+          "message": "アプリのblueprintは、フォーム、承認、データ送信などの一般的なユースケースに対応する既製のアプリです。Kestra Enterprise Editionでは、任意のblueprintを起点として使用し、ワークフローの上にカスタムUIを構築するために適応させることができます。"
+        }
       },
       "tests": {
         "label": "テスト",

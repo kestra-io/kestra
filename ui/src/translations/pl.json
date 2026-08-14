@@ -521,7 +521,9 @@
       "detail": {
         "category": "Typ kategorii",
         "links": "Linki i zasoby",
-        "openInEditor": "Otwórz w Edytuj Flow"
+        "openInEditor": "Otwórz w Edytuj Flow",
+        "openInAppsEditor": "Otwórz w Edytorze Aplikacji",
+        "openInDashboardEditor": "Otwórz w Edytorze Dashboardu"
       },
       "missingPlugins": {
         "title": "Brakujące pluginy",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Twórz własne aplikacje z Kestra",
-        "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie."
+        "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie.",
+        "blueprints": {
+          "title": "Zacznij od blueprint aplikacji.",
+          "message": "Blueprints aplikacji to gotowe aplikacje do typowych zastosowań, takich jak formularze, zatwierdzenia i przesyłanie danych. Dzięki Kestra Enterprise Edition możesz użyć dowolnego blueprintu jako punktu wyjścia i dostosować go do budowania niestandardowych interfejsów użytkownika na podstawie swoich workflowów."
+        }
       },
       "tests": {
         "label": "Testy",

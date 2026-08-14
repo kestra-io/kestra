@@ -56,10 +56,6 @@ public record AiUsageLimitConfiguration(
 ) {
     private static final Duration DEFAULT_WINDOW = Duration.ofDays(30);
 
-    /** What a provider that has said nothing about limits gets: recorded, never shown, never enforced. */
-    public static final AiUsageLimitConfiguration DISABLED =
-        new AiUsageLimitConfiguration(false, 1.0, 0.1, 6.0, 0, 0, 10, DEFAULT_WINDOW);
-
     public AiUsageLimitConfiguration {
         if (coldInputWeight == 0) {
             coldInputWeight = 1.0;

@@ -96,11 +96,13 @@ public class AiUsageService {
 
         // Read defensively: this runs before every model call, on the path of every chat request, and an
         // implementation that answers nothing means it declares no limit — not that Copilot should 500.
-        AiUsageLimitConfiguration limit = Optional.ofNullable(service.usageLimit())
-            .orElse(AiUsageLimitConfiguration.DISABLED);
-        if (!limit.enabled()) {
+        Optional<AiUsageLimitConfiguration> declared =
+            Optional.ofNullable(service.usageLimit()).orElseGet(Optional::empty);
+        if (declared.isEmpty()) {
             return AiUsageStatus.disabled(resolvedProviderId);
         }
+
+        AiUsageLimitConfiguration limit = declared.get();
 
         Instant from = limit.windowStart(Instant.now());
         AiUsageStatus.Axis global = AiUsageStatus.Axis.of(

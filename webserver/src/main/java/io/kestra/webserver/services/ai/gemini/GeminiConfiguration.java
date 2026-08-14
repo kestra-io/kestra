@@ -42,9 +42,6 @@ public record GeminiConfiguration(
             maxOutputTokens = 8000;
         if (ThinkingEffort.NONE == thinkingEffort)
             throw new IllegalArgumentException("Gemini has no 'none' thinking level, use 'low' or set thinking-enabled to false instead.");
-
-        if (usageLimit == null)
-            usageLimit = AiUsageLimitConfiguration.DISABLED;
     }
 
     @Override

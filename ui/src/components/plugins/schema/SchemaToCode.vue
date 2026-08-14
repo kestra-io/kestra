@@ -24,7 +24,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import type {HighlighterCore} from "shiki/core"
-    import {KsButton, KsTooltip} from "@kestra-io/design-system"
+    import {KsButton, KsTooltip, copyToClipboard as writeToClipboard} from "@kestra-io/design-system"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -52,7 +52,7 @@
 
     function copyToClipboard() {
         clearTimeout(copyResetTimer.value)
-        navigator.clipboard.writeText(props.code.trimEnd())
+        writeToClipboard(props.code.trimEnd())
         copied.value = true
 
         copyResetTimer.value = setTimeout(() => {

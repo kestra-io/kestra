@@ -84,6 +84,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
+    import {copyToClipboard} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -151,7 +152,7 @@
 
     let copiedTimer: ReturnType<typeof setTimeout> | undefined
     function copy(expr: string) {
-        navigator.clipboard?.writeText(expr)
+        copyToClipboard(expr)
         copied.value = expr
         clearTimeout(copiedTimer)
         copiedTimer = setTimeout(() => {

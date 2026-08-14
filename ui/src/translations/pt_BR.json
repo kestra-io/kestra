@@ -521,7 +521,9 @@
       "detail": {
         "category": "Tipo de categoria",
         "links": "Link & Recursos",
-        "openInEditor": "Abrir em Edit Flow"
+        "openInEditor": "Abrir em Edit Flow",
+        "openInAppsEditor": "Abrir no Editor de Apps",
+        "openInDashboardEditor": "Abrir no Editor do Dashboard"
       },
       "missingPlugins": {
         "title": "Plugins ausentes",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Crie Apps personalizadas com Kestra",
-        "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação."
+        "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação.",
+        "blueprints": {
+          "title": "Comece a partir de um blueprint de aplicativo.",
+          "message": "Os blueprints de aplicativos são aplicativos prontos para casos de uso comuns, como formulários, aprovações e envio de dados. Com o Kestra Enterprise Edition, você pode usar qualquer blueprint como ponto de partida e adaptá-lo para construir UIs personalizadas sobre seus workflows."
+        }
       },
       "tests": {
         "label": "Testes",
@@ -1792,31 +1798,18 @@
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Dashboard Padrão",
-      "switch": "Alternar Dashboard",
-      "preview": "Visualizar Dashboard",
       "empty": "Não há resultados para serem exibidos.",
-      "creation": {
-        "label": "Criar Dashboard",
-        "confirmation": "O Dashboard <code>{title}</code> foi criado."
-      },
       "edition": {
         "label": "Editar Dashboard",
-        "confirmation": "As alterações no dashboard <code>{title}</code> foram salvas.",
-        "chart": "Edite este gráfico",
-        "id readonly": "A propriedade `id` não pode ser alterada — agora está definida para seus valores iniciais. Se você quiser alterá-la, pode criar um novo dashboard e remover o antigo."
-      },
-      "deletion": {
-        "confirmation": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?"
+        "chart": "Edite este gráfico"
       },
       "no_description": "Sem descrição",
       "no_description_hint": "Adicione uma descrição a este flow para documentar o que ele faz.<br>Markdown é suportado.",
       "others": "Outros",
       "viewAll": "Ver tudo",
-      "chart_preview": "Clique no código-fonte de um gráfico para ver sua pré-visualização",
       "export": "Exportar",
       "exportTo": {
         "csv": "Exportar para CSV",

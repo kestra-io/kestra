@@ -16,9 +16,13 @@ import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class SubflowGraphTask extends AbstractGraphTask {
+    @Setter
+    private boolean subflowFlowDisabled;
+
     public SubflowGraphTask(String uid, ExecutableTask<?> task, TaskRun taskRun, List<String> values, RelationType relationType) {
         super(uid, (TaskInterface) task, taskRun, values, relationType);
     }
@@ -38,13 +42,15 @@ public class SubflowGraphTask extends AbstractGraphTask {
 
     public SubflowGraphTask withRenderedSubflowId(RunContext runContext) {
         SubflowGraphTask previous = this;
-        return new SubflowGraphTask(this.getUid(), new SubflowTaskWrapper<>(runContext, this.executableTask()), this.getTaskRun(), this.getValues(), this.getRelationType()) {
+        SubflowGraphTask rendered = new SubflowGraphTask(this.getUid(), new SubflowTaskWrapper<>(runContext, this.executableTask()), this.getTaskRun(), this.getValues(), this.getRelationType()) {
             @Override
             public int hashCode() {
                 // Since edges are handled by a hashmap, we need to keep the same hash and uid is not a good candidate as it changes whenever a node is moved to a cluster
                 return previous.hashCode();
             }
         };
+        rendered.setSubflowFlowDisabled(this.subflowFlowDisabled);
+        return rendered;
     }
 
     public record SubflowTaskWrapper<T extends Output>(RunContext runContext, ExecutableTask<T> subflowTask) implements TaskInterface, ExecutableTask<T> {

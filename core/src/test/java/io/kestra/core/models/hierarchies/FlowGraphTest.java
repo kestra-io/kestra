@@ -266,6 +266,7 @@ class FlowGraphTest {
         SubflowGraphTask subflowGraphTask = (SubflowGraphTask) nodeByUid(flowGraph, "root.launch");
         assertThat(subflowGraphTask.getTask()).isInstanceOf(SubflowGraphTask.SubflowTaskWrapper.class);
         assertThat(subflowGraphTask.getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+        assertThat(subflowGraphTask.isSubflowFlowDisabled()).isFalse();
 
         GraphTask switchNode = (GraphTask) nodeByUid(flowGraph, "root.launch.parent-seq");
         assertThat(switchNode.getTask()).isInstanceOf(Switch.class);
@@ -275,6 +276,26 @@ class FlowGraphTest {
         assertThat(flowTrigger.getTriggerDeclaration()).isInstanceOf(Schedule.class);
         GraphTrigger subflowTrigger = (GraphTrigger) nodeByUid(flowGraph, "root.launch.Triggers.schedule");
         assertThat(subflowTrigger.getTriggerDeclaration()).isInstanceOf(Schedule.class);
+    }
+
+    @Test
+    @LoadFlows(
+        value = {
+            "flows/valids/subflow-disabled-parent.yaml",
+            "flows/valids/subflow-disabled-child.yaml"
+        },
+        tenantId = "tenant-disabled-subflow"
+    )
+    void shouldMarkSubflowGraphTaskWhenReferencedFlowIsDisabled() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
+        FlowWithSource flow = this.parse("flows/valids/subflow-disabled-parent.yaml", "tenant-disabled-subflow");
+
+        FlowGraph collapsed = graphService.flowGraph(flow, Collections.emptyList());
+        SubflowGraphTask collapsedSubflow = (SubflowGraphTask) nodeByUid(collapsed, "root.subflow");
+        assertThat(collapsedSubflow.isSubflowFlowDisabled()).isTrue();
+
+        FlowGraph expanded = graphService.flowGraph(flow, Collections.singletonList("root.subflow"));
+        SubflowGraphTask expandedSubflow = (SubflowGraphTask) ((SubflowGraphCluster) cluster(expanded, "root\\.subflow").getCluster()).getTaskNode();
+        assertThat(expandedSubflow.isSubflowFlowDisabled()).isTrue();
     }
 
     @Test

@@ -449,6 +449,26 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs-ion-file.yaml" }, tenantId = "ioninputfile")
+    void shouldRejectFileUploadOnIonInput() {
+        String tenantId = "ioninputfile";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        MultipartBody requestBody = MultipartBody.builder()
+            .addPart("payload", "data.ion", MediaType.TEXT_PLAIN_TYPE, "{name:\"Ada\"}".getBytes(StandardCharsets.UTF_8))
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "inputs-ion-file", requestBody, false)
+        );
+
+        String response = e.getResponse().getBody(String.class).orElseThrow();
+
+        assertThat(response).contains("Invalid entity");
+        assertThat(response).contains("Invalid value for input `payload`");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "triggerexecutionandwait")
     void triggerExecutionAndWait() {
         String tenantId = "triggerexecutionandwait";

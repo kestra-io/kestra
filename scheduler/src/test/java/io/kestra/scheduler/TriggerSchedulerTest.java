@@ -21,7 +21,6 @@ import org.reactivestreams.Publisher;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
@@ -37,6 +36,7 @@ import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
+import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher.PublishedExecution;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
@@ -134,14 +134,14 @@ class TriggerSchedulerTest {
         // Check that an execution was created
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-        Execution execution = triggerExecutionPublisher.executions().getFirst();
-        assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-        assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-        assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-        assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+        PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+        assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+        assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+        assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+        assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
         // The locking execution id is persisted on the trigger state (allowConcurrent defaults to false).
-        assertThat(state.getExecutionId()).isEqualTo(execution.getId());
+        assertThat(state.getExecutionId()).isEqualTo(execution.evaluation().executionId());
     }
 
     @Test
@@ -401,11 +401,11 @@ class TriggerSchedulerTest {
                 // Check an execution was created
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-                Execution execution = triggerExecutionPublisher.executions().getFirst();
-                assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-                assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+                assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+                assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+                assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+                assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
                 // Simulate execution completed
                 completeExecution();
@@ -464,11 +464,11 @@ class TriggerSchedulerTest {
                 // Assert NO Execution
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-                Execution execution = triggerExecutionPublisher.executions().getFirst();
-                assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-                assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+                assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+                assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+                assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+                assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
                 // Simulate execution completed
                 completeExecution();
@@ -562,7 +562,7 @@ class TriggerSchedulerTest {
 
         // THEN
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
+        assertThat(triggerExecutionPublisher.executions().getFirst().triggerId().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
     }
 
     @Test
@@ -581,7 +581,7 @@ class TriggerSchedulerTest {
 
         // THEN - a FAILED execution is sent due to the render exception
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(triggerExecutionPublisher.executions().getFirst().evaluation().stateType()).isEqualTo(State.Type.FAILED);
     }
 
     @Test
@@ -680,11 +680,11 @@ class TriggerSchedulerTest {
             // Check an execution was created
             assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-            Execution execution = triggerExecutionPublisher.executions().getFirst();
-            assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-            assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-            assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-            assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+            PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+            assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+            assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+            assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+            assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
             // Simulate execution completed
             completeExecution();

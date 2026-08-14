@@ -5,7 +5,7 @@
                 <Play :size="18" />
             </span>
             <span class="product-tour-label">
-                {{ t(tk("menu")) }}
+                {{ t(tk(menuKey)) }}
             </span>
         </RouterLink>
         <span class="product-tour-dismiss">
@@ -24,7 +24,7 @@
     import {useProductTourMenuEntry} from "./useProductTourEntry"
 
     const {t} = useI18n()
-    const {visible, tourRoute, tk, dismiss} = useProductTourMenuEntry()
+    const {visible, menuKey, tourRoute, tk, dismiss} = useProductTourMenuEntry()
 </script>
 
 <style scoped lang="scss">

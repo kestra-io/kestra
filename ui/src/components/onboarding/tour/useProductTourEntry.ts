@@ -44,6 +44,7 @@ export function useProductTourMenuEntry() {
 
     return {
         visible,
+        menuKey: computed(() => (wasSkipped.value ? "menu_resume" : "menu")),
         tourRoute: useTourRoute(),
         tk: useTourKey(),
         dismiss: () => tourStore.dismissMenuEntry(),

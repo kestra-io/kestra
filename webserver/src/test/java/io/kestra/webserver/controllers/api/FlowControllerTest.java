@@ -1106,6 +1106,9 @@ class FlowControllerTest {
     }
 
     @Test
+    @FlakyTest(description = "Under CPU-constrained CI load, Micronaut 5's StreamingNettyByteBody$SharedBuffer occasionally " +
+        "reads the multipart request body from an event loop other than the one it was bound to when building the " +
+        "diagnostic error message for a failed exchange, throwing IllegalStateException(\"Must only be called on event loop\")")
     void importFlowsWithZip() throws IOException {
         // create a ZIP file using the extract endpoint
         byte[] zip = client.toBlocking().retrieve(

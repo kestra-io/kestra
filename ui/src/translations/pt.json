@@ -888,6 +888,10 @@
         "files": "Excluir {count} arquivos selecionados",
         "folders": "Excluir {count} pastas selecionadas"
       },
+      "move": {
+        "bulk_success": "Arquivos selecionados movidos com sucesso.",
+        "bulk_error": "Falha ao mover {count} do(s) item(ns) selecionado(s)."
+      },
       "import": {
         "files": "Importar arquivos",
         "folder": "Importar pasta",

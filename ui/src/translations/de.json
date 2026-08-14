@@ -888,6 +888,10 @@
         "files": "Lösche {count} ausgewählte Dateien",
         "folders": "Lösche {count} ausgewählte Ordner"
       },
+      "move": {
+        "bulk_success": "Ausgewählte Dateien erfolgreich verschoben.",
+        "bulk_error": "{count} der ausgewählten Elemente konnten nicht verschoben werden."
+      },
       "import": {
         "files": "Dateien importieren",
         "folder": "Ordner importieren",

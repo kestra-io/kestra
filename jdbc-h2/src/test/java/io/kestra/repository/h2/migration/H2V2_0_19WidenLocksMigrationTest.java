@@ -17,12 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * H2-specific integration test for {@link V2_0_19WidenLocksColumnsMigration}. On H2 the generated
- * {@code locks.id} column cannot be altered in place, so the migration drops its index, drops the
- * column, and re-adds it wider — this test proves that an EXISTING row survives that drop/re-add
- * (the generated columns are recomputed from {@code value}), that the widened column accepts an
- * asset-sized id, and that re-running the migration after a partial failure is safe (idempotent).
- * Postgres/MySQL alter the column in place, so the data-safety concern is H2-only.
+ * H2-specific integration test for the {@code locks} table's key/id width, created directly at
+ * their final size by {@link V2_0_01SchemaMigration}'s CREATE TABLE. Proves an existing row
+ * survives a rerun of the migration and that the column accepts an asset-sized id.
  */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
@@ -39,7 +36,7 @@ class H2V2_0_19WidenLocksMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_19WidenLocksColumnsMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach
@@ -53,12 +50,11 @@ class H2V2_0_19WidenLocksMigrationTest {
     }
 
     @Test
-    void existingRowSurvivesDropAndReAddOfGeneratedId() throws Exception {
+    void existingRowSurvivesRerunOfTheMigration() throws Exception {
         insertLock(SEED_KEY, "{\"category\":\"lease\",\"id\":\"widen-seed-1\",\"owner\":\"o\"}");
 
         migration.migrate();
 
-        // the row is still present and its generated id was recomputed from value
         assertThat(readId(SEED_KEY)).isEqualTo("widen-seed-1");
     }
 

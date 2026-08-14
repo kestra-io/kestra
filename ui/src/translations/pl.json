@@ -1792,31 +1792,18 @@
     "duplicate-pair": "{label} \"{key}\" jest zduplikowany, pierwszy klucz zignorowany.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboardy"
       },
       "default": "Domyślny Dashboard",
-      "switch": "Przełącz Dashboard",
-      "preview": "Podgląd Dashboardu",
       "empty": "Brak wyników do wyświetlenia.",
-      "creation": {
-        "label": "Utwórz Dashboard",
-        "confirmation": "Dashboard <code>{title}</code> został utworzony."
-      },
       "edition": {
         "label": "Edytuj Dashboard",
-        "confirmation": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
-        "chart": "Edytuj ten wykres",
-        "id readonly": "Właściwość `id` nie może być zmieniona — jest teraz ustawiona na swoje początkowe wartości. Jeśli chcesz ją zmienić, możesz utworzyć nowy dashboard i usunąć stary."
-      },
-      "deletion": {
-        "confirmation": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?"
+        "chart": "Edytuj ten wykres"
       },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
-      "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
       "export": "Eksportuj",
       "exportTo": {
         "csv": "Eksportuj do CSV",

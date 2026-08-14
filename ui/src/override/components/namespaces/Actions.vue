@@ -30,7 +30,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {useNamespacesStore} from "override/stores/namespaces"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
-    import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
+    import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
     import {useActiveTab} from "../../../composables/useActiveTab"
     import {routeFamily} from "../../../utils/routeFamily"

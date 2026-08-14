@@ -18,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * H2-specific integration test for {@link V2_0_24MultipleConditionsDateWidthMigration}.
+ * H2-specific integration test for the {@code multipleconditions} date-width fix applied by
+ * {@link V2_0_01SchemaMigration} (formerly V2_0_24MultipleConditionsDateWidthMigration).
  *
  * <p>
  * This migration is the prerequisite for moving the {@code ZonedDateTime} serializer to six
@@ -51,7 +52,7 @@ class H2V2_0_24MultipleConditionsDateWidthMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_24MultipleConditionsDateWidthMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach

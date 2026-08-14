@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * H2-specific integration test for {@link V2_0_21LocksLockedUntilMigration}: the generated
- * {@code locked_until} column must reflect the JSON value's {@code lockedUntil} for lease rows, stay
- * NULL for rows without one, and the migration must be re-runnable.
+ * H2-specific integration test for the {@code locks.locked_until} generated column created by
+ * {@link V2_0_01SchemaMigration}: it must reflect the JSON value's {@code lockedUntil} for lease
+ * rows, stay NULL for rows without one, and the migration must be re-runnable.
  */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
@@ -38,7 +38,7 @@ class H2V2_0_21LocksLockedUntilMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_21LocksLockedUntilMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach

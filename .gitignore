@@ -57,6 +57,7 @@ docker/app/secrets/*.yml
 
 ### Build
 core/src/main/resources/gradle.properties
+script/src/main/resources/kotlp/
 .plugins.override
 
 # H2 Database
@@ -76,3 +77,6 @@ charts/kestra-starter/charts/
 # Generated OpenAPI spec (produced by :webserver:generateOpenapiSpec; the committed SDK under
 # ui/packages/kestra-sdk/src/openapi is the source of truth, not this transient spec file).
 /openapi.yml
+
+# Local dev server data (embedded H2, namespace files, KV) — never commit
+cli/data/

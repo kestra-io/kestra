@@ -1,0 +1,21 @@
+id: webhook-plugin-labels
+namespace: io.kestra.tests
+
+labels:
+  team: platform
+  env: dev
+
+variables:
+  region: eu-west-1
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: hello
+
+triggers:
+  - id: webhook1
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: labels-case
+    labels:
+      env: from-trigger

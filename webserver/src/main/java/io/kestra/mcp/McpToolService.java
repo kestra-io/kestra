@@ -124,7 +124,7 @@ public class McpToolService {
             Execution execution = toolTrigger.evaluate(
                 flow, input, additionalInputs, Label.from(
                     Map.of(
-                        Label.FROM, "mcp",
+                        Label.FROM, Label.FromLabel.MCP.value,
                         Label.MCP_SERVER_ID, context.getServerId(),
                         Label.MCP_SESSION_ID, context.getSessionId()
                     )

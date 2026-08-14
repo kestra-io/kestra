@@ -236,7 +236,7 @@
                     :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
                     :inline="true"
                     :navbar="false"
-                    v-if="input.type === 'JSON'"
+                    v-if="input.type === 'JSON' || input.type === 'ION'"
                     :data-testid="`input-form-${input.id}`"
                     lang="json"
                     v-model="inputsValues[input.id]"

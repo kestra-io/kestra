@@ -18,6 +18,7 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowParsingService;
 
+import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
@@ -114,37 +115,76 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
-    public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
-        var flowId = FlowId.uid(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()));
-        var fromCache = withDefaultCache.getIfPresent(flowId);
-        if (fromCache.isPresent()) {
-            return fromCache;
+    public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
+        // probe the cache before resolving the flow: this runs on every executor message, and an execution
+        // pinned to a revision the meta-store no longer holds resolves through the repository. The key is the
+        // one injectDefaults would compute, as findByExecution asks for that exact revision.
+        if (execution.getFlowRevision() != null) {
+            var fromCache = withDefaultCache.getIfPresent(
+                FlowId.uid(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()))
+            );
+            if (fromCache.isPresent()) {
+                return fromCache;
+            }
         }
 
-        var flowWithDefault = findByExecution(execution).map(it -> parseForRuntime(it, execution));
-        flowWithDefault.ifPresent(it -> withDefaultCache.put(flowId, it));
-        return flowWithDefault;
+        return findByExecution(execution).map(it -> injectDefaults(it, execution));
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return findById(tenantId, namespace, id, revision).map(it -> injectDefaults(it, null));
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant,
+        String fromNamespace, String fromId) {
+        return findByIdFromTask(tenantId, namespace, id, revision, fromTenant, fromNamespace, fromId).map(it -> injectDefaults(it, null));
     }
 
     /**
-     * Parses the flow resolved for a running execution, converting failures into outcomes the executor
-     * handles — this method must never throw, a throw here would escape the executor's queue consumer:
-     * <ul>
-     * <li>governance rejection ({@link FlowBlockedException}) is logged against the execution and surfaced as a
-     * {@link FlowWithException}, which the executor fails fast on;</li>
-     * <li>any other parse failure is logged against the execution and the flow is returned as stored, so the
-     * execution proceeds with the un-processed flow.</li>
-     * </ul>
+     * Parses a flow for runtime, memoized on the resolved flow UID. Keying on the resolved flow rather than on
+     * the requested identifier is what makes the cache safe: the UID always carries a revision, and the entry
+     * for a revision is expired whenever that flow — or a setting it resolves against — changes.
      */
-    private FlowWithSource parseForRuntime(FlowInterface flow, Execution execution) {
+    private FlowWithSource injectDefaults(FlowInterface flow, @Nullable Execution execution) {
+        var fromCache = withDefaultCache.getIfPresent(flow.uid());
+        if (fromCache.isPresent()) {
+            return fromCache.get();
+        }
+
+        ParsedFlow parsed = parseForRuntimeSafely(flow, execution);
+        if (parsed.cacheable()) {
+            withDefaultCache.put(flow.uid(), parsed.flow());
+        }
+        return parsed.flow();
+    }
+
+    /**
+     * Parses the flow resolved for an execution — running or about to be created — converting failures into
+     * outcomes the executor handles: this method must never throw, a throw here would escape the executor's
+     * queue consumer:
+     * <ul>
+     * <li>governance rejection ({@link FlowBlockedException}) is logged and surfaced as a
+     * {@link FlowWithException}, which the executor fails fast on;</li>
+     * <li>any other parse failure is logged and the flow is returned as stored, so the execution proceeds
+     * with the un-processed flow.</li>
+     * </ul>
+     * Failures are logged against the execution when there is one, which is not the case on the creation path
+     * where the execution does not exist yet.
+     */
+    private ParsedFlow parseForRuntimeSafely(FlowInterface flow, @Nullable Execution execution) {
         try {
-            return flowParsingService.parseForRuntime(flow);
+            return new ParsedFlow(flowParsingService.parseForRuntime(flow), true);
         } catch (FlowBlockedException e) {
-            logToExecution(execution, e);
-            return FlowWithException.from(flow, e);
+            logBlocked(flow, execution, e);
+            // a governance rejection is deterministic, so it is memoized like a successful parse
+            return new ParsedFlow(FlowWithException.from(flow, e), true);
         } catch (Exception e) {
-            logToExecution(execution, e);
-            return FlowParsingService.toFlowWithSource(flow);
+            logParseFailure(flow, execution, e);
+            // possibly transient, and the cache has no TTL: memoizing it would pin an un-governed flow for
+            // every later execution of this revision until the flow or a setting it resolves against changes
+            return new ParsedFlow(FlowParsingService.toFlowWithSource(flow), false);
         }
     }
 
@@ -164,9 +204,33 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
         }
     }
 
+    private void logBlocked(FlowInterface flow, @Nullable Execution execution, FlowBlockedException e) {
+        if (execution == null) {
+            log.warn("Flow {} is blocked by governance: {}", flow.uid(), e.getMessage());
+            return;
+        }
+
+        logToExecution(execution, e);
+    }
+
+    private void logParseFailure(FlowInterface flow, @Nullable Execution execution, Exception e) {
+        if (execution == null) {
+            log.error("Unable to parse flow {} for runtime", flow.uid(), e);
+            return;
+        }
+
+        logToExecution(execution, e);
+    }
+
     private void logToExecution(Execution execution, Exception e) {
         var logger = runContextLoggerFactory.create(execution);
         logger.emitLogs(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
+    }
+
+    /**
+     * A flow parsed for runtime, and whether the outcome is stable enough to memoize.
+     */
+    private record ParsedFlow(FlowWithSource flow, boolean cacheable) {
     }
 
 }

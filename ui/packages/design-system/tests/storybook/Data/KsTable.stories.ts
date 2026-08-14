@@ -3,6 +3,8 @@ import {ref} from "vue"
 import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
 import KsTag from "../../../src/components/Data/KsTag/KsTag.vue"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import KsButtonGroup from "../../../src/components/Basic/KsButton/KsButtonGroup.vue"
 
 const SAMPLE_DATA = [
     {id: "flow-001", namespace: "company.team", status: "SUCCESS", duration: "1.2s"},
@@ -204,6 +206,34 @@ export const ExpandableRow: Story = {
                     <ks-table-column prop="id" label="Flow ID" />
                     <ks-table-column prop="namespace" label="Namespace" />
                     <ks-table-column prop="status" label="Status" />
+                </ks-table>
+            </div>
+        `,
+    }),
+}
+
+/** Links and button-styled anchors inside cells: a plain link takes the primary text color, while an anchor rendered by KsButton (tag="a") keeps its button styling. */
+export const LinksAndButtonAnchors: Story = {
+    render: () => ({
+        components: {KsTable, KsTableColumn, KsButton, KsButtonGroup},
+        setup() { return {SAMPLE_DATA} },
+        template: `
+            <div style="padding:24px">
+                <ks-table :data="SAMPLE_DATA">
+                    <ks-table-column prop="id" label="Flow ID" />
+                    <ks-table-column label="Link">
+                        <template #default="{row}">
+                            <a href="#">{{ row.namespace }}</a>
+                        </template>
+                    </ks-table-column>
+                    <ks-table-column label="Actions">
+                        <template #default>
+                            <ks-button-group>
+                                <ks-button tag="a" type="primary" size="small" href="#">Download</ks-button>
+                                <ks-button type="primary" size="small">Preview</ks-button>
+                            </ks-button-group>
+                        </template>
+                    </ks-table-column>
                 </ks-table>
             </div>
         `,

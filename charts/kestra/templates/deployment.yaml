@@ -58,6 +58,9 @@ spec:
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- with (default $common.progressDeadlineSeconds $content.progressDeadlineSeconds) }}
+  progressDeadlineSeconds: {{ . }}
+  {{- end }}
   {{- end }}
   {{- if eq $kind "StatefulSet" }}
   {{- with (default $common.updateStrategy $content.updateStrategy) }}

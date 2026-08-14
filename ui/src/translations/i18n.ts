@@ -3,7 +3,8 @@ import {createI18n, type I18n} from "vue-i18n"
 
 const translations = import.meta.glob(["./*.json", "!./en.json"])
 
-export const SUPPORT_LOCALES = ["de","en","es","fr","hi","it","ja","ko","pl","pt","pt_BR","ru","zh_CN"] as const
+import {SUPPORT_LOCALES} from "./languages"
+
 type Locales = (typeof SUPPORT_LOCALES)[number]
 
 export const globalI18n = ref<I18n<any, any, any, Locales, false>["global"]>()

@@ -189,13 +189,18 @@ export const HeaderStripDoesNotOpenTheControl: Story = {
         expect(header.tagName).toBe("DIV");
         expect(header.getAttribute("for")).toBe("");
 
+        // The control is loaded on demand (a skeleton stands in meanwhile). Wait for
+        // it before clicking the header, or the assertion below passes for the wrong
+        // reason: no control means no popper to open.
+        const combobox = await canvas.findByRole("combobox", {}, {timeout: 15000});
+
         const {width, height} = header.getBoundingClientRect();
         expect(width).toBeGreaterThan(200);
 
         fireEvent.click(header, {clientX: width - 20, clientY: height / 2});
         expect(openPoppers()).toHaveLength(0);
 
-        fireEvent.click(await canvas.findByRole("combobox"));
+        fireEvent.click(combobox);
         await waitFor(() => expect(openPoppers().length).toBeGreaterThan(0));
     },
 };

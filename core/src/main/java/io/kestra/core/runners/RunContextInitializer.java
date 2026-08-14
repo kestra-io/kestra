@@ -140,12 +140,6 @@ public class RunContextInitializer {
             variables.put("taskrun", taskrun);
         }
 
-        // Rehydrate outputs (EE override point)
-        Object outputs = variables.getOrDefault("outputs", Map.of());
-        if (outputs instanceof Map) {
-            variables.put("outputs", rehydrateOutputs((Map<String, Object>) outputs));
-        }
-
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTask);
         addSecretConsumer(variables, runContextLogger);
 
@@ -172,14 +166,6 @@ public class RunContextInitializer {
             kestra.put("url", kestraConfiguration.url());
         }
         return kestra;
-    }
-
-    /**
-     * Rehydrate outputs from internal storage if enabled.
-     * As outputs in internal storage is an EE feature, this is a no-op in OSS.
-     */
-    protected Map<String, Object> rehydrateOutputs(Map<String, Object> outputs) {
-        return outputs;
     }
 
     /**

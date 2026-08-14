@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.micronaut.core.bind.annotation.Bindable;
 
-import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -31,9 +30,9 @@ import java.time.Instant;
  *                                 and make the per-user axis decorative
  * @param warningThresholdPercent  remaining percentage below which a caller should be warned, so exhaustion is
  *                                 something a user sees coming rather than discovers
- * @param window                   how far back a ceiling looks. A ceiling with no window would lock an
- *                                 installation out permanently the day it is first reached, so this has a
- *                                 default rather than being optional
+ * @param window                   the period a ceiling is counted over, and at whose boundary spend starts
+ *                                 again. A ceiling with no period would lock an installation out permanently the
+ *                                 day it is first reached, so this has a default rather than being optional
  *
  * <p>Also bound from the hosted relay's {@code /limits} response, which is why unknown properties are ignored: the
  * relay is deployed separately and will add fields, and an instance must keep reading the ones it understands
@@ -52,9 +51,9 @@ public record AiUsageLimitConfiguration(
 
     @Bindable(defaultValue = "10") int warningThresholdPercent,
 
-    @Bindable(defaultValue = "P30D") Duration window
+    @Bindable(defaultValue = "MONTHLY") AiUsageWindow window
 ) {
-    private static final Duration DEFAULT_WINDOW = Duration.ofDays(30);
+    private static final AiUsageWindow DEFAULT_WINDOW = AiUsageWindow.MONTHLY;
 
     public AiUsageLimitConfiguration {
         if (coldInputWeight == 0) {
@@ -69,7 +68,7 @@ public record AiUsageLimitConfiguration(
         if (warningThresholdPercent == 0) {
             warningThresholdPercent = 10;
         }
-        if (window == null || window.isZero() || window.isNegative()) {
+        if (window == null) {
             window = DEFAULT_WINDOW;
         }
     }
@@ -95,6 +94,11 @@ public record AiUsageLimitConfiguration(
 
     /** The lower bound of the current window, which is what the repository is queried with. */
     public Instant windowStart(Instant now) {
-        return now.minus(window);
+        return window.start(now);
+    }
+
+    /** When the current window ends and its spend stops counting, which is when a refused caller can run again. */
+    public Instant windowEnd(Instant now) {
+        return window.next(now);
     }
 }

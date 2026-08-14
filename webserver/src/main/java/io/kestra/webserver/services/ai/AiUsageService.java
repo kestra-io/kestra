@@ -104,7 +104,8 @@ public class AiUsageService {
 
         AiUsageLimitConfiguration limit = declared.get();
 
-        Instant from = limit.windowStart(Instant.now());
+        Instant now = Instant.now();
+        Instant from = limit.windowStart(now);
         AiUsageStatus.Axis global = AiUsageStatus.Axis.of(
             limit.weigh(repository.totals(tenant, resolvedProviderId, from)),
             limit.maxWeight()
@@ -116,7 +117,19 @@ public class AiUsageService {
                 limit.userMaxWeight()
             );
 
-        return new AiUsageStatus(resolvedProviderId, true, from, global, user, limit.warningThresholdPercent());
+        // Only worth answering while something is exhausted: the end of a period a caller is not held by is not
+        // news, and a date on the screen the whole time would read as one.
+        boolean exhausted = global.exceeded() || (user != null && user.exceeded());
+
+        return new AiUsageStatus(
+            resolvedProviderId,
+            true,
+            from,
+            exhausted ? limit.windowEnd(now) : null,
+            global,
+            user,
+            limit.warningThresholdPercent()
+        );
     }
 
     /**

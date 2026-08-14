@@ -1,5 +1,6 @@
 package io.kestra.webserver.services.ai;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Nullable;
 
 import java.time.Instant;
@@ -15,6 +16,9 @@ import java.time.Instant;
  * @param enabled                 whether this provider has limits switched on at all; when false every other
  *                                field is empty, because a disabled limit is neither shown nor enforced
  * @param windowStart             the lower bound the totals were summed from
+ * @param availableAt             when the current period ends and spend starts again, absent while nothing is
+ *                                exhausted. "Comes back on Monday" is something a user can act on, where "you have
+ *                                run out" leaves them guessing at whether to wait or go and find an administrator
  * @param global                  spend across every caller
  * @param user                    spend by the calling user, absent where the edition has no user identity
  * @param warningThresholdPercent the remaining percentage below which a client should warn
@@ -23,6 +27,7 @@ public record AiUsageStatus(
     @Nullable String providerId,
     boolean enabled,
     @Nullable Instant windowStart,
+    @Nullable Instant availableAt,
     @Nullable Axis global,
     @Nullable Axis user,
     int warningThresholdPercent
@@ -45,7 +50,7 @@ public record AiUsageStatus(
 
     /** What every provider reports until someone switches limits on: recorded, but nothing to show. */
     public static AiUsageStatus disabled(@Nullable String providerId) {
-        return new AiUsageStatus(providerId, false, null, null, null, 0);
+        return new AiUsageStatus(providerId, false, null, null, null, null, 0);
     }
 
     public boolean isExceeded() {
@@ -57,7 +62,7 @@ public record AiUsageStatus(
         return remainingPercent() <= warningThresholdPercent;
     }
 
-    /** The tightest axis, which is the only one worth showing a user a single number for. */
+    @JsonProperty("remainingPercent")
     public int remainingPercent() {
         int remaining = global == null ? 100 : global.remainingPercent();
         return user == null ? remaining : Math.min(remaining, user.remainingPercent());
@@ -71,13 +76,23 @@ public record AiUsageStatus(
      */
     public String exceededMessage() {
         if (user != null && user.exceeded()) {
-            return "You have reached your AI usage limit (%d of %d weighted tokens since %s). It will free up as the window moves on."
-                .formatted(user.weight(), user.maxWeight(), windowStart);
+            return "You have reached your AI usage limit (%d of %d weighted tokens since %s).%s"
+                .formatted(user.weight(), user.maxWeight(), windowStart, freesUpSentence());
         }
         if (global != null && global.exceeded()) {
-            return "This installation has reached its AI usage limit (%d of %d weighted tokens since %s). Ask an administrator to raise kestra.ai usage limits."
-                .formatted(global.weight(), global.maxWeight(), windowStart);
+            return "This installation has reached its AI usage limit (%d of %d weighted tokens since %s).%s Ask an administrator to raise kestra.ai usage limits."
+                .formatted(global.weight(), global.maxWeight(), windowStart, freesUpSentence());
         }
         return "AI usage is within its limits.";
+    }
+
+    /**
+     * When the caller can run again, for the messages that refuse them.
+     *
+     * <p>Empty when the period end is not known, which leaves the sentence that carries it saying only what it
+     * knows: a wrong date is worse than none, since a user who is told to come back on one will.
+     */
+    private String freesUpSentence() {
+        return availableAt == null ? "" : " It resets on %s.".formatted(availableAt);
     }
 }

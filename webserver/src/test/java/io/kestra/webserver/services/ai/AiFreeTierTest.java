@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -136,7 +135,7 @@ class AiFreeTierTest {
 
         AiFreeTierLimitProvider limitProvider = mock(AiFreeTierLimitProvider.class);
         when(limitProvider.limit()).thenReturn(Optional.of(new AiUsageLimitConfiguration(
-            true, 1.0, 0.1, 6.0, 250_000, 0, 10, Duration.ofHours(24)
+            true, 1.0, 0.1, 6.0, 250_000, 0, 10, AiUsageWindow.DAILY
         )));
 
         // When the hosted provider is registered

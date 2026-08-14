@@ -3,7 +3,6 @@ package io.kestra.webserver.services.ai;
 import io.kestra.core.ai.usage.models.AiUsageTotals;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +19,7 @@ class AiUsageLimitConfigurationTest {
     private static AiUsageLimitConfiguration weights(
         final double coldInput, final double cachedInput, final double output) {
         return new AiUsageLimitConfiguration(
-            true, coldInput, cachedInput, output, 1_000_000, 0, 10, Duration.ofDays(30)
+            true, coldInput, cachedInput, output, 1_000_000, 0, 10, AiUsageWindow.MONTHLY
         );
     }
 

@@ -53,6 +53,8 @@ const FAKE_EXECUTION = {
         customerId: "cust-42",
         sendCopy: true,
     },
+    // Flow-level outputs — required for the Flow Outputs section to render.
+    outputs: {myname: "Hello"},
 };
 
 const ROUTER_ROUTES = [
@@ -141,6 +143,37 @@ export const SearchFiltersItems: Story = {
                 expect(canvas.queryByText("maxRetries")).toBeNull();
             },
             {timeout: 3000},
+        );
+    },
+};
+
+/**
+ * Clicking a Flow Outputs item seeds the expression debugger with the correct
+ * expression. This story intentionally uses the *real* ExpressionDebugger and
+ * KsEditor (no stubs) so that regressions in the full render chain are caught.
+ */
+export const FlowOutputsDebugger: Story = {
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+
+        // Wait for the sidebar to render the Flow Outputs section header.
+        await waitFor(() => canvas.getByText(/flow outputs/i), {timeout: 5000});
+
+        // Click the "myname" item inside the Flow Outputs section.
+        const item = await waitFor(() => canvas.getByText("myname"), {timeout: 5000});
+        await userEvent.click(item);
+
+        // The expression debugger input (textarea inside the Monaco editor) must
+        // contain the correct expression — {{ execution.outputs.myname }}.
+        await waitFor(
+            () => {
+                const textarea = canvasElement.querySelector(
+                    ".expression-debugger textarea, .expression-debugger .monaco-editor textarea",
+                ) as HTMLTextAreaElement | null;
+                expect(textarea).not.toBeNull();
+                expect(textarea!.value).toContain("execution.outputs.myname");
+            },
+            {timeout: 5000},
         );
     },
 };

@@ -115,6 +115,45 @@ describe("ExecutionVariableExplorer", () => {
         setActivePinia(createPinia())
     })
 
+    test("sections computed yields expression: \"execution.outputs.myname\" for a flow output", async () => {
+        // This is a direct regression guard for the Bug #1 fix: the flowOutputs
+        // section must prefix items with "execution.outputs" (not bare "outputs").
+        const executionsStore = useExecutionsStore()
+        executionsStore.execution = {
+            id: "execution-id",
+            originalId: "execution-id",
+            namespace: "io.kestra.tests",
+            flowId: "flow",
+            flowRevision: 1,
+            metadata: {originalCreatedDate: "2026-01-01T00:00:00Z", attemptNumber: 1},
+            variables: {},
+            inputs: {},
+            outputs: {myname: "Hello"},
+            taskRunList: [],
+            state: {
+                current: "SUCCESS",
+                histories: [],
+                startDate: "2026-01-01T00:00:00Z",
+                duration: "PT1S",
+                getStartDate: "2026-01-01T00:00:00Z",
+                getEndDate: "",
+                getDuration: "PT1S",
+            },
+        } as any
+
+        const wrapper = mount(ExecutionVariableExplorer, {global: globalConfig})
+        await flushPromises()
+
+        const sidebar = wrapper.findComponent({name: "SidebarList"})
+        const sections = sidebar.props("sections") as any[]
+        const flowOutputsSection = sections.find((s) => s.key === "flowOutputs")
+
+        expect(flowOutputsSection).toBeDefined()
+        const mynameItem = flowOutputsSection.items.find((item: {label: string}) => item.label === "myname")
+        expect(mynameItem).toBeDefined()
+        expect(mynameItem.expression).toBe("execution.outputs.myname")
+    })
+
     test("previews a nested file selected from the tree", async () => {
         const fileUri = "kestra:///outputs/report.txt"
         const wrapper = mountExplorer({

@@ -1141,6 +1141,15 @@
         "title": "跨环境推广 flow",
         "message": "Kestra Enterprise Edition 允许您直接从 UI 将 flow 从一个环境（例如 dev、staging 到 production）提升到另一个环境，无需 Git 或 CI/CD 管道。在提升之前，您可以查看将要更改内容的 diff，通过确认门保护敏感目标，一目了然地发现漂移，并保留谁在何时何地提升了什么的完整历史记录。"
       },
+      "dashboards": {
+        "header": "自定义仪表盘",
+        "title": "构建适合您团队的自定义仪表板。",
+        "message": "Kestra Enterprise Edition 中的自定义仪表板允许您创建和共享自己的视图，以查看 execution、log 和 metrics，结合时间序列、KPI、表格和 Markdown 图表，并提供代码和无代码编辑器、实时预览以及每个 tenant 的默认仪表板。",
+        "blueprints": {
+          "title": "从仪表盘 blueprint 开始。",
+          "message": "仪表盘 blueprint 是用于常见监控需求的预制自定义仪表盘。使用 Kestra Enterprise Edition，您可以将任何 blueprint 作为起点，并在仪表盘编辑器中根据您的团队调整其图表、KPI 和表格。"
+        }
+      },
       "IAM": {
         "title": "通过IAM使用SSO、SCIM和RBAC管理用户",
         "message": "Kestra Enterprise Edition 具有内置的 IAM 功能，支持单点登录 (SSO)、SCIM 目录同步和基于角色的访问控制 (RBAC)，可与多个身份提供商集成，并允许您为用户和服务帐户分配细粒度权限。"

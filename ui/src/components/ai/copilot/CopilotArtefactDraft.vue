@@ -53,11 +53,14 @@
 
     const props = defineProps<{draft: ArtefactDraftEvent}>()
 
-    const {applying, appSupported, openInEditor, apply} = useApplyDraft()
+    const {applying, appSupported, dashboardSupported, openInEditor, apply} = useApplyDraft()
 
-    // Flow + dashboard drafts always have actions; app drafts only when the EE app path is present.
+    // Flow drafts always have actions; dashboard drafts only when the backend serves custom
+    // dashboards, app drafts only when the EE app path is present.
     const showActions = computed(
-        () => props.draft.kind === "FLOW" || props.draft.kind === "DASHBOARD" || (props.draft.kind === "APP" && appSupported),
+        () => props.draft.kind === "FLOW"
+            || (props.draft.kind === "DASHBOARD" && dashboardSupported.value)
+            || (props.draft.kind === "APP" && appSupported),
     )
 
     // Render the YAML as a fenced code block so KsMarkdown syntax-highlights it (matching the

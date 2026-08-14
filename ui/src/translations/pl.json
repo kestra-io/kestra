@@ -1141,6 +1141,15 @@
         "title": "Promuj flowy między środowiskami",
         "message": "Kestra Enterprise Edition umożliwia promowanie flow z jednego środowiska do drugiego — na przykład z dev do staging, a następnie do production — bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
       },
+      "dashboards": {
+        "header": "Niestandardowe pulpity nawigacyjne",
+        "title": "Twórz niestandardowe pulpity nawigacyjne dostosowane do Twojego zespołu.",
+        "message": "Niestandardowe pulpity nawigacyjne w Kestra Enterprise Edition umożliwiają tworzenie i udostępnianie własnych widoków na podstawie wykonań, logów i metryk, łącząc szeregi czasowe, KPI, tabele i wykresy Markdown, z edytorem kodu i bez kodu, podglądem na żywo oraz domyślnymi pulpitami nawigacyjnymi dla każdego tenant.",
+        "blueprints": {
+          "title": "Zacznij od blueprintu pulpitu nawigacyjnego.",
+          "message": "Blueprinty pulpitu nawigacyjnego to gotowe, niestandardowe pulpity nawigacyjne do typowych potrzeb monitorowania. Dzięki Kestra Enterprise Edition możesz użyć dowolnego blueprintu jako punktu wyjścia i dostosować jego wykresy, KPI i tabele do swojego zespołu w edytorze pulpitu nawigacyjnego."
+        }
+      },
       "IAM": {
         "title": "Zarządzaj użytkownikami przez IAM z SSO, SCIM i RBAC",
         "message": "Kestra Enterprise Edition posiada wbudowane funkcje IAM z jednokrotnym logowaniem (SSO), synchronizacją katalogów SCIM i kontrolą dostępu opartą na rolach (RBAC), integrując się z wieloma dostawcami tożsamości i umożliwiając przypisywanie szczegółowych uprawnień dla użytkowników i kont usług."

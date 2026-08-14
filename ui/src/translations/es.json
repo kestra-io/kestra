@@ -1141,6 +1141,15 @@
         "title": "Promover Flows entre Entornos",
         "message": "Kestra Enterprise Edition te permite promover flows de un entorno a otro —como de desarrollo a staging y a producción— directamente desde la UI, sin necesidad de Git o pipelines de CI/CD. Revisa un diff de exactamente lo que cambiará antes de promover, protege objetivos sensibles con una puerta de confirmación, detecta desviaciones de un vistazo y mantén un historial completo de quién promovió qué, dónde y cuándo."
       },
+      "dashboards": {
+        "header": "Dashboards Personalizados",
+        "title": "Crea dashboards personalizados adaptados a tu equipo.",
+        "message": "Los dashboards personalizados en Kestra Enterprise Edition te permiten crear y compartir tus propias vistas sobre ejecuciones, logs y métricas, combinando series de tiempo, KPIs, tablas y gráficos Markdown, con un editor de código y sin código, vista previa en vivo y dashboards predeterminados por tenant.",
+        "blueprints": {
+          "title": "Comenzar desde un blueprint de dashboard.",
+          "message": "Los blueprints de Dashboard son dashboards personalizados listos para usar para necesidades comunes de monitoreo. Con Kestra Enterprise Edition, puedes usar cualquier blueprint como punto de partida y adaptar sus gráficos, KPIs y tablas a tu equipo en el editor de dashboard."
+        }
+      },
       "IAM": {
         "title": "Gestionar usuarios a través de IAM con SSO, SCIM y RBAC",
         "message": "Kestra Enterprise Edition tiene capacidades IAM integradas con inicio de sesión único (SSO), sincronización de directorio SCIM y control de acceso basado en roles (RBAC), integrándose con múltiples proveedores de identidad y permitiéndole asignar permisos detallados para usuarios y cuentas de servicio."

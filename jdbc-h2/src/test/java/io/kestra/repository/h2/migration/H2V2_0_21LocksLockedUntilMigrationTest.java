@@ -55,7 +55,7 @@ class H2V2_0_21LocksLockedUntilMigrationTest {
     void generatedColumnReflectsLockedUntilFromValue() throws Exception {
         migration.migrate();
 
-        // JdbcMapper always serializes a 6-digit fraction (production-shaped); the generated column
+        // KestraDateTimeModule always serializes a 6-digit fraction (production-shaped); the generated column
         // truncates to millisecond precision (LEFT(...,23)), so the round trip must drop the last 3 digits
         Instant lockedUntil = Instant.parse("2026-01-01T00:00:00.123Z");
         insertLock(LEASE_KEY, "{\"category\":\"lease\",\"id\":\"locked-until-seed-1\",\"tenantId\":\"tenant-a\",\"owner\":\"o\",\"lockedUntil\":\"2026-01-01T00:00:00.123456Z\"}");

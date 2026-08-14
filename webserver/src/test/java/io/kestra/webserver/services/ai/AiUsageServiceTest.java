@@ -56,13 +56,26 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 @Property(name = "kestra.ai.providers[4].configuration.api-key", value = "fake-key")
 @Property(name = "kestra.ai.providers[4].configuration.usage-limit.enabled", value = "true")
 @Property(name = "kestra.ai.providers[4].configuration.usage-limit.max-weight", value = "1000")
-@Property(name = "kestra.ai.providers[4].configuration.usage-limit.window", value = "P7D")
+@Property(name = "kestra.ai.providers[4].configuration.usage-limit.window", value = "DAILY")
+@Property(name = "kestra.ai.providers[5].id", value = AiUsageServiceTest.SHORT_WINDOW_EXHAUSTED)
+@Property(name = "kestra.ai.providers[5].type", value = "gemini")
+@Property(name = "kestra.ai.providers[5].configuration.api-key", value = "fake-key")
+@Property(name = "kestra.ai.providers[5].configuration.usage-limit.enabled", value = "true")
+@Property(name = "kestra.ai.providers[5].configuration.usage-limit.max-weight", value = "1000")
+@Property(name = "kestra.ai.providers[5].configuration.usage-limit.window", value = "MONTHLY")
+@Property(name = "kestra.ai.providers[6].id", value = AiUsageServiceTest.INSTALLATION_CEILING_UNREACHED)
+@Property(name = "kestra.ai.providers[6].type", value = "gemini")
+@Property(name = "kestra.ai.providers[6].configuration.api-key", value = "fake-key")
+@Property(name = "kestra.ai.providers[6].configuration.usage-limit.enabled", value = "true")
+@Property(name = "kestra.ai.providers[6].configuration.usage-limit.max-weight", value = "1000000")
 class AiUsageServiceTest {
     static final String NO_CEILING = "gemini-without-a-ceiling";
     static final String INSTALLATION_CEILING = "gemini-with-an-installation-ceiling";
     static final String PER_USER_CEILING = "gemini-with-a-per-user-ceiling";
     static final String UNATTRIBUTED_SPEND = "gemini-metering-unattributed-spend";
-    static final String SHORT_WINDOW = "gemini-with-a-seven-day-window";
+    static final String SHORT_WINDOW = "gemini-with-a-daily-window";
+    static final String SHORT_WINDOW_EXHAUSTED = "gemini-with-a-monthly-window-exhausted";
+    static final String INSTALLATION_CEILING_UNREACHED = "gemini-with-a-ceiling-nobody-reached";
 
     private static final String TENANT = TenantService.MAIN_TENANT;
     private static final String MODEL = "gemini-3.1-flash-lite";
@@ -220,26 +233,53 @@ class AiUsageServiceTest {
     }
 
     @Test
-    void shouldCountOnlyTheConfiguredWindowRatherThanAllHistory() {
-        // Given a seven-day window, spend from ten days ago that would exhaust the ceiling on its own...
+    void shouldCountOnlyTheCurrentPeriodRatherThanAllHistory() {
+        // Given a daily ceiling, spend from ten days ago that would exhaust it on its own...
         usageStore.save(new AiUsage(
             IdUtils.create(), TENANT, SHORT_WINDOW, null, MODEL, Instant.now().minus(Duration.ofDays(10)),
             5_000, 0, 0, 0
         ));
-        // ...and a little spend inside the window
+        // ...and a little spend inside today's
         service.record(TENANT, SHORT_WINDOW, null, MODEL, new TokenUsage(100, 0, 100));
 
         // When
         Instant before = Instant.now();
         AiUsageStatus status = service.status(TENANT, SHORT_WINDOW, null);
 
-        // Then only what falls inside the window counts, so a ceiling frees up as the window moves. Summing all
-        // history instead would make the first exhaustion permanent.
-        assertThat(status.windowStart())
-            .isBetween(before.minus(Duration.ofDays(7)).minusSeconds(5), before.minus(Duration.ofDays(7)).plusSeconds(5));
+        // Then only what falls inside the current period counts, and it is summed from that period's boundary
+        // rather than from a moving point. Summing all history instead would make the first exhaustion permanent.
+        assertThat(status.windowStart()).isEqualTo(AiUsageWindow.DAILY.start(before));
         assertThat(status.global().weight()).isEqualTo(100);
         assertThat(status.global().maxWeight()).isEqualTo(1_000);
         assertThat(status.isExceeded()).isFalse();
+    }
+
+    @Test
+    void shouldReportWhenAnExhaustedCeilingStartsAgain() {
+        // Given a monthly ceiling exhausted by a single call in the current period
+        Instant before = Instant.now();
+        service.record(TENANT, SHORT_WINDOW_EXHAUSTED, null, MODEL, new TokenUsage(2_000, 0, 2_000));
+
+        // When
+        AiUsageStatus status = service.status(TENANT, SHORT_WINDOW_EXHAUSTED, null);
+
+        // Then the caller is told the date the period turns over, which is the whole reason the ceiling counts
+        // calendar periods: a rolling one has no such date to give them.
+        assertThat(status.isExceeded()).isTrue();
+        assertThat(status.availableAt()).isEqualTo(AiUsageWindow.MONTHLY.next(before));
+        assertThat(status.exceededMessage()).contains("It resets on");
+    }
+
+    @Test
+    void shouldReportNoMomentWhileTheCeilingIsNotExhausted() {
+        // Given spend that sits under the ceiling
+        service.record(TENANT, INSTALLATION_CEILING_UNREACHED, null, MODEL, new TokenUsage(100, 0, 100));
+
+        // When / Then there is nothing to wait for, so nothing is reported — and the store is not read a second
+        // time to work that out, since this runs before every model call.
+        AiUsageStatus status = service.status(TENANT, INSTALLATION_CEILING_UNREACHED, null);
+        assertThat(status.isExceeded()).isFalse();
+        assertThat(status.availableAt()).isNull();
     }
 
     /** A provider nothing else meters against, for the recording paths that read no limit. */

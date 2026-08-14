@@ -198,6 +198,14 @@
                 <template #description>
                     <h3>{{ t('source_search.no_results_title', {query}) }}</h3>
                     <p>{{ t('source_search.no_results_description') }}</p>
+
+                    <p v-if="suggestedQuery">
+                        {{ t('source_search.did_you_mean', {suggestion: suggestedQuery}) }}
+                        <button type="button" @click="query = suggestedQuery">
+                            {{ suggestedQuery }}
+                        </button>
+                        ?
+                    </p>
                 </template>
             </KsEmpty>
         </div>
@@ -352,6 +360,7 @@
     }
 
     const results = ref<SourceSearchResult[]>([])
+    const suggestedQuery = ref<string | null>(null)
     const hasResults = computed(() => results.value.length > 0)
     const totalMatchCount = computed(() => results.value.reduce((sum, group) => sum + group.matches.length, 0))
     const readOnlyExcludedCount = computed(() => results.value.filter((group) => !group.editable).length)
@@ -390,7 +399,16 @@
     function onSelect(value: {namespace: string; id: string; line: number; column: number}) {
         selected.value = value
     }
+    function getSeparatorVariant(query: string): string | null {
+        if (query.includes("-")) {
+        return query.replace(/-/g, "_")
+    }
+    if (query.includes("_")) {
+        return query.replace(/_/g, "-")
+    }
 
+    return null
+    }
     function goToMatch(delta: number) {
         if (flatMatches.value.length === 0) return
         const nextIndex = (activeMatchIndex.value + delta + flatMatches.value.length) % flatMatches.value.length
@@ -529,6 +547,7 @@
         loading.value = true
         errorMessage.value = null
         previewResponse.value = null
+        suggestedQuery.value = null
 
         try {
             const response = await FlowsAPI.searchFlowsBySourceCode({
@@ -539,6 +558,20 @@
                 namespace: namespaceFilter.value,
             })
             results.value = response.results as SourceSearchResult[]
+            if (results.value.length === 0) {
+                const alternativeQuery = getSeparatorVariant(query.value)
+
+                if(alternativeQuery){
+                    const alternativeResponse = await FlowsAPI.searchFlowsBySourceCode({...searchFilters.value,
+                        page: 1,
+                        size: 200,
+                        q: alternativeQuery.value,
+                    })
+                    if(alternativeResponse.results.length > 0){
+                        suggestedQuery.value = alternativeQuery
+                    }
+                }
+            }
         } catch (e: any) {
             errorMessage.value = e?.response?.data?.message ?? t("source_search.search_failed")
             results.value = []

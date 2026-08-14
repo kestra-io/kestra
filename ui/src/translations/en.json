@@ -2025,6 +2025,7 @@
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
       "no_results_title": "No matches for “{query}”",
+      "did_you_mean": "Did you mean {suggestion}?",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",
       "options_aria": "Search options",

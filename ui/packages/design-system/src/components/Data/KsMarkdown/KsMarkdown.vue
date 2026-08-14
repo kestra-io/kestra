@@ -18,7 +18,7 @@
     import KsAlert from "../../Feedback/KsAlert.vue"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
-    import {getShiki} from "./shikiHighlighter"
+    import {getShiki, loadLanguageOnDemand} from "./shikiHighlighter"
 
     const props = withDefaults(
         defineProps<{
@@ -409,9 +409,8 @@
 
             let lang = block.lang
             if (lang && !(hl.getLoadedLanguages() as string[]).includes(lang)) {
-                try {
-                    await hl.loadLanguage(lang as any)
-                } catch {
+                // Not pre-registered: fetch it from Shiki's full bundle, or render as plain text.
+                if (!await loadLanguageOnDemand(hl, lang)) {
                     lang = ""
                 }
             }

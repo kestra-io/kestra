@@ -265,7 +265,7 @@ public class AgentOrchestrator {
                 return;
             }
 
-            AiUsageStatus usage = usageService.status(ctx.tenant(), ctx.providerId(), userId(ctx));
+            AiUsageStatus usage = usageService.status(ctx.providerId(), userId(ctx));
             if (usage.isExceeded()) {
                 stopForUsageLimit(ctx, sink, usage);
                 return;
@@ -474,11 +474,8 @@ public class AgentOrchestrator {
     }
 
     /**
-     * Books what the call just cost, before the turn can be abandoned.
-     *
-     * <p>Deliberately ahead of the cancellation check: a user closing the tab does not un-bill the tokens the
-     * provider has already generated, and a cancel path that skipped this would make abandoning turns the cheapest
-     * way to use the model.
+     * Books what the call just cost. Deliberately ahead of the cancellation check — a user closing the tab does
+     * not un-bill tokens the provider already generated.
      */
     private void recordUsage(final AgentLoopContext ctx, final ChatResponse response) {
         String model = response.metadata() == null ? null : response.metadata().modelName();
@@ -486,13 +483,12 @@ public class AgentOrchestrator {
     }
 
     /**
-     * Ends a turn gracefully once the provider's spend ceiling is reached.
-     *
-     * <p>Stopped rather than failed, like the tool-step cap: the request was valid and the work done so far stands,
-     * so the thread stays usable and the note explains what happened in terms a user can act on.
+     * Ends a turn gracefully once the provider's spend ceiling is reached. Stopped rather than failed, like the
+     * tool-step cap: the request was valid and the work so far stands, so the thread stays usable.
      */
     private void stopForUsageLimit(final AgentLoopContext ctx, final TurnEventSink sink, final AiUsageStatus usage) {
         log.warn("Copilot turn for thread {} stopped: provider '{}' has reached its usage limit", ctx.thread().uid(), ctx.providerId());
+        usageService.recordRefusal(usage);
         String message = usage.exceededMessage();
         threadManager.appendAssistantText(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), message);
         sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(message));

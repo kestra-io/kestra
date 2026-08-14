@@ -28,6 +28,7 @@ import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.repositories.AiMessageRepositoryInterface;
 import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.ai.usage.models.AiUsage;
@@ -55,6 +56,8 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.googleai.GoogleAiGeminiTokenUsage;
 import dev.langchain4j.model.output.TokenUsage;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -70,8 +73,8 @@ class AgentOrchestratorTest {
     private static final String TENANT = TenantService.MAIN_TENANT;
 
     /**
-     * Spelled out rather than reusing {@link AiUsageLimitConfiguration#DISABLED}, so that a change to the
-     * production defaults cannot silently turn limits on for every test that does not set its own.
+     * Spelled out rather than read from the shipped defaults, so a change to those cannot silently turn limits
+     * on for every test that does not set its own.
      */
     private static final AiUsageLimitConfiguration NO_LIMIT =
         new AiUsageLimitConfiguration(false, 1.0, 0.1, 6.0, 0, 0, 10, AiUsageWindow.MONTHLY);
@@ -95,11 +98,14 @@ class AgentOrchestratorTest {
     @Inject
     AiUsageRepositoryInterface usageStore;
 
+    @Inject
+    MeterRegistry meterRegistry;
+
     @MockBean(AiServiceManager.class)
     AiServiceManager aiServiceManager() {
         AiServiceInterface service = mock(AiServiceInterface.class);
-        // The orchestrator asks for the principal-carrying overload. Stubbing only the other one leaves this
-        // returning null, and every turn then dies on a null model — which is exactly what was happening.
+        // The orchestrator asks for the principal-carrying overload; stubbing only the other one leaves this
+        // returning null and every turn dies on a null model.
         when(service.streamingChatModel(any(), any())).thenReturn(scriptedModel);
         when(service.usageLimit()).thenAnswer(invocation -> Optional.ofNullable(usageLimit.get()));
         AiServiceManager manager = mock(AiServiceManager.class);
@@ -691,9 +697,8 @@ class AgentOrchestratorTest {
         // When
         orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, null, null), new CollectingSink());
 
-        // Then all four counts reach the durable store, keyed to the provider that served the turn. Recording is
-        // not gated on limits being enabled, so this holds for the default configuration.
-        AiUsageTotals totals = usageStore.totals(TENANT, provider, Instant.now().minus(Duration.ofHours(1)));
+        // Then all four counts reach the store, keyed to the provider. Recording is not gated on limits.
+        AiUsageTotals totals = usageStore.totals(provider, Instant.now().minus(Duration.ofHours(1)));
         assertThat(totals.promptTokens()).isEqualTo(1_000);
         assertThat(totals.cachedPromptTokens()).isEqualTo(400);
         assertThat(totals.completionTokens()).isEqualTo(19);
@@ -714,9 +719,8 @@ class AgentOrchestratorTest {
         // When
         orchestrator.runTurn(new AgentTurnContext(thread, "list my flows", AgentMode.ASK, TENANT, provider, null, null), new CollectingSink());
 
-        // Then both calls are booked. Recording per turn instead would lose the fact that a turn is a dozen calls,
-        // and with it any chance of weighting each call's cached share correctly.
-        AiUsageTotals totals = usageStore.totals(TENANT, provider, Instant.now().minus(Duration.ofHours(1)));
+        // Then both calls are booked: recording per turn would lose each call's own cached share
+        AiUsageTotals totals = usageStore.totals(provider, Instant.now().minus(Duration.ofHours(1)));
         assertThat(totals.promptTokens()).isEqualTo(1_400);
         assertThat(totals.completionTokens()).isEqualTo(100);
     }
@@ -743,6 +747,9 @@ class AgentOrchestratorTest {
         assertThat(sink.names()).contains(AgentEvents.TOKEN);
         assertThat(messageStore.load(thread.tenant(), thread.uid()).getLast().content())
             .contains("This installation has reached its AI usage limit");
+        // ...and the stop is counted, since a Copilot that has quietly stopped answering looks from the
+        // outside exactly like one nobody is using
+        assertThat(refusals(provider, "global")).isEqualTo(1);
     }
 
     @Test
@@ -760,8 +767,7 @@ class AgentOrchestratorTest {
             new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, new TestPrincipal("user-42"), null), sink
         );
 
-        // Then they are refused on their own axis, and told so — an exhausted personal allowance is something they
-        // can act on, where an exhausted installation-wide one is not about them at all.
+        // Then they are refused on their own axis, and the message names it
         assertThat(scriptedModel.callCount()).isZero();
         assertThat(messageStore.load(thread.tenant(), thread.uid()).getLast().content())
             .contains("You have reached your AI usage limit");
@@ -782,8 +788,7 @@ class AgentOrchestratorTest {
             new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, provider, new TestPrincipal("user-7"), null), sink
         );
 
-        // Then it runs. The per-user axis has to be per user: summing every user's spend into it would turn the
-        // first heavy user into an outage for everyone.
+        // Then it runs: summing every user's spend into this axis would make one heavy user an outage for all
         assertThat(scriptedModel.callCount()).isEqualTo(1);
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
     }
@@ -805,8 +810,8 @@ class AgentOrchestratorTest {
         // When
         orchestrator.runTurn(new AgentTurnContext(thread, "list my flows", AgentMode.ASK, TENANT, provider, null, null), sink);
 
-        // Then the first call runs and the second does not. Checking once per turn instead would let one runaway
-        // turn spend an installation's whole allowance and only notice on the next one.
+        // Then the first call runs and the second does not: checking once per turn would let one runaway turn
+        // spend the whole allowance
         assertThat(scriptedModel.callCount()).isEqualTo(1);
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
         assertThat(messageStore.load(thread.tenant(), thread.uid()).getLast().content())
@@ -819,6 +824,17 @@ class AgentOrchestratorTest {
             IdUtils.create(), TENANT, provider, userId, "gemini-3.1-flash-lite", Instant.now(),
             promptTokens, 0, 0, 0
         ));
+    }
+
+    /** Turns stopped for want of allowance on one axis, matched on the suffix so the metric prefix is irrelevant. */
+    private double refusals(final String provider, final String axis) {
+        return meterRegistry.getMeters().stream()
+            .filter(meter -> meter.getId().getName().endsWith(MetricRegistry.METRIC_AI_USAGE_REFUSED_TOTAL))
+            .filter(meter -> provider.equals(meter.getId().getTag(MetricRegistry.TAG_AI_PROVIDER_ID)))
+            .filter(meter -> axis.equals(meter.getId().getTag(MetricRegistry.TAG_AI_USAGE_AXIS)))
+            .filter(Counter.class::isInstance)
+            .mapToDouble(meter -> ((Counter) meter).count())
+            .sum();
     }
 
     /** AgentPrincipal has no abstract method, so a lambda cannot stand in for one. */

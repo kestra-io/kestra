@@ -13,6 +13,5 @@ CREATE TABLE IF NOT EXISTS ai_usage (
     "thought_tokens"        BIGINT       NOT NULL GENERATED ALWAYS AS (JQ_LONG("value", '.thoughtTokens'))
 );
 
--- Every read is "totals for this provider since a point in time", optionally narrowed to one user.
-CREATE INDEX IF NOT EXISTS ai_usage__provider_recorded ON ai_usage ("tenant_id", "provider_id", "recorded_at");
-CREATE INDEX IF NOT EXISTS ai_usage__provider_user_recorded ON ai_usage ("tenant_id", "provider_id", "user_id", "recorded_at");
+CREATE INDEX IF NOT EXISTS ai_usage__provider_recorded ON ai_usage ("provider_id", "recorded_at");
+CREATE INDEX IF NOT EXISTS ai_usage__provider_user_recorded ON ai_usage ("provider_id", "user_id", "recorded_at");

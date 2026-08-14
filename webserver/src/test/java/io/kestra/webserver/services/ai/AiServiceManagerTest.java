@@ -77,8 +77,8 @@ class AiServiceManagerTest {
             kestraDocsContextTool,
             expressionContextService,
             flowParsingService,
-            // The hosted provider is not the subject of these cases: they assert how *configured* providers are
-            // resolved, and leaving it enabled would register a fallback for the no-provider case.
+            // These cases assert how *configured* providers resolve; leaving the free tier on would register
+            // a fallback for the no-provider case.
             freeTierDisabled(),
             null
         );

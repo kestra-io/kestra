@@ -31,13 +31,9 @@ public interface AiConfiguration {
     /**
      * This provider's spend ceiling as configured, or null when it declares none.
      *
-     * <p>Nullable rather than optional because this is the binding surface: every provider configuration is a
-     * record whose {@code usageLimit} component implements this, and Jackson writes a null there when an
-     * operator wrote nothing. Absence is expressed as an empty {@link java.util.Optional} one level up, at
-     * {@link AiServiceInterface#usageLimit()}, which is what the rest of the code reads.
-     *
-     * <p>A default rather than an abstract method so the ten existing provider configurations need no change:
-     * a provider that says nothing about limits has its usage recorded and nothing shown or enforced.
+     * <p>Nullable because this is the binding surface — a provider configuration is a record whose
+     * {@code usageLimit} component implements this, and binding writes null when nothing was configured.
+     * Callers read {@link AiServiceInterface#usageLimit()}, which expresses absence as an empty Optional.
      */
     @Nullable
     default AiUsageLimitConfiguration usageLimit() {

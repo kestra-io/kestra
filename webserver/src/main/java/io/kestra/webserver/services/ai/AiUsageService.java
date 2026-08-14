@@ -17,13 +17,9 @@ import java.util.Optional;
 /**
  * Records what AI model calls cost, and reports where that leaves a provider against its ceiling.
  *
- * <p>Recording is unconditional and applies to every provider, whether or not it has limits switched on. So
- * turning a limit on reports against history that already exists, rather than starting from zero and looking
- * wrong for a window; and an operator running their own key gets a spend figure without opting into anything.
- *
- * <p>Enforcement is check-then-charge, per model call. The overshoot that allows is bounded by one call, which is
- * bounded in turn by the provider's own output cap — and the alternative, reserving before the call, would have to
- * guess the cost of a response that has not been generated yet.
+ * <p>Recording is unconditional, so switching a limit on reports against history that already exists rather
+ * than starting from zero. Enforcement is check-then-charge per model call, which overshoots by at most one
+ * call — reserving up front would mean guessing the cost of a response not yet generated.
  */
 @Singleton
 @Slf4j
@@ -31,23 +27,24 @@ public class AiUsageService {
     private final AiUsageRepositoryInterface repository;
     private final AiServiceManager aiServiceManager;
     private final AiTokenUsageReader tokenUsageReader;
+    private final AiUsageMetrics metrics;
 
     @Inject
     public AiUsageService(
         final AiUsageRepositoryInterface repository,
         final AiServiceManager aiServiceManager,
-        final AiTokenUsageReader tokenUsageReader) {
+        final AiTokenUsageReader tokenUsageReader,
+        final AiUsageMetrics metrics) {
         this.repository = repository;
         this.aiServiceManager = aiServiceManager;
         this.tokenUsageReader = tokenUsageReader;
+        this.metrics = metrics;
     }
 
     /**
-     * Records one model call, or nothing when the provider reported no usage.
-     *
-     * <p>Never throws: a turn that succeeded must not be failed because its bookkeeping could not be written, and
-     * the user would have no way to act on the failure anyway. A dropped record undercounts spend, so the failure
-     * is logged at warn rather than swallowed.
+     * Records one model call, or nothing when the provider reported no usage. Never throws — a turn that
+     * succeeded must not fail because its bookkeeping could not be written — but logs at warn, since a dropped
+     * record undercounts spend.
      */
     public void record(
         final String tenant,
@@ -55,7 +52,11 @@ public class AiUsageService {
         @Nullable final String userId,
         @Nullable final String model,
         @Nullable final TokenUsage usage) {
+        String resolvedProviderId = resolveProviderId(providerId);
         AiUsageTotals counts = tokenUsageReader.read(usage);
+
+        metrics.modelCall(resolvedProviderId, tenant, model, counts);
+
         if (counts.promptTokens() == 0 && counts.completionTokens() == 0 && counts.thoughtTokens() == 0) {
             return;
         }
@@ -64,7 +65,7 @@ public class AiUsageService {
             repository.save(new AiUsage(
                 IdUtils.create(),
                 tenant,
-                resolveProviderId(providerId),
+                resolvedProviderId,
                 userId,
                 model,
                 Instant.now(),
@@ -74,30 +75,29 @@ public class AiUsageService {
                 counts.thoughtTokens()
             ));
         } catch (Exception e) {
+            metrics.recordFailed(resolvedProviderId, tenant, model);
             log.warn("Could not record AI usage for provider '{}': {}", providerId, e.getMessage(), e);
         }
     }
 
     /**
-     * Where {@code userId} stands against {@code providerId}'s ceiling, for display and for enforcement alike.
+     * Where {@code userId} stands against {@code providerId}'s ceiling, for display and enforcement alike.
      *
-     * <p>Returns {@link AiUsageStatus#disabled} when the provider has no limits switched on, which is the default:
-     * usage is still being recorded, but there is nothing an operator asked to be shown or held to.
+     * <p>Returns {@link AiUsageStatus#disabled} when the provider has no limits switched on, which is the
+     * default. Takes no tenant, unlike {@link #record}: the provider key belongs to the installation, so both
+     * ceilings count every tenant's spend against it.
      *
-     * @param userId the caller, or null where the edition has no user identity in the agent path — in which case
-     *               only the installation-wide axis is evaluated, since every row would fall in the same bucket
+     * @param userId the caller, or null where there is no user identity in the agent path — in which case only
+     *               the installation-wide axis is evaluated
      */
-    public AiUsageStatus status(final String tenant, @Nullable final String providerId, @Nullable final String userId) {
+    public AiUsageStatus status(@Nullable final String providerId, @Nullable final String userId) {
         String resolvedProviderId = resolveProviderId(providerId);
         AiServiceInterface service = aiServiceManager.getAiService(providerId);
         if (service == null) {
             return AiUsageStatus.disabled(resolvedProviderId);
         }
 
-        // Read defensively: this runs before every model call, on the path of every chat request, and an
-        // implementation that answers nothing means it declares no limit — not that Copilot should 500.
-        Optional<AiUsageLimitConfiguration> declared =
-            Optional.ofNullable(service.usageLimit()).orElseGet(Optional::empty);
+        Optional<AiUsageLimitConfiguration> declared = service.usageLimit();
         if (declared.isEmpty()) {
             return AiUsageStatus.disabled(resolvedProviderId);
         }
@@ -107,21 +107,21 @@ public class AiUsageService {
         Instant now = Instant.now();
         Instant from = limit.windowStart(now);
         AiUsageStatus.Axis global = AiUsageStatus.Axis.of(
-            limit.weigh(repository.totals(tenant, resolvedProviderId, from)),
+            limit.weigh(repository.totals(resolvedProviderId, from)),
             limit.maxWeight()
         );
         AiUsageStatus.Axis user = userId == null
             ? null
             : AiUsageStatus.Axis.of(
-                limit.weigh(repository.totalsForUser(tenant, resolvedProviderId, userId, from)),
+                limit.weigh(repository.totalsForUser(resolvedProviderId, userId, from)),
                 limit.userMaxWeight()
             );
 
-        // Only worth answering while something is exhausted: the end of a period a caller is not held by is not
-        // news, and a date on the screen the whole time would read as one.
+        // The period end is only worth reporting while something is exhausted; on screen the rest of the time
+        // it reads as a deadline.
         boolean exhausted = global.exceeded() || (user != null && user.exceeded());
 
-        return new AiUsageStatus(
+        AiUsageStatus status = new AiUsageStatus(
             resolvedProviderId,
             true,
             from,
@@ -130,13 +130,23 @@ public class AiUsageService {
             user,
             limit.warningThresholdPercent()
         );
+
+        metrics.observed(status);
+
+        return status;
     }
 
     /**
-     * The provider a turn will actually run against, so recorded rows and queried totals agree.
-     *
-     * <p>A caller may leave the provider unnamed and get the default one; recording that as "no provider" would
-     * split one provider's history across two keys and make its ceiling unenforceable.
+     * Books a turn refused for want of allowance. Counted here rather than wherever a status is read, since
+     * {@link #status} is also what the usage endpoint answers and polling it is not a refusal.
+     */
+    public void recordRefusal(final AiUsageStatus status) {
+        metrics.refused(status);
+    }
+
+    /**
+     * The provider a turn will actually run against, so recorded rows and queried totals agree. Recording an
+     * unnamed provider as "none" would split one provider's history across two keys.
      */
     private String resolveProviderId(@Nullable final String providerId) {
         return providerId != null ? providerId : aiServiceManager.getDefaultProviderId();

@@ -36,7 +36,6 @@ import io.kestra.webserver.services.ai.agent.data.ApiThreadDetail;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
 
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
@@ -134,7 +133,7 @@ public class AiAgentController {
 
     @Post(uri = "/{threadId}/chat", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = { "AI" }, summary = "Open a streaming agent chat turn (SSE)")
-    public HttpResponse<Flux<Event<Object>>> chat(
+    public Flux<Event<Object>> chat(
         @PathVariable final String threadId,
         @Body final ApiChatTurnRequest request) {
         String tenant = tenantService.resolveTenant();
@@ -155,7 +154,7 @@ public class AiAgentController {
         // request-scoped lookup made later would come back empty.
         AgentPrincipal principal = principalResolver.resolve();
 
-        AiUsageStatus usage = usageService.status(tenant, request.providerId(), principal == null ? null : principal.userId());
+        AiUsageStatus usage = usageService.status(request.providerId(), principal == null ? null : principal.userId());
         if (usage.isExceeded()) {
             throw new HttpStatusException(HttpStatus.TOO_MANY_REQUESTS, usage.exceededMessage());
         }
@@ -165,11 +164,11 @@ public class AiAgentController {
             AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
                 .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
 
-            return HttpResponse.ok(stream(
+            return stream(
                 sink -> orchestrator.runTurn(
                     new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal, request.additionalContext()), sink
                 )
-            ));
+            );
         } catch (RuntimeException e) {
             turnGate.release();
             throw e;

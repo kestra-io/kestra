@@ -20,6 +20,7 @@ import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.schema.ConfigurationSchemaCommand;
 import io.kestra.cli.services.EnvironmentProvider;
+import io.kestra.core.models.ServerType;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
@@ -179,42 +180,77 @@ public class Kestra implements Callable<Integer> {
 
         Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
 
+        Map<String, Object> properties = AbstractCommand.class.isAssignableFrom(cls)
+            ? commandProperties(cls, commandLine)
+            : Map.of();
+
+        return contextBuilder(cls, properties)
+            .mainClass(mainClass)
+            .environments(environments)
+            .properties(properties)
+            .build();
+    }
+
+    /**
+     * Resolve the properties a command contributes to its {@link ApplicationContext}: the
+     * {@code --config} file, the command's forced overrides, and the {@code --port} option.
+     */
+    private static Map<String, Object> commandProperties(Class<?> cls, CommandLine commandLine) {
+        Map<String, Object> properties = new HashMap<>();
+
+        // if class have propertiesFromConfig, add configuration files
+        Map<String, Object> configProperties = getPropertiesFromMethod(cls, "propertiesFromConfig", commandLine.getCommandSpec().userObject());
+        if (configProperties != null) {
+            properties.putAll(configProperties);
+        }
+
+        // if class have propertiesOverrides, add force properties for this class
+        Map<String, Object> propertiesOverrides = getPropertiesFromMethod(cls, "propertiesOverrides", null);
+        if (propertiesOverrides != null && isPracticalCommand(commandLine)) {
+            properties.putAll(propertiesOverrides);
+        }
+
+        // custom server configuration
+        commandLine
+            .getParseResult()
+            .matchedArgs()
+            .stream()
+            .filter(argSpec -> ((Field) argSpec.userObject()).getName().equals("serverPort"))
+            .findFirst()
+            .ifPresent(argSpec -> properties.put("micronaut.server.port", argSpec.getValue()));
+
+        return properties;
+    }
+
+    /**
+     * Select the {@link ApplicationContext} flavour a command runs in.
+     */
+    private static ApplicationContextBuilder contextBuilder(Class<?> cls, Map<String, Object> properties) {
         // Pure migration commands run in a minimal context that never registers the other
         // Kestra @Context beans (repositories, server services, the migration startup trigger),
         // so nothing touches the database before the migration is applied explicitly.
-        ApplicationContextBuilder builder = (AbstractMigrationCommand.class.isAssignableFrom(cls)
-            ? new MigrationApplicationContextBuilder()
-            : ApplicationContext.builder())
-            .mainClass(mainClass)
-            .environments(environments);
-
-        if (AbstractCommand.class.isAssignableFrom(cls)) {
-            Map<String, Object> properties = new HashMap<>();
-
-            // if class have propertiesFromConfig, add configuration files
-            Map<String, Object> configProperties = getPropertiesFromMethod(cls, "propertiesFromConfig", commandLine.getCommandSpec().userObject());
-            if (configProperties != null) {
-                properties.putAll(configProperties);
-            }
-
-            // if class have propertiesOverrides, add force properties for this class
-            Map<String, Object> propertiesOverrides = getPropertiesFromMethod(cls, "propertiesOverrides", null);
-            if (propertiesOverrides != null && isPracticalCommand(commandLine)) {
-                properties.putAll(propertiesOverrides);
-            }
-
-            // custom server configuration
-            commandLine
-                .getParseResult()
-                .matchedArgs()
-                .stream()
-                .filter(argSpec -> ((Field) argSpec.userObject()).getName().equals("serverPort"))
-                .findFirst()
-                .ifPresent(argSpec -> properties.put("micronaut.server.port", argSpec.getValue()));
-
-            builder.properties(properties);
+        if (AbstractMigrationCommand.class.isAssignableFrom(cls)) {
+            return new MigrationApplicationContextBuilder();
         }
-        return builder.build();
+
+        // A worker runs in a context without any datasource at all.
+        if (isWorkerServerType(properties)) {
+            return new WorkerApplicationContextBuilder();
+        }
+
+        return ApplicationContext.builder();
+    }
+
+    /**
+     * The server type is read from the resolved command properties rather than from the command
+     * class, so any command forcing {@code kestra.server-type} to {@code WORKER} — including the EE
+     * ones — gets the worker context.
+     */
+    private static boolean isWorkerServerType(Map<String, Object> properties) {
+        return Optional.ofNullable(properties.get("kestra.server-type"))
+            .map(String::valueOf)
+            .filter(ServerType.WORKER.name()::equalsIgnoreCase)
+            .isPresent();
     }
 
     private static void continueOnParsingErrors(CommandLine cmd) {
@@ -254,6 +290,54 @@ public class Kestra implements Callable<Integer> {
         @Override
         protected ApplicationContext newApplicationContext() {
             return new MigrationApplicationContext(this);
+        }
+    }
+
+    /**
+     * Builder that produces a {@link WorkerApplicationContext}, see
+     * {@link MigrationApplicationContextBuilder} for the wiring it inherits.
+     */
+    private static final class WorkerApplicationContextBuilder extends DefaultApplicationContextBuilder {
+        @Override
+        protected ApplicationContext newApplicationContext() {
+            return new WorkerApplicationContext(this);
+        }
+    }
+
+    /**
+     * {@link ApplicationContext} for {@code server worker}: it drops Micronaut's JDBC datasource
+     * beans so a worker never opens a database connection.
+     *
+     * <p>
+     * A worker owns no repository and reaches the rest of the cluster over gRPC, but Micronaut turns
+     * every {@code datasources.<name>} entry into an eagerly-initialized, fail-fast Hikari pool
+     * regardless of {@code kestra.server-type}. Deployments commonly share one configuration across
+     * all server types, so a worker with no route to the database — the normal case for a remote
+     * worker — died at startup on a datasource it never uses.
+     *
+     * <p>
+     * Dropping the bean definitions is the only lever that works for every configuration source:
+     * the datasource names are user-chosen ({@code @EachProperty}), so the per-datasource
+     * {@code datasources.<name>.enabled=false} switch cannot be forced by the command, whose
+     * property overrides are resolved before any configuration is read.
+     */
+    private static final class WorkerApplicationContext extends DefaultApplicationContext {
+
+        /**
+         * Package holding {@code DatasourceConfiguration} and the {@code @Context} factory that
+         * turns it into a pool. Matching on the definition name keeps this free of class loading.
+         */
+        private static final String MICRONAUT_JDBC_PACKAGE = "io.micronaut.configuration.jdbc.";
+
+        WorkerApplicationContext(ApplicationContextConfiguration configuration) {
+            super(configuration);
+        }
+
+        @Override
+        protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
+            return super.resolveBeanDefinitionReferences().stream()
+                .filter(reference -> !reference.getBeanDefinitionName().startsWith(MICRONAUT_JDBC_PACKAGE))
+                .toList();
         }
     }
 

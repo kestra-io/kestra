@@ -16,3 +16,11 @@ export function placeholdersOf(message: string): string[];
 
 /** Every way `message` breaks the placeholder rules, optionally compared against its English source. */
 export function placeholderProblems(key: string, message: string, englishMessage?: string): string[];
+
+export const NON_LATIN_LOCALE_SCRIPTS: Record<string, RegExp>;
+
+export function untranslatedKeys(
+    lang: string,
+    messages: Record<string, string>,
+    englishMessages: Record<string, string>,
+): string[];

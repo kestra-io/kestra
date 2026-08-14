@@ -14,6 +14,7 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 
@@ -244,10 +245,12 @@ class FlowTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getLabels()).hasSize(3);
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-execution-id", triggeringExecution.getId()));
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-namespace", "io.kestra.unittest.upstream"));
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-flow-id", "upstream-flow"));
+        assertThat(LabelService.labelsExcludingSystem(evaluate.get().getLabels()))
+            .containsExactlyInAnyOrder(
+                new Label("triggering-execution-id", triggeringExecution.getId()),
+                new Label("triggering-namespace", "io.kestra.unittest.upstream"),
+                new Label("triggering-flow-id", "upstream-flow")
+            );
     }
 
     @Test
@@ -292,8 +295,8 @@ class FlowTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getLabels()).hasSize(1);
-        assertThat(evaluate.get().getLabels()).contains(new Label("triggering-execution-id", triggeringExecution.getId()));
+        assertThat(LabelService.labelsExcludingSystem(evaluate.get().getLabels()))
+            .containsExactly(new Label("triggering-execution-id", triggeringExecution.getId()));
         assertThat(evaluate.get().getLabels()).noneMatch(label -> label.key().equals("unknown-trigger-field"));
     }
 }

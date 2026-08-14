@@ -99,6 +99,10 @@ class FlowToolSchemaMapperTest {
             .expectedSchema(Map.of("type", "integer", "minimum", 1, "maximum", 10))
             .build(),
         InputConversionTestCase.builder()
+            .input(IonInput.builder().type(Type.ION).build())
+            .expectedSchema(Map.of("type", "object", "additionalProperties", true))
+            .build(),
+        InputConversionTestCase.builder()
             .input(JsonInput.builder().type(Type.JSON).build())
             .expectedSchema(Map.of("type", "object", "additionalProperties", true))
             .build(),

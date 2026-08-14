@@ -135,6 +135,7 @@ public class FlowToolSchemaMapper {
             case FileInput i -> toFileType((FileInput) input, baseSchema);
             case FloatInput i -> toFloatType((FloatInput) input, baseSchema);
             case IntInput i -> toIntType((IntInput) input, baseSchema);
+            case IonInput i -> toObjectType(input, baseSchema);
             case JsonInput i -> toObjectType(input, baseSchema);
             case MultiselectInput i -> toMultiselectType((MultiselectInput) input, baseSchema);
             case SecretInput i -> toSecretType((SecretInput) input, baseSchema);
@@ -340,7 +341,7 @@ public class FlowToolSchemaMapper {
     private static String getJsonSchemaType(Type type) {
         return switch (type) {
             case STRING, SECRET, EMAIL, DATE, DURATION, TIME, FILE, URI, DATETIME -> "string";
-            case JSON, YAML -> "object";
+            case JSON, ION, YAML -> "object";
             case SELECT -> "string";
             case INT -> "integer";
             case FLOAT -> "number";

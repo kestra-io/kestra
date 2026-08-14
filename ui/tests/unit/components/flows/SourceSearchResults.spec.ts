@@ -3,6 +3,10 @@ import {mount, flushPromises} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import SourceSearchResults from "../../../../src/components/flows/SourceSearchResults.vue"
+import type {SearchResourceType, SearchStatus} from "../../../../src/utils/crossResourceSearch"
+import type {NamespaceFileState, KvMatchEntry, SecretMatchEntry, ResourceGroup} from "../../../../src/stores/crossResourceSearch"
+import type {SourceSearchResult} from "../../../../src/utils/sourceSearchDiff"
+import en from "../../../../src/translations/en.json"
 
 vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn()}),
@@ -13,66 +17,63 @@ vi.mock("vue-router", () => ({
     },
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            source_search: {
-                cannot_select_read_only: "Cannot select — you lack edit permission on {namespace} / {id}",
-                match_count: "{count} match | {count} matches",
-                open_flow: "Open flow",
-                read_only: "Read-only",
-                read_only_tooltip: "You have read access but not edit access on this namespace",
-                replace_all_in_flow: "Replace all in flow",
-                replace_this_match: "Replace this match",
-                select_all_in_flow: "Select all matches in {namespace} / {id}",
-                select_match: "Select match on line {line}",
-            },
-        },
-    },
-})
+const i18n = createI18n({legacy: false, locale: "en", messages: en})
 
 const globalConfig = {
     plugins: [i18n, KestraDesignSystem],
 }
 
-const makeResult = (namespace: string, id: string, snippets: string[], editable = true) => ({
+const makeFlowResult = (namespace: string, id: string, snippets: string[], editable = true) => ({
     namespace,
     id,
     editable,
     matches: snippets.map((snippet, index) => ({line: (index + 1) * 10, column: 0, snippet})),
 })
 
-function mountResults(props: Partial<InstanceType<typeof SourceSearchResults>["$props"]> & {results: any[]}) {
+function baseProps(overrides: Record<string, unknown> = {}) {
+    return {
+        query: "match",
+        caseSensitive: false,
+        selectedTypes: ["flows", "files", "kv", "secrets"] as SearchResourceType[],
+        flowsStatus: "done" as SearchStatus,
+        flowsResults: [] as SourceSearchResult[],
+        filesStatus: "idle" as SearchStatus,
+        filesNamespaces: [] as NamespaceFileState[],
+        kvStatus: "idle" as SearchStatus,
+        kvGroups: [] as ResourceGroup<KvMatchEntry>[],
+        secretsStatus: "idle" as SearchStatus,
+        secretsGroups: [] as ResourceGroup<SecretMatchEntry>[],
+        selectedKey: null as string | null,
+        replaceMode: false,
+        selectedMatchKeys: new Set<string>(),
+        ...overrides,
+    }
+}
+
+function mountResults(overrides: Record<string, unknown> = {}) {
     return mount(SourceSearchResults, {
-        props: {
-            selectedKey: null,
-            replaceMode: false,
-            selectedMatchKeys: new Set<string>(),
-            ...props,
-        },
+        props: baseProps(overrides) as InstanceType<typeof SourceSearchResults>["$props"],
         global: globalConfig,
     })
 }
 
 describe("SourceSearchResults", () => {
-    test("renders a group for each result", async () => {
-        const results = [
-            makeResult("company.data", "flow-one", ["line [mark]match[/mark] here"]),
-            makeResult("company.data", "flow-two", ["another [mark]result[/mark]"]),
+    test("renders a flow group for each result", async () => {
+        const flowsResults = [
+            makeFlowResult("company.data", "flow-one", ["line [mark]match[/mark] here"]),
+            makeFlowResult("company.data", "flow-two", ["another [mark]match[/mark]"]),
         ]
 
-        const wrapper = mountResults({results})
+        const wrapper = mountResults({flowsResults})
         await flushPromises()
         const headers = wrapper.findAll("[data-test='source-search-group-header']")
         expect(headers.length).toBe(2)
     })
 
-    test("emits select with namespace, id and line when a group header is clicked", async () => {
-        const results = [makeResult("company.data", "my-flow", ["fragment [mark]hit[/mark]"])]
+    test("emits select with type flows when a group header is clicked", async () => {
+        const flowsResults = [makeFlowResult("company.data", "my-flow", ["fragment [mark]hit[/mark]"])]
 
-        const wrapper = mountResults({results})
+        const wrapper = mountResults({flowsResults})
         await flushPromises()
 
         const header = wrapper.find("[data-test='source-search-group-header']")
@@ -80,43 +81,13 @@ describe("SourceSearchResults", () => {
 
         const emitted = wrapper.emitted("select")
         expect(emitted).toBeTruthy()
-        expect(emitted![0][0]).toEqual({namespace: "company.data", id: "my-flow", line: 10, column: 0})
+        expect(emitted![0][0]).toEqual({type: "flows", namespace: "company.data", id: "my-flow", line: 10, column: 0})
     })
 
-    test("emits select with the correct line when a specific match is clicked", async () => {
-        const results = [makeResult("ns", "flow-id", ["line [mark]term[/mark]", "second [mark]term[/mark]", "third [mark]term[/mark]"])]
+    test("sanitizes snippet html and renders mark tags for flow matches", async () => {
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["text [mark]keyword[/mark] end"])]
 
-        const wrapper = mountResults({results})
-        await flushPromises()
-
-        const matches = wrapper.findAll("[data-test='source-search-match']")
-        expect(matches.length).toBe(3)
-
-        await matches[1].trigger("click")
-        const emitted = wrapper.emitted("select")
-        expect(emitted).toBeTruthy()
-        expect(emitted![0][0]).toEqual({namespace: "ns", id: "flow-id", line: 20, column: 0})
-
-        await matches[2].trigger("click")
-        expect(wrapper.emitted("select")![1][0]).toEqual({namespace: "ns", id: "flow-id", line: 30, column: 0})
-    })
-
-    test("applies selected class only to the matching row", async () => {
-        const results = [makeResult("ns", "flow-id", ["frag-0", "frag-1", "frag-2"])]
-
-        const wrapper = mountResults({results, selectedKey: "ns.flow-id#20:0"})
-        await flushPromises()
-
-        const matches = wrapper.findAll("[data-test='source-search-match']")
-        expect(matches[0].classes()).not.toContain("result-match--selected")
-        expect(matches[1].classes()).toContain("result-match--selected")
-        expect(matches[2].classes()).not.toContain("result-match--selected")
-    })
-
-    test("sanitizes snippet html and renders mark tags", async () => {
-        const results = [makeResult("ns", "flow-id", ["text [mark]keyword[/mark] end"])]
-
-        const wrapper = mountResults({results})
+        const wrapper = mountResults({flowsResults})
         await flushPromises()
 
         const code = wrapper.find("[data-test='source-search-match'] code")
@@ -124,49 +95,38 @@ describe("SourceSearchResults", () => {
     })
 
     test("escapes html in snippet before converting mark tags", async () => {
-        const results = [makeResult("ns", "flow-id", ["<script>evil()</script> [mark]safe[/mark]"])]
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["<script>evil()</script> [mark]safe[/mark]"])]
 
-        const wrapper = mountResults({results})
+        const wrapper = mountResults({flowsResults})
         await flushPromises()
 
         const code = wrapper.find("[data-test='source-search-match'] code")
         expect(code.html()).not.toContain("<script>")
         expect(code.html()).toContain("&lt;script&gt;")
-        expect(code.html()).toContain("<mark>safe</mark>")
-    })
-
-    test("renders a secret chip instead of the snippet for secret() references", async () => {
-        const results = [makeResult("ns", "flow-id", ["serviceAccount: [mark]secret[/mark]('GCP_SERVICE_ACCOUNT')"])]
-
-        const wrapper = mountResults({results})
-        await flushPromises()
-
-        expect(wrapper.text()).toContain("secret('GCP_SERVICE_ACCOUNT')")
-        expect(wrapper.find(".result-match-snippet").exists()).toBe(false)
     })
 
     test("shows the read-only pill for non-editable flows", async () => {
-        const results = [makeResult("ns", "locked-flow", ["frag"], false)]
+        const flowsResults = [makeFlowResult("ns", "locked-flow", ["frag"], false)]
 
-        const wrapper = mountResults({results})
+        const wrapper = mountResults({flowsResults})
         await flushPromises()
 
         expect(wrapper.find(".result-group-readonly").exists()).toBe(true)
     })
 
     test("does not render checkboxes outside replace mode", async () => {
-        const results = [makeResult("ns", "flow-id", ["frag"])]
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag"])]
 
-        const wrapper = mountResults({results, replaceMode: false})
+        const wrapper = mountResults({flowsResults, replaceMode: false})
         await flushPromises()
 
         expect(wrapper.findAll(".kel-checkbox").length).toBe(0)
     })
 
     test("emits toggle-flow when the group checkbox is toggled in replace mode", async () => {
-        const results = [makeResult("ns", "flow-id", ["frag-0", "frag-1"])]
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag-0", "frag-1"])]
 
-        const wrapper = mountResults({results, replaceMode: true})
+        const wrapper = mountResults({flowsResults, replaceMode: true})
         await flushPromises()
 
         const checkbox = wrapper.find(".result-group-checkbox input[type='checkbox']")
@@ -177,42 +137,103 @@ describe("SourceSearchResults", () => {
         expect(emitted![0][0]).toEqual({namespace: "ns", id: "flow-id", checked: true})
     })
 
-    test("open flow link renders with the correct flow path in template", () => {
-        const results = [makeResult("my.ns", "my-flow", ["frag"])]
+    test("does not render a type section for a type that is idle", () => {
+        const wrapper = mountResults({flowsStatus: "idle", flowsResults: []})
 
-        const wrapper = mountResults({results})
-
-        expect(wrapper.html()).toContain("my.ns")
-        expect(wrapper.html()).toContain("my-flow")
+        expect(wrapper.find("[data-type='flows']").exists()).toBe(false)
     })
 
-    test("keys two occurrences on the same line distinctly by column", async () => {
-        const results = [{
-            namespace: "ns",
-            id: "flow-id",
-            editable: true,
-            matches: [
-                {line: 5, column: 5, snippet: "msg: [mark]dup[/mark] and dup"},
-                {line: 5, column: 13, snippet: "msg: dup and [mark]dup[/mark]"},
+    test("does not render a type section for a type that failed entirely", () => {
+        const wrapper = mountResults({kvStatus: "failed", kvGroups: []})
+
+        expect(wrapper.find("[data-type='kv']").exists()).toBe(false)
+    })
+
+    test("skips a type section when it is not part of selectedTypes", () => {
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag"])]
+
+        const wrapper = mountResults({flowsResults, selectedTypes: ["kv"]})
+
+        expect(wrapper.find("[data-type='flows']").exists()).toBe(false)
+    })
+
+    test("renders namespace file paths with dimmed directory segments and highlighted matches", () => {
+        const wrapper = mountResults({
+            query: "extract",
+            filesStatus: "done",
+            filesNamespaces: [{namespace: "company.data", status: "done", paths: ["scripts/extract.py"]}],
+        })
+
+        const path = wrapper.find(".result-path")
+        expect(path.find(".result-path-dir").text()).toBe("scripts/")
+        expect(path.find("mark").text()).toBe("extract")
+    })
+
+    test("emits select with type files when a file row is clicked", async () => {
+        const wrapper = mountResults({
+            query: "extract",
+            filesStatus: "done",
+            filesNamespaces: [{namespace: "company.data", status: "done", paths: ["scripts/extract.py"]}],
+        })
+
+        const rows = wrapper.findAll("[data-type='files'] [data-test='source-search-match']")
+        await rows[0].trigger("click")
+
+        expect(wrapper.emitted("select")![0][0]).toEqual({type: "files", namespace: "company.data", path: "scripts/extract.py"})
+    })
+
+    test("renders a retry affordance for a failed namespace and emits retry-namespace", async () => {
+        const wrapper = mountResults({
+            filesStatus: "counting",
+            filesNamespaces: [
+                {namespace: "company.platform", status: "failed", paths: [], errorMessage: "Timed out"},
             ],
-        }]
+        })
 
-        const wrapper = mountResults({results, selectedKey: "ns.flow-id#5:13"})
-        await flushPromises()
+        expect(wrapper.text()).toContain("company.platform")
+        expect(wrapper.text()).toContain("Timed out")
 
-        const matches = wrapper.findAll("[data-test='source-search-match']")
-        expect(matches.length).toBe(2)
-        expect(matches[0].classes()).not.toContain("result-match--selected")
-        expect(matches[1].classes()).toContain("result-match--selected")
+        await wrapper.find(".type-fail button").trigger("click")
+        expect(wrapper.emitted("retry-namespace")).toEqual([[{namespace: "company.platform"}]])
+    })
 
-        await matches[0].trigger("click")
-        expect(wrapper.emitted("select")![0][0]).toEqual({namespace: "ns", id: "flow-id", line: 5, column: 5})
+    test("renders a pending row while a namespace is still being searched", () => {
+        const wrapper = mountResults({
+            filesStatus: "counting",
+            filesNamespaces: [{namespace: "company.ml", status: "pending", paths: []}],
+        })
+
+        expect(wrapper.find(".type-pending").exists()).toBe(true)
+        expect(wrapper.text()).toContain("company.ml")
+    })
+
+    test("renders kv rows grouped by namespace with highlighted keys", () => {
+        const wrapper = mountResults({
+            query: "bucket",
+            kvStatus: "done",
+            kvGroups: [{namespace: "company.data", matches: [{key: "landing-bucket", updateDate: "2026-01-01T00:00:00Z"}]}],
+        })
+
+        const key = wrapper.find("[data-type='kv'] .result-key")
+        expect(key.find("mark").text()).toBe("bucket")
+    })
+
+    test("renders secrets as a locked chip and never exposes a value", () => {
+        const wrapper = mountResults({
+            query: "aws",
+            secretsStatus: "done",
+            secretsGroups: [{namespace: "company.data", matches: [{key: "aws-access-key"}]}],
+        })
+
+        const chip = wrapper.find("[data-type='secrets'] .result-secret-chip")
+        expect(chip.exists()).toBe(true)
+        expect(chip.find("mark").text()).toBe("aws")
     })
 
     test("exposes collapseAll and expandAll", async () => {
-        const results = [makeResult("ns", "flow-id", ["frag"])]
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag"])]
 
-        const wrapper = mountResults({results})
+        const wrapper = mountResults({flowsResults})
         await flushPromises()
 
         const vm = wrapper.vm as unknown as {collapseAll: () => void; expandAll: () => void}

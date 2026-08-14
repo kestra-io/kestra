@@ -18,10 +18,13 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.FlowMetaStores;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
@@ -49,7 +52,6 @@ import static io.kestra.core.models.Label.CORRELATION_ID;
 public class WebhookService {
     public static final String TEST_EVENT_HEADER = "X-Kestra-Test-Event";
 
-    private static final String FROM_TRIGGER = "trigger";
     private static final String FROM_TEST_EVENT = "testEvent";
 
     @Inject
@@ -81,6 +83,9 @@ public class WebhookService {
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
+
+    @Inject
+    private FlowMetaStoreInterface flowMetaStore;
 
     /**
      * Parse query parameters from the webhook request URI.
@@ -122,6 +127,9 @@ public class WebhookService {
      * @throws WebhookInputRenderException if the trigger inputs cannot be rendered or processed
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
+        // the trigger is matched on the raw flow, but the execution is built from the flow the executor will run
+        FlowInterface resolvedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, context.flow());
+
         Execution execution = Execution.builder()
             // The caller mints the id before reading the request so that files stored for the call already live
             // under this execution; it is only null for a context built without one.
@@ -131,18 +139,19 @@ public class WebhookService {
             .flowId(context.flow().getId())
             .flowRevision(context.flow().getRevision())
             .inputs(trigger.getInputs())
-            .variables(context.flow().getVariables())
+            .variables(resolvedFlow.getVariables())
             .state(new State())
             .trigger(ExecutionTrigger.of(trigger, output))
             .build();
 
         var runContext = runContext(flow, execution);
 
-        // Add labels
+        // Add labels, flow first so the trigger's own override it, as Execution#newExecution does elsewhere
         List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : FROM_TRIGGER));
+        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
+        labels.addAll(LabelService.labelsExcludingSystem(resolvedFlow.getLabels()));
         // The trigger's own labels, as the other trigger types get them through TriggerService
-        labels.addAll(LabelService.fromTrigger(runContext, flow, trigger, Map.of()));
+        labels.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
         if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
             labels.add(new Label(CORRELATION_ID, execution.getId()));
         }

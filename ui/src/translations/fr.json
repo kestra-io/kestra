@@ -1798,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "dashboards": {
       "labels": {
-        "singular": "Tableau de bord",
         "plural": "Tableaux de bord"
       },
       "default": "Tableau de bord par défaut",
-      "switch": "Changer de tableau de bord",
-      "preview": "Aperçu du Dashboard",
       "empty": "Il n'y a aucun résultat à afficher.",
-      "creation": {
-        "label": "Créer un tableau de bord",
-        "confirmation": "Le tableau de bord <code>{title}</code> est créé."
-      },
       "edition": {
         "label": "Modifier le tableau de bord",
-        "confirmation": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
-        "chart": "Modifier ce graphique",
-        "id readonly": "La propriété `id` ne peut pas être modifiée — elle est maintenant définie sur ses valeurs initiales. Si vous souhaitez la changer, vous pouvez créer un nouveau tableau de bord et supprimer l'ancien."
-      },
-      "deletion": {
-        "confirmation": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?"
+        "chart": "Modifier ce graphique"
       },
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",
       "viewAll": "Tout voir",
-      "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
       "export": "Exporter",
       "exportTo": {
         "csv": "Exporter vers CSV",

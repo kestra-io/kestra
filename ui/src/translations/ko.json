@@ -1798,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {
       "labels": {
-        "singular": "대시보드",
         "plural": "대시보드"
       },
       "default": "기본 대시보드",
-      "switch": "대시보드 전환",
-      "preview": "미리보기 대시보드",
       "empty": "결과가 표시되지 않습니다.",
-      "creation": {
-        "label": "대시보드 생성",
-        "confirmation": "대시보드 <code>{title}</code>이(가) 생성되었습니다."
-      },
       "edition": {
         "label": "대시보드 편집",
-        "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
-        "chart": "이 차트 편집",
-        "id readonly": "`id` 속성은 변경할 수 없습니다 — 현재 초기 값으로 설정되어 있습니다. 변경하려면 새 대시보드를 생성하고 기존 것을 제거할 수 있습니다."
-      },
-      "deletion": {
-        "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
+        "chart": "이 차트 편집"
       },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "others": "기타",
       "viewAll": "전체 보기",
-      "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
       "export": "내보내기",
       "exportTo": {
         "csv": "CSV로 내보내기",

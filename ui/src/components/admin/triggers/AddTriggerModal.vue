@@ -127,7 +127,7 @@
     import {computed, provide, ref, watch} from "vue"
     import {useRouter} from "vue-router"
 
-    import {KsEditor} from "@kestra-io/design-system"
+    import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -266,7 +266,7 @@
     }
 
     const copySource = async () => {
-        await navigator.clipboard.writeText(`triggers:\n${sourceYaml.value}\n`)
+        await copyToClipboard(`triggers:\n${sourceYaml.value}\n`)
         copied.value = true
         setTimeout(() => copied.value = false, COPY_FEEDBACK_MS)
     }

@@ -54,7 +54,8 @@ public class AiServiceManager {
         @Nullable KestraDocsContextTool kestraDocsContextTool,
         ExpressionContextService expressionContextService,
         FlowParsingService flowParsingService,
-        AiFreeTierConfiguration freeTierConfiguration) {
+        AiFreeTierConfiguration freeTierConfiguration,
+        @Nullable AiFreeTierLimitProvider freeTierLimitProvider) {
         this.providersConfiguration = providersConfiguration;
         this.expressionContextService = expressionContextService;
         this.flowParsingService = flowParsingService;
@@ -119,8 +120,8 @@ public class AiServiceManager {
         // misconfiguration. A declared provider is an expressed intent, so it is respected even when broken.
         if (configs.isEmpty()) {
             registerFreeTier(
-                freeTierConfiguration, pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService,
-                posthogService, listeners, expressionContextService, flowParsingService
+                freeTierConfiguration, freeTierLimitProvider, pluginRegistry, jsonSchemaGenerator, versionProvider,
+                instanceService, posthogService, listeners, expressionContextService, flowParsingService
             );
         } else if (!hasConfiguredProvider) {
             log.warn(
@@ -142,6 +143,7 @@ public class AiServiceManager {
      */
     private void registerFreeTier(
         AiFreeTierConfiguration freeTier,
+        @Nullable AiFreeTierLimitProvider limitProvider,
         io.kestra.core.plugins.PluginRegistry pluginRegistry,
         io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
         VersionProvider versionProvider,
@@ -168,7 +170,8 @@ public class AiServiceManager {
             null,
             null,
             null,
-            freeTier.getTimeout()
+            freeTier.getTimeout(),
+            null
         );
 
         aiServices.put(
@@ -176,7 +179,7 @@ public class AiServiceManager {
             new FreeTierGeminiAiService(
                 pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService,
                 this.namespaceContextTool, AiFreeTierConfiguration.DISPLAY_NAME, listeners, configuration,
-                expressionContextService, flowParsingService
+                expressionContextService, flowParsingService, limitProvider
             )
         );
         defaultProviderId = AiFreeTierConfiguration.PROVIDER_ID;

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -127,6 +128,43 @@ class AiFreeTierTest {
     }
 
     @Test
+    void shouldReadTheHostedCeilingFromTheRelayRatherThanTheSynthesizedConfiguration() {
+        // Given an operator ceiling on the free-tier configuration, and a relay reporting a different one
+        AiFreeTierConfiguration configuration = enabled();
+        configuration.setUsageLimit(Map.of("enabled", true, "maxWeight", 1_000_000));
+
+        AiFreeTierLimitProvider limitProvider = mock(AiFreeTierLimitProvider.class);
+        when(limitProvider.limit()).thenReturn(new AiUsageLimitConfiguration(
+            true, 1.0, 0.1, 6.0, 250_000, 0, 10, Duration.ofHours(24)
+        ));
+
+        // When the hosted provider is registered
+        AiServiceManager manager = buildManager(null, configuration, limitProvider);
+
+        // Then the relay's figure is what the provider reports, not the one copied onto the configuration the
+        // manager synthesizes for it. Two routes to one ceiling is how the figure enforced mid-turn stops
+        // matching the figure the client was shown; reconciling an operator's own cap against the allowance is
+        // the limit provider's job, and is asserted where that decision lives.
+        assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit().maxWeight())
+            .isEqualTo(250_000);
+    }
+
+    @Test
+    void shouldClaimNoHostedCeilingWhenTheRelayHasNotBeenReadAtAll() {
+        // Given a configured ceiling but nothing able to read the relay
+        AiFreeTierConfiguration configuration = enabled();
+        configuration.setUsageLimit(Map.of("enabled", true, "maxWeight", 1_000_000));
+
+        // When the hosted provider is registered without one
+        AiServiceManager manager = buildManager(null, configuration);
+
+        // Then no ceiling is claimed rather than the synthesized configuration's being used as a second source.
+        // Failing open is right here: the relay enforces its own budget and answers 429 when it is spent, so the
+        // cost of not knowing the ceiling is a surprising refusal, against refusing turns the relay would serve.
+        assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit().enabled()).isFalse();
+    }
+
+    @Test
     void shouldSendTheInstanceIdentityAndNoUserWhenThereIsNoPrincipal() {
         // Given the hosted provider on an install with no user identity, which is every OSS install
         when(instanceService.fetch()).thenReturn("instance-abc");
@@ -181,6 +219,14 @@ class AiFreeTierTest {
     }
 
     private AiServiceManager buildManager(List<AiProviderConfiguration> providers, AiFreeTierConfiguration freeTier) {
+        return buildManager(providers, freeTier, null);
+    }
+
+    private AiServiceManager buildManager(
+        List<AiProviderConfiguration> providers,
+        AiFreeTierConfiguration freeTier,
+        AiFreeTierLimitProvider limitProvider
+    ) {
         when(providersConfiguration.providers()).thenReturn(providers);
         PropertyPlaceholderResolver placeholderResolver = mock(PropertyPlaceholderResolver.class);
         lenient().when(environment.getPlaceholderResolver()).thenReturn(placeholderResolver);
@@ -200,7 +246,8 @@ class AiFreeTierTest {
             kestraDocsContextTool,
             expressionContextService,
             flowParsingService,
-            freeTier
+            freeTier,
+            limitProvider
         );
     }
 }

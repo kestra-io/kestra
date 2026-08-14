@@ -27,4 +27,14 @@ public interface AiConfiguration {
     default Map<String, String> customHeaders() {
         return Map.of();
     }
+
+    /**
+     * This provider's spend ceiling, if it declares one.
+     *
+     * <p>A default rather than an abstract method so the ten existing provider configurations need no change:
+     * a provider that says nothing about limits has its usage recorded and nothing shown or enforced.
+     */
+    default AiUsageLimitConfiguration usageLimit() {
+        return AiUsageLimitConfiguration.DISABLED;
+    }
 }

@@ -30,6 +30,8 @@ import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.AiUsageService;
+import io.kestra.webserver.services.ai.AiUsageStatus;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
@@ -74,6 +76,7 @@ public class AgentOrchestrator {
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
     private final SystemPromptResolver systemPromptResolver;
+    private final AiUsageService usageService;
     private final Duration modelCallTimeout;
     private final int maxContextTurns;
     private final int maxSequentialToolsInvocations;
@@ -85,12 +88,14 @@ public class AgentOrchestrator {
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
         final SystemPromptResolver systemPromptResolver,
+        final AiUsageService usageService,
         final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
         this.systemPromptResolver = systemPromptResolver;
+        this.usageService = usageService;
         this.modelCallTimeout = configuration.modelCallTimeout();
         this.maxContextTurns = configuration.maxContextTurns();
         this.maxSequentialToolsInvocations = configuration.maxSequentialToolsInvocations();
@@ -280,12 +285,22 @@ public class AgentOrchestrator {
                 return;
             }
 
+            AiUsageStatus usage = usageService.status(ctx.tenant(), ctx.providerId(), userId(ctx));
+            if (usage.isExceeded()) {
+                stopForUsageLimit(ctx, sink, usage);
+                return;
+            }
+
             ChatRequest request = ChatRequest.builder()
                 .messages(ctx.messages())
                 .toolSpecifications(ctx.profile().toolSpecifications())
                 .build();
 
             ChatResponse response = callModel(ctx.model(), request, sink);
+            if (response != null) {
+                recordUsage(ctx, response);
+            }
+
             if (sink.isCancelled() || response == null) {
                 abortCancelled(ctx);
                 return;
@@ -554,6 +569,38 @@ public class AgentOrchestrator {
         if (handle != null && !handle.isCancelled()) {
             handle.cancel();
         }
+    }
+
+    /**
+     * Books what the call just cost, before the turn can be abandoned.
+     *
+     * <p>Deliberately ahead of the cancellation check: a user closing the tab does not un-bill the tokens the
+     * provider has already generated, and a cancel path that skipped this would make abandoning turns the cheapest
+     * way to use the model.
+     */
+    private void recordUsage(final AgentLoopContext ctx, final ChatResponse response) {
+        String model = response.metadata() == null ? null : response.metadata().modelName();
+        usageService.record(ctx.tenant(), ctx.providerId(), userId(ctx), model, response.tokenUsage());
+    }
+
+    /**
+     * Ends a turn gracefully once the provider's spend ceiling is reached.
+     *
+     * <p>Stopped rather than failed, like the tool-step cap: the request was valid and the work done so far stands,
+     * so the thread stays usable and the note explains what happened in terms a user can act on.
+     */
+    private void stopForUsageLimit(final AgentLoopContext ctx, final TurnEventSink sink, final AiUsageStatus usage) {
+        log.warn("Copilot turn for thread {} stopped: provider '{}' has reached its usage limit", ctx.thread().uid(), ctx.providerId());
+        String message = usage.exceededMessage();
+        threadManager.appendAssistantText(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), message);
+        sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(message));
+        finishTurn(ctx);
+        done(sink, AgentThreadStatus.IDLE);
+    }
+
+    @Nullable
+    private static String userId(final AgentLoopContext ctx) {
+        return ctx.principal() == null ? null : ctx.principal().userId();
     }
 
     private void finishTurn(final AgentLoopContext ctx) {

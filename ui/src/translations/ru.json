@@ -521,7 +521,9 @@
       "detail": {
         "category": "Тип категории",
         "links": "Ссылка и ресурсы",
-        "openInEditor": "Открыть в Edit Flow"
+        "openInEditor": "Открыть в Edit Flow",
+        "openInAppsEditor": "Открыть в редакторе Apps",
+        "openInDashboardEditor": "Открыть в редакторе Dashboard"
       },
       "missingPlugins": {
         "title": "Отсутствующие plugins",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Создавайте пользовательские приложения с Kestra",
-        "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения."
+        "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения.",
+        "blueprints": {
+          "title": "Начните с blueprint приложения.",
+          "message": "Готовые blueprints приложений для распространенных сценариев использования, таких как формы, утверждения и отправка данных. С Kestra Enterprise Edition вы можете использовать любой blueprint в качестве отправной точки и адаптировать его для создания пользовательских UI поверх ваших workflows."
+        }
       },
       "tests": {
         "label": "Тесты",
@@ -1140,6 +1146,15 @@
       "promote": {
         "title": "Продвижение flow между средами",
         "message": "Kestra Enterprise Edition позволяет продвигать flow из одной среды в другую — например, из dev в staging, а затем в production — непосредственно из UI, без необходимости использования Git или CI/CD-пайплайнов. Просматривайте diff того, что именно изменится перед продвижением, защищайте конфиденциальные цели с помощью подтверждающего шлюза, мгновенно выявляйте отклонения и ведите полную историю того, кто, что, куда и когда продвигал."
+      },
+      "dashboards": {
+        "header": "Пользовательские панели мониторинга",
+        "title": "Создавайте настраиваемые панели мониторинга, адаптированные для вашей команды.",
+        "message": "Пользовательские дашборды в Kestra Enterprise Edition позволяют создавать и делиться собственными представлениями на основе исполнений, logs и метрик, комбинируя временные ряды, KPI, таблицы и Markdown-графики, с помощью code и no-code редактора, предварительного просмотра в реальном времени и дашбордов по умолчанию для каждого tenant.",
+        "blueprints": {
+          "title": "Начните с blueprint дашборда.",
+          "message": "Блюпринты дашбордов — это готовые настраиваемые дашборды для общих потребностей мониторинга. В Kestra Enterprise Edition вы можете использовать любой blueprint в качестве отправной точки и адаптировать его графики, KPI и таблицы для вашей команды в редакторе дашбордов."
+        }
       },
       "IAM": {
         "title": "Управление пользователями через IAM с SSO, SCIM и RBAC",
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "dashboards": {
       "labels": {
-        "singular": "Панель управления",
         "plural": "Панели управления"
       },
       "default": "Панель по умолчанию",
-      "switch": "Переключить Панель управления",
-      "preview": "Предварительный просмотр Dashboard",
       "empty": "Нет результатов для отображения.",
-      "creation": {
-        "label": "Создать Dashboard",
-        "confirmation": "Панель <code>{title}</code> создана."
-      },
       "edition": {
         "label": "Редактировать Dashboard",
-        "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
-        "chart": "Редактировать этот график",
-        "id readonly": "Свойство `id` не может быть изменено — оно установлено на начальные значения. Если вы хотите его изменить, вы можете создать новую панель и удалить старую."
-      },
-      "deletion": {
-        "confirmation": "Вы уверены, что хотите удалить панель <code>{title}</code>?"
+        "chart": "Редактировать этот график"
       },
       "no_description": "Нет описания",
       "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "others": "Другие",
       "viewAll": "Показать все",
-      "chart_preview": "Нажмите на исходный код диаграммы, чтобы увидеть его предварительный просмотр",
       "export": "Экспорт",
       "exportTo": {
         "csv": "Экспорт в CSV",
@@ -2190,28 +2192,56 @@
     "source_search": {
       "cannot_select_read_only": "Невозможно выбрать — у вас нет разрешения на редактирование {namespace} / {id}",
       "collapse_all": "Свернуть все",
+      "confirm_bar_excluded": "Ещё {count} совпадение не будет изменено. | Ещё {count} совпадения не будут изменены. | Ещё {count} совпадений не будет изменено.",
       "confirm_bar_message": "Заменить {matches} в {flows} редактируемых flow. {skipped} flow, доступных только для чтения, будут пропущены.",
+      "count_flows": "{count} flow | {count} flows | {count} flows",
+      "count_keys": "{count} ключ | {count} ключа | {count} ключей",
+      "count_namespaces": "{count} namespace | {count} namespace | {count} namespace",
+      "count_paths": "{count} путь | {count} пути | {count} путей",
+      "count_resources": "{count} ресурс | {count} ресурса",
+      "count_types": "{count} тип | {count} типа",
       "diff_preview_aria": "Предварительный просмотр изменений",
       "diff_preview_label": "предварительный просмотр diff · еще не применено",
-      "empty_description": "Искать в YAML-источнике каждого flow тип плагина, свойство или любое определение. Включите .* для регулярных выражений, Aa для учета регистра и откройте «Заменить», чтобы изменить совпадения на месте — с учетом ваших разрешений.",
-      "empty_title": "Найти, где что-либо используется в ваших flows",
+      "empty_description": "Flows ищутся по их исходному коду. Файлы namespace сравниваются по пути, а KV и secrets — по имени ключа. Выберите типы выше, затем введите запрос.",
+      "empty_title": "Найдите значение среди flows, файлов и ключей",
       "error_title": "Неверное регулярное выражение",
       "examples_aria": "Примеры запросов",
+      "exclusion_flows_readonly": "Flows — {count} совпадение только для чтения: нужно разрешение FLOW · UPDATE. | Flows — {count} совпадения только для чтения: нужно разрешение FLOW · UPDATE. | Flows — {count} совпадений только для чтения: нужно разрешение FLOW · UPDATE.",
+      "exclusion_search_only": "{type} — {count} совпадение: только поиск, заменить нельзя. | {type} — {count} совпадения: только поиск, заменить нельзя. | {type} — {count} совпадений: только поиск, заменить нельзя.",
+      "exclusion_title": "{count} совпадение исключено из «Заменить все» | {count} совпадения исключены из «Заменить все» | {count} совпадений исключено из «Заменить все»",
       "expand_all": "Развернуть все",
+      "file_match_notice": "Путь файла совпал. Содержимое файла не ищется — откройте файл, чтобы искать внутри него.",
+      "files_progress_banner_failed": "Файлы namespace ищутся по одному namespace за раз. Готово {done} из {total}, {failed} с ошибкой. Итог ещё изменится.",
+      "files_progress_banner_ok": "Файлы namespace ищутся по одному namespace за раз. Готово {done} из {total}. Итог ещё изменится.",
+      "flow_only_toggle_hint": "Учёт регистра, целое слово и регулярное выражение применяются только к flows. Пути файлов и ключи всегда сравниваются как обычный текст.",
+      "flow_section": "Раздел flow",
       "flow_update_permission": "flow · ОБНОВЛЕНИЕ",
       "hide_replace": "Скрыть замену",
+      "key_only_hint": "Ищет только имена ключей. Заменить нельзя.",
+      "kv_match_notice": "Было найдено только имя ключа. Откройте KV Store, чтобы прочитать значение.",
       "line_label": "строка {line}",
       "match_case": "Учитывать регистр",
       "match_count": "{count} совпадение | {count} совпадения",
       "match_nav": "{current} из {total}",
       "match_nav_empty": "0 из 0",
       "match_whole_word": "Совпадение по слову целиком",
+      "meta_created": "Создано",
+      "meta_expires": "Истекает",
+      "meta_never": "Никогда",
+      "meta_updated": "Обновлено",
+      "namespace_search_failed": "Не удалось выполнить поиск в {namespace}",
+      "namespace_search_failed_detail": "Запрос не выполнен. Остальные namespace не затронуты.",
       "next_match": "Следующее совпадение",
       "no_results_description": "Попробуйте расширить namespace, переключить область видимости обратно на All source или отключить Match case и Match whole word.",
+      "no_results_hidden_type": "Найдено {count} совпадение в {type}, который вы не выбрали. | Найдено {count} совпадения в {type}, который вы не выбрали. | Найдено {count} совпадений в {type}, который вы не выбрали.",
+      "no_results_in_types": "Нет совпадений для «{query}» в {types}",
       "no_results_title": "Нет совпадений для «{query}»",
       "open_flow": "Открыть flow",
       "open_in_editor": "Открыть в редакторе",
+      "open_in_kv": "Открыть в KV Store",
+      "open_in_secrets": "Открыть в secrets",
       "options_aria": "Параметры поиска",
+      "path_only_hint": "Ищет только путь файла, а не его содержимое. Заменить нельзя.",
       "preview_empty": "Выберите результат для предпросмотра. Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
       "preview_error": "Не удалось загрузить исходный код flow",
       "previous_match": "Предыдущее совпадение",
@@ -2227,6 +2257,7 @@
       "replace_aria": "Заменить на",
       "replace_placeholder": "Заменить…",
       "replace_preview_failed": "Не удалось вычислить предварительный просмотр замены",
+      "replace_scope_hint": "Замена применяется только к flows. Остальные три типа доступны только для поиска.",
       "replace_skip_reason": {
         "INVALID_FLOW": "станет недействительным",
         "NOT_FOUND": "больше не существует",
@@ -2237,6 +2268,7 @@
       },
       "replace_this": "Заменить",
       "replace_this_match": "Заменить это совпадение",
+      "retry_namespace": "Повторить для этого namespace",
       "retry_search": "Повторить поиск",
       "scope": "Область видимости",
       "scope_all": "Весь исходный код",
@@ -2245,12 +2277,33 @@
       "scope_triggers": "Triggers",
       "search_aria": "Поиск исходного кода flow",
       "search_failed": "Поиск не удался",
-      "search_placeholder": "Искать по всем исходникам flow…",
+      "search_in": "Искать в",
+      "search_placeholder": "Поиск по исходному коду flows, путям файлов, ключам KV и secrets…",
+      "searching_namespace": "Поиск в {namespace}",
+      "secret_match_notice": "Значения secrets никогда не читаются при поиске. Сравниваются только имена ключей.",
       "select_all_in_flow": "Выбрать все совпадения в {namespace} / {id}",
+      "select_all_types": "Выбрать все типы",
       "select_match": "Выбрать совпадение на строке {line}",
       "show_replace": "Показать замену",
       "summary": "{matches} совпадений в {flows} flows",
-      "use_regex": "Использовать регулярное выражение"
+      "summary_cross": "{matches} в {resources} среди {types}",
+      "tag_keys_only_never": "Только ключи — значения никогда не показываются и не ищутся",
+      "tag_keys_only_values": "Только ключи — значения не ищутся",
+      "tag_paths_only": "Только пути — содержимое файла не ищется",
+      "tag_search_only": "Только поиск — не заменяется",
+      "tag_source_code": "Исходный код",
+      "truncated_flows": "Показаны первые {shown} из {total} совпадений. «Заменить все» применяется только к показанным совпадениям, сначала уточните запрос.",
+      "truncated_type": "первые {shown} из {total}",
+      "turn_off": "Отключить {option}",
+      "type_files": "Файлы namespace",
+      "type_flows": "Flows",
+      "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "Не удалось выполнить поиск в {type}",
+      "type_secrets": "Cекреты",
+      "use_regex": "Использовать регулярное выражение",
+      "value_never_shown": "Никогда не показывается и не ищется",
+      "value_withheld": "Не показывается"
     },
     "open source": "Открытый исходный код",
     "pricing": "Цены",

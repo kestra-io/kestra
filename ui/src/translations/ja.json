@@ -521,7 +521,9 @@
       "detail": {
         "category": "カテゴリタイプ",
         "links": "リンクとリソース",
-        "openInEditor": "フローを編集で開く"
+        "openInEditor": "フローを編集で開く",
+        "openInAppsEditor": "Appsエディターで開く",
+        "openInDashboardEditor": "ダッシュボードエディターで開く"
       },
       "missingPlugins": {
         "title": "不足しているplugin",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Kestraでカスタムアプリを構築する",
-        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。"
+        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
+        "blueprints": {
+          "title": "アプリのblueprintから開始します。",
+          "message": "アプリのblueprintは、フォーム、承認、データ送信などの一般的なユースケースに対応する既製のアプリです。Kestra Enterprise Editionでは、任意のblueprintを起点として使用し、ワークフローの上にカスタムUIを構築するために適応させることができます。"
+        }
       },
       "tests": {
         "label": "テスト",
@@ -1140,6 +1146,15 @@
       "promote": {
         "title": "環境間でのflowの昇格",
         "message": "Kestra Enterprise Editionでは、GitやCI/CDパイプラインを必要とせず、UIから直接、ある環境から別の環境（開発からステージング、本番など）へflowを昇格させることができます。昇格前に変更内容の差分を正確に確認し、確認ゲートで機密性の高いターゲットを保護し、ドリフトを一目で特定し、誰が何を、どこで、いつ昇格させたかの完全な履歴を保持します。"
+      },
+      "dashboards": {
+        "header": "カスタムダッシュボード",
+        "title": "チームに合わせてカスタムダッシュボードを構築します。",
+        "message": "Kestra Enterprise Editionのカスタムダッシュボードでは、コードおよびノーコードエディター、ライブプレビュー、tenantごとのデフォルトダッシュボードを使用して、実行、log、メトリクスに関する独自のビューを作成および共有できます。時系列、KPI、テーブル、Markdownチャートを組み合わせることができます。",
+        "blueprints": {
+          "title": "ダッシュボードのblueprintから開始します。",
+          "message": "ダッシュボードのblueprintは、一般的な監視ニーズに対応する既製のカスタムダッシュボードです。Kestra Enterprise Editionでは、任意のblueprintを起点として、ダッシュボードエディターでそのチャート、KPI、テーブルをチームに合わせて調整できます。"
+        }
       },
       "IAM": {
         "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）",
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
       "labels": {
-        "singular": "ダッシュボード",
         "plural": "ダッシュボード"
       },
       "default": "デフォルトダッシュボード",
-      "switch": "ダッシュボードを切り替える",
-      "preview": "プレビュー ダッシュボード",
       "empty": "表示する結果がありません。",
-      "creation": {
-        "label": "ダッシュボードを作成",
-        "confirmation": "ダッシュボード <code>{title}</code> が作成されました。"
-      },
       "edition": {
         "label": "ダッシュボードを編集",
-        "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
-        "chart": "このチャートを編集",
-        "id readonly": "プロパティ `id` は変更できません — 現在、初期値に設定されています。変更したい場合は、新しいダッシュボードを作成し、古いものを削除してください。"
-      },
-      "deletion": {
-        "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
+        "chart": "このチャートを編集"
       },
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
       "viewAll": "すべて表示",
-      "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
       "export": "エクスポート",
       "exportTo": {
         "csv": "CSVにエクスポート",
@@ -2190,28 +2192,56 @@
     "source_search": {
       "cannot_select_read_only": "選択できません — {namespace} / {id} の編集権限がありません",
       "collapse_all": "すべて折りたたむ",
+      "confirm_bar_excluded": "他に{count}件の一致は変更されません。 | 他に{count}件の一致は変更されません。",
       "confirm_bar_message": "{flows}個の編集可能なflowで{matches}個を置換します。{skipped}個の読み取り専用flowはスキップされます。",
+      "count_flows": "{count} flow | {count} flows",
+      "count_keys": "{count} key | {count} key",
+      "count_namespaces": "{count} namespace | {count} namespace",
+      "count_paths": "{count} 件のパス | {count} 件のパス",
+      "count_resources": "{count} 件のリソース | {count} 件のリソース",
+      "count_types": "{count} 種類 | {count} 種類",
       "diff_preview_aria": "置換差分プレビュー",
       "diff_preview_label": "差分プレビュー · まだ適用されていません",
-      "empty_description": "すべてのflowのYAMLソースで、プラグインタイプ、プロパティ、または任意の定義を検索します。正規表現には「.*」、大文字と小文字の区別には「Aa」を有効にし、置換を開いて、権限を尊重しながら一致するものをその場で変更します。",
-      "empty_title": "flow全体で何が使用されているかを見つける",
+      "empty_description": "Flowsはそのソース内で検索されます。Namespaceファイルはパスで、KVとSecretsはキー名で一致します。上で種類を選び、検索語を入力してください。",
+      "empty_title": "Flows・ファイル・キーの中から値を探す",
       "error_title": "無効な正規表現",
       "examples_aria": "クエリ例",
+      "exclusion_flows_readonly": "Flows — 読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。 | Flows — 読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。",
+      "exclusion_search_only": "{type} — {count} 件: 検索専用のため置換できません。 | {type} — {count} 件: 検索専用のため置換できません。",
+      "exclusion_title": "{count} 件の一致が「すべて置換」から除外されています | {count} 件の一致が「すべて置換」から除外されています",
       "expand_all": "すべて展開",
+      "file_match_notice": "ファイルパスが一致しました。ファイルの内容は検索されません — 中を検索するにはファイルを開いてください。",
+      "files_progress_banner_failed": "Namespaceファイルは1つずつ検索されます。{total} 件中 {done} 件完了、{failed} 件失敗しました。合計はまだ変わります。",
+      "files_progress_banner_ok": "Namespaceファイルは1つずつ検索されます。{total} 件中 {done} 件完了しました。合計はまだ変わります。",
+      "flow_only_toggle_hint": "大文字/小文字の区別、単語単位、正規表現はFlowsにのみ適用されます。ファイルパスとキーは常にプレーンテキストとして一致します。",
+      "flow_section": "Flowセクション",
       "flow_update_permission": "flow · 更新",
       "hide_replace": "置換を非表示",
+      "key_only_hint": "キー名のみを検索します。置換はできません。",
+      "kv_match_notice": "キー名のみが検索されました。値を確認するにはKV Storeを開いてください。",
       "line_label": "行 {line}",
       "match_case": "大文字・小文字を区別する",
       "match_count": "{count} 件一致 | {count} 件一致",
       "match_nav": "{total}件中{current}件",
       "match_nav_empty": "0 / 0",
       "match_whole_word": "単語全体を一致させる",
+      "meta_created": "作成日",
+      "meta_expires": "有効期限",
+      "meta_never": "なし",
+      "meta_updated": "更新日",
+      "namespace_search_failed": "{namespace} を検索できませんでした",
+      "namespace_search_failed_detail": "リクエストが失敗しました。他のnamespaceには影響しません。",
       "next_match": "次の一致",
       "no_results_description": "namespaceを広げるか、スコープを「すべてのソース」に戻すか、「大文字と小文字を区別する」と「単語全体に一致」をオフにしてみてください。",
+      "no_results_hidden_type": "選択していない{type}で{count}件の一致が見つかりました。 | 選択していない{type}で{count}件の一致が見つかりました。",
+      "no_results_in_types": "“{query}” に一致する結果は{types}にありません",
       "no_results_title": "「{query}」に一致する項目はありません",
       "open_flow": "flow を開く",
       "open_in_editor": "エディターで開く",
+      "open_in_kv": "KV Storeで開く",
+      "open_in_secrets": "Secretsで開く",
       "options_aria": "検索オプション",
+      "path_only_hint": "ファイルパスのみを検索し、内容は検索しません。置換はできません。",
       "preview_empty": "プレビューする結果を選択してください。結果リストの flow をクリックするとソースが表示されます。",
       "preview_error": "flow ソースの読み込みに失敗しました",
       "previous_match": "前のマッチ",
@@ -2227,6 +2257,7 @@
       "replace_aria": "置換",
       "replace_placeholder": "置換…",
       "replace_preview_failed": "置換プレビューの計算に失敗しました",
+      "replace_scope_hint": "置換はFlowsにのみ適用されます。他の3種類は検索専用です。",
       "replace_skip_reason": {
         "INVALID_FLOW": "無効になります",
         "NOT_FOUND": "存在しません",
@@ -2237,6 +2268,7 @@
       },
       "replace_this": "置換",
       "replace_this_match": "この一致を置き換える",
+      "retry_namespace": "このnamespaceを再試行",
       "retry_search": "検索を再試行",
       "scope": "スコープ",
       "scope_all": "すべてのソース",
@@ -2245,12 +2277,33 @@
       "scope_triggers": "Triggers",
       "search_aria": "flowソースを検索",
       "search_failed": "検索に失敗しました",
-      "search_placeholder": "すべてのflowソースを検索…",
+      "search_in": "検索対象",
+      "search_placeholder": "Flowのソース、ファイルパス、KV・secretキーを検索…",
+      "searching_namespace": "{namespace} を検索中",
+      "secret_match_notice": "Secretの値は検索で読み取られることはありません。キー名のみが比較されます。",
       "select_all_in_flow": "{namespace} / {id} 内のすべての一致を選択",
+      "select_all_types": "すべての種類を選択",
       "select_match": "行 {line} で一致を選択",
       "show_replace": "置換を表示",
       "summary": "{flows} flow中{matches}件の一致",
-      "use_regex": "正規表現を使用"
+      "summary_cross": "{types}、{resources}で{matches}",
+      "tag_keys_only_never": "キーのみ — 値は表示も検索もされません",
+      "tag_keys_only_values": "キーのみ — 値は検索されません",
+      "tag_paths_only": "パスのみ — ファイルの内容は検索されません",
+      "tag_search_only": "検索専用 — 置換されません",
+      "tag_source_code": "ソースコード",
+      "truncated_flows": "{total} 件中 {shown} 件の一致を表示しています。すべて置換は表示中の一致にのみ適用されます。先に検索条件を絞り込んでください。",
+      "truncated_type": "{total} 件中 {shown} 件",
+      "turn_off": "{option} をオフにする",
+      "type_files": "Namespaceのファイル",
+      "type_flows": "Flows",
+      "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "{type} を検索できませんでした",
+      "type_secrets": "Secrets",
+      "use_regex": "正規表現を使用",
+      "value_never_shown": "表示も検索もされません",
+      "value_withheld": "表示されません"
     },
     "open source": "オープンソース",
     "pricing": "料金",

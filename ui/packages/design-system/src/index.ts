@@ -1,7 +1,14 @@
-import type {App, Component} from "vue"
+import {defineAsyncComponent} from "vue"
+import type {App, AsyncComponentLoader, Component} from "vue"
 import ElementPlus, {INSTALLED_KEY} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
+
+// defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
+// real name lets consumers stub the component by name in tests and read it in
+// devtools, exactly as they could before it was made async.
+const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
+    Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 import KsEchart from "./components/Charts/KsEchart.vue"
@@ -42,7 +49,12 @@ import KsDialog from "./components/Feedback/KsDialog.vue"
 import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
-import KsEditor from "./components/Form/KsEditor.vue"
+// Async on purpose: KsEditor statically pulls the whole Monaco toolchain, which
+// must stay out of the app's eager bundle (see the "monaco" chunk group).
+import type KsEditorSfc from "./components/Form/KsEditor.vue"
+const KsEditor = asyncComponent("KsEditor",
+    () => import("./components/Form/KsEditor.vue"),
+) as unknown as typeof KsEditorSfc
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
 export type {TaskIconProps} from "./composables/taskIcon"
@@ -69,7 +81,12 @@ import KsPassword from "./components/Form/KsPassword.vue"
 import KsPasswordRequirements from "./components/Form/KsPasswordRequirements.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
-import KsMarkdown from "./components/Data/KsMarkdown/KsMarkdown.vue"
+// Async on purpose: KsMarkdown pulls the whole markdown/Shiki toolchain, which
+// must stay out of the app's eager bundle (see the "markdown" chunk group).
+import type KsMarkdownSfc from "./components/Data/KsMarkdown/KsMarkdown.vue"
+const KsMarkdown = asyncComponent("KsMarkdown",
+    () => import("./components/Data/KsMarkdown/KsMarkdown.vue"),
+) as unknown as typeof KsMarkdownSfc
 import KsMenu from "./components/Navigation/KsMenu/KsMenu.vue"
 import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
@@ -129,6 +146,7 @@ export {KsMessageBox} from "./components/Feedback/KsMessageBox"
 export {KsNotification} from "./components/Feedback/KsNotification"
 
 export {cssVar} from "./utils/css"
+export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export * as durationUtils from "./utils/duration"

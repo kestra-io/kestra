@@ -92,6 +92,7 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -3084,6 +3085,76 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(
+        value = { "flows/valids/follow-dependencies-partial-parent.yaml",
+            "flows/valids/follow-dependencies-partial-child.yaml" },
+        tenantId = "followdependenciespartiallyterminated"
+    )
+    void shouldEndOnlyTerminatedDependenciesWhenFollowedExecutionIsStillRunning() {
+        // Given: a parent whose subflow already succeeded while the parent itself is still paused,
+        // so the dependency graph is only partially terminated.
+        String tenantId = "followdependenciespartiallyterminated";
+        String parentFlowId = "follow-dependencies-partial-parent";
+        String childFlowId = "follow-dependencies-partial-child";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution parent = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, parentFlowId, null, false);
+        awaitExecution(tenantId, parent.getId(), execution -> execution.getState().isPaused());
+        Execution child = awaitTerminatedExecutionOfFlow(tenantId, childFlowId);
+        assertThat(child.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // When: following the dependencies of the still-paused parent. Only the pre-scan of
+        // already-existing executions is asserted here, so no assertion depends on a queue delivery:
+        // it runs before the queue subscription, hence the first event of each flow is its verdict.
+        List<Event<ExecutionStatusEvent>> events = new CopyOnWriteArrayList<>();
+        Disposable subscription = sseClient
+            .eventStream("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .subscribe(events::add);
+
+        try {
+            await()
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(250))
+                .untilAsserted(() ->
+                {
+                    assertThat(eventsForFlow(events, childFlowId)).isNotEmpty();
+                    assertThat(eventsForFlow(events, parentFlowId)).isNotEmpty();
+                });
+
+            // Then: the terminated child is ended while the still-paused parent only progresses.
+            assertThat(eventsForFlow(events, childFlowId).getFirst().getId()).isEqualTo("end");
+            assertThat(eventsForFlow(events, parentFlowId).getFirst().getId()).isEqualTo("progress");
+            // the stream stays open: the parent is still a pending dependency
+            assertThat(events).extracting(Event::getId).doesNotContain("end-all");
+        } finally {
+            subscription.dispose();
+        }
+
+        // When: the parent is resumed, the whole graph terminates.
+        HttpResponse<?> resume = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/actions/resume", null)
+        );
+        assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(tenantId, parent.getId(), execution -> execution.getState().isTerminated());
+
+        // Then: a stream opened on the terminated graph is ended by the pre-scan alone, so it
+        // completes on its own and every dependency is ended exactly once.
+        List<Event<ExecutionStatusEvent>> terminatedEvents = sseClient
+            .eventStream("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .collectList()
+            .block(Duration.ofSeconds(30));
+
+        assertThat(terminatedEvents).isNotNull();
+        assertThat(eventsForFlow(terminatedEvents, childFlowId)).extracting(Event::getId).containsExactly("end");
+        assertThat(eventsForFlow(terminatedEvents, parentFlowId)).extracting(Event::getId).containsExactly("end");
+        assertThat(terminatedEvents.getLast().getId()).isEqualTo("end-all");
+    }
+
+    private static List<Event<ExecutionStatusEvent>> eventsForFlow(List<Event<ExecutionStatusEvent>> events, String flowId) {
+        return events.stream().filter(event -> flowId.equals(event.getData().flowId())).toList();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/logs.yaml" })
     void shouldReturnBadRequestWhenRestartByIdsCalledOnInvalidExecutions() {
         Execution execution = client.toBlocking().retrieve(
@@ -3540,6 +3611,30 @@ class ExecutionControllerRunnerTest {
             .until(
                 () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
                 predicate
+            );
+    }
+
+    /** Repository-based variant so it works for any tenant, unlike the {@code /api/v1/main} ones above. */
+    private Execution awaitExecution(String tenantId, String executionId, Predicate<Execution> predicate) {
+        return await()
+            .atMost(Duration.ofSeconds(30))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> executionRepositoryInterface.findById(tenantId, executionId).orElse(null),
+                execution -> execution != null && predicate.test(execution)
+            );
+    }
+
+    private Execution awaitTerminatedExecutionOfFlow(String tenantId, String flowId) {
+        return await()
+            .atMost(Duration.ofSeconds(30))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> executionRepositoryInterface.findByFlowId(tenantId, TESTS_FLOW_NS, flowId, Pageable.UNPAGED)
+                    .stream()
+                    .findFirst()
+                    .orElse(null),
+                execution -> execution != null && execution.getState().isTerminated()
             );
     }
 

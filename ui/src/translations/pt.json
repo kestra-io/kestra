@@ -521,7 +521,9 @@
       "detail": {
         "category": "Tipo de categoria",
         "links": "Link & Recursos",
-        "openInEditor": "Abrir em Edit Flow"
+        "openInEditor": "Abrir em Edit Flow",
+        "openInAppsEditor": "Abrir no Editor de Aplicativos",
+        "openInDashboardEditor": "Abrir no Editor do Dashboard"
       },
       "missingPlugins": {
         "title": "Plugins ausentes",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Crie Apps personalizadas com Kestra",
-        "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação."
+        "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação.",
+        "blueprints": {
+          "title": "Comece a partir de um blueprint de aplicativo.",
+          "message": "Os blueprints de aplicativos são aplicativos prontos para casos de uso comuns, como formulários, aprovações e envio de dados. Com o Kestra Enterprise Edition, você pode usar qualquer blueprint como ponto de partida e adaptá-lo para construir UIs personalizadas sobre seus workflows."
+        }
       },
       "tests": {
         "label": "Testes",
@@ -1140,6 +1146,15 @@
       "promote": {
         "title": "Promover Flows Entre Ambientes",
         "message": "O Kestra Enterprise Edition permite promover flows de um ambiente para outro — como de desenvolvimento para staging e para produção — diretamente da UI, sem a necessidade de Git ou pipelines de CI/CD. Revise um diff do que exatamente será alterado antes de promover, proteja alvos sensíveis com um portão de confirmação, identifique desvios rapidamente e mantenha um histórico completo de quem promoveu o quê, onde e quando."
+      },
+      "dashboards": {
+        "header": "Dashboards Personalizados",
+        "title": "Crie dashboards personalizados para sua equipe.",
+        "message": "Os dashboards personalizados na Kestra Enterprise Edition permitem que você crie e compartilhe suas próprias visualizações sobre execuções, logs e métricas, combinando séries temporais, KPIs, tabelas e gráficos Markdown, com um editor de código e no-code, pré-visualização ao vivo e dashboards padrão por tenant.",
+        "blueprints": {
+          "title": "Comece a partir de um blueprint de dashboard.",
+          "message": "Os blueprints de Dashboard são dashboards personalizados pré-fabricados para necessidades comuns de monitoramento. Com o Kestra Enterprise Edition, você pode usar qualquer blueprint como ponto de partida e adaptar seus gráficos, KPIs e tabelas à sua equipe no editor de dashboard."
+        }
       },
       "IAM": {
         "title": "Gerencie Usuários através do IAM com SSO, SCIM e RBAC",
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Dashboard Padrão",
-      "switch": "Alternar Dashboard",
-      "preview": "Visualizar Dashboard",
       "empty": "Não há resultados para serem exibidos.",
-      "creation": {
-        "label": "Criar Dashboard",
-        "confirmation": "O Dashboard <code>{title}</code> foi criado."
-      },
       "edition": {
         "label": "Editar Dashboard",
-        "confirmation": "As alterações no dashboard <code>{title}</code> foram salvas.",
-        "chart": "Edite este gráfico",
-        "id readonly": "A propriedade `id` não pode ser alterada — agora está definida para seus valores iniciais. Se você quiser alterá-la, pode criar um novo dashboard e remover o antigo."
-      },
-      "deletion": {
-        "confirmation": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?"
+        "chart": "Edite este gráfico"
       },
       "no_description": "Sem descrição",
       "no_description_hint": "Adicione uma descrição a este flow para documentar o que ele faz.<br>Markdown é suportado.",
       "others": "Outros",
       "viewAll": "Ver tudo",
-      "chart_preview": "Clique no código-fonte de um gráfico para ver sua pré-visualização",
       "export": "Exportar",
       "exportTo": {
         "csv": "Exportar para CSV",
@@ -2190,28 +2192,56 @@
     "source_search": {
       "cannot_select_read_only": "Não é possível selecionar — você não tem permissão de edição em {namespace} / {id}",
       "collapse_all": "Recolher tudo",
+      "confirm_bar_excluded": "Mais {count} correspondência não será alterada. | Mais {count} correspondências não serão alteradas.",
       "confirm_bar_message": "Substituir {matches} em {flows} flows editáveis. {skipped} flows somente leitura serão ignorados.",
+      "count_flows": "{count} flow | {count} flows",
+      "count_keys": "{count} key | {count} keys",
+      "count_namespaces": "{count} namespace | {count} namespaces",
+      "count_paths": "{count} caminho | {count} caminhos",
+      "count_resources": "{count} recurso | {count} recursos",
+      "count_types": "{count} tipo | {count} tipos",
       "diff_preview_aria": "Pré-visualização da diferença de substituição",
       "diff_preview_label": "pré-visualização de diff · ainda não aplicado",
-      "empty_description": "Pesquise o código-fonte YAML de cada flow por um tipo de plugin, uma propriedade ou qualquer definição. Habilite .* para expressões regulares, Aa para diferenciar maiúsculas de minúsculas e abra Substituir para alterar as correspondências no local — respeitando suas permissões.",
-      "empty_title": "Encontre onde qualquer coisa é usada em seus flows",
+      "empty_description": "Os flows são pesquisados na sua fonte. Os ficheiros do namespace correspondem pelo caminho, e o KV e os secrets pelo nome da key. Escolha os tipos acima e depois escreva uma pesquisa.",
+      "empty_title": "Encontre um valor em flows, ficheiros e keys",
       "error_title": "Expressão regular inválida",
       "examples_aria": "Consultas de exemplo",
+      "exclusion_flows_readonly": "Flows — {count} correspondência só de leitura: precisa da permissão FLOW · UPDATE. | Flows — {count} correspondências só de leitura: precisa da permissão FLOW · UPDATE.",
+      "exclusion_search_only": "{type} — {count} correspondência: apenas pesquisa, não pode ser substituída. | {type} — {count} correspondências: apenas pesquisa, não podem ser substituídas.",
+      "exclusion_title": "{count} correspondência está excluída de Substituir tudo | {count} correspondências estão excluídas de Substituir tudo",
       "expand_all": "Expandir tudo",
+      "file_match_notice": "O caminho do ficheiro correspondeu. O conteúdo do ficheiro não é pesquisado — abra o ficheiro para pesquisar dentro dele.",
+      "files_progress_banner_failed": "Os ficheiros do namespace são pesquisados um namespace de cada vez. {done} de {total} concluídos, {failed} falharam. O total ainda vai mudar.",
+      "files_progress_banner_ok": "Os ficheiros do namespace são pesquisados um namespace de cada vez. {done} de {total} concluídos. O total ainda vai mudar.",
+      "flow_only_toggle_hint": "Maiúsculas/minúsculas, palavra completa e expressão regular aplicam-se apenas a flows. Os caminhos de ficheiros e as keys correspondem sempre a texto simples.",
+      "flow_section": "Secção do flow",
       "flow_update_permission": "flow · ATUALIZAR",
       "hide_replace": "Ocultar substituição",
+      "key_only_hint": "Pesquisa apenas nomes de key. Não pode ser substituído.",
+      "kv_match_notice": "Apenas o nome da key foi pesquisado. Abra o KV Store para ler o valor.",
       "line_label": "linha {line}",
       "match_case": "Diferenciar maiúsculas e minúsculas",
       "match_count": "{count} correspondência | {count} correspondências",
       "match_nav": "{current} de {total}",
       "match_nav_empty": "0 de 0",
       "match_whole_word": "Corresponder palavra inteira",
+      "meta_created": "Criado",
+      "meta_expires": "Expira",
+      "meta_never": "Nunca",
+      "meta_updated": "Atualizado",
+      "namespace_search_failed": "Não foi possível pesquisar {namespace}",
+      "namespace_search_failed_detail": "O pedido falhou. Os outros namespaces não são afetados.",
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, mudar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
+      "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
+      "no_results_in_types": "Sem correspondências para “{query}” em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",
+      "open_in_kv": "Abrir no KV Store",
+      "open_in_secrets": "Abrir em secrets",
       "options_aria": "Opções de pesquisa",
+      "path_only_hint": "Pesquisa apenas o caminho do ficheiro, não o seu conteúdo. Não pode ser substituído.",
       "preview_empty": "Selecione um resultado para pré-visualizar. Clique num flow na lista de resultados para ver a sua fonte.",
       "preview_error": "Falha ao carregar a fonte do flow",
       "previous_match": "Correspondência anterior",
@@ -2227,6 +2257,7 @@
       "replace_aria": "Substituir por",
       "replace_placeholder": "Substituir…",
       "replace_preview_failed": "Falha ao calcular a pré-visualização da substituição",
+      "replace_scope_hint": "A substituição aplica-se apenas a flows. Os outros três tipos são apenas de pesquisa.",
       "replace_skip_reason": {
         "INVALID_FLOW": "se tornaria inválido",
         "NOT_FOUND": "não existe mais",
@@ -2237,6 +2268,7 @@
       },
       "replace_this": "Substituir",
       "replace_this_match": "Substituir esta correspondência",
+      "retry_namespace": "Repetir este namespace",
       "retry_search": "Tentar pesquisa novamente",
       "scope": "Escopo",
       "scope_all": "Todo o código-fonte",
@@ -2245,12 +2277,33 @@
       "scope_triggers": "Triggers",
       "search_aria": "Pesquisar código-fonte do flow",
       "search_failed": "A pesquisa falhou",
-      "search_placeholder": "Pesquisar em todas as fontes de flow…",
+      "search_in": "Pesquisar em",
+      "search_placeholder": "Pesquisar no código-fonte de flows, caminhos de ficheiros, keys de KV e secrets…",
+      "searching_namespace": "A pesquisar em {namespace}",
+      "secret_match_notice": "Os valores dos secrets nunca são lidos pela pesquisa. Só os nomes das keys são comparados.",
       "select_all_in_flow": "Selecionar todas as correspondências em {namespace} / {id}",
+      "select_all_types": "Selecionar todos os tipos",
       "select_match": "Selecionar correspondência na linha {line}",
       "show_replace": "Mostrar substituição",
       "summary": "{matches} correspondências em {flows} flows",
-      "use_regex": "Usar expressão regular"
+      "summary_cross": "{matches} em {resources} em {types}",
+      "tag_keys_only_never": "Apenas keys — os valores nunca são mostrados nem pesquisados",
+      "tag_keys_only_values": "Apenas keys — os valores não são pesquisados",
+      "tag_paths_only": "Apenas caminhos — o conteúdo do ficheiro não é pesquisado",
+      "tag_search_only": "Apenas pesquisa — não substituído",
+      "tag_source_code": "Código-fonte",
+      "truncated_flows": "A mostrar as primeiras {shown} de {total} correspondências. Substituir tudo só se aplica às correspondências mostradas, restrinja primeiro a pesquisa.",
+      "truncated_type": "primeiras {shown} de {total}",
+      "turn_off": "Desativar {option}",
+      "type_files": "Arquivos do namespace",
+      "type_flows": "Flows",
+      "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "Não foi possível pesquisar {type}",
+      "type_secrets": "Segredos",
+      "use_regex": "Usar expressão regular",
+      "value_never_shown": "Nunca mostrado nem pesquisado",
+      "value_withheld": "Não mostrado"
     },
     "open source": "Código Aberto",
     "pricing": "Preços",

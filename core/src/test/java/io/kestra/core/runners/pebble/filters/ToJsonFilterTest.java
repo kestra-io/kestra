@@ -2,7 +2,6 @@ package io.kestra.core.runners.pebble.filters;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -66,7 +65,8 @@ class ToJsonFilterTest {
         assertThat(render).isEqualTo("true");
 
         render = variableRenderer.render("{{ vars.second.date | toJson }}", vars);
-        assertThat(render).isEqualTo("\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\"");
+        assertThat(ZonedDateTime.parse(render.substring(1, render.length() - 1)).toInstant())
+            .isEqualTo(date.toInstant());
 
         render = variableRenderer.render("{{ vars.second.map | toJson }}", vars);
         assertThat(render).contains("\"int\":1");

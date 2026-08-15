@@ -10,8 +10,9 @@ export const DENSITY_PADDING = {
     expanded: "12px",
 } as const
 
-const MIGRATION_FLAG = "_fontMigratedV3"
+const MIGRATION_FLAG = "_fontMigratedV2"
 const LEGACY_LOGS_DEFAULT = 14
+const LEGACY_EDITOR_DEFAULT = 12
 
 function runMigrationOnce() {
     if (localStorage.getItem(MIGRATION_FLAG)) return
@@ -20,6 +21,12 @@ function runMigrationOnce() {
     if (rawLogs !== null) {
         const n = Number(rawLogs)
         if (n === LEGACY_LOGS_DEFAULT) localStorage.removeItem("logsFontSize")
+    }
+
+    const rawEditor = localStorage.getItem("editorFontSize")
+    if (rawEditor !== null) {
+        const n = Number(rawEditor)
+        if (n === LEGACY_EDITOR_DEFAULT) localStorage.removeItem("editorFontSize")
     }
 
     localStorage.setItem(MIGRATION_FLAG, "1")

@@ -54,7 +54,7 @@ describe("useLogDisplay", () => {
     })
 
     it("explicit override of 14 for logs is kept when migration already ran", async () => {
-        localStorage.setItem("_fontMigratedV3", "1")
+        localStorage.setItem("_fontMigratedV2", "1")
         localStorage.setItem("logsFontSize", "14")
 
         const {logsFontSize, appFontSizeMode} = await import("../../../src/composables/useLogDisplay")
@@ -64,7 +64,7 @@ describe("useLogDisplay", () => {
     })
 
     it("explicit override of 12 for editor is kept when migration already ran", async () => {
-        localStorage.setItem("_fontMigratedV3", "1")
+        localStorage.setItem("_fontMigratedV2", "1")
         localStorage.setItem("editorFontSize", "12")
 
         const {effectiveEditorFontSize, appFontSizeMode} = await import("../../../src/composables/useLogDisplay")
@@ -73,31 +73,21 @@ describe("useLogDisplay", () => {
         expect(effectiveEditorFontSize.value).toBe(12)
     })
 
-    it("one-time migration clears stale logs default 14", async () => {
+    it("one-time migration clears legacy logs default 14", async () => {
         localStorage.setItem("logsFontSize", "14")
 
         await import("../../../src/composables/useLogDisplay")
 
         expect(localStorage.getItem("logsFontSize")).toBeNull()
-        expect(localStorage.getItem("_fontMigratedV3")).toBe("1")
+        expect(localStorage.getItem("_fontMigratedV2")).toBe("1")
     })
 
-    it("one-time migration clears stale logs default 14 even after a previous migration ran", async () => {
-        localStorage.setItem("_fontMigratedV2", "1")
-        localStorage.setItem("logsFontSize", "14")
-
-        await import("../../../src/composables/useLogDisplay")
-
-        expect(localStorage.getItem("logsFontSize")).toBeNull()
-        expect(localStorage.getItem("_fontMigratedV3")).toBe("1")
-    })
-
-    it("one-time migration preserves a stored editor font size equal to the new default", async () => {
+    it("one-time migration clears legacy editor default 12", async () => {
         localStorage.setItem("editorFontSize", "12")
 
         await import("../../../src/composables/useLogDisplay")
 
-        expect(localStorage.getItem("editorFontSize")).toBe("12")
+        expect(localStorage.getItem("editorFontSize")).toBeNull()
     })
 
     it("one-time migration does not clear non-legacy override values", async () => {
@@ -111,7 +101,7 @@ describe("useLogDisplay", () => {
     })
 
     it("migration runs only once: legacy value set after flag is treated as explicit override", async () => {
-        localStorage.setItem("_fontMigratedV3", "1")
+        localStorage.setItem("_fontMigratedV2", "1")
         localStorage.setItem("logsFontSize", "14")
 
         await import("../../../src/composables/useLogDisplay")

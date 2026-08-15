@@ -37,9 +37,9 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.SourceSearchMatcher;
-import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Flows;
 
@@ -56,7 +56,7 @@ import reactor.core.publisher.FluxSink;
 @Slf4j
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
 
-    protected static final ObjectMapper MAPPER = JdbcMapper.of();
+    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     public static final Field<String> SOURCE_FIELD = field("source_code", String.class);
@@ -103,7 +103,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 return deserialize;
             } catch (DeserializationException | IOException | IllegalArgumentException | FlowProcessingException e) {
                 try {
-                    JsonNode jsonNode = JdbcMapper.of().readTree(source);
+                    JsonNode jsonNode = JacksonMapper.ofJson().readTree(source);
                     return FlowWithException.from(jsonNode, e)
                         .orElseThrow(() -> e instanceof DeserializationException de ? de : new DeserializationException(e, source));
                 } catch (JsonProcessingException ex) {
@@ -944,7 +944,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         try {
             // For drafts the YAML may be unparsable; if parsing fails we skip all
             // validation since draft revisions are intentionally allowed to carry invalid content.
-            FlowWithSource flowWithDefault = flowParsingService.parse(flow, false);
+            FlowWithSource flowWithDefault = flowParsingService.parseForValidation(flow);
             // Drafts are allowed to be saved invalid - they will fail at execution time instead.
             // Read the draft flag from the original GenericFlow (set from the API draft flag) rather
             // than from flowWithDefault, since `parse` re-parses the YAML source which

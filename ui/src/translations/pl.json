@@ -521,7 +521,9 @@
       "detail": {
         "category": "Typ kategorii",
         "links": "Linki i zasoby",
-        "openInEditor": "Otwórz w Edytuj Flow"
+        "openInEditor": "Otwórz w Edytuj Flow",
+        "openInAppsEditor": "Otwórz w Edytorze Aplikacji",
+        "openInDashboardEditor": "Otwórz w Edytorze Dashboardu"
       },
       "missingPlugins": {
         "title": "Brakujące pluginy",
@@ -886,6 +888,10 @@
         "files": "Usuń {count} wybrane pliki",
         "folders": "Usuń {count} wybrane foldery"
       },
+      "move": {
+        "bulk_success": "Wybrane pliki zostały pomyślnie przeniesione.",
+        "bulk_error": "Nie udało się przenieść {count} z wybranych elementów."
+      },
       "import": {
         "files": "Importuj pliki",
         "folder": "Importuj folder",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Twórz własne aplikacje z Kestra",
-        "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie."
+        "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie.",
+        "blueprints": {
+          "title": "Zacznij od blueprint aplikacji.",
+          "message": "Blueprints aplikacji to gotowe aplikacje do typowych zastosowań, takich jak formularze, zatwierdzenia i przesyłanie danych. Dzięki Kestra Enterprise Edition możesz użyć dowolnego blueprintu jako punktu wyjścia i dostosować go do budowania niestandardowych interfejsów użytkownika na podstawie swoich workflowów."
+        }
       },
       "tests": {
         "label": "Testy",
@@ -1140,6 +1150,15 @@
       "promote": {
         "title": "Promuj flowy między środowiskami",
         "message": "Kestra Enterprise Edition umożliwia promowanie flow z jednego środowiska do drugiego — na przykład z dev do staging, a następnie do production — bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
+      },
+      "dashboards": {
+        "header": "Niestandardowe pulpity nawigacyjne",
+        "title": "Twórz niestandardowe pulpity nawigacyjne dostosowane do Twojego zespołu.",
+        "message": "Niestandardowe pulpity nawigacyjne w Kestra Enterprise Edition umożliwiają tworzenie i udostępnianie własnych widoków na podstawie wykonań, logów i metryk, łącząc szeregi czasowe, KPI, tabele i wykresy Markdown, z edytorem kodu i bez kodu, podglądem na żywo oraz domyślnymi pulpitami nawigacyjnymi dla każdego tenant.",
+        "blueprints": {
+          "title": "Zacznij od blueprintu pulpitu nawigacyjnego.",
+          "message": "Blueprinty pulpitu nawigacyjnego to gotowe, niestandardowe pulpity nawigacyjne do typowych potrzeb monitorowania. Dzięki Kestra Enterprise Edition możesz użyć dowolnego blueprintu jako punktu wyjścia i dostosować jego wykresy, KPI i tabele do swojego zespołu w edytorze pulpitu nawigacyjnego."
+        }
       },
       "IAM": {
         "title": "Zarządzaj użytkownikami przez IAM z SSO, SCIM i RBAC",
@@ -1783,31 +1802,18 @@
     "duplicate-pair": "{label} \"{key}\" jest zduplikowany, pierwszy klucz zignorowany.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboardy"
       },
       "default": "Domyślny Dashboard",
-      "switch": "Przełącz Dashboard",
-      "preview": "Podgląd Dashboardu",
       "empty": "Brak wyników do wyświetlenia.",
-      "creation": {
-        "label": "Utwórz Dashboard",
-        "confirmation": "Dashboard <code>{title}</code> został utworzony."
-      },
       "edition": {
         "label": "Edytuj Dashboard",
-        "confirmation": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
-        "chart": "Edytuj ten wykres",
-        "id readonly": "Właściwość `id` nie może być zmieniona — jest teraz ustawiona na swoje początkowe wartości. Jeśli chcesz ją zmienić, możesz utworzyć nowy dashboard i usunąć stary."
-      },
-      "deletion": {
-        "confirmation": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?"
+        "chart": "Edytuj ten wykres"
       },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
-      "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
       "export": "Eksportuj",
       "exportTo": {
         "csv": "Eksportuj do CSV",

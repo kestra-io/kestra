@@ -1,5 +1,6 @@
 import {computed} from "vue"
 import moment from "moment"
+import {copyToClipboard} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -242,21 +243,7 @@ export function asArray(objOrArray: any | any[]) {
 }
 
 export async function copy(text: string) {
-    if (navigator.clipboard) {
-        await navigator.clipboard.writeText(text)
-        return
-    }
-
-    const node = document.createElement("textarea")
-    node.style.position = "absolute"
-    node.style.left = "-9999px"
-    node.textContent = text
-    document.body.appendChild(node).value = text
-    node.select()
-
-    document.execCommand("copy")
-
-    document.body.removeChild(node)
+    await copyToClipboard(text)
 }
 
 export function toFormData(obj: FormData | Record<string, any>) {

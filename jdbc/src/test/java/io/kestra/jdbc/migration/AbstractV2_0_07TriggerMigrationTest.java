@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
-import io.kestra.jdbc.JdbcMapper;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Execution(ExecutionMode.SAME_THREAD)
 public abstract class AbstractV2_0_07TriggerMigrationTest {
 
-    private static final ObjectMapper MAPPER = JdbcMapper.of();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final int VNODES = 16;
     private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
     private static final Field<Object> VALUE_FIELD = DSL.field(DSL.quotedName("value"));

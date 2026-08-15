@@ -521,7 +521,9 @@
       "detail": {
         "category": "Kategorietyp",
         "links": "Link & Ressourcen",
-        "openInEditor": "In Flow bearbeiten öffnen"
+        "openInEditor": "In Flow bearbeiten öffnen",
+        "openInAppsEditor": "In Apps Editor öffnen",
+        "openInDashboardEditor": "Im Dashboard-Editor öffnen"
       },
       "missingPlugins": {
         "title": "Fehlende Plugins",
@@ -886,6 +888,10 @@
         "files": "Lösche {count} ausgewählte Dateien",
         "folders": "Lösche {count} ausgewählte Ordner"
       },
+      "move": {
+        "bulk_success": "Ausgewählte Dateien erfolgreich verschoben.",
+        "bulk_error": "Fehler beim Verschieben von {count} der ausgewählten Elemente."
+      },
       "import": {
         "files": "Dateien importieren",
         "folder": "Ordner importieren",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Erstellen Sie benutzerdefinierte Apps mit Kestra",
-        "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können."
+        "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können.",
+        "blueprints": {
+          "title": "Starten Sie mit einem App-Blueprint.",
+          "message": "App-Blueprints sind vorgefertigte Apps für gängige Anwendungsfälle wie Formulare, Genehmigungen und Datenübermittlung. Mit der Kestra Enterprise Edition können Sie jeden Blueprint als Ausgangspunkt verwenden und ihn anpassen, um benutzerdefinierte UIs auf Ihren Workflows aufzubauen."
+        }
       },
       "tests": {
         "label": "Tests",
@@ -1140,6 +1150,15 @@
       "promote": {
         "title": "Flows über Umgebungen hinweg bewerben",
         "message": "Mit Kestra Enterprise Edition können Sie flows direkt über die UI von einer Umgebung in eine andere – z. B. von der Entwicklung über das Staging zur Produktion – befördern, ohne dass Git- oder CI/CD-Pipelines erforderlich sind. Überprüfen Sie vor der Beförderung einen Diff der genauen Änderungen, schützen Sie sensible Ziele mit einer Bestätigungsschranke, erkennen Sie Abweichungen auf einen Blick und behalten Sie eine vollständige Historie darüber, wer was, wo und wann befördert hat."
+      },
+      "dashboards": {
+        "header": "Benutzerdefinierte Dashboards",
+        "title": "Erstellen Sie benutzerdefinierte Dashboards, die auf Ihr Team zugeschnitten sind.",
+        "message": "Benutzerdefinierte Dashboards in Kestra Enterprise Edition ermöglichen es Ihnen, eigene Ansichten über Ausführungen, Logs und Metriken zu erstellen und zu teilen. Sie können Zeitreihen, KPIs, Tabellen und Markdown-Diagramme kombinieren, mit einem Code- und No-Code-Editor, Live-Vorschau und Standard-Dashboards pro tenant.",
+        "blueprints": {
+          "title": "Beginnen Sie mit einem Dashboard-Blueprint.",
+          "message": "Dashboard-Blueprints sind vorgefertigte, benutzerdefinierte Dashboards für gängige Überwachungsanforderungen. Mit Kestra Enterprise Edition können Sie jeden Blueprint als Ausgangspunkt verwenden und dessen Diagramme, KPIs und Tabellen im Dashboard-Editor an Ihr Team anpassen."
+        }
       },
       "IAM": {
         "title": "Benutzer über IAM mit SSO, SCIM und RBAC verwalten",
@@ -1783,31 +1802,18 @@
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Standard-Dashboard",
-      "switch": "Dashboard wechseln",
-      "preview": "Vorschau-Dashboard",
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
-      "creation": {
-        "label": "Dashboard erstellen",
-        "confirmation": "Das Dashboard <code>{title}</code> wurde erstellt."
-      },
       "edition": {
         "label": "Dashboard bearbeiten",
-        "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
-        "chart": "Bearbeiten Sie dieses Diagramm",
-        "id readonly": "Die Eigenschaft `id` kann nicht geändert werden — sie ist jetzt auf ihre Anfangswerte festgelegt. Wenn Sie sie ändern möchten, können Sie ein neues Dashboard erstellen und das alte entfernen."
-      },
-      "deletion": {
-        "confirmation": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?"
+        "chart": "Bearbeiten Sie dieses Diagramm"
       },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
       "viewAll": "Alle anzeigen",
-      "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
       "export": "Export",
       "exportTo": {
         "csv": "Exportieren als CSV",

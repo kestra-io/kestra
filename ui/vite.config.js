@@ -84,6 +84,15 @@ export default defineConfig(({mode}) => {
             dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+                // moment-timezone's default entry bundles the whole IANA database (705 kB of
+                // JSON, 1900-2100) into the eager boot chunk. The 1970-2030 build carries the
+                // same 597 zone names and identical offsets across that window; see
+                // tests/unit/utils/momentTimezoneData.spec.ts, which fails once "now" gets
+                // close enough to 2030 that the range must be widened.
+                {
+                    find: /^moment-timezone$/,
+                    replacement: path.resolve(__dirname, "node_modules/moment-timezone/builds/moment-timezone-with-data-1970-2030.js"),
+                },
             ],
         },
         plugins: [

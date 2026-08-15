@@ -1,6 +1,6 @@
 import {defineAsyncComponent} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
-import ElementPlus, {INSTALLED_KEY} from "element-plus"
+import {provideGlobalConfig, INSTALLED_KEY} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
 
@@ -454,8 +454,14 @@ export {
 
 const KestraDesignSystem = {
     install(app: App) {
+        // Element Plus's installer registers all ~124 of its components globally, which
+        // pins the whole library into the eager bundle. Nothing renders `<el-*>` tags —
+        // every Ks* wrapper imports the El* component it needs — so the only part of the
+        // installer we need is the global config, which is what carries the `kel` prefix
+        // (including to ElMessage and friends, via its `global` flag).
         if (!(app as any)[INSTALLED_KEY]) {
-            app.use(ElementPlus, {namespace: "kel"})
+            (app as any)[INSTALLED_KEY] = true
+            provideGlobalConfig({namespace: "kel"}, app, true)
         }
         for (const [name, component] of Object.entries(components)) {
             app.component(name, component)

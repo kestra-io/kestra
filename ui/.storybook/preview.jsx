@@ -8,6 +8,7 @@ import {configureClient, useClient} from "@kestra-io/kestra-sdk";
 import axios from "axios";
 import {createMemoryHistory} from "vue-router";
 import {vueRouter} from "storybook-vue3-router";
+import ElementPlus from "element-plus";
 
 import "../src/styles/vendor.scss";
 import "../src/styles/app.scss";
@@ -95,6 +96,15 @@ const preview = {
 };
 
 setup(async (app) => {
+  // Storybook only: several fixtures (theme/ShowCase.vue above all) render raw `<el-*>` tags
+  // on purpose, to exercise Element Plus theming. The app itself never does, so the design
+  // system installs only Element Plus's global config and lets the unused components
+  // tree-shake. Registering them here keeps those fixtures rendering.
+  // Must precede initApp: Element Plus's installer no-ops once INSTALLED_KEY is set, and the
+  // design system sets it. Installing first also means the design system skips its own
+  // provideGlobalConfig, since this call already supplies the same namespace.
+  app.use(ElementPlus, {namespace: "kel"});
+
   const {piniaStore} = await initApp(app, [], {}, en);
   // Isolated stories lack many namespaced i18n keys, so silence vue-i18n's
   // noisy "Not found" warnings in Storybook (it already falls back to the key).

@@ -38,8 +38,8 @@ describe("ContextDrawer", () => {
     it("excludes hidden buttons from the visible tab strip", () => {
         const wrapper = mountComponent()
 
-        expect(wrapper.html()).toContain("name=\"news\"")
-        expect(wrapper.html()).not.toContain("name=\"notifications\"")
+        expect(wrapper.find("#tab-news").exists()).toBe(true)
+        expect(wrapper.find("#tab-notifications").exists()).toBe(false)
     })
 
     it("shows the tab strip when a visible tab is active", () => {
@@ -62,6 +62,6 @@ describe("ContextDrawer", () => {
         // A route-hidden, non-panelOnly tab must not leave the drawer stuck: the strip stays and
         // the first visible tab becomes active.
         expect(wrapper.find(".tabBar").exists()).toBe(true)
-        expect(wrapper.html()).toContain("name=\"news\"")
+        expect(wrapper.find("#tab-news").exists()).toBe(true)
     })
 })

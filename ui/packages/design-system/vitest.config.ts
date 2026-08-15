@@ -4,6 +4,8 @@ import {storybookTest} from "@storybook/addon-vitest/vitest-plugin"
 import {resolve} from "path"
 import {playwright} from "@vitest/browser-playwright"
 
+import {designSystemAutoImport} from "./vite/autoImport.mjs"
+
 // @vue/compiler-dom passes a browser-only `decodeEntities` option to
 // @vue/compiler-core during Vite's Node.js transform phase.  The core
 // compiler warns that the option is ignored in non-browser builds — this
@@ -26,7 +28,7 @@ export default defineConfig({
             // This is the project the Storybook UI "Tests" panel connects to.
             // Name must match the filter sent by the addon: "storybook:<abs-path>/.storybook"
             {
-                plugins: [vue(), ...storybookPlugins],
+                plugins: [vue(), designSystemAutoImport(), ...storybookPlugins],
                 // Replacing import.meta.env with a static object prevents coverage
                 // instrumentation from doing dynamic property access (e.g. [Symbol.toStringTag])
                 // which the browser module runner does not support.
@@ -55,7 +57,7 @@ export default defineConfig({
             // Mounts KsSelect/KsOption directly with @vue/test-utils + jsdom.
             // Fast, no browser needed, no Storybook runtime dependency.
             {
-                plugins: [vue()],
+                plugins: [vue(), designSystemAutoImport()],
                 test: {
                     name: "unit",
                     environment: "jsdom",

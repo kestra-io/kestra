@@ -46,6 +46,7 @@ import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
 import {loaderFragment} from "./plugins/loaderFragment.js"
+import {designSystemAutoImport} from "@kestra-io/design-system/vite"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
 
@@ -98,6 +99,7 @@ export default defineConfig(({mode}) => {
                     },
                 },
             }),
+            designSystemAutoImport(),
             !process.env.STORYBOOK && federation({
                 name: "host",
                 shared: {

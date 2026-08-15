@@ -1,14 +1,7 @@
-import {defineAsyncComponent} from "vue"
-import type {App, AsyncComponentLoader, Component} from "vue"
-import ElementPlus, {INSTALLED_KEY} from "element-plus"
+import type {App} from "vue"
+import {INSTALLED_KEY, provideGlobalConfig} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
-
-// defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
-// real name lets consumers stub the component by name in tests and read it in
-// devtools, exactly as they could before it was made async.
-const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
-    Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 import KsEchart from "./components/Charts/KsEchart.vue"
@@ -49,12 +42,7 @@ import KsDialog from "./components/Feedback/KsDialog.vue"
 import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
-// Async on purpose: KsEditor statically pulls the whole Monaco toolchain, which
-// must stay out of the app's eager bundle (see the "monaco" chunk group).
-import type KsEditorSfc from "./components/Form/KsEditor.vue"
-const KsEditor = asyncComponent("KsEditor",
-    () => import("./components/Form/KsEditor.vue"),
-) as unknown as typeof KsEditorSfc
+import KsEditor from "./components/Form/KsEditor.async"
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
 export type {TaskIconProps} from "./composables/taskIcon"
@@ -81,12 +69,7 @@ import KsPassword from "./components/Form/KsPassword.vue"
 import KsPasswordRequirements from "./components/Form/KsPasswordRequirements.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
-// Async on purpose: KsMarkdown pulls the whole markdown/Shiki toolchain, which
-// must stay out of the app's eager bundle (see the "markdown" chunk group).
-import type KsMarkdownSfc from "./components/Data/KsMarkdown/KsMarkdown.vue"
-const KsMarkdown = asyncComponent("KsMarkdown",
-    () => import("./components/Data/KsMarkdown/KsMarkdown.vue"),
-) as unknown as typeof KsMarkdownSfc
+import KsMarkdown from "./components/Data/KsMarkdown/KsMarkdown.async"
 import KsMenu from "./components/Navigation/KsMenu/KsMenu.vue"
 import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
@@ -231,116 +214,6 @@ export {
     flipLogical,
 } from "./components/Data/KsDataTable/filter/utils/filterTypes"
 
-const components: Record<string, Component> = {
-    KsAlert,
-    KsEchart,
-    KsGraph,
-    KsLine,
-    KsBar,
-    KsPie,
-    KsAutocomplete,
-    KsAvatar,
-    KsBadge,
-    KsNewBadge,
-    KsBreadcrumb,
-    KsDrillRow,
-    KsButton,
-    KsButtonGroup,
-    KsCard,
-    KsTopologyDetails,
-    KsDateAgo,
-    KsDataTable,
-    KsCascaderPanel,
-    KsCheckbox,
-    KsCheckboxButton,
-    KsCheckboxGroup,
-    KsCheckTag,
-    KsCheckItem,
-    KsCodeStatus,
-    KsCol,
-    KsCollapse,
-    KsCollapseItem,
-    KsColorPicker,
-    KsContainer,
-    KsHeader,
-    KsListingPage,
-    KsMain,
-    KsDatePicker,
-    KsDialog,
-    KsDivider,
-    KsDrawer,
-    KsDurationPicker,
-    KsDropdown,
-    KsDropdownItem,
-    KsDropdownMenu,
-    KsEditor,
-    KsEmpty,
-    KsEmptyState,
-    KsEntityLink,
-    KsExecutionStatus,
-    KsFilter,
-    KsForm,
-    KsFormItem,
-    KsId,
-    KsIcon,
-    KsIconButton,
-    KsInput,
-    KsInputNumber,
-    KsPassword,
-    KsPasswordRequirements,
-    KsLink,
-    KsMarkdown,
-    KsMenu,
-    KsMenuItem,
-    KsOption,
-    KsOptionGroup,
-    KsPagination,
-    KsPopover,
-    KsProgress,
-    KsRadio,
-    KsRadioButton,
-    KsRadioCardGroup,
-    KsRadioGroup,
-    KsRow,
-    KsScrollbar,
-    KsSearch,
-    KsSegmented,
-    KsSelect,
-    KsSideBar,
-    KsSideBarItem,
-    KsSideBarSection,
-    KsSkeleton,
-    KsSplitter,
-    KsSplitterPanel,
-    KsStep,
-    KsSteps,
-    KsSwitch,
-    KsTabPane,
-    KsTabs,
-    KsTable,
-    KsTableColumn,
-    KsNoData,
-    KsTag,
-    KsLogoBadge,
-    KsText,
-    KsTimeline,
-    KsTimelineItem,
-    KsTimePicker,
-    KsTooltip,
-    KsTopNavBar,
-    KsTree,
-    KsJsonTree,
-    KsUpload,
-    KsSubMenu,
-    KsPageHeader,
-    KsDescriptions,
-    KsDescriptionsItem,
-    KsCarousel,
-    KsCarouselItem,
-    KsResult,
-    KsBacktop,
-}
-
 export {
     KsAlert,
     KsEchart,
@@ -453,18 +326,33 @@ export {
 }
 
 const KestraDesignSystem = {
+    /**
+     * Wires up what a component cannot bring along on its own: the Element Plus
+     * global config (namespace) and the design system's i18n messages.
+     *
+     * Components are NOT registered here. They are resolved per file by the
+     * auto-import plugin (`@kestra-io/design-system/vite`), so a page only
+     * downloads the ones it renders. Consumers that build their own Vue app
+     * without that plugin can still import each component from the package.
+     */
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
-            app.use(ElementPlus, {namespace: "kel"})
-        }
-        for (const [name, component] of Object.entries(components)) {
-            app.component(name, component)
+            ;(app as any)[INSTALLED_KEY] = true
+            provideGlobalConfig({namespace: "kel"}, app, true)
         }
         app.directive("ks-loading", vKsLoading)
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) void registerDesignSystemI18n(i18n)
+        // Fire-and-forget (a Vue plugin's install cannot await): consumers that need the
+        // messages before first render call registerDesignSystemI18n themselves. Failures
+        // are caught rather than left as an unhandled rejection — missing messages fall
+        // back to the key, which is not worth taking the app down for.
+        if (i18n) {
+            void registerDesignSystemI18n(i18n).catch((error) => {
+                console.warn("Design system i18n messages could not be registered.", error)
+            })
+        }
     },
 }
 

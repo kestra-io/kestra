@@ -14,7 +14,14 @@ Think of the design system as the product's **visual vocabulary**:
 
 If a screen feels "off-brand," looks broken in dark mode, or every page styles the same control differently, it's almost always because someone bypassed the design system. The rules below exist to prevent that.
 
-Under the hood, the design system wraps Element Plus under the `kel` namespace and globally registers every component with a `Ks*` prefix. You should almost never `import` from `element-plus` directly in `ui/src/`.
+Under the hood, the design system wraps Element Plus under the `kel` namespace and exposes every component with a `Ks*` prefix. You should almost never `import` from `element-plus` directly in `ui/src/`.
+
+`Ks*` components are **auto-imported**: write `<KsButton>` in a template and the `designSystemAutoImport()` Vite plugin (`@kestra-io/design-system/vite`) turns it into an import of that one component. Nothing is registered globally, so a page ships only what it renders. Two consequences worth knowing:
+
+- **Every Vite config that compiles templates needs the plugin** — the app build, both Vitest projects, and Storybook. It is already wired into all of them; a new config needs it too.
+- **Runtime `template:` strings are not covered.** No build step sees them, so their tags cannot be resolved. The design system's own Storybook, whose stories are written that way, calls `registerComponents(app)` in its preview for exactly this reason. Application code must never call it — that single reference pulls the whole library back into the boot bundle.
+
+Importing a component explicitly (`import KsButton from "@kestra-io/design-system/components/Basic/KsButton/KsButton.vue"`) also works and takes precedence; the auto-import only fills in tags nothing else resolved.
 
 > **Note on `@kestra-io/ui-libs`:** The codebase may still contain imports from `@kestra-io/ui-libs`, the previous shared component library. That repository is sunsetting — all components have been migrated here into `ui/packages/`. Do not add new imports from `@kestra-io/ui-libs`; use `Ks*` components from the design system instead.
 

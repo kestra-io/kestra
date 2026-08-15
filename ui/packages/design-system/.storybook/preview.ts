@@ -7,6 +7,7 @@ import {createRouter, createMemoryHistory} from "vue-router"
 import "../src/assets/styles/index.scss"
 
 import KestraDesignSystem from "../src/index"
+import {registerComponents} from "../src/registerComponents"
 
 const router = createRouter({
     history: createMemoryHistory(),
@@ -16,6 +17,9 @@ const router = createRouter({
 setup((app) => {
     app.use(createI18n({legacy: false, locale: "en"}))
     app.use(KestraDesignSystem)
+    // Stories declare their markup as runtime `template:` strings, which no build step
+    // sees, so the auto-import resolver cannot reach their tags.
+    registerComponents(app)
     app.use(router)
 })
 

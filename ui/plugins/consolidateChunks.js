@@ -14,6 +14,10 @@ const isRealModule = (id) =>
     !id.includes("__loadShare__") &&
     !id.includes("@module-federation") &&
     !id.includes("?worker") &&
+    // `*.async.ts` files are the defineAsyncComponent boundary guarding a lazy group.
+    // Letting a group claim one puts the boundary inside the chunk it is meant to keep
+    // out of the eager graph, so every consumer ends up importing that chunk statically.
+    !(/\.async\.ts$/).test(id) &&
     // Implementations of MF shared singletons (see federation() shared config)
     // must keep their own chunks: consumers import them through MF loadShare
     // wrappers, and merging them with wrapper consumers creates a

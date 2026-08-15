@@ -2,12 +2,17 @@ import {defineProject} from "vitest/config"
 import vue from "@vitejs/plugin-vue"
 
 import viteConfig from "./vite.config.js"
+import {designSystemAutoImport} from "@kestra-io/design-system/vite"
 
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 export default defineProject({
     plugins: [
         vue(),
+        // Same resolution as the app build: `<KsFoo>` in a template becomes an import of
+        // that component. Without it every mounted template hits "Failed to resolve
+        // component", since the design system no longer registers them globally.
+        designSystemAutoImport(),
     ],
     resolve: resolvedViteConfig.resolve,
     test: {

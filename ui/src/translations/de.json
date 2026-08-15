@@ -890,7 +890,7 @@
       },
       "move": {
         "bulk_success": "Ausgewählte Dateien erfolgreich verschoben.",
-        "bulk_error": "{count} der ausgewählten Elemente konnten nicht verschoben werden."
+        "bulk_error": "Fehler beim Verschieben von {count} der ausgewählten Elemente."
       },
       "import": {
         "files": "Dateien importieren",

@@ -963,6 +963,8 @@
   "namespace files|import|files": "824ca255db35",
   "namespace files|import|folder": "b849e38fdb56",
   "namespace files|import|success": "20d1a630655e",
+  "namespace files|move|bulk_error": "68fae5ae9eb5",
+  "namespace files|move|bulk_success": "b981db9f3ced",
   "namespace files|new_file": "d23b5dc62153",
   "namespace files|no_items|heading": "2376a1a0d0ba",
   "namespace files|no_items|paragraph": "cea5c4cf1510",

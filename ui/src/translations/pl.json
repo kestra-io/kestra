@@ -888,6 +888,10 @@
         "files": "Usuń {count} wybrane pliki",
         "folders": "Usuń {count} wybrane foldery"
       },
+      "move": {
+        "bulk_success": "Wybrane pliki zostały pomyślnie przeniesione.",
+        "bulk_error": "Nie udało się przenieść {count} z wybranych elementów."
+      },
       "import": {
         "files": "Importuj pliki",
         "folder": "Importuj folder",

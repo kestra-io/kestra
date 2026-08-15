@@ -944,7 +944,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         try {
             // For drafts the YAML may be unparsable; if parsing fails we skip all
             // validation since draft revisions are intentionally allowed to carry invalid content.
-            FlowWithSource flowWithDefault = flowParsingService.parse(flow, false);
+            FlowWithSource flowWithDefault = flowParsingService.parseForValidation(flow);
             // Drafts are allowed to be saved invalid - they will fail at execution time instead.
             // Read the draft flag from the original GenericFlow (set from the API draft flag) rather
             // than from flowWithDefault, since `parse` re-parses the YAML source which

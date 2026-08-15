@@ -541,7 +541,7 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins group by subgroups")
     // The response is raw file bytes, not base64: keep the OpenAPI schema as binary like the previous StreamedFile signature.
-    @ApiResponse(responseCode = "200", content = @Content(schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
+    @ApiResponse(responseCode = "200", description = "Ok", content = @Content(schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
     public HttpResponse<byte[]> getPluginUi(
         HttpRequest<?> request,
         @Parameter(description = "The plugin group") @PathVariable String group,

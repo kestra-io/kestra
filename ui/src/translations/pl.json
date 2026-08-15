@@ -2431,6 +2431,10 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
+    },
+    "plugin_card": {
+      "tasks": "zadanie | zadania",
+      "blueprints": "szablon | szablony"
     }
   }
 }

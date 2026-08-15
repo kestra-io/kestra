@@ -1,5 +1,7 @@
 // @ts-check
 
+import {TRANSLATED_LOCALES} from "../src/translations/languages.ts"
+
 /**
  * True for modules groups may capture. Excludes module-federation
  * virtual/wrapper modules, which must stay in the chunks MF assigns them, and
@@ -144,9 +146,32 @@ function collectStaticLangs(ctx) {
     }
 }
 
+/**
+ * Everything one extra language costs, in a single chunk: the app's messages, the design system's,
+ * and moment's locale. English is deliberately absent — it is a static import that ships with the
+ * main bundle, which is what most users run.
+ *
+ * Without a group per language the design-system group below would swallow the design system's
+ * message files into the eager chunk every user downloads, and what escaped it would still land in
+ * a chunk of its own, so a German user fetched three files instead of one.
+ * @param {string} lang
+ */
+const localeGroup = (lang) => {
+    const messages = new RegExp(`[\\\\/]translations[\\\\/]${lang}\\.json(\\?.*)?$`)
+    // moment names its locales `pt-br` / `zh-cn`, matching its own normalizeLocale.
+    const moment = new RegExp(`[\\\\/]moment[\\\\/]dist[\\\\/]locale[\\\\/]${lang.toLowerCase().replace(/_/g, "-")}(\\.js)?(\\?.*)?$`)
+    return {
+        name: `i18n-${lang}`,
+        test: (/** @type {string} */ id) => isRealModule(id) && (messages.test(id) || moment.test(id)),
+        priority: -5,
+        includeDependenciesRecursively: false,
+    }
+}
+
 // Negative priorities keep module federation's own groups (priority >= 0)
 // winning every module they target; recursion off so shared deps stay put.
 const GROUPS = [
+    ...TRANSLATED_LOCALES.map(localeGroup),
     // Monaco and the design-system editor files that statically import it.
     // Lazy: KsEditor is exported as an async component.
     {

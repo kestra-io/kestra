@@ -1,0 +1,415 @@
+{
+  "zh_CN": {
+    "ks_bulk_select": {
+      "selected": "<strong>{count}</strong> 个已选择",
+      "all": "选择所有 ({count})"
+    },
+    "days": "天数",
+    "hours": "小时",
+    "minutes": "分钟",
+    "seconds": "秒钟",
+    "input_custom_duration": "或输入自定义持续时间：",
+    "datepicker": {
+      "custom duration": "自定义持续时间"
+    },
+    "no_data": "看起来这里还没有内容……\n调整您的过滤器，或者再试一次！",
+    "ks_empty_state": {
+      "learn_more": "了解更多"
+    },
+    "add": "添加",
+    "none": "无",
+    "filter": {
+      "update": "更新",
+      "update conditions hint": "当前应用的filter将替换此保存的filter的条件。",
+      "save": "保存",
+      "cancel": "取消",
+      "description": "描述",
+      "apply": "应用过滤器",
+      "customize": "添加过滤器",
+      "customize tooltip": "自定义显示哪些过滤器",
+      "customize columns": "自定义表格列",
+      "delete filter": "删除过滤器",
+      "delete filter confirm": "您确定要删除此过滤器吗？",
+      "edit filter": "编辑过滤器",
+      "options": "数据选项",
+      "periodic refresh": "定期刷新",
+      "refresh": "刷新数据",
+      "save filter": "保存过滤器",
+      "save filter tooltip": "保存已应用的过滤器",
+      "saved": "已保存的过滤器",
+      "saved filters": "已保存的过滤器集",
+      "saved tooltip": "管理已保存的过滤器",
+      "show chart": "显示图表",
+      "drag to reorder": "拖动以重新排序",
+      "select filter": "选择要添加的过滤器",
+      "enter description": "输入筛选器描述",
+      "enter name": "输入过滤器名称",
+      "reset": "清除所有",
+      "reset_all": "重置所有过滤器",
+      "reset_tooltip": "重置为默认",
+      "or": "或",
+      "and": "且",
+      "in any": "任意",
+      "add_condition_group": "添加条件组",
+      "add_condition": "添加条件",
+      "add_advanced_filter": "添加高级筛选",
+      "advanced_filter": "高级筛选",
+      "mobile_filters": "筛选器",
+      "filters_title": "筛选器",
+      "all_filters": "所有筛选器",
+      "my_filters_saved": "我的筛选器已保存",
+      "rule_count": "{count} 条规则",
+      "rules_count": "{count} 条规则",
+      "where": "条件",
+      "raw_view": "以文本方式编辑",
+      "chip_view": "可视化编辑",
+      "raw_apply": "应用",
+      "raw_revert": "还原",
+      "raw_placeholder": "filters[field][op]=value…",
+      "unrenderable_title": "复杂查询",
+      "unrenderable_body": "此查询使用了可视化过滤器编辑器无法表示的嵌套结构。请在此处直接编辑，或应用以进行简化。",
+      "drag to reorder columns": "拖动以重新排序列",
+      "save current": "保存当前过滤器",
+      "empty title": "暂无已保存的过滤器",
+      "empty subtitle": "保存当前过滤器以便稍后重复使用",
+      "save duplicate": "已存在同名过滤器。",
+      "active key value pairs": "活动的Key/Value对",
+      "kv_pair_selected": "{count} 个 Key/Value 对已选择",
+      "key": "键",
+      "value": "值",
+      "search options": "搜索...",
+      "select all": "全选",
+      "deselect all": "取消全选",
+      "no options found": "未找到选项",
+      "show default": "显示默认",
+      "operator": "过滤运算符",
+      "is_between": "介于",
+      "timerange": {
+        "predefined": "预定义",
+        "custom": "自定义范围"
+      },
+      "select_option": "选择一个选项",
+      "start_date": "开始日期",
+      "end_date": "结束日期",
+      "select_start_date": "选择开始日期",
+      "select_end_date": "选择结束日期",
+      "filters_added": "已添加 {total} 个过滤器中的 {selected} 个",
+      "label_comparators": {
+        "has_any_of": "包含任意一个",
+        "has_none_of": "不包含任何一个",
+        "has_all_of": "包含全部",
+        "contains": "包含",
+        "does_not_contain": "不包含",
+        "is_set": "已设置",
+        "is_not_set": "未设置"
+      },
+      "comparator_descriptions": {
+        "EQUALS": "完全匹配 - value 必须相同",
+        "NOT_EQUALS": "排除完全匹配 - value 必须不同",
+        "IN": "匹配选项列表中的任何值",
+        "NOT_IN": "从选项列表中排除所有值",
+        "GREATER_THAN": "数字/日期比较 - 值必须更大",
+        "LESS_THAN": "数字/日期比较 - 值必须更小",
+        "GREATER_THAN_OR_EQUAL_TO": "数值/日期比较 - 值必须大于或等于",
+        "LESS_THAN_OR_EQUAL_TO": "数值/日期比较 - 值必须小于或等于",
+        "STARTS_WITH": "文本以指定字符开头",
+        "ENDS_WITH": "文本以指定字符结束",
+        "CONTAINS": "文本包含指定字符的任意位置",
+        "NOT_CONTAINS": "文本不包含指定字符",
+        "IS_NULL": "Label key 不存在",
+        "IS_NOT_NULL": "Label key 存在且可为任意 value",
+        "REGEX": "使用正则表达式进行高级模式匹配",
+        "PREFIX": "命名空间层级匹配（例如，'com.example' 匹配 'com.example.app'）"
+      },
+      "hierarchy": {
+        "all": "默认",
+        "child_description": "仅显示嵌套/触发的执行",
+        "parent_description": "仅显示顶级/根执行"
+      },
+      "execution_kind": {
+        "normal": "正常",
+        "playground": "游乐场",
+        "loop": "循环",
+        "test": "测试",
+        "normal_description": "常规执行",
+        "playground_description": "从Playground模式触发的执行",
+        "loop_description": "由 Loop task 创建的执行",
+        "test_description": "单元测试触发的执行"
+      },
+      "scope": {
+        "label": "范围",
+        "description": "按执行范围筛选"
+      },
+      "namespace": {
+        "label": "命名空间",
+        "description": "按namespace筛选"
+      },
+      "enabled": {
+        "description": "按启用筛选"
+      },
+      "type": {
+        "description": "按类型筛选"
+      },
+      "username": {
+        "description": "按用户名筛选"
+      },
+      "name": {
+        "label": "名称",
+        "description": "按名称筛选"
+      },
+      "member": {
+        "description": "按成员筛选"
+      },
+      "group": {
+        "description": "按组筛选"
+      },
+      "parentId": {
+        "label": "父级 ID",
+        "description": "按 parent ID 筛选"
+      },
+      "flowId": {
+        "label": "Flow ID",
+        "description": "按 flow ID 筛选"
+      },
+      "email": {
+        "description": "按 email 筛选"
+      },
+      "kind": {
+        "label": "种类",
+        "description": "按执行类型筛选"
+      },
+      "state": {
+        "label": "状态",
+        "description": "按执行状态筛选"
+      },
+      "state_group": {
+        "running": "运行中",
+        "paused": "已暂停",
+        "completed": "已完成",
+        "failed": "失败",
+        "other": "其他"
+      },
+      "childFilter": {
+        "label": "层次结构",
+        "description": "按执行层级筛选"
+      },
+      "timeRange": {
+        "label": "间隔",
+        "description": "按执行时间筛选",
+        "applyTo": "应用于",
+        "chip": {
+          "start": "已启动",
+          "end": "结束",
+          "startOrEnd": "已开始或已结束"
+        },
+        "dateFilter": {
+          "startDate": "开始日期",
+          "endDate": "结束日期",
+          "startOrEndDate": "开始或结束日期"
+        }
+      },
+      "timeRange_dashboard": {
+        "label": "间隔",
+        "description": "按仪表板窗口筛选"
+      },
+      "timeRange_log": {
+        "label": "间隔",
+        "description": "按log时间戳筛选"
+      },
+      "timeRange_trigger": {
+        "label": "间隔",
+        "description": "按触发器时间筛选",
+        "chip": {
+          "nextExecution": "下次执行",
+          "lastTriggered": "最后触发"
+        },
+        "dateFilter": {
+          "nextExecutionDate": "下次执行日期",
+          "lastTriggeredDate": "最后触发日期"
+        }
+      },
+      "timeRange_metric": {
+        "label": "间隔",
+        "description": "按时间间隔筛选"
+      },
+      "labels": {
+        "label": "标签",
+        "description": "按标签筛选"
+      },
+      "labels_execution": {
+        "label": "标签",
+        "description": "按执行标签筛选"
+      },
+      "labels_flow": {
+        "label": "标签",
+        "description": "按 flow 标签筛选"
+      },
+      "triggerExecutionId": {
+        "label": "触发 Execution ID",
+        "description": "按 trigger 执行 ID 筛选"
+      },
+      "triggerState": {
+        "label": "触发状态",
+        "description": "按触发器状态筛选",
+        "enabled": "启用",
+        "disabled": "禁用"
+      },
+      "scope_flow": {
+        "label": "范围",
+        "description": "按flow范围筛选"
+      },
+      "scope_log": {
+        "label": "范围",
+        "description": "按用户或系统日志筛选"
+      },
+      "scope_trigger": {
+        "label": "范围",
+        "description": "按 trigger 范围筛选"
+      },
+      "level": {
+        "description": "按日志严重性筛选"
+      },
+      "level_log_executions": {
+        "label": "日志级别"
+      },
+      "triggerId": {
+        "label": "触发器 ID",
+        "description": "按触发器标识符筛选"
+      },
+      "triggerId_trigger": {
+        "label": "触发器 ID",
+        "description": "按 trigger ID 筛选"
+      },
+      "taskId": {
+        "label": "Task ID",
+        "description": "按 task 标识符筛选"
+      },
+      "taskRunId": {
+        "label": "Task 运行 ID",
+        "description": "按 task 运行标识符筛选"
+      },
+      "attemptNumber": {
+        "label": "尝试次数",
+        "description": "按 task 运行尝试编号筛选"
+      },
+      "workerId": {
+        "label": "工作者 ID",
+        "description": "按worker ID筛选"
+      },
+      "metric": {
+        "label": "指标",
+        "description": "按指标类型筛选"
+      },
+      "task": {
+        "label": "任务",
+        "description": "按任务名称筛选"
+      },
+      "table_column": {
+        "mcpTools": {
+          "title": "向 AI 智能体显示的标题",
+          "annotations": "在工具上声明的行为提示（read-only、destructive 等）",
+          "flow": "定义此工具的 flow",
+          "namespace": "定义此工具的 flow 的 namespace",
+          "triggerId": "flow 内的 trigger id（与工具名称不同）",
+          "description": "工具的功能以及智能体何时应调用它"
+        },
+        "flows": {
+          "labels": "flow 标签 (key:value 格式)",
+          "namespace": "flow的namespace",
+          "last execution date": "上次执行flow的时间",
+          "last execution status": "最近一次执行的状态",
+          "execution statistics": "显示最近执行状态的图表",
+          "triggers": "可以启动flow的Triggers（例如，schedule，event）",
+          "last modified": "flow 定义最后更新时间"
+        },
+        "executions": {
+          "id": "执行 ID",
+          "start-date": "执行开始时",
+          "end-date": "执行完成时",
+          "duration": "执行的总运行时间",
+          "namespace": "执行的flow所属的namespace",
+          "flow": "已执行flow的ID",
+          "labels": "执行标签 (key:value 格式)",
+          "state": "当前执行状态",
+          "revision": "用于此次执行的flow版本",
+          "inputs": "执行提供的输入值",
+          "task-id": "执行中最后一个task的ID",
+          "trigger": "启动执行的Trigger",
+          "parent-execution": "触发此执行的父执行ID"
+        },
+        "kv": {
+          "namespace": "逻辑分组，其中存储了key-value对",
+          "key": "存储值的唯一标识符",
+          "description": "可选说明解释KV条目",
+          "last modified": "最近更新的时间戳",
+          "expiration date": "当 kv store 的键值对过期时"
+        },
+        "secrets": {
+          "namespace": "逻辑分组存储机密",
+          "description": "可选备注提供上下文",
+          "tags": "额外分类标签"
+        },
+        "triggers": {
+          "flow": "与trigger关联的flow",
+          "namespace": "触发器的namespace",
+          "execution id": "由 trigger 启动的执行 ID",
+          "workerId": "工作器标识符",
+          "last trigger date": "上次触发器执行时间",
+          "context updated date": "触发器上下文的最后更新",
+          "next evaluation date": "触发器下一次评估时",
+          "last evaluation date": "trigger 上次评估时间"
+        },
+        "metrics": {
+          "task": "生成该指标的任务",
+          "name": "指标名称",
+          "value": "指标的值",
+          "tags": "与指标关联的标签"
+        }
+      },
+      "titles": {
+        "flow_execution_filters": "流执行过滤器",
+        "dashboard_filters": "仪表板过滤器",
+        "namespace_dashboard_filters": "命名空间仪表板过滤器",
+        "flow_dashboard_filters": "流仪表板过滤器",
+        "execution_filters": "执行过滤器",
+        "flow_filters": "流过滤器",
+        "log_filters": "日志过滤器",
+        "metric_filters": "指标过滤器",
+        "flow_metric_filters": "流量指标过滤器",
+        "trigger_filters": "触发器过滤器",
+        "namespace_filters": "命名空间过滤器",
+        "kv_filters": "键值过滤器",
+        "secret_filters": "秘密过滤器",
+        "blueprint_filters": "蓝图过滤器"
+      },
+      "search_placeholders": {
+        "search_mcp_tools": "搜索 MCP 工具",
+        "search_executions": "搜索执行",
+        "search_dashboards": "搜索仪表板...",
+        "search_flows": "搜索 flows",
+        "search_logs": "搜索日志",
+        "search_metrics": "搜索指标",
+        "search_triggers": "搜索 triggers",
+        "search_namespaces": "搜索 namespaces",
+        "search_kv": "搜索 KV 对",
+        "search_secrets": "搜索密钥",
+        "search_blueprints": "搜索blueprint"
+      }
+    },
+    "ks_no_data": {
+      "no_results": "没有结果显示。",
+      "nothing_here": "看起来这里还什么都没有…！",
+      "will_appear": "一旦有内容可显示，就会显示在这里。"
+    },
+    "password_requirements": {
+      "length": "至少 8 个字符",
+      "uppercase": "一个大写字母",
+      "lowercase": "一个小写字母",
+      "number": "一个数字",
+      "match": "密码匹配"
+    },
+    "topnav_sidebar_toggle": "切换菜单",
+    "topnav_bookmark": "切换书签",
+    "topnav_dock_toggle": "切换面板"
+  }
+}

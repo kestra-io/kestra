@@ -41,11 +41,11 @@
             <slot name="footer-content">
                 <span v-if="hasTaskCount" class="plugin-card__count">
                     <span class="plugin-card__count-value">{{ taskCount }}</span>
-                    <span class="plugin-card__count-label">{{ t("plugin_card.tasks", taskCount ?? 0) }}</span>
+                    <span class="plugin-card__count-label">{{ $t("plugin_card.tasks", taskCount ?? 0) }}</span>
                 </span>
                 <span v-if="hasBlueprintCount" class="plugin-card__count">
                     <span class="plugin-card__count-value">{{ blueprintCount }}</span>
-                    <span class="plugin-card__count-label">{{ t("plugin_card.blueprints", blueprintCount ?? 0) }}</span>
+                    <span class="plugin-card__count-label">{{ $t("plugin_card.blueprints", blueprintCount ?? 0) }}</span>
                 </span>
             </slot>
             <ChevronRight
@@ -59,21 +59,14 @@
 
 <script setup lang="ts">
     import {computed, useSlots} from "vue"
-    import {useI18n} from "vue-i18n"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {KsTag} from "@kestra-io/design-system"
     import TaskIcon, {type TaskIconData} from "./TaskIcon.vue"
-    import locale from "./PluginCard.locale"
 
     defineOptions({
         name: "PluginCard",
     })
 
-    const {t} = useI18n({
-        useScope: "local",
-        inheritLocale: true,
-        messages: locale,
-    })
     const slots = useSlots()
 
     const props = withDefaults(defineProps<{

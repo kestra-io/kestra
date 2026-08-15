@@ -1,0 +1,415 @@
+{
+  "hi": {
+    "ks_bulk_select": {
+      "selected": "<strong>{count}</strong> चयनित",
+      "all": "सभी का चयन करें ({count})"
+    },
+    "days": "दिन",
+    "hours": "घंटे",
+    "minutes": "मिनट्स",
+    "seconds": "सेकंड्स",
+    "input_custom_duration": "या कस्टम अवधि दर्ज करें:",
+    "datepicker": {
+      "custom duration": "कस्टम अवधि"
+    },
+    "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!\nअपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
+    "ks_empty_state": {
+      "learn_more": "और जानें"
+    },
+    "add": "जोड़ें",
+    "none": "कोई नहीं",
+    "filter": {
+      "update": "अपडेट",
+      "update conditions hint": "वर्तमान में लागू filter इस सहेजे गए filter की शर्तों को बदल देंगे।",
+      "save": "सहेजें",
+      "cancel": "रद्द करें",
+      "description": "विवरण",
+      "apply": "फ़िल्टर लागू करें",
+      "customize": "फ़िल्टर जोड़ें",
+      "customize tooltip": "कौन से फ़िल्टर प्रदर्शित करने हैं, इसे अनुकूलित करें",
+      "customize columns": "तालिका स्तंभों को अनुकूलित करें",
+      "delete filter": "फ़िल्टर हटाएं",
+      "delete filter confirm": "क्या आप वाकई इस फ़िल्टर को हटाना चाहते हैं?",
+      "edit filter": "फ़िल्टर संपादित करें",
+      "options": "डेटा विकल्प",
+      "periodic refresh": "आवधिक रिफ्रेश",
+      "refresh": "डेटा रिफ्रेश करें",
+      "save filter": "फ़िल्टर सहेजें",
+      "save filter tooltip": "लागू किए गए फ़िल्टर सहेजें",
+      "saved": "सहेजे गए फ़िल्टर",
+      "saved filters": "सहेजे गए फ़िल्टर सेट्स",
+      "saved tooltip": "सहेजे गए फ़िल्टर प्रबंधित करें",
+      "show chart": "चार्ट दिखाएं",
+      "drag to reorder": "पुनः क्रमबद्ध करने के लिए खींचें",
+      "select filter": "एक फ़िल्टर जोड़ने के लिए चुनें",
+      "enter description": "फ़िल्टर विवरण दर्ज करें",
+      "enter name": "फ़िल्टर नाम दर्ज करें",
+      "reset": "सभी साफ़ करें",
+      "reset_all": "सभी फ़िल्टर रीसेट करें",
+      "reset_tooltip": "डिफ़ॉल्ट पर रीसेट करें",
+      "or": "या",
+      "and": "और",
+      "in any": "किसी में भी",
+      "add_condition_group": "शर्त समूह जोड़ें",
+      "add_condition": "शर्त जोड़ें",
+      "add_advanced_filter": "उन्नत फ़िल्टर जोड़ें",
+      "advanced_filter": "उन्नत फ़िल्टर",
+      "mobile_filters": "फ़िल्टर",
+      "filters_title": "फ़िल्टर",
+      "all_filters": "सभी फ़िल्टर",
+      "my_filters_saved": "मेरे फ़िल्टर सहेजे गए",
+      "rule_count": "{count} नियम",
+      "rules_count": "{count} नियम",
+      "where": "जहां",
+      "raw_view": "पाठ के रूप में संपादित करें",
+      "chip_view": "दृश्य रूप से संपादित करें",
+      "raw_apply": "लागू करें",
+      "raw_revert": "पूर्ववत करें",
+      "raw_placeholder": "filters[field][op]=value…",
+      "unrenderable_title": "जटिल क्वेरी",
+      "unrenderable_body": "यह क्वेरी ऐसी नेस्टिंग का उपयोग करती है जिसे दृश्य फ़िल्टर संपादक प्रस्तुत नहीं कर सकता। इसे सीधे यहां संपादित करें, या सरल बनाने के लिए लागू करें।",
+      "drag to reorder columns": "कॉलम को पुनः क्रमबद्ध करने के लिए खींचें",
+      "save current": "वर्तमान फ़िल्टर सहेजें",
+      "empty title": "अभी तक कोई सहेजा हुआ फ़िल्टर नहीं",
+      "empty subtitle": "बाद में पुन: उपयोग के लिए अपना सक्रिय फ़िल्टर सहेजें",
+      "save duplicate": "इस नाम का एक फ़िल्टर पहले से मौजूद है।",
+      "active key value pairs": "सक्रिय Key/Value जोड़े",
+      "kv_pair_selected": "{count} Key/Value जोड़े चुने गए",
+      "key": "कुंजी",
+      "value": "मान",
+      "search options": "खोजें...",
+      "select all": "सभी चुनें",
+      "deselect all": "सभी को अचयनित करें",
+      "no options found": "कोई विकल्प नहीं मिला",
+      "show default": "डिफ़ॉल्ट दिखाएं",
+      "operator": "फ़िल्टर ऑपरेटर",
+      "is_between": "के बीच है",
+      "timerange": {
+        "predefined": "पूर्वनिर्धारित",
+        "custom": "कस्टम रेंज"
+      },
+      "select_option": "एक विकल्प चुनें",
+      "start_date": "आरंभ तिथि",
+      "end_date": "समाप्ति तिथि",
+      "select_start_date": "प्रारंभ तिथि चुनें",
+      "select_end_date": "अंतिम तिथि चुनें",
+      "filters_added": "{total} में से {selected} फ़िल्टर जोड़े गए",
+      "label_comparators": {
+        "has_any_of": "इनमें से कोई है",
+        "has_none_of": "इनमें से कोई नहीं है",
+        "has_all_of": "इनमें से सभी हैं",
+        "contains": "शामिल है",
+        "does_not_contain": "शामिल नहीं है",
+        "is_set": "सेट है",
+        "is_not_set": "सेट नहीं है"
+      },
+      "comparator_descriptions": {
+        "EQUALS": "सटीक मिलान - value समान होना चाहिए",
+        "NOT_EQUALS": "सटीक मिलान को बाहर करें - value अलग होना चाहिए",
+        "IN": "विकल्पों की सूची से किसी भी value से मेल खाता है",
+        "NOT_IN": "विकल्पों की सूची से सभी values को बाहर करता है",
+        "GREATER_THAN": "संख्यात्मक/तिथि तुलना - value बड़ा होना चाहिए",
+        "LESS_THAN": "संख्यात्मक/तिथि तुलना - value छोटा होना चाहिए",
+        "GREATER_THAN_OR_EQUAL_TO": "संख्यात्मक/तिथि तुलना - value बड़ा या बराबर होना चाहिए",
+        "LESS_THAN_OR_EQUAL_TO": "संख्यात्मक/तिथि तुलना - value छोटा या बराबर होना चाहिए",
+        "STARTS_WITH": "टेक्स्ट निर्दिष्ट वर्णों से शुरू होता है",
+        "ENDS_WITH": "पाठ निर्दिष्ट वर्णों के साथ समाप्त होता है",
+        "CONTAINS": "पाठ में निर्दिष्ट वर्ण कहीं भी शामिल हैं",
+        "NOT_CONTAINS": "टेक्स्ट में निर्दिष्ट वर्ण कहीं भी शामिल नहीं हैं",
+        "IS_NULL": "Label key मौजूद नहीं है",
+        "IS_NOT_NULL": "Label key किसी भी value के साथ मौजूद है",
+        "REGEX": "उन्नत पैटर्न मिलान नियमित अभिव्यक्तियों का उपयोग करके",
+        "PREFIX": "Namespace पदानुक्रम मिलान (उदाहरण के लिए, 'com.example' 'com.example.app' से मेल खाता है)"
+      },
+      "hierarchy": {
+        "all": "डिफ़ॉल्ट",
+        "child_description": "केवल नेस्टेड/ट्रिगर की गई Executions दिखाएं",
+        "parent_description": "केवल शीर्ष-स्तरीय/मूल executions दिखाएं"
+      },
+      "execution_kind": {
+        "normal": "सामान्य",
+        "playground": "प्लेग्राउंड",
+        "loop": "लूप",
+        "test": "परीक्षण",
+        "normal_description": "नियमित निष्पादन",
+        "playground_description": "प्लेग्राउंड मोड से ट्रिगर की गई Executions",
+        "loop_description": "लूप task द्वारा बनाई गई एग्जीक्यूशन",
+        "test_description": "यूनिट टेस्ट द्वारा ट्रिगर की गई Executions"
+      },
+      "scope": {
+        "label": "क्षेत्र",
+        "description": "निष्पादन दायरे के अनुसार फ़िल्टर करें"
+      },
+      "namespace": {
+        "label": "Namespace",
+        "description": "namespace द्वारा फ़िल्टर करें"
+      },
+      "enabled": {
+        "description": "सक्षम द्वारा फ़िल्टर करें"
+      },
+      "type": {
+        "description": "प्रकार के अनुसार फ़िल्टर करें"
+      },
+      "username": {
+        "description": "उपयोगकर्ता नाम द्वारा फ़िल्टर करें"
+      },
+      "name": {
+        "label": "नाम",
+        "description": "नाम से फ़िल्टर करें"
+      },
+      "member": {
+        "description": "सदस्य द्वारा फ़िल्टर करें"
+      },
+      "group": {
+        "description": "समूह द्वारा फ़िल्टर करें"
+      },
+      "parentId": {
+        "label": "पैरेंट ID",
+        "description": "parent ID द्वारा फ़िल्टर करें"
+      },
+      "flowId": {
+        "label": "Flow ID",
+        "description": "flow ID द्वारा फ़िल्टर करें"
+      },
+      "email": {
+        "description": "ईमेल द्वारा फ़िल्टर करें"
+      },
+      "kind": {
+        "label": "प्रकार",
+        "description": "प्रकार के अनुसार निष्पादन फ़िल्टर करें"
+      },
+      "state": {
+        "label": "स्थिति",
+        "description": "कार्य स्थिति द्वारा फ़िल्टर करें"
+      },
+      "state_group": {
+        "running": "चल रहा है",
+        "paused": "रुका हुआ",
+        "completed": "पूर्ण",
+        "failed": "विफल",
+        "other": "अन्य"
+      },
+      "childFilter": {
+        "label": "अनुक्रम",
+        "description": "कार्यक्रम पदानुक्रम द्वारा फ़िल्टर करें"
+      },
+      "timeRange": {
+        "label": "अंतराल",
+        "description": "कार्य समय द्वारा फ़िल्टर करें",
+        "applyTo": "लागू करें",
+        "chip": {
+          "start": "शुरू हुआ",
+          "end": "समाप्त",
+          "startOrEnd": "शुरू या समाप्त हुआ"
+        },
+        "dateFilter": {
+          "startDate": "प्रारंभ तिथि",
+          "endDate": "समाप्ति तिथि",
+          "startOrEndDate": "प्रारंभ या समाप्ति तिथि"
+        }
+      },
+      "timeRange_dashboard": {
+        "label": "अंतराल",
+        "description": "डैशबोर्ड विंडो द्वारा फ़िल्टर करें"
+      },
+      "timeRange_log": {
+        "label": "अंतराल",
+        "description": "लॉग टाइमस्टैम्प द्वारा फ़िल्टर करें"
+      },
+      "timeRange_trigger": {
+        "label": "अंतराल",
+        "description": "ट्रिगर समय द्वारा फ़िल्टर करें",
+        "chip": {
+          "nextExecution": "अगला निष्पादन",
+          "lastTriggered": "अंतिम ट्रिगर"
+        },
+        "dateFilter": {
+          "nextExecutionDate": "अगली निष्पादन तिथि",
+          "lastTriggeredDate": "अंतिम ट्रिगर तिथि"
+        }
+      },
+      "timeRange_metric": {
+        "label": "अंतराल",
+        "description": "समय अंतराल के अनुसार फ़िल्टर करें"
+      },
+      "labels": {
+        "label": "लेबल्स",
+        "description": "लेबल द्वारा फ़िल्टर करें"
+      },
+      "labels_execution": {
+        "label": "लेबल्स",
+        "description": "निष्पादन लेबल द्वारा फ़िल्टर करें"
+      },
+      "labels_flow": {
+        "label": "लेबल्स",
+        "description": "फ्लो लेबल्स द्वारा फ़िल्टर करें"
+      },
+      "triggerExecutionId": {
+        "label": "Execution ID ट्रिगर करें",
+        "description": "ट्रिगर Execution ID द्वारा फ़िल्टर करें"
+      },
+      "triggerState": {
+        "label": "ट्रिगर स्थिति",
+        "description": "ट्रिगर स्थिति द्वारा फ़िल्टर करें",
+        "enabled": "सक्रिय",
+        "disabled": "अक्षम"
+      },
+      "scope_flow": {
+        "label": "दायरा",
+        "description": "फ्लो स्कोप द्वारा फ़िल्टर करें"
+      },
+      "scope_log": {
+        "label": "स्कोप",
+        "description": "उपयोगकर्ता या सिस्टम logs द्वारा फ़िल्टर करें"
+      },
+      "scope_trigger": {
+        "label": "क्षेत्र",
+        "description": "ट्रिगर स्कोप द्वारा फ़िल्टर करें"
+      },
+      "level": {
+        "description": "लॉग गंभीरता के अनुसार फ़िल्टर करें"
+      },
+      "level_log_executions": {
+        "label": "लॉग स्तर"
+      },
+      "triggerId": {
+        "label": "ट्रिगर ID",
+        "description": "ट्रिगर पहचानकर्ता द्वारा फ़िल्टर करें"
+      },
+      "triggerId_trigger": {
+        "label": "ट्रिगर ID",
+        "description": "ट्रिगर ID द्वारा फ़िल्टर करें"
+      },
+      "taskId": {
+        "label": "Task ID",
+        "description": "task identifier द्वारा फ़िल्टर करें"
+      },
+      "taskRunId": {
+        "label": "Task रन ID",
+        "description": "task run पहचानकर्ता द्वारा फ़िल्टर करें"
+      },
+      "attemptNumber": {
+        "label": "प्रयास संख्या",
+        "description": "task run प्रयास संख्या द्वारा फ़िल्टर करें"
+      },
+      "workerId": {
+        "label": "वर्कर ID",
+        "description": "वर्कर ID द्वारा फ़िल्टर करें"
+      },
+      "metric": {
+        "label": "मेट्रिक",
+        "description": "मेट्रिक प्रकार द्वारा फ़िल्टर करें"
+      },
+      "task": {
+        "label": "कार्य",
+        "description": "कार्य का नाम द्वारा फ़िल्टर करें"
+      },
+      "table_column": {
+        "mcpTools": {
+          "title": "AI एजेंट्स को दिखाया जाने वाला शीर्षक",
+          "annotations": "टूल पर घोषित व्यवहार संकेत (read-only, destructive, आदि)",
+          "flow": "वह flow जो इस टूल को परिभाषित करता है",
+          "namespace": "उस flow का namespace जो इस टूल को परिभाषित करता है",
+          "triggerId": "flow के भीतर trigger id, टूल नाम से अलग",
+          "description": "टूल क्या करता है और एजेंट को इसे कब कॉल करना चाहिए"
+        },
+        "flows": {
+          "labels": "फ्लो लेबल्स (key:value प्रारूप)",
+          "namespace": "flow का namespace",
+          "last execution date": "जब flow को अंतिम बार निष्पादित किया गया था",
+          "last execution status": "हाल की सबसे नई execution की स्थिति",
+          "execution statistics": "हाल की execution अवस्थाओं को दिखाने वाला चार्ट",
+          "triggers": "फ्लो शुरू करने वाले ट्रिगर्स (जैसे, शेड्यूल, इवेंट)",
+          "last modified": "flow परिभाषा को अंतिम बार कब अपडेट किया गया था"
+        },
+        "executions": {
+          "id": "एक्सेक्यूशन ID",
+          "start-date": "जब निष्पादन शुरू हुआ",
+          "end-date": "जब निष्पादन समाप्त हो गया",
+          "duration": "निष्पादन का कुल रनटाइम",
+          "namespace": "जिस namespace में निष्पादित flow शामिल है",
+          "flow": "चलाए गए flow का ID",
+          "labels": "निष्पादन लेबल (key:value प्रारूप)",
+          "state": "वर्तमान निष्पादन स्थिति",
+          "revision": "इस execution के लिए उपयोग किए गए flow का संस्करण",
+          "inputs": "असेंबल के लिए प्रदान किए गए Input values",
+          "task-id": "अंतिम task का ID निष्पादन में",
+          "trigger": "जिस Trigger ने execution शुरू किया",
+          "parent-execution": "इस निष्पादन को ट्रिगर करने वाला पैरेंट execution ID"
+        },
+        "kv": {
+          "namespace": "जिस तार्किक समूह में kv store होता है",
+          "key": "संग्रहीत value के लिए अद्वितीय पहचानकर्ता",
+          "description": "kv प्रविष्टि को समझाने वाले वैकल्पिक नोट्स",
+          "last modified": "सबसे हालिया अपडेट का टाइमस्टैम्प",
+          "expiration date": "जब kv store की key-value जोड़ी समाप्त हो जाती है"
+        },
+        "secrets": {
+          "namespace": "जिस तार्किक समूह में गुप्त जानकारी संग्रहीत की जाती है",
+          "description": "वैकल्पिक नोट्स जो संदर्भ प्रदान करते हैं",
+          "tags": "अतिरिक्त वर्गीकरण टैग्स"
+        },
+        "triggers": {
+          "flow": "ट्रिगर के साथ जुड़ा हुआ flow",
+          "namespace": "ट्रिगर का namespace",
+          "execution id": "trigger द्वारा शुरू किए गए निष्पादन की ID",
+          "workerId": "वर्कर पहचानकर्ता",
+          "last trigger date": "जब trigger ने अंतिम बार निष्पादन किया",
+          "context updated date": "ट्रिगर संदर्भ का अंतिम अपडेट",
+          "next evaluation date": "जब अगला trigger मूल्यांकन करेगा",
+          "last evaluation date": "trigger का अंतिम बार कब मूल्यांकन किया गया था"
+        },
+        "metrics": {
+          "task": "मेट्रिक उत्पन्न करने वाला Task",
+          "name": "मेट्रिक का नाम",
+          "value": "मेट्रिक का मूल्य",
+          "tags": "मेट्रिक से जुड़े टैग्स"
+        }
+      },
+      "titles": {
+        "flow_execution_filters": "फ्लो निष्पादन फ़िल्टर",
+        "dashboard_filters": "डैशबोर्ड फ़िल्टर",
+        "namespace_dashboard_filters": "नेमस्पेस डैशबोर्ड फ़िल्टर",
+        "flow_dashboard_filters": "फ्लो डैशबोर्ड फ़िल्टर",
+        "execution_filters": "निष्पादन फ़िल्टर",
+        "flow_filters": "फ्लो फ़िल्टर",
+        "log_filters": "लॉग फ़िल्टर",
+        "metric_filters": "मेट्रिक फ़िल्टर",
+        "flow_metric_filters": "फ्लो मेट्रिक फ़िल्टर",
+        "trigger_filters": "ट्रिगर फ़िल्टर",
+        "namespace_filters": "नेमस्पेस फ़िल्टर",
+        "kv_filters": "कुंजी-मूल्य फ़िल्टर",
+        "secret_filters": "गुप्त फ़िल्टर",
+        "blueprint_filters": "ब्लूप्रिंट फ़िल्टर"
+      },
+      "search_placeholders": {
+        "search_mcp_tools": "MCP टूल खोजें",
+        "search_executions": "निष्पादन खोजें",
+        "search_dashboards": "डैशबोर्ड खोजें...",
+        "search_flows": "फ्लो खोजें",
+        "search_logs": "लॉग खोजें",
+        "search_metrics": "मेट्रिक्स खोजें",
+        "search_triggers": "ट्रिगर्स खोजें",
+        "search_namespaces": "namespace खोजें",
+        "search_kv": "KV जोड़े खोजें",
+        "search_secrets": "गोपनीय जानकारी खोजें",
+        "search_blueprints": "ब्लूप्रिंट्स खोजें"
+      }
+    },
+    "ks_no_data": {
+      "no_results": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+      "nothing_here": "लगता है यहाँ अभी कुछ नहीं है…!",
+      "will_appear": "जैसे ही दिखाने के लिए कुछ होगा, यह यहाँ दिखाई देगा।"
+    },
+    "password_requirements": {
+      "length": "कम से कम 8 अक्षर",
+      "uppercase": "एक बड़ा अक्षर",
+      "lowercase": "एक छोटा अक्षर",
+      "number": "एक संख्या",
+      "match": "पासवर्ड मेल खाते हैं"
+    },
+    "topnav_sidebar_toggle": "मेनू टॉगल करें",
+    "topnav_bookmark": "बुकमार्क टॉगल करें",
+    "topnav_dock_toggle": "पैनल टॉगल करें"
+  }
+}

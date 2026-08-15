@@ -1,0 +1,415 @@
+{
+  "pl": {
+    "ks_bulk_select": {
+      "selected": "<strong>{count}</strong> wybrano",
+      "all": "Wybierz wszystkie ({count})"
+    },
+    "days": "Dni",
+    "hours": "Godziny",
+    "minutes": "Minuty",
+    "seconds": "Sekundy",
+    "input_custom_duration": "lub wprowadź niestandardowy czas trwania:",
+    "datepicker": {
+      "custom duration": "Niestandardowy czas trwania"
+    },
+    "no_data": "Wygląda na to, że nic tu jeszcze nie ma!\nDostosuj swoje filtry lub spróbuj ponownie.",
+    "ks_empty_state": {
+      "learn_more": "Dowiedz się więcej"
+    },
+    "add": "Dodaj",
+    "none": "Brak",
+    "filter": {
+      "update": "Aktualizuj",
+      "update conditions hint": "Aktualnie zastosowane filtry zastąpią warunki tego zapisanego filter.",
+      "save": "Zapisz",
+      "cancel": "Anuluj",
+      "description": "Opis",
+      "apply": "Zastosuj filtry",
+      "customize": "Dodaj filtry",
+      "customize tooltip": "Dostosuj, które filtry mają być wyświetlane",
+      "customize columns": "Dostosuj kolumny tabeli",
+      "delete filter": "Usuń filtr",
+      "delete filter confirm": "Czy na pewno chcesz usunąć ten filtr?",
+      "edit filter": "Edytuj filtr",
+      "options": "Opcje Danych",
+      "periodic refresh": "Okresowe odświeżanie",
+      "refresh": "Odśwież dane",
+      "save filter": "Zapisz filtr",
+      "save filter tooltip": "Zapisz zastosowane filtry",
+      "saved": "Zapisane filtry",
+      "saved filters": "Zapisane zestawy filtrów",
+      "saved tooltip": "Zarządzaj zapisanymi filtrami",
+      "show chart": "Pokaż wykres",
+      "drag to reorder": "Przeciągnij, aby zmienić kolejność",
+      "select filter": "Wybierz filtr do dodania",
+      "enter description": "Wprowadź opis filtra",
+      "enter name": "Wprowadź nazwę filtra",
+      "reset": "Wyczyść wszystko",
+      "reset_all": "Resetuj wszystkie filtry",
+      "reset_tooltip": "Przywróć domyślne ustawienia",
+      "or": "LUB",
+      "and": "ORAZ",
+      "in any": "w dowolnym",
+      "add_condition_group": "Dodaj grupę warunków",
+      "add_condition": "Dodaj warunek",
+      "add_advanced_filter": "Dodaj filtr zaawansowany",
+      "advanced_filter": "Filtr zaawansowany",
+      "mobile_filters": "Filtry",
+      "filters_title": "Filtry",
+      "all_filters": "Wszystkie Filtry",
+      "my_filters_saved": "Moje Filtry zapisane",
+      "rule_count": "{count} reguła",
+      "rules_count": "{count} reguły",
+      "where": "Gdzie",
+      "raw_view": "Edytuj jako tekst",
+      "chip_view": "Edytuj wizualnie",
+      "raw_apply": "Zastosuj",
+      "raw_revert": "Przywróć",
+      "raw_placeholder": "filters[field][op]=value…",
+      "unrenderable_title": "Złożone zapytanie",
+      "unrenderable_body": "To zapytanie używa zagnieżdżenia, którego wizualny edytor filtrów nie potrafi przedstawić. Edytuj je bezpośrednio tutaj lub zastosuj, aby je uprościć.",
+      "drag to reorder columns": "Przeciągnij, aby zmienić kolejność kolumn",
+      "save current": "Zapisz bieżące filtry",
+      "empty title": "Brak zapisanych filtrów",
+      "empty subtitle": "Zapisz aktywny filtr, aby użyć go ponownie później",
+      "save duplicate": "Filtr o tej nazwie już istnieje.",
+      "active key value pairs": "Aktywne pary KV",
+      "kv_pair_selected": "Wybrano {count} par KV",
+      "key": "Key",
+      "value": "Value",
+      "search options": "Szukaj...",
+      "select all": "Zaznacz wszystko",
+      "deselect all": "Odznacz wszystko",
+      "no options found": "Nie znaleziono opcji",
+      "show default": "Pokaż domyślne",
+      "operator": "Operator filtrowania",
+      "is_between": "Pomiędzy",
+      "timerange": {
+        "predefined": "Zdefiniowane z góry",
+        "custom": "Zakres niestandardowy"
+      },
+      "select_option": "Wybierz opcję",
+      "start_date": "Data rozpoczęcia",
+      "end_date": "Data zakończenia",
+      "select_start_date": "Wybierz datę rozpoczęcia",
+      "select_end_date": "Wybierz datę zakończenia",
+      "filters_added": "{selected} z {total} filtrów dodanych",
+      "label_comparators": {
+        "has_any_of": "ma dowolny z",
+        "has_none_of": "nie ma żadnego z",
+        "has_all_of": "ma wszystkie z",
+        "contains": "zawiera",
+        "does_not_contain": "nie zawiera",
+        "is_set": "jest ustawione",
+        "is_not_set": "nie jest ustawione"
+      },
+      "comparator_descriptions": {
+        "EQUALS": "Dokładne dopasowanie - wartość musi być identyczna",
+        "NOT_EQUALS": "Wyklucza dokładne dopasowania - wartość musi być inna",
+        "IN": "Pasuje do dowolnej wartości z listy opcji",
+        "NOT_IN": "Wyklucza wszystkie wartości z listy opcji",
+        "GREATER_THAN": "Porównanie numeryczne/datowe - wartość musi być większa",
+        "LESS_THAN": "Porównanie numeryczne/datowe - wartość musi być mniejsza",
+        "GREATER_THAN_OR_EQUAL_TO": "Porównanie numeryczne/dat - wartość musi być większa lub równa",
+        "LESS_THAN_OR_EQUAL_TO": "Porównanie numeryczne/dat - wartość musi być mniejsza lub równa",
+        "STARTS_WITH": "Tekst zaczyna się od określonych znaków",
+        "ENDS_WITH": "Tekst kończy się określonymi znakami",
+        "CONTAINS": "Tekst zawiera określone znaki w dowolnym miejscu",
+        "NOT_CONTAINS": "Tekst nigdzie nie zawiera podanych znaków",
+        "IS_NULL": "Key etykiety nie istnieje",
+        "IS_NOT_NULL": "Key etykiety istnieje z dowolną wartością",
+        "REGEX": "Zaawansowane dopasowywanie wzorców za pomocą wyrażeń regularnych",
+        "PREFIX": "Hierarchia namespace pasująca (np. 'com.example' pasuje do 'com.example.app')"
+      },
+      "hierarchy": {
+        "all": "Domyślny",
+        "child_description": "Pokaż tylko zagnieżdżone lub wyzwolone egzekucje",
+        "parent_description": "Pokaż tylko egzekucje najwyższego poziomu"
+      },
+      "execution_kind": {
+        "normal": "Normalny",
+        "playground": "Playground",
+        "loop": "Pętla",
+        "test": "Test",
+        "normal_description": "Zwykłe egzekucje",
+        "playground_description": "Egzekucje uruchomione w trybie Playground",
+        "loop_description": "Egzekucje utworzone przez Task Loop",
+        "test_description": "Egzekucje uruchomione przez testy jednostkowe"
+      },
+      "scope": {
+        "label": "Zakres",
+        "description": "Filtruj według zakresu egzekucji"
+      },
+      "namespace": {
+        "label": "Namespace",
+        "description": "Filtruj według namespace"
+      },
+      "enabled": {
+        "description": "Filtruj według enabled"
+      },
+      "type": {
+        "description": "Filtruj według typu"
+      },
+      "username": {
+        "description": "Filtruj według nazwy użytkownika"
+      },
+      "name": {
+        "label": "Nazwa",
+        "description": "Filtruj według nazwy"
+      },
+      "member": {
+        "description": "Filtruj według członka"
+      },
+      "group": {
+        "description": "Filtruj według grupy"
+      },
+      "parentId": {
+        "label": "ID rodzica",
+        "description": "Filtruj według parent ID"
+      },
+      "flowId": {
+        "label": "ID Flow",
+        "description": "Filtruj według Flow ID"
+      },
+      "email": {
+        "description": "Filtruj według email"
+      },
+      "kind": {
+        "label": "Rodzaj",
+        "description": "Filtruj według rodzaju egzekucji"
+      },
+      "state": {
+        "label": "Status",
+        "description": "Filtruj według statusu egzekucji"
+      },
+      "state_group": {
+        "running": "W toku",
+        "paused": "Wstrzymano",
+        "completed": "Zakończono",
+        "failed": "Nie powiodło się",
+        "other": "Inne"
+      },
+      "childFilter": {
+        "label": "Hierarchia",
+        "description": "Filtruj według hierarchii egzekucji"
+      },
+      "timeRange": {
+        "label": "Interwał",
+        "description": "Filtruj według czasu egzekucji",
+        "applyTo": "Zastosuj do",
+        "chip": {
+          "start": "Rozpoczęto",
+          "end": "Zakończono",
+          "startOrEnd": "Rozpoczęto lub zakończono"
+        },
+        "dateFilter": {
+          "startDate": "Data rozpoczęcia",
+          "endDate": "Data zakończenia",
+          "startOrEndDate": "Data rozpoczęcia lub zakończenia"
+        }
+      },
+      "timeRange_dashboard": {
+        "label": "Interwał",
+        "description": "Filtruj według okna Dashboardu"
+      },
+      "timeRange_log": {
+        "label": "Interwał",
+        "description": "Filtruj według znacznika czasu loga"
+      },
+      "timeRange_trigger": {
+        "label": "Interwał",
+        "description": "Filtruj według czasu wyzwalania",
+        "chip": {
+          "nextExecution": "Następna egzekucja",
+          "lastTriggered": "Ostatnie uruchomienie"
+        },
+        "dateFilter": {
+          "nextExecutionDate": "Data następnej egzekucji",
+          "lastTriggeredDate": "Data ostatniego uruchomienia"
+        }
+      },
+      "timeRange_metric": {
+        "label": "Interwał",
+        "description": "Filtruj według przedziału czasowego"
+      },
+      "labels": {
+        "label": "Etykiety",
+        "description": "Filtruj według etykiet"
+      },
+      "labels_execution": {
+        "label": "Etykiety",
+        "description": "Filtruj według etykiet egzekucji"
+      },
+      "labels_flow": {
+        "label": "Etykiety",
+        "description": "Filtruj według etykiet Flow"
+      },
+      "triggerExecutionId": {
+        "label": "ID egzekucji Triggera",
+        "description": "Filtruj według ID egzekucji Triggera"
+      },
+      "triggerState": {
+        "label": "Status Triggera",
+        "description": "Filtruj według statusu Triggera",
+        "enabled": "Włączone",
+        "disabled": "Wyłączone"
+      },
+      "scope_flow": {
+        "label": "Zakres",
+        "description": "Filtruj według zakresu Flow"
+      },
+      "scope_log": {
+        "label": "Zakres",
+        "description": "Filtruj według logów użytkownika lub systemowych"
+      },
+      "scope_trigger": {
+        "label": "Zakres",
+        "description": "Filtruj według zakresu Triggera"
+      },
+      "level": {
+        "description": "Filtruj według log severity"
+      },
+      "level_log_executions": {
+        "label": "Poziom Logowania"
+      },
+      "triggerId": {
+        "label": "ID Triggera",
+        "description": "Filtruj według ID Triggera"
+      },
+      "triggerId_trigger": {
+        "label": "ID Triggera",
+        "description": "Filtruj według Trigger ID"
+      },
+      "taskId": {
+        "label": "Task ID",
+        "description": "Filtruj według ID Taska"
+      },
+      "taskRunId": {
+        "label": "ID Task Runa",
+        "description": "Filtruj według ID Task Runa"
+      },
+      "attemptNumber": {
+        "label": "Numer próby",
+        "description": "Filtruj według numeru próby Task Runa"
+      },
+      "workerId": {
+        "label": "ID Workera",
+        "description": "Filtruj według Worker ID"
+      },
+      "metric": {
+        "label": "Metryka",
+        "description": "Filtruj według typu metryki"
+      },
+      "task": {
+        "label": "Task",
+        "description": "Filtruj według nazwy Taska"
+      },
+      "table_column": {
+        "mcpTools": {
+          "title": "Tytuł wyświetlany agentom AI",
+          "annotations": "Wskazówki dotyczące zachowania zadeklarowane dla narzędzia (read-only, destructive itp.)",
+          "flow": "Flow, który definiuje to narzędzie",
+          "namespace": "Namespace Flow, który definiuje to narzędzie",
+          "triggerId": "ID Triggera w obrębie Flow, inne niż nazwa narzędzia",
+          "description": "Co robi narzędzie i kiedy agent powinien je wywołać"
+        },
+        "flows": {
+          "labels": "Etykiety Flow (format Key:Value)",
+          "namespace": "Namespace Flow",
+          "last execution date": "Kiedy Flow był ostatnio uruchamiany",
+          "last execution status": "Status ostatniej egzekucji",
+          "execution statistics": "Wykres z ostatnimi statusami egzekucji",
+          "triggers": "Triggery, które mogą uruchomić Flow (np. harmonogram, zdarzenie)",
+          "last modified": "Kiedy definicja Flow była ostatnio aktualizowana"
+        },
+        "executions": {
+          "id": "ID egzekucji",
+          "start-date": "Kiedy egzekucja się rozpoczęła",
+          "end-date": "Kiedy egzekucja się zakończyła",
+          "duration": "Całkowity czas działania egzekucji",
+          "namespace": "Namespace, do którego należy uruchomiony Flow",
+          "flow": "ID uruchomionego Flow",
+          "labels": "Etykiety egzekucji (format Key:Value)",
+          "state": "Bieżący status egzekucji",
+          "revision": "Wersja Flow użyta dla tej egzekucji",
+          "inputs": "Wartości Inputów przekazane do egzekucji",
+          "task-id": "ID ostatniego Taska w egzekucji",
+          "trigger": "Trigger, który uruchomił egzekucję",
+          "parent-execution": "ID nadrzędnej egzekucji, która uruchomiła tę egzekucję"
+        },
+        "kv": {
+          "namespace": "Logiczna grupa, w której przechowywana jest para KV",
+          "key": "Unikalne ID przechowywanej wartości",
+          "description": "Opcjonalne notatki wyjaśniające wpis w kv store",
+          "last modified": "Znacznik czasu ostatniej aktualizacji",
+          "expiration date": "Kiedy para KV wygasa"
+        },
+        "secrets": {
+          "namespace": "Logiczna grupa, w której przechowywany jest sekret",
+          "description": "Opcjonalne notatki dostarczające kontekst",
+          "tags": "Dodatkowe tagi kategoryzacji"
+        },
+        "triggers": {
+          "flow": "Flow powiązany z Triggerem",
+          "namespace": "Namespace Triggera",
+          "execution id": "ID egzekucji uruchomionej przez Trigger",
+          "workerId": "ID Workera",
+          "last trigger date": "Kiedy Trigger był ostatnio uruchamiany",
+          "context updated date": "Ostatnia aktualizacja kontekstu Triggera",
+          "next evaluation date": "Kiedy Trigger zostanie ponownie oceniony",
+          "last evaluation date": "Kiedy Trigger był ostatnio oceniany"
+        },
+        "metrics": {
+          "task": "Task, który wygenerował metrykę",
+          "name": "Nazwa metryki",
+          "value": "Wartość metryki",
+          "tags": "Tagi powiązane z metryką"
+        }
+      },
+      "titles": {
+        "flow_execution_filters": "Filtry egzekucji Flow",
+        "dashboard_filters": "Filtry Dashboardu",
+        "namespace_dashboard_filters": "Filtry Dashboardu Namespace",
+        "flow_dashboard_filters": "Filtry Dashboardu Flow",
+        "execution_filters": "Filtry egzekucji",
+        "flow_filters": "Filtry Flowów",
+        "log_filters": "Filtry Logów",
+        "metric_filters": "Filtry Metryk",
+        "flow_metric_filters": "Filtry Metryk Flow",
+        "trigger_filters": "Filtry Trigger",
+        "namespace_filters": "Filtry Namespace",
+        "kv_filters": "Filtry KV",
+        "secret_filters": "Filtry sekretów",
+        "blueprint_filters": "Filtry Blueprint"
+      },
+      "search_placeholders": {
+        "search_mcp_tools": "Wyszukaj narzędzia MCP",
+        "search_executions": "Szukaj egzekucji",
+        "search_dashboards": "Szukaj Dashboardów…",
+        "search_flows": "Szukaj Flowów",
+        "search_logs": "Wyszukaj logi",
+        "search_metrics": "Wyszukaj metryki",
+        "search_triggers": "Szukaj Triggerów",
+        "search_namespaces": "Szukaj namespace'ów",
+        "search_kv": "Szukaj par KV",
+        "search_secrets": "Szukaj sekretów",
+        "search_blueprints": "Wyszukaj Blueprinty"
+      }
+    },
+    "ks_no_data": {
+      "no_results": "Brak wyników.",
+      "nothing_here": "Wygląda na to, że nic tu jeszcze nie ma.",
+      "will_appear": "Pojawi się tutaj, gdy będzie coś do wyświetlenia."
+    },
+    "password_requirements": {
+      "length": "Co najmniej 8 znaków",
+      "uppercase": "Jedna wielka litera",
+      "lowercase": "Jedna mała litera",
+      "number": "Jedna cyfra",
+      "match": "Hasła są zgodne"
+    },
+    "topnav_sidebar_toggle": "Przełącz menu",
+    "topnav_bookmark": "Przełącz zakładkę",
+    "topnav_dock_toggle": "Przełącz panel"
+  }
+}

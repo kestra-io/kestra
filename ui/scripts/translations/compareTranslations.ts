@@ -38,12 +38,16 @@ const compileErrors = (message: string): string[] => {
  * @param languages        language codes to check (defaults to all shipped locales)
  * @param fingerprintsFile absolute path to the generator's fingerprints file; omit to skip the
  *                         staleness check
+ * @param label            names the set being checked in the output, for callers that check more
+ *                         than one directory (the app's messages and the design system's)
  */
 export function compareTranslations(
     translationsDir: string,
     languages: readonly string[] = TRANSLATED_LOCALES,
     fingerprintsFile?: string,
+    label = "",
 ): void {
+    const scope = label ? ` (${label})` : ""
     // Locale codes are interpolated into a path, so they are constrained to the shape a locale
     // actually has, and the resolved path is then asserted to sit directly inside the base
     // directory. Callers pass a fixed list today; the two guards mean a future caller reading codes
@@ -93,7 +97,7 @@ export function compareTranslations(
 
     // English is the source every locale is generated from, so a broken message there spreads.
     const englishBroken = checkCompiles("en", englishStrings)
-    console.warn("---\n\x1b[34mComparison with EN\x1b[0m  \n")
+    console.warn(`---\n\x1b[34mComparison with EN${scope}\x1b[0m  \n`)
     console.warn(englishBroken.length ? `Uncompilable messages: \x1b[31m${englishBroken.join("\n  ")}\x1b[0m` : "No uncompilable messages.")
     console.warn(stale.length ? `Stale keys (English changed since translating): \x1b[31m${stale.join(", ")}\x1b[0m` : "No stale keys.")
     console.warn("---\n")
@@ -117,7 +121,7 @@ export function compareTranslations(
 
         const untranslated = untranslatedKeys(lang, strings, englishStrings)
 
-        console.warn(`---\n\x1b[34mComparison with ${lang.toUpperCase()}\x1b[0m  \n`)
+        console.warn(`---\n\x1b[34mComparison with ${lang.toUpperCase()}${scope}\x1b[0m  \n`)
         console.warn(missing.length ? `Missing keys: \x1b[31m${missing.join(", ")}\x1b[0m` : "No missing keys.")
         console.warn(extra.length ? `Extra keys: \x1b[32m${extra.join(", ")}\x1b[0m` : "No extra keys.")
 
@@ -159,6 +163,6 @@ export function compareTranslations(
     }
 
     if (errorString.length) {
-        throw new Error(errorString)
+        throw new Error(scope ? `${label}:${errorString}` : errorString)
     }
 }

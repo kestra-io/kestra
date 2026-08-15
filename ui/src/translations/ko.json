@@ -2431,6 +2431,10 @@
       "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
       "install": "설치",
       "dismiss": "나중에"
+    },
+    "plugin_card": {
+      "tasks": "작업 | 작업",
+      "blueprints": "블루프린트 | 블루프린트"
     }
   }
 }

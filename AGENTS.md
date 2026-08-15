@@ -390,6 +390,23 @@ This document should be updated as the codebase evolves. When in doubt, follow e
 
 Translation files live in `ui/src/translations/`. There is one JSON file per language code (e.g. `de.json`, `fr.json`) plus the source `en.json`.
 
+Strings owned by a `Ks*` component live in the design system's own copy of that layout,
+`ui/packages/design-system/src/translations/`. It is checked and generated exactly like the app's —
+every command below covers both directories.
+
+### One chunk per extra language
+
+English ships with the main bundle, since that is what most users run; each additional language
+costs exactly one extra file, fetched when the app starts in that language. Both translation
+directories are therefore loaded through `import.meta.glob` with `en.json` excluded (it is a static
+import), and `ui/plugins/consolidateChunks.js` declares one code-splitting group per language that
+merges the app's messages, the design system's, and moment's locale into a single `i18n-<lang>`
+chunk.
+
+**Never import a message file statically from a component.** Doing so ships all thirteen languages
+to every user inside whichever eager chunk the component lands in — which is what the per-component
+`*.locale.ts` files did to the design-system chunk until they were replaced by the layout above.
+
 ### Checking for missing translations
 
 Run the check script from the `ui/` directory:
@@ -432,7 +449,7 @@ Two branches that both touch `en.json` will both regenerate `ui/scripts/translat
 Resolve it the same way as a `kestra-sdk` conflict — regenerate:
 
 ```bash
-git checkout --ours ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+git checkout --ours ui/src/translations/*.json ui/packages/design-system/src/translations/*.json ui/scripts/translations/fingerprints*.json
 cd ui && npm run translations:generate   # fills whatever the other branch added
 npm run translations:check               # must report no missing / extra / stale keys
 ```

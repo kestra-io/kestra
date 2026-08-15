@@ -31,7 +31,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 7. **Never override Element Plus classes directly.** Don't write `.el-button { ... }` in feature code. If a `Ks*` component is missing a behavior, extend the component in the design system instead of patching CSS at the call site.
 8. **Don't fork — extend.** If a `Ks*` component is *almost* what you need, add a prop or a slot to the component in `ui/packages/design-system/`. Copy-pasting the component into your feature folder is forbidden.
 9. **Every new `Ks*` component needs a Storybook story and a unit test.** Stories double as living documentation for design and product reviewers.
-10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
+10. **i18n keys owned by a `Ks*` component live in the design system**, not inside feature code (e.g. `KsEmpty`, `KsDurationPicker`). Add them to `packages/design-system/src/translations/en.json`; `registerDesignSystemI18n` merges them into the app at bootstrap. Never put messages in a file a component imports statically — that ships every language to every user.
 
 ## Best practices for keeping the design system healthy
 
@@ -91,7 +91,7 @@ Reject (or ask to fix) anything that:
 - **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
 - Use `<i18n-t>` for plurals and interpolation — never string-concatenate.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
-- Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
+- Strings owned by a `Ks*` component live in `packages/design-system/src/translations/{lang}.json` and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in `src/translations/{lang}.json`. Both directories hold one file per language, and English alone is bundled eagerly — see "UI Translations" in the root `AGENTS.md`.
 
 ### Loading, empty, and error states
 

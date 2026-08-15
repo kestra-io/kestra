@@ -1,0 +1,415 @@
+{
+  "ko": {
+    "ks_bulk_select": {
+      "selected": "<strong>{count}</strong> 개 선택됨",
+      "all": "모두 선택 ({count})"
+    },
+    "days": "일",
+    "hours": "운영 시간",
+    "minutes": "분",
+    "seconds": "초",
+    "input_custom_duration": "또는 사용자 지정 기간 입력:",
+    "datepicker": {
+      "custom duration": "사용자 정의 지속 시간"
+    },
+    "no_data": "여기에는 아직 아무것도 없는 것 같아요…\n필터를 조정하거나 다시 시도해 보세요!",
+    "ks_empty_state": {
+      "learn_more": "자세히 보기"
+    },
+    "add": "추가",
+    "none": "없음",
+    "filter": {
+      "update": "업데이트",
+      "update conditions hint": "현재 적용된 filter가 이 저장된 filter의 조건을 대체합니다.",
+      "save": "저장",
+      "cancel": "취소",
+      "description": "설명",
+      "apply": "필터 적용",
+      "customize": "필터 추가",
+      "customize tooltip": "표시할 필터 사용자 지정",
+      "customize columns": "테이블 열 사용자 정의",
+      "delete filter": "필터 삭제",
+      "delete filter confirm": "이 필터를 제거하시겠습니까?",
+      "edit filter": "필터 편집",
+      "options": "데이터 옵션",
+      "periodic refresh": "주기적 새로 고침",
+      "refresh": "데이터 새로 고침",
+      "save filter": "필터 저장",
+      "save filter tooltip": "적용된 필터 저장",
+      "saved": "저장된 필터",
+      "saved filters": "저장된 필터 세트",
+      "saved tooltip": "저장된 필터 관리",
+      "show chart": "차트 표시",
+      "drag to reorder": "끌어서 순서 변경",
+      "select filter": "필터를 추가하려면 선택하세요",
+      "enter description": "필터 설명 입력",
+      "enter name": "필터 이름 입력",
+      "reset": "모두 지우기",
+      "reset_all": "모든 필터 재설정",
+      "reset_tooltip": "기본값으로 재설정",
+      "or": "OR",
+      "and": "AND",
+      "in any": "모두",
+      "add_condition_group": "조건 그룹 추가",
+      "add_condition": "조건 추가",
+      "add_advanced_filter": "고급 필터 추가",
+      "advanced_filter": "고급 필터",
+      "mobile_filters": "필터",
+      "filters_title": "필터",
+      "all_filters": "모든 필터",
+      "my_filters_saved": "내 필터 저장됨",
+      "rule_count": "규칙 {count}개",
+      "rules_count": "규칙 {count}개",
+      "where": "조건",
+      "raw_view": "텍스트로 편집",
+      "chip_view": "시각적으로 편집",
+      "raw_apply": "적용",
+      "raw_revert": "되돌리기",
+      "raw_placeholder": "filters[field][op]=value…",
+      "unrenderable_title": "복잡한 쿼리",
+      "unrenderable_body": "이 쿼리는 시각적 필터 편집기가 표현할 수 없는 중첩을 사용합니다. 여기에서 직접 편집하거나, 적용하여 단순화하세요.",
+      "drag to reorder columns": "열을 재정렬하려면 드래그하세요.",
+      "save current": "현재 필터 저장",
+      "empty title": "저장된 필터가 아직 없습니다",
+      "empty subtitle": "활성 필터를 저장하여 나중에 다시 사용하세요",
+      "save duplicate": "이 이름을 가진 필터가 이미 존재합니다.",
+      "active key value pairs": "활성 Key/Value 쌍",
+      "kv_pair_selected": "{count} Key/Value 쌍 선택됨",
+      "key": "키",
+      "value": "값",
+      "search options": "검색...",
+      "select all": "모두 선택",
+      "deselect all": "모두 선택 해제",
+      "no options found": "옵션을 찾을 수 없습니다.",
+      "show default": "기본값 표시",
+      "operator": "필터 연산자",
+      "is_between": "사이",
+      "timerange": {
+        "predefined": "사전 정의됨",
+        "custom": "사용자 정의 범위"
+      },
+      "select_option": "옵션 선택",
+      "start_date": "시작 날짜",
+      "end_date": "종료 날짜",
+      "select_start_date": "시작 날짜 선택",
+      "select_end_date": "종료 날짜 선택",
+      "filters_added": "{total}개의 필터 중 {selected}개 추가됨",
+      "label_comparators": {
+        "has_any_of": "다음 중 하나 포함",
+        "has_none_of": "다음 중 아무것도 포함 안 함",
+        "has_all_of": "다음 모두 포함",
+        "contains": "포함",
+        "does_not_contain": "포함하지 않음",
+        "is_set": "설정됨",
+        "is_not_set": "설정되지 않음"
+      },
+      "comparator_descriptions": {
+        "EQUALS": "정확히 일치 - value가 동일해야 합니다",
+        "NOT_EQUALS": "정확히 일치하는 항목 제외 - value는 달라야 합니다",
+        "IN": "옵션 목록에서 임의의 값을 일치시킵니다.",
+        "NOT_IN": "옵션 목록에서 모든 값을 제외합니다.",
+        "GREATER_THAN": "숫자/날짜 비교 - value는 더 커야 합니다",
+        "LESS_THAN": "숫자/날짜 비교 - value는 더 작아야 합니다",
+        "GREATER_THAN_OR_EQUAL_TO": "숫자/날짜 비교 - 값은 크거나 같아야 합니다.",
+        "LESS_THAN_OR_EQUAL_TO": "숫자/날짜 비교 - 값은 작거나 같아야 합니다",
+        "STARTS_WITH": "텍스트는 지정된 문자로 시작합니다",
+        "ENDS_WITH": "지정된 문자로 텍스트가 끝납니다",
+        "CONTAINS": "텍스트에 지정된 문자가 포함되어 있음",
+        "NOT_CONTAINS": "텍스트에 지정된 문자가 포함되지 않음",
+        "IS_NULL": "Label key가 존재하지 않음",
+        "IS_NOT_NULL": "Label key가 임의의 value와 함께 존재함",
+        "REGEX": "정규 표현식을 사용한 고급 패턴 매칭",
+        "PREFIX": "네임스페이스 계층 구조 일치 (예: 'com.example'은 'com.example.app'과 일치)"
+      },
+      "hierarchy": {
+        "all": "기본",
+        "child_description": "중첩/trigger된 실행만 표시",
+        "parent_description": "최상위/루트 실행만 표시"
+      },
+      "execution_kind": {
+        "normal": "일반",
+        "playground": "플레이그라운드",
+        "loop": "루프",
+        "test": "테스트",
+        "normal_description": "정기 실행",
+        "playground_description": "플레이그라운드 모드에서 트리거된 실행",
+        "loop_description": "Loop task에 의해 생성된 실행",
+        "test_description": "단위 테스트에 의해 트리거된 실행"
+      },
+      "scope": {
+        "label": "범위",
+        "description": "실행 범위별 필터"
+      },
+      "namespace": {
+        "label": "Namespace",
+        "description": "namespace로 필터링"
+      },
+      "enabled": {
+        "description": "사용 가능 여부로 필터링"
+      },
+      "type": {
+        "description": "유형별 필터"
+      },
+      "username": {
+        "description": "사용자 이름으로 필터링"
+      },
+      "name": {
+        "label": "이름",
+        "description": "이름으로 필터링"
+      },
+      "member": {
+        "description": "멤버별 필터링"
+      },
+      "group": {
+        "description": "그룹별 필터링"
+      },
+      "parentId": {
+        "label": "상위 ID",
+        "description": "parent ID로 필터링"
+      },
+      "flowId": {
+        "label": "Flow ID",
+        "description": "flow ID로 필터링"
+      },
+      "email": {
+        "description": "email로 필터링"
+      },
+      "kind": {
+        "label": "종류",
+        "description": "실행 종류별 필터링"
+      },
+      "state": {
+        "label": "상태",
+        "description": "실행 상태별 필터링"
+      },
+      "state_group": {
+        "running": "실행 중",
+        "paused": "일시 중지",
+        "completed": "완료",
+        "failed": "실패",
+        "other": "기타"
+      },
+      "childFilter": {
+        "label": "계층 구조",
+        "description": "실행 계층별 필터링"
+      },
+      "timeRange": {
+        "label": "간격",
+        "description": "실행 시간으로 필터링",
+        "applyTo": "적용 대상",
+        "chip": {
+          "start": "시작됨",
+          "end": "종료됨",
+          "startOrEnd": "시작되었거나 종료됨"
+        },
+        "dateFilter": {
+          "startDate": "시작 날짜",
+          "endDate": "종료 날짜",
+          "startOrEndDate": "시작 또는 종료 날짜"
+        }
+      },
+      "timeRange_dashboard": {
+        "label": "간격",
+        "description": "대시보드 창별 필터"
+      },
+      "timeRange_log": {
+        "label": "간격",
+        "description": "로그 타임스탬프로 필터링"
+      },
+      "timeRange_trigger": {
+        "label": "간격",
+        "description": "트리거 시간으로 필터링",
+        "chip": {
+          "nextExecution": "다음 실행",
+          "lastTriggered": "마지막 트리거"
+        },
+        "dateFilter": {
+          "nextExecutionDate": "다음 실행 날짜",
+          "lastTriggeredDate": "마지막 트리거 날짜"
+        }
+      },
+      "timeRange_metric": {
+        "label": "간격",
+        "description": "시간 간격으로 필터링"
+      },
+      "labels": {
+        "label": "레이블",
+        "description": "레이블로 필터링"
+      },
+      "labels_execution": {
+        "label": "레이블",
+        "description": "실행 label로 필터링"
+      },
+      "labels_flow": {
+        "label": "레이블",
+        "description": "flow 레이블로 필터링"
+      },
+      "triggerExecutionId": {
+        "label": "트리거 Execution ID",
+        "description": "트리거 실행 ID로 필터링"
+      },
+      "triggerState": {
+        "label": "트리거 상태",
+        "description": "트리거 상태별 필터링",
+        "enabled": "사용 가능",
+        "disabled": "비활성화됨"
+      },
+      "scope_flow": {
+        "label": "범위",
+        "description": "flow 범위별 필터링"
+      },
+      "scope_log": {
+        "label": "범위",
+        "description": "사용자 또는 시스템 로그로 필터링"
+      },
+      "scope_trigger": {
+        "label": "영역",
+        "description": "트리거 범위로 필터링"
+      },
+      "level": {
+        "description": "로그 심각도로 필터링"
+      },
+      "level_log_executions": {
+        "label": "로그 레벨"
+      },
+      "triggerId": {
+        "label": "트리거 ID",
+        "description": "트리거 식별자로 필터링"
+      },
+      "triggerId_trigger": {
+        "label": "트리거 ID",
+        "description": "트리거 ID로 필터링"
+      },
+      "taskId": {
+        "label": "Task ID",
+        "description": "task 식별자로 필터링"
+      },
+      "taskRunId": {
+        "label": "Task 실행 ID",
+        "description": "`task` 실행 `id`로 필터링"
+      },
+      "attemptNumber": {
+        "label": "시도 횟수",
+        "description": "task 실행 시도 번호로 필터링"
+      },
+      "workerId": {
+        "label": "작업자 ID",
+        "description": "작업자 ID로 필터링"
+      },
+      "metric": {
+        "label": "메트릭",
+        "description": "메트릭 유형별 필터"
+      },
+      "task": {
+        "label": "작업",
+        "description": "작업 이름으로 필터링"
+      },
+      "table_column": {
+        "mcpTools": {
+          "title": "AI 에이전트에게 표시되는 제목",
+          "annotations": "도구에 선언된 동작 힌트 (read-only, destructive 등)",
+          "flow": "이 도구를 정의하는 flow",
+          "namespace": "이 도구를 정의하는 flow의 namespace",
+          "triggerId": "flow 내의 trigger id (도구 이름과 다름)",
+          "description": "도구의 기능과 에이전트가 호출해야 하는 시점"
+        },
+        "flows": {
+          "labels": "Flow 레이블 (key:value 형식)",
+          "namespace": "flow의 namespace",
+          "last execution date": "flow가 마지막으로 실행된 시점",
+          "last execution status": "가장 최근 실행의 상태",
+          "execution statistics": "최근 실행 상태를 보여주는 차트",
+          "triggers": "flow를 시작할 수 있는 트리거 (예: 일정, 이벤트)",
+          "last modified": "flow 정의 최종 업데이트 시점"
+        },
+        "executions": {
+          "id": "실행 ID",
+          "start-date": "실행이 시작되었을 때",
+          "end-date": "실행이 완료되었을 때",
+          "duration": "실행의 총 실행 시간",
+          "namespace": "실행된 flow가 속한 namespace",
+          "flow": "실행된 flow의 ID",
+          "labels": "실행 레이블 (key:value 형식)",
+          "state": "현재 실행 상태",
+          "revision": "이 실행에 사용된 flow의 버전",
+          "inputs": "실행에 제공된 입력 값",
+          "task-id": "실행에서 마지막 task의 ID",
+          "trigger": "실행을 시작한 Trigger",
+          "parent-execution": "이 실행을 트리거한 상위 execution ID"
+        },
+        "kv": {
+          "namespace": "키-값 쌍이 저장되는 논리적 그룹",
+          "key": "저장된 값의 고유 식별자",
+          "description": "KV 항목을 설명하는 선택적 메모",
+          "last modified": "가장 최근 업데이트의 타임스탬프",
+          "expiration date": "키-값 쌍이 만료될 때"
+        },
+        "secrets": {
+          "namespace": "비밀이 저장되는 논리적 그룹화",
+          "description": "선택적 메모는 컨텍스트를 제공합니다",
+          "tags": "추가 분류 태그"
+        },
+        "triggers": {
+          "flow": "트리거와 연결된 flow",
+          "namespace": "트리거의 namespace",
+          "execution id": "trigger에 의해 시작된 실행의 ID",
+          "workerId": "작업자 식별자",
+          "last trigger date": "트리거가 마지막으로 실행된 시점",
+          "context updated date": "트리거 컨텍스트의 마지막 업데이트",
+          "next evaluation date": "트리거가 다음에 평가될 때",
+          "last evaluation date": "trigger가 마지막으로 평가된 시점"
+        },
+        "metrics": {
+          "task": "메트릭을 생성한 Task",
+          "name": "메트릭의 이름",
+          "value": "메트릭의 값",
+          "tags": "메트릭과 연관된 태그"
+        }
+      },
+      "titles": {
+        "flow_execution_filters": "Flow 실행 필터",
+        "dashboard_filters": "대시보드 필터",
+        "namespace_dashboard_filters": "네임스페이스 대시보드 필터",
+        "flow_dashboard_filters": "플로우 대시보드 필터",
+        "execution_filters": "실행 필터",
+        "flow_filters": "Flow 필터",
+        "log_filters": "로그 필터",
+        "metric_filters": "메트릭 필터",
+        "flow_metric_filters": "Flow Metric 필터",
+        "trigger_filters": "트리거 필터",
+        "namespace_filters": "네임스페이스 필터",
+        "kv_filters": "키-값 필터",
+        "secret_filters": "비밀 필터",
+        "blueprint_filters": "블루프린트 필터"
+      },
+      "search_placeholders": {
+        "search_mcp_tools": "MCP 도구 검색",
+        "search_executions": "실행 검색",
+        "search_dashboards": "대시보드 검색...",
+        "search_flows": "flow 검색",
+        "search_logs": "로그 검색",
+        "search_metrics": "메트릭 검색",
+        "search_triggers": "트리거 검색",
+        "search_namespaces": "네임스페이스 검색",
+        "search_kv": "KV 쌍 검색",
+        "search_secrets": "비밀 검색",
+        "search_blueprints": "블루프린트 검색"
+      }
+    },
+    "ks_no_data": {
+      "no_results": "결과가 없습니다.",
+      "nothing_here": "아직 여기에는 아무것도 없는 것 같아요…!",
+      "will_appear": "표시할 내용이 생기면 여기에 나타납니다."
+    },
+    "password_requirements": {
+      "length": "8자 이상",
+      "uppercase": "대문자 1개",
+      "lowercase": "소문자 1개",
+      "number": "숫자 1개",
+      "match": "비밀번호가 일치합니다"
+    },
+    "topnav_sidebar_toggle": "메뉴 전환",
+    "topnav_bookmark": "북마크 전환",
+    "topnav_dock_toggle": "패널 전환"
+  }
+}

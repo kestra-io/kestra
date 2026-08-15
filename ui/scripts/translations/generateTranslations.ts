@@ -6,11 +6,8 @@
  * holds its own language JSON files, which is what repoints the generator at EE. This mirrors how
  * `./compareTranslations.ts` is shared with `ui-ee/scripts/translations/check.ts`.
  *
- * Two sources can be translated:
- *   1. A directory of per-language JSON files (`en.json` -> `de.json`, `fr.json`, ...) via
- *      {@link generateTranslations}. Both repos use this.
- *   2. The design-system `*.locale.ts` files, each of which holds every language in a single
- *      `export default {en: {...}, de: {...}, ...}`, via {@link translateLocaleFiles}. OSS only.
+ * The source is a directory of per-language JSON files (`en.json` -> `de.json`, `fr.json`, ...).
+ * OSS runs it twice — once for the app's messages, once for the design system's.
  *
  * The Gemini client is injected rather than constructed here, so `@google/genai` resolves from the
  * *calling* repo's `node_modules`. Without that, running this from EE would need OSS's dependencies
@@ -20,7 +17,7 @@
  * reads `process.argv` and never writes a file unless a caller asks it to.
  */
 import {readFileSync} from "node:fs"
-import {dirname, relative, resolve} from "node:path"
+import {resolve} from "node:path"
 import {writeIfChanged} from "./files.ts"
 import {
     type Fingerprints,
@@ -55,8 +52,6 @@ export interface TranslationClient {
 type NestedValue = string | NestedValue[] | NestedDict;
 type NestedDict = {[key: string]: NestedValue};
 type FlatDict = {[key: string]: string};
-
-const LANGUAGE_BY_CODE: {[code: string]: string} = Object.fromEntries(LANGUAGES)
 
 const MODEL = "gemini-2.5-flash"
 
@@ -376,173 +371,5 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
         }
         nextFingerprints[key] = fingerprintOf(enFlat[key])
     }
-    writeFingerprints(fingerprintsFile, nextFingerprints)
-}
-
-// ---------------------------------------------------------------------------
-// Design-system `*.locale.ts` files
-//
-// Unlike the per-language JSON files, each `*.locale.ts` file bundles every
-// language in a single default export:
-//
-//   export default {
-//       en: { ... },
-//       de: { ... },
-//       ...
-//   }
-//
-// These files contain only string values and nested objects (no imports, types
-// or function calls), which lets us evaluate them as plain object literals and
-// re-serialise them back to TypeScript after filling in the translations.
-// ---------------------------------------------------------------------------
-
-// Evaluate the body of a `*.locale.ts` default export into a plain object.
-// The files are pure data literals, so this is safe (and far simpler than parsing TS).
-function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
-    const body = source
-        .replace(/export\s+default\s*/, "")
-        .replace(/;?\s*$/, "")
-    return new Function(`return (${body})`)() as {[lang: string]: NestedDict}
-}
-
-// Serialise a value back to TypeScript source, matching the existing 4-space
-// indentation and trailing-comma style. Keys are always quoted: many of them have to be
-// (`"customize tooltip"` contains a space), so quoting only the ones that strictly need it left
-// each file inconsistent with itself and made the serialiser rewrite whichever keys happened to be
-// stored the other way. Quoting everything is one rule, applied uniformly, and keeps regeneration
-// a no-op when nothing was translated.
-function serializeLocaleValue(value: NestedValue, indent: number): string {
-    if (value === null || typeof value !== "object") {
-        return JSON.stringify(value)
-    }
-
-    const pad = "    ".repeat(indent)
-    const padInner = "    ".repeat(indent + 1)
-
-    if (Array.isArray(value)) {
-        if (value.length === 0) {
-            return "[]"
-        }
-        const items = value.map((v) => `${padInner}${serializeLocaleValue(v, indent + 1)},`)
-        return `[\n${items.join("\n")}\n${pad}]`
-    }
-
-    const entries = Object.entries(value)
-    if (entries.length === 0) {
-        return "{}"
-    }
-
-    const lines = entries.map(([k, v]) =>
-        `${padInner}${JSON.stringify(k)}: ${serializeLocaleValue(v, indent + 1)},`)
-    return `{\n${lines.join("\n")}\n${pad}}`
-}
-
-function serializeLocaleModule(data: {[lang: string]: NestedDict}): string {
-    return `export default ${serializeLocaleValue(data, 0)}\n`
-}
-
-export interface TranslateLocaleFilesOptions {
-    client: TranslationClient;
-    /** Absolute paths of the `*.locale.ts` files to fill. */
-    localeFiles: string[];
-    /**
-     * Absolute path to the fingerprints file for these locale files. Entries are keyed
-     * `<path relative to the fingerprints file>|<flat key>`, so one file covers them all.
-     */
-    fingerprintsFile?: string;
-    /** Re-translate every key, ignoring the fingerprints. */
-    force?: boolean;
-}
-
-/**
- * Translates the missing/stale keys of each `*.locale.ts` file in place, using that file's own
- * `en` block as the source of truth for every other language.
- */
-export async function translateLocaleFiles(options: TranslateLocaleFilesOptions): Promise<void> {
-    const {client, localeFiles, fingerprintsFile, force = false} = options
-
-    const fingerprints = readFingerprints(fingerprintsFile)
-    const nextFingerprints: Fingerprints = {}
-    const fingerprintKeyFor = (filePath: string, key: string): string =>
-        `${fingerprintsFile ? relative(dirname(fingerprintsFile), filePath) : filePath}|${key}`
-
-    await Promise.all(localeFiles.map(async (filePath) => {
-        const data = evalLocaleModule(readFileSync(filePath, "utf-8"))
-        if (!data.en) {
-            console.log(`Skipping ${filePath}: no 'en' base translations found.`)
-            return
-        }
-
-        const enFlat = flattenDict(data.en)
-        const translatableKeys = Object.keys(enFlat).filter((key) => typeof enFlat[key] === "string")
-        const staleKeys = new Set(
-            force
-                ? translatableKeys
-                : translatableKeys.filter((key) =>
-                    fingerprints[fingerprintKeyFor(filePath, key)] !== fingerprintOf(enFlat[key])),
-        )
-
-        const failedKeys = new Set<string>()
-
-        // Keep any unknown languages already present in the file, and add any shipped language missing from it.
-        const codes = Object.keys(data).filter((code) => code !== "en")
-        for (const [code] of LANGUAGES) {
-            if (!codes.includes(code)) {
-                codes.push(code)
-            }
-        }
-
-        const translatedByCode = await Promise.all(codes.map(async (code): Promise<readonly [string, NestedDict]> => {
-            const targetLanguage = LANGUAGE_BY_CODE[code]
-            if (!targetLanguage) {
-                // Language not in our translation list: keep whatever is already there.
-                return [code, data[code]] as const
-            }
-
-            const targetFlat = flattenDict(data[code] ?? {})
-
-            const pending = translatableKeys.filter((key) =>
-                staleKeys.has(key) || targetFlat[key] === undefined || targetFlat[key] === "")
-
-            const translated: FlatDict = {}
-            await Promise.all(pending.map(async (key) => {
-                const value = await translateText(client, key, enFlat[key], targetLanguage)
-                if (value === undefined) {
-                    failedKeys.add(key)
-                    console.log(`[${filePath}] '${key}': translation failed, leaving the existing value in place.`)
-                    return
-                }
-                translated[key] = value
-                console.log(`[${filePath}] '${key}': ${JSON.stringify(enFlat[key])} -> ${JSON.stringify(value)}`)
-            }))
-
-            // Rebuild the target dict in the same key order as `en`, dropping keys no longer present in `en`.
-            const result: FlatDict = {}
-            for (const key of Object.keys(enFlat)) {
-                result[key] = translated[key] || targetFlat[key] || enFlat[key]
-            }
-            return [code, unflattenDict(result)] as const
-        }))
-
-        for (const key of translatableKeys) {
-            const fingerprintKey = fingerprintKeyFor(filePath, key)
-            if (failedKeys.has(key)) {
-                if (fingerprints[fingerprintKey]) nextFingerprints[fingerprintKey] = fingerprints[fingerprintKey]
-                continue
-            }
-            nextFingerprints[fingerprintKey] = fingerprintOf(enFlat[key])
-        }
-
-        // Assembled after the fact in a fixed order — `en` first, then `codes` — rather than as each
-        // language finishes. The serialised output preserves key order, so letting completion order
-        // decide it would rewrite the whole file on every run.
-        const result: {[lang: string]: NestedDict} = {en: data.en}
-        for (const [code, dict] of translatedByCode) {
-            result[code] = dict
-        }
-
-        writeIfChanged(filePath, serializeLocaleModule(result))
-    }))
-
     writeFingerprints(fingerprintsFile, nextFingerprints)
 }

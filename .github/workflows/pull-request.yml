@@ -135,7 +135,7 @@ jobs:
             translations:
               - 'ui/src/translations/**'
               - 'ui/scripts/translations/**'
-              - 'ui/packages/design-system/**/*.locale.ts'
+              - 'ui/packages/design-system/src/translations/**'
             backend:
               - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -191,7 +191,7 @@ jobs:
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
           git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
-          git add ':(glob)ui/packages/design-system/**/*.locale.ts'
+          git add ui/packages/design-system/src/translations/*.json
           if git diff --cached --quiet; then
             echo "Translations are already up to date."
             exit 0

@@ -4,6 +4,10 @@ import type {Preview} from "@storybook/vue3-vite"
 import {createI18n} from "vue-i18n"
 import {createRouter, createMemoryHistory} from "vue-router"
 
+// Isolated stories get the design system's own English messages, so components render their real
+// labels rather than raw keys. The app merges the very same file at bootstrap.
+import messages from "../src/translations/en.json"
+
 import "../src/assets/styles/index.scss"
 
 import KestraDesignSystem from "../src/index"
@@ -14,7 +18,7 @@ const router = createRouter({
 })
 
 setup((app) => {
-    app.use(createI18n({legacy: false, locale: "en"}))
+    app.use(createI18n({legacy: false, locale: "en", messages}))
     app.use(KestraDesignSystem)
     app.use(router)
 })

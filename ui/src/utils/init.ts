@@ -121,15 +121,17 @@ export default async (
         warnHtmlMessage: false,
     } as any) // FIXME: any
 
-    // Merge design-system locales before first render, so parent computeds
-    // that call t() on design-system keys don't cache the raw key.
-    await registerDesignSystemI18n(i18n)
-
     if(locale !== "en"){
         // FIXME: any - loadLocaleMessages/setI18nLanguage expect literal locale types
         await loadLocaleMessages(i18n, locale as any, additionalTranslations as any) // FIXME: any
         await setI18nLanguage(i18n, locale as any) // FIXME: any
     }
+
+    // Merge design-system locales before first render, so parent computeds that call t() on
+    // design-system keys don't cache the raw key. After the app's own messages: loadLocaleMessages
+    // sets a locale wholesale, so merging first would drop the design-system keys again.
+    await registerDesignSystemI18n(i18n, locale)
+
     setDesignSystemLocale(locale)
     app.use(i18n)
 

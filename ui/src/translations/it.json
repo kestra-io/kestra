@@ -2431,6 +2431,10 @@
       "install_description": "Installa Kestra come app per un accesso più rapido e un'esperienza a schermo intero.",
       "install": "Installa",
       "dismiss": "Non ora"
+    },
+    "plugin_card": {
+      "tasks": "attività | attività",
+      "blueprints": "blueprint | blueprint"
     }
   }
 }

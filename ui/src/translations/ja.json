@@ -2431,6 +2431,10 @@
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
       "install": "インストール",
       "dismiss": "後で"
+    },
+    "plugin_card": {
+      "tasks": "タスク | タスク",
+      "blueprints": "ブループリント | ブループリント"
     }
   }
 }

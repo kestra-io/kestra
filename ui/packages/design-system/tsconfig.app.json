@@ -20,5 +20,8 @@
         "allowImportingTsExtensions": true,
         "rootDir": "./src"
     },
-    "include": ["src"]
+    // `src` alone does not pick up JSON: a bare directory expands to TypeScript's own extensions,
+    // so the translation files an import reaches have to be matched explicitly. Same list as the
+    // app's tsconfig.app.json.
+    "include": ["src", "src/**/*.json"]
 }

@@ -40,12 +40,17 @@ const MARKDOWN_MODULES = /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMa
 // re-exported eagerly by the design-system barrel, so claiming it here would put
 // an eager module in this lazy chunk and cycle the two.
 const CHART_MODULES = /design-system[\\/]src[\\/]components[\\/]Charts[\\/]Ks(Echart|Graph|Line|Bar|Pie)\.vue|node_modules[\\/](echarts|vue-echarts|zrender)[\\/]/
+// Only sections/: DrillDownDrawer and dashboard/composables sit at the dashboard
+// root and are eager (App.vue mounts the drawer), so matching the whole directory
+// would put eager modules in this lazy chunk and cycle the two.
+const DASHBOARD_MODULES = /src[\\/]components[\\/]dashboard[\\/]sections[\\/]/
 
 /** Lazily loaded toolchains, each owning the private subtree of what it matches. */
 const LAZY_GROUPS = [
     {name: "monaco", pattern: MONACO_MODULES},
     {name: "markdown", pattern: MARKDOWN_MODULES},
     {name: "charts", pattern: CHART_MODULES},
+    {name: "dashboard", pattern: DASHBOARD_MODULES},
 ]
 
 /**
@@ -184,6 +189,14 @@ const GROUPS = [
         name: "charts",
         test: matchesWithLazySubtree("charts", CHART_MODULES),
         priority: -17,
+        includeDependenciesRecursively: false,
+    },
+    // The dashboard sections and what only they reach, in one chunk instead of the
+    // dozen small ones they scatter into once they leave the eager app chunk.
+    {
+        name: "dashboard",
+        test: matchesWithLazySubtree("dashboard", DASHBOARD_MODULES),
+        priority: -18,
         includeDependenciesRecursively: false,
     },
     // One design-system chunk (with element-plus, its foundation) so federated

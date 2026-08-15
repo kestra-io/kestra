@@ -54,6 +54,8 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.validation.constraints.Max;
@@ -538,6 +540,8 @@ public class PluginController {
     @Get(value = "/{group}/pluginUi/{path:.*}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins group by subgroups")
+    // The response is raw file bytes, not base64: keep the OpenAPI schema as binary like the previous StreamedFile signature.
+    @ApiResponse(responseCode = "200", content = @Content(schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
     public HttpResponse<byte[]> getPluginUi(
         HttpRequest<?> request,
         @Parameter(description = "The plugin group") @PathVariable String group,

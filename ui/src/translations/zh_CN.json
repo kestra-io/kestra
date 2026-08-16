@@ -888,6 +888,10 @@
         "files": "删除 {count} 个已选择的文件",
         "folders": "删除 {count} 个已选文件夹"
       },
+      "move": {
+        "bulk_success": "所选文件已成功移动。",
+        "bulk_error": "未能移动选定项目中的 {count} 个。"
+      },
       "import": {
         "files": "导入文件",
         "folder": "导入文件夹",

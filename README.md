@@ -83,6 +83,10 @@ Deploy Kestra on AWS using our CloudFormation template:
 
 [![Launch Stack](https://cdn.jsdelivr.net/gh/buildkite/cloudformation-launch-stack-button-svg@master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kestra-deployment-templates.s3.eu-west-3.amazonaws.com/aws/cloudformation/ec2-rds-s3/kestra-oss.yaml&stackName=kestra-oss)
 
+### Launch on Azure (Terraform deployment)
+
+Deploy Kestra on an Azure Virtual Machine with Azure Database for PostgreSQL and Azure Blob Storage using [our Terraform module](https://github.com/kestra-io/deployment-templates/tree/main/azure/terraform/kestra-oss). See the [Azure VM installation guide](https://kestra.io/docs/installation/azure-vm) for architecture and configuration details.
+
 ### Launch on Google Cloud (Terraform deployment)
 
 Deploy Kestra on Google Cloud Infrastructure Manager using [our Terraform module](https://github.com/kestra-io/deployment-templates/tree/main/gcp/terraform/infrastructure-manager/vm-sql-gcs).

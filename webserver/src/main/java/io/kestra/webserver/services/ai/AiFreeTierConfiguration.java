@@ -41,4 +41,11 @@ public class AiFreeTierConfiguration {
 
     /** Generous by default: a relayed agent turn streams, and can sit quiet between chunks. */
     private Duration timeout = Duration.ofMinutes(5);
+
+    /**
+     * How long the relay's reported budget is held before a read refreshes it in the background. The figure is
+     * only displayed — the relay enforces its own — so an hour-old copy costs at worst a stale percentage, and
+     * anything shorter buys nothing at the rate this is read.
+     */
+    private Duration limitRefreshInterval = Duration.ofHours(1);
 }

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import io.kestra.core.ai.usage.models.AiUsageTotals;
 import io.kestra.core.metrics.MetricRegistry;
@@ -138,9 +139,10 @@ public class AiUsageMetrics {
     private AtomicReference<Double> remainingRatio(final String providerId) {
         return remainingRatioByProvider.computeIfAbsent(providerId, id -> {
             AtomicReference<Double> ratio = new AtomicReference<>(1.0);
+            Supplier<Double> reading = ratio::get;
             metricRegistry.gauge(
                 MetricRegistry.METRIC_AI_USAGE_REMAINING_RATIO, MetricRegistry.METRIC_AI_USAGE_REMAINING_RATIO_DESCRIPTION,
-                ratio::get, gaugeTags(id)
+                reading, gaugeTags(id)
             );
             return ratio;
         });

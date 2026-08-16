@@ -323,7 +323,11 @@
       },
       "apps": {
         "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação.",
-        "title": "Crie Apps personalizadas com Kestra"
+        "title": "Crie Apps personalizadas com Kestra",
+        "blueprints": {
+          "title": "Comece a partir de um blueprint de aplicativo.",
+          "message": "Os blueprints de aplicativos são aplicativos prontos para casos de uso comuns, como formulários, aprovações e envio de dados. Com o Kestra Enterprise Edition, você pode usar qualquer blueprint como ponto de partida e adaptá-lo para construir UIs personalizadas sobre seus workflows."
+        }
       },
       "assets": {
         "header": "Metadados e Observabilidade de Assets",

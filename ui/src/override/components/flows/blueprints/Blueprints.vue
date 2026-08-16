@@ -1,5 +1,6 @@
 <template>
     <DemoBlueprints v-if="props.tab === 'custom'" />
+    <DemoApps v-else-if="props.kind === 'app'" blueprints />
     <template v-else>
         <TopNavBar v-if="!props.embed" :title="routeInfo.title" />
         <DottedLayout
@@ -38,6 +39,7 @@
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
     import BlueprintsBrowser from "../../../../components/flows/blueprints/BlueprintsBrowser.vue";
     import DemoBlueprints from "../../../../components/demo/Blueprints.vue";
+    import DemoApps from "../../../../components/demo/Apps.vue";
     import useRouteContext from "../../../../composables/useRouteContext";
 
     import headerImage from "../../../../assets/icons/blueprint.svg";

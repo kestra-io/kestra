@@ -7,15 +7,20 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.findUnmatchedRequests;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.moreThan;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.okForContentType;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * The hosted free tier's budget, fetched from the relay rather than configured locally.
@@ -23,6 +28,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Served over a real port rather than by a mocked client, because what is under test is that the relay's
  * JSON binds to the instance's configuration type — a wire contract between two separately deployed
  * repositories, which a mock returning a built object would not exercise.
+ *
+ * <p>Most cases drive {@link AiFreeTierLimitProvider#refresh()} directly, which is the fetch itself and is
+ * synchronous. What {@link AiFreeTierLimitProvider#limit()} adds on top — triggering that fetch in the
+ * background when the held copy has aged out, and answering from memory meanwhile — has its own cases at the
+ * bottom, where the timing is the point.
  */
 @WireMockTest
 class AiFreeTierLimitProviderTest {
@@ -50,8 +60,13 @@ class AiFreeTierLimitProviderTest {
     }
 
     private static AiFreeTierLimitProvider provider(final String baseUrl) {
+        return provider(baseUrl, Duration.ofHours(1));
+    }
+
+    private static AiFreeTierLimitProvider provider(final String baseUrl, final Duration refreshInterval) {
         AiFreeTierConfiguration configuration = new AiFreeTierConfiguration();
         configuration.setBaseUrl(baseUrl);
+        configuration.setLimitRefreshInterval(refreshInterval);
         return new AiFreeTierLimitProvider(configuration, client);
     }
 
@@ -154,11 +169,63 @@ class AiFreeTierLimitProviderTest {
 
     @Test
     void shouldReportNoLimitBeforeTheRelayHasEverBeenReached(WireMockRuntimeInfo relay) {
-        // Given a provider that has not refreshed yet, as every instance is for its first half minute
+        // Given a provider that has not fetched yet, as every instance is until its first read returns
         AiFreeTierLimitProvider provider = providerAgainst(relay);
 
         // Then nothing is shown or enforced — failing open, since the relay enforces its own budget anyway
         assertThat(provider.limit()).isEmpty();
+    }
+
+    @Test
+    void shouldFetchInTheBackgroundWhenReadRatherThanMakeTheReaderWait(WireMockRuntimeInfo relay) {
+        // Given a relay that takes noticeable time to answer
+        stubFor(get(urlEqualTo(LIMITS_PATH)).willReturn(okJson(FULL_BUDGET).withFixedDelay(500)));
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
+
+        // When the budget is read, as it is before every model call
+        // Then the read answers from memory rather than waiting out the relay: a fetch on this path would put
+        // api.kestra.io's latency in front of every answer Copilot gives
+        assertThat(provider.limit()).isEmpty();
+
+        // and the fetch it started lands on its own
+        await().atMost(Duration.ofSeconds(10))
+            .untilAsserted(() -> assertThat(provider.limit()).isPresent());
+        assertRelayAnsweredFromTheStub();
+    }
+
+    @Test
+    void shouldNotFetchAgainUntilTheHeldBudgetHasAgedOut(WireMockRuntimeInfo relay) {
+        // Given a budget just fetched, and an hour before it is due again
+        relayServes(FULL_BUDGET);
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(provider.limit()).isPresent());
+
+        // When read as often as a busy agent turn reads it
+        for (int i = 0; i < 100; i++) {
+            assertThat(provider.limit()).isPresent();
+        }
+
+        // Then the relay was called once, not once per read — this is consulted before every model call, so
+        // refreshing on read only works if a read that finds a fresh copy costs nothing
+        verify(exactly(1), getRequestedFor(urlEqualTo(LIMITS_PATH)));
+    }
+
+    @Test
+    void shouldFetchAgainOnceTheHeldBudgetHasAgedOut(WireMockRuntimeInfo relay) {
+        // Given a copy that ages out immediately, standing in for one an hour old
+        relayServes(FULL_BUDGET);
+        AiFreeTierLimitProvider provider = provider(relay.getHttpBaseUrl() + "/v1/ai/relay/gemini", Duration.ZERO);
+
+        // When read repeatedly
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(provider.limit()).isPresent());
+        await().atMost(Duration.ofSeconds(10))
+            .untilAsserted(() -> {
+                provider.limit();
+                verify(moreThan(1), getRequestedFor(urlEqualTo(LIMITS_PATH)));
+            });
+
+        // Then a re-price or a re-size is picked up without a restart, which is what the refresh is for
+        assertThat(provider.limit()).isPresent();
     }
 
     @Test

@@ -1887,6 +1887,13 @@
         "title": "Copilota AI",
         "placeholder": "Dimmi cosa costruire…",
         "send": "Invia",
+        "usage": {
+          "remaining": "{percent}% rimanente",
+          "help": "Quota rimanente del limite di utilizzo dell'IA di questo provider nella finestra corrente.",
+          "warning": "Sei vicino al limite di utilizzo dell'IA di questo provider. Le richieste vengono rifiutate una volta raggiunto il limite.",
+          "exceeded": "Il limite di utilizzo dell'IA di questo provider è stato raggiunto. Si resetta alla fine del periodo corrente.",
+          "exceededUntil": "Il limite di utilizzo dell'IA di questo provider è stato raggiunto. Si ripristina il {when}."
+        },
         "mode": {
           "ask": "Chiedi",
           "edit": "Modifica",

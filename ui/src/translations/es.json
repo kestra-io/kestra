@@ -1887,6 +1887,13 @@
         "title": "Copiloto de IA",
         "placeholder": "Dime qué construir…",
         "send": "Enviar",
+        "usage": {
+          "remaining": "{percent}% restante",
+          "help": "Porcentaje del límite de uso de IA de este proveedor restante en la ventana actual.",
+          "warning": "Estás cerca del límite de uso de IA de este proveedor. Los turnos se rechazan una vez que se alcanza.",
+          "exceeded": "Se ha alcanzado el límite de uso de IA de este proveedor. Se restablecerá cuando finalice el período actual.",
+          "exceededUntil": "Se ha alcanzado el límite de uso de IA de este proveedor. Se restablecerá el {when}."
+        },
         "mode": {
           "ask": "Preguntar",
           "edit": "Editar",

@@ -179,7 +179,7 @@
         }
 
         if (routeFamily(route.name) === "namespaces/update") {
-            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string})
+            baseFilters.push({field: "namespace", operation: "PREFIX", value: route.params.id as string})
         }
 
         return baseFilters

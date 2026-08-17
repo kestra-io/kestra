@@ -33,7 +33,7 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts.js";
     import {totalsDurationLegend, totalsLegend} from "../composables/useLegend";
 
     import moment from "moment";
@@ -81,10 +81,25 @@
                 },
             },
             onClick: (e, elements) => {
-                chartClick(moment, router, route, {}, parsedData.value, elements, "dataset");
+                onSegmentClick(elements);
             },
         }, theme.value);
     });
+
+    // The pie's single dimension is the column without an aggregation.
+    const dimensionColumn = computed(() => {
+        const entry = Object.entries(props.chart.data.columns).find(([, column]) => !("agg" in (column as Record<string, any>)));
+        return entry?.[1] as {field?: string; labelKey?: string} | undefined;
+    });
+
+    function onSegmentClick(elements: {index: number}[]) {
+        if (!elements?.length) return;
+        const label = parsedData.value.labels[elements[0].index];
+        if (!label) return;
+        const drillDown = chartSegmentDrillDown(props.chart, dimensionColumn.value, label);
+        if (!drillDown) return;
+        pushChartDrillDown(router, route, drillDown);
+    }
 
     const centerPlugin = computed(() => ({
         id: "centerPlugin",

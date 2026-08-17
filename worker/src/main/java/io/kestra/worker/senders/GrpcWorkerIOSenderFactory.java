@@ -8,6 +8,7 @@ import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerSer
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.Logs;
@@ -53,7 +54,7 @@ public class GrpcWorkerIOSenderFactory {
             {
                 Logs.logTaskRun(result.getTaskRun(), Level.ERROR, RESULT_TOO_LARGE_MESSAGE);
                 logEntryEmitter.emits(taskRunLogEntry(result.getTaskRun(), RESULT_TOO_LARGE_MESSAGE));
-                return result.withTaskRun(result.getTaskRun().fail()).withOutputs(null);
+                return result.withTaskRun(result.getTaskRun().withStateAndAttempt(State.Type.FAILED)).withOutputs(null);
             },
             // Task results must survive a transient network partition: re-queue and redrive rather than
             // drop, otherwise a completed task is left stuck RUNNING because its result is lost.

@@ -120,7 +120,8 @@ class GrpcWorkerIOSenderTest {
         char[] largePayload = new char[2 * 1024 * 1024];
         Arrays.fill(largePayload, 'a');
         TaskRun taskRun = buildTaskResult(Map.of()).getTaskRun()
-            .withAttempts(List.of(TaskRunAttempt.builder().state(new State()).build()));
+            .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .withState(State.Type.SUCCESS);
         WorkerTaskResult large = new WorkerTaskResult(taskRun, Map.of("output", new String(largePayload)));
 
         taskResultSender.send(List.of(large));
@@ -136,6 +137,8 @@ class GrpcWorkerIOSenderTest {
         assertThat(received.getTaskRun().getId()).isEqualTo(large.getTaskRun().getId());
         assertThat(received.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(received.getOutputs()).isNull();
+        assertThat(received.getTaskRun().getAttempts()).hasSize(1);
+        assertThat(received.getTaskRun().lastAttempt().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         ArgumentCaptor<LogEntry> logCaptor = ArgumentCaptor.forClass(LogEntry.class);
         verify(logEntryEmitter).emits(logCaptor.capture());

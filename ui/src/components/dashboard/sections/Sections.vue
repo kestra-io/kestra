@@ -4,6 +4,7 @@
             <div
                 v-for="chart in props.charts"
                 :key="`chart__${chart.id}`"
+                :ref="(el) => observeChartBlock(el, chart.id)"
                 class="dashboard-block"
                 :class="{
                     [`dash-width-${chart.chartOptions?.width || 6}`]: true
@@ -72,12 +73,20 @@
 
                     <div class="flex-grow-1">
                         <component
+                            v-if="activatedCharts.has(chart.id)"
                             ref="chartsComponents"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
                             :dashboardId="dashboard.id"
                             :filters
                             :showDefault="props.showDefault"
+                        />
+                        <KsSkeleton
+                            v-else
+                            animated
+                            :rows="3"
+                            class="chart-placeholder"
+                            :class="{'is-kpi': isKPIChart(chart.type)}"
                         />
                     </div>
                 </div>
@@ -87,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, onBeforeUnmount, type ComponentPublicInstance} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
     import {isKPIChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
@@ -97,7 +106,7 @@
     import {routeFamily} from "../../../utils/routeFamily"
     const route = useRoute()
 
-    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsTooltip} from "@kestra-io/design-system"
+    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsSkeleton, KsTooltip} from "@kestra-io/design-system"
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
@@ -111,6 +120,36 @@
     function refreshCharts() {
         (chartsComponents.value ?? []).forEach((component) => component.refresh())
     }
+
+    // Charts mount lazily, ~200px before their block scrolls into view; once activated they stay mounted.
+    const activatedCharts = ref(new Set<string>())
+    const observedBlocks = new WeakMap<Element, string>()
+
+    const blockObserver = typeof IntersectionObserver === "undefined"
+        ? undefined
+        : new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue
+                blockObserver!.unobserve(entry.target)
+                const chartId = observedBlocks.get(entry.target)
+                if (chartId) activatedCharts.value.add(chartId)
+            }
+        }, {rootMargin: "200px 0px"})
+
+    function observeChartBlock(el: Element | ComponentPublicInstance | null, chartId: string) {
+        if (!(el instanceof Element) || activatedCharts.value.has(chartId)) return
+
+        // environments without IntersectionObserver (e.g. jsdom) load every chart eagerly
+        if (!blockObserver) {
+            activatedCharts.value.add(chartId)
+            return
+        }
+
+        observedBlocks.set(el, chartId)
+        blockObserver.observe(el)
+    }
+
+    onBeforeUnmount(() => blockObserver?.disconnect())
 
     defineExpose({
         refreshCharts,
@@ -204,6 +243,14 @@ section#charts {
 
         &:hover #charts_buttons {
             opacity: 1;
+        }
+
+        .chart-placeholder {
+            min-height: 200px; // roughly the height of a rendered chart, so activation does not shift the layout
+
+            &.is-kpi {
+                min-height: 0;
+            }
         }
 
         #charts_heading {

@@ -1,6 +1,7 @@
 <template>
     <div class="pie">
-        <div v-if="generated?.results?.length" class="chart">
+        <KsSkeleton v-if="loading && !generated" animated :rows="3" class="empty" />
+        <div v-else-if="generated?.results?.length" class="chart">
             <KsPie
                 ref="ksPieRef"
                 :data="pieData"
@@ -34,7 +35,7 @@
     import {useRoute} from "vue-router"
 
     import moment from "moment"
-    import {KsPie, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
+    import {KsPie, KsSkeleton, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor} from "../composables/charts"
@@ -73,7 +74,7 @@
     }, {})
 
     const ksPieRef = ref<InstanceType<typeof KsPie> | null>(null)
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     function parseValue(value: unknown): string {
         const date = moment(value as moment.MomentInput, moment.ISO_8601, true)

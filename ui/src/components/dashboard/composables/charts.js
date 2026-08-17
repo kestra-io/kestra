@@ -2,6 +2,7 @@ import _merge from "lodash/merge";
 import Utils from "../../../utils/utils";
 import {cssVariable, State} from "@kestra-io/ui-libs";
 import {getSchemeValue} from "../../../utils/scheme";
+import {useMiscStore} from "override/stores/misc";
 
 export function tooltip(tooltipModel) {
     const titleLines = tooltipModel.title || [];
@@ -104,6 +105,140 @@ export function extractState(value) {
     }
 
     return value;
+}
+
+// Maps a dashboard `where` FilterType to the list comparator key used in the URL.
+// Types with no list equivalent (OR, REGEX, IS_NULL/IS_NOT_NULL, IS_TRUE/IS_FALSE) are omitted (skipped).
+const WHERE_TYPE_TO_COMPARATOR = {
+    EQUAL_TO: "EQUALS",
+    NOT_EQUAL_TO: "NOT_EQUALS",
+    IN: "IN",
+    NOT_IN: "NOT_IN",
+    CONTAINS: "CONTAINS",
+    STARTS_WITH: "STARTS_WITH",
+    ENDS_WITH: "ENDS_WITH",
+    PREFIX: "PREFIX",
+    GREATER_THAN: "GREATER_THAN",
+    GREATER_THAN_OR_EQUAL_TO: "GREATER_THAN_OR_EQUAL_TO",
+    LESS_THAN: "LESS_THAN",
+    LESS_THAN_OR_EQUAL_TO: "LESS_THAN_OR_EQUAL_TO",
+};
+
+// Per data-source drill-down config, keyed by the short name of `chart.data.type`
+// (io.kestra.plugin.core.dashboard.data.<Name>). Sources without a list to drill into (e.g. Metrics) are omitted,
+// so a click on such a chart simply does not navigate rather than landing on the wrong page.
+const DRILL_DOWNS = {
+    Executions: {
+        route: "executions/list",
+        fieldKey: {NAMESPACE: "namespace", FLOW_ID: "flowId", STATE: "state", LABELS: "labels", SCOPE: "scope", TRIGGER_EXECUTION_ID: "triggerExecutionId"},
+        multiSelect: ["namespace", "flowId", "state", "scope"],
+        timeFiltered: true,
+    },
+    Logs: {
+        route: "logs/list",
+        fieldKey: {NAMESPACE: "namespace", FLOW_ID: "flowId", TRIGGER_ID: "triggerId", TASK_ID: "taskId", TASK_RUN_ID: "taskRunId", ATTEMPT_NUMBER: "attemptNumber"},
+        multiSelect: ["namespace"],
+        timeFiltered: true,
+    },
+    Flows: {
+        // Flows have no time dimension - the flows list rejects a timeRange filter - so timeFiltered is false.
+        route: "flows/list",
+        fieldKey: {NAMESPACE: "namespace"},
+        multiSelect: ["namespace"],
+        timeFiltered: false,
+    },
+    Triggers: {
+        route: "admin/triggers",
+        fieldKey: {NAMESPACE: "namespace", FLOW_ID: "flowId", TRIGGER_ID: "triggerId", WORKER_ID: "workerId"},
+        multiSelect: ["namespace"],
+        timeFiltered: true,
+    },
+};
+
+function drillDownFor(dataType) {
+    const sourceName = dataType?.split(".").pop();
+    return sourceName ? DRILL_DOWNS[sourceName] : undefined;
+}
+
+// Resolves the list comparator for a (filterKey, dashboard FilterType), honoring multi-select fields
+// (equality -> IN/NOT_IN). Returns null when the operator can't be represented for that field.
+function comparatorFor(descriptor, filterKey, type) {
+    if (descriptor.multiSelect.includes(filterKey)) {
+        if (type === "EQUAL_TO" || type === "IN") return "IN";
+        if (type === "NOT_EQUAL_TO" || type === "NOT_IN") return "NOT_IN";
+    }
+    return WHERE_TYPE_TO_COMPARATOR[type ?? ""] ?? null;
+}
+
+function encodeFilter(filterKey, comparator, labelKey, value) {
+    if (filterKey === "labels") {
+        return labelKey ? {[`filters[labels][${comparator}][${labelKey}]`]: value} : {};
+    }
+    return {[`filters[${filterKey}][${comparator}]`]: value};
+}
+
+function asString(value) {
+    return Array.isArray(value) ? value.join(",") : String(value);
+}
+
+export function dimensionFilter(descriptor, column, value) {
+    const filterKey = descriptor.fieldKey[column?.field ?? ""];
+    if (!filterKey) return {};
+    const comparator = comparatorFor(descriptor, filterKey, "EQUAL_TO");
+    if (!comparator) return {};
+    const resolved = filterKey === "state" ? extractState(value) : value;
+    return encodeFilter(filterKey, comparator, column?.labelKey, resolved);
+}
+
+// Translates a chart's `where` conditions into list `filters[...]` query params
+export function whereToFilters(descriptor, where) {
+    const out = {};
+    if (!Array.isArray(where)) return out;
+
+    for (const condition of where) {
+        if (condition?.value === undefined || condition.value === null) continue;
+        const filterKey = descriptor.fieldKey[condition.field ?? ""];
+        if (!filterKey) continue;
+        const comparator = comparatorFor(descriptor, filterKey, condition.type);
+        if (!comparator) continue;
+        Object.assign(out, encodeFilter(filterKey, comparator, condition.labelKey, asString(condition.value)));
+    }
+
+    return out;
+}
+
+export function chartSegmentDrillDown(chart, column, value) {
+    const descriptor = drillDownFor(chart?.data?.type);
+    if (!descriptor) return null;
+    return {
+        name: descriptor.route,
+        timeFiltered: descriptor.timeFiltered,
+        query: {
+            ...whereToFilters(descriptor, chart?.data?.where),
+            ...dimensionFilter(descriptor, column, value),
+        },
+    };
+}
+
+/**
+ * Pushes the list route resolved by {@link chartSegmentDrillDown}, augmenting its filters with the
+ * query the list pages expect: user scope, first page, and the default time range when supported.
+ */
+export function pushChartDrillDown(router, route, drillDown, extraFilters = {}) {
+    router.push({
+        name: drillDown.name,
+        params: {tenant: route.params.tenant},
+        query: {
+            ...drillDown.query,
+            ...extraFilters,
+            scope: "USER",
+            size: 100,
+            page: 1,
+            ...(drillDown.timeFiltered
+                ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+                : {}),
+        },
+    });
 }
 
 export function chartClick(moment, router, route, event, parsedData, elements, type = "label") {

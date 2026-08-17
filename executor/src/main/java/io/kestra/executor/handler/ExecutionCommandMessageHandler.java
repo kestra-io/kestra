@@ -17,6 +17,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
@@ -130,11 +131,11 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
         String error = null;
         try {
-            var flow = flowMetaStore
+            var processedFlow = flowMetaStore
                 .findByIdForRuntime(command.tenantId(), command.namespace(), command.flowId(), Optional.ofNullable(command.flowRevision()))
                 .orElseThrow(() -> new FlowNotFoundException(command.executionFullId(), command.flowRevision()));
 
-            var newExecution = executionService.create(command, flow);
+            var newExecution = executionService.create(command, processedFlow);
 
             var persisted = persistNewExecutionWithKillSwitch(newExecution);
             if (persisted.isEmpty()) {
@@ -179,6 +180,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
             if (command.revision() != null) {
                 flow = flowMetaStore
                     .findByIdForRuntime(command.tenantId(), command.namespace(), command.flowId(), Optional.of(command.revision()))
+                    .map(ProcessedFlow::flow)
                     .orElseThrow(() -> new FlowNotFoundException(sourceExecution));
             } else {
                 flow = flowMetaStore

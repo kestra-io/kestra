@@ -391,6 +391,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs-defaults-from-labels.yaml" }, tenantId = "inputdefaultsfromlabels")
+    void shouldResolveInputDefaultsFromExecutionLabelsWhenCreatingExecution() {
+        String tenantId = "inputdefaultsfromlabels";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/inputs-defaults-from-labels?labels=caller:me&wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getInputs().get("fromFlowLabel")).isEqualTo("kestra");
+        assertThat(result.getInputs().get("fromExecutionLabel")).isEqualTo("me");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputsmall")
     void triggerExecutionInputSmall() {
         String tenantId = "triggerexecutioninputsmall";
@@ -429,6 +446,26 @@ class ExecutionControllerRunnerTest {
 
         assertThat(response).contains("Invalid entity");
         assertThat(response).contains("Invalid value for input `validatedString`");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/inputs-ion-file.yaml" }, tenantId = "ioninputfile")
+    void shouldRejectFileUploadOnIonInput() {
+        String tenantId = "ioninputfile";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        MultipartBody requestBody = MultipartBody.builder()
+            .addPart("payload", "data.ion", MediaType.TEXT_PLAIN_TYPE, "{name:\"Ada\"}".getBytes(StandardCharsets.UTF_8))
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "inputs-ion-file", requestBody, false)
+        );
+
+        String response = e.getResponse().getBody(String.class).orElseThrow();
+
+        assertThat(response).contains("Invalid entity");
+        assertThat(response).contains("Invalid value for input `payload`");
     }
 
     @Test

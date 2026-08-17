@@ -17,13 +17,18 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.FlowMetaStores;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.ExecutionStreamingService;
+import io.kestra.core.services.LabelService;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -47,6 +52,7 @@ public class McpToolService {
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
     private final McpConfig mcpConfig;
     private final FlowInputOutput flowInputOutput;
+    private final FlowMetaStoreInterface flowMetaStore;
     private final Cache<ToolHandlerCacheKey, McpServerFeatures.AsyncToolSpecification> asyncToolSpecificationCache;
 
     private static final McpSchema.CallToolResult FLOW_ERROR_CALL_TOOL_RESULT = McpSchema.CallToolResult.builder()
@@ -60,7 +66,8 @@ public class McpToolService {
         FlowToolSchemaMapper flowToolSchemaMapper,
         ExecutionStreamingService streamingService, ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
         McpConfig mcpConfig,
-        FlowInputOutput flowInputOutput) {
+        FlowInputOutput flowInputOutput,
+        FlowMetaStoreInterface flowMetaStore) {
         this.executionCommandQueue = executionCommandQueue;
         this.flowRepositoryInterface = flowRepositoryInterface;
         this.flowToolSchemaMapper = flowToolSchemaMapper;
@@ -68,6 +75,7 @@ public class McpToolService {
         this.eventPublisher = eventPublisher;
         this.mcpConfig = mcpConfig;
         this.flowInputOutput = flowInputOutput;
+        this.flowMetaStore = flowMetaStore;
         asyncToolSpecificationCache = Caffeine.newBuilder()
             .maximumSize(mcpConfig.toolCacheConfig().maximumSize())
             .expireAfterAccess(mcpConfig.toolCacheConfig().expireAfterAccess())
@@ -153,7 +161,22 @@ public class McpToolService {
     }
 
     List<String> collectInputValidationErrors(Flow flow, Execution execution, Map<String, Object> input) {
-        return flowInputOutput.resolveInputs(flow.getInputs(), flow, execution, input).stream()
+        // An input renders against the execution's labels, which the trigger deliberately limits to what it
+        // contributes, so validate against the merge the executor will build, on the flow it will build it
+        // from. Otherwise an input defaulting to {{ labels.something }} is rejected here and accepted there.
+        // a flow governance blocks resolves to a FlowWithException, which carries no input: the authored ones
+        // are validated instead, and the block itself fails the execution once it is created
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolvedFlow = processedFlow.flow() instanceof FlowWithException ? flow : processedFlow.flow();
+        Execution forValidation = execution.withLabels(
+            LabelService.forExecution(
+                resolvedFlow,
+                LabelService.withoutPinned(execution.getLabels(), processedFlow.pinnedLabelKeys()),
+                execution.getId()
+            )
+        );
+
+        return flowInputOutput.resolveInputs(resolvedFlow.getInputs(), resolvedFlow, forValidation, input).stream()
             .filter(resolved -> resolved.exceptions() != null && !resolved.exceptions().isEmpty())
             .flatMap(resolved -> resolved.exceptions().stream())
             .map(Throwable::getMessage)

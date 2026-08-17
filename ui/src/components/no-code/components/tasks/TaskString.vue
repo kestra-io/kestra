@@ -188,13 +188,12 @@
 }
 
 .wrapper--toggle > .string-editor {
-    border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-radius-base);
-    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    transition: box-shadow 0.12s ease;
 }
 
 .wrapper--toggle > .string-editor:focus-within {
-    border-color: var(--ks-border-focus);
+    --ks-editor-single-line-border-color: var(--ks-border-focus);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--ks-border-focus) 22%, transparent);
 }
 </style>

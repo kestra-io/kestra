@@ -4,7 +4,7 @@
         class="taskrun-header"
         :style="{'--depth': depth}"
     >
-        <div>
+        <div class="me-1">
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"

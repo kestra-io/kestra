@@ -15,7 +15,6 @@ import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
@@ -411,8 +410,7 @@ public class TriggerEventHandler {
             triggerStateStore.save(newState);
 
             if (event.evaluation() != null) {
-                Execution execution = event.evaluation().toExecution(event.id());
-                triggerExecutionPublisher.send(execution);
+                triggerExecutionPublisher.send(event.id(), event.evaluation());
             }
         });
     }

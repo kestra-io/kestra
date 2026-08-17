@@ -24,9 +24,7 @@ import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -47,7 +45,6 @@ import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowParsingService;
-import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
@@ -313,22 +310,17 @@ public class TriggerScheduler {
             triggerStateStore.save(triggerState);
 
             // Send the FAILED execution
-            final TriggerContext triggerContext = triggerState.context();
-            final FlowInterface flow = context.flow();
+            TriggerEvaluationResult failed = new TriggerEvaluationResult(
+                IdUtils.create(),
+                State.Type.FAILED,
+                null,
+                null,
+                context.flow().getRevision(),
+                scheduledTime.toInstant(),
+                null
+            );
 
-            Execution execution = Execution.builder()
-                .id(IdUtils.create())
-                .tenantId(triggerContext.getTenantId())
-                .namespace(triggerContext.getNamespace())
-                .flowId(triggerContext.getFlowId())
-                .flowRevision(flow.getRevision())
-                .labels(LabelService.labelsExcludingSystem(flow.getLabels()))
-                .state(new State().withState(State.Type.FAILED))
-                .build()
-                .withScheduleDate(scheduledTime.toInstant())
-                .withTenantId(triggerState.getTenantId());
-
-            triggerExecutionSender.send(execution);
+            triggerExecutionSender.send(triggerState, failed);
         }
     }
 
@@ -352,14 +344,9 @@ public class TriggerScheduler {
         triggerStateStore.save(triggerState);
 
         // May send a new execution - if Schedulable trigger or on error
-        final String tenantId = triggerState.getTenantId();
         evaluationResult.ifPresent(res ->
-        {
-            var execution = res.toExecution(triggerContext)
-                .withScheduleDate(scheduleTime.toInstant())
-                .withTenantId(tenantId);
-            triggerExecutionSender.send(execution);
-        });
+            triggerExecutionSender.send(triggerContext, res.withScheduleDate(scheduleTime.toInstant()))
+        );
     }
 
     private void processPollingTrigger(Clock clock, TriggerState triggerState, TriggerEvaluationContext triggerEvaluationContext, PollingTriggerInterface trigger) {

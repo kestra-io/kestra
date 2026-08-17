@@ -9,15 +9,15 @@ import java.util.zip.GZIPOutputStream;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * Compression helpers for precompressing static assets held in memory.
+ * Compression helpers for precompressing static UI resources held in memory.
  * <p>
  * Brotli support is opportunistic: it is only active when the optional {@code brotli4j} library (and its
  * platform natives) are present on the runtime classpath; otherwise callers fall back to gzip.
  */
-public final class AssetCompression {
+public final class UiResourceCompression {
     private static final boolean BROTLI_AVAILABLE = detectBrotli();
 
-    private AssetCompression() {
+    private UiResourceCompression() {
     }
 
     public static boolean isBrotliAvailable() {
@@ -54,7 +54,7 @@ public final class AssetCompression {
         try {
             return com.aayushatharva.brotli4j.encoder.Encoder.compress(
                 raw,
-                // Quality 5 keeps the one-time compression cost per asset low while still beating gzip on size.
+                // Quality 5 keeps the one-time compression cost per resource low while still beating gzip on size.
                 new com.aayushatharva.brotli4j.encoder.Encoder.Parameters().setQuality(5)
             );
         } catch (IOException e) {

@@ -29,7 +29,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.services.AssetCacheService;
+import io.kestra.webserver.services.UiResourceCacheService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
@@ -97,7 +97,7 @@ public class PluginController {
     protected PluginCatalogService pluginCatalogService;
 
     @Inject
-    protected AssetCacheService assetCacheService;
+    protected UiResourceCacheService uiResourceCacheService;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -570,9 +570,9 @@ public class PluginController {
 
         // Only the plugin-ui entry file is cache-busted by the frontend (via a sourceHash query parameter),
         // so every plugin UI response must be revalidated; 304s are answered from memory.
-        return assetCacheService
+        return uiResourceCacheService
             .get(cacheKey, mediaType, () -> readPluginUiResource(plugin, resourcePath))
-            .map(asset -> (HttpResponse<byte[]>) assetCacheService.respond(request, asset, REVALIDATE_CACHE_DIRECTIVE))
+            .map(resource -> (HttpResponse<byte[]>) uiResourceCacheService.respond(request, resource, REVALIDATE_CACHE_DIRECTIVE))
             .orElseThrow(NotFoundException::new);
     }
 

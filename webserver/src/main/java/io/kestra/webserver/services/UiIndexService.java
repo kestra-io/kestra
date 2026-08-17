@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.zip.Deflater;
 
 import io.kestra.webserver.configuration.WebserverConfiguration;
-import io.kestra.webserver.utils.AssetCompression;
+import io.kestra.webserver.utils.UiResourceCompression;
 import io.kestra.webserver.utils.HttpCacheUtils;
 
 import io.micronaut.context.annotation.Requires;
@@ -93,14 +93,14 @@ public class UiIndexService {
         byte[] body = html.getBytes(StandardCharsets.UTF_8);
         String acceptEncoding = request.getHeaders().get(HttpHeaders.ACCEPT_ENCODING);
         String contentEncoding = HttpCacheUtils.accepts(acceptEncoding, GZIP) ? GZIP : null;
-        String etag = AssetCacheService.etagFor(AssetCacheService.sha256Hex(body), contentEncoding);
+        String etag = UiResourceCacheService.etagFor(UiResourceCacheService.sha256Hex(body), contentEncoding);
 
         if (HttpCacheUtils.anyEtagMatches(request.getHeaders().get(HttpHeaders.IF_NONE_MATCH), etag)) {
             return applyHeaders(HttpResponse.notModified(), etag);
         }
 
         if (GZIP.equals(contentEncoding)) {
-            body = AssetCompression.gzip(body, Deflater.DEFAULT_COMPRESSION);
+            body = UiResourceCompression.gzip(body, Deflater.DEFAULT_COMPRESSION);
         }
 
         MutableHttpResponse<byte[]> response = applyHeaders(HttpResponse.ok(body), etag)

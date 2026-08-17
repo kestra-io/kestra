@@ -5,7 +5,7 @@ import java.util.Locale;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * HTTP content negotiation and conditional-request helpers for cached static assets.
+ * HTTP content negotiation and conditional-request helpers for cached static UI resources.
  */
 public final class HttpCacheUtils {
     private HttpCacheUtils() {

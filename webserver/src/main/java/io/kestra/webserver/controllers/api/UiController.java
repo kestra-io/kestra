@@ -6,8 +6,8 @@ import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import io.kestra.webserver.models.CachedAsset;
-import io.kestra.webserver.services.AssetCacheService;
+import io.kestra.webserver.models.CachedUiResource;
+import io.kestra.webserver.services.UiResourceCacheService;
 import io.kestra.webserver.services.UiIndexService;
 
 import io.micronaut.context.annotation.Requires;
@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.inject.Inject;
 
 /**
- * Serves the UI single-page application from the bounded in-memory {@link AssetCacheService}: hashed assets
+ * Serves the UI single-page application from the bounded in-memory {@link UiResourceCacheService}: hashed files under {@code assets/}
  * with immutable cache headers, everything else falling back to the rewritten {@code index.html}
  * (<a href="https://router.vuejs.org/guide/essentials/history-mode.html">HTML5 history mode</a>).
  */
@@ -38,12 +38,12 @@ public class UiController {
     private static final String DEFAULT_CACHE_CONTROL = "public, max-age=86400";
     private static final String INDEX_HTML = "index.html";
 
-    private final AssetCacheService assetCacheService;
+    private final UiResourceCacheService uiResourceCacheService;
     private final UiIndexService uiIndexService;
 
     @Inject
-    public UiController(AssetCacheService assetCacheService, UiIndexService uiIndexService) {
-        this.assetCacheService = Objects.requireNonNull(assetCacheService);
+    public UiController(UiResourceCacheService uiResourceCacheService, UiIndexService uiIndexService) {
+        this.uiResourceCacheService = Objects.requireNonNull(uiResourceCacheService);
         this.uiIndexService = Objects.requireNonNull(uiIndexService);
     }
 
@@ -61,20 +61,20 @@ public class UiController {
             return HttpResponse.notFound();
         }
 
-        // Only paths whose last segment has an extension can be static assets; SPA routes never resolve here.
-        if (isAssetCandidate(normalized) && !INDEX_HTML.equals(normalized)) {
+        // Only paths whose last segment has an extension can be static resources; SPA routes never resolve here.
+        if (isStaticResourceCandidate(normalized) && !INDEX_HTML.equals(normalized)) {
             MediaType mediaType = MediaType
                 .forExtension(NameUtils.extension(normalized))
                 .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
 
-            Optional<CachedAsset> asset = assetCacheService.get(
+            Optional<CachedUiResource> resource = uiResourceCacheService.get(
                 "ui:" + normalized,
                 mediaType,
                 () -> readClasspathResource("ui/" + normalized)
             );
-            if (asset.isPresent()) {
+            if (resource.isPresent()) {
                 String cacheControl = normalized.startsWith(HASHED_ASSETS_PREFIX) ? HASHED_ASSETS_CACHE_CONTROL : DEFAULT_CACHE_CONTROL;
-                return assetCacheService.respond(request, asset.get(), cacheControl);
+                return uiResourceCacheService.respond(request, resource.get(), cacheControl);
             }
         }
 
@@ -83,7 +83,7 @@ public class UiController {
         return index.isPresent() ? index.get() : HttpResponse.notFound();
     }
 
-    private static boolean isAssetCandidate(String path) {
+    private static boolean isStaticResourceCandidate(String path) {
         if (path.isEmpty() || path.endsWith("/")) {
             return false;
         }

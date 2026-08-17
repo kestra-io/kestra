@@ -8,9 +8,9 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.webserver.configuration.AssetCacheConfiguration;
-import io.kestra.webserver.models.CachedAsset;
-import io.kestra.webserver.utils.AssetCompression;
+import io.kestra.webserver.configuration.UiResourceCacheConfiguration;
+import io.kestra.webserver.models.CachedUiResource;
+import io.kestra.webserver.utils.UiResourceCompression;
 
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
@@ -21,11 +21,11 @@ import io.micronaut.http.MutableHttpResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-class AssetCacheServiceTest {
+class UiResourceCacheServiceTest {
     private static final MediaType JS = MediaType.of("text/javascript");
 
-    private static AssetCacheService service(long maxSize) {
-        return new AssetCacheService(new AssetCacheConfiguration(maxSize));
+    private static UiResourceCacheService service(long maxSize) {
+        return new UiResourceCacheService(new UiResourceCacheConfiguration(maxSize));
     }
 
     private static byte[] compressibleContent() {
@@ -50,13 +50,13 @@ class AssetCacheServiceTest {
     @Test
     void shouldLoadAndCompressOnlyOnceWhenAssetFitsInTheBound() {
         // Given
-        AssetCacheService service = service(10 * 1024 * 1024);
+        UiResourceCacheService service = service(10 * 1024 * 1024);
         AtomicInteger loads = new AtomicInteger();
         byte[] content = compressibleContent();
 
         // When
-        Optional<CachedAsset> first = service.get("a", JS, countingLoader(loads, content));
-        Optional<CachedAsset> second = service.get("a", JS, countingLoader(loads, content));
+        Optional<CachedUiResource> first = service.get("a", JS, countingLoader(loads, content));
+        Optional<CachedUiResource> second = service.get("a", JS, countingLoader(loads, content));
 
         // Then
         assertThat(first).isPresent();
@@ -71,13 +71,13 @@ class AssetCacheServiceTest {
     @Test
     void shouldStillServeButReloadWhenAssetIsLargerThanTheBound() {
         // Given - a bound smaller than the single asset
-        AssetCacheService service = service(128);
+        UiResourceCacheService service = service(128);
         AtomicInteger loads = new AtomicInteger();
         byte[] content = incompressibleContent(1024);
 
         // When
-        Optional<CachedAsset> first = service.get("oversized", MediaType.APPLICATION_OCTET_STREAM_TYPE, countingLoader(loads, content));
-        Optional<CachedAsset> second = service.get("oversized", MediaType.APPLICATION_OCTET_STREAM_TYPE, countingLoader(loads, content));
+        Optional<CachedUiResource> first = service.get("oversized", MediaType.APPLICATION_OCTET_STREAM_TYPE, countingLoader(loads, content));
+        Optional<CachedUiResource> second = service.get("oversized", MediaType.APPLICATION_OCTET_STREAM_TYPE, countingLoader(loads, content));
 
         // Then - both requests are served, but the entry cannot stay resident
         assertThat(first).isPresent();
@@ -88,7 +88,7 @@ class AssetCacheServiceTest {
     @Test
     void shouldEvictWhenTotalWeightExceedsTheBound() {
         // Given - two assets that each fit but cannot both stay resident
-        AssetCacheService service = service(1000);
+        UiResourceCacheService service = service(1000);
         AtomicInteger loads = new AtomicInteger();
         byte[] content = incompressibleContent(600);
 
@@ -105,11 +105,11 @@ class AssetCacheServiceTest {
     @Test
     void shouldSkipPrecompressionWhenContentDoesNotShrink() {
         // Given - random bytes do not compress
-        AssetCacheService service = service(10 * 1024 * 1024);
+        UiResourceCacheService service = service(10 * 1024 * 1024);
         byte[] content = incompressibleContent(2048);
 
         // When
-        Optional<CachedAsset> asset = service.get("random", MediaType.TEXT_PLAIN_TYPE, () -> Optional.of(content));
+        Optional<CachedUiResource> asset = service.get("random", MediaType.TEXT_PLAIN_TYPE, () -> Optional.of(content));
 
         // Then
         assertThat(asset).isPresent();
@@ -119,10 +119,10 @@ class AssetCacheServiceTest {
     @Test
     void shouldSkipPrecompressionForIncompressibleMediaTypes() {
         // Given - compressible bytes but an already-compressed media type
-        AssetCacheService service = service(10 * 1024 * 1024);
+        UiResourceCacheService service = service(10 * 1024 * 1024);
 
         // When
-        Optional<CachedAsset> asset = service.get("image", MediaType.IMAGE_PNG_TYPE, () -> Optional.of(compressibleContent()));
+        Optional<CachedUiResource> asset = service.get("image", MediaType.IMAGE_PNG_TYPE, () -> Optional.of(compressibleContent()));
 
         // Then
         assertThat(asset).isPresent();
@@ -132,7 +132,7 @@ class AssetCacheServiceTest {
     @Test
     void shouldReturnEmptyWhenLoaderFindsNoResource() {
         // Given
-        AssetCacheService service = service(10 * 1024 * 1024);
+        UiResourceCacheService service = service(10 * 1024 * 1024);
 
         // When / Then
         assertThat(service.get("missing", JS, Optional::empty)).isEmpty();
@@ -141,9 +141,9 @@ class AssetCacheServiceTest {
     @Test
     void shouldServeIdentityWhenNoAcceptEncoding() {
         // Given
-        AssetCacheService service = service(10 * 1024 * 1024);
+        UiResourceCacheService service = service(10 * 1024 * 1024);
         byte[] content = compressibleContent();
-        CachedAsset asset = service.get("a", JS, () -> Optional.of(content)).orElseThrow();
+        CachedUiResource asset = service.get("a", JS, () -> Optional.of(content)).orElseThrow();
 
         // When
         MutableHttpResponse<byte[]> response = service.respond(HttpRequest.GET("/ui/a"), asset, "public, max-age=86400");
@@ -161,8 +161,8 @@ class AssetCacheServiceTest {
     @Test
     void shouldServeGzipWhenAccepted() {
         // Given
-        AssetCacheService service = service(10 * 1024 * 1024);
-        CachedAsset asset = service.get("a", JS, () -> Optional.of(compressibleContent())).orElseThrow();
+        UiResourceCacheService service = service(10 * 1024 * 1024);
+        CachedUiResource asset = service.get("a", JS, () -> Optional.of(compressibleContent())).orElseThrow();
 
         // When
         MutableHttpResponse<byte[]> response = service.respond(
@@ -182,8 +182,8 @@ class AssetCacheServiceTest {
     void shouldPreferBrotliOverGzipWhenBothAcceptedAndAvailable() {
         // Given - a brotli variant crafted directly, so this test does not depend on the brotli4j natives
         byte[] brotli = {1, 2, 3};
-        CachedAsset asset = new CachedAsset(JS, compressibleContent(), new byte[]{4, 5}, brotli, "etag");
-        AssetCacheService service = service(1024);
+        CachedUiResource asset = new CachedUiResource(JS, compressibleContent(), new byte[]{4, 5}, brotli, "etag");
+        UiResourceCacheService service = service(1024);
 
         // When
         MutableHttpResponse<byte[]> response = service.respond(
@@ -201,9 +201,9 @@ class AssetCacheServiceTest {
     @Test
     void shouldServeIdentityWhenGzipIsRefusedWithZeroQuality() {
         // Given
-        AssetCacheService service = service(10 * 1024 * 1024);
+        UiResourceCacheService service = service(10 * 1024 * 1024);
         byte[] content = compressibleContent();
-        CachedAsset asset = service.get("a", JS, () -> Optional.of(content)).orElseThrow();
+        CachedUiResource asset = service.get("a", JS, () -> Optional.of(content)).orElseThrow();
 
         // When
         MutableHttpResponse<byte[]> response = service.respond(
@@ -220,8 +220,8 @@ class AssetCacheServiceTest {
     @Test
     void shouldAnswer304WhenIfNoneMatchMatchesTheVariantEtag() {
         // Given
-        AssetCacheService service = service(10 * 1024 * 1024);
-        CachedAsset asset = service.get("a", JS, () -> Optional.of(compressibleContent())).orElseThrow();
+        UiResourceCacheService service = service(10 * 1024 * 1024);
+        CachedUiResource asset = service.get("a", JS, () -> Optional.of(compressibleContent())).orElseThrow();
         MutableHttpResponse<byte[]> first = service.respond(
             HttpRequest.GET("/ui/a").header(HttpHeaders.ACCEPT_ENCODING, "gzip"),
             asset,
@@ -247,8 +247,8 @@ class AssetCacheServiceTest {
     @Test
     void shouldAnswer200WhenIfNoneMatchDoesNotMatch() {
         // Given
-        AssetCacheService service = service(10 * 1024 * 1024);
-        CachedAsset asset = service.get("a", JS, () -> Optional.of(compressibleContent())).orElseThrow();
+        UiResourceCacheService service = service(10 * 1024 * 1024);
+        CachedUiResource asset = service.get("a", JS, () -> Optional.of(compressibleContent())).orElseThrow();
 
         // When
         MutableHttpResponse<byte[]> response = service.respond(
@@ -265,12 +265,12 @@ class AssetCacheServiceTest {
     @Test
     void shouldPrecompressBrotliWhenBrotli4jIsAvailable() throws Exception {
         // Given - only runs when the brotli4j natives resolved for this platform
-        assumeTrue(AssetCompression.isBrotliAvailable());
-        AssetCacheService service = service(10 * 1024 * 1024);
+        assumeTrue(UiResourceCompression.isBrotliAvailable());
+        UiResourceCacheService service = service(10 * 1024 * 1024);
         byte[] content = compressibleContent();
 
         // When
-        CachedAsset asset = service.get("a", JS, () -> Optional.of(content)).orElseThrow();
+        CachedUiResource asset = service.get("a", JS, () -> Optional.of(content)).orElseThrow();
 
         // Then - the brotli variant is present, smaller, and round-trips to the raw bytes
         assertThat(asset.brotli()).isNotNull();

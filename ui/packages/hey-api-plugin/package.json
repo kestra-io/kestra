@@ -1,6 +1,6 @@
 {
   "name": "@kestra-io/hey-api-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Kestra's shared SDK tooling. Two entry points: the '.' entry is the @hey-api/openapi-ts generator plugin (generation-time) that turns a Kestra OpenAPI spec into tenant-aware, human-friendly SDK wrappers; the './runtime' entry is createConfigureClient — the universal fetch-based client setup every Kestra SDK ships. Single source of truth used by the OSS UI SDK, the EE UI SDK, and the client-sdk repo.",
   "license": "Apache-2.0",
   "type": "module",

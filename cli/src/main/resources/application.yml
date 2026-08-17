@@ -54,6 +54,8 @@ micronaut:
           - /metrics/.+
           - /prometheus(\?.*)?
     http-version: HTTP_1_1
+    # No CORS defaults are shipped on purpose: see NotFoundHeadersCorsCustomizer, which adds the
+    # 404-disambiguation headers to whatever CORS configurations a deployment defines itself.
   security:
     filter:
       enabled: false

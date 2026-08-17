@@ -116,7 +116,7 @@
         canCreate(props.blueprintKind),
     )
 
-    const {missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {missingTaskTypes} = useBlueprintPlugins()
 
     const missingTasks = computed(() =>
         missingTaskTypes(props.blueprint.includedTasks),
@@ -126,7 +126,7 @@
 
     const missingPluginsMessage = computed(() =>
         t("blueprints.missingPlugins.card", {
-            plugins: missingPluginNames(props.blueprint.includedTasks).join(", "),
+            tasks: missingTasks.value.join(", "),
         }),
     )
 </script>

@@ -888,6 +888,10 @@
         "files": "Eliminar {count} archivos seleccionados",
         "folders": "Eliminar {count} carpetas seleccionadas"
       },
+      "move": {
+        "bulk_success": "Archivos seleccionados movidos correctamente.",
+        "bulk_error": "Error al mover {count} de los elementos seleccionados."
+      },
       "import": {
         "files": "Importar archivos",
         "folder": "Importar carpeta",

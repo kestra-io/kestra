@@ -1106,6 +1106,9 @@ class FlowControllerTest {
     }
 
     @Test
+    // Upstream Micronaut race: https://github.com/micronaut-projects/micronaut-core/issues/12860
+    @FlakyTest(description = "Under CI load, AuthenticationFilter resumes routing off the event loop (subscribeOn(boundedElastic)), " +
+        "which can race the multipart FormDemuxer's SharedBuffer and throw IllegalStateException(\"Must only be called on event loop\")")
     void importFlowsWithZip() throws IOException {
         // create a ZIP file using the extract endpoint
         byte[] zip = client.toBlocking().retrieve(
@@ -1741,6 +1744,9 @@ class FlowControllerTest {
         assertThat(csv).contains("id");
         assertThat(csv).contains(f1.getId());
         assertThat(csv).contains(f2.getId());
+        // The export must go through the mapper carrying TenantSerializer: the header is the first row's key
+        // set, so a mapper without it silently adds a tenantId column.
+        assertThat(csv).doesNotContain("tenantId");
     }
 
     @Test

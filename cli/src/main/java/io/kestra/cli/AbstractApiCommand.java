@@ -47,6 +47,13 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     private HttpClientConfiguration httpClientConfiguration;
 
     /**
+     * The context mapper rather than {@code JsonMapper.createDefault()}: that resolves an unconfigured mapper
+     * from the SPI, so it carries none of the configuration the server encodes its responses with.
+     */
+    @Inject
+    private JsonMapper jsonMapper;
+
+    /**
      * {@inheritDoc}
      */
     protected boolean loadExternalPlugins() {
@@ -60,7 +67,7 @@ public abstract class AbstractApiCommand extends AbstractCommand {
             .build();
         MessageBodyHandlerRegistry defaultHandlerRegistry = defaultHttpClient.getHandlerRegistry();
         if (defaultHandlerRegistry instanceof ContextlessMessageBodyHandlerRegistry modifiableRegistry) {
-            modifiableRegistry.add(MediaType.TEXT_JSON_TYPE, new NettyJsonHandler<>(JsonMapper.createDefault()));
+            modifiableRegistry.add(MediaType.TEXT_JSON_TYPE, new NettyJsonHandler<>(jsonMapper));
         }
         return defaultHttpClient;
     }

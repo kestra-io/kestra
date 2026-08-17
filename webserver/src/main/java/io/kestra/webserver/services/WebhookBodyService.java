@@ -7,6 +7,7 @@ import java.io.PushbackInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FilenameUtils;
@@ -184,7 +185,8 @@ public class WebhookBodyService {
     }
 
     private MultipartFormDataRequestBody.Part toPart(CompletedPart part, Flow flow, String executionId, int index) throws IOException {
-        String contentType = part.getContentType().map(MediaType::getName).orElse(null);
+        // Micronaut 5 moved the part's media type onto its metadata record.
+        String contentType = Optional.ofNullable(part.getMetadata().mediaType()).map(MediaType::getName).orElse(null);
 
         if (part instanceof CompletedFileUpload fileUpload && fileUpload.getFilename() != null && !fileUpload.getFilename().isBlank()) {
             // Read before the content, as the part is released once its stream is handed over.

@@ -3482,6 +3482,9 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=executions.csv");
         String csv = new String(response.body());
         assertThat(csv).contains(execution.getId());
+        // The export must go through the mapper carrying TenantSerializer: the header is the first row's key
+        // set, so a mapper without it silently adds a tenantId column.
+        assertThat(csv).doesNotContain("tenantId");
     }
 
     @Test

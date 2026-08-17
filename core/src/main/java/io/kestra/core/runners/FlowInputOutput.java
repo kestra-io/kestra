@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
@@ -147,7 +148,8 @@ public class FlowInputOutput {
     private Mono<Map<String, Object>> readData(List<Input<?>> rawInputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         // Inline reusable-inputs references, then flatten FORMs so FILE part matching works against dotted leaf ids.
         final List<Input<?>> inputs = Input.expandToLeaves(reusableInputsExpander.expand(execution.getTenantId(), execution.getNamespace(), rawInputs));
-        return Flux.from(data)
+        // Micronaut 5 passes a literal null, rather than an empty publisher, when the multipart body is absent.
+        return (data == null ? Flux.<CompletedPart> empty() : Flux.from(data))
             .publishOn(Schedulers.boundedElastic()).<Map.Entry<String, String>> handle((input, sink) ->
             {
                 if (input instanceof CompletedFileUpload fileUpload) {
@@ -171,7 +173,8 @@ public class FlowInputOutput {
                                 .forInput(execution, inputId, fileName)
                                 .getContextStorageURI()
                         );
-                        fileUpload.discard();
+                        // Releases the part now it has been read; Micronaut 5 replaced discard() with close().
+                        IOUtils.closeQuietly(fileUpload);
                         sink.next(Map.entry(inputId, from.toString()));
                     } else {
                         try {
@@ -192,7 +195,8 @@ public class FlowInputOutput {
                                 }
                             }
                         } catch (IOException e) {
-                            fileUpload.discard();
+                            // Quietly, so the original failure below is the one reported.
+                            IOUtils.closeQuietly(fileUpload);
                             sink.error(e);
                         }
                     }

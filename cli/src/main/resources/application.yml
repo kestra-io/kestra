@@ -98,8 +98,11 @@ micronaut:
       retry:
         enabled: true
       netty:
+        # Must stay off on Micronaut 5: this binder replaces the stock NIO event-loop factory with an
+        # instrumented one that drops its 'nio' qualifier, and Micronaut 5 looks transports up by qualifier, so
+        # enabling it fails startup with "No matching transport was found".
         queues:
-          enabled: true
+          enabled: false
         bytebuf-allocators:
           enabled: true
         channels:
@@ -112,13 +115,13 @@ micronaut:
 #        url: http://localhost:4318/v1/metrics
 
 jackson:
-  serialization:
-    writeDatesAsTimestamps: false
-    writeDurationsAsTimestamps: false
+  date-time-features:
+    WRITE_DATES_AS_TIMESTAMPS: false
+    WRITE_DURATIONS_AS_TIMESTAMPS: false
   serialization-inclusion: non_null
-  deserialization:
+  deserialization-features:
     FAIL_ON_UNKNOWN_PROPERTIES: false
-  mapper:
+  mapper-features:
     ACCEPT_CASE_INSENSITIVE_ENUMS: true
 
 # Disable Micronaut embedded gRPC server and health check

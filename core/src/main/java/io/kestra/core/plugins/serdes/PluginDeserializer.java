@@ -73,8 +73,10 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
                 // By default, if no plugin-registry is configured retrieve
                 // the one configured from the static Kestra's context.
                 pluginRegistry = KestraContext.getContext().getPluginRegistry();
-            } catch (IllegalStateException | NoSuchBeanException ignore) {
+            } catch (IllegalStateException | NoSuchBeanException | NullPointerException ignore) {
                 // This error can only happen if the KestraContext is not initialized (i.e. in unit tests).
+                // NullPointerException included because a KestraContext.Initializer left behind by a closed
+                // context has a null application context, so getPluginRegistry() throws that instead.
                 log.error("No plugin registry was initialized. Use default implementation.");
                 pluginRegistry = DefaultPluginRegistry.getOrCreate();
             }
@@ -157,6 +159,21 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
         String type = Optional.ofNullable(node.get(TYPE)).map(JsonNode::textValue).orElse(null);
         String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::asText).orElse(null);
 
+        return rawIdentifier(type, version, isVersioningSupported);
+    }
+
+    /**
+     * Builds the plugin registry identifier from an already-extracted type and version.
+     * <p>
+     * Kept Jackson-version-neutral so {@link Jackson3PluginDeserializer}, which reads a
+     * {@code tools.jackson} tree, applies exactly the same identifier convention.
+     *
+     * @param type                 The plugin type, may be {@code null} or empty.
+     * @param version              The plugin version, may be {@code null} or empty.
+     * @param isVersioningSupported Whether the registry resolves versioned identifiers.
+     * @return The raw identifier, or {@code null} if no type was provided.
+     */
+    static String rawIdentifier(final String type, final String version, final boolean isVersioningSupported) {
         if (type == null || type.isEmpty()) {
             return null;
         }

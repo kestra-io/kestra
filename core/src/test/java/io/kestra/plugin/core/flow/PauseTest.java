@@ -2,7 +2,6 @@ package io.kestra.plugin.core.flow;
 
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -26,14 +25,12 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 
+import io.micronaut.core.io.buffer.ReadBufferFactory;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.multipart.CompletedAttribute;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
-import io.micronaut.http.server.HttpServerConfiguration;
-import io.micronaut.http.server.netty.MicronautHttpData;
-import io.micronaut.http.server.netty.multipart.NettyCompletedAttribute;
-import io.micronaut.http.server.netty.multipart.NettyCompletedFileUpload;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.multipart.*;
+import io.micronaut.http.multipart.FormFieldMetadata;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
@@ -298,13 +295,19 @@ public class PauseTest {
             assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.PAUSED);
             assertThat(execution.getTaskRunList()).hasSize(1);
 
-            CompletedPart part1 = new NettyCompletedAttribute(new MemoryAttribute("asked", "restarted"));
-            CompletedPart part2 = new NettyCompletedAttribute(new MemoryAttribute("secret_pause", "secret_value"));
+            CompletedPart part1 = CompletedAttribute.create(
+                new FormFieldMetadata("asked", null, null),
+                ReadBufferFactory.getJdkFactory().adapt("restarted".getBytes())
+            );
+            CompletedPart part2 = CompletedAttribute.create(
+                new FormFieldMetadata("secret_pause", null, null),
+                ReadBufferFactory.getJdkFactory().adapt("secret_value".getBytes())
+            );
             byte[] data = executionId.getBytes();
-            HttpDataFactory httpDataFactory = new MicronautHttpData.Factory(new HttpServerConfiguration.MultipartConfiguration(), null);
-            FileUpload fileUpload = httpDataFactory.createFileUpload(null, "files", "data", MediaType.TEXT_PLAIN, null, Charset.defaultCharset(), data.length);
-            fileUpload.addContent(Unpooled.copiedBuffer(data), true);
-            CompletedPart part3 = new NettyCompletedFileUpload(fileUpload);
+            CompletedPart part3 = CompletedFileUpload.ofMemory(
+                new FormFieldMetadata("files", "data", MediaType.TEXT_PLAIN_TYPE),
+                ReadBufferFactory.getJdkFactory().adapt(data)
+            );
             Map<String, Object> resumeOutputs = executionService.readInputs(
                 execution,
                 flow,

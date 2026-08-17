@@ -1,10 +1,6 @@
 package io.kestra.core.runners;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -46,9 +42,11 @@ import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.context.annotation.Value;
-import io.micronaut.http.MediaType;
+import io.micronaut.core.io.buffer.ReadBufferFactory;
+import io.micronaut.http.multipart.CompletedAttribute;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -280,7 +278,7 @@ class FlowInputOutputTest {
             .type(Type.FILE)
             .build();
 
-        Publisher<CompletedPart> data = Mono.just(new MemoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
+        Publisher<CompletedPart> data = Mono.just(memoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
 
         // When
         List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block();
@@ -567,14 +565,8 @@ class FlowInputOutputTest {
     }
 
     @Test
-    void shouldResolveZeroByteFileUpload() throws java.io.IOException {
-        File tempFile = File.createTempFile("empty", ".txt");
-        tempFile.deleteOnExit();
-
-        io.micronaut.http.multipart.CompletedFileUpload fileUpload = org.mockito.Mockito.mock(io.micronaut.http.multipart.CompletedFileUpload.class);
-        org.mockito.Mockito.when(fileUpload.getInputStream()).thenReturn(new java.io.FileInputStream(tempFile));
-        org.mockito.Mockito.when(fileUpload.getFilename()).thenReturn("empty.txt");
-        org.mockito.Mockito.when(fileUpload.getName()).thenReturn("empty_file");
+    void shouldResolveZeroByteFileUpload() {
+        CompletedFileUpload fileUpload = memoryCompletedFileUpload("empty_file", "empty.txt", new byte[0]);
 
         Execution execution = Execution.builder()
             .id(IdUtils.create())
@@ -738,7 +730,7 @@ class FlowInputOutputTest {
         Map<String, Object> result = flowInputOutput
             .readExecutionInputs(
                 flow, executionId,
-                Flux.just(new MemoryCompletedPart("greeting", "hello".getBytes(StandardCharsets.UTF_8)))
+                Flux.just(memoryCompletedPart("greeting", "hello".getBytes(StandardCharsets.UTF_8)))
             )
             .block();
 
@@ -761,7 +753,7 @@ class FlowInputOutputTest {
         Map<String, Object> result = flowInputOutput
             .readExecutionInputs(
                 flow, executionId,
-                Flux.just(new MemoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8)))
+                Flux.just(memoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8)))
             )
             .block();
 
@@ -1129,73 +1121,17 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions()).isNull();
     }
 
-    private static class MemoryCompletedPart implements CompletedPart {
-
-        protected final String name;
-        protected final byte[] content;
-
-        public MemoryCompletedPart(String name, byte[] content) {
-            this.name = name;
-            this.content = content;
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return new ByteArrayInputStream(content);
-        }
-
-        @Override
-        public byte[] getBytes() {
-            return content;
-        }
-
-        @Override
-        public ByteBuffer getByteBuffer() {
-            return ByteBuffer.wrap(content);
-        }
-
-        @Override
-        public Optional<MediaType> getContentType() {
-            return Optional.empty();
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
+    private static CompletedPart memoryCompletedPart(String name, byte[] content) {
+        return CompletedAttribute.create(
+            new FormFieldMetadata(name, null, null),
+            ReadBufferFactory.getJdkFactory().adapt(content)
+        );
     }
 
-    private static final class MemoryCompletedFileUpload extends MemoryCompletedPart implements CompletedFileUpload {
-
-        private final String fileName;
-
-        public MemoryCompletedFileUpload(String name, String fileName, byte[] content) {
-            super(name, content);
-            this.fileName = fileName;
-        }
-
-        @Override
-        public String getFilename() {
-            return fileName;
-        }
-
-        @Override
-        public long getSize() {
-            return content.length;
-        }
-
-        @Override
-        public long getDefinedSize() {
-            return content.length;
-        }
-
-        @Override
-        public boolean isComplete() {
-            return true;
-        }
-
-        @Override
-        public void discard() {
-        }
+    private static CompletedFileUpload memoryCompletedFileUpload(String name, String fileName, byte[] content) {
+        return CompletedFileUpload.ofMemory(
+            new FormFieldMetadata(name, fileName, null),
+            ReadBufferFactory.getJdkFactory().adapt(content)
+        );
     }
 }

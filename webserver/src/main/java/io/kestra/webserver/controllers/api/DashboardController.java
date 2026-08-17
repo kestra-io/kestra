@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import io.kestra.core.exceptions.InvalidException;
+import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.Setting;
@@ -138,7 +139,7 @@ public class DashboardController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(consumes = MediaType.APPLICATION_YAML)
+    @Post(consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(
         tags = { "Dashboards" }, summary = "Create a dashboard from yaml source",
         responses = @ApiResponse(
@@ -175,7 +176,7 @@ public class DashboardController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "validate", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Dashboards" }, summary = "Validate dashboard from yaml source")
     public ValidateConstraintViolation validateDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
@@ -199,7 +200,7 @@ public class DashboardController {
         return validateConstraintViolationBuilder.build();
     }
 
-    @Put(uri = "{id}", consumes = MediaType.APPLICATION_YAML)
+    @Put(uri = "{id}", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = { "Dashboards" }, summary = "Update a dashboard",
@@ -471,7 +472,7 @@ public class DashboardController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate/chart", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "validate/chart", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Dashboards" }, summary = "Validate a chart from yaml source")
     public ValidateConstraintViolation validateChart(
         @RequestBody(description = "The chart definition as YAML") @Body String chart) throws ConstraintViolationException {

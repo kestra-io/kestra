@@ -34,8 +34,13 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  *
  * @param <T> the target type of the property
  */
+// The Jackson 2 pair is used by JacksonMapper (storage, queue, YAML flow parsing); the Jackson 3 pair by
+// Micronaut's HTTP mapper. Both are required: a `using=` attribute is bound to one Jackson major version, and
+// Micronaut 5's Jackson 2 annotation compatibility layer covers only `as=`/`builder=`, not `using=`.
 @JsonDeserialize(using = Property.PropertyDeserializer.class)
 @JsonSerialize(using = Property.PropertySerializer.class)
+@tools.jackson.databind.annotation.JsonDeserialize(using = Property.Jackson3PropertyDeserializer.class)
+@tools.jackson.databind.annotation.JsonSerialize(using = Property.Jackson3PropertySerializer.class)
 @Builder
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @Schema(
@@ -344,6 +349,54 @@ public class Property<T> {
 
         @Override
         public void serialize(Property value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            gen.writeString(value.getExpression());
+        }
+    }
+
+    /**
+     * Jackson 3 counterpart of {@link PropertyDeserializer}, used by Micronaut's HTTP mapper.
+     */
+    static class Jackson3PropertyDeserializer extends tools.jackson.databind.deser.std.StdDeserializer<Property<?>> {
+        protected Jackson3PropertyDeserializer() {
+            super(Property.class);
+        }
+
+        @Override
+        public Property<?> deserialize(tools.jackson.core.JsonParser p, tools.jackson.databind.DeserializationContext ctxt) {
+            String s;
+            // The expression is stored as a string, so the parsed structure is re-serialized with the Jackson 2
+            // MAPPER above to keep the exact same expression form on both mappers.
+            if (p.isExpectedStartArrayToken()) {
+                s = writeExpression(ctxt.readValue(p, List.class));
+            } else if (p.isExpectedStartObjectToken()) {
+                s = writeExpression(ctxt.readValue(p, Map.class));
+            } else {
+                s = p.getValueAsString();
+            }
+            return new Property<>(s);
+        }
+
+        private static String writeExpression(Object parsed) {
+            try {
+                return MAPPER.writeValueAsString(parsed);
+            } catch (JsonProcessingException e) {
+                // Jackson 3's deserialize() cannot propagate Jackson 2's checked exception.
+                throw new IllegalArgumentException("Cannot serialize the property value as an expression.", e);
+            }
+        }
+    }
+
+    /**
+     * Jackson 3 counterpart of {@link PropertySerializer}, used by Micronaut's HTTP mapper.
+     */
+    @SuppressWarnings("rawtypes")
+    static class Jackson3PropertySerializer extends tools.jackson.databind.ser.std.StdSerializer<Property> {
+        protected Jackson3PropertySerializer() {
+            super(Property.class);
+        }
+
+        @Override
+        public void serialize(Property value, tools.jackson.core.JsonGenerator gen, tools.jackson.databind.SerializationContext context) {
             gen.writeString(value.getExpression());
         }
     }

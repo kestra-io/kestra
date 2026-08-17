@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -22,7 +21,8 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.tenant.TenantService;
@@ -68,10 +68,14 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 
 @Controller("/api/v1/{tenant}/triggers")
 @Slf4j
 public class TriggerController {
+    // The Micronaut-managed mapper, which carries TenantSerializer: see CSVUtils#toCSVFlux.
+    @Inject
+    private ObjectMapper objectMapper;
 
     @Inject
     private TriggerRepositoryInterface triggerRepository;
@@ -84,9 +88,6 @@ public class TriggerController {
 
     @Inject
     private TriggerStateService triggerStateService;
-
-    @Inject
-    private ObjectMapper objectMapper;
 
     // region [Trigger Search APIs]
     // -----------------------------------------------------------------------------------------------------------------
@@ -423,8 +424,8 @@ public class TriggerController {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                triggerRepository.find(this.tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                triggerRepository.find(this.tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null)),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=triggers.csv");
@@ -482,7 +483,9 @@ public class TriggerController {
             ZonedDateTime end,
             Map<String, Object> inputs,
             @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
-            @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class) List<@NoSystemLabelValidation Label> labels) {
+            @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+            @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+            @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class) List<@NoSystemLabelValidation Label> labels) {
         }
     }
 

@@ -931,7 +931,7 @@ class TriggerEventHandlerTest {
 
         // THEN
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(triggerExecutionPublisher.executions().getFirst().evaluation().stateType()).isEqualTo(State.Type.FAILED);
     }
 
     @Test

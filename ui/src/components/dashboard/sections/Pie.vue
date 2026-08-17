@@ -34,13 +34,12 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown} from "../composables/charts";
+    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
     import {totalsDurationLegend, totalsLegend} from "../composables/useLegend";
 
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
-    import {useMiscStore} from "override/stores/misc";
     import {FilterObject} from "../../../utils/filters";
 
     const route = useRoute();
@@ -117,19 +116,7 @@
         if (!label) return;
         const drillDown = chartSegmentDrillDown(props.chart, dimensionColumn.value, label);
         if (!drillDown) return;
-        router.push({
-            name: drillDown.name,
-            params: {tenant: route.params.tenant},
-            query: {
-                ...drillDown.query,
-                scope: "USER",
-                size: 100,
-                page: 1,
-                ...(drillDown.timeFiltered
-                    ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
-                    : {}),
-            },
-        });
+        pushChartDrillDown(router, route, drillDown);
     }
 
     const centerPlugin = computed(() => ({

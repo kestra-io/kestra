@@ -247,7 +247,7 @@
         types.filter((type) => !type.startsWith("#") || !isDeprecated(props.definitions?.[type.slice(1)]))
 
     function sortedAndAggregated(schema?: Record<string, JSONProperty>): Record<string, JSONProperty> {
-        const source = schema ?? {}
+        const source = schema ? { ...schema } : {}
         const requiredKeys: string[] = []
         const nonRequiredKeys: string[] = []
 

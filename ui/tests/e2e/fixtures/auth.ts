@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const STORAGE_STATE = path.resolve(__dirname, "../.auth/user.json")
 
 /** Mirrors `AUTH_FLAG_KEY` in `ui/src/utils/basicAuth.ts`. */
-const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
+export const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
 
 /** Mirrors `STORAGE_KEY` in `ui/src/stores/productTour.ts`. */
 export const PRODUCT_TOUR_STORAGE_KEY = "kestra.productTour.state"

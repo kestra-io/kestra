@@ -243,6 +243,7 @@
         .task-duration small {
             white-space: nowrap;
             color: var(--ks-text-secondary);
+            line-height: 1;
         }
 
     }

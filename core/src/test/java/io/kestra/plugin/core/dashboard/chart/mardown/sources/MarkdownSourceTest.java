@@ -9,12 +9,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MarkdownSourceTest {
     @Test
     void shouldSerializeTypeOnlyOnce() throws Exception {
-        Text source = Text.builder().content("hello").build();
-        String json = JacksonMapper.ofJson().writeValueAsString(source);
+        String jsonInput = "{\"type\":\"Text\",\"content\":\"hello\"}";
+        MarkdownSource source = JacksonMapper.ofJson().readValue(jsonInput, MarkdownSource.class);
+        String jsonOutput = JacksonMapper.ofJson().writeValueAsString(source);
 
         // the word "type" should appear exactly once in the JSON as the key "type"
-        int typeCount = json.split("\"type\"").length - 1;
+        int typeCount = jsonOutput.split("\"type\"").length - 1;
         assertThat(typeCount).isEqualTo(1);
-        assertThat(json).contains("\"type\":\"Text\"");
+        assertThat(jsonOutput).contains("\"type\":\"Text\"");
     }
 }

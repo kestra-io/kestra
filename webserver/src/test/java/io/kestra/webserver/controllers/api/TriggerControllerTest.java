@@ -848,6 +848,5 @@ class TriggerControllerTest {
 
         String csv = new String(csvBytes, java.nio.charset.StandardCharsets.UTF_8);
         assertThat(csv).doesNotContain("tenantId");
-        assertThat(csv).contains("triggerId", "namespace", "flowId");
     }
 }

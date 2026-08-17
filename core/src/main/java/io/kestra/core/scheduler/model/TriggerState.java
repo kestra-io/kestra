@@ -9,7 +9,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.events.EventId;
-import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -30,7 +29,7 @@ import lombok.Getter;
 @EqualsAndHashCode
 @AllArgsConstructor
 @Builder
-public final class TriggerState implements TriggerId, TenantInterface {
+public final class TriggerState implements TriggerId {
     private final String tenantId;
     private final String namespace;
     private final String flowId;

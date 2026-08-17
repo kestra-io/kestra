@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.FlowParsingService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +48,7 @@ class TriggerFlowParserTest {
         // Given
         FlowParsingService flowParsingService = mock(FlowParsingService.class);
         FlowWithSource parsed = flow.toBuilder().revision(2).build();
-        when(flowParsingService.parseForRuntime(flow)).thenReturn(parsed);
+        when(flowParsingService.parseForRuntime(flow)).thenReturn(ProcessedFlow.of(parsed));
 
         // When / Then
         assertThat(TriggerFlowParser.parseOrSkip(flowParsingService, flow, LOGGER)).isSameAs(parsed);

@@ -22,6 +22,7 @@ import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InputOutputValidationException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
@@ -33,6 +34,7 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
@@ -126,7 +128,25 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final String executionId,
         final Publisher<CompletedPart> data) {
-        return readExecutionInputs(flow, minimalExecution(flow, executionId), data);
+        return readExecutionInputs(flow, executionId, null, data);
+    }
+
+    /**
+     * Same as {@link #readExecutionInputs(FlowInterface, String, Publisher)}, rendering inputs against the
+     * labels the created execution will carry: the flow's own merged with the given contributed ones.
+     *
+     * @param flow The Flow.
+     * @param executionId The ID that will be assigned to the execution.
+     * @param contributed The labels contributed by whoever starts the execution.
+     * @param data The execution's inputs data.
+     * @return The Map of typed inputs.
+     */
+    public Mono<Map<String, Object>> readExecutionInputs(
+        final FlowInterface flow,
+        final String executionId,
+        @Nullable final List<Label> contributed,
+        final Publisher<CompletedPart> data) {
+        return readExecutionInputs(flow, minimalExecution(flow, executionId, contributed), data);
     }
 
     /**
@@ -211,7 +231,7 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final String executionId,
         final Map<String, ?> data) {
-        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId), data);
+        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId, null), data);
     }
 
     /**
@@ -609,7 +629,7 @@ public class FlowInputOutput {
         }
     }
 
-    private static Execution minimalExecution(FlowInterface flow, String executionId) {
+    private static Execution minimalExecution(FlowInterface flow, String executionId, @Nullable List<Label> contributed) {
         return Execution.builder()
             .id(executionId)
             .tenantId(flow.getTenantId())
@@ -618,6 +638,7 @@ public class FlowInputOutput {
             .flowRevision(flow.getRevision())
             .state(new State())
             .variables(flow.getVariables())
+            .labels(LabelService.forExecution(flow, contributed, executionId))
             .build();
     }
 

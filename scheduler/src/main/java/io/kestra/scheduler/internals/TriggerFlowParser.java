@@ -20,7 +20,7 @@ public final class TriggerFlowParser {
      */
     public static FlowWithSource parseOrSkip(final FlowParsingService flowParsingService, final FlowWithSource flow, final Logger logger) {
         try {
-            return flowParsingService.parseForRuntime(flow);
+            return flowParsingService.parseForRuntime(flow).flow();
         } catch (FlowBlockedException e) {
             logger.warn(
                 "Flow on tenant {}, namespace '{}', flow '{}' is blocked by governance, skipping its triggers: {}",

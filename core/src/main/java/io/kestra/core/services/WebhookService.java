@@ -25,6 +25,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FlowMetaStores;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
@@ -44,8 +45,6 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import static io.kestra.core.models.Label.CORRELATION_ID;
 
 @Slf4j
 @Singleton
@@ -128,7 +127,8 @@ public class WebhookService {
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         // the trigger is matched on the raw flow, but the execution is built from the flow the executor will run
-        FlowInterface resolvedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, context.flow());
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, context.flow());
+        FlowInterface resolvedFlow = processedFlow.flow();
 
         Execution execution = Execution.builder()
             // The caller mints the id before reading the request so that files stored for the call already live
@@ -146,17 +146,18 @@ public class WebhookService {
 
         var runContext = runContext(flow, execution);
 
-        // Add labels, flow first so the trigger's own override it, as Execution#newExecution does elsewhere
-        List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
-        labels.addAll(LabelService.labelsExcludingSystem(resolvedFlow.getLabels()));
+        List<Label> contributed = new ArrayList<>();
+        contributed.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
         // The trigger's own labels, as the other trigger types get them through TriggerService
-        labels.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
-        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
-            labels.add(new Label(CORRELATION_ID, execution.getId()));
-        }
+        contributed.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
 
-        execution = execution.withLabels(labels);
+        execution = execution.withLabels(
+            LabelService.forExecution(
+                resolvedFlow,
+                LabelService.withoutPinned(contributed, processedFlow.pinnedLabelKeys()),
+                execution.getId()
+            )
+        );
 
         // Check conditions
         if (!conditionService.isValid(trigger, flow, runContext)) {

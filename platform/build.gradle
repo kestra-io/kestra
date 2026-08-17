@@ -121,6 +121,12 @@ dependencies {
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin
         api 'org.jsoup:jsoup:1.22.1'
+        // Carries no classes: just the kotlp APE, read off the classpath as /kotlp/kotlp. Pinned
+        // strictly ('!!') so this version always wins: any transitive request is downgraded to it
+        // rather than winning by Gradle's highest-version conflict resolution. The binary's OTLP
+        // envelope key has to match what TaskLogLineMatcher parses, and a mismatch emits valid
+        // output that Kestra silently ingests none of — so the version ships only when bumped here.
+        api 'io.kestra:kotlp:0.1.3!!'
         api "org.xhtmlrenderer:flying-saucer-core:$flyingSaucerVersion"
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.5'

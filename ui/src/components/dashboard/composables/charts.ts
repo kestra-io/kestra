@@ -261,6 +261,32 @@ export function chartSegmentDrillDown(
     };
 }
 
+/**
+ * Pushes the list route resolved by {@link chartSegmentDrillDown}, augmenting its filters with the
+ * query the list pages expect: user scope, first page, and the default time range when supported.
+ */
+export function pushChartDrillDown(
+    router: any,
+    route: any,
+    drillDown: {name: string; query: Record<string, string>; timeFiltered: boolean},
+    extraFilters: Record<string, string> = {},
+) {
+    router.push({
+        name: drillDown.name,
+        params: {tenant: route.params.tenant},
+        query: {
+            ...drillDown.query,
+            ...extraFilters,
+            scope: "USER",
+            size: 100,
+            page: 1,
+            ...(drillDown.timeFiltered
+                ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+                : {}),
+        },
+    });
+}
+
 export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label", filters: Record<string, any> = {}) {
     const query: Record<string, any> = {};
 

@@ -109,13 +109,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         const validateYAML = computed(() => useBlueprintsStore().validateYAML);
-        // Keep Monaco YAML validation in sync with the blueprint store setting.
-        watch(validateYAML, (shouldValidate) =>
-            configureMonacoYaml(monaco, {validate: shouldValidate}),
-        );
 
         // Base YAML language setup shared across all YAML editors.
-        configureMonacoYaml(monaco, {
+        const monacoYaml = configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
@@ -123,6 +119,13 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             format: true,
             schemas: yamlSchemas(),
         });
+
+        // Keep Monaco YAML validation in sync with the blueprint store setting. The single instance must be
+        // updated in place: calling configureMonacoYaml again would stack a second undisposed instance whose
+        // validate flag can never be turned off again.
+        watch(validateYAML, (shouldValidate) =>
+            monacoYaml.update({validate: shouldValidate ?? true}),
+        );
 
         const yamlCompletion = (
             StandaloneServices.get(ILanguageFeaturesService).completionProvider

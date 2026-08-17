@@ -98,6 +98,23 @@ jobs:
     with:
       java-version: 25
 
+  # Built once here, consumed by both the E2E tests and the PR docker image
+  # publish (previously each of them rebuilt the whole product themselves).
+  build-artifacts:
+    name: Build Artifacts
+    needs: [file-changes]
+    # Docs-only PRs (e.g. .github or markdown changes) don't need a product
+    # build; drafts are filtered by file-changes' own if. Fork PRs can't
+    # share artifacts (their runs hold no repo write token), so they keep
+    # the E2E build-from-source fallback below.
+    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+    with:
+      java-version: 25
+      
   check-openapi-spec-up-to-date:
     name: Check Openapi generated spec is up to date
     needs: file-changes
@@ -137,6 +154,9 @@ jobs:
   e2e-tests:
     name: E2E - Tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
 

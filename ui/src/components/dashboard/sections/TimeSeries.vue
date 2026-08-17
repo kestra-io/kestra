@@ -32,7 +32,7 @@
     import NoData from "../../layout/NoData.vue";
     import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
-    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts";
+    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown, tooltip} from "../composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
@@ -159,13 +159,25 @@
                 if (data?.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;
                 }
-                chartClick(moment, router, route, {}, parsedData.value, elements, "label", {
-                    ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
-                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})              
-                });
+                onSegmentClick(elements);
             },
         }, theme.value);
     });
+
+    function onSegmentClick(elements: ActiveElement[]) {
+        if (!elements?.length) return;
+        const dataset = parsedData.value.datasets[elements[0].datasetIndex] as Record<string, any> | undefined;
+        // The yB duration line has no drillable dimension; stacked bars are labelled by colorByColumn.
+        if (!dataset || dataset.type === "line" || !dataset.label) return;
+        const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined;
+        const column = colorByColumn ? (data?.columns as Record<string, any> | undefined)?.[colorByColumn] : undefined;
+        const drillDown = chartSegmentDrillDown(props.chart, column, dataset.label);
+        if (!drillDown) return;
+        pushChartDrillDown(router, route, drillDown, {
+            ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
+            ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {}),
+        });
+    }
 
     function isDuration(field: string | undefined): boolean {
         return field === "DURATION";

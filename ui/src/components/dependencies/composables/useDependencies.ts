@@ -846,6 +846,9 @@ export function useDependencies(
             capturePositions()
             if (storedPositions.value.size > 0) {
                 const id = selectedNodeID.value
+                // Switch to layout:"none" now so the one-time refit it triggers happens under
+                // the initial focus below, rather than under the user's first click.
+                applyStylesToChart()
                 requestAnimationFrame(() => {
                     if (id) focusNode(id)
                     else fitGraph()

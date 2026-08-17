@@ -183,7 +183,13 @@
             bottom: 0,
             // Only DAG needs a floor: its cards are sized in pixels, so zooming out piles
             // them up. A large force graph may legitimately need to zoom out further.
-            ...(layoutMode.value === "dag" ? {scaleLimit: {min: 0.4, max: 2.5}} : {}),
+            ...(layoutMode.value === "dag"
+                ? {scaleLimit: {min: 0.4, max: 2.5}}
+                // Tree captures force positions and switches to layout:"none"; without this
+                // ECharts stretch-fits that bounding rect onto the box with independent
+                // scaleX/scaleY, which squashes every node into an ellipse. roamTrigger keeps
+                // dragging on the whole canvas once the fit is aspect-contained.
+                : {preserveAspect: true, roamTrigger: "global"}),
             // Tree view dims everything but the hovered node and its neighbours, which is
             // what makes a dense force graph readable; DAG columns already read on their own.
             emphasis: {focus: layoutMode.value === "dag" ? "none" : "adjacency"},

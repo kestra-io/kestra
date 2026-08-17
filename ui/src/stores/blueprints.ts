@@ -1,4 +1,4 @@
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {defineStore} from "pinia";
 
 import {useAxios} from "../utils/axios";
@@ -58,6 +58,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const graph = ref<any | undefined>(undefined);
 
     const validateYAML = ref<boolean>(true); // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
+
+    const validation = ref<{constraints?: string} | undefined>(undefined);
+
+    const validationErrors = computed<string[] | undefined>(
+        () => validation.value?.constraints ? [validation.value.constraints] : undefined,
+    );
 
     const getBlueprints = async (options: Options) => {
         const PARAMS = {params: options.params, ...VALIDATE};
@@ -149,6 +155,16 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return response.data;
     };
 
+    const validateFlowBlueprint = async (source: string): Promise<void> => {
+        const url = `${apiUrl()}/blueprints/flows/validate`;
+        const response = await axios.post(url, source, {
+            headers: {"Content-Type": "application/x-yaml"},
+            showMessageOnError: false
+        });
+
+        validation.value = response.data;
+    };
+
     const deleteFlowBlueprint = async (idToDelete: string) => {
         const url = `${apiUrl()}/blueprints/flows/${idToDelete}`;
         await axios.delete(url);
@@ -181,6 +197,9 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         getFlowBlueprint,
         createFlowBlueprint,
         updateFlowBlueprint,
+        validation,
+        validationErrors,
+        validateFlowBlueprint,
         deleteFlowBlueprint,
     };
 });

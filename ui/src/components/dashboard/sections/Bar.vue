@@ -12,7 +12,6 @@
 
 <script setup lang="ts">
     import {PropType, computed, watch} from "vue";
-    import moment from "moment";
     import {Bar} from "vue-chartjs";
     import type {TooltipItem, ChartEvent, ActiveElement, ChartData} from "chart.js";
 
@@ -25,7 +24,7 @@
 
     import {customBarLegend} from "../composables/useLegend";
     import {useTheme} from "../../../utils/utils";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts";
+    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
 
 
     import {useRoute, useRouter} from "vue-router";
@@ -112,10 +111,26 @@
                 },
             },
             onClick: (_e: ChartEvent, elements: ActiveElement[]) => {
-                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
+                onSegmentClick(elements);
             },
         }, theme.value);
     });
+
+    // The series dimension is the first column that is neither aggregated nor the x-axis column.
+    const seriesColumn = computed(() => {
+        const entry = Object.entries(data?.columns ?? {})
+            .find(([key, value]) => !(value as Record<string, any>).agg && key !== (chartOptions?.column ?? ""));
+        return entry?.[1] as {field?: string; labelKey?: string} | undefined;
+    });
+
+    function onSegmentClick(elements: ActiveElement[]) {
+        if (!elements?.length) return;
+        const label = parsedData.value.datasets[elements[0].datasetIndex]?.label;
+        if (!label) return;
+        const drillDown = chartSegmentDrillDown(props.chart, seriesColumn.value, label);
+        if (!drillDown) return;
+        pushChartDrillDown(router, route, drillDown);
+    }
 
     function isDurationAgg() {
         return aggregator[0][1].field === "DURATION";

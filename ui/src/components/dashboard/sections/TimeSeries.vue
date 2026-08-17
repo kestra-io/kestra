@@ -1,6 +1,8 @@
 <template>
+    <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
+
     <div
-        v-if="generated?.total > 0"
+        v-else-if="generated?.total > 0"
         class="chart"
         :class="{short: props.short, execution: props.execution}"
     >
@@ -36,7 +38,7 @@
     import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    import {KsEchart, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
@@ -343,7 +345,7 @@
         }
     })
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const showLegend = computed(() => !props.short && !props.execution && !!chartOptions?.legend?.enabled)
 

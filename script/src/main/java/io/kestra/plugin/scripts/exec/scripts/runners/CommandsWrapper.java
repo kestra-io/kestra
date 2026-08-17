@@ -228,6 +228,10 @@ public class CommandsWrapper implements TaskCommands {
             wrapped.add("--");
             wrapped.addAll(finalCommands);
             finalCommands = wrapped;
+
+            if (this.kotlp.isForwardTraces() && this.logConsumer instanceof DefaultLogConsumer) {
+                this.logConsumer = new DefaultLogConsumer(this.runContext, true);
+            }
         }
 
         this.commands = Property.ofValue(finalCommands);

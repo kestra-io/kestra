@@ -57,6 +57,9 @@ public class TaskLogLineMatcher {
 
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
 
+    @jakarta.inject.Inject
+    private OtlpSpanForwarder otlpSpanForwarder;
+
     /**
      * Attempts to match and extract structured data from a given log line.
      * <p>
@@ -70,18 +73,31 @@ public class TaskLogLineMatcher {
      * @return an {@link Optional} containing the {@link TaskLogMatch} if a match was found,
      *         otherwise {@link Optional#empty()}
      */
-    public Optional<TaskLogMatch> matches(String logLine, Logger logger, RunContext runContext, Instant instant) throws IOException {
-        Optional<String> matches = matches(logLine);
+    public Optional<TaskLogMatch> matches(String line, Logger logger, RunContext runContext, Instant customInstant) {
+        return matches(line, logger, runContext, customInstant, false);
+    }
+
+    public Optional<TaskLogMatch> matches(String line, Logger logger, RunContext runContext, Instant customInstant, boolean forwardTraces) {
+        Optional<String> matches = matches(line);
         if (matches.isEmpty()) {
             return Optional.empty();
         }
 
-        TaskLogMatch match = MAPPER.readValue(matches.get(), TaskLogLineMatcher.TaskLogMatch.class);
-
-        return Optional.of(handle(logger, runContext, instant, match, matches.get()));
+        try {
+            TaskLogMatch match = MAPPER.readValue(matches.get(), TaskLogLineMatcher.TaskLogMatch.class);
+            return Optional.of(handle(logger, runContext, customInstant, match, matches.get(), forwardTraces));
+        } catch (JsonProcessingException e) {
+            try {
+                OtlpRecord otlpRecord = MAPPER.readValue(matches.get(), OtlpRecord.class);
+                processOtlp(otlpRecord, logger, runContext, customInstant, forwardTraces);
+                return Optional.of(new TaskLogMatch(null, null, null, null, otlpRecord));
+            } catch (JsonProcessingException ex) {
+                return Optional.empty();
+            }
+        }
     }
 
-    protected TaskLogMatch handle(Logger logger, RunContext runContext, Instant instant, TaskLogMatch match, String data) {
+    protected TaskLogMatch handle(Logger logger, RunContext runContext, Instant instant, TaskLogMatch match, String data, boolean forwardTraces) {
 
         if (match.metrics() != null) {
             match.metrics().forEach(runContext::metric);
@@ -114,7 +130,7 @@ public class TaskLogLineMatcher {
         }
 
         if (match.otlp() != null && !match.otlp().isEmpty()) {
-            handleOtlp(logger, runContext, instant, match.otlp(), data);
+            processOtlp(match.otlp(), logger, runContext, instant, forwardTraces);
         }
 
         return match;
@@ -136,10 +152,14 @@ public class TaskLogLineMatcher {
      * @param instant the fallback timestamp for log records without a {@code timeUnixNano}
      * @return every successfully parsed OTLP record, in stream order
      */
-    public List<OtlpRecord> parseOtlp(InputStream inputStream, Logger logger, RunContext runContext, Instant instant) throws IOException {
+    public List<OtlpRecord> parseOtlp(InputStream in, Logger logger, RunContext runContext, Instant customInstant) throws IOException {
+        return parseOtlp(in, logger, runContext, customInstant, false);
+    }
+
+    public List<OtlpRecord> parseOtlp(InputStream in, Logger logger, RunContext runContext, Instant customInstant, boolean forwardTraces) throws IOException {
         List<OtlpRecord> records = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -159,7 +179,7 @@ public class TaskLogLineMatcher {
                     continue;
                 }
 
-                handleOtlp(logger, runContext, instant, record, line);
+                processOtlp(record, logger, runContext, customInstant, forwardTraces);
                 records.add(record);
             }
         }
@@ -186,20 +206,28 @@ public class TaskLogLineMatcher {
      * Forwards the logs and metrics of an OTLP record to the {@link RunContext}; traces are left
      * untouched as they are only exposed to the caller for now.
      */
-    protected void handleOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data) {
+    private void processOtlp(OtlpRecord record, Logger logger, RunContext runContext, Instant customInstant, boolean forwardTraces) {
         ListUtils.emptyOnNull(record.resourceLogs()).stream()
             .flatMap(resourceLogs -> ListUtils.emptyOnNull(resourceLogs.scopeLogs()).stream())
             .flatMap(scopeLogs -> ListUtils.emptyOnNull(scopeLogs.logRecords()).stream())
             .forEach(logRecord ->
             {
                 try {
-                    runContext
+                    LoggingEventBuilder builder = runContext
                         .logger()
                         .atLevel(otlpSeverityToLevel(logRecord))
-                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, toInstant(logRecord.timeUnixNano(), instant))
-                        .log(logRecord.body() != null ? logRecord.body().asText() : null);
+                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, toInstant(logRecord.timeUnixNano(), customInstant));
+
+                    if (logRecord.traceId() != null && !logRecord.traceId().isBlank()) {
+                        builder = builder.addKeyValue("traceId", logRecord.traceId());
+                    }
+                    if (logRecord.spanId() != null && !logRecord.spanId().isBlank()) {
+                        builder = builder.addKeyValue("spanId", logRecord.spanId());
+                    }
+
+                    builder.log(logRecord.body() != null ? logRecord.body().asText() : null);
                 } catch (Exception e) {
-                    logger.warn("Invalid OTLP log '{}'", data, e);
+                    logger.warn("Invalid OTLP log", e);
                 }
             });
 
@@ -209,11 +237,15 @@ public class TaskLogLineMatcher {
             .forEach(metric ->
             {
                 try {
-                    toKestraMetrics(metric, instant).forEach(runContext::metric);
+                    toKestraMetrics(metric, customInstant).forEach(runContext::metric);
                 } catch (Exception e) {
-                    logger.warn("Invalid OTLP metric '{}'", data, e);
+                    logger.warn("Invalid OTLP metric", e);
                 }
             });
+
+        if (forwardTraces) {
+            otlpSpanForwarder.forward(record.resourceSpans(), runContext, logger);
+        }
     }
 
     /**
@@ -294,9 +326,11 @@ public class TaskLogLineMatcher {
 
             String[] tags = otlpAttributesToTags(dataPoint.attributes());
             Instant timestamp = toInstant(dataPoint.timeUnixNano(), instant);
-            entries.add(isDeltaSum
-                ? Counter.of(metric.name(), description, value, timestamp, tags)
-                : Gauge.of(metric.name(), description, value, timestamp, tags));
+            entries.add(
+                isDeltaSum
+                    ? Counter.of(metric.name(), description, value, timestamp, tags)
+                    : Gauge.of(metric.name(), description, value, timestamp, tags)
+            );
         }
 
         return entries;
@@ -334,7 +368,7 @@ public class TaskLogLineMatcher {
      * @param logs additional log lines derived from the matched line, if any
      * @param assets assets emitted through the matched line, if any
      * @param otlp an OpenTelemetry record captured from the matched line, if any (the key spelling
-     *             follows the kotlp {@code ::{"otlp":...}::} framing)
+     *        follows the kotlp {@code ::{"otlp":...}::} framing)
      */
     public record TaskLogMatch(
         Map<String, Object> outputs,

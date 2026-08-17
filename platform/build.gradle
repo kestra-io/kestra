@@ -126,7 +126,7 @@ dependencies {
         // rather than winning by Gradle's highest-version conflict resolution. The binary's OTLP
         // envelope key has to match what TaskLogLineMatcher parses, and a mismatch emits valid
         // output that Kestra silently ingests none of — so the version ships only when bumped here.
-        api 'io.kestra:kotlp:0.1.2!!'
+        api 'io.kestra:kotlp:0.1.3!!'
         api "org.xhtmlrenderer:flying-saucer-core:$flyingSaucerVersion"
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.5'

@@ -526,9 +526,10 @@
         "openInDashboardEditor": "在仪表板编辑器中打开"
       },
       "missingPlugins": {
-        "title": "缺少 plugin",
-        "description": "此 blueprint 使用了此实例上未安装的 plugin 的 task：{plugins}。请安装它们以使用此 blueprint。",
-        "card": "需要此实例上未安装的 plugin：{plugins}",
+        "title": "不可用的 task",
+        "description": "此 blueprint 使用了此实例上不可用的 task 类型：",
+        "installHint": "请安装缺少的 plugin 以使用此 blueprint：{plugins}。",
+        "card": "使用了此实例上不可用的 task 类型：{tasks}",
         "install": "安装 plugin"
       }
     },

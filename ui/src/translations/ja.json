@@ -526,9 +526,10 @@
         "openInDashboardEditor": "ダッシュボードエディターで開く"
       },
       "missingPlugins": {
-        "title": "不足しているplugin",
-        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
-        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "title": "利用できないtask",
+        "description": "このblueprintは、このインスタンスで利用できないtaskタイプを使用しています:",
+        "installHint": "このblueprintを使用するには、不足しているpluginをインストールしてください: {plugins}。",
+        "card": "このインスタンスで利用できないtaskタイプを使用しています: {tasks}",
         "install": "pluginをインストール"
       }
     },

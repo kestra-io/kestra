@@ -26,16 +26,24 @@
             </div>
         </section>
 
-        <section v-if="missingPlugins.length" class="block">
+        <section v-if="missingTasks.length" class="block">
             <KsAlert
                 type="warning"
                 :closable="false"
                 :title="$t('blueprints.missingPlugins.title')"
             >
                 <p class="missing-description">
-                    {{ $t("blueprints.missingPlugins.description", {plugins: missingPlugins.join(", ")}) }}
+                    {{ $t("blueprints.missingPlugins.description") }}
                 </p>
-                <slot name="missing-plugins-action" :missingPlugins="missingPlugins" />
+                <p class="missing-types">
+                    <code v-for="task in missingTasks" :key="task">{{ task }}</code>
+                </p>
+                <template v-if="uninstalledPlugins.length">
+                    <p class="missing-description">
+                        {{ $t("blueprints.missingPlugins.installHint", {plugins: uninstalledPlugins.join(", ")}) }}
+                    </p>
+                    <slot name="missing-plugins-action" :uninstalledPlugins="uninstalledPlugins" />
+                </template>
             </KsAlert>
         </section>
 
@@ -100,14 +108,14 @@
 
     const taskName = (cls: string) => stringUtils.afterLastDot(cls)
 
-    const {missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {missingTaskTypes, uninstalledPluginNames} = useBlueprintPlugins()
 
     const missingTasks = computed(() =>
         missingTaskTypes(props.blueprint?.includedTasks),
     )
 
-    const missingPlugins = computed(() =>
-        missingPluginNames(props.blueprint?.includedTasks),
+    const uninstalledPlugins = computed(() =>
+        uninstalledPluginNames(props.blueprint?.includedTasks),
     )
 </script>
 
@@ -182,6 +190,26 @@
 
         .missing-description {
             margin: 0;
+        }
+
+        .missing-types {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--ks-spacing-1);
+            margin: var(--ks-spacing-2) 0 0;
+
+            code {
+                padding: 0 var(--ks-spacing-1);
+                border-radius: var(--ks-radius-xs);
+                background: var(--ks-bg-tag);
+                font-family: var(--ks-font-family-mono);
+                overflow-wrap: anywhere;
+            }
+        }
+
+        .missing-types + .missing-description {
+            margin-top: var(--ks-spacing-2);
         }
 
         .pill {

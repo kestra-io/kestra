@@ -434,9 +434,6 @@ public class DefaultRunContext extends RunContext {
                 return logFileURI;
             } catch (Exception e) {
                 logger().warn("Failed to upload log file to storage", e);
-                if (Thread.currentThread().isInterrupted()) {
-                    Thread.currentThread().interrupt();
-                }
                 if (isInterrupted(e)) {
                     Thread.currentThread().interrupt();
                 }

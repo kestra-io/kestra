@@ -29,6 +29,9 @@
         :showHeader="false"
         class="nodes"
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
+        @row-dblclick="(row: { data: Node }) => emits('open', row.data)"
+        @cell-mouse-enter="(row: { data: Node }) => emits('hover', row.data.id)"
+        @cell-mouse-leave="() => emits('hover', undefined)"
         :rowClassName="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
     >
         <KsTableColumn>
@@ -36,10 +39,7 @@
                 <section id="row">
                     <section id="left">
                         <div id="link">
-                            <Link
-                                :node="row.data"
-                                :subtype="row.data.metadata.subtype"
-                            />
+                            <code class="name">{{ row.data.flow }}</code>
                         </div>
 
                         <p class="description">
@@ -54,13 +54,8 @@
                             size="small"
                         />
                         <RouterLink
-                            v-if="[FLOW, NAMESPACE, ASSET].includes(row.data.metadata.subtype)"
-                            :to="{
-                                name: row.data.metadata.subtype === ASSET ? 'assets/update' : 'flows/update',
-                                params: row.data.metadata.subtype === ASSET
-                                    ? {namespace: row.data.namespace, assetId: row.data.flow}
-                                    : {namespace: row.data.namespace, id: row.data.flow}
-                            }"
+                            :to="row.to"
+                            :title="$t('open')"
                         >
                             <KsIcon size="sm">
                                 <OpenInNew />
@@ -76,18 +71,31 @@
 <script setup lang="ts">
     import {watch, nextTick, ref, computed} from "vue"
 
-    import Link from "./Link.vue"
     import {KsExecutionStatus} from "@kestra-io/design-system"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
+    import {NODE, FLOW, EXECUTION, ASSET} from "../utils/types"
     import type {Types, Node, Element} from "../utils/types"
 
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
 
-    const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>()
+    /** Where a row's open arrow goes; executions carry their own execution id. */
+    const openRoute = (node: Node) => {
+        const {subtype} = node.metadata
+        if (subtype === ASSET) return {name: "assets/update", params: {assetId: node.flow}}
+        if (subtype === EXECUTION && "id" in node.metadata && node.metadata.id) {
+            return {name: "executions/update", params: {namespace: node.namespace, flowId: node.flow, id: node.metadata.id}}
+        }
+        return {name: "flows/update", params: {namespace: node.namespace, id: node.flow}}
+    }
+
+    const emits = defineEmits<{
+        (e: "select", id: Node["id"]): void;
+        (e: "hover", id?: Node["id"]): void;
+        (e: "open", node: Node): void;
+    }>()
     const props = defineProps<{
         elements: Element[];
         highlightShown?: (nodeIDs: string[]) => void;
@@ -169,11 +177,20 @@
         const IDs = filtered.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []))
         props.highlightShown?.(IDs)
 
-        return filtered
+        // The open route is resolved here rather than called from the template: Element Plus
+        // renders this column's slot from its own instance, where a setup binding is not in scope.
+        return filtered.map((element) => ({...element, to: openRoute(element.data)}))
     })
 </script>
 
 <style scoped lang="scss">
+.name {
+    display: block;
+    max-width: 100%;
+    font-size: var(--ks-font-size-sm);
+    color: var(--ks-text-primary);
+}
+
 section#filtering {
     position: sticky;
     top: 0;

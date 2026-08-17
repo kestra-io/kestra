@@ -30,6 +30,18 @@ type Asset = {
     updated?: string;
     /** How the asset is materialised, e.g. `seed`, `view` or `table`. */
     kind?: string;
+    /** Freshness against the producing flow's schedule: fresh, stale, failed, never, unknown. */
+    status?: string;
+    /** Most recent runs that wrote the asset, newest first. */
+    runs?: AssetRun[];
+};
+
+export type AssetRun = {
+    executionId?: string;
+    namespace?: string;
+    flowId?: string;
+    created?: string;
+    state?: string;
 };
 
 export type Node = {

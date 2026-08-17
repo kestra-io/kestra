@@ -79,9 +79,24 @@ function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string
 export type LayoutMode = "force" | "dag"
 
 /** Card footprint in graph coordinates; must stay inside the layout row/column gaps. */
-const CARD_SIZE = [180, 54]
+const CARD_SIZE = [160, 54]
 const HEADER_OFFSET = 64
 const HEADER_ID_PREFIX = "dag-column-header-"
+const PADDING_ID_PREFIX = "dag-padding-"
+
+// Freshness vocabulary, using the status tokens the rest of the product already
+// uses for execution state, always paired with a glyph so colour is never alone.
+const STATUS = {
+    fresh:   {token: "--ks-status-success", icon: "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"},
+    stale:   {token: "--ks-status-warning", icon: "M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z"},
+    failed:  {token: "--ks-status-error",   icon: "M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"},
+    never:   {token: "--ks-status-neutral", icon: "M19,13H5V11H19V13Z"},
+    unknown: {token: "--ks-status-neutral", icon: "M15.07,11.25L14.17,12.17C13.45,12.89 13,13.5 13,15H11V14.5C11,13.39 11.45,12.39 12.17,11.67L13.41,10.41C13.78,10.05 14,9.55 14,9C14,7.89 13.1,7 12,7A2,2 0 0,0 10,9H8A4,4 0 0,1 12,5A4,4 0 0,1 16,9C16,9.88 15.64,10.67 15.07,11.25M13,19H11V17H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"},
+} as const
+
+type StatusKey = keyof typeof STATUS
+
+const statusOf = (value?: string): StatusKey => (value && value in STATUS ? value as StatusKey : "unknown")
 
 // Material Design glyphs marking how an asset is materialised. Same `image://`
 // trick as the asset symbol above: ECharts draws labels on a canvas and cannot
@@ -93,10 +108,8 @@ const KIND_ICONS: Record<string, string> = {
     flow:  "M4,2A2,2 0 0,0 2,4V8A2,2 0 0,0 4,10H8A2,2 0 0,0 10,8V7H14V8A2,2 0 0,0 16,10H20A2,2 0 0,0 22,8V4A2,2 0 0,0 20,2H16A2,2 0 0,0 14,4V5H10V4A2,2 0 0,0 8,2H4M4,14A2,2 0 0,0 2,16V20A2,2 0 0,0 4,22H8A2,2 0 0,0 10,20V16A2,2 0 0,0 8,14H4M16,14A2,2 0 0,0 14,16V20A2,2 0 0,0 16,22H20A2,2 0 0,0 22,20V16A2,2 0 0,0 20,14H16Z",
 }
 
-/** Inline SVG data URI for a kind glyph, tinted to the given colour. */
-function kindIcon(kind: string, color: string): string | undefined {
-    const path = KIND_ICONS[kind]
-    if (!path) return undefined
+/** Inline SVG data URI for a Material path, tinted to the given colour. */
+function svgSymbol(path: string, color: string): string {
     const svg =
         "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
         `<path fill="${color}" d="${path}"/>` +
@@ -104,6 +117,12 @@ function kindIcon(kind: string, color: string): string | undefined {
     // Plain data URI, not the `image://` form: that prefix is symbol syntax, and a rich
     // text fragment takes the URL directly.
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+/** Glyph for how an asset is materialised, when the kind is one we have an icon for. */
+function kindIcon(kind: string, color: string): string | undefined {
+    const path = KIND_ICONS[kind]
+    return path ? svgSymbol(path, color) : undefined
 }
 
 /** Trailing segment of a dotted asset id (`db.schema.stg_customers` → `stg_customers`). */
@@ -221,8 +240,24 @@ export function useDependencies(
     const chartEdges = ref<KsGraphEdge[] | null>(null)
     /** Positions read back from ECharts once the force simulation has settled. */
     const capturedPositions = ref(new Map<string, {x: number; y: number}>())
+    /**
+     * The camera, kept in step with the user's own panning and zooming through the
+     * graphRoam event. Only focusNode and fitGraph write it deliberately; nothing else
+     * may re-assert it, or a style-only update would yank the viewport back.
+     */
+    const viewState = ref<{zoom: number; center?: [number, number]}>({zoom: 1})
+
     /** KsGraph's layout prop: "force" only for the very first render, explicit coordinates after. */
     const graphLayout = ref<"force" | "none">("force")
+    /**
+     * How far ECharts has scaled the layout to fit the pane. Cards are sized in screen
+     * pixels, so without this they keep their size while the gaps around them shrink,
+     * which is why a narrower pane made them look fatter and eventually collide.
+     */
+    const fitScale = ref(1)
+
+    /** Set when a node is double-clicked, so the view can open that node's own page. */
+    const openedNodeID = ref<Node["id"] | undefined>(undefined)
 
     /** IDs of nodes that belong to the current table-filter result (null = no filter). */
     const shownNodeIDs = ref<Set<string> | null>(null)
@@ -246,10 +281,15 @@ export function useDependencies(
                 // Ignoring what feeds it keeps it in the first column instead of the middle.
                 .filter((edge) => !flows.has(edge.target)),
                 {
-                columnGap: CARD_SIZE[0] + 70,
-                rowGap:    CARD_SIZE[1] + 46,
-                // Flows head their column: they orchestrate the assets beside them.
-                priority:  (id) => (flows.has(id) ? -1 : 0),
+                // ECharts fits the layout extent to the canvas while symbols keep their pixel
+                // size, and the wider axis sets that scale. Columns are the binding dimension
+                // here, so widening them shrinks everything and crowds the rows; the row pitch
+                // is free to be generous.
+                columnGap: CARD_SIZE[0] + 110,
+                rowGap:    CARD_SIZE[1] * 2.2,
+                // A flow triggers the graph rather than sitting inside it, so it gets
+                // the leading column to itself.
+                ownColumn: (id) => flows.has(id),
             },
         )
     })
@@ -368,15 +408,25 @@ export function useDependencies(
                         : node.namespace
                     const updated = (node.metadata as {updated?: string}).updated
                     const glyph = kindIcon(isAsset ? String(kind) : "flow", cssVar("--ks-text-secondary"))
-                    const meta = [
+                    const status = statusOf(isAsset ? (node.metadata as {status?: string}).status : undefined)
+                    const statusColor = cssVar(STATUS[status].token)
+                    const statusGlyph = isAsset ? svgSymbol(STATUS[status].icon, statusColor) : undefined
+                    // Kind is spelled out rather than left to the glyph: an icon only reads
+                    // to someone who already knows the vocabulary.
+                    // One meta row keeps the card long and thin; the second row is what made
+                    // it tall enough to crowd its neighbours.
+                    const kindLine = [
                         glyph ? "{glyph| }" : "",
-                        kind ? `{badge|${kind}}` : "",
-                        updated ? `{age|${moment(updated).fromNow()}}` : "",
+                        kind ? `{kindLabel|${String(kind).toUpperCase()}}` : "",
+                        isAsset ? "{status| }" : "",
+                        isAsset ? `{statusLabel|${t(`dependency.dag.status.${status}`)}}` : "",
+                        isAsset && updated ? `{age|${moment(updated).fromNow(true)}}` : "",
                     ].filter(Boolean).join(" ")
                     const cardItemStyle = {
+                        // Status owns the border in DAG view: it is the first thing to read.
                         color:       cssVar("--ks-bg-surface"),
-                        borderColor,
-                        borderWidth: isSelected ? 2 : 1,
+                        borderColor: isAsset && !isDimmed && !isFaded ? statusColor : borderColor,
+                        borderWidth: isSelected ? 3 : 2,
                         opacity,
                     }
 
@@ -384,31 +434,39 @@ export function useDependencies(
                         id:         node.id,
                         name:       node.id,
                         symbol:     "roundRect",
-                        symbolSize: CARD_SIZE,
+                        symbolSize: CARD_SIZE.map((side) => side * fitScale.value),
                         itemStyle:  cardItemStyle,
                         emphasis:   {itemStyle: {...cardItemStyle, borderColor: cssVar(NODE_BORDER.hovered), opacity: 1}},
                         blur:       {itemStyle: cardItemStyle},
                         label: {
                             show:            true,
                             position:        "inside",
-                            formatter:       [`{name|${shortName(node.flow)}}`, meta].filter(Boolean).join("\n"),
+                            formatter:       [
+                                `{name|${shortName(node.flow)}}`,
+                                kindLine,
+                            ].filter(Boolean).join("\n"),
                             textBorderWidth: 0,
                             rich: {
                                 name: {
-                                    fontSize:   13,
+                                    fontSize:   13 * fitScale.value,
                                     fontWeight: "bold",
                                     color:      labelColor,
-                                    padding:    [0, 0, 6, 0],
+                                    padding:    [0, 0, 5, 0],
+                                    // Long asset names are truncated rather than allowed to
+                                    // spill over the card and into the next column.
+                                    width:      (CARD_SIZE[0] - 24) * fitScale.value,
+                                    overflow:   "truncate",
                                 },
-                                badge: {
-                                    fontSize:        10,
+                                kindLabel: {
+                                    fontSize:        9 * fitScale.value,
+                                    fontWeight:      "bold",
                                     color:           cssVar("--ks-text-secondary"),
                                     backgroundColor: cssVar("--ks-bg-tag"),
                                     borderRadius:    3,
-                                    padding:         [3, 6],
+                                    padding:         [3, 5],
                                 },
                                 age: {
-                                    fontSize: 10,
+                                    fontSize: 10 * fitScale.value,
                                     color:    cssVar("--ks-text-secondary"),
                                     padding:  [3, 0],
                                 },
@@ -416,6 +474,17 @@ export function useDependencies(
                                     height:          12,
                                     width:           12,
                                     backgroundColor: glyph ? {image: glyph} : undefined,
+                                },
+                                status: {
+                                    height:          12,
+                                    width:           12,
+                                    backgroundColor: statusGlyph ? {image: statusGlyph} : undefined,
+                                },
+                                statusLabel: {
+                                    fontSize:   10 * fitScale.value,
+                                    fontWeight: "bold",
+                                    color:      statusColor,
+                                    padding:    [3, 0],
                                 },
                             },
                         },
@@ -438,7 +507,7 @@ export function useDependencies(
                             borderWidth: 2,
                             opacity:     1,
                         },
-                        label: {color: cssVar("--ks-text-primary")},
+                        label: {show: true, color: cssVar("--ks-text-primary")},
                     },
                     // Blur = same as base so selection colours survive when another node is hovered.
                     // Label uses full opacity so text doesn't dim when a neighbour is hovered.
@@ -446,8 +515,11 @@ export function useDependencies(
                         itemStyle: baseItemStyle,
                         label:     {color: cssVar("--ks-text-primary")},
                     },
+                    // Asset ids are long enough that a few dozen of them printed at once is a
+                    // pile, so the asset graph reveals them on hover. The flow, execution and
+                    // namespace graphs keep their always-on labels.
                     label: {
-                        show:            true,
+                        show:            subtype !== ASSET,
                         formatter:       node.flow,
                         position:        "bottom",
                         color:           labelColor,
@@ -457,8 +529,36 @@ export function useDependencies(
                 }
             })
 
-        return isDag.value ? [...nodes, ...columnHeaderNodes()] : nodes
+        return isDag.value ? [...nodes, ...columnHeaderNodes(), ...paddingNodes()] : nodes
     })
+
+    /**
+     * Invisible nodes just outside the graph's corners. ECharts fits the data extent
+     * to the canvas, so padding the extent is what puts breathing room around the
+     * layout; insetting the series box would do it too but would shrink the roam area.
+     */
+    const paddingNodes = (): KsGraphNode[] => {
+        const positions = [...dagLayout.value.positions.values()]
+        if (!positions.length) return []
+
+        const xs = positions.map((position) => position.x)
+        const ys = positions.map((position) => position.y)
+        const padX = CARD_SIZE[0] + 40
+        const padY = CARD_SIZE[1] * 2 + HEADER_OFFSET
+
+        return [
+            {x: Math.min(...xs) - padX, y: Math.min(...ys) - padY},
+            {x: Math.max(...xs) + padX, y: Math.max(...ys) + padY},
+        ].map((corner, index) => ({
+            id:         `${PADDING_ID_PREFIX}${index}`,
+            name:       `${PADDING_ID_PREFIX}${index}`,
+            ...corner,
+            symbolSize: 0,
+            silent:     true,
+            tooltip:    {show: false},
+            label:      {show: false},
+        }))
+    }
 
     /**
      * Label-only nodes sitting above each DAG column. They ride the graph's own
@@ -549,6 +649,14 @@ export function useDependencies(
 
     // ─── Selection ────────────────────────────────────────────────────────────
 
+    /** Mirrors a hover in the side table onto the canvas, and clears it when it leaves. */
+    const highlightNode = (id?: Node["id"]): void => {
+        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+        if (!chart) return
+        chart.dispatchAction({type: "downplay", seriesIndex: 0})
+        if (id) chart.dispatchAction({type: "highlight", seriesIndex: 0, name: id})
+    }
+
     const focusNode = (id: Node["id"]): void => {
         if (!id) return
         const pos = storedPositions.value.get(id)
@@ -561,15 +669,16 @@ export function useDependencies(
         // For ECharts graph series, `center` is in data coordinates.
         // Setting center=[pos.x, pos.y] places the selected node at canvas centre.
         // DAG cards are sized in pixels, so zooming past 1:1 only pushes them apart.
-        chart.setOption({series: [{type: "graph", zoom: isDag.value ? 1 : 1.8, center: [pos.x, pos.y]}]}, false)
+        viewState.value = {zoom: isDag.value ? 1 : 1.8, center: [pos.x, pos.y]}
+        applyView(chart)
     }
 
     // Trigger focus after all reactive updates (applyStylesToChart) have flushed.
     // Only fires after initial capture (storedPositions populated), so the initial
     // auto-selection on mount is handled by captureAndFocusWhenReady instead.
-    watch(selectedNodeID, (id) => {
-        if (id && storedPositions.value.size > 0) focusNode(id)
-    }, {flush: "post"})
+    // Selecting a node never moves the viewport: the canvas jumping under the cursor
+    // costs the user their bearings. Only the initial auto-selection centres the graph,
+    // from captureAndFocusWhenReady.
 
     /**
      * Selects a node by ID, updating the visual selection state reactively.
@@ -589,6 +698,40 @@ export function useDependencies(
      * and caches them in storedPositions so subsequent style-only updates can
      * use layout:"none" and avoid re-running the force simulation.
      */
+    /**
+     * Clearing the selection also re-frames the graph. The initial auto-selection zooms
+     * in on one node, so dropping the selection without re-fitting would leave the view
+     * stranded at that zoom.
+     */
+    const clearSelection = (): void => {
+        selectedNodeID.value = undefined
+        shownNodeIDs.value = null
+        fitGraph()
+    }
+
+    /** Clicking the canvas away from any node clears the selection, like the back button. */
+    const bindCanvasClicks = (): void => {
+        requestAnimationFrame(() => {
+            const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+            const zr = chart?.getZr?.()
+            if (!zr || zr.__ksDependenciesBound) return
+            zr.__ksDependenciesBound = true
+            zr.on("click", (event: {target?: unknown}) => {
+                // Deselect only: the viewport stays exactly where the user left it, and
+                // nothing changes but the node styling.
+                if (!event.target) selectedNodeID.value = undefined
+            })
+            chart?.on?.("graphRoam", () => {
+                const series = (chart.getOption?.() as Record<string, any> | undefined)?.series?.[0]
+                if (series?.zoom !== undefined) viewState.value = {zoom: series.zoom, center: series.center}
+            })
+            // Single click selects, double click opens: the same contract as the side table.
+            chart?.on?.("dblclick", (params: Record<string, any>) => {
+                if (params?.dataType === "node") openedNodeID.value = params.data?.id as string
+            })
+        })
+    }
+
     const capturePositions = (): void => {
         const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
         if (!chart) return
@@ -619,9 +762,18 @@ export function useDependencies(
      * instance, bypassing the frozen reactive props. Uses layout:"none" with
      * stored positions so the force simulation never re-runs.
      */
+    const applyView = (chart: Record<string, any>): void => {
+        chart.setOption({series: [{
+            type: "graph",
+            zoom: viewState.value.zoom,
+            ...(viewState.value.center ? {center: viewState.value.center} : {}),
+        }]}, false)
+    }
+
     const applyStylesToChart = (): void => {
         const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
         if (!chart) return
+        bindCanvasClicks()
         const positions    = storedPositions.value
         const nodesWithPos = graphNodes.value.map((n) => {
             const pos = positions.get(n.id)
@@ -638,6 +790,7 @@ export function useDependencies(
      * simulation can run.
      */
     const renderGraph = (): void => {
+        bindCanvasClicks()
         const positions = storedPositions.value
         chartNodes.value = graphNodes.value.map((node) => {
             const position = positions.get(node.id as string)
@@ -654,9 +807,12 @@ export function useDependencies(
     })
 
     // The two layouts occupy very different extents, so re-frame on every switch.
+    // The re-fit waits a frame rather than a tick: KsGraph's own prop-driven
+    // setOption lands after nextTick and would otherwise reset the zoom we just set,
+    // leaving DAG cards overlapping, since ECharts scales positions but not symbols.
     watch(layoutMode, () => {
         renderGraph()
-        nextTick(() => fitGraph())
+        requestAnimationFrame(() => fitGraph())
     }, {flush: "post"})
 
     // ─── Data loading ─────────────────────────────────────────────────────────
@@ -686,6 +842,7 @@ export function useDependencies(
                 requestAnimationFrame(poll)
                 return
             }
+            bindCanvasClicks()
             capturePositions()
             if (storedPositions.value.size > 0) {
                 const id = selectedNodeID.value
@@ -811,7 +968,20 @@ export function useDependencies(
         sse.value = undefined
     }
 
+    const onResize = (): void => {
+        requestAnimationFrame(() => {
+            // Resize first: until the canvas re-measures, it is only stretched by CSS and
+            // the nodes render distorted. Re-fitting afterwards uses the new dimensions.
+            const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+            chart?.resize?.()
+            if (isDag.value) fitGraph()
+        })
+    }
+
+    onMounted(() => window.addEventListener("resize", onResize))
+
     onBeforeUnmount(() => {
+        window.removeEventListener("resize", onResize)
         if (subtype === EXECUTION) closeSSE()
     })
 
@@ -830,17 +1000,28 @@ export function useDependencies(
         // beyond the extent and have to be added back before fitting.
         const spreadX = (Math.max(...xs) - Math.min(...xs)) + (isDag.value ? CARD_SIZE[0] : 0)
         const spreadY = (Math.max(...ys) - Math.min(...ys)) + (isDag.value ? CARD_SIZE[1] + HEADER_OFFSET : 0)
-        // Card symbols are sized in screen pixels while positions are data coordinates,
-        // so zooming out would close the gaps the layout just opened. DAG view stays at
-        // 1:1 and pans instead.
-        const zoom = isDag.value ? 1 : Math.min(
-            1,
-            (W - padding * 2) / (spreadX || 1),
-            (H - padding * 2) / (spreadY || 1),
-        )
+        // ECharts fits the data extent to the canvas, but card symbols keep their pixel
+        // size, so any fit below 1:1 slides fixed-size cards into each other. Counteract
+        // the fit so one data unit is one pixel: the layout's gaps then hold exactly as
+        // designed and a graph larger than the pane is panned rather than shrunk.
+        if (isDag.value) {
+            // Clamped: below this the label text stops being readable, and past 1 the
+            // cards would grow beyond their designed size on a very wide pane.
+            const measured = Math.min(1, Math.max(0.65, Math.min(W / (spreadX || 1), H / (spreadY || 1))))
+            if (Math.abs(measured - fitScale.value) > 0.02) fitScale.value = measured
+        }
+
+        const zoom = isDag.value
+            ? 1
+            : Math.min(
+                1,
+                (W - padding * 2) / (spreadX || 1),
+                (H - padding * 2) / (spreadY || 1),
+            )
         const cx = (Math.min(...xs) + Math.max(...xs)) / 2
         const cy = (Math.min(...ys) + Math.max(...ys)) / 2 - (isDag.value ? HEADER_OFFSET / 2 : 0)
-        chart.setOption({series: [{type: "graph", zoom, center: [cx, cy]}]}, false)
+        viewState.value = {zoom, center: [cx, cy]}
+        applyView(chart)
     }
 
     return {
@@ -860,6 +1041,10 @@ export function useDependencies(
         isRendering,
         selectedNodeID,
         selectNode,
+        /** Highlights a node from outside the canvas, e.g. hovering the side table. */
+        highlightNode,
+        /** Last node double-clicked on the canvas, for the view to navigate to. */
+        openedNodeID,
         /** Called from the KsGraph @node-click event. */
         handleNodeClick: (node: KsGraphNode) => {
             selectNode(node.id as string)
@@ -867,11 +1052,7 @@ export function useDependencies(
         handlers: {
             zoomIn:        () => graphRef.value?.zoomIn(),
             zoomOut:       () => graphRef.value?.zoomOut(),
-            clearSelection: () => {
-                selectedNodeID.value = undefined
-                shownNodeIDs.value   = null
-                fitGraph()
-            },
+            clearSelection,
             fit: fitGraph,
             highlightShown: (nodeIDs: string[]) => {
                 const allNodeCount = elements.value.data.filter((el) => el.data.type === NODE).length

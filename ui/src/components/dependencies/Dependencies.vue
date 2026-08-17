@@ -15,69 +15,82 @@
         <Empty v-else-if="!getElements().length" :type="`dependencies.${SUBTYPE}`" />
         <KsSplitter v-else class="dependencies">
             <KsSplitterPanel id="graph" v-bind="PANEL">
-                <KsGraph
-                    ref="graphRef"
-                    class="graph-canvas"
-                    :nodes="chartNodes"
-                    :edges="chartEdges"
-                    :loading="isRendering"
-                    :layout="graphLayout"
-                    :options="{series: [{emphasis: {focus: 'none'}}]}"
-                    @node-click="handleNodeClick"
-                />
+                <div class="graph-pane">
+                    <KsGraph
+                        ref="graphRef"
+                        class="graph-canvas"
+                        :nodes="chartNodes"
+                        :edges="chartEdges"
+                        :loading="isRendering"
+                        :layout="graphLayout"
+                        :options="graphOptions"
+                        @node-click="handleNodeClick"
+                    />
 
-                <KsSegmented
-                    v-if="dagView"
-                    v-model="layoutMode"
-                    class="layout-toggle"
-                    size="small"
-                    :options="layoutOptions"
-                />
+                    <div v-if="dagView" class="dag-bar">
+                        <KsSegmented
+                            v-model="layoutMode"
+                            class="layout-toggle"
+                            size="small"
+                            :options="layoutOptions"
+                        />
+                        <KsText v-if="summary" size="small" class="layout-summary">
+                            {{ summary }}
+                        </KsText>
+                    </div>
 
-                <div class="controls">
-                    <KsButton
-                        size="small"
-                        :title="$t('dependency.controls.zoom_in')"
-                        @click="handlers.zoomIn"
-                    >
-                        <Plus />
-                    </KsButton>
-                    <KsButton
-                        size="small"
-                        :title="$t('dependency.controls.zoom_out')"
-                        @click="handlers.zoomOut"
-                    >
-                        <Minus />
-                    </KsButton>
-                    <KsButton
-                        size="small"
-                        :title="$t('dependency.controls.clear_selection')"
-                        @click="handlers.clearSelection"
-                    >
-                        <SelectionRemove />
-                    </KsButton>
-                    <KsButton
-                        size="small"
-                        :title="$t('dependency.controls.fit_view')"
-                        @click="handlers.fit"
-                    >
-                        <FitToScreenOutline />
-                    </KsButton>
-                    <KsDropdown>
-                        <KsButton size="small" :title="$t('export')">
-                            <Download />
+                    <div v-if="dagView && layoutMode === 'dag'" class="dag-legend">
+                        <span v-for="state in LEGEND" :key="state" class="legend-item">
+                            <i :class="`legend-swatch status-${state}`" />
+                            <KsText size="small">{{ $t(`dependency.dag.status.${state}`) }}</KsText>
+                        </span>
+                    </div>
+
+                    <div class="controls">
+                        <KsButton
+                            size="small"
+                            :title="$t('dependency.controls.zoom_in')"
+                            @click="handlers.zoomIn"
+                        >
+                            <Plus />
                         </KsButton>
-                        <template #dropdown>
-                            <KsDropdownMenu>
-                                <KsDropdownItem @click="handlers.exportAsImage('jpeg', selectedNodeID)">
-                                    {{ $t("export_as", {format: "JPEG"}) }}
-                                </KsDropdownItem>
-                                <KsDropdownItem @click="handlers.exportAsImage('png', selectedNodeID)">
-                                    {{ $t("export_as", {format: "PNG"}) }}
-                                </KsDropdownItem>
-                            </KsDropdownMenu>
-                        </template>
-                    </KsDropdown>
+                        <KsButton
+                            size="small"
+                            :title="$t('dependency.controls.zoom_out')"
+                            @click="handlers.zoomOut"
+                        >
+                            <Minus />
+                        </KsButton>
+                        <KsButton
+                            size="small"
+                            :title="$t('dependency.controls.clear_selection')"
+                            @click="handlers.clearSelection"
+                        >
+                            <SelectionRemove />
+                        </KsButton>
+                        <KsButton
+                            size="small"
+                            :title="$t('dependency.controls.fit_view')"
+                            @click="handlers.fit"
+                        >
+                            <FitToScreenOutline />
+                        </KsButton>
+                        <KsDropdown>
+                            <KsButton size="small" :title="$t('export')">
+                                <Download />
+                            </KsButton>
+                            <template #dropdown>
+                                <KsDropdownMenu>
+                                    <KsDropdownItem @click="handlers.exportAsImage('jpeg', selectedNodeID)">
+                                        {{ $t("export_as", {format: "JPEG"}) }}
+                                    </KsDropdownItem>
+                                    <KsDropdownItem @click="handlers.exportAsImage('png', selectedNodeID)">
+                                        {{ $t("export_as", {format: "PNG"}) }}
+                                    </KsDropdownItem>
+                                </KsDropdownMenu>
+                            </template>
+                        </KsDropdown>
+                    </div>
                 </div>
             </KsSplitterPanel>
 
@@ -95,6 +108,8 @@
                     :selected="selectedNodeID"
                     :subtype="SUBTYPE"
                     @select="selectNode"
+                    @hover="highlightNode"
+                    @open="openNode"
                 />
             </KsSplitterPanel>
         </KsSplitter>
@@ -115,6 +130,7 @@
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {useI18n} from "vue-i18n"
+    import moment from "moment"
 
     import {useDependencies} from "./composables/useDependencies"
     import type {LayoutMode} from "./composables/useDependencies"
@@ -125,7 +141,7 @@
 
     const PANEL = {size: "70%", min: "30%", max: "80%"}
 
-    import {useRoute} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     const route = useRoute()
 
@@ -147,6 +163,32 @@
     }>()
 
     const layoutMode = ref<LayoutMode>("force")
+
+    const LEGEND = ["fresh", "stale", "failed", "never", "unknown"] as const
+
+    /**
+     * DAG view insets the series box so the graph never touches the toolbar, the
+     * legend or the pane edges, and clamps roam so cards cannot be zoomed into a
+     * pile: ECharts scales positions but not symbol size.
+     */
+    const graphOptions = computed(() => ({
+        series: [{
+            // Both layouts share this canvas, so they share its fixes. The series box is
+            // pinned to the whole canvas because ECharts binds roam to that box and would
+            // otherwise size it to the content, leaving a dead border where dragging does
+            // nothing. DAG margins come from spacer nodes padding the data extent instead.
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            // Only DAG needs a floor: its cards are sized in pixels, so zooming out piles
+            // them up. A large force graph may legitimately need to zoom out further.
+            ...(layoutMode.value === "dag" ? {scaleLimit: {min: 0.4, max: 2.5}} : {}),
+            // Tree view dims everything but the hovered node and its neighbours, which is
+            // what makes a dense force graph readable; DAG columns already read on their own.
+            emphasis: {focus: layoutMode.value === "dag" ? "none" : "adjacency"},
+        }],
+    }))
 
     const layoutOptions = computed(() => [
         {label: t("dependency.dag.force"), value: "force"},
@@ -176,9 +218,74 @@
         isRendering,
         selectedNodeID,
         selectNode,
+        highlightNode,
+        openedNodeID,
         handleNodeClick,
         handlers,
     } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, layoutMode)
+
+    const router = useRouter()
+
+    /** Double click opens the node's own page; single click only selects. */
+    const openNode = (node: Node): void => {
+        const {subtype} = node.metadata
+        const tenant = route.params.tenant
+
+        if (subtype === ASSET) {
+            router.push({name: "assets/update", params: {tenant, assetId: node.flow}})
+            return
+        }
+
+        // An execution node belongs to an execution, not to the flow that produced it.
+        if (subtype === EXECUTION && "id" in node.metadata && node.metadata.id) {
+            router.push({
+                name: "executions/update",
+                params: {tenant, namespace: node.namespace, flowId: node.flow, id: node.metadata.id},
+            })
+            return
+        }
+
+        router.push({name: "flows/update", params: {tenant, namespace: node.namespace, id: node.flow}})
+    }
+
+    watch(openedNodeID, (id) => {
+        if (!id) return
+        const element = getElements().find((el): el is {data: Node} => el.data.type === "NODE" && el.data.id === id)
+        if (element) openNode(element.data)
+    })
+
+    /** One line answering "is anything wrong here" before the user reads a single node. */
+    const summary = computed(() => {
+        if (!props.dagView) return ""
+
+        const assets = getElements()
+            .filter((el): el is {data: Node} => el.data.type === "NODE" && el.data.metadata.subtype === ASSET)
+            .map(({data}) => data.metadata as {status?: string; updated?: string})
+
+        if (!assets.length) return ""
+
+        const stale = assets.filter((asset) => asset.status === "stale").length
+        const failed = assets.filter((asset) => asset.status === "failed").length
+        const latest = assets.reduce<string | undefined>(
+            (newest, asset) => (asset.updated && (!newest || asset.updated > newest) ? asset.updated : newest),
+            undefined,
+        )
+
+        const fresh = assets.filter((asset) => asset.status === "fresh").length
+        const never = assets.filter((asset) => asset.status === "never").length
+        const untracked = assets.filter((asset) => !asset.status || asset.status === "unknown").length
+
+        const parts = []
+        if (failed) parts.push(t("dependency.dag.summary.failed", {n: failed}))
+        if (stale) parts.push(t("dependency.dag.summary.issues", {n: stale}))
+        if (never) parts.push(t("dependency.dag.summary.never", {n: never}))
+        // "All" has to mean all of them, not just all of the ones we could judge.
+        if (!parts.length && fresh === assets.length) parts.push(t("dependency.dag.summary.fresh", {n: fresh}))
+        if (untracked) parts.push(t("dependency.dag.summary.unknown", {n: untracked}))
+        if (latest) parts.push(t("dependency.dag.summary.last_run", {ago: moment(latest).fromNow()}))
+
+        return parts.join(" · ")
+    })
 
     /** DAG view swaps the table for the selected node's details, keeping the canvas in place. */
     const selectedNode = computed(() => {
@@ -294,9 +401,15 @@
     min-height: 0;
 
     & div#graph {
-        position: relative; // for absolute positioning of controls
+        // The splitter panel itself stays static, so overlays anchor to .graph-pane.
+
+        & .graph-pane {
+            position: relative; // anchors the layout bar and the zoom controls
+            height: 100%;
+        }
 
         & .graph-canvas {
+            width: 100%;
             height: 100%;
             overflow: hidden;
             background-color: transparent;
@@ -309,10 +422,72 @@
             }
         }
 
-        & .layout-toggle {
+        & .dag-bar {
             position: absolute;
             top: var(--ks-spacing-2);
             left: var(--ks-spacing-2);
+            right: var(--ks-spacing-2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-3);
+            pointer-events: none; // the canvas keeps its own drag and zoom
+        }
+
+        & .layout-toggle {
+            pointer-events: auto;
+        }
+
+        & .layout-summary {
+            color: var(--ks-text-secondary);
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        & .dag-legend {
+            position: absolute;
+            bottom: var(--ks-spacing-3);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--ks-spacing-1) var(--ks-spacing-4);
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            border: 1px solid var(--ks-border-subtle);
+            border-radius: var(--ks-radius-base);
+            background: var(--ks-bg-surface);
+        }
+
+        & .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+        }
+
+        & .legend-swatch {
+            width: 0.625rem;
+            height: 0.625rem;
+            border-radius: var(--ks-radius-xs);
+        }
+
+        & .legend-swatch.status-fresh {
+            background: var(--ks-status-success);
+        }
+
+        & .legend-swatch.status-stale {
+            background: var(--ks-status-warning);
+        }
+
+        & .legend-swatch.status-failed {
+            background: var(--ks-status-error);
+        }
+
+        & .legend-swatch.status-never,
+        & .legend-swatch.status-unknown {
+            background: var(--ks-status-neutral);
         }
 
         & .controls {

@@ -2040,12 +2040,28 @@
         "fit_view": "Fit to screen"
       },
       "dag": {
-        "force": "Force",
-        "layered": "Layered",
+        "force": "Tree",
+        "layered": "DAG",
         "layer": "Layer {n}",
         "kind": "Kind",
         "system": "System",
-        "last_update": "Last update"
+        "last_update": "Last update",
+        "status": {
+          "fresh": "Fresh",
+          "stale": "Stale",
+          "failed": "Failed",
+          "never": "Never run",
+          "unknown": "Not tracked"
+        },
+        "summary": {
+          "fresh": "All {n} assets fresh",
+          "issues": "{n} stale",
+          "failed": "{n} failed",
+          "last_run": "last run {ago}",
+          "unknown": "{n} not tracked",
+          "never": "{n} never run"
+        },
+        "recent_runs": "Recent runs"
       },
       "search": {
         "placeholders": {

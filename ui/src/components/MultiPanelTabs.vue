@@ -1001,8 +1001,8 @@
             z-index: 0;
         }
 
-        :deep(.el-splitter-bar__dragger-horizontal){
-            width: 16 px;
+        :deep(.kel-splitter-bar__dragger-horizontal){
+            width: 16px;
             cursor: ew-resize;
         }
     }

@@ -82,9 +82,9 @@ const meta: Meta<typeof ExecutionVariableExplorer> = {
     // Runs after the preview-level beforeEach has reset the previous story's routes.
     beforeEach() {
         mockStoryApiRoutes({
-            [`GET /outputs/${FAKE_EXECUTION.id}`]: OUTPUTS_INFORMATION,
-            [`GET /outputs/${FAKE_EXECUTION.id}/run-http`]: OUTPUTS_BY_TASK_RUN_ID["run-http"],
-            [`GET /outputs/${FAKE_EXECUTION.id}/run-check`]: OUTPUTS_BY_TASK_RUN_ID["run-check"],
+            [`GET /outputs/tasks/${FAKE_EXECUTION.id}`]: OUTPUTS_INFORMATION,
+            [`GET /outputs/tasks/${FAKE_EXECUTION.id}/run-http`]: OUTPUTS_BY_TASK_RUN_ID["run-http"],
+            [`GET /outputs/tasks/${FAKE_EXECUTION.id}/run-check`]: OUTPUTS_BY_TASK_RUN_ID["run-check"],
         });
     },
 };

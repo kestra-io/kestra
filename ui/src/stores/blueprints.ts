@@ -1,4 +1,4 @@
-import {ref} from "vue"
+import {computed, ref} from "vue"
 import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
@@ -58,6 +58,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const blueprint = ref<Blueprint | undefined>(undefined)
 
     const validateYAML = ref<boolean>(true) // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
+
+    const validation = ref<{constraints?: string} | undefined>(undefined)
+
+    const validationErrors = computed<string[] | undefined>(
+        () => validation.value?.constraints ? [validation.value.constraints] : undefined,
+    )
 
     const getBlueprints = async (options: Options) => {
         if (options.type === "community") {
@@ -172,6 +178,14 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return data
     }
 
+    const validateFlowBlueprint = async (source: string): Promise<void> => {
+        const {data} = await axios.post<{constraints?: string}>(`${apiUrl()}/blueprints/flows/validate`, source, {
+            headers: {"Content-Type": "application/x-yaml"},
+            showMessageOnError: false,
+        })
+        validation.value = data
+    }
+
     const deleteFlowBlueprint = async (idToDelete: string) => {
         await axios.delete(`${apiUrl()}/blueprints/flows/${idToDelete}`)
     }
@@ -193,6 +207,9 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         getFlowBlueprint,
         createFlowBlueprint,
         updateFlowBlueprint,
+        validation,
+        validationErrors,
+        validateFlowBlueprint,
         deleteFlowBlueprint,
     }
 })

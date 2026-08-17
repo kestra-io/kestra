@@ -3,7 +3,6 @@ import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
-import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
 import {useMiscStore} from "override/stores/misc"
 
@@ -82,22 +81,16 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         }
     }
 
-    /**
-     * The /blueprints/custom backend reads search/tag filters from the QueryFilter format.
-     * Legacy callers still pass `q` / `tags` as scalar params, so translate them into a
-     * QueryFilter[] here. The external community API (api.kestra.io) still expects the legacy
-     * scalar form, so this is only used for `custom`.
-     */
     function toCustomBlueprintParams(params?: Record<string, any>) {
         const {q, tags, ...rest} = params ?? {}
-        const filters: QueryFilter[] = []
+        const converted: Record<string, any> = {...rest}
         if (q !== undefined && q !== null) {
-            filters.push({field: "q", operation: "EQUALS", value: q})
+            converted["filters[q][EQUALS]"] = q
         }
         if (tags !== undefined && tags !== null) {
-            filters.push({field: "tags", operation: "IN", value: Array.isArray(tags) ? tags.join(",") : tags})
+            converted["filters[tags][IN]"] = Array.isArray(tags) ? tags.join(",") : tags
         }
-        return {...rest, filters}
+        return converted
     }
 
     const getBlueprint = async (options: Options) => {

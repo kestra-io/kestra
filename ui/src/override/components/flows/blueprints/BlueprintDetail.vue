@@ -11,11 +11,11 @@
             :loadIcon="pluginsStore.loadIcon"
             @back="goBack"
         >
-            <template #actions="{hasMissingPlugins, missingPlugins}">
+            <template #actions="{hasMissingPlugins, missingTasks}">
                 <template v-if="userCanCreate">
                     <KsTooltip
                         v-if="hasMissingPlugins"
-                        :content="$t('blueprints.missingPlugins.card', {plugins: missingPlugins.join(', ')})"
+                        :content="$t('blueprints.missingPlugins.card', {tasks: missingTasks.join(', ')})"
                     >
                         <KsButton type="primary" disabled>
                             {{ $t(openInEditorKey) }}

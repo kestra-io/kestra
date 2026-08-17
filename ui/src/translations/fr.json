@@ -526,9 +526,10 @@
         "openInDashboardEditor": "Ouvrir dans l'éditeur de tableau de bord"
       },
       "missingPlugins": {
-        "title": "Plugins manquants",
-        "description": "Ce blueprint utilise des tasks de plugin(s) qui ne sont pas installés sur cette instance : {plugins}. Installez-les pour utiliser ce blueprint.",
-        "card": "Nécessite des plugin(s) non installés sur cette instance : {plugins}",
+        "title": "Tasks indisponibles",
+        "description": "Ce blueprint utilise des types de task qui ne sont pas disponibles sur cette instance :",
+        "installHint": "Installez le ou les plugin(s) manquants pour utiliser ce blueprint : {plugins}.",
+        "card": "Utilise des types de task qui ne sont pas disponibles sur cette instance : {tasks}",
         "install": "Installer les plugins"
       }
     },

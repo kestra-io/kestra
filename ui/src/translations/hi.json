@@ -526,9 +526,10 @@
         "openInDashboardEditor": "डैशबोर्ड एडिटर में खोलें"
       },
       "missingPlugins": {
-        "title": "अनुपलब्ध plugins",
-        "description": "यह blueprint ऐसे plugin(s) के tasks का उपयोग करता है जो इस instance पर इंस्टॉल नहीं हैं: {plugins}। इस blueprint का उपयोग करने के लिए उन्हें इंस्टॉल करें।",
-        "card": "इस instance पर इंस्टॉल न किए गए plugin(s) की आवश्यकता है: {plugins}",
+        "title": "अनुपलब्ध tasks",
+        "description": "यह blueprint ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं:",
+        "installHint": "इस blueprint का उपयोग करने के लिए अनुपलब्ध plugin(s) इंस्टॉल करें: {plugins}।",
+        "card": "ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं: {tasks}",
         "install": "Plugins इंस्टॉल करें"
       }
     },

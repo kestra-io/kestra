@@ -1043,8 +1043,6 @@ public class WorkerJobDispatcher {
 
         // Fail the job cleanly so the execution reaches a terminal state.
         if (job instanceof WorkerTask workerTask) {
-            // The worker never receives the job so it never logs the reason: without this the user
-            // only sees a FAILED task run with no logs.
             emitJobLog(
                 runContextLoggerFactory.create(workerTask),
                 LogEntry.of(workerTask.getTaskRun(), workerTask.getExecutionKind()),

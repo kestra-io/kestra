@@ -374,7 +374,7 @@
 
         const newExecution = response
 
-        toast.success(t("replayed"))
+        toast.success(t(props.isReplay ? "replayed" : "restarted"))
 
         if (newExecution.id !== props.execution.id) {
             window.location.href = router.resolve({

@@ -63,7 +63,7 @@
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import {canCreate} from "override/composables/blueprintsPermissions"
-    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
+    import {blueprintTaskTypes, useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const {t} = useI18n()
@@ -101,7 +101,7 @@
     )
 
     const tasks = computed(() =>
-        [...new Set(props.blueprint.includedTasks)],
+        blueprintTaskTypes(props.blueprint.includedTasks),
     )
     
     const visibleTasks = computed(() =>

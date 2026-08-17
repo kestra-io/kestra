@@ -40,7 +40,40 @@ describe("useBlueprintPlugins", () => {
         composable = useBlueprintPlugins()
     })
 
+    describe("blueprintTaskTypes", () => {
+        it("filters out plugin-group prefixes coming from pluginDefaults", async () => {
+            const {blueprintTaskTypes} = await import("../../../src/composables/useBlueprintPlugins")
+            expect(
+                blueprintTaskTypes([
+                    "io.kestra.plugin.jdbc.postgresql.Query",
+                    "io.kestra.plugin.jdbc.postgresql.Queries",
+                    "io.kestra.plugin.jdbc.postgresql",
+                ]),
+            ).toEqual([
+                "io.kestra.plugin.jdbc.postgresql.Query",
+                "io.kestra.plugin.jdbc.postgresql.Queries",
+            ])
+        })
+
+        it("dedupes and handles missing input", async () => {
+            const {blueprintTaskTypes} = await import("../../../src/composables/useBlueprintPlugins")
+            expect(
+                blueprintTaskTypes(["io.kestra.plugin.core.log.Log", "io.kestra.plugin.core.log.Log"]),
+            ).toEqual(["io.kestra.plugin.core.log.Log"])
+            expect(blueprintTaskTypes(undefined)).toEqual([])
+        })
+    })
+
     describe("missingTaskTypes", () => {
+        it("never flags a plugin-group prefix used by pluginDefaults", () => {
+            expect(
+                composable.missingTaskTypes([
+                    "io.kestra.plugin.gcp.bigquery.Query",
+                    "io.kestra.plugin.gcp",
+                ]),
+            ).toEqual([])
+        })
+
         it("flags a task whose exact class is not installed", () => {
             expect(
                 composable.missingTaskTypes([

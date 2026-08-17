@@ -14,9 +14,8 @@
 
 <style scoped lang="scss">
 .plugin-doc-wrapper {
-    padding: 1px 1rem;
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-12);
     background-color: var(--ks-bg-surface);
-    padding-bottom: 5rem;
 }
 
 .plugin-doc {

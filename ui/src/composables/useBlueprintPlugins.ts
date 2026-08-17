@@ -9,6 +9,17 @@ const PLUGIN_PACKAGE_PREFIX = "io.kestra.plugin."
 // schema (not the plugin list), so they must never be treated as "missing".
 const CONDITION_CLASS_PATTERN = /\.conditions?\./
 
+const CONCRETE_CLASS_PATTERN = /\.[A-Z][^.]*$/
+
+/**
+ * Unique concrete task class names of a blueprint. includedTasks also carries
+ * pluginDefaults types, which may be whole plugin groups (lowercase last
+ * segment, e.g. io.kestra.plugin.jdbc.postgresql); those are excluded.
+ */
+export function blueprintTaskTypes(includedTasks?: string[]): string[] {
+    return [...new Set(includedTasks ?? [])].filter(type => CONCRETE_CLASS_PATTERN.test(type))
+}
+
 /** Derives a short, user-facing plugin name from a task class name. */
 function pluginNameOf(taskType: string): string {
     if (taskType.startsWith(PLUGIN_PACKAGE_PREFIX)) {
@@ -57,7 +68,7 @@ export function useBlueprintPlugins() {
      */
     const missingTaskTypes = (includedTasks?: string[]): string[] => {
         if (installedTypes.value.size === 0) return []
-        return [...new Set(includedTasks ?? [])].filter(
+        return blueprintTaskTypes(includedTasks).filter(
             type => !CONDITION_CLASS_PATTERN.test(type) && !installedTypes.value.has(type),
         )
     }

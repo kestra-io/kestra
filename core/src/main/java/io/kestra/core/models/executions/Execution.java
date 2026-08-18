@@ -488,21 +488,30 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .toList();
     }
 
+    /**
+     * Find a task run by its task run id.
+     *
+     * @see #findTaskRunByTaskRunIdIfPresent(String) for a safe alternative
+     * @throws InternalException if the task run doesn't exist
+     */
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
-        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()
-            : this.taskRunList)
+        return findTaskRunByTaskRunIdIfPresent(id)
+            .orElseThrow(() -> new InternalException(
+                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
+                    + this.toStringState()
+            ));
+    }
+
+    /**
+     * Find a task run by its task run id if present, else return an empty optional.
+     *
+     * @see #findTaskRunByTaskRunId(String) for a fail-fast alternative
+     */
+    public Optional<TaskRun> findTaskRunByTaskRunIdIfPresent(String id) {
+        return ListUtils.emptyOnNull(this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
-
-        if (find.isEmpty()) {
-            throw new InternalException(
-                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
-                    + this.toStringState()
-            );
-        }
-
-        return find.get();
     }
 
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values)

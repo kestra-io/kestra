@@ -347,6 +347,7 @@ dind:
             - SETGID
       args:
         - '--log-level=fatal'
+        - '--group=1000'
   # -- Path where dind socket is mounted.
   # @section -- kestra dind
   socketPath: /dind/

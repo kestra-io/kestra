@@ -15,21 +15,19 @@ public final class TriggerFlowParser {
     }
 
     /**
-     * Parses the given flow for trigger evaluation. A flow rejected by governance is skipped ({@code null});
-     * any other parse failure degrades to the flow as stored so existing triggers keep evaluating.
+     * Parses the given flow for trigger evaluation, degrading to the flow as stored when parsing fails so
+     * existing triggers keep evaluating.
+     *
+     * @throws FlowBlockedException when governance rejects the flow, whose triggers must then not run. Checked
+     *         deliberately: a caller has to decide what to report, and a block reported as an ordinary parse
+     *         failure is the confusion this guards against.
      */
-    public static FlowWithSource parseOrSkip(final FlowParsingService flowParsingService, final FlowWithSource flow, final Logger logger) {
+    public static FlowWithSource parseForTrigger(final FlowParsingService flowParsingService, final FlowWithSource flow, final Logger logger)
+        throws FlowBlockedException {
         try {
             return flowParsingService.parseForRuntime(flow).flow();
         } catch (FlowBlockedException e) {
-            logger.warn(
-                "Flow on tenant {}, namespace '{}', flow '{}' is blocked by governance, skipping its triggers: {}",
-                flow.getTenantId(),
-                flow.getNamespace(),
-                flow.getId(),
-                e.getMessage()
-            );
-            return null;
+            throw e;
         } catch (Exception e) {
             logger.warn(
                 "Can't parse flow on tenant {}, namespace '{}', flow '{}' with errors '{}'",

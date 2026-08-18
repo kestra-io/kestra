@@ -35,10 +35,12 @@ import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.ConcurrencyLimitResolver;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.services.WorkerQueueService;
+import io.kestra.core.services.configuration.ExecutionOutputConfiguration;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -105,6 +107,8 @@ public final class ExecutorTestHarness {
     private final InMemorySLAMonitorStateStore slaMonitorStateStore;
     private final InMemoryConcurrencyLimitStateStore concurrencyLimitStateStore;
     private final InMemoryTaskOutputRepository taskOutputRepository;
+    private final InMemoryExecutionOutputRepository executionOutputRepository;
+    private final ExecutionOutputService executionOutputService;
     private final RecordingBroadcastQueue<ExecutionKilled> killQueue;
     private final RecordingDispatchQueue<LoopExecutionEvent> loopExecutionEventQueue;
     private final RecordingKeyedDispatchQueue<WorkerJobEvent> workerJobEventQueue;
@@ -138,6 +142,7 @@ public final class ExecutorTestHarness {
         this.slaMonitorStateStore = new InMemorySLAMonitorStateStore();
         this.concurrencyLimitStateStore = new InMemoryConcurrencyLimitStateStore();
         this.taskOutputRepository = new InMemoryTaskOutputRepository();
+        this.executionOutputRepository = new InMemoryExecutionOutputRepository();
         this.killQueue = new RecordingBroadcastQueue<>("kill");
         this.loopExecutionEventQueue = new RecordingDispatchQueue<>("loopExecutionEvent");
         this.workerJobEventQueue = new RecordingKeyedDispatchQueue<>("workerJobEvent");
@@ -154,6 +159,12 @@ public final class ExecutorTestHarness {
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class)),
             new TaskOutputConfiguration(-1)
+        );
+        this.executionOutputService = new ExecutionOutputService(
+            executionOutputRepository,
+            Mockito.mock(StorageInterface.class),
+            new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class)),
+            new ExecutionOutputConfiguration(-1)
         );
         // Real Pebble engine without Micronaut: the mocked ApplicationContext returns no Extension
         // beans, so only Pebble built-ins are available (same pattern as RunVariablesTest).
@@ -230,6 +241,7 @@ public final class ExecutorTestHarness {
             new AssetService.NoopAssetService(),
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
+            executionOutputService,
             new PausedTaskNotifier.NoopPausedTaskNotifier()
         );
 
@@ -258,6 +270,7 @@ public final class ExecutorTestHarness {
             executionStateStore,
             flowMetaStore,
             taskOutputService,
+            executionOutputService,
             asyncOperationService,
             executionEventMessageHandler,
             killSwitchService,
@@ -482,6 +495,18 @@ public final class ExecutorTestHarness {
 
     public InMemoryConcurrencyLimitStateStore concurrencyLimitStateStore() {
         return concurrencyLimitStateStore;
+    }
+
+    public InMemoryFlowMetaStore flowMetaStore() {
+        return flowMetaStore;
+    }
+
+    public InMemoryExecutionOutputRepository executionOutputRepository() {
+        return executionOutputRepository;
+    }
+
+    public ExecutionOutputService executionOutputService() {
+        return executionOutputService;
     }
 
     public InMemoryTaskOutputRepository taskOutputRepository() {

@@ -43,7 +43,9 @@ class FlowTriggerDecisionTest {
         harness.runContextFactory(),
         // FlowService is field-injected and repository-backed; the only method FlowTriggerService
         // calls is removeUnwanted, which is pure — same pattern as the harness's ExecutionService
-        Mockito.mock(FlowService.class, Mockito.CALLS_REAL_METHODS)
+        Mockito.mock(FlowService.class, Mockito.CALLS_REAL_METHODS),
+        harness.flowMetaStore(),
+        harness.executionOutputService()
     );
 
     // --- standard conditions: who fires

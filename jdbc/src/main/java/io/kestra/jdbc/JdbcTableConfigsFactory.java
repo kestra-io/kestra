@@ -9,6 +9,7 @@ import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionOutput;
+import io.kestra.core.models.executions.ExecutionIndexedField;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskOutput;
@@ -163,6 +164,11 @@ public class JdbcTableConfigsFactory {
     @Named("executionoutputs")
     public InstantiableJdbcTableConfig executionOutputs() {
         return new InstantiableJdbcTableConfig("executionoutputs", ExecutionOutput.class, "execution_outputs");
+    }    
+        
+    @Named("indexedfields")
+    public InstantiableJdbcTableConfig indexedFields() {
+        return new InstantiableJdbcTableConfig("indexedfields", ExecutionIndexedField.class, "execution_indexed_fields");
     }
 
     @Bean

@@ -108,6 +108,14 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     List<Output> outputs;
 
+    @Schema(
+        title = "Indexed fields available and searchable for executions of this flow.",
+        description = "Indexed fields are computed from Pebble expressions when the execution ends and stored in a dedicated, searchable key/value table so executions can be looked up without indexing the full outputs."
+    )
+    @PluginProperty(dynamic = true)
+    @Valid
+    List<IndexedField> indexedFields;
+
     // implementation = Object.class prevents the Micronaut OpenAPI annotation processor from following
     // the @JsonSubTypes on AbstractRetry, which causes a PostponeToNextRoundException at compile time
     // due to the Micronaut constraint validators on the concrete retry subtypes (Constant, Exponential, Random).

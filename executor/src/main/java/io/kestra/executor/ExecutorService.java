@@ -70,6 +70,7 @@ public class ExecutorService {
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
     private final PausedTaskNotifier pausedTaskNotifier;
+    private final IndexedFieldService indexedFieldService;
 
     @Inject
     public ExecutorService(
@@ -88,6 +89,7 @@ public class ExecutorService {
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
         PausedTaskNotifier pausedTaskNotifier) {
+        IndexedFieldService indexedFieldService) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.flowExecutorInterface = flowExecutorInterface;
@@ -103,6 +105,7 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
         this.pausedTaskNotifier = pausedTaskNotifier;
+        this.indexedFieldService = indexedFieldService;
     }
 
     /**
@@ -461,8 +464,9 @@ public class ExecutorService {
         Execution newExecution = executor.getExecution()
             .withState(finalState);
 
+        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+
         if (flow.getOutputs() != null) {
-            RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             var inputAndOutput = runContext.inputAndOutput();
 
             try {
@@ -478,6 +482,14 @@ public class ExecutorService {
                 );
                 runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
                 newExecution = newExecution.withState(State.Type.FAILED);
+            }
+        }
+
+        if (flow.getIndexedFields() != null) {
+            try {
+                indexedFieldService.saveIndexedFields(runContext, flow, newExecution);
+            } catch (Exception e) {
+                runContext.logger().warn("Failed to save indexed fields: {}", e.getMessage(), e);
             }
         }
 

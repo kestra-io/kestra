@@ -129,6 +129,56 @@ class PluginInstallJobRegistryTest {
         verify(jsonSchemaCache, never()).clear();
     }
 
+    // ─── awaitTerminal ────────────────────────────────────────────────────────
+
+    @Test
+    void shouldAwaitTerminalUntilJobSucceeds() throws Exception {
+        // Given
+        List<PluginArtifact> artifacts = List.of(artifact("io.kestra.plugin", "plugin-scripts", "1.0.0"));
+
+        when(pluginManager.install(anyList(), anyList(), anyBoolean(), isNull(), any(TransferListener.class)))
+            .thenReturn(artifacts);
+
+        // When
+        UUID jobId = registry.submit(artifacts);
+        Optional<PluginInstallJob> job = registry.awaitTerminal(jobId, Duration.ofSeconds(5));
+
+        // Then
+        assertThat(job).isPresent();
+        assertThat(job.get().status()).isEqualTo(PluginInstallJob.Status.SUCCEEDED);
+    }
+
+    @Test
+    void shouldReturnNonTerminalJobWhenAwaitTimesOut() throws Exception {
+        // Given — an install that outlives the await timeout
+        List<PluginArtifact> artifacts = List.of(artifact("io.kestra.plugin", "plugin-scripts", "1.0.0"));
+        CountDownLatch releaseInstall = new CountDownLatch(1);
+
+        when(pluginManager.install(anyList(), anyList(), anyBoolean(), isNull(), any(TransferListener.class)))
+            .thenAnswer(invocation ->
+            {
+                releaseInstall.await(5, TimeUnit.SECONDS);
+                return artifacts;
+            });
+
+        // When
+        UUID jobId = registry.submit(artifacts);
+        Optional<PluginInstallJob> job = registry.awaitTerminal(jobId, Duration.ofMillis(100));
+
+        // Then
+        assertThat(job).isPresent();
+        assertThat(job.get().isTerminal()).isFalse();
+
+        releaseInstall.countDown();
+        awaitTerminal(jobId, Duration.ofSeconds(5));
+    }
+
+    @Test
+    void shouldReturnEmptyWhenAwaitingUnknownJob() throws Exception {
+        // When / Then
+        assertThat(registry.awaitTerminal(UUID.randomUUID(), Duration.ofMillis(100))).isEmpty();
+    }
+
     // ─── TransferListener progress ────────────────────────────────────────────
 
     @Test

@@ -1,15 +1,19 @@
 package io.kestra.core.plugins;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.kestra.core.docs.JsonSchemaCache;
@@ -35,6 +39,7 @@ public class PluginInstallJobRegistry {
     private static final long TERMINAL_JOB_TTL_SECONDS = 3600L;
 
     private final ConcurrentHashMap<UUID, AtomicReference<PluginInstallJob>> jobs = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Future<?>> futures = new ConcurrentHashMap<>();
     private final ThreadPoolExecutor installExecutor;
     private final ScheduledExecutorService evictionExecutor;
     private final PluginManager pluginManager;
@@ -65,10 +70,36 @@ public class PluginInstallJobRegistry {
         AtomicReference<PluginInstallJob> ref = new AtomicReference<>(job);
         jobs.put(job.id(), ref);
 
-        installExecutor.submit(() -> runInstall(ref));
+        futures.put(job.id(), installExecutor.submit(() -> runInstall(ref)));
 
         log.info("Queued async plugin install job {} for artifacts: {}", job.id(), artifacts);
         return job.id();
+    }
+
+    /**
+     * Blocks until the job with the given id reaches a terminal state, or the timeout elapses.
+     * <p>
+     * On timeout the job keeps running in the background; the returned snapshot simply reflects
+     * its current, possibly non-terminal, state.
+     *
+     * @param jobId the job id.
+     * @param timeout the maximum time to wait for the job to finish.
+     * @return the job snapshot after waiting, or empty if the job is unknown.
+     * @throws InterruptedException if the current thread is interrupted while waiting.
+     */
+    public Optional<PluginInstallJob> awaitTerminal(final UUID jobId, final Duration timeout) throws InterruptedException {
+        Future<?> future = futures.get(jobId);
+        if (future != null) {
+            try {
+                future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                log.warn("Timed out after {} while waiting for plugin install job {} to finish.", timeout, jobId);
+            } catch (ExecutionException e) {
+                // runInstall records its own failures on the job, so an execution failure here is unexpected.
+                log.error("Plugin install job {} threw an unexpected error.", jobId, e.getCause());
+            }
+        }
+        return get(jobId);
     }
 
     /**
@@ -103,7 +134,11 @@ public class PluginInstallJobRegistry {
     }
 
     private void scheduleEviction(final UUID jobId) {
-        evictionExecutor.schedule(() -> jobs.remove(jobId), TERMINAL_JOB_TTL_SECONDS, TimeUnit.SECONDS);
+        evictionExecutor.schedule(() ->
+        {
+            jobs.remove(jobId);
+            futures.remove(jobId);
+        }, TERMINAL_JOB_TTL_SECONDS, TimeUnit.SECONDS);
     }
 
     private void evictTerminalJobs() {
@@ -113,6 +148,7 @@ public class PluginInstallJobRegistry {
             PluginInstallJob job = entry.getValue().get();
             return job.isTerminal() && job.finishedAt() != null && job.finishedAt().isBefore(cutoff);
         });
+        futures.keySet().retainAll(jobs.keySet());
     }
 
     @PreDestroy

@@ -13,13 +13,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
-import io.kestra.core.runners.ConcurrencyLimit;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -39,8 +37,10 @@ import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.TriggerCreated;
@@ -140,6 +140,10 @@ public class FlowService {
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
+            // Best-effort: installed before validation so a save through any server-side path does
+            // not fail on a not-yet-installed plugin type; a failed install just leaves the
+            // pre-existing "Invalid type" validation error in place.
+            pluginAutoInstallService.installMissingPlugins(flow.getSource());
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
         }
@@ -174,6 +178,10 @@ public class FlowService {
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
+            // Best-effort: installed before validation so a save through any server-side path does
+            // not fail on a not-yet-installed plugin type; a failed install just leaves the
+            // pre-existing "Invalid type" validation error in place.
+            pluginAutoInstallService.installMissingPlugins(flow.getSource());
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
         }
@@ -498,6 +506,12 @@ public class FlowService {
 
     public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
         final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
+
+        // Best-effort, actual imports only: a dry run must keep reporting a missing plugin type as
+        // a validation failure without side effects.
+        if (!dryRun) {
+            pluginAutoInstallService.installMissingPlugins(source);
+        }
 
         Optional<FlowWithSource> maybeExisting = flowRepository.findByIdWithSource(
             flow.getTenantId(),

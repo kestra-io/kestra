@@ -1,25 +1,38 @@
 package io.kestra.core.plugins;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class PluginAutoInstallServiceTest {
 
+    private static final Duration INSTALL_TIMEOUT = Duration.ofSeconds(5);
+
     private PluginCatalogService catalogService;
     private PluginRegistry pluginRegistry;
+    private PluginInstallJobRegistry installJobRegistry;
 
     @BeforeEach
     void setUp() {
         catalogService = mock(PluginCatalogService.class);
         pluginRegistry = mock(PluginRegistry.class);
+        installJobRegistry = mock(PluginInstallJobRegistry.class);
     }
 
     // ─── findMissingTypes ──────────────────────────────────────────────────────
@@ -180,14 +193,140 @@ class PluginAutoInstallServiceTest {
         assertThat(service.isEnabled()).isFalse();
     }
 
+    // ─── installMissingPlugins ────────────────────────────────────────────────
+
+    @Test
+    void shouldInstallDeduplicatedArtifactsWhenTypesAreMissing() throws Exception {
+        // Given — two missing types resolving to the same catalog artifact
+        String yaml = """
+            id: my-flow
+            namespace: company
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.http.request.Request
+              - id: t2
+                type: io.kestra.plugin.http.download.Download
+            """;
+        when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn(null);
+        when(catalogService.get()).thenReturn(
+            List.of(manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http"))
+        );
+
+        UUID jobId = UUID.randomUUID();
+        when(installJobRegistry.submit(anyList())).thenReturn(jobId);
+        when(installJobRegistry.awaitTerminal(jobId, INSTALL_TIMEOUT))
+            .thenAnswer(invocation -> Optional.of(succeededJob()));
+
+        PluginAutoInstallService service = enabledService();
+
+        // When
+        service.installMissingPlugins(yaml);
+
+        // Then — the shared artifact is submitted exactly once
+        ArgumentCaptor<List<PluginArtifact>> captor = ArgumentCaptor.captor();
+        verify(installJobRegistry).submit(captor.capture());
+        assertThat(captor.getValue()).hasSize(1);
+        assertThat(captor.getValue().getFirst().artifactId()).isEqualTo("plugin-http");
+        verify(installJobRegistry).awaitTerminal(jobId, INSTALL_TIMEOUT);
+    }
+
+    @Test
+    void shouldNotInstallWhenDisabled() {
+        // Given
+        String yaml = """
+            id: my-flow
+            namespace: company
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.http.request.Request
+            """;
+        PluginAutoInstallService service = disabledService();
+
+        // When
+        service.installMissingPlugins(yaml);
+
+        // Then
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
+    @Test
+    void shouldNotInstallWhenAllTypesAreRegistered() {
+        // Given
+        String yaml = """
+            id: my-flow
+            namespace: company
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.http.request.Request
+            """;
+        when(pluginRegistry.findClassByIdentifier("io.kestra.plugin.http.request.Request"))
+            .thenReturn((Class) Object.class);
+
+        PluginAutoInstallService service = enabledService();
+
+        // When
+        service.installMissingPlugins(yaml);
+
+        // Then
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
+    @Test
+    void shouldNotInstallWhenNoCatalogArtifactMatches() {
+        // Given
+        String yaml = """
+            id: my-flow
+            namespace: company
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.unknown.Task
+            """;
+        when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn(null);
+        when(catalogService.get()).thenReturn(List.of());
+
+        PluginAutoInstallService service = enabledService();
+
+        // When
+        service.installMissingPlugins(yaml);
+
+        // Then
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
+    @Test
+    void shouldNotThrowWhenInstallFails() {
+        // Given — the registry blows up: the save path must never see the exception
+        String yaml = """
+            id: my-flow
+            namespace: company
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.http.request.Request
+            """;
+        when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn(null);
+        when(catalogService.get()).thenReturn(
+            List.of(manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http"))
+        );
+        when(installJobRegistry.submit(anyList())).thenThrow(new RuntimeException("boom"));
+
+        PluginAutoInstallService service = enabledService();
+
+        // When / Then
+        assertThatCode(() -> service.installMissingPlugins(yaml)).doesNotThrowAnyException();
+    }
+
     // ─── helpers ─────────────────────────────────────────────────────────────
 
     private PluginAutoInstallService enabledService() {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, true);
+        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, true, INSTALL_TIMEOUT);
     }
 
     private PluginAutoInstallService disabledService() {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, false);
+        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, false, INSTALL_TIMEOUT);
+    }
+
+    private PluginInstallJob succeededJob() {
+        return PluginInstallJob.pending(List.of()).running(Instant.now()).succeeded(Instant.now());
     }
 
     private PluginCatalogService.PluginManifest manifest(String groupId, String artifactId, String group) {

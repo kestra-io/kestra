@@ -65,14 +65,14 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>The {@code /plugins-schema.json} classpath resource — the bundle shipped inside the Kestra
  *       JAR. Loaded with no network access, so autocompletion works offline / air-gapped out of the
  *       box once CI embeds it.</li>
- *   <li>{@code kestra.plugins.schema-bundle-url-template} — a remote URL where {@code {version}} is
- *       replaced by the current stable Kestra version. Fallback for older/custom setups. The shipped
- *       default points at a GCS bucket keyed by the stripped stable version (e.g. {@code 1.2.3},
- *       never {@code -SNAPSHOT}), so the fetch is a silent no-op (404, logged and swallowed) on
- *       {@code develop}/dev builds, which only publish under a {@code develop/} prefix.</li>
+ *   <li>{@code kestra.plugins.schema-bundle-url-template} — a self-hosted remote URL where
+ *       {@code {version}} is replaced by the stripped stable Kestra version (e.g. {@code 1.2.3},
+ *       never {@code -SNAPSHOT}). Empty by default: the bundle is not published anywhere, so this is
+ *       only an escape hatch for a custom build that ships no embedded resource. A failed fetch is
+ *       logged and swallowed.</li>
  * </ol>
- * When none of the three resolves, the service is a no-op — useful for air-gapped instances that set
- * an empty URL template and ship no bundled resource.
+ * When none of the three resolves, the service is a no-op. That is the expected state on a plain
+ * {@code ./gradlew build} or a {@code develop} build, where CI has not embedded a bundle.
  */
 @Singleton
 @Slf4j

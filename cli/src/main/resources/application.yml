@@ -213,7 +213,10 @@ kestra:
       poll-switch-interval: 60s
 
   plugins:
-    schema-bundle-url-template: "https://storage.googleapis.com/kestra-api-storage_prd/configuration-schema/{version}/plugins-schema.json"
+    # No default: the schema bundle ships inside the Kestra JAR as the /plugins-schema.json
+    # classpath resource, so no instance needs to fetch it. Set this only to point at a bundle
+    # hosted somewhere yourself ({version} is replaced by the running stable version).
+    schema-bundle-url-template: ""
     repositories:
       central:
         url: https://repo.maven.apache.org/maven2/

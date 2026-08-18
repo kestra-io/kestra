@@ -47,11 +47,11 @@
       "create_flow": "Flow erstellen",
       "email": "E-Mail",
       "execution": {
-        "include_sub": "Unter-Namespaces einschließen",
+        "include_sub": "Untergeordnete Namespaces einschließen",
         "include_sub_hint_off": "Nur Flows im exakten Namespace lösen diesen Alert aus.",
         "include_sub_hint_on": "Flows in untergeordneten Namespaces lösen diesen Alert ebenfalls aus.",
         "namespace_placeholder": "Namespace auswählen",
-        "namespaces_error": "Namespaces konnten nicht geladen werden. Gib einen Namespace ein, den du beobachten möchtest, oder versuch es später erneut.",
+        "namespaces_error": "Namespaces konnten nicht geladen werden. Gib einen Namespace ein, den du beobachten möchtest, oder versuche es später erneut.",
         "states": "Bei diesen Status",
         "states_recommended": "FAILED ist der empfohlene Standard für Alerts.",
         "states_required": "Mindestens einen Status auswählen.",
@@ -71,7 +71,7 @@
         "teams_webhook_placeholder": "Teams Incoming Webhook URL"
       },
       "other": {
-        "load_error": "Trigger konnten nicht geladen werden. Versuch es später erneut.",
+        "load_error": "Trigger konnten nicht geladen werden. Versuche es später erneut.",
         "no_results": "Keine Trigger gefunden.",
         "search_label": "Trigger suchen",
         "search_placeholder": "Nach Name oder Typ filtern"
@@ -96,7 +96,7 @@
         "empty": "Konfiguriere den Trigger und mindestens einen Benachrichtigungskanal, um deinen Flow in der Vorschau zu sehen.",
         "exact_match": "exakte Übereinstimmung",
         "execution": "Wenn ein Flow in {ns} ({scope}) den Status {states} erreicht, wird über {channels} benachrichtigt.",
-        "including_sub": "und Unter-Namespaces",
+        "including_sub": "und untergeordnete Namespaces",
         "invalid_hint": "Füge mindestens einen Benachrichtigungskanal hinzu und schließe die Trigger-Konfiguration ab.",
         "invalid_hint_trigger": "Schließe die Trigger-Konfiguration ab.",
         "no_channel": "die von dir ausgewählten Kanäle",
@@ -236,7 +236,7 @@
     "details": "Details",
     "overview": "Übersicht",
     "gantt": "Gantt",
-    "gantt_no_tasks_executed": "Diese Execution wurde beendet, ohne dass ein Task ausgeführt wurde.\nDen Grund findest du in der Übersicht und in den Logs.",
+    "gantt_no_tasks_executed": "Diese Execution endete, ohne dass ein Task ausgeführt wurde.\nDen Grund findest du in der Übersicht und in den Logs.",
     "gantt_no_tasks_match_filters": "Passe die Filter für Suche, Status oder Log-Level an.",
     "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "logs": "Logs",
@@ -385,11 +385,11 @@
     "change execution state done": "Execution-Status aktualisiert",
     "mark as": "Als <code>{status}</code> markieren",
     "unqueue as": "Als <code>{status}</code> aus der Warteschlange entfernen",
-    "kill": "Beenden",
-    "kill parents and subflow": "Aktuelle Execution und Subflows beenden",
-    "kill only parents": "Nur aktuelle Execution beenden",
-    "killed confirm": "Execution <code>{id}</code> wirklich beenden?",
-    "killed done": "Die Execution wurde zum Beenden eingereiht",
+    "kill": "Killen",
+    "kill parents and subflow": "Aktuelle Execution und Subflows killen",
+    "kill only parents": "Nur aktuelle Execution killen",
+    "killed confirm": "Execution <code>{id}</code> wirklich killen?",
+    "killed done": "Die Execution wurde zum Killen eingereiht",
     "resume": "Fortsetzen",
     "resumed title": "Execution <code>{id}</code> fortsetzen",
     "resumed confirm": "Execution <code>{id}</code> wirklich fortsetzen?",
@@ -617,7 +617,7 @@
     "triggers_add_modal_namespace_placeholder": "Namespace auswählen",
     "triggers_add_modal_flow_placeholder": "Flow auswählen",
     "triggers_add_modal_trigger_id": "Trigger-ID",
-    "triggers_add_modal_trigger_id_placeholder": "Eindeutige Kennung für diesen Trigger",
+    "triggers_add_modal_trigger_id_placeholder": "Eindeutige ID für diesen Trigger",
     "triggers_add_modal_properties_hint": "Konfiguriere die Trigger-Eigenschaften im Flow-Editor, nachdem du den Trigger hinzugefügt hast.",
     "triggers_add_modal_add_button": "Trigger zum Flow hinzufügen",
     "trigger details": "Trigger-Details",
@@ -688,7 +688,7 @@
       "heading": "Alles rund um Kestra.",
       "subheading": "Die neuesten Updates, Anleitungen und Beiträge"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Diese Execution läuft noch, durch das Löschen wird sie nicht gestoppt.<br />Du musst die Execution beenden, um sie zu stoppen.</div>",
+    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Diese Execution läuft noch, durch das Löschen wird sie nicht gestoppt.<br />Du musst die Execution killen, um sie zu stoppen.</div>",
     "restore": "Wiederherstellen",
     "restore confirm": "Möchtest du die Revision <code>{revision}</code> wirklich wiederherstellen?",
     "bulk delete": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich löschen?",
@@ -698,7 +698,7 @@
     "bulk pause": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich pausieren?",
     "bulk force run": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
     "bulk restart": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich neu starten?",
-    "bulk kill": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich beenden?",
+    "bulk kill": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich killen?",
     "cancel": "Abbrechen",
     "errorLogs": "Fehler-Logs",
     "welcome_page": {
@@ -712,7 +712,7 @@
     "executions unqueue": "<code>{executionCount}</code> Execution(s) aus der Warteschlange entfernt",
     "executions force run": "<code>{executionCount}</code> Execution(s) erzwungen",
     "executions restarted": "<code>{executionCount}</code> Execution(s) neu gestartet",
-    "executions killed": "<code>{executionCount}</code> Execution(s) beendet",
+    "executions killed": "<code>{executionCount}</code> Execution(s) gekillt",
     "executions deleted": "<code>{executionCount}</code> Execution(s) gelöscht",
     "invalid bulk replay": "Replay der Executions nicht möglich",
     "invalid bulk resume": "Executions konnten nicht fortgesetzt werden",
@@ -720,7 +720,7 @@
     "invalid bulk unqueue": "Executions konnten nicht aus der Warteschlange entfernt werden",
     "invalid bulk force run": "Executions konnten nicht erzwungen werden",
     "invalid bulk restart": "Executions konnten nicht neu gestartet werden",
-    "invalid bulk kill": "Executions konnten nicht beendet werden",
+    "invalid bulk kill": "Executions konnten nicht gekillt werden",
     "invalid bulk delete": "Executions konnten nicht gelöscht werden",
     "execution not found": "Execution {executionId} wurde nicht gefunden.",
     "execution not in state PAUSED": "Execution <code>{executionId}</code> ist nicht im Status PAUSED",
@@ -949,9 +949,9 @@
     "true": "Wahr",
     "false": "Falsch",
     "undefined": "Nicht definiert",
-    "execution-include-non-terminated": "Nicht beendete Executions einbeziehen?",
+    "execution-include-non-terminated": "Nicht abgeschlossene Executions einbeziehen?",
     "execution-warn-title": "Wichtige Warnung!",
-    "execution-warn-deleting-still-running": "Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Executions zuerst zu beenden. Das Löschen nicht beendeter Executions kann zu Concurrency-Problemen, Inkonsistenzen bei Flow-Abhängigkeiten und Zombie-Prozessen auf deiner Instanz führen, was die Systemleistung beeinträchtigen kann. Stell sicher, dass du diese Risiken vollständig verstehst, bevor du mit dem Löschen fortfährst.",
+    "execution-warn-deleting-still-running": "Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Executions zuerst zu killen. Das Löschen nicht abgeschlossener Executions kann zu Concurrency-Problemen, Inkonsistenzen bei Flow-Abhängigkeiten und Zombie-Prozessen auf deiner Instanz führen, was die Systemleistung beeinträchtigen kann. Stelle sicher, dass du diese Risiken vollständig verstehst, bevor du mit dem Löschen fortfährst.",
     "pluginPage": {
       "search": "{count}+ Plugins durchsuchen",
       "searchTasks": "{count} Tasks durchsuchen",
@@ -1123,7 +1123,7 @@
       },
       "apps": {
         "title": "Eigene Apps mit Kestra erstellen",
-        "message": "Mit Apps in der Kestra Enterprise Edition kannst du eigene UIs erstellen, die von außerhalb der Plattform mit Kestra-Workflows interagieren. Damit lassen sich deine Workflows als Backend für eigene Anwendungen nutzen, sodass auch nicht-technische Nutzer Daten über Formulare einreichen oder pausierte Workflows freigeben können, die auf eine Genehmigung warten.",
+        "message": "Mit Apps in der Kestra Enterprise Edition kannst du eigene UIs erstellen, die von außerhalb der Plattform mit Kestra-Workflows interagieren. Damit lassen sich deine Workflows als Backend für eigene Anwendungen nutzen, sodass auch nicht-technische Nutzer Daten über Formulare eingeben oder pausierte Workflows freigeben können, die auf eine Genehmigung warten.",
         "blueprints": {
           "title": "Mit einem App-Blueprint starten.",
           "message": "App-Blueprints sind fertige Apps für gängige Anwendungsfälle wie Formulare, Genehmigungen und Datenübermittlung. Mit der Kestra Enterprise Edition kannst du jeden Blueprint als Ausgangspunkt nehmen und ihn anpassen, um eigene UIs auf deinen Workflows aufzubauen."
@@ -1139,7 +1139,7 @@
         "label": "Assets",
         "header": "Asset-Metadaten und Observability",
         "title": "Jedes Dataset, jeden Service und jede Abhängigkeit sichtbar machen.",
-        "message": "Assets verbinden Observability-, Lineage- und Ownership-Metadaten, damit Plattformteams Probleme schneller beheben und mit Vertrauen deployen können."
+        "message": "Assets verbinden Observability-, Lineage- und Ownership-Metadaten, damit Plattformteams Probleme schneller beheben und zuverlässiger deployen können."
       },
       "cases": {
         "label": "Cases",
@@ -1341,7 +1341,7 @@
               "body": "Task-Runs, die bereits erfolgreich waren, werden wiederverwendet, sodass nur die fehlgeschlagene Arbeit erneut laufen muss, gegen die neueste Revision des Flows. Replay und Neustart findest du unter <strong>Aktionen</strong> bei einer Execution und bei einem Task-Run in der Gantt-Ansicht."
             },
             "events": {
-              "title": "Executions, die durch Events gestartet werden",
+              "title": "Durch Events gestartete Executions",
               "body": "Webhook- und Schedule-Trigger sind Teil von Kestra, sodass eine Execution durch ein Event oder nach einem Zeitplan gestartet werden kann, ohne dass du zusätzlich etwas hosten musst."
             },
             "chain": {
@@ -1369,12 +1369,12 @@
           }
         },
         "errors": {
-          "first_execution": "Die erste Execution endete mit dem Status {state}, statt erfolgreich zu sein. Öffne die Logs auf dieser Seite, um zu sehen warum, und versuch es dann erneut.",
-          "expected_failure": "Diese Execution endete mit dem Status {state}, es gibt also noch keinen Fehler zu beheben. Prüfe, ob der Flow noch den Task <code>notify</code> hat, und versuch es erneut.",
-          "no_execution_to_replay": "Es gibt noch keine Execution für einen Replay. Führe den Flow im vorherigen Schritt aus und versuch es dann erneut.",
-          "replay": "Der Replay endete mit dem Status {state}. Öffne die Logs auf dieser Seite, um zu sehen, was <code>notify</code> gemeldet hat, und versuch es dann erneut.",
+          "first_execution": "Die erste Execution endete mit dem Status {state}, statt erfolgreich zu sein. Öffne die Logs auf dieser Seite, um zu sehen warum, und versuche es dann erneut.",
+          "expected_failure": "Diese Execution endete mit dem Status {state}, es gibt also noch keinen Fehler zu beheben. Prüfe, ob der Flow noch den Task <code>notify</code> hat, und versuche es erneut.",
+          "no_execution_to_replay": "Es gibt noch keine Execution für einen Replay. Führe den Flow im vorherigen Schritt aus und versuche es dann erneut.",
+          "replay": "Der Replay endete mit dem Status {state}. Öffne die Logs auf dieser Seite, um zu sehen, was <code>notify</code> gemeldet hat, und versuche es dann erneut.",
           "save_flow": "Der Tour-Flow konnte nicht gespeichert werden. {reason}",
-          "test_event": "Der Webhook hat mit {status} geantwortet. Prüfe, ob der Flow gespeichert und der Trigger aktiviert ist, und versuch es dann erneut."
+          "test_event": "Der Webhook hat mit {status} geantwortet. Prüfe, ob der Flow gespeichert und der Trigger aktiviert ist, und versuche es dann erneut."
         },
         "steps": {
           "1": "Einen Flow schreiben und ausführen",
@@ -1515,7 +1515,7 @@
     "drop items here": "Elemente hier ablegen",
     "files": "Namespace-Dateien",
     "optional": "Optional",
-    "no_data": "Sieht aus, als wäre hier noch nichts…<br/>Passe deine Filter an oder versuch es noch einmal!",
+    "no_data": "Sieht aus, als wäre hier noch nichts…<br/>Passe deine Filter an oder versuche es noch einmal!",
     "remove_bookmark": "Möchtest du dieses Lesezeichen wirklich entfernen?",
     "showLess": "Weniger anzeigen",
     "documentationMenu": "Dokumentationsmenü",
@@ -1649,7 +1649,7 @@
       "loading_execution": "Beim Laden der Execution ist etwas schiefgelaufen",
       "connection_lost": {
         "title": "Verbindung unterbrochen",
-        "message": "Wir konnten deine Kestra-Instanz nicht erreichen. Stell sicher, dass sie läuft, und aktualisiere dann die Seite."
+        "message": "Wir konnten deine Kestra-Instanz nicht erreichen. Stelle sicher, dass sie läuft, und aktualisiere dann die Seite."
       },
       "opening_flow_editor": "Beim Öffnen des Flow-Editors ist etwas schiefgelaufen",
       "retry": "Erneut versuchen"
@@ -1727,7 +1727,7 @@
       },
       "variables": {
         "title": "Noch keine Variablen",
-        "content": "Füge Key-Value-Paare hinzu, um Konfiguration über Flows hinweg zu teilen. Untergeordnete Namespaces erben sie automatisch, und du kannst jeden Wert referenzieren mit"
+        "content": "Füge KV-Paare hinzu, um Konfiguration über Flows hinweg zu teilen. Untergeordnete Namespaces erben sie automatisch, und du kannst jeden Wert referenzieren mit"
       },
       "workerRegistrationTokens": {
         "title": "Du hast noch keine Registration Tokens!",
@@ -1792,7 +1792,7 @@
       "executions": "Keine Executions gefunden",
       "triggers": "Keine Trigger gefunden",
       "flows": "Keine Flows gefunden",
-      "kv_pairs": "Keine Key-Value-Paare gefunden",
+      "kv_pairs": "Keine KV-Paare gefunden",
       "secrets": "Keine Secrets gefunden"
     },
     "duplicate-pair": "{label} „{key}“ ist doppelt vorhanden, der erste Key wird ignoriert.",
@@ -1895,7 +1895,7 @@
           "plan": "Plan"
         },
         "empty": {
-          "title": "Mach aus deiner Idee einen Workflow"
+          "title": "Verwandle deine Idee in einen Workflow"
         },
         "toolCall": "{tool} wird ausgeführt",
         "context": {
@@ -1973,7 +1973,7 @@
           "Auslösung",
           "Ausführung",
           "Koordinierung",
-          "Provisioning",
+          "Provisionierung",
           "Auflösung",
           "Komposition",
           "Zusammenstellung",
@@ -2232,7 +2232,7 @@
       "namespace_search_failed": "{namespace} konnte nicht durchsucht werden",
       "namespace_search_failed_detail": "Anfrage fehlgeschlagen. Die anderen Namespaces sind nicht betroffen.",
       "next_match": "Nächste Übereinstimmung",
-      "no_results_description": "Versuch, den Namespace zu erweitern, den Bereich auf „Alle Quellen“ zurückzustellen oder „Groß-/Kleinschreibung beachten“ und „Ganzes Wort“ zu deaktivieren.",
+      "no_results_description": "Versuche, den Namespace zu erweitern, den Bereich auf „Alle Quellen“ zurückzustellen oder „Groß-/Kleinschreibung beachten“ und „Ganzes Wort“ zu deaktivieren.",
       "no_results_hidden_type": "{count} Treffer in {type} gefunden, das du nicht ausgewählt hast. | {count} Treffer in {type} gefunden, das du nicht ausgewählt hast.",
       "no_results_in_types": "Keine Treffer für „{query}“ in {types}",
       "no_results_title": "Keine Übereinstimmungen für „{query}“",

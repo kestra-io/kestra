@@ -498,9 +498,9 @@ export default {
                 "loop": "Schleife",
                 "test": "Test",
                 "normal_description": "Reguläre Executions",
-                "playground_description": "Executions, die im Playground-Modus ausgelöst wurden",
-                "loop_description": "Executions, die vom Loop-Task erstellt wurden",
-                "test_description": "Executions, die von Unit-Tests ausgelöst wurden",
+                "playground_description": "Im Playground-Modus ausgelöste Executions",
+                "loop_description": "Vom Loop-Task erstellte Executions",
+                "test_description": "Von Unit-Tests ausgelöste Executions",
             },
             "scope": {
                 "label": "Bereich",
@@ -640,7 +640,7 @@ export default {
             },
             "triggerId": {
                 "label": "Trigger-ID",
-                "description": "Nach Trigger-Kennung filtern",
+                "description": "Nach Trigger-ID filtern",
             },
             "triggerId_trigger": {
                 "label": "Trigger-ID",
@@ -648,7 +648,7 @@ export default {
             },
             "taskId": {
                 "label": "Task-ID",
-                "description": "Nach Task-Kennung filtern",
+                "description": "Nach Task-ID filtern",
             },
             "taskRunId": {
                 "label": "Task-Run-ID",
@@ -697,18 +697,18 @@ export default {
                     "flow": "ID des ausgeführten Flows",
                     "labels": "Execution-Labels (Format Key:Value)",
                     "state": "Aktueller Execution-Status",
-                    "revision": "Version des Flows, die für diese Execution verwendet wird",
-                    "inputs": "Input-Werte, die der Execution übergeben werden",
+                    "revision": "Für diese Execution verwendete Flow-Revision",
+                    "inputs": "Der Execution übergebene Input-Werte",
                     "task-id": "ID des letzten Tasks in der Execution",
                     "trigger": "Trigger, der die Execution gestartet hat",
                     "parent-execution": "ID der übergeordneten Execution, die diese Execution ausgelöst hat",
                 },
                 "kv": {
-                    "namespace": "Logische Gruppierung, in der das Key-Value-Paar gespeichert wird",
+                    "namespace": "Logische Gruppierung, in der das KV-Paar gespeichert wird",
                     "key": "Eindeutiger Bezeichner für den gespeicherten Wert",
                     "description": "Optionale Notizen zur Erklärung des KV-Eintrags",
                     "last modified": "Zeitstempel der letzten Aktualisierung",
-                    "expiration date": "Wann das Key-Value-Paar abläuft",
+                    "expiration date": "Wann das KV-Paar abläuft",
                 },
                 "secrets": {
                     "namespace": "Logische Gruppierung, in der das Secret gespeichert ist",
@@ -718,8 +718,8 @@ export default {
                 "triggers": {
                     "flow": "Flow, der mit dem Trigger verknüpft ist",
                     "namespace": "Namespace des Triggers",
-                    "execution id": "ID der Execution, die vom Trigger gestartet wurde",
-                    "workerId": "Worker-Kennung",
+                    "execution id": "ID der vom Trigger gestarteten Execution",
+                    "workerId": "Worker-ID",
                     "last trigger date": "Wann der Trigger zuletzt ausgeführt wurde",
                     "context updated date": "Letzte Aktualisierung des Trigger-Kontexts",
                     "next evaluation date": "Wann der Trigger das nächste Mal ausgewertet wird",
@@ -744,7 +744,7 @@ export default {
                 "flow_metric_filters": "Flow-Metrik-Filter",
                 "trigger_filters": "Trigger-Filter",
                 "namespace_filters": "Namespaces-Filter",
-                "kv_filters": "Key-Value-Filter",
+                "kv_filters": "KV-Filter",
                 "secret_filters": "Secret-Filter",
                 "blueprint_filters": "Blueprint-Filter",
             },

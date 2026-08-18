@@ -1756,10 +1756,6 @@
           "content": "이 자산은 flow 또는 다른 자산과 상위 또는 하위 종속성이 없습니다."
         }
       },
-      "plugins": {
-        "title": "이 Namespace에 대한 플러그인 기본값이 설정되지 않았습니다.",
-        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요."
-      },
       "triggers": {
         "title": "flow에 Triggers가 없습니다.",
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요."

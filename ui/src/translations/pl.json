@@ -1756,10 +1756,6 @@
           "content": "Ten zasób nie ma zależności w górę ani w dół z flow lub innymi zasobami."
         }
       },
-      "plugins": {
-        "title": "Dla tego namespace nie ustawiono domyślnych pluginów.",
-        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Limitach Concurrency</a></strong> w naszej dokumentacji."
-      },
       "triggers": {
         "title": "Twój flow nie ma żadnych Triggerów.",
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> w naszej dokumentacji."

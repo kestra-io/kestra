@@ -1756,10 +1756,6 @@
           "content": "Este ativo não possui dependências upstream ou downstream com flows ou outros ativos."
         }
       },
-      "plugins": {
-        "title": "Nenhum padrão de plugin está definido para este Namespace.",
-        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação."
-      },
       "triggers": {
         "title": "Seu flow não possui nenhum trigger.",
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> em nossa documentação."

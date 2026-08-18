@@ -1756,10 +1756,6 @@
           "content": "Cet actif n'a pas de dépendances amont ou aval avec des flows ou d'autres actifs."
         }
       },
-      "plugins": {
-        "title": "Aucun paramètre par défaut de plugin n'est défini pour ce namespace.",
-        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation."
-      },
       "triggers": {
         "title": "Votre flow n'a pas de triggers.",
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> dans notre documentation."

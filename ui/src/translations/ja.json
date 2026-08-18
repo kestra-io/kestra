@@ -1756,10 +1756,6 @@
           "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。"
         }
       },
-      "plugins": {
-        "title": "このNamespaceにはプラグインのデフォルトが設定されていません。",
-        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。"
-      },
       "triggers": {
         "title": "あなたのflowにはTriggerがありません。",
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。"

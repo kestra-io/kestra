@@ -1756,10 +1756,6 @@
           "content": "इस संपत्ति का flows या अन्य संपत्तियों के साथ कोई upstream या downstream निर्भरता नहीं है।"
         }
       },
-      "plugins": {
-        "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।",
-        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।"
-      },
       "triggers": {
         "title": "आपके flow में कोई Triggers नहीं हैं।",
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।"

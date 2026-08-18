@@ -1020,7 +1020,8 @@
             "triggers_default_tab": "デフォルトトリガーのタブ",
             "playground": "プレイグラウンド",
             "auto_refresh_interval": "自動更新間隔",
-            "task_edit_default_mode": "デフォルトのTask編集モード"
+            "task_edit_default_mode": "デフォルトのTask編集モード",
+            "flow_template": "デフォルトのflowテンプレート"
           },
           "descriptions": {
             "default_namespace": "namespaceなしで新しいflowを作成する際に使用されます。",
@@ -1033,11 +1034,17 @@
             "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。",
             "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
             "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
-            "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。"
+            "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。",
+            "flow_template": "新しいflowを作成すると、エディターでYAMLが開きます。idとnamespaceは自動生成されるため、省略できます。これが空の場合、インスタンスに設定されているテンプレートが使用されます。"
           },
           "task_edit_default_mode_options": {
             "modal": "モーダル",
             "tab": "タブ"
+          },
+          "flow_template_reset": "デフォルトにリセット",
+          "flow_template_error": {
+            "invalid_mapping": "無効なflowテンプレート: リストまたはスカラーではなく、キーと値のマッピングが必要です。",
+            "parse_error": "YAMLを解析できませんでした。テンプレートは保存されたため、flowを作成する際にエディタに同じエラーが表示される可能性があります。"
           }
         },
         "theme": {

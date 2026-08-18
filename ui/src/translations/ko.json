@@ -1020,7 +1020,8 @@
             "triggers_default_tab": "기본 Trigger 탭",
             "playground": "플레이그라운드",
             "auto_refresh_interval": "자동 새로고침 간격",
-            "task_edit_default_mode": "기본 Task 편집 모드"
+            "task_edit_default_mode": "기본 Task 편집 모드",
+            "flow_template": "기본 flow 템플릿"
           },
           "descriptions": {
             "default_namespace": "namespace 없이 새로운 flow를 생성할 때 사용됩니다.",
@@ -1033,11 +1034,17 @@
             "triggers_default_tab": "트리거 페이지로 이동할 때 선택된 탭.",
             "auto_refresh_interval": "목록 페이지에서 자동 데이터 새로 고침 간격(초).",
             "playground": "편집기 플레이그라운드에서 개별적으로 task 실행.",
-            "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다."
+            "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다.",
+            "flow_template": "새 flow를 생성할 때 YAML이 에디터에서 열립니다. id와 namespace는 자동으로 생성되므로 비워둘 수 있습니다. 이 필드가 비어 있으면 인스턴스에 구성된 템플릿이 사용됩니다."
           },
           "task_edit_default_mode_options": {
             "modal": "모달",
             "tab": "탭"
+          },
+          "flow_template_reset": "기본값으로 재설정",
+          "flow_template_error": {
+            "invalid_mapping": "잘못된 flow 템플릿: 목록 또는 스칼라가 아닌 키-값 매핑이 필요합니다.",
+            "parse_error": "YAML을 파싱할 수 없습니다. 템플릿이 저장되었으므로 flow를 생성할 때 편집기에 동일한 오류가 표시될 수 있습니다."
           }
         },
         "theme": {

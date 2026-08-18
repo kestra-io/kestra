@@ -1020,7 +1020,8 @@
             "triggers_default_tab": "Domyślna karta Triggers",
             "playground": "Plac zabaw",
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
-            "task_edit_default_mode": "Domyślny tryb edycji Taska"
+            "task_edit_default_mode": "Domyślny tryb edycji Taska",
+            "flow_template": "Domyślny szablon flow"
           },
           "descriptions": {
             "default_namespace": "Używane podczas tworzenia nowych flow bez namespace.",
@@ -1033,11 +1034,17 @@
             "triggers_default_tab": "Karta wybrana podczas nawigacji do strony triggerów.",
             "auto_refresh_interval": "Sekundy między automatycznymi odświeżeniami danych na stronach list.",
             "playground": "Uruchom taski indywidualnie w edytorze playground.",
-            "task_edit_default_mode": "Jak domyślnie otwiera się task z edytora no-code."
+            "task_edit_default_mode": "Jak domyślnie otwiera się task z edytora no-code.",
+            "flow_template": "YAML otwarty w edytorze podczas tworzenia nowego flow. id i namespace mogą zostać pominięte, ponieważ są generowane automatycznie. Gdy to pole jest puste, używany jest szablon skonfigurowany dla instancji."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Karta"
+          },
+          "flow_template_reset": "Przywróć domyślne",
+          "flow_template_error": {
+            "invalid_mapping": "Nieprawidłowy szablon flow: oczekiwano mapowania klucz-wartość, a nie listy lub skalara.",
+            "parse_error": "Nie można przeanalizować YAML. Szablon został zapisany, więc edytor może pokazać ten sam błąd podczas tworzenia flow."
           }
         },
         "theme": {

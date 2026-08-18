@@ -32,4 +32,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/badge';
+    @use "../../assets/styles/color-palette" as palette;
+
+    .kel-badge .kel-badge__content--danger {
+        background-color: palette.$base-red-500;
+    }
 </style>

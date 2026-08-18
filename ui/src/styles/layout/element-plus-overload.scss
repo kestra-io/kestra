@@ -843,6 +843,14 @@ form.ks-horizontal {
             }
         }
 
+        &.is-disabled {
+            color: var(--ks-content-inactive);
+
+            i {
+                color: inherit;
+            }
+        }
+
         &:not(.is-disabled):hover {
             background-color: var(--ks-dropdown-background-hover);
         }

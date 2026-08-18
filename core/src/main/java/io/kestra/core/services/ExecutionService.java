@@ -99,6 +99,7 @@ public class ExecutionService {
 
     @Inject
     private ExecutionOutputService executionOutputService;
+    private IndexedFieldService indexedFieldService;
 
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
@@ -722,6 +723,7 @@ public class ExecutionService {
                     builder.executionsCount(this.executionRepository.purge(executions));
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
                     builder.executionOutputsCount(this.executionOutputService.purge(executions));
+                    builder.indexedFieldsCount(this.indexedFieldService.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -768,6 +770,7 @@ public class ExecutionService {
         boolean deleteMetrics,
         boolean deleteStorage) throws IOException {
         this.executionRepository.purge(execution);
+        this.indexedFieldService.purge(java.util.List.of(execution));
 
         if (deleteLogs) {
             this.logRepository.purge(execution);
@@ -1186,6 +1189,7 @@ public class ExecutionService {
 
         @Builder.Default
         private int executionOutputsCount = 0;
+        private int indexedFieldsCount = 0;
 
         @Builder.Default
         private int logsCount = 0;

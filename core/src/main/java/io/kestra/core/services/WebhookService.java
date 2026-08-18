@@ -11,6 +11,7 @@ import org.apache.hc.core5.net.URIBuilder;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
@@ -67,6 +68,9 @@ public class WebhookService {
 
     @Inject
     private UriProvider uriProvider;
+
+    @Inject
+    private ExecutionOutputService executionOutputService;
 
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
@@ -267,11 +271,22 @@ public class WebhookService {
      * @param execution The execution to create the response from
      * @return The WebhookResponse
      */
-    public WebhookResponse executionResponse(Execution execution) {
+    public WebhookResponse executionResponse(Execution execution) throws InternalException {
         return WebhookResponse.fromExecution(
             execution,
+            executionOutputService.getOutputs(execution),
             uriProvider.executionUrl(execution)
         );
+    }
+
+    /**
+     * Get the flow-level outputs of an execution, they are stored outside of the execution.
+     *
+     * @param execution The execution to read the outputs from
+     * @return The execution outputs, or null if the execution has none
+     */
+    public Map<String, Object> executionOutputs(Execution execution) throws InternalException {
+        return executionOutputService.getOutputs(execution);
     }
 
     /**

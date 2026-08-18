@@ -138,7 +138,7 @@ export function transformResponse(
  *
  * @param graphRef    - Template ref pointing to the KsGraph component instance.
  * @param subtype     - Dependency subtype: FLOW, EXECUTION, NAMESPACE, or ASSET.
- * @param initialNodeID - ID of the node to pre-select after the first render.
+ * @param initialNodeID - ID of the node to preselect after the first render.
  * @param params      - Vue Router params (id, namespace, flowId).
  * @param isTesting   - When true, uses generated fixture data instead of the API.
  * @param fetchAssetDependencies - Custom async fetcher for ASSET subtypes.
@@ -453,7 +453,7 @@ export function useDependencies(
     /**
      * Polls until ECharts has completed the initial force layout and node positions
      * are available, then centres the view on the selected node (or fits all nodes
-     * for NAMESPACE graphs where no node is pre-selected).
+     * for NAMESPACE graphs where no node is preselected).
      *
      * Why polling instead of listening for the `finished` event:
      * `chartNodes` is set synchronously, which schedules a Vue microtask flush.

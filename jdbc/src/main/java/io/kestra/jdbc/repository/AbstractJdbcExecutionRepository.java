@@ -26,6 +26,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
+import io.kestra.core.repositories.IndexedFieldRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
@@ -38,6 +40,7 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
@@ -54,6 +57,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     private final SystemFlowsConfiguration systemFlowsConfiguration;
 
     private final JdbcFilterService filterService;
+
+    @Inject
+    private IndexedFieldRepositoryInterface indexedFieldRepository;
 
     @Getter
     private final Map<Executions.Fields, String> fieldsMapping = Map.of(
@@ -307,6 +313,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     @Override
     public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable) {
         var condition = field("namespace").eq(namespace).and(field("flow_id").eq(id));
+        return findPage(pageable, tenantId, condition);
+    }
+
+    @Override
+    public ArrayListTotal<Execution> findByIndexedField(String tenantId, String key, String value, boolean exactMatch, Pageable pageable) {
+        List<String> executionIds = indexedFieldRepository.findExecutionIds(tenantId, key, value, exactMatch);
+        if (executionIds.isEmpty()) {
+            return new ArrayListTotal<>(List.of(), 0);
+        }
+
+        var condition = KEY_FIELD.in(executionIds);
         return findPage(pageable, tenantId, condition);
     }
 

@@ -636,6 +636,22 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/indexed-fields/search")
+    @Operation(tags = { "Executions" }, summary = "Search for executions by an indexed field")
+    public PagedResults<ApiLightExecution> searchExecutionsByIndexedField(
+        @Parameter(description = "The indexed field key") @QueryValue String key,
+        @Parameter(description = "The value to match") @QueryValue String value,
+        @Parameter(description = "Whether to match the value exactly or as a substring") @QueryValue(defaultValue = "true") boolean exactMatch,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size) {
+        var executions = executionRepository.findByIndexedField(tenantService.resolveTenant(), key, value, exactMatch, PageableUtils.from(page, size));
+        var apiExecution = executions.stream()
+            .map(execution -> ApiLightExecution.of(execution))
+            .toList();
+        return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by GET webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })

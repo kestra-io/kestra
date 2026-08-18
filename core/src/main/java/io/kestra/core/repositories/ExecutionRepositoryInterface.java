@@ -38,6 +38,17 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
     ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable);
 
     /**
+     * Search executions matching an indexed field key/value pair.
+     *
+     * @param tenantId the tenant id
+     * @param key the indexed field key
+     * @param value the value to match
+     * @param exactMatch when {@code true} matches the value exactly, otherwise uses a substring (contains) match
+     * @param pageable the pagination
+     */
+    ArrayListTotal<Execution> findByIndexedField(String tenantId, String key, String value, boolean exactMatch, Pageable pageable);
+
+    /**
      * Finds all the executions that were triggered by the given execution id.
      *
      * @param tenantId the tenant id.

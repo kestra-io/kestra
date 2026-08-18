@@ -8,7 +8,7 @@
     >
         <span class="content">
             <span class="key">{{ filter.keyLabel }}</span>
-            <span v-if="!hasValue(filter.value)" class="in">{{ t("filter.in any") }}</span>
+            <span v-if="!hasValue(filter.value)" class="in">{{ $t("filter.in any") }}</span>
             <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <KsTooltip
                 v-if="hasValue(filter.value)"

@@ -4,14 +4,14 @@
             <slot name="nav">
                 <div class="text-nowrap">
                     <KsButtonGroup>
-                        <KsTooltip :content="t('Fold content lines')">
+                        <KsTooltip :content="$t('Fold content lines')">
                             <KsButton
                                 :icon="icon.UnfoldLessHorizontal"
                                 @click="autoFold(true)"
                                 size="small"
                             />
                         </KsTooltip>
-                        <KsTooltip :content="t('Unfold content lines')">
+                        <KsTooltip :content="$t('Unfold content lines')">
                             <KsButton
                                 :icon="icon.UnfoldMoreHorizontal"
                                 @click="unfoldAll"
@@ -127,7 +127,6 @@
     const datePicker = ref()
 
     const {
-        t,
         icon,
         containerClass,
         showPlaceholder,

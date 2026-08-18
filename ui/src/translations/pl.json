@@ -1194,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "Ulepsz zarządzanie Namespace",
-          "message": "W Kestra Enterprise Edition, namespace'y zapewniają zaawansowaną izolację i zarządzanie sekretami, zmiennymi oraz domyślnymi ustawieniami pluginów na dużą skalę. Administratorzy mogą konfigurować niestandardowe menedżery sekretów, izolowane backendy pamięci masowej, dedykowane grupy workerów oraz szczegółowe uprawnienia dla każdego namespace'u. Zapewnia to, że sekrety, zmienne i konfiguracje pluginów pozostają bezpieczne i łatwe w utrzymaniu w różnych zespołach i projektach."
+          "message": "W Kestra Enterprise Edition, namespaces zapewniają zaawansowaną izolację i kontrolę nad sekretami, zmiennymi i politykami zarządzania na dużą skalę. Administratorzy mogą konfigurować niestandardowe menedżery sekretów, izolowane backendy pamięci masowej, dedykowane grupy workerów oraz szczegółowe uprawnienia dla każdego namespace'u. Zapewnia to bezpieczeństwo i łatwość utrzymania sekretów, zmiennych i zasad zarządzania w różnych zespołach i projektach."
         },
         "secrets": {
           "title": "Zarządzaj sekretami w bezpieczny sposób",

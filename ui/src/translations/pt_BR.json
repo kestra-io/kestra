@@ -1194,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "Atualize o Gerenciamento do seu Namespace",
-          "message": "No Kestra Enterprise Edition, os namespaces fornecem isolamento avançado e governança de secrets, variáveis e padrões de plugins em escala. Os administradores podem configurar gerenciadores de secrets personalizados, backends de armazenamento isolados, grupos de workers dedicados e permissões granulares por namespace. Isso garante que secrets, variáveis e configurações de plugins permaneçam seguros e fáceis de manter em diferentes equipes e projetos."
+          "message": "Na Kestra Enterprise Edition, os namespaces fornecem isolamento avançado e controle de secrets, variáveis e Políticas de governança em escala. Os administradores podem configurar gerenciadores de secrets personalizados, backends de armazenamento isolados, grupos de worker dedicados e permissões granulares por namespace. Isso garante que secrets, variáveis e regras de governança permaneçam seguros e fáceis de manter em diferentes equipes e projetos."
         },
         "secrets": {
           "title": "Gerenciar Segredos de Forma Segura",

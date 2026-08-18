@@ -1194,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "네임스페이스 관리 업그레이드",
-          "message": "Kestra Enterprise Edition에서 namespace는 대규모로 secrets, variables 및 플러그인 기본값에 대한 고급 격리 및 거버넌스를 제공합니다. 관리자는 namespace별로 사용자 지정 secrets manager, 격리된 스토리지 백엔드, 전용 worker 그룹 및 세분화된 권한을 구성할 수 있습니다. 이를 통해 secrets, variables 및 플러그인 구성이 여러 팀과 프로젝트에서 안전하고 쉽게 유지 관리됩니다."
+          "message": "Kestra Enterprise Edition에서 namespace는 시크릿, 변수 및 거버넌스 정책에 대한 고급 격리 및 제어를 대규모로 제공합니다. 관리자는 namespace별로 사용자 지정 시크릿 관리자, 격리된 스토리지 백엔드, 전용 worker 그룹 및 세분화된 권한을 구성할 수 있습니다. 이를 통해 시크릿, 변수 및 거버넌스 규칙이 여러 팀과 프로젝트에서 안전하고 쉽게 유지 관리되도록 보장합니다."
         },
         "secrets": {
           "title": "비밀을 안전하게 관리하기",

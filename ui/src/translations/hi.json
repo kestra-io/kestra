@@ -1194,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें",
-          "message": "Kestra Enterprise Edition में, namespaces बड़े पैमाने पर secrets, variables और plugin defaults का उन्नत अलगाव और शासन प्रदान करते हैं। व्यवस्थापक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और plugin कॉन्फ़िगरेशन विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
+          "message": "Kestra Enterprise Edition में, namespace बड़े पैमाने पर secrets, variables और governance Policies का उन्नत अलगाव और नियंत्रण प्रदान करते हैं। प्रशासक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और governance rules विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
         },
         "secrets": {
           "title": "सुरक्षित तरीके से Secrets प्रबंधित करें",

@@ -1194,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "升级您的Namespace管理",
-          "message": "在 Kestra Enterprise Edition 中，namespace 提供了对 secrets、变量和插件默认值进行大规模高级隔离和治理的功能。管理员可以为每个 namespace 配置自定义 secrets 管理器、隔离的存储后端、专用的 worker 组以及细粒度权限。这确保了 secrets、变量和插件配置在不同团队和项目之间保持安全且易于维护。"
+          "message": "在 Kestra 企业版中，namespace 提供高级隔离，并大规模控制 secrets、variables 和治理 Policies。管理员可以配置自定义 secrets manager、隔离的存储后端、专用 worker 组以及基于 namespace 的精细权限。这确保了 secrets、variables 和治理规则在不同团队和项目之间保持安全且易于维护。"
         },
         "secrets": {
           "title": "以安全方式管理Secrets",

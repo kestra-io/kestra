@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 
 /**
  * Map-backed {@link FlowMetaStoreInterface}. Flows must be registered up-front with
@@ -45,8 +46,20 @@ public class InMemoryFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
-    public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
+    public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
         return Optional.ofNullable(flows.get(key(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())));
+    }
+
+    @Override
+    public Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return Optional.ofNullable(flows.get(key(tenantId, namespace, id)))
+            .map(flow -> new ProcessedFlow(flow, null));
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant, String fromNamespace,
+        String fromId) {
+        return Optional.ofNullable(flows.get(key(tenantId, namespace, id)));
     }
 
     private static String key(String tenantId, String namespace, String id) {

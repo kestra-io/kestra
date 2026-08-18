@@ -44,8 +44,8 @@
                             </div>
                             <div class="logs-toolbar__actions">
                                 <LogDisplaySettings />
-                                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
-                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
+                                <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="openDownload" />
+                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs" />
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
@@ -75,22 +75,22 @@
             </KsDataTable>
         </div>
 
-        <KsDialog v-model="downloadOpen" :title="t('download logs')" destroyOnClose>
-            <p class="download-hint">{{ t('download_logs_description') }}</p>
+        <KsDialog v-model="downloadOpen" :title="$t('download logs')" destroyOnClose>
+            <p class="download-hint">{{ $t('download_logs_description') }}</p>
             <QuickFilters
                 :levels="VALUES.LEVELS"
                 :intervals="quickIntervals"
                 :level="downloadLevel"
                 :timeRange="downloadTimeRange"
-                :levelLabel="t('filter.level_log_executions.label')"
-                :intervalLabel="t('filter.timeRange_log.label')"
+                :levelLabel="$t('filter.level_log_executions.label')"
+                :intervalLabel="$t('filter.timeRange_log.label')"
                 @update:level="(value: string) => (downloadLevel = value)"
                 @update:time-range="(value: string) => (downloadTimeRange = value)"
             />
             <template #footer>
-                <KsButton @click="downloadOpen = false">{{ t('cancel') }}</KsButton>
+                <KsButton @click="downloadOpen = false">{{ $t('cancel') }}</KsButton>
                 <KsButton type="primary" :loading="downloading" @click="downloadLogs">
-                    {{ t('download') }}
+                    {{ $t('download') }}
                 </KsButton>
             </template>
         </KsDialog>

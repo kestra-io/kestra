@@ -1,22 +1,22 @@
 <template>
     <KsDialog
         :modelValue="shortcutsOpen"
-        :title="t('block_editor.shortcuts.title')"
+        :title="$t('block_editor.shortcuts.title')"
         data-test="block-editor-shortcuts"
         @update:modelValue="(open?: boolean) => emit('update:shortcutsOpen', open ?? false)"
     >
         <div class="block-editor-shortcuts">
             <div v-for="group in shortcutGroups" :key="group.group" class="block-editor-shortcuts-col">
-                <span class="block-editor-shortcuts-heading">{{ t(`block_editor.shortcuts.group_${group.group}`) }}</span>
+                <span class="block-editor-shortcuts-heading">{{ $t(`block_editor.shortcuts.group_${group.group}`) }}</span>
                 <div v-for="binding in group.bindings" :key="binding.id" class="block-editor-shortcut">
                     <span class="block-editor-shortcut-keys">
                         <kbd v-for="key in displayKeys(binding.keys)" :key="key">{{ key }}</kbd>
                         <template v-if="binding.alt?.length">
-                            <span class="block-editor-shortcut-or">{{ t('block_editor.shortcuts.or') }}</span>
+                            <span class="block-editor-shortcut-or">{{ $t('block_editor.shortcuts.or') }}</span>
                             <kbd v-for="key in displayKeys(binding.alt)" :key="key">{{ key }}</kbd>
                         </template>
                     </span>
-                    <span>{{ t(binding.i18nKey) }}</span>
+                    <span>{{ $t(binding.i18nKey) }}</span>
                 </div>
             </div>
         </div>
@@ -25,8 +25,8 @@
     <button
         type="button"
         class="block-editor-help"
-        :aria-label="t('block_editor.shortcuts.title')"
-        :title="t('block_editor.shortcuts.title')"
+        :aria-label="$t('block_editor.shortcuts.title')"
+        :title="$t('block_editor.shortcuts.title')"
         data-test="block-editor-help"
         @click="emit('update:shortcutsOpen', true)"
     >
@@ -38,7 +38,7 @@
         <span class="block-editor-footer-context">{{ footerContext }}</span>
         <span v-for="hint in footerHints" :key="hint.id" class="block-editor-footer-hint">
             <kbd v-for="key in displayKeys(hint.keys)" :key="key">{{ key }}</kbd>
-            {{ t(hint.i18nKey) }}
+            {{ $t(hint.i18nKey) }}
         </span>
     </div>
 
@@ -51,7 +51,7 @@
                 data-test="block-editor-undo"
                 @click="emit('undo')"
             >
-                {{ t("block_editor.undo") }}
+                {{ $t("block_editor.undo") }}
             </button>
         </div>
     </Transition>
@@ -59,7 +59,6 @@
 
 <script setup lang="ts">
     import Keyboard from "vue-material-design-icons/Keyboard.vue"
-    import {useI18n} from "vue-i18n"
     import {displayKeys, type FooterHint} from "./shortcutHints"
     import type {BlockEditorKeyBinding, BlockEditorKeymapGroup} from "./keymap"
 
@@ -76,7 +75,6 @@
         undo: []
     }>()
 
-    const {t} = useI18n()
 </script>
 
 <style scoped lang="scss">

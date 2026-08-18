@@ -265,7 +265,7 @@
                     <div class="flow-actions-cell">
                         <KsIconButton
                             v-if="canExecute(scope.row)"
-                            :tooltip="t('execute')"
+                            :tooltip="$t('execute')"
                             @click="openExecuteModal(scope.row)"
                         >
                             <Play />

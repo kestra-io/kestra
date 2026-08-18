@@ -1,0 +1,13 @@
+id: indexed-fields
+namespace: io.kestra.tests
+
+indexedFields:
+  - id: customerId
+    value: "acme-corp"
+  - id: region
+    value: "{{ outputs.setoutput.value }}"
+
+tasks:
+  - id: setoutput
+    type: io.kestra.plugin.core.debug.Return
+    format: "europe"

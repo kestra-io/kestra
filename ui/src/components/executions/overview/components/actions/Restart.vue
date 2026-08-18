@@ -372,7 +372,7 @@
             revision: revisionsSelected.value,
         })
 
-        const newExecution = response.data
+        const newExecution = response
 
         toast.success(t("replayed"))
 

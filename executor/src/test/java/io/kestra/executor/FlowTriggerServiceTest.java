@@ -22,8 +22,10 @@ import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
@@ -50,13 +52,15 @@ class FlowTriggerServiceTest {
     private ConditionService conditionService;
     @Inject
     private FlowService flowService;
+    @Inject
+    private ExecutionOutputService executionOutputService;
     private FlowMetaStoreInterface flowMetaStore;
     private FlowTriggerService flowTriggerService;
 
     @BeforeEach
     void setUp() {
         flowMetaStore = mock(FlowMetaStoreInterface.class);
-        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore);
+        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService);
     }
 
     @Test
@@ -218,7 +222,7 @@ class FlowTriggerServiceTest {
             .variables(Map.of("env", "prod"))
             .build();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(resolved));
+            .thenReturn(Optional.of(ProcessedFlow.of(resolved)));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -251,7 +255,7 @@ class FlowTriggerServiceTest {
         // Given a flow whose trigger matches but which governance blocks at runtime
         FlowWithSource raw = flowWithFlowTriggerSource();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(FlowWithException.from(raw, new FlowBlockedException("Blocked by governance policy"))));
+            .thenReturn(Optional.of(ProcessedFlow.of(FlowWithException.from(raw, new FlowBlockedException("Blocked by governance policy")))));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -291,7 +295,7 @@ class FlowTriggerServiceTest {
             .labels(List.of(new Label("env", "prod")))
             .build();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(resolved));
+            .thenReturn(Optional.of(ProcessedFlow.of(resolved)));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When
@@ -315,7 +319,7 @@ class FlowTriggerServiceTest {
             .variables(Map.of("env", "prod"))
             .build();
         when(flowMetaStore.findByIdForRuntime(MAIN_TENANT, TEST_NAMESPACE, raw.getId(), Optional.of(1)))
-            .thenReturn(Optional.of(resolved));
+            .thenReturn(Optional.of(ProcessedFlow.of(resolved)));
         var simpleFlowExecution = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
 
         // When

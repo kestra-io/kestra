@@ -1,0 +1,11 @@
+id: inputs-ion-file
+namespace: io.kestra.tests
+
+inputs:
+  - id: payload
+    type: ION
+
+tasks:
+  - id: task
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.payload }}"

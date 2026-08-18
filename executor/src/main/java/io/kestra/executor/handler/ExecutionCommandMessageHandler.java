@@ -17,6 +17,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
@@ -36,6 +38,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionStateStore executionStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final TaskOutputService taskOutputService;
+    private final ExecutionOutputService executionOutputService;
     private final AsyncOperationService asyncOperationService;
     private final ExecutionEventMessageHandler executionEventMessageHandler;
     private final KillSwitchService killSwitchService;
@@ -47,6 +50,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         ExecutionStateStore executionStateStore,
         FlowMetaStoreInterface flowMetaStore,
         TaskOutputService taskOutputService,
+        ExecutionOutputService executionOutputService,
         AsyncOperationService asyncOperationService,
         ExecutionEventMessageHandler executionEventMessageHandler,
         KillSwitchService killSwitchService,
@@ -55,6 +59,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
         this.taskOutputService = taskOutputService;
+        this.executionOutputService = executionOutputService;
         this.asyncOperationService = asyncOperationService;
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.killSwitchService = killSwitchService;
@@ -114,7 +119,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                return newExecution != null ? executorContext.withExecution(migrateTaskOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
+                return newExecution != null ? executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
             } catch (Exception e) {
                 log.error("Unable to process event for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
                 outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
@@ -130,11 +135,11 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
         String error = null;
         try {
-            var flow = flowMetaStore
+            var processedFlow = flowMetaStore
                 .findByIdForRuntime(command.tenantId(), command.namespace(), command.flowId(), Optional.ofNullable(command.flowRevision()))
                 .orElseThrow(() -> new FlowNotFoundException(command.executionFullId(), command.flowRevision()));
 
-            var newExecution = executionService.create(command, flow);
+            var newExecution = executionService.create(command, processedFlow);
 
             var persisted = persistNewExecutionWithKillSwitch(newExecution);
             if (persisted.isEmpty()) {
@@ -179,6 +184,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
             if (command.revision() != null) {
                 flow = flowMetaStore
                     .findByIdForRuntime(command.tenantId(), command.namespace(), command.flowId(), Optional.of(command.revision()))
+                    .map(ProcessedFlow::flow)
                     .orElseThrow(() -> new FlowNotFoundException(sourceExecution));
             } else {
                 flow = flowMetaStore
@@ -247,11 +253,17 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     }
 
     /**
-     * Pre-2.0 backward compatibility: if a task run carries inline outputs (deprecated {@code Variables outputs} field),
-     * persist them into the task output repository so the rest of the executor can work uniformly with the modern storage.
+     * Pre-2.0 backward compatibility: if the execution or one of its task runs carries inline outputs (deprecated
+     * {@code outputs} fields), persist them into the output repositories so the rest of the executor can work
+     * uniformly with the modern storage.
      */
     @SuppressWarnings("deprecation")
-    private Execution migrateTaskOutputs(Execution execution) throws InternalException {
+    private Execution migrateOutputs(Execution execution) throws InternalException {
+        if (execution.getOutputs() != null) {
+            executionOutputService.saveOutputs(execution, execution.getOutputs());
+            execution = execution.withOutputs(null);
+        }
+
         if (ListUtils.isEmpty(execution.getTaskRunList())) {
             return execution;
         }

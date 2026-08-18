@@ -526,9 +526,10 @@
         "openInDashboardEditor": "Otwórz w Edytorze Dashboardu"
       },
       "missingPlugins": {
-        "title": "Brakujące pluginy",
-        "description": "Ten blueprint używa tasków z pluginów, które nie są zainstalowane w tej instancji: {plugins}. Zainstaluj je, aby użyć tego blueprintu.",
-        "card": "Wymaga pluginów niezainstalowanych w tej instancji: {plugins}",
+        "title": "Niedostępne taski",
+        "description": "Ten blueprint używa typów tasków, które nie są dostępne w tej instancji:",
+        "installHint": "Zainstaluj brakujące pluginy, aby użyć tego blueprintu: {plugins}.",
+        "card": "Używa typów tasków, które nie są dostępne w tej instancji: {tasks}",
         "install": "Zainstaluj pluginy"
       }
     },

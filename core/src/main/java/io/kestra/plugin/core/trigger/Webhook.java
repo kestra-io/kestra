@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.Example;
@@ -248,7 +249,11 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             .flatMap(__ ->
             {
                 if (!this.wait) {
-                    return Mono.<HttpResponse<?>> just(HttpResponse.of(context.webhookService().executionResponse(execution)));
+                    try {
+                        return Mono.<HttpResponse<?>> just(HttpResponse.of(context.webhookService().executionResponse(execution)));
+                    } catch (InternalException e) {
+                        return Mono.error(e);
+                    }
                 }
 
                 return context
@@ -262,7 +267,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                             int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
 
                             HttpResponse<?> response = this.getReturnOutputs()
-                                ? buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode))
+                                ? buildOutputResponse(context.webhookService().executionOutputs(event.getData()), responseContentType, HttpResponse.Status.valueOf(responseCode))
                                 : HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
                             return Mono.<HttpResponse<?>> just(response);
                         } catch (Exception e) {

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithException;
@@ -15,6 +16,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 
 import io.micronaut.context.annotation.Requires;
@@ -80,6 +82,9 @@ public class SubflowFunction implements KestraFunction {
 
     @Inject
     private Provider<ExecutionService> executionService;
+
+    @Inject
+    private Provider<ExecutionOutputService> executionOutputService;
 
     @Override
     public List<String> getArgumentNames() {
@@ -195,7 +200,11 @@ public class SubflowFunction implements KestraFunction {
                 );
             }
 
-            return Result.of(terminated);
+            try {
+                return Result.of(terminated, executionOutputService.get().getOutputs(terminated));
+            } catch (InternalException e) {
+                throw new PebbleException(e, "Failed to read the outputs of subflow '" + namespace + "'.'" + id + "': " + e.getMessage(), lineNumber, self.getName());
+            }
         } finally {
             int current = DEPTH.get() - 1;
             if (current <= 0) {
@@ -264,14 +273,14 @@ public class SubflowFunction implements KestraFunction {
      * @param labels the execution labels as a {@code key -> value} map
      */
     public record Result(String id, String state, Map<String, Object> outputs, Map<String, String> labels) {
-        static Result of(Execution execution) {
+        static Result of(Execution execution, Map<String, Object> outputs) {
             Map<String, String> labels = new HashMap<>();
             execution.getLabels().forEach(label -> labels.put(label.key(), label.value()));
 
             return new Result(
                 execution.getId(),
                 execution.getState().getCurrent().name(),
-                execution.getOutputs() != null ? execution.getOutputs() : Map.of(),
+                outputs != null ? outputs : Map.of(),
                 labels
             );
         }

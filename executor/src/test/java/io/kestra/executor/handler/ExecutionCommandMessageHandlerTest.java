@@ -22,6 +22,8 @@ import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.executor.ExecutionStateStore;
@@ -56,6 +58,8 @@ class ExecutionCommandMessageHandlerTest {
     @Mock
     TaskOutputService taskOutputService;
     @Mock
+    ExecutionOutputService executionOutputService;
+    @Mock
     KillSwitchService killSwitchService;
     @Mock
     KillSwitchActionService killSwitchActionService;
@@ -72,6 +76,7 @@ class ExecutionCommandMessageHandlerTest {
             executionStateStore,
             flowMetaStore,
             taskOutputService,
+            executionOutputService,
             asyncOperationService,
             executionEventMessageHandler,
             killSwitchService,
@@ -88,10 +93,11 @@ class ExecutionCommandMessageHandlerTest {
     void shouldEmitSucceededOutcomeOnHappyPath() {
         // Given
         var flow = mock(FlowWithSource.class);
+        var processedFlow = ProcessedFlow.of(flow);
         var execution = executionWithState(State.Type.CREATED);
         var context = mock(ExecutorContext.class);
-        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
-        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(processedFlow));
+        when(executionService.create(eq(createCommand), eq(processedFlow))).thenReturn(execution);
         when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.PASS);
         when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
 
@@ -124,9 +130,10 @@ class ExecutionCommandMessageHandlerTest {
         // Bug #2: executionStateStore.create() failure was swallowed (only logged) and the handler
         // continued to emit SUCCEEDED — the controller returned 200 for an execution never persisted.
         var flow = mock(FlowWithSource.class);
+        var processedFlow = ProcessedFlow.of(flow);
         var execution = mock(Execution.class); // state stubs not needed — exception fires before getState()
-        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
-        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(processedFlow));
+        when(executionService.create(eq(createCommand), eq(processedFlow))).thenReturn(execution);
         doThrow(new RuntimeException("DB unavailable")).when(executionStateStore).create(execution);
 
         // When — must not throw
@@ -139,9 +146,10 @@ class ExecutionCommandMessageHandlerTest {
     @Test
     void shouldEmitFailedOutcomeWhenEventHandlerFails() {
         var flow = mock(FlowWithSource.class);
+        var processedFlow = ProcessedFlow.of(flow);
         var execution = executionWithState(State.Type.CREATED);
-        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
-        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(processedFlow));
+        when(executionService.create(eq(createCommand), eq(processedFlow))).thenReturn(execution);
         when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.PASS);
         when(executionEventMessageHandler.handle(any())).thenThrow(new RuntimeException("handler error"));
 
@@ -154,9 +162,10 @@ class ExecutionCommandMessageHandlerTest {
     void shouldPersistExecutionAndReturnEmptyWhenKillSwitchActive() {
         // Given
         var flow = mock(FlowWithSource.class);
+        var processedFlow = ProcessedFlow.of(flow);
         var execution = mock(Execution.class); // no state stubs needed — kill switch fires before getState()
-        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
-        when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(processedFlow));
+        when(executionService.create(eq(createCommand), eq(processedFlow))).thenReturn(execution);
         when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.IGNORE);
 
         // When
@@ -341,7 +350,7 @@ class ExecutionCommandMessageHandlerTest {
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         var context = mock(ExecutorContext.class);
         when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
-        when(flowMetaStore.findByIdForRuntime("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByIdForRuntime("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(ProcessedFlow.of(flow)));
         when(executionService.replay(any(), eq(flow), isNull(), eq(3), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
         when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));

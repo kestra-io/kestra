@@ -218,6 +218,8 @@ export function useDependencies(
     params: RouteParams,
     fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
     layoutMode: Ref<LayoutMode> = ref<LayoutMode>("force"),
+    /** Field the graph is grouped by; returns undefined for nodes it says nothing about. */
+    groupOf: Ref<((node: Node) => string | undefined) | undefined> = ref(undefined),
 ) {
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -259,8 +261,47 @@ export function useDependencies(
     /** Set when a node is double-clicked, so the view can open that node's own page. */
     const openedNodeID = ref<Node["id"] | undefined>(undefined)
 
-    /** IDs of nodes that belong to the current table-filter result (null = no filter). */
-    const shownNodeIDs = ref<Set<string> | null>(null)
+    /** IDs matching the side table's filters, and IDs matching an isolated group. */
+    const tableFilterIDs = ref<Set<string> | null>(null)
+    const isolatedIDs = ref<Set<string> | null>(null)
+
+    /**
+     * The group the chip row is pinned to. It lives here rather than in the view so a
+     * canvas click can clear the isolation and the chip's active state together.
+     */
+    const activeGroup = ref<string | undefined>(undefined)
+
+    /** Restricts the graph to one group; undefined shows all of them. */
+    const isolateGroup = (key?: string): void => {
+        if (!key) { isolatedIDs.value = null; return }
+        const match = elements.value.data
+            .filter((el): el is {data: Node} => el.data.type === NODE)
+            .filter(({data}) => laneOf.value?.(data.id) === key)
+            .map(({data}) => data.id)
+        isolatedIDs.value = match.length ? new Set(match) : null
+    }
+
+    const toggleGroup = (key: string): void => {
+        activeGroup.value = activeGroup.value === key ? undefined : key
+        isolateGroup(activeGroup.value)
+    }
+
+    const clearGroup = (): void => {
+        activeGroup.value = undefined
+        isolateGroup(undefined)
+    }
+
+    /**
+     * Both filters narrow the graph independently, so they intersect. They are kept apart
+     * because the table rewrites its own set on every keystroke, which would otherwise
+     * silently clear a group the user had isolated.
+     */
+    const shownNodeIDs = computed<Set<string> | null>(() => {
+        const [table, isolated] = [tableFilterIDs.value, isolatedIDs.value]
+        if (!table) return isolated
+        if (!isolated) return table
+        return new Set([...table].filter((id) => isolated.has(id)))
+    })
 
     const elements = ref<{data: Element[]; count: number}>({data: [], count: 0})
 
@@ -268,9 +309,27 @@ export function useDependencies(
 
     const isDag = computed(() => layoutMode.value === "dag")
 
+    /** Node ids to their group, when a grouping field is selected. */
+    const laneOf = computed(() => {
+        const accessor = groupOf.value
+        if (!accessor) return undefined
+
+        const byID = new Map(
+            elements.value.data
+                .filter((el): el is {data: Node} => el.data.type === NODE)
+                .map(({data}) => [data.id, accessor(data)]),
+        )
+
+        return (id: string) => byID.get(id)
+    })
+
     const dagLayout = computed(() => {
         const nodes = elements.value.data.filter((el): el is {data: Node} => el.data.type === NODE)
         const flows = new Set(nodes.filter(({data}) => data.metadata.subtype === FLOW).map(({data}) => data.id))
+
+        const groupKeys = laneOf.value
+            ? [...new Set(nodes.map(({data}) => laneOf.value!(data.id) ?? ""))].sort()
+            : []
 
         return computeDagLayout(
             nodes.map(({data}) => data.id),
@@ -290,6 +349,11 @@ export function useDependencies(
                 // A flow triggers the graph rather than sitting inside it, so it gets
                 // the leading column to itself.
                 ownColumn: (id) => flows.has(id),
+                // Grouping only orders: members of a group land next to each other in each
+                // column. Proximity is free, and it never moves a node out of its rank.
+                priority: laneOf.value
+                    ? (id) => groupKeys.indexOf(laneOf.value!(id) ?? "")
+                    : undefined,
             },
         )
     })
@@ -415,9 +479,11 @@ export function useDependencies(
                     // to someone who already knows the vocabulary.
                     // One meta row keeps the card long and thin; the second row is what made
                     // it tall enough to crowd its neighbours.
+                    // When the graph is grouped by kind, the chip row already says it.
+                    const showKind = kind && laneOf.value === undefined
                     const kindLine = [
-                        glyph ? "{glyph| }" : "",
-                        kind ? `{kindLabel|${String(kind).toUpperCase()}}` : "",
+                        showKind && glyph ? "{glyph| }" : "",
+                        showKind ? `{kindLabel|${String(kind).toUpperCase()}}` : "",
                         isAsset ? "{status| }" : "",
                         isAsset ? `{statusLabel|${t(`dependency.dag.status.${status}`)}}` : "",
                         isAsset && updated ? `{age|${moment(updated).fromNow(true)}}` : "",
@@ -705,7 +771,7 @@ export function useDependencies(
      */
     const clearSelection = (): void => {
         selectedNodeID.value = undefined
-        shownNodeIDs.value = null
+        isolatedIDs.value = null
         fitGraph()
     }
 
@@ -717,9 +783,12 @@ export function useDependencies(
             if (!zr || zr.__ksDependenciesBound) return
             zr.__ksDependenciesBound = true
             zr.on("click", (event: {target?: unknown}) => {
-                // Deselect only: the viewport stays exactly where the user left it, and
-                // nothing changes but the node styling.
-                if (!event.target) selectedNodeID.value = undefined
+                // Clicking bare canvas clears every lens the user has applied — selection
+                // and group isolation — while the viewport stays exactly where they left it.
+                if (!event.target) {
+                    selectedNodeID.value = undefined
+                    clearGroup()
+                }
             })
             chart?.on?.("graphRoam", () => {
                 const series = (chart.getOption?.() as Record<string, any> | undefined)?.series?.[0]
@@ -805,6 +874,14 @@ export function useDependencies(
         if (isDag.value) renderGraph()
         else applyStylesToChart()
     })
+
+    // Grouping re-stacks every node, so the view needs re-framing on the same terms as a
+    // layout switch: after the prop-driven render, not on the tick before it.
+    watch(laneOf, () => {
+        if (chartNodes.value === null || !isDag.value) return
+        renderGraph()
+        requestAnimationFrame(() => fitGraph())
+    }, {flush: "post"})
 
     // The two layouts occupy very different extents, so re-frame on every switch.
     // The re-fit waits a frame rather than a tick: KsGraph's own prop-driven
@@ -1040,6 +1117,12 @@ export function useDependencies(
         chartEdges,
         /** Layout to hand KsGraph: explicit coordinates once any are known. */
         graphLayout,
+        /** Fades every node outside one group, without pinning it. */
+        isolateGroup,
+        /** Pins or unpins a group; the chip row reads activeGroup for its active state. */
+        toggleGroup,
+        clearGroup,
+        activeGroup,
         isLoading,
         isRendering,
         selectedNodeID,
@@ -1059,7 +1142,7 @@ export function useDependencies(
             fit: fitGraph,
             highlightShown: (nodeIDs: string[]) => {
                 const allNodeCount = elements.value.data.filter((el) => el.data.type === NODE).length
-                shownNodeIDs.value  = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs)
+                tableFilterIDs.value = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs)
             },
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
                 const ts       = new Date().toISOString().slice(0, 19).replace(/:/g, "-")

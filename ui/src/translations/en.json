@@ -2061,7 +2061,11 @@
           "unknown": "{n} not tracked",
           "never": "{n} never run"
         },
-        "recent_runs": "Recent runs"
+        "recent_runs": "Recent runs",
+        "group_by": "Group by",
+        "group_none": "No grouping",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungrouped"
       },
       "search": {
         "placeholders": {

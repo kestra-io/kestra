@@ -34,13 +34,43 @@
                             size="small"
                             :options="layoutOptions"
                         />
+                        <KsSelect
+                            v-model="groupField"
+                            class="group-select"
+                            size="small"
+                            :placeholder="$t('dependency.dag.group_by')"
+                        >
+                            <KsOption :label="$t('dependency.dag.group_none')" value="" />
+                            <KsOption
+                                v-for="field in groupFields"
+                                :key="field.key"
+                                :label="`${field.label} (${field.groups})`"
+                                :value="field.key"
+                                :disabled="!field.usable"
+                            />
+                        </KsSelect>
+
                         <KsText v-if="summary" size="small" class="layout-summary">
                             {{ summary }}
                         </KsText>
                     </div>
 
+                    <div v-if="groupChips.length" class="group-chips">
+                        <button
+                            v-for="chip in groupChips"
+                            :key="chip.key"
+                            type="button"
+                            :class="['group-chip', {'is-active': chip.key === activeGroup}]"
+                            @mouseenter="isolateGroup(chip.key)"
+                            @mouseleave="isolateGroup(activeGroup)"
+                            @click="toggleGroup(chip.key)"
+                        >
+                            {{ chip.label }} ({{ chip.count }})
+                        </button>
+                    </div>
+
                     <div v-if="dagView && layoutMode === 'dag'" class="dag-legend">
-                        <span v-for="state in LEGEND" :key="state" class="legend-item">
+                        <span v-for="state in presentStatuses" :key="state" class="legend-item">
                             <i :class="`legend-swatch status-${state}`" />
                             <KsText size="small">{{ $t(`dependency.dag.status.${state}`) }}</KsText>
                         </span>
@@ -166,6 +196,70 @@
 
     const LEGEND = ["fresh", "stale", "failed", "never", "unknown"] as const
 
+    const groupField = ref("")
+
+    /** Legend lists only the statuses on screen: a permanent five-entry key is noise. */
+    const presentStatuses = computed(() => {
+        const present = new Set(graphNodesList.value
+            .filter((node) => node.metadata.subtype === ASSET)
+            .map((node) => (node.metadata as {status?: string}).status ?? "unknown"))
+        return LEGEND.filter((state) => present.has(state))
+    })
+
+    /** Grouping fields, read off each node so only ones with data are offered. */
+    const GROUP_FIELDS = [
+        {key: "dataset", label: () => t("dependency.dag.group_dataset"), of: (node: Node) => schemaOf(node.flow)},
+        {key: "kind", label: () => t("dependency.dag.kind"), of: (node: Node) => (node.metadata as {kind?: string}).kind},
+        {key: "system", label: () => t("dependency.dag.system"), of: (node: Node) => (node.metadata as {system?: string}).system},
+        {key: "namespace", label: () => t("namespace"), of: (node: Node) => node.namespace},
+    ] as const
+
+    const schemaOf = (id: string): string | undefined => {
+        const segments = id.split(".")
+        return segments.length >= 3 ? segments[segments.length - 2] : undefined
+    }
+
+    const graphNodesList = computed(() => getElements()
+        .filter((el): el is {data: Node} => el.data.type === "NODE")
+        .map(({data}) => data))
+
+    const groupFields = computed(() => GROUP_FIELDS.map((field) => {
+        const values = graphNodesList.value.map(field.of).filter(Boolean)
+        const groups = new Set(values).size
+
+        return {
+            key:    field.key,
+            label:  field.label(),
+            groups,
+            // One group says nothing, and a lane per node is a diagonal rather than a grouping.
+            usable: groups > 1 && groups < graphNodesList.value.length,
+        }
+    }).filter((field) => field.groups > 0))
+
+    /** One chip per group in the current graph, ungrouped last. */
+    const groupChips = computed(() => {
+        const accessor = groupOf.value
+        if (!accessor) return []
+
+        const counts = new Map<string, number>()
+        graphNodesList.value.forEach((node) => {
+            const key = accessor(node) ?? ""
+            counts.set(key, (counts.get(key) ?? 0) + 1)
+        })
+
+        return [...counts.entries()]
+            .sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a < b ? -1 : 1))
+            .map(([key, count]) => ({key, count, label: key || t("dependency.dag.ungrouped")}))
+    })
+
+    // Switching the grouping field invalidates whichever group was pinned.
+    watch(() => groupField.value, () => clearGroup())
+
+    const groupOf = computed(() => {
+        const field = GROUP_FIELDS.find((candidate) => candidate.key === groupField.value)
+        return field ? (node: Node) => field.of(node) : undefined
+    })
+
     /**
      * DAG view insets the series box so the graph never touches the toolbar, the
      * legend or the pane edges, and clamps roam so cards cannot be zoomed into a
@@ -225,10 +319,14 @@
         selectedNodeID,
         selectNode,
         highlightNode,
+        isolateGroup,
+        toggleGroup,
+        clearGroup,
+        activeGroup,
         openedNodeID,
         handleNodeClick,
         handlers,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, layoutMode)
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, layoutMode, groupOf)
 
     const router = useRouter()
 
@@ -444,12 +542,47 @@
             pointer-events: auto;
         }
 
+        & .group-select {
+            pointer-events: auto;
+            width: 11rem;
+        }
+
         & .layout-summary {
             color: var(--ks-text-secondary);
             text-align: right;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        & .group-chips {
+            position: absolute;
+            top: var(--ks-spacing-8);
+            left: var(--ks-spacing-2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--ks-spacing-2);
+            pointer-events: auto;
+        }
+
+        & .group-chip {
+            padding: var(--ks-spacing-1) var(--ks-spacing-3);
+            border: 1px solid var(--ks-border-subtle);
+            border-radius: var(--ks-radius-base);
+            background: var(--ks-bg-surface);
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-xs);
+            cursor: pointer;
+        }
+
+        & .group-chip:hover {
+            color: var(--ks-text-primary);
+            border-color: var(--ks-border-default);
+        }
+
+        & .group-chip.is-active {
+            border-color: var(--ks-border-focus);
+            color: var(--ks-text-primary);
         }
 
         & .dag-legend {

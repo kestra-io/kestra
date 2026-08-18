@@ -153,6 +153,8 @@ kestra:
     # precompressed variants and ETags, so requests never re-read or re-compress files from the jar.
     ui-resource-cache:
       max-size: 64mb
+      # Files bigger than this bypass the cache and are streamed directly from the jar.
+      max-entry-size: 8mb
 
   retries:
     attempts: 5

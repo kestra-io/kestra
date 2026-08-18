@@ -1,5 +1,9 @@
 package io.kestra.webserver.services;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -35,7 +39,8 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UiResourceCacheService {
     private static final int PRECOMPRESS_MIN_SIZE = 256;
-    private static final double PRECOMPRESS_MAX_RATIO = 0.9d;
+    // Store a compressed variant only when it at least halves the raw size, so marginal wins do not cost cache space.
+    private static final double PRECOMPRESS_MAX_RATIO = 0.5d;
     private static final String GZIP = "gzip";
     private static final String BROTLI = "br";
     private static final Set<String> INCOMPRESSIBLE_MEDIA_TYPES = Set.of(
@@ -53,16 +58,26 @@ public class UiResourceCacheService {
     );
 
     private final Cache<String, CachedUiResource> cache;
+    private final long maxEntrySize;
 
     @Inject
     public UiResourceCacheService(UiResourceCacheConfiguration configuration) {
         long maxSize = configuration.maxSize();
+        this.maxEntrySize = configuration.maxEntrySize();
         this.cache = Caffeine.newBuilder()
             .maximumWeight(maxSize)
             .weigher((String key, CachedUiResource resource) -> (int) Math.min(Integer.MAX_VALUE, resource.weight() + key.length()))
             // Run eviction inline so the cache never exceeds its bound between maintenance cycles.
             .executor(Runnable::run)
             .build();
+    }
+
+    /**
+     * Returns true when a resource of the given size may enter the cache; bigger files must be streamed
+     * directly by the caller so a single huge artifact cannot occupy the whole cache.
+     */
+    public boolean isCacheable(long sizeInBytes) {
+        return sizeInBytes >= 0 && sizeInBytes <= maxEntrySize;
     }
 
     /**
@@ -121,6 +136,29 @@ public class UiResourceCacheService {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
         } catch (NoSuchAlgorithmException e) {
             throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Returns the size of a classpath resource without reading its content, from the zip entry or file
+     * metadata, or {@code -1} when it cannot be determined.
+     */
+    public static long resourceSize(URL url) {
+        try {
+            return url.openConnection().getContentLengthLong();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Reads a classpath resource fully into memory.
+     */
+    public static byte[] readResource(URL url) {
+        try (InputStream is = url.openStream()) {
+            return is.readAllBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

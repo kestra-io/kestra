@@ -3,19 +3,24 @@ package io.kestra.webserver.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
+
+import com.aayushatharva.brotli4j.Brotli4jLoader;
+import com.aayushatharva.brotli4j.encoder.Encoder;
 
 import io.micronaut.core.annotation.Nullable;
 
 /**
  * Compression helpers for precompressing static UI resources held in memory.
  * <p>
- * Brotli support is opportunistic: it is only active when the optional {@code brotli4j} library (and its
- * platform natives) are present on the runtime classpath; otherwise callers fall back to gzip.
+ * Brotli is only active when the brotli4j native library loads for the current platform; otherwise
+ * callers fall back to gzip only.
  */
 public final class UiResourceCompression {
-    private static final boolean BROTLI_AVAILABLE = detectBrotli();
+    // Both resolved once at class-loading time: the native library probe and the encoder settings.
+    private static final boolean BROTLI_AVAILABLE = Brotli4jLoader.isAvailable();
+    // Quality 5 keeps the one-time compression cost per resource low while still beating gzip on size.
+    private static final Encoder.Parameters BROTLI_PARAMETERS = new Encoder.Parameters().setQuality(5);
 
     private UiResourceCompression() {
     }
@@ -25,48 +30,32 @@ public final class UiResourceCompression {
     }
 
     public static byte[] gzip(byte[] raw, int level) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream(Math.max(64, raw.length / 3));
-        try (GZIPOutputStream gzip = new GZIPOutputStream(out) {
-            {
-                this.def.setLevel(level);
-            }
-        }) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(Math.max(64, raw.length / 3));
+             GZIPOutputStream gzip = new GZIPOutputStream(out) {
+                 {
+                     this.def.setLevel(level);
+                 }
+             }) {
             gzip.write(raw);
+            gzip.finish();
+            return out.toByteArray();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return out.toByteArray();
     }
 
     /**
-     * Compresses with brotli, or returns {@code null} when brotli4j is not on the classpath.
+     * Compresses with brotli, or returns {@code null} when the brotli native library is unavailable.
      */
     @Nullable
     public static byte[] brotli(byte[] raw) {
         if (!BROTLI_AVAILABLE) {
             return null;
         }
-        return brotliCompress(raw);
-    }
-
-    // Isolated so the brotli4j classes are only resolved once availability has been confirmed.
-    private static byte[] brotliCompress(byte[] raw) {
         try {
-            return com.aayushatharva.brotli4j.encoder.Encoder.compress(
-                raw,
-                // Quality 5 keeps the one-time compression cost per resource low while still beating gzip on size.
-                new com.aayushatharva.brotli4j.encoder.Encoder.Parameters().setQuality(5)
-            );
+            return Encoder.compress(raw, BROTLI_PARAMETERS);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
-        }
-    }
-
-    private static boolean detectBrotli() {
-        try {
-            return com.aayushatharva.brotli4j.Brotli4jLoader.isAvailable();
-        } catch (NoClassDefFoundError e) {
-            return false;
         }
     }
 }

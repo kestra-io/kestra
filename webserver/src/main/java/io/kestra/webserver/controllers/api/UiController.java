@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.URL;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -12,12 +13,14 @@ import io.kestra.webserver.services.UiIndexService;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -63,18 +66,27 @@ public class UiController {
 
         // Only paths whose last segment has an extension can be static resources; SPA routes never resolve here.
         if (isStaticResourceCandidate(normalized) && !INDEX_HTML.equals(normalized)) {
-            MediaType mediaType = MediaType
-                .forExtension(NameUtils.extension(normalized))
-                .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-            Optional<CachedUiResource> resource = uiResourceCacheService.get(
-                "ui:" + normalized,
-                mediaType,
-                () -> readClasspathResource("ui/" + normalized)
-            );
-            if (resource.isPresent()) {
+            URL resourceUrl = UiController.class.getClassLoader().getResource("ui/" + normalized);
+            if (resourceUrl != null) {
+                MediaType mediaType = MediaType
+                    .forExtension(NameUtils.extension(normalized))
+                    .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
                 String cacheControl = normalized.startsWith(HASHED_ASSETS_PREFIX) ? HASHED_ASSETS_CACHE_CONTROL : DEFAULT_CACHE_CONTROL;
-                return uiResourceCacheService.respond(request, resource.get(), cacheControl);
+
+                if (!uiResourceCacheService.isCacheable(UiResourceCacheService.resourceSize(resourceUrl))) {
+                    // Files above the per-entry bound are streamed straight from the jar instead of being buffered.
+                    return HttpResponse.ok(new StreamedFile(openStream(resourceUrl), mediaType))
+                        .header(HttpHeaders.CACHE_CONTROL, cacheControl);
+                }
+
+                Optional<CachedUiResource> resource = uiResourceCacheService.get(
+                    "ui:" + normalized,
+                    mediaType,
+                    () -> Optional.of(UiResourceCacheService.readResource(resourceUrl))
+                );
+                if (resource.isPresent()) {
+                    return uiResourceCacheService.respond(request, resource.get(), cacheControl);
+                }
             }
         }
 
@@ -91,9 +103,9 @@ public class UiController {
         return lastSegment.indexOf('.') > 0;
     }
 
-    private static Optional<byte[]> readClasspathResource(String resourcePath) {
-        try (InputStream is = UiController.class.getClassLoader().getResourceAsStream(resourcePath)) {
-            return is == null ? Optional.empty() : Optional.of(is.readAllBytes());
+    private static InputStream openStream(URL url) {
+        try {
+            return url.openStream();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

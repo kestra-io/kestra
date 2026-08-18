@@ -1,8 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,6 +48,7 @@ import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -542,10 +542,10 @@ public class PluginController {
     @Operation(tags = { "Plugins" }, summary = "Get plugins group by subgroups")
     // The response is raw file bytes, not base64: keep the OpenAPI schema as binary like the previous StreamedFile signature.
     @ApiResponse(responseCode = "200", description = "Ok", content = @Content(schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
-    public HttpResponse<byte[]> getPluginUi(
+    public HttpResponse<?> getPluginUi(
         HttpRequest<?> request,
         @Parameter(description = "The plugin group") @PathVariable String group,
-        @Parameter(description = "The file path") @PathVariable String path) {
+        @Parameter(description = "The file path") @PathVariable String path) throws IOException {
         if (path.contains("..") || path.startsWith("/") || path.startsWith("\\") || path.contains("\0")) {
             return HttpResponse.badRequest();
         }
@@ -557,9 +557,20 @@ public class PluginController {
 
         String resourcePath = "plugin-ui/" + path;
 
+        URL resourceUrl = plugin.getClassLoader().getResource(resourcePath);
+        if (resourceUrl == null) {
+            throw new NotFoundException();
+        }
+
         MediaType mediaType = MediaType
             .forExtension(NameUtils.extension(resourcePath))
             .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        if (!uiResourceCacheService.isCacheable(UiResourceCacheService.resourceSize(resourceUrl))) {
+            // Oversized plugin files are streamed straight from the plugin jar, as before this cache
+            // existed, so a single huge artifact cannot occupy the whole cache.
+            return HttpResponse.ok(new StreamedFile(resourceUrl.openStream(), mediaType));
+        }
 
         // The key includes the plugin UI source hash and the classloader identity so a reloaded or
         // upgraded plugin never serves stale bytes from the cache.
@@ -571,17 +582,9 @@ public class PluginController {
         // Only the plugin-ui entry file is cache-busted by the frontend (via a sourceHash query parameter),
         // so every plugin UI response must be revalidated; 304s are answered from memory.
         return uiResourceCacheService
-            .get(cacheKey, mediaType, () -> readPluginUiResource(plugin, resourcePath))
-            .map(resource -> (HttpResponse<byte[]>) uiResourceCacheService.respond(request, resource, REVALIDATE_CACHE_DIRECTIVE))
+            .get(cacheKey, mediaType, () -> Optional.of(UiResourceCacheService.readResource(resourceUrl)))
+            .map(resource -> uiResourceCacheService.respond(request, resource, REVALIDATE_CACHE_DIRECTIVE))
             .orElseThrow(NotFoundException::new);
-    }
-
-    private static Optional<byte[]> readPluginUiResource(RegisteredPlugin plugin, String resourcePath) {
-        try (InputStream in = plugin.getClassLoader().getResourceAsStream(resourcePath)) {
-            return in == null ? Optional.empty() : Optional.of(in.readAllBytes());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {

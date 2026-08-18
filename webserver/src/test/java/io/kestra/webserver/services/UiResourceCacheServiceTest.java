@@ -25,7 +25,7 @@ class UiResourceCacheServiceTest {
     private static final MediaType JS = MediaType.of("text/javascript");
 
     private static UiResourceCacheService service(long maxSize) {
-        return new UiResourceCacheService(new UiResourceCacheConfiguration(maxSize));
+        return new UiResourceCacheService(new UiResourceCacheConfiguration(maxSize, maxSize));
     }
 
     private static byte[] compressibleContent() {
@@ -114,6 +114,34 @@ class UiResourceCacheServiceTest {
         // Then
         assertThat(asset).isPresent();
         assertThat(asset.get().gzip()).isNull();
+    }
+
+    @Test
+    void shouldSkipPrecompressionWhenCompressionRatioIsWeak() {
+        // Given - a single duplication of random bytes compresses to roughly half, above the 0.5 cutoff
+        UiResourceCacheService service = service(10 * 1024 * 1024);
+        byte[] random = incompressibleContent(2048);
+        byte[] content = new byte[random.length * 2];
+        System.arraycopy(random, 0, content, 0, random.length);
+        System.arraycopy(random, 0, content, random.length, random.length);
+
+        // When
+        Optional<CachedUiResource> asset = service.get("weakly-compressible", MediaType.TEXT_PLAIN_TYPE, () -> Optional.of(content));
+
+        // Then
+        assertThat(asset).isPresent();
+        assertThat(asset.get().gzip()).isNull();
+    }
+
+    @Test
+    void shouldRejectResourcesAboveTheEntryBoundFromTheCache() {
+        // Given
+        UiResourceCacheService service = new UiResourceCacheService(new UiResourceCacheConfiguration(10L * 1024 * 1024, 1024L));
+
+        // Then - unknown sizes and oversized files must be streamed by the caller
+        assertThat(service.isCacheable(1024)).isTrue();
+        assertThat(service.isCacheable(1025)).isFalse();
+        assertThat(service.isCacheable(-1)).isFalse();
     }
 
     @Test

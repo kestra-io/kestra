@@ -3113,8 +3113,8 @@ export default {
             "empty title": "Brak zapisanych filtrów",
             "empty subtitle": "Zapisz aktywny filtr, aby użyć go ponownie później",
             "save duplicate": "Filtr o tej nazwie już istnieje.",
-            "active key value pairs": "Aktywne pary klucz/wartość",
-            "kv_pair_selected": "Wybrano {count} pary Key/Value",
+            "active key value pairs": "Aktywne pary KV",
+            "kv_pair_selected": "Wybrano {count} par KV",
             "key": "Key",
             "value": "Value",
             "search options": "Szukaj...",
@@ -3204,11 +3204,11 @@ export default {
                 "description": "Filtruj według grupy",
             },
             "parentId": {
-                "label": "Identyfikator parent",
+                "label": "ID rodzica",
                 "description": "Filtruj według parent ID",
             },
             "flowId": {
-                "label": "Identyfikator flow",
+                "label": "ID Flow",
                 "description": "Filtruj według flow ID",
             },
             "email": {
@@ -3313,11 +3313,11 @@ export default {
                 "label": "Poziom Logowania",
             },
             "triggerId": {
-                "label": "Identyfikator Trigger",
-                "description": "Filtruj według identyfikatora trigger",
+                "label": "ID Triggera",
+                "description": "Filtruj według ID Triggera",
             },
             "triggerId_trigger": {
-                "label": "Identyfikator Trigger",
+                "label": "ID Triggera",
                 "description": "Filtruj według trigger ID",
             },
             "taskId": {
@@ -3333,7 +3333,7 @@ export default {
                 "description": "Filtruj według numeru próby Task Runa",
             },
             "workerId": {
-                "label": "Identyfikator Worker",
+                "label": "ID Workera",
                 "description": "Filtruj według worker ID",
             },
             "metric": {
@@ -3378,11 +3378,11 @@ export default {
                     "parent-execution": "ID nadrzędnego Executiona, który uruchomił ten Execution",
                 },
                 "kv": {
-                    "namespace": "Logiczna grupa, w której przechowywana jest para klucz-wartość",
-                    "key": "Unikalny identyfikator dla przechowywanej wartości",
+                    "namespace": "Logiczna grupa, w której przechowywana jest para KV",
+                    "key": "Unikalne ID przechowywanej wartości",
                     "description": "Opcjonalne notatki wyjaśniające wpis w kv store",
                     "last modified": "Znacznik czasu ostatniej aktualizacji",
-                    "expiration date": "Kiedy para Key-Value wygasa",
+                    "expiration date": "Kiedy para KV wygasa",
                 },
                 "secrets": {
                     "namespace": "Logiczna grupa, w której przechowywany jest Secret",
@@ -3393,7 +3393,7 @@ export default {
                     "flow": "Przepływ powiązany z triggerem",
                     "namespace": "Namespace Triggera",
                     "execution id": "ID Executiona uruchomionego przez Trigger",
-                    "workerId": "Identyfikator worker",
+                    "workerId": "ID Workera",
                     "last trigger date": "Kiedy Trigger był ostatnio uruchamiany",
                     "context updated date": "Ostatnia aktualizacja kontekstu triggera",
                     "next evaluation date": "Kiedy trigger oceni następny",
@@ -3418,7 +3418,7 @@ export default {
                 "flow_metric_filters": "Filtry Metryk Flow",
                 "trigger_filters": "Filtry Trigger",
                 "namespace_filters": "Filtry Namespace",
-                "kv_filters": "Filtry Key-Value",
+                "kv_filters": "Filtry KV",
                 "secret_filters": "Filtry Secretów",
                 "blueprint_filters": "Filtry Blueprint",
             },

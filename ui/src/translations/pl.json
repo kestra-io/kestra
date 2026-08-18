@@ -5,7 +5,7 @@
     "new_flow_landing": {
       "blank": {
         "id_invalid": "Używaj tylko liter, cyfr, kropek, myślników i podkreśleń, zaczynając od litery lub cyfry.",
-        "id_label": "Identyfikator Flow",
+        "id_label": "ID Flow",
         "id_placeholder": "mój-flow",
         "namespace_invalid": "Używaj tylko małych liter, cyfr, kropek, myślników i podkreśleń, zaczynając od małej litery lub cyfry.",
         "namespace_placeholder": "Wybierz namespace",
@@ -22,7 +22,7 @@
         "back": "Wstecz",
         "error": {
           "empty": "Zawartość YAML jest pusta.",
-          "invalid_mapping": "Nieprawidłowy YAML Flow: oczekiwano mapowania Key-Value, a nie listy lub skalara.",
+          "invalid_mapping": "Nieprawidłowy YAML Flow: oczekiwano mapowania z Key na Value, a nie listy lub skalara.",
           "parse_error": "Nie można przeanalizować YAML.",
           "too_large": "Ten plik jest za duży. Zamiast tego wklej definicję Flow lub prześlij plik mniejszy niż 1 MB."
         },
@@ -47,7 +47,7 @@
       "create_flow": "Utwórz Flow",
       "email": "Email",
       "execution": {
-        "include_sub": "Uwzględnij pod-namespace'y",
+        "include_sub": "Uwzględnij podrzędne namespace'y",
         "include_sub_hint_off": "Ten alert wyzwolą tylko Flowy w dokładnie tym namespace'ie.",
         "include_sub_hint_on": "Ten alert wyzwolą również Flowy w podrzędnych namespace'ach.",
         "namespace_placeholder": "Wybierz namespace",
@@ -96,7 +96,7 @@
         "empty": "Skonfiguruj Trigger i co najmniej jeden kanał powiadomień, aby zobaczyć podgląd swojego Flow.",
         "exact_match": "dokładne dopasowanie",
         "execution": "Gdy Flow w {ns} ({scope}) osiągnie status {states}, zostanie wysłane powiadomienie przez {channels}.",
-        "including_sub": "i pod-namespace'y",
+        "including_sub": "i podrzędne namespace'y",
         "invalid_hint": "Dodaj co najmniej jeden kanał powiadomień i uzupełnij konfigurację Triggera.",
         "invalid_hint_trigger": "Uzupełnij konfigurację Triggera.",
         "no_channel": "wybrane kanały",
@@ -385,11 +385,11 @@
     "change execution state done": "Status Execution zaktualizowany",
     "mark as": "Oznacz jako <code>{status}</code>",
     "unqueue as": "Usuń z kolejki jako <code>{status}</code>",
-    "kill": "Zatrzymaj",
-    "kill parents and subflow": "Zatrzymaj bieżący Execution i Subflowy",
-    "kill only parents": "Zatrzymaj tylko bieżący Execution",
-    "killed confirm": "Czy na pewno chcesz zatrzymać Execution <code>{id}</code>?",
-    "killed done": "Execution został skierowany do zatrzymania",
+    "kill": "Zabij",
+    "kill parents and subflow": "Zabij bieżący Execution i Subflowy",
+    "kill only parents": "Zabij tylko bieżący Execution",
+    "killed confirm": "Czy na pewno chcesz zabić Execution <code>{id}</code>?",
+    "killed done": "Execution został skierowany do zabicia",
     "resume": "Wznów",
     "resumed title": "Wznów Execution <code>{id}</code>",
     "resumed confirm": "Czy na pewno chcesz wznowić Execution <code>{id}</code>?",
@@ -617,7 +617,7 @@
     "triggers_add_modal_namespace_placeholder": "Wybierz namespace",
     "triggers_add_modal_flow_placeholder": "Wybierz flow",
     "triggers_add_modal_trigger_id": "ID Triggera",
-    "triggers_add_modal_trigger_id_placeholder": "Unikalny identyfikator dla tego triggera",
+    "triggers_add_modal_trigger_id_placeholder": "Unikalne ID dla tego Triggera",
     "triggers_add_modal_properties_hint": "Skonfiguruj właściwości Triggera w edytorze Flow po dodaniu Triggera.",
     "triggers_add_modal_add_button": "Dodaj Trigger do Flow",
     "trigger details": "Szczegóły Triggera",
@@ -688,7 +688,7 @@
       "heading": "Wszystko o Kestra.",
       "subheading": "Najnowsze aktualizacje, przewodniki i historie"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Ten Execution nadal trwa, a usunięcie go nie zatrzyma procesu.<br />Aby go zatrzymać, musisz zakończyć Execution.</div>",
+    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Ten Execution nadal trwa, a usunięcie go nie zatrzyma procesu.<br />Aby go zatrzymać, musisz zabić Execution.</div>",
     "restore": "Przywróć",
     "restore confirm": "Czy na pewno chcesz przywrócić Rewizję <code>{revision}</code>?",
     "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> Executionów?",
@@ -698,7 +698,7 @@
     "bulk pause": "Czy na pewno chcesz wstrzymać <code>{executionCount}</code> Executionów?",
     "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> Executionów?<br/><br/>OSTRZEŻENIE: wymuszone uruchomienie Execution nie jest gwarantowane i może spowodować zduplikowane Task Runy.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w statusie CREATED przejdą do statusu RUNNING.</li><li>Taski w statusie RUNNING zostaną ponownie przesłane.</li><li>Taski w statusie QUEUED zostaną usunięte z kolejki.</li><li>Taski w statusie PAUSED zostaną wznowione.</li></ul>",
     "bulk restart": "Czy na pewno chcesz ponownie uruchomić <code>{executionCount}</code> Executionów?",
-    "bulk kill": "Czy na pewno chcesz zatrzymać <code>{executionCount}</code> Executionów?",
+    "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> Executionów?",
     "cancel": "Anuluj",
     "errorLogs": "Logi błędów",
     "welcome_page": {
@@ -712,7 +712,7 @@
     "executions unqueue": "Usunięto z kolejki <code>{executionCount}</code> Executionów",
     "executions force run": "Wymuszono uruchomienie <code>{executionCount}</code> Executionów",
     "executions restarted": "Uruchomiono ponownie <code>{executionCount}</code> Executionów",
-    "executions killed": "Zatrzymano <code>{executionCount}</code> Executionów",
+    "executions killed": "Zabito <code>{executionCount}</code> Executionów",
     "executions deleted": "Usunięto <code>{executionCount}</code> Executionów",
     "invalid bulk replay": "Nie można uruchomić Replaya Executionów",
     "invalid bulk resume": "Nie można wznowić Executionów",
@@ -720,7 +720,7 @@
     "invalid bulk unqueue": "Nie można usunąć Executionów z kolejki",
     "invalid bulk force run": "Nie można wymusić uruchomienia Executionów",
     "invalid bulk restart": "Nie można ponownie uruchomić Executionów",
-    "invalid bulk kill": "Nie można zatrzymać Executionów",
+    "invalid bulk kill": "Nie można zabić Executionów",
     "invalid bulk delete": "Nie można usunąć Executionów",
     "execution not found": "Nie znaleziono Execution {executionId}.",
     "execution not in state PAUSED": "Execution <code>{executionId}</code> nie jest w statusie PAUSED",
@@ -951,7 +951,7 @@
     "undefined": "Niezdefiniowane",
     "execution-include-non-terminated": "Uwzględnić niezakończone Executiony?",
     "execution-warn-title": "Ważne ostrzeżenie!",
-    "execution-warn-deleting-still-running": "Zdecydowanie zalecamy anulowanie tej akcji i zatrzymanie najpierw wszystkich trwających Executionów. Usunięcie niezakończonych Executionów może prowadzić do problemów ze współbieżnością, niespójności w zarządzaniu zależnościami Flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka, zanim przejdziesz do usuwania.",
+    "execution-warn-deleting-still-running": "Zdecydowanie zalecamy anulowanie tej akcji i zabicie najpierw wszystkich trwających Executionów. Usunięcie niezakończonych Executionów może prowadzić do problemów ze współbieżnością, niespójności w zarządzaniu zależnościami Flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka, zanim przejdziesz do usuwania.",
     "pluginPage": {
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
@@ -1123,7 +1123,7 @@
       },
       "apps": {
         "title": "Twórz własne Apps w Kestrze",
-        "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie.",
+        "message": "Apps w Kestra Enterprise Edition pozwalają tworzyć własne interfejsy, które współpracują z workflowami Kestry spoza platformy. Dzięki temu możesz używać swoich workflowów jako backendu dla własnych aplikacji, a osoby nietechniczne mogą wprowadzać dane przez formularze lub wznawiać wstrzymane workflowy oczekujące na zatwierdzenie.",
         "blueprints": {
           "title": "Zacznij od Blueprintu Apps.",
           "message": "Blueprinty Apps to gotowe aplikacje do typowych zastosowań, takich jak formularze, zatwierdzenia i przesyłanie danych. Dzięki Kestra Enterprise Edition możesz wziąć dowolny Blueprint jako punkt wyjścia i dostosować go, aby zbudować własne interfejsy na swoich workflowach."
@@ -1727,7 +1727,7 @@
       },
       "variables": {
         "title": "Jeszcze brak zmiennych",
-        "content": "Dodaj pary Key-Value, aby udostępniać konfigurację między Flowami. Podrzędne namespace'y dziedziczą je automatycznie, a do każdej wartości możesz się odwołać przez"
+        "content": "Dodaj pary KV, aby udostępniać konfigurację między Flowami. Podrzędne namespace'y dziedziczą je automatycznie, a do każdej wartości możesz się odwołać przez"
       },
       "workerRegistrationTokens": {
         "title": "Nie masz jeszcze żadnych Registration Tokenów!",
@@ -1792,7 +1792,7 @@
       "executions": "Nie znaleziono Executionów",
       "triggers": "Nie znaleziono Triggerów",
       "flows": "Nie znaleziono Flowów",
-      "kv_pairs": "Nie znaleziono par Key-Value",
+      "kv_pairs": "Nie znaleziono par KV",
       "secrets": "Nie znaleziono Secretów"
     },
     "duplicate-pair": "{label} „{key}” jest zduplikowany, pierwszy Key został zignorowany.",
@@ -2164,7 +2164,7 @@
         "codex_hint": "Dodaj następujące elementy do ~/.codex/config.toml:",
         "auth_basic_hint": "Przed uruchomieniem klienta ustaw <code>KESTRA_BASIC_AUTH</code> jako zmienną środowiskową zawierającą zakodowany w base64 ciąg <code>username:password</code>.",
         "auth_api_token_hint": "Przed uruchomieniem klienta ustaw <code>KESTRA_TOKEN</code> jako zmienną środowiskową.",
-        "auth_oauth_client_id_hint": "Zastąp <code>&lt;client-id&gt;</code> identyfikatorem klienta OAuth i zarejestruj <code>http://localhost:7777</code> jako prawidłowy URI przekierowania na tym kliencie.",
+        "auth_oauth_client_id_hint": "Zastąp <code>&lt;client-id&gt;</code> ID klienta OAuth i zarejestruj <code>http://localhost:7777</code> jako prawidłowy URI przekierowania dla tego klienta.",
         "auth_oauth_browser_hint": "Przy pierwszym połączeniu przeglądarka otworzy stronę logowania dostawcy tożsamości."
       }
     },

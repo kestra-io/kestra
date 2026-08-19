@@ -11,10 +11,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.storages.StorageInterface;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -315,14 +319,124 @@ class PluginAutoInstallServiceTest {
         assertThatCode(() -> service.installMissingPlugins(yaml)).doesNotThrowAnyException();
     }
 
+    // ─── installMissingTypes ──────────────────────────────────────────────────
+
+    @Test
+    void shouldInstallDeduplicatedArtifactsForAggregatedTypes() throws Exception {
+        // Given — two missing types (as aggregated by the first-sync migration) sharing one artifact
+        when(catalogService.get()).thenReturn(
+            List.of(manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http"))
+        );
+        UUID jobId = UUID.randomUUID();
+        when(installJobRegistry.submit(anyList())).thenReturn(jobId);
+        when(installJobRegistry.awaitTerminal(jobId, INSTALL_TIMEOUT))
+            .thenAnswer(invocation -> Optional.of(succeededJob()));
+
+        PluginAutoInstallService service = enabledService();
+
+        // When
+        service.installMissingTypes(
+            Set.of(
+                "io.kestra.plugin.http.request.Request",
+                "io.kestra.plugin.http.download.Download"
+            )
+        );
+
+        // Then
+        ArgumentCaptor<List<PluginArtifact>> captor = ArgumentCaptor.captor();
+        verify(installJobRegistry).submit(captor.capture());
+        assertThat(captor.getValue()).hasSize(1);
+        assertThat(captor.getValue().getFirst().artifactId()).isEqualTo("plugin-http");
+    }
+
+    @Test
+    void shouldNotInstallTypesWhenDisabled() {
+        // Given
+        PluginAutoInstallService service = disabledService();
+
+        // When
+        service.installMissingTypes(Set.of("io.kestra.plugin.http.request.Request"));
+
+        // Then
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
+    // ─── installMissingConfiguredPlugins ──────────────────────────────────────
+
+    @Test
+    void shouldInstallStorageArtifactWhenConfiguredStorageTypeIsMissing() throws Exception {
+        // Given — no registered plugin provides the configured "s3" storage backend
+        when(pluginRegistry.plugins()).thenReturn(List.of());
+        UUID jobId = UUID.randomUUID();
+        when(installJobRegistry.submit(anyList())).thenReturn(jobId);
+        when(installJobRegistry.awaitTerminal(jobId, INSTALL_TIMEOUT))
+            .thenAnswer(invocation -> Optional.of(succeededJob()));
+
+        PluginAutoInstallService service = enabledService(Optional.of("s3"));
+
+        // When
+        service.installMissingConfiguredPlugins();
+
+        // Then — the conventional storage coordinates are submitted
+        ArgumentCaptor<List<PluginArtifact>> captor = ArgumentCaptor.captor();
+        verify(installJobRegistry).submit(captor.capture());
+        assertThat(captor.getValue()).hasSize(1);
+        assertThat(captor.getValue().getFirst().groupId()).isEqualTo("io.kestra.storage");
+        assertThat(captor.getValue().getFirst().artifactId()).isEqualTo("storage-s3");
+    }
+
+    @Test
+    void shouldNotInstallStorageArtifactWhenConfiguredStorageTypeIsRegistered() {
+        // Given — a registered plugin already provides the "s3" storage backend
+        RegisteredPlugin registeredPlugin = mock(RegisteredPlugin.class);
+        doReturn(List.of(S3LikeStorage.class)).when(registeredPlugin).getStorages();
+        when(pluginRegistry.plugins()).thenReturn(List.of(registeredPlugin));
+
+        PluginAutoInstallService service = enabledService(Optional.of("S3"));
+
+        // When
+        service.installMissingConfiguredPlugins();
+
+        // Then
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
+    @Test
+    void shouldNotInstallStorageArtifactWhenNoStorageTypeIsConfigured() {
+        // Given
+        PluginAutoInstallService service = enabledService(Optional.empty());
+
+        // When
+        service.installMissingConfiguredPlugins();
+
+        // Then
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
+    @Test
+    void shouldNotInstallConfiguredPluginsWhenDisabled() {
+        // Given
+        PluginAutoInstallService service = disabledService();
+
+        // When
+        service.installMissingConfiguredPlugins();
+
+        // Then
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
     // ─── helpers ─────────────────────────────────────────────────────────────
 
     private PluginAutoInstallService enabledService() {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, true, INSTALL_TIMEOUT);
+        return enabledService(Optional.empty());
+    }
+
+    private PluginAutoInstallService enabledService(Optional<String> storageType) {
+        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, true, INSTALL_TIMEOUT, storageType);
     }
 
     private PluginAutoInstallService disabledService() {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, false, INSTALL_TIMEOUT);
+        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, false, INSTALL_TIMEOUT, Optional.of("s3"));
     }
 
     private PluginInstallJob succeededJob() {
@@ -331,5 +445,9 @@ class PluginAutoInstallServiceTest {
 
     private PluginCatalogService.PluginManifest manifest(String groupId, String artifactId, String group) {
         return new PluginCatalogService.PluginManifest(artifactId, null, groupId, artifactId, group);
+    }
+
+    @Plugin.Id("s3")
+    abstract static class S3LikeStorage implements StorageInterface {
     }
 }

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.EditionProvider;
@@ -40,6 +41,10 @@ import lombok.extern.slf4j.Slf4j;
  * CLI, kestractl, EE) transparently installs missing plugins before validation. Installation is
  * best-effort: a failure is logged as a warning and never turns a save into a hard error beyond
  * the pre-existing validation failure.</li>
+ * <li><b>First-sync / boot</b>: {@link #installMissingTypes(Set)} backs the 1.3 → 2.0 migration
+ * that crawls every existing flow once, and {@link #installMissingConfiguredPlugins()} installs
+ * config-referenced plugins (storage backend) at server startup, before the corresponding
+ * services initialize.</li>
  * </ul>
  * <p>
  * Feature gating: on by default only for OSS standalone (the KIP-45 target persona). Everywhere else
@@ -55,11 +60,15 @@ public class PluginAutoInstallService {
 
     private static final Duration DEFAULT_INSTALL_TIMEOUT = Duration.ofMinutes(2);
 
+    /** Maven coordinates template for storage backend plugins, e.g. {@code io.kestra.storage:storage-s3:LATEST}. */
+    private static final String STORAGE_ARTIFACT_TEMPLATE = "io.kestra.storage:storage-%s:LATEST";
+
     private final PluginCatalogService catalogService;
     private final PluginRegistry pluginRegistry;
     private final Provider<PluginInstallJobRegistry> installJobRegistry;
     private final boolean enabled;
     private final Duration installTimeout;
+    private final Optional<String> configuredStorageType;
 
     @Inject
     public PluginAutoInstallService(
@@ -67,19 +76,25 @@ public class PluginAutoInstallService {
         final PluginRegistry pluginRegistry,
         final Provider<PluginInstallJobRegistry> installJobRegistry,
         final EditionProvider editionProvider,
+        @Value("${kestra.server-type}") final Optional<ServerType> serverType,
+        @Value("${kestra.storage.type}") final Optional<String> storageType,
         @Value("${kestra.plugins.auto-install.enabled}") final Optional<Boolean> enabledProperty,
         @Value("${kestra.plugins.auto-install.install-timeout}") final Optional<Duration> installTimeoutProperty) {
         // Default on only for OSS standalone; an explicit property value always wins, so an operator
-        // who opts in on a distributed/EE deployment keeps the previous behaviour.
+        // who opts in on a distributed/EE deployment keeps the previous behaviour. The server type is
+        // read from the property (not KestraContext) because this bean can be instantiated during
+        // database migrations, before the KestraContext static holder is initialized; absent defaults
+        // to STANDALONE, mirroring KestraContext.Initializer.
         this(
             catalogService,
             pluginRegistry,
             installJobRegistry,
             enabledProperty.orElseGet(
                 () -> editionProvider.get() == EditionProvider.Edition.OSS
-                    && KestraContext.getContext().getServerType() == ServerType.STANDALONE
+                    && ServerType.STANDALONE == serverType.orElse(ServerType.STANDALONE)
             ),
-            installTimeoutProperty.orElse(DEFAULT_INSTALL_TIMEOUT)
+            installTimeoutProperty.orElse(DEFAULT_INSTALL_TIMEOUT),
+            storageType
         );
     }
 
@@ -88,12 +103,14 @@ public class PluginAutoInstallService {
         final PluginRegistry pluginRegistry,
         final Provider<PluginInstallJobRegistry> installJobRegistry,
         final boolean enabled,
-        final Duration installTimeout) {
+        final Duration installTimeout,
+        final Optional<String> configuredStorageType) {
         this.catalogService = Objects.requireNonNull(catalogService);
         this.pluginRegistry = Objects.requireNonNull(pluginRegistry);
         this.installJobRegistry = Objects.requireNonNull(installJobRegistry);
         this.enabled = enabled;
         this.installTimeout = Objects.requireNonNull(installTimeout);
+        this.configuredStorageType = Objects.requireNonNull(configuredStorageType);
     }
 
     /**
@@ -163,9 +180,22 @@ public class PluginAutoInstallService {
         if (!enabled) {
             return;
         }
+        installMissingTypes(findMissingTypes(flowYaml));
+    }
 
-        Set<String> missingTypes = findMissingTypes(flowYaml);
-        if (missingTypes.isEmpty()) {
+    /**
+     * Resolves the catalog artifacts for the given missing plugin type FQCNs and installs the
+     * deduplicated set synchronously with a bounded wait.
+     * <p>
+     * This is the bulk variant of {@link #installMissingPlugins(String)}, reused by the
+     * 1.3 → 2.0 first-sync migration which aggregates the missing types of every existing flow
+     * before triggering a single install. Same best-effort semantics: any failure is logged as a
+     * warning and never propagated.
+     *
+     * @param missingTypes the plugin type FQCNs missing from the local registry.
+     */
+    public void installMissingTypes(final Set<String> missingTypes) {
+        if (!enabled || missingTypes.isEmpty()) {
             return;
         }
 
@@ -180,6 +210,50 @@ public class PluginAutoInstallService {
             return;
         }
 
+        installArtifacts(artifacts, missingTypes);
+    }
+
+    /**
+     * Detects plugin types referenced by the resolved configuration — not by flow YAML — that are
+     * missing from the local plugin registry, and installs them synchronously with a bounded wait.
+     * <p>
+     * This covers the {@code kestra.storage.type} storage backend, which is needed at boot before
+     * the {@code StorageInterface} singleton is first resolved, so a slim distribution configured
+     * for e.g. S3 does not fail startup. Storage plugins follow the fixed Maven convention
+     * {@code io.kestra.storage:storage-<id>}, so no catalog lookup is involved. The other
+     * config-referenced plugin kinds need no boot-time install in OSS: secret managers are
+     * Enterprise Edition plugins resolved by the EE secret factory, log datastores (h2, mysql,
+     * postgres) ship in the distribution itself, and file renderers are discovered per request
+     * after installation.
+     * <p>
+     * Must be called after the external plugins directory has been registered (see
+     * {@code AbstractCommand#maybeInitPlugins()}) and before the corresponding services initialize.
+     * Best-effort: on failure the boot continues and fails later with the pre-existing
+     * "no storage interface found" error.
+     */
+    public void installMissingConfiguredPlugins() {
+        if (!enabled) {
+            return;
+        }
+
+        configuredStorageType
+            .map(type -> type.toLowerCase(Locale.ROOT))
+            .filter(type -> !isStorageTypeRegistered(type))
+            .ifPresent(
+                type -> installArtifacts(
+                    List.of(PluginArtifact.fromCoordinates(STORAGE_ARTIFACT_TEMPLATE.formatted(type))),
+                    Set.of(type)
+                )
+            );
+    }
+
+    private boolean isStorageTypeRegistered(final String type) {
+        return pluginRegistry.plugins().stream()
+            .flatMap(plugin -> plugin.getStorages().stream())
+            .anyMatch(cls -> Plugin.getId(cls).map(type::equals).orElse(false));
+    }
+
+    private void installArtifacts(final List<PluginArtifact> artifacts, final Set<String> missingTypes) {
         try {
             PluginInstallJobRegistry registry = installJobRegistry.get();
             UUID jobId = registry.submit(artifacts);

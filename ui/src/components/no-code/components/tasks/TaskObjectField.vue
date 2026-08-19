@@ -62,9 +62,9 @@
                     <span
                         v-if="pluginDefault !== undefined"
                         class="plugin-default-hint"
-                        :title="t('block_editor.plugin_default_tooltip')"
+                        :title="$t('block_editor.plugin_default_tooltip')"
                     >
-                        {{ t("block_editor.plugin_default", {value: pluginDefault}) }}
+                        {{ $t("block_editor.plugin_default", {value: pluginDefault}) }}
                     </span>
 
                     <ClearButton
@@ -106,8 +106,8 @@
                     filled
                     class="inline-code-toggle"
                     :type="pebbleState ? 'primary' : 'default'"
-                    :tooltip="t('no_code.toggle_pebble')"
-                    :aria-label="t('no_code.toggle_pebble')"
+                    :tooltip="$t('no_code.toggle_pebble')"
+                    :aria-label="$t('no_code.toggle_pebble')"
                     @click="pebbleState = !pebbleState"
                 >
                     <IconCodeTags />
@@ -133,14 +133,13 @@
             data-test="field-required-missing"
         >
             <AlertCircleOutline class="required-missing-icon" />
-            {{ t("block_editor.required_missing") }}
+            {{ $t("block_editor.required_missing") }}
         </span>
     </KsFormItem>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useBlockComponent} from "./useBlockComponent"
     import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
@@ -244,7 +243,6 @@
         return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 
-    const {t} = useI18n()
 
     const pluginDefaults = inject(PLUGIN_DEFAULTS_INJECTION_KEY, undefined)
     const pluginDefault = computed(() => {

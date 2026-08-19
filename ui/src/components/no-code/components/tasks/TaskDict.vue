@@ -1,7 +1,7 @@
 <template>
     <KsAlert
         v-if="duplicatedKeys?.length"
-        :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
+        :title="$t('duplicate-pair', {label: $t('key'), key: duplicatedKeys[0]})"
         type="error"
         :closable="false"
         class="mb-2"
@@ -32,7 +32,7 @@
                     />
                     <div class="delete-container">
                         <button @click="removeItem(index)" class="remove-entry">
-                            {{ te(`no_code.remove.${root}`) ? t(`no_code.remove.${root}`) : t('no_code.remove.default') }} <DeleteOutline />
+                            {{ te(`no_code.remove.${root}`) ? $t(`no_code.remove.${root}`) : $t('no_code.remove.default') }} <DeleteOutline />
                         </button>
                     </div>
                 </template>
@@ -82,7 +82,7 @@
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
 
-    const {t, te} = useI18n()
+    const {te} = useI18n()
 
     defineOptions({
         inheritAttrs: false,

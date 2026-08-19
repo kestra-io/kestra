@@ -311,8 +311,6 @@
         "1d": "1j",
         "7d": "7j"
       },
-      "last14days": "Les 14 derniers jours",
-      "last28days": "Les 28 derniers jours",
       "14days": "14 jours",
       "28days": "28 jours"
     },
@@ -1194,7 +1192,7 @@
       "namespace": {
         "edit": {
           "title": "Améliorez la Gestion de votre Namespace",
-          "message": "Dans Kestra Enterprise Edition, les namespaces offrent une isolation avancée et une gouvernance des secrets, des variables et des valeurs par défaut des plugins à l'échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des backends de stockage isolés, des groupes de workers dédiés et des permissions granulaires par namespace. Cela garantit que les secrets, les variables et les configurations de plugins restent sécurisés et faciles à maintenir entre les différentes équipes et projets."
+          "message": "Dans Kestra Enterprise Edition, les namespaces offrent une isolation avancée et un contrôle des secrets, des variables et des politiques de gouvernance à grande échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des backends de stockage isolés, des groupes de workers dédiés et des permissions granulaires par namespace. Cela garantit que les secrets, les variables et les règles de gouvernance restent sécurisés et faciles à maintenir pour différentes équipes et projets."
         },
         "secrets": {
           "title": "Gérer les secrets de manière sécurisée",
@@ -1755,10 +1753,6 @@
           "title": "Il n'y a actuellement aucune dépendance.",
           "content": "Cet actif n'a pas de dépendances amont ou aval avec des flows ou d'autres actifs."
         }
-      },
-      "plugins": {
-        "title": "Aucun paramètre par défaut de plugin n'est défini pour ce namespace.",
-        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation."
       },
       "triggers": {
         "title": "Votre flow n'a pas de triggers.",

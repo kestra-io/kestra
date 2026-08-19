@@ -56,8 +56,12 @@ final class SchedulableExecutionFactory {
 
         Map<String, Object> allInputs = getInputs(trigger, runContext, triggerContext.getBackfill());
 
+        Execution executionForRendering = execution.withLabels(
+            LabelService.forExecution(conditionContext.getFlow(), executionLabels, execution.getId())
+        );
+
         // add inputs and inject defaults (FlowInputOutput handles defaults internally)
-        execution = execution.withInputs(runContext.inputAndOutput().readInputs(conditionContext.getFlow(), execution, allInputs));
+        Map<String, Object> inputs = runContext.inputAndOutput().readInputs(conditionContext.getFlow(), executionForRendering, allInputs);
 
         return new TriggerEvaluationResult(
             runContext.getTriggerExecutionId(),
@@ -66,7 +70,7 @@ final class SchedulableExecutionFactory {
             executionLabels,
             conditionContext.getFlow().getRevision(),
             Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null),
-            runContext.inputAndOutput().readInputs(conditionContext.getFlow(), execution, allInputs)
+            inputs
         );
     }
 

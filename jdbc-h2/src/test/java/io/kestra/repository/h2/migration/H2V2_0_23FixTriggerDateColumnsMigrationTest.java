@@ -16,7 +16,8 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * H2-specific integration test for {@link V2_0_23FixTriggerDateColumnsMigration}.
+ * H2-specific integration test for the trigger date-column fix applied by
+ * {@link V2_0_01SchemaMigration} (formerly V2_0_23FixTriggerDateColumnsMigration).
  *
  * <p>
  * The width dependency only shows on a server whose timezone is not UTC, so the session timezone
@@ -57,7 +58,7 @@ class H2V2_0_23FixTriggerDateColumnsMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_23FixTriggerDateColumnsMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach

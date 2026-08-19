@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
-    <section id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
+    <section v-if="isRouteSettled" id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
@@ -91,6 +91,10 @@
     const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? DEFAULT_DASHBOARD)
     const isDashboardBundledWithUI = ref<boolean>(false)
     const charts = ref<Chart[]>([])
+    // The filter writes its defaults (time range) into the URL when it mounts, so it may
+    // only mount once load() is done moving us to the canonical dashboard URL: a mount on
+    // the intermediate URL loses those defaults to the cancelled navigation.
+    const isRouteSettled = ref<boolean>(false)
 
     const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = []
@@ -130,6 +134,7 @@
         if (miscStore.configs?.isCustomDashboardsEnabled === false) {
             await useDefaultDashboardBundledInUI()
             await loadCharts(dashboard.value.charts)
+            isRouteSettled.value = true
             return
         }
 
@@ -185,6 +190,7 @@
         }
 
         await loadCharts(dashboard.value.charts)
+        isRouteSettled.value = true
     }
 
     watch([() => route.params.dashboard, () => route.params.tenant], async () => {

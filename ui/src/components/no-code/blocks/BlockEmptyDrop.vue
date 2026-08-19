@@ -8,7 +8,7 @@
     >
         <span class="block-empty-drop-lead">
             <PlusCircleOutline class="block-empty-drop-ico" />
-            {{ variant === "empty" ? t("block_editor.empty_add_lead", {label}) : t("block_editor.inline_add", {label}) }}
+            {{ variant === "empty" ? $t("block_editor.empty_add_lead", {label}) : $t("block_editor.inline_add", {label}) }}
         </span>
 
         <span v-if="hint" class="block-empty-drop-hint">{{ hint }}</span>
@@ -16,10 +16,8 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
 
-    const {t} = useI18n()
 
     withDefaults(defineProps<{
         label: string

@@ -4,7 +4,7 @@
         class="taskrun-header"
         :style="{'--depth': depth}"
     >
-        <div class="me-1">
+        <div>
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"
@@ -16,7 +16,7 @@
                 <ChevronRight v-else />
             </KsIcon>
         </div>
-        <div class="task-icon d-none d-md-inline-block me-1">
+        <div class="task-icon d-none d-md-inline-block">
             <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
@@ -257,7 +257,6 @@
             width: var(--ks-spacing-6);
             height: var(--ks-spacing-6);
             border-radius: var(--ks-radius-base);
-            margin-left: calc(-1 * var(--ks-spacing-2));
         }
 
         .task-id {

@@ -68,7 +68,7 @@ class UiControllerTest {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.headers().firstValue("Content-Encoding")).contains("br");
         assertThat(response.headers().firstValue("ETag").orElseThrow()).endsWith("-br\"");
-        assertThat(response.headers().firstValue("Cache-Control")).contains("immutable");
+        assertThat(response.headers().firstValue("Cache-Control")).contains("public, max-age=31536000, immutable");
     }
 
     @Test

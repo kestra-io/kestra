@@ -440,7 +440,7 @@ class PluginControllerTest {
     }
 
     @Test
-    void should_serve_plugin_ui_from_cache_with_etag_and_answer_304() {
+    void should_serve_plugin_ui_with_etag_and_answer_304() {
         // Given
         HttpResponse<String> first = client.toBlocking().exchange(
             HttpRequest.GET(PATH + "/io.kestra.plugin.redis/pluginUi/plugin-ui.js"),

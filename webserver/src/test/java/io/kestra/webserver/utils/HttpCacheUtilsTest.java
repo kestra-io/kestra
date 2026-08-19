@@ -53,6 +53,8 @@ class HttpCacheUtilsTest {
         assertThat(HttpCacheUtils.anyEtagMatches("\"abc\"", "\"abc\"")).isTrue();
         assertThat(HttpCacheUtils.anyEtagMatches("\"xyz\", \"abc\"", "\"abc\"")).isTrue();
         assertThat(HttpCacheUtils.anyEtagMatches("W/\"abc\"", "\"abc\"")).isTrue();
+        assertThat(HttpCacheUtils.anyEtagMatches("W/\"abc\"", "W/\"abc\"")).isTrue();
+        assertThat(HttpCacheUtils.anyEtagMatches("\"abc\"", "W/\"abc\"")).isTrue();
         assertThat(HttpCacheUtils.anyEtagMatches("*", "\"abc\"")).isTrue();
     }
 

@@ -571,12 +571,14 @@ public class PluginController {
         if (HttpCacheUtils.anyEtagMatches(request.getHeaders().get(io.micronaut.http.HttpHeaders.IF_NONE_MATCH), etag)) {
             return HttpResponse.notModified()
                 .header(io.micronaut.http.HttpHeaders.ETAG, etag)
-                .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+                .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE)
+                .header(io.micronaut.http.HttpHeaders.VARY, io.micronaut.http.HttpHeaders.ACCEPT_ENCODING);
         }
 
         return HttpResponse.ok(new StreamedFile(resourceUrl.openStream(), mediaType))
             .header(io.micronaut.http.HttpHeaders.ETAG, etag)
-            .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+            .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE)
+            .header(io.micronaut.http.HttpHeaders.VARY, io.micronaut.http.HttpHeaders.ACCEPT_ENCODING);
     }
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {

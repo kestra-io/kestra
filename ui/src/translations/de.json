@@ -1194,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "Verbessern Sie Ihr Namespace-Management",
-          "message": "In Kestra Enterprise Edition bieten namespaces erweiterte Isolation und Governance von Secrets, Variablen und Plugin-Standardeinstellungen im großen Maßstab. Administratoren können benutzerdefinierte Secrets Manager, isolierte Speicher-Backends, dedizierte worker-Gruppen und fein abgestufte Berechtigungen pro namespace konfigurieren. Dies stellt sicher, dass Secrets, Variablen und Plugin-Konfigurationen sicher und einfach über verschiedene Teams und Projekte hinweg verwaltet werden können."
+          "message": "In der Kestra Enterprise Edition bieten namespaces erweiterte Isolation und Kontrolle von Secrets, Variablen und Governance Policies in großem Maßstab. Administratoren können benutzerdefinierte Secrets Manager, isolierte Speicher-Backends, dedizierte worker-Gruppen und detaillierte Berechtigungen pro namespace konfigurieren. Dies stellt sicher, dass Secrets, Variablen und Governance-Regeln über verschiedene Teams und Projekte hinweg sicher und einfach zu verwalten bleiben."
         },
         "secrets": {
           "title": "Geheimnisse auf sichere Weise verwalten",
@@ -1755,10 +1755,6 @@
           "title": "Derzeit gibt es keine Abhängigkeiten.",
           "content": "Dieses Asset hat keine Upstream- oder Downstream-Abhängigkeiten mit flows oder anderen Assets."
         }
-      },
-      "plugins": {
-        "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt.",
-        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation."
       },
       "triggers": {
         "title": "Ihr flow hat keine Trigger.",

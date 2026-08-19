@@ -306,7 +306,10 @@
             emit("loaded")
         } catch {
             if (props.embed) error.value = true
-            else coreStore.error = 404
+            else {
+                coreStore.error = 404
+                coreStore.failedRequest = undefined
+            }
         }
     }
 

@@ -50,11 +50,32 @@ export interface KestraHttpError extends Error {
 
 export interface KestraHttpOptions {
     router?: Router
-    coreStore?: {message: unknown; error: unknown}
+    coreStore?: {message: unknown; error: unknown; failedRequest?: unknown}
     beforeLogout?: () => void
     isLoggedIn?: () => boolean
     onError?: (type: "message" | "error", error: unknown) => void
     onUnauthorized?: (navigateToLogin: () => void, error: KestraHttpError) => Promise<boolean> | boolean | void
+}
+
+function sameOriginPath(url: string): string {
+    try {
+        const parsed = new URL(url, window.location.origin)
+        return parsed.origin === window.location.origin ? parsed.pathname + parsed.search : url
+    } catch {
+        return url
+    }
+}
+
+function failedRequestOf(error: KestraHttpError) {
+    const response = error.response
+    if (!response) return undefined
+    const serverMessage = (response.data as {message?: unknown} | undefined)?.message
+    return {
+        status: response.status,
+        method: (response.config.method || "GET").toUpperCase(),
+        url: sameOriginPath(response.config.url ?? ""),
+        message: typeof serverMessage === "string" ? serverMessage : undefined,
+    }
 }
 
 export function setupKestraHttp(
@@ -77,6 +98,7 @@ export function setupKestraHttp(
                 }
             } else {
                 coreStore.error = kestraError.response?.status
+                coreStore.failedRequest = failedRequestOf(kestraError)
             }
         },
         onUnauthorized = (navigate: () => void) => {

@@ -65,3 +65,53 @@ describe("setupKestraHttp router NProgress hooks", () => {
         expect(nprogressDone).toHaveBeenCalledTimes(1)
     })
 })
+
+describe("setupKestraHttp 404 diagnostics", () => {
+    type ErrorInterceptor = (error: any, response: any, request: any, opts?: any) => any
+
+    const captureErrorInterceptor = (coreStore: Record<string, unknown>): ErrorInterceptor => {
+        fakeClient.interceptors.error.use.mockClear()
+        setupKestraHttp({}, {coreStore: coreStore as any})
+        return fakeClient.interceptors.error.use.mock.calls.at(-1)![0] as ErrorInterceptor
+    }
+
+    const missingFlowPath = "/api/v1/main/flows/my.namespace/missing"
+    const missingFlowUrl = window.location.origin + missingFlowPath
+
+    const notFoundResponse = {
+        status: 404,
+        statusText: "Not Found",
+        url: missingFlowUrl,
+        headers: {forEach: () => {}},
+    }
+
+    const notFoundRequest = {
+        method: "get",
+        url: missingFlowUrl,
+    }
+
+    it("records the request that 404ed so the error page can name it", () => {
+        const coreStore: Record<string, unknown> = {}
+        const onError = captureErrorInterceptor(coreStore)
+
+        onError(Object.assign(new Error("Not Found"), {status: 404}), notFoundResponse, notFoundRequest)
+
+        expect(coreStore.error).toBe(404)
+        expect(coreStore.failedRequest).toEqual({
+            status: 404,
+            method: "GET",
+            url: missingFlowPath,
+            message: "Not Found",
+        })
+    })
+
+    it("leaves the error page untouched when the caller handles the 404 itself", () => {
+        const coreStore: Record<string, unknown> = {}
+        const onError = captureErrorInterceptor(coreStore)
+
+        onError(Object.assign(new Error("Not Found"), {status: 404}), notFoundResponse, notFoundRequest, {ignoreNotFound: true})
+
+        expect(coreStore.error).toBeUndefined()
+        expect(coreStore.failedRequest).toBeUndefined()
+    })
+})

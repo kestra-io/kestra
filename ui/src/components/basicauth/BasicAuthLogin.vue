@@ -148,6 +148,7 @@
     const handleSubmit = async () => {
         try {
             coreStore.error = undefined
+            coreStore.failedRequest = undefined
             if (!form.value || isLoading.value) return
             if (!(await form.value.validate().catch(() => false))) return
 

@@ -8,6 +8,11 @@
             <span v-html="$t('errors.' + code + '.content')" />
         </p>
 
+        <p v-if="failedRequest" class="failed-request">
+            <code>{{ failedRequest.method }} {{ failedRequest.url }}</code>
+            <span v-if="failedRequest.message">{{ failedRequest.message }}</span>
+        </p>
+
         <KsButton v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
             {{ $t("back_to_dashboard") }}
         </KsButton>
@@ -33,6 +38,8 @@
     const coreStore = useCoreStore()
     const route = useRoute()
 
+    const failedRequest = computed(() => coreStore.failedRequest)
+
     const routeInfo = computed(() => ({title: t("errors." + props.code + ".title")}))
 
     useRouteContext(routeInfo)
@@ -45,6 +52,7 @@
         () => route.fullPath,
         () => {
             coreStore.error = undefined
+            coreStore.failedRequest = undefined
         },
     )
 </script>
@@ -64,5 +72,17 @@
     p {
         line-height: 22px;
         font-size: var(--ks-font-size-sm);
+    }
+
+    .failed-request {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        color: var(--ks-content-secondary);
+
+        code {
+            font-family: var(--bs-font-monospace);
+            word-break: break-all;
+        }
     }
 </style>

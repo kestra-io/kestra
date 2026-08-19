@@ -4,8 +4,8 @@
             v-if="hasFlow"
             :icon="History"
             :count="revisionsCount"
-            :suffix="t('flow_editor_stats.revisions.suffix')"
-            :tooltip="t('flow_editor_stats.revisions.tooltip')"
+            :suffix="$t('flow_editor_stats.revisions.suffix')"
+            :tooltip="$t('flow_editor_stats.revisions.tooltip')"
             tab="revisions"
         />
 
@@ -13,8 +13,8 @@
             v-if="hasFlow"
             :icon="GraphOutline"
             :count="dependenciesCount"
-            :suffix="t('flow_editor_stats.dependencies.suffix')"
-            :tooltip="t('flow_editor_stats.dependencies.tooltip')"
+            :suffix="$t('flow_editor_stats.dependencies.suffix')"
+            :tooltip="$t('flow_editor_stats.dependencies.tooltip')"
             tab="dependencies"
         />
 

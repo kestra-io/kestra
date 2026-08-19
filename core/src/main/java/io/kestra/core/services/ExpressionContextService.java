@@ -75,7 +75,7 @@ public class ExpressionContextService {
     private final PebbleExpressionService pebbleExpressionService;
     private final RunContextCache runContextCache;
     @SuppressWarnings("rawtypes")
-    private final SecretService secretService;
+    private final SecretService<?> secretService;
     private final KVStoreService kvStoreService;
     private final StorageInterface storageInterface;
     private final NamespaceFactory namespaceFactory;
@@ -86,7 +86,7 @@ public class ExpressionContextService {
         JsonSchemaGenerator jsonSchemaGenerator,
         PebbleExpressionService pebbleExpressionService,
         RunContextCache runContextCache,
-        SecretService secretService,
+        SecretService<?> secretService,
         KVStoreService kvStoreService,
         StorageInterface storageInterface,
         NamespaceFactory namespaceFactory) {

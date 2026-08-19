@@ -138,6 +138,7 @@ public class DocumentationGenerator {
         );
     }
 
+    @SuppressWarnings("rawtypes")
     private static Map<SubGroup, Map<String, List<ClassPlugin>>> indexGroupedClass(RegisteredPlugin plugin) {
         return plugin.allClassGrouped()
             .entrySet()

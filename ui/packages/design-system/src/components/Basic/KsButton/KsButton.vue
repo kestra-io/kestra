@@ -143,6 +143,8 @@
         &.is-square {
             .material-design-icon > .material-design-icon__svg {
                 bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
             }
         }
 

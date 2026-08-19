@@ -165,6 +165,11 @@ public class ErrorController {
     }
 
     @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, ForbiddenException e) {
+        return jsonError(request, e, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReason());
+    }
+
+    @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidQueryFiltersException e) {
         return jsonError(request, e, HttpStatus.BAD_REQUEST, "Invalid query filters");
     }

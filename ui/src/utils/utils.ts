@@ -273,9 +273,9 @@ export function getDateFormat(startDate: moment.MomentInput, endDate: moment.Mom
     } else if (duration.asDays() > 1) {
         return "yyyy-MM-DD"
     } else if (duration.asHours() > 1) {
-        return "yyyy-MM-DD:HH:00"
+        return "yyyy-MM-DD HH:00"
     } else {
-        return "yyyy-MM-DD:HH:mm"
+        return "yyyy-MM-DD HH:mm"
     }
 }
 

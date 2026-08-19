@@ -166,10 +166,18 @@ public class SubflowFunction implements KestraFunction {
                 );
 
             if (targetFlow instanceof FlowWithException fwe) {
-                throw new PebbleException(null, "Cannot run the invalid flow '" + namespace + "'.'" + id + "': " + fwe.getException(), lineNumber, self.getName());
+                // The flow could not be resolved for runtime, either because it is invalid or because governance
+                // blocks it. Which one it was is in the carried message, so state neither here.
+                throw new PebbleException(
+                    null, "Cannot execute flow '%s'.'%s': %s".formatted(namespace, id, fwe.getException()),
+                    lineNumber, self.getName()
+                );
             }
             if (targetFlow.isDisabled()) {
-                throw new PebbleException(null, "Cannot run the disabled flow '" + namespace + "'.'" + id + "'.", lineNumber, self.getName());
+                throw new PebbleException(
+                    null, "Cannot execute flow '%s'.'%s': it is disabled.".formatted(namespace, id),
+                    lineNumber, self.getName()
+                );
             }
 
             Execution execution;

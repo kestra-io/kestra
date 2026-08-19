@@ -88,6 +88,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final ExecutionStateStore executionStateStore;
     private final ExecutionDelayStateStore executionDelayStateStore;
     private final SLAMonitorStateStore slaMonitorStateStore;
+    private final io.kestra.core.services.TaskOutputService taskOutputService;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final TriggerEventQueue triggerEventQueue;
 
@@ -147,6 +148,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         ExecutorService executorService,
         ExecutionService executionService,
+        io.kestra.core.services.TaskOutputService taskOutputService,
         FlowTriggerService flowTriggerService,
         SLAService slaService,
         MaintenanceService maintenanceService,
@@ -191,6 +193,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.executionStateStore = executionStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
         this.slaMonitorStateStore = slaMonitorStateStore;
+        this.taskOutputService = taskOutputService;
         this.concurrencySlotReleaseProcessor = concurrencySlotReleaseProcessor;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
@@ -588,6 +591,22 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         executor = executorService.handleFailedExecutionFromExecutor(executor, e);
                     }
 
+                    if (execution.getId().equals(executor.getExecution().getId())) {
+                        List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+                        List<String> newIds = executor.getExecution().getTaskRunList() != null
+                            ? executor.getExecution().getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+
+                        if (originalIds.size() != newIds.size() || !newIds.containsAll(originalIds)) {
+                            List<String> pruned = new ArrayList<>(originalIds);
+                            pruned.removeAll(newIds);
+                            if (!pruned.isEmpty()) {
+                                taskOutputService.deleteByTaskRunIds(executor.getExecution(), pruned);
+                            }
+                        }
+                    }
+
                     return executor;
                 });
 
@@ -859,9 +878,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     private void sendTriggerExecutionTerminated(Execution execution) {
         // The scheduler didn't manage states for the WebHook and the Flow trigger
-        if (!execution.getTrigger().getType().equals(Webhook.class.getName()) &&
-            !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
-            !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
+        if (
+            !execution.getTrigger().getType().equals(Webhook.class.getName()) &&
+                !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
+                !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
         ) {
             TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
             triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));

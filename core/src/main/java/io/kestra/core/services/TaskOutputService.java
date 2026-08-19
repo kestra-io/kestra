@@ -228,4 +228,32 @@ public class TaskOutputService extends AbstractOutputService {
             outputRepository.save(newOutput);
         }
     }
+
+    /**
+     * Delete outputs for a given list of task run ids.
+     * This will also delete any internal storage files associated with these outputs.
+     */
+    public void deleteByTaskRunIds(Execution execution, List<String> taskRunIds) {
+        if (taskRunIds == null || taskRunIds.isEmpty()) {
+            return;
+        }
+
+        List<TaskOutput> toDelete = outputRepository.findByTaskRunIds(
+            execution.getTenantId(),
+            execution.getId(),
+            taskRunIds
+        );
+
+        for (TaskOutput output : toDelete) {
+            if (output.uri() != null) {
+                try {
+                    storageInterface.delete(execution.getTenantId(), execution.getNamespace(), java.net.URI.create(output.uri()));
+                } catch (Exception e) {
+                    // Ignore storage deletion errors to allow DB cleanup to proceed
+                }
+            }
+        }
+
+        outputRepository.deleteByTaskRunIds(execution.getTenantId(), execution.getId(), taskRunIds);
+    }
 }

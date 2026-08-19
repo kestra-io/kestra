@@ -371,6 +371,7 @@
 <script lang="ts" setup>
     import {ref, computed, inject, watch} from "vue"
     import {useRoute} from "vue-router"
+    import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
@@ -1009,15 +1010,9 @@
         }
     }
 
-    async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const {content} = await namespacesStore.readFile({
-            path: filesStore.getPath(node.id) ?? "",
-            namespace: namespaceId.value,
-        })
-        if(!content?.length)
-            throw new Error("File is empty or undefined")
-        const blob = new Blob([content], {type: "text/plain"})
-        Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName)
+    function exportFile(node: TreeNode, data: {fileName: string}) {
+        const path = filesStore.getPath(node.id) ?? ""
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=${encodeURI(`/${path}`)}`, data.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {

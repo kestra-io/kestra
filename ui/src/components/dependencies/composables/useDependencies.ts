@@ -628,6 +628,8 @@ export function useDependencies(
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
+        /** Reactive computed reference to the raw Element[] used by the template. */
+        elements: computed(() => elements.value.data),
         /** Live computed nodes — reflects selection/filter/theme changes; used by applyStylesToChart and tests. */
         graphNodes,
         /** Live computed edges — reflects selection/filter/theme changes; used by applyStylesToChart and tests. */

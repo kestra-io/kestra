@@ -41,7 +41,7 @@ public class SecretFunction implements KestraFunction {
     private static final String METADATA_KEY = "metadata";
 
     @Inject
-    private Provider<SecretService> secretService;
+    private Provider<SecretService<?>> secretService;
 
     @Inject
     private Provider<NamespaceService> namespaceService;

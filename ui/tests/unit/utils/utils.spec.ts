@@ -1,5 +1,5 @@
 import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars} from "../../../src/utils/utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateFormat} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -100,6 +100,19 @@ describe("flatten()", () => {
     it("flattens arrays with index keys and keeps nulls", () => {
         expect(flatten({list: ["a", "b"], empty: null}))
             .toEqual({"list.0": "a", "list.1": "b", empty: null})
+    })
+})
+
+describe("getDateFormat()", () => {
+    it("uses a space between date and hour so the label is not read as a timestamp with seconds", () => {
+        expect(getDateFormat(undefined, undefined, "PT24H")).toBe("yyyy-MM-DD HH:00")
+        expect(getDateFormat(undefined, undefined, "PT30M")).toBe("yyyy-MM-DD HH:mm")
+    })
+
+    it("returns coarser formats for longer ranges", () => {
+        expect(getDateFormat(undefined, undefined, "P2D")).toBe("yyyy-MM-DD")
+        expect(getDateFormat(undefined, undefined, "P200D")).toBe("yyyy-'W'ww")
+        expect(getDateFormat(undefined, undefined, "P400D")).toBe("yyyy-MM")
     })
 })
 

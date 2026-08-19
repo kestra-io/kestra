@@ -315,7 +315,7 @@ describe("useDependencies composable", () => {
     const CANVAS_W = 600
     const CANVAS_H = 400
 
-    async function mountWithChart() {
+    async function mountWithChart(initialNodeID = "X") {
         const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H)
         const graphRef = ref({
             fit:                vi.fn(),
@@ -337,9 +337,9 @@ describe("useDependencies composable", () => {
         const wrapper = mount({
             template: "<div></div>",
             setup() {
-                // Use initialNodeID="X" (nonexistent) so no node is pre-selected,
+                // Defaults to initialNodeID="X" (nonexistent) so no node is pre-selected,
                 // leaving selectedNodeID undefined and letting tests control selection.
-                const composable = useDependencies(graphRef as any, FLOW, "X", {}, fetchAssetDependencies)
+                const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies)
                 return {composable}
             },
         })
@@ -351,41 +351,50 @@ describe("useDependencies composable", () => {
         await vi.runAllTimersAsync()
         await nextTick()
         vi.useRealTimers()
+        // Snapshot the mount-time calls before clearing: the initial auto-selection
+        // centres the graph from captureAndFocusWhenReady, and that is the only path
+        // that still calls focusNode.
+        const mountCalls = [...chartMock.setOption.mock.calls]
         chartMock.setOption.mockClear()
-        const {selectNode} = wrapper.vm.composable as ReturnType<typeof useDependencies>
-        return {selectNode, chartMock}
+        const {selectNode, selectedNodeID} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+        return {selectNode, selectedNodeID, chartMock, mountCalls}
     }
 
-    it("calls setOption with zoom=1.8 and correct center when node A is selected", async () => {
-        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates
-        const {selectNode, chartMock} = await mountWithChart()
+    const cameraCalls = (calls: any[][]) =>
+        calls.filter((args) => args[0]?.series?.[0]?.zoom !== undefined)
+
+    it("centres on the initially selected node at zoom=1.8 on mount", async () => {
+        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates.
+        // The initial auto-selection is the only path that still moves the viewport.
+        const {mountCalls} = await mountWithChart("A")
+
+        expect(cameraCalls(mountCalls)).toEqual([
+            [
+                expect.objectContaining({
+                    series: [expect.objectContaining({zoom: 1.8, center: [100, 200]})],
+                }),
+                false,
+            ],
+        ])
+    })
+
+    it("does not move the viewport when the selection changes", async () => {
+        // Selecting a node never re-centres: the canvas jumping under the cursor costs
+        // the user their bearings. Only the initial auto-selection centres the graph.
+        const {selectNode, selectedNodeID, chartMock} = await mountWithChart()
 
         selectNode("A")
         await nextTick()
         await nextTick()
-
-        expect(chartMock.setOption).toHaveBeenCalledWith(
-            expect.objectContaining({
-                series: [expect.objectContaining({zoom: 1.8, center: [100, 200]})],
-            }),
-            false,
-        )
-    })
-
-    it("centers on the correct node when selection changes to B", async () => {
-        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates
-        const {selectNode, chartMock} = await mountWithChart()
-
         selectNode("B")
         await nextTick()
         await nextTick()
 
-        expect(chartMock.setOption).toHaveBeenCalledWith(
-            expect.objectContaining({
-                series: [expect.objectContaining({zoom: 1.8, center: [300, 400]})],
-            }),
-            false,
-        )
+        // Assert the selection actually landed, so this cannot pass by selection being
+        // broken outright: "no camera call" is only meaningful if a selection happened.
+        expect(selectedNodeID.value).toBe("B")
+        expect(chartMock.setOption).toHaveBeenCalled()
+        expect(cameraCalls(chartMock.setOption.mock.calls)).toEqual([])
     })
 
     it("does not call setOption for centering when node has no stored position", async () => {

@@ -4,12 +4,20 @@ import {createI18n} from "vue-i18n"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
 
+// Shared across calls so a future test of openNode()'s navigation can assert on it;
+// a fresh spy per useRouter() call would be unreachable from the test body.
+const routerPush = vi.hoisted(() => vi.fn())
+
 vi.mock("vue-router", () => ({
     useRoute: () => ({
         name: "flows/update/dependencies",
         params: {namespace: "qa.topology", id: "deploy_dashboard"},
         query: {},
     }),
+    // openNode() pushes a route when a node is opened. This suite covers only the
+    // execution chart, so navigation is unasserted here, but the component calls
+    // useRouter() at setup and would throw without it.
+    useRouter: () => ({push: routerPush}),
 }))
 
 // `isLoading` keeps the graph/table branch of the template unmounted: this suite only

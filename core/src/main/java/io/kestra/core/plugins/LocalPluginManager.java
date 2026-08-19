@@ -46,7 +46,7 @@ public class LocalPluginManager implements PluginManager {
      * @param mavenPluginDownloader The {@link MavenPluginDownloader}.
      */
     public LocalPluginManager(final MavenPluginDownloader mavenPluginDownloader) {
-        this(null, mavenPluginDownloader, null);
+        this(null, mavenPluginDownloader, null, null);
     }
 
     /**
@@ -55,14 +55,20 @@ public class LocalPluginManager implements PluginManager {
      * @param pluginRegistryProvider The {@link PluginRegistry}.
      * @param mavenPluginDownloader The {@link MavenPluginDownloader}.
      * @param localRepositoryPath The local repository path used to stored plugins.
+     * @param localStorageBasePath The local-filesystem internal storage base path, if configured.
      */
     @Inject
     public LocalPluginManager(final Provider<PluginRegistry> pluginRegistryProvider,
         final MavenPluginDownloader mavenPluginDownloader,
-        @Nullable @Value("${kestra.plugins.management.localRepositoryPath}") final String localRepositoryPath) {
+        @Nullable @Value("${kestra.plugins.management.localRepositoryPath}") final String localRepositoryPath,
+        @Nullable @Value("${kestra.storage.local.base-path}") final String localStorageBasePath) {
         this.pluginRegistryProvider = pluginRegistryProvider;
         this.mavenPluginDownloader = mavenPluginDownloader;
-        this.localRepositoryPath = PluginManager.getLocalManagedRepositoryPathOrDefault(localRepositoryPath);
+        // Precedence: explicit repository path, then <storage.local.base-path>/plugins — so a local
+        // instance keeps a single folder to manage/persist — then the temp-dir fallback.
+        this.localRepositoryPath = localRepositoryPath == null && localStorageBasePath != null
+            ? PluginManager.createLocalRepositoryIfNotExist(Path.of(localStorageBasePath).resolve("plugins"))
+            : PluginManager.getLocalManagedRepositoryPathOrDefault(localRepositoryPath);
     }
 
     /**
@@ -70,7 +76,11 @@ public class LocalPluginManager implements PluginManager {
      **/
     @Override
     public void start() {
-        // no-op
+        // Re-register plugins installed by previous runs: nothing else scans the managed repository
+        // at boot, so without this an auto-installed plugin would vanish after a restart.
+        if (pluginRegistryProvider != null) {
+            pluginRegistryProvider.get().registerIfAbsent(localRepositoryPath);
+        }
     }
 
     /**

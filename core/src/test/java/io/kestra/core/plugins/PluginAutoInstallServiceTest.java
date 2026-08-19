@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.EditionProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -317,6 +318,44 @@ class PluginAutoInstallServiceTest {
 
         // When / Then
         assertThatCode(() -> service.installMissingPlugins(yaml)).doesNotThrowAnyException();
+    }
+
+    // ─── computed default gating ──────────────────────────────────────────────
+
+    @Test
+    void shouldBeEnabledByDefaultForOssWithLocalStorage() {
+        // Given / When — no explicit enabled property, OSS edition, local-filesystem storage
+        PluginAutoInstallService service = new PluginAutoInstallService(
+            catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
+            Optional.of("local"), Optional.empty(), Optional.empty()
+        );
+
+        // Then
+        assertThat(service.isEnabled()).isTrue();
+    }
+
+    @Test
+    void shouldBeDisabledByDefaultForNonLocalStorage() {
+        // Given / When — a standalone deployment on S3 must stay inert
+        PluginAutoInstallService service = new PluginAutoInstallService(
+            catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
+            Optional.of("s3"), Optional.empty(), Optional.empty()
+        );
+
+        // Then
+        assertThat(service.isEnabled()).isFalse();
+    }
+
+    @Test
+    void shouldHonorExplicitEnabledPropertyOnNonLocalStorage() {
+        // Given / When — an explicit opt-in always wins over the computed default
+        PluginAutoInstallService service = new PluginAutoInstallService(
+            catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
+            Optional.of("s3"), Optional.of(true), Optional.empty()
+        );
+
+        // Then
+        assertThat(service.isEnabled()).isTrue();
     }
 
     // ─── installMissingTypes ──────────────────────────────────────────────────

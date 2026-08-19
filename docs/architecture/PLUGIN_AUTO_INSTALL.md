@@ -40,15 +40,19 @@ acquires a plugin the moment a flow actually uses it.
 
 ### Target persona & scope
 
-The target is the **OSS user evaluating Kestra on a standalone deployment** — spinning
+The target is the **OSS user evaluating Kestra on a local deployment** (`server local`) — spinning
 Kestra up locally or on a single VM. The goal is zero friction between "just started Kestra" and
 "first flow runs": no need to know which plugins exist, edit a Dockerfile, or restart anything. The
 local plugins directory is the storage target.
 
-Auto-download is therefore **on by default only for OSS + standalone**, and off everywhere else.
-The computed default is `edition == OSS && serverType == STANDALONE`; an explicit
-`kestra.plugins.auto-install.enabled` always overrides it (so an operator can still opt in elsewhere).
-These are deliberately **out of scope** and stay off by default:
+Auto-download is therefore **on by default only for OSS + local-filesystem storage**, and off
+everywhere else. The computed default is `edition == OSS && storage.type == local` — the storage
+type is the discriminating signal because `server local` extends the standalone command and always
+reports `ServerType.STANDALONE`, so the server type alone cannot tell a local dev instance from a
+generic standalone deployment on S3/GCS. An explicit `kestra.plugins.auto-install.enabled` always
+overrides it (so an operator can still opt in elsewhere), and `server local` also sets it to `true`
+explicitly in its property overrides. These are deliberately **out of scope** and stay off by
+default:
 
 - **OSS distributed / production** — wants predictable, pre-provisioned plugin sets; on-demand fetch
   at save time is undesirable there.
@@ -61,7 +65,7 @@ The feature assumes a dual-image distribution (the build itself lives in the `ac
 scope for this codebase):
 
 - `kestra/kestra:<version>` — **full** image, all plugins bundled (offline / air-gapped use).
-- `kestra/kestra:<version>-no-plugins` — **lean** image, core engine only. This is the image that
+- `kestra/kestra:<version>-slim` — **slim** image, core engine only. This is the image that
   relies on the two features below to stay usable.
 
 ---
@@ -228,7 +232,7 @@ plugins take precedence** over the bundle. Draft-7 shape (`definitions`, not `$d
 > contribution to a few MB: each stub definition appears once (property-name shells + doc text
 > included), only the ~50-byte `$ref` branches repeat per site — e.g. a heavy full-plugin dev
 > install goes 6.9 → 9.8 MB merged. If that ever creeps toward the monaco ceiling, the per-property
-> `markdownDescription` copy is the first thing to drop (~1.5 MB). On a lean (`-no-plugins`)
+> `markdownDescription` copy is the first thing to drop (~1.5 MB). On a slim (`-slim`)
 > install — the actual target — the local schema is small too, so the merged result stays light.
 
 Merge-by-FQCN works only because both sides come from the same `JsonSchemaGenerator.schemas()` — the
@@ -279,10 +283,11 @@ When a flow referencing an uninstalled plugin is saved, `PluginAutoInstallServic
 
 ### Feature gating
 
-On by default **only for OSS + standalone** (`edition == OSS && serverType == STANDALONE`), off
-everywhere else. Setting `kestra.plugins.auto-install.enabled` explicitly (`true`/`false`) always
-wins over that computed default. Resolved once in `PluginAutoInstallService` from `EditionProvider`
-and `KestraContext.getServerType()`.
+On by default **only for OSS + local-filesystem storage** (`edition == OSS && storage.type == local`),
+off everywhere else — a standalone deployment on S3/GCS stays inert. Setting
+`kestra.plugins.auto-install.enabled` explicitly (`true`/`false`) always wins over that computed
+default, and `server local` sets it to `true` explicitly. Resolved once in
+`PluginAutoInstallService` from `EditionProvider` and the `kestra.storage.type` property.
 
 ---
 
@@ -309,7 +314,7 @@ and `KestraContext.getServerType()`.
 |----------|---------|--------|
 | `kestra.plugins.schema-bundle-path` | unset | Explicit local-file bundle, highest priority — wins over the JAR-embedded resource and the URL template. Used by `plugin-devtools` to inject a full-catalog dev bundle. |
 | `kestra.plugins.schema-bundle-url-template` | empty | URL of a self-hosted bundle (`{version}` placeholder, resolved to the stripped stable version, e.g. `1.2.3`). Lowest priority, and empty by default because the bundle ships in the jar — set it only for a custom build that has no embedded bundle. |
-| `kestra.plugins.auto-install.enabled` | unset → `true` on OSS+standalone, else `false` | Auto-download missing plugins on save. Unset → computed default (`edition == OSS && serverType == STANDALONE`); an explicit value always wins. |
+| `kestra.plugins.auto-install.enabled` | unset → `true` on OSS+local storage, else `false` | Auto-download missing plugins on save. Unset → computed default (`edition == OSS && storage.type == local`); an explicit value always wins. `server local` sets it to `true` explicitly. |
 
 > **No instance phones home for the bundle.** It is read from the jar's own classpath, so an air-gapped or offline deployment gets catalog completion with no egress and nothing to configure. Both remaining sources are opt-in and empty by default: an explicit local file (`schema-bundle-path`) or a self-hosted URL (`schema-bundle-url-template`). Downloading the plugin **JARs** on save is a separate, gated concern — see `kestra.plugins.auto-install.enabled` and the table below.
 

@@ -26,13 +26,17 @@ jobs:
     strategy:
       matrix:
         variant:
-          - cache-tag: latest-no-plugins
+          # The -no-plugins tags are deprecated aliases of -slim, kept one release for downstream
+          # consumers (actions repo, EE) — drop them once everything references -slim.
+          - cache-tag: latest-slim
             tags: |
+              ghcr.io/kestra-io/kestra-base:latest-slim
+              ghcr.io/kestra-io/kestra-base:latest-jre25-slim
               ghcr.io/kestra-io/kestra-base:latest-no-plugins
               ghcr.io/kestra-io/kestra-base:latest-jre25-no-plugins
             jre: "25"
             with-python: "false"
-            description: "Kestra base image (no plugins) — JRE 25 + uv pre-installed"
+            description: "Kestra base image (slim, no plugins) — JRE 25 + uv pre-installed"
           - cache-tag: latest
             tags: |
               ghcr.io/kestra-io/kestra-base:latest
@@ -40,12 +44,13 @@ jobs:
             jre: "25"
             with-python: "true"
             description: "Kestra base image — JRE 25 + uv + Python + kestra pip pre-installed"
-          - cache-tag: latest-jre21-no-plugins
+          - cache-tag: latest-jre21-slim
             tags: |
+              ghcr.io/kestra-io/kestra-base:latest-jre21-slim
               ghcr.io/kestra-io/kestra-base:latest-jre21-no-plugins
             jre: "21"
             with-python: "false"
-            description: "Kestra base image (no plugins) — JRE 21 + uv pre-installed"
+            description: "Kestra base image (slim, no plugins) — JRE 21 + uv pre-installed"
           - cache-tag: latest-jre21
             tags: |
               ghcr.io/kestra-io/kestra-base:latest-jre21

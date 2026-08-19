@@ -6,22 +6,22 @@
         @update:modelValue="emit('update:modelValue', !!$event)"
     >
         <template #header>
-            <span>{{ count && count > 1 ? t("trigger enable dialog.bulk title", {count}) : t("trigger enable dialog.title") }}</span>
+            <span>{{ count && count > 1 ? $t("trigger enable dialog.bulk title", {count}) : $t("trigger enable dialog.title") }}</span>
         </template>
 
         <KsAlert type="info" :closable="false" class="description">
-            {{ count && count > 1 ? t("trigger enable dialog.bulk description") : t("trigger enable dialog.description") }}
+            {{ count && count > 1 ? $t("trigger enable dialog.bulk description") : $t("trigger enable dialog.description") }}
         </KsAlert>
 
         <slot />
 
         <p id="trigger-enable-strategy-label" class="strategy-label">
-            {{ t("trigger enable dialog.strategy") }}
+            {{ $t("trigger enable dialog.strategy") }}
         </p>
 
         <KsRadioGroup v-model="choice" class="radio-vertical" aria-labelledby="trigger-enable-strategy-label">
             <KsRadio value="SKIP" class="radio-item">
-                {{ t("trigger enable dialog.options.skip") }}
+                {{ $t("trigger enable dialog.options.skip") }}
             </KsRadio>
             <KsRadio value="FOLLOW_CONFIGURATION" class="radio-item">
                 <i18n-t keypath="trigger enable dialog.options.follow" scope="global">
@@ -34,10 +34,10 @@
 
         <template #footer>
             <KsButton @click="emit('update:modelValue', false)">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" @click="confirm">
-                {{ t("enable") }}
+                {{ $t("enable") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -45,9 +45,7 @@
 
 <script setup lang="ts">
     import {ref, watch} from "vue"
-    import {useI18n} from "vue-i18n"
 
-    const {t} = useI18n()
 
     const props = defineProps<{
         modelValue: boolean;

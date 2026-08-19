@@ -10,11 +10,11 @@
     >
         <template #header>
             <div class="flow-properties-modal-header">
-                <span class="flow-properties-modal-title">{{ t("no_code.sections.flow") }}</span>
+                <span class="flow-properties-modal-title">{{ $t("no_code.sections.flow") }}</span>
                 <KsIconButton
                     class="flow-properties-modal-header-action"
-                    :aria-label="t('close')"
-                    :tooltip="t('close')"
+                    :aria-label="$t('close')"
+                    :tooltip="$t('close')"
                     data-test="flow-properties-modal-close"
                     @click="emit('close')"
                 >
@@ -30,14 +30,12 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import {KsDialog, KsIconButton} from "@kestra-io/design-system"
     import Close from "vue-material-design-icons/Close.vue"
     import FlowPropertiesEdit from "./FlowPropertiesEdit.vue"
 
     const emit = defineEmits<{(e: "close"): void}>()
 
-    const {t} = useI18n()
 </script>
 
 <style lang="scss" scoped>

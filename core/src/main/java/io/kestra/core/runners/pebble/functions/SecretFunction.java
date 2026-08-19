@@ -39,6 +39,12 @@ public class SecretFunction implements KestraFunction {
     private static final String FULL_ARG = "full";
     private static final String VALUE_KEY = "value";
     private static final String METADATA_KEY = "metadata";
+    // Kestra's raw-tag markers (see VariableRenderer#RAW_PATTERN): wrapping the returned value
+    // keeps a later recursive-rendering pass from re-parsing it as Pebble source. A secret can
+    // legitimately contain '{#', '{{' or '{%', which would otherwise crash that later pass with a
+    // parser error whose message quotes the offending text, i.e. the secret itself.
+    private static final String RAW_TAG_OPEN = "{% raw %}";
+    private static final String RAW_TAG_CLOSE = "{% endraw %}";
 
     @Inject
     private Provider<SecretService> secretService;
@@ -80,10 +86,14 @@ public class SecretFunction implements KestraFunction {
                 consumeSecret(context, secretObject.value());
 
                 Map<String, Object> result = new LinkedHashMap<>();
-                result.put(VALUE_KEY, secretObject.value());
+                result.put(VALUE_KEY, wrapAsRaw(secretObject.value()));
                 if (!secretObject.metadata().isEmpty()) {
-                    secretObject.metadata().values().forEach(value -> consumeSecret(context, value));
-                    result.put(METADATA_KEY, secretObject.metadata());
+                    Map<String, String> wrappedMetadata = new LinkedHashMap<>();
+                    secretObject.metadata().forEach((metadataKey, value) -> {
+                        consumeSecret(context, value);
+                        wrappedMetadata.put(metadataKey, wrapAsRaw(value));
+                    });
+                    result.put(METADATA_KEY, wrappedMetadata);
                 }
                 return result;
             }
@@ -111,10 +121,14 @@ public class SecretFunction implements KestraFunction {
             }
 
             consumeSecret(context, secret);
-            return secret;
+            return wrapAsRaw(secret);
         } catch (SecretException | IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
+    }
+
+    private static String wrapAsRaw(String value) {
+        return RAW_TAG_OPEN + value + RAW_TAG_CLOSE;
     }
 
     @SuppressWarnings("unchecked")

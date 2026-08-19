@@ -526,9 +526,10 @@
         "openInDashboardEditor": "대시보드 편집기에서 열기"
       },
       "missingPlugins": {
-        "title": "누락된 plugin",
-        "description": "이 blueprint는 이 인스턴스에 설치되지 않은 plugin의 task를 사용합니다: {plugins}. 이 blueprint를 사용하려면 설치하세요.",
-        "card": "이 인스턴스에 설치되지 않은 plugin이 필요합니다: {plugins}",
+        "title": "사용할 수 없는 task",
+        "description": "이 blueprint는 이 인스턴스에서 사용할 수 없는 task 유형을 사용합니다:",
+        "installHint": "이 blueprint를 사용하려면 누락된 plugin을 설치하세요: {plugins}.",
+        "card": "이 인스턴스에서 사용할 수 없는 task 유형을 사용합니다: {tasks}",
         "install": "plugin 설치"
       }
     },
@@ -888,6 +889,10 @@
         "files": "{count}개의 선택된 파일 삭제",
         "folders": "{count}개의 선택된 폴더 삭제"
       },
+      "move": {
+        "bulk_success": "선택한 파일이 성공적으로 이동되었습니다.",
+        "bulk_error": "선택한 항목 {count}개 중 이동에 실패했습니다."
+      },
       "import": {
         "files": "파일 가져오기",
         "folder": "폴더 가져오기",
@@ -1189,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "네임스페이스 관리 업그레이드",
-          "message": "Kestra Enterprise Edition에서 namespace는 대규모로 secrets, variables 및 플러그인 기본값에 대한 고급 격리 및 거버넌스를 제공합니다. 관리자는 namespace별로 사용자 지정 secrets manager, 격리된 스토리지 백엔드, 전용 worker 그룹 및 세분화된 권한을 구성할 수 있습니다. 이를 통해 secrets, variables 및 플러그인 구성이 여러 팀과 프로젝트에서 안전하고 쉽게 유지 관리됩니다."
+          "message": "Kestra Enterprise Edition에서 namespace는 시크릿, 변수 및 거버넌스 정책에 대한 고급 격리 및 제어를 대규모로 제공합니다. 관리자는 namespace별로 사용자 지정 시크릿 관리자, 격리된 스토리지 백엔드, 전용 worker 그룹 및 세분화된 권한을 구성할 수 있습니다. 이를 통해 시크릿, 변수 및 거버넌스 규칙이 여러 팀과 프로젝트에서 안전하고 쉽게 유지 관리되도록 보장합니다."
         },
         "secrets": {
           "title": "비밀을 안전하게 관리하기",
@@ -1751,10 +1756,6 @@
           "title": "현재 종속성이 없습니다.",
           "content": "이 자산은 flow 또는 다른 자산과 상위 또는 하위 종속성이 없습니다."
         }
-      },
-      "plugins": {
-        "title": "이 Namespace에 대한 플러그인 기본값이 설정되지 않았습니다.",
-        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요."
       },
       "triggers": {
         "title": "flow에 Triggers가 없습니다.",

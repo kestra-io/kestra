@@ -1,32 +1,30 @@
 <template>
     <div v-if="visible && isBlueprints" class="product-tour-nudge">
         <span class="product-tour-nudge__dismiss">
-            <KsIconButton :tooltip="t(tk('actions.dismiss'))" placement="top" @click="dismiss">
+            <KsIconButton :tooltip="$t(tk('actions.dismiss'))" placement="top" @click="dismiss">
                 <Close />
             </KsIconButton>
         </span>
         <p class="product-tour-nudge__title">
-            {{ t(tk("nudge.title")) }}
+            {{ $t(tk("nudge.title")) }}
         </p>
         <RouterLink :to="tourRoute" class="product-tour-nudge__link">
             <span class="product-tour-nudge__play">
                 <Play :size="14" />
             </span>
-            <span>{{ t(tk("nudge.action")) }}</span>
+            <span>{{ $t(tk("nudge.action")) }}</span>
         </RouterLink>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
     import Play from "vue-material-design-icons/Play.vue"
     import Close from "vue-material-design-icons/Close.vue"
 
     import {useProductTourNudge} from "./useProductTourEntry"
 
-    const {t} = useI18n()
     const route = useRoute()
     const {visible, tourRoute, tk, dismiss} = useProductTourNudge()
 

@@ -1,12 +1,12 @@
 package io.kestra.webserver.controllers.api;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.tenant.TenantService;
 
@@ -30,6 +30,9 @@ public class OutputController {
     private TaskOutputService taskOutputService;
 
     @Inject
+    private ExecutionOutputService executionOutputService;
+
+    @Inject
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
@@ -39,7 +42,19 @@ public class OutputController {
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{executionId}/{taskRunId}")
+    @Get(uri = "executions/{executionId}")
+    @Operation(tags = { "Outputs" }, summary = "Get the flow-level outputs of an execution")
+    @ApiResponse(
+        responseCode = "200", description = "The execution outputs as a map of output names to their values",
+        content = { @Content(schema = @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.TRUE)) }
+    )
+    public Map<String, Object> getExecutionOutputs(@Parameter(description = "The execution id") @PathVariable String executionId) throws InternalException {
+        var execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        return Optional.ofNullable(executionOutputService.getOutputs(execution)).orElse(Collections.emptyMap());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "tasks/{executionId}/{taskRunId}")
     @Operation(tags = { "Outputs" }, summary = "Get task run outputs")
     @ApiResponse(
         responseCode = "200", description = "The task run outputs as a map of output names to their values",
@@ -54,8 +69,8 @@ public class OutputController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{executionId}")
-    @Operation(tags = { "Outputs" }, summary = "Get task run outputs")
+    @Get(uri = "tasks/{executionId}")
+    @Operation(tags = { "Outputs" }, summary = "List the task runs of an execution having outputs")
     public List<TaskOutputInformation> getTaskOutputsInformation(@Parameter(description = "The execution id") @PathVariable String executionId) throws InternalException {
         var execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         return taskOutputRepository.findByExecution(execution).stream()

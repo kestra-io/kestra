@@ -449,7 +449,6 @@ class RunVariablesTest {
         // LoopRun with key set and two parents (last has a non-null key → item.parent.key appears)
         Execution parentExecution = Execution.builder()
             .id("parent-exec-id").namespace("ns").flowId("flow").state(new State())
-            .outputs(Map.of())
             .trigger(executionTrigger)
             .build()
             .withState(State.Type.SUCCESS);
@@ -464,7 +463,6 @@ class RunVariablesTest {
             .labels(List.of(new Label("env", "prod")))
             .loopRun(loopRun)
             .variables(new java.util.HashMap<>(Map.of(RunVariables.FIXTURE_FILES_KEY, Map.of())))
-            .outputs(Map.of())
             .build();
 
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
@@ -482,6 +480,7 @@ class RunVariablesTest {
             })
             .withTaskRun(childRun)
             .withExecution(execution)
+            .withExecutionOutputs(Map.of("myExecutionOutput", "value"))
             .withEnvs(Map.of("MY_ENV", "value"))
             .withGlobals(Map.of("myGlobal", "value"))
             .withInputs(Map.of("myInput", "value"))
@@ -490,9 +489,10 @@ class RunVariablesTest {
 
         // Dynamic top-level keys whose children vary per flow/execution — not walked.
         // "trigger" holds execution-trigger variables (dynamic like inputs/outputs).
+        // "execution.outputs" holds the flow-level outputs, dynamic like inputs/outputs.
         Set<String> dynamicTopLevel = Set.of(
             "envs", "files", "globals", "inputs", "labels",
-            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
+            "outputs", "tasks", "trigger", "vars", "execution.outputs", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
         );
 
         List<String> foundPaths = new ArrayList<>();
@@ -526,12 +526,12 @@ class RunVariablesTest {
             if (RunVariables.SECRET_CONSUMER_VARIABLE_NAME.equals(key) && prefix.isEmpty()) {
                 continue;
             }
-            if (stopAt.contains(key) && prefix.isEmpty()) {
-                // Dynamic key: record the top-level key but don't walk flow-specific children
-                paths.add(key);
+            String fullPath = prefix.isEmpty() ? key : prefix + "." + key;
+            if (stopAt.contains(fullPath)) {
+                // Dynamic key: record the key but don't walk flow-specific children
+                paths.add(fullPath);
                 continue;
             }
-            String fullPath = prefix.isEmpty() ? key : prefix + "." + key;
             paths.add(fullPath);
             if (entry.getValue() instanceof Map<?, ?> nested) {
                 collectStructuralPaths((Map<String, ?>) nested, fullPath, stopAt, paths);

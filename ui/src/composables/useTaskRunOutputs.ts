@@ -67,3 +67,14 @@ export async function loadTaskRunOutputs(executionId: string, taskRunId: string)
     )
     return data ?? {}
 }
+
+/**
+ * Fetches an execution's flow-level outputs. Like task run outputs, they are not embedded in the Execution payload.
+ */
+export async function loadExecutionOutputs(executionId: string): Promise<Record<string, unknown>> {
+    const data = await OutputsAPI.executionOutputs(
+        {executionId},
+        {validateStatus: (status: number) => status === 200 || status === 404},
+    )
+    return data ?? {}
+}

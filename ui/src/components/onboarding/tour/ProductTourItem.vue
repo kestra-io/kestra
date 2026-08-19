@@ -5,11 +5,11 @@
                 <Play :size="18" />
             </span>
             <span class="product-tour-label">
-                {{ t(tk(menuKey)) }}
+                {{ $t(tk(menuKey)) }}
             </span>
         </RouterLink>
         <span class="product-tour-dismiss">
-            <KsIconButton :tooltip="t(tk('actions.dismiss'))" placement="top" @click="dismiss">
+            <KsIconButton :tooltip="$t(tk('actions.dismiss'))" placement="top" @click="dismiss">
                 <Close />
             </KsIconButton>
         </span>
@@ -17,13 +17,11 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
     import Close from "vue-material-design-icons/Close.vue"
 
     import {useProductTourMenuEntry} from "./useProductTourEntry"
 
-    const {t} = useI18n()
     const {visible, menuKey, tourRoute, tk, dismiss} = useProductTourMenuEntry()
 </script>
 

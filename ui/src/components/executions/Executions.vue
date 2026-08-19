@@ -93,6 +93,17 @@
                     {{ $t("delete") }}
                 </KsButton>
 
+                <component
+                    :is="action"
+                    v-for="(action, i) in bulkActionComponents"
+                    :key="i"
+                    :selection="selection"
+                    :queryBulkAction="queryBulkAction"
+                    :namespace="props.namespace"
+                    :loadQuery="loadQuery"
+                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
+                />
+
                 <KsDropdown>
                     <KsButton :aria-label="$t('bulk actions')">
                         <DotsVertical />
@@ -144,17 +155,6 @@
                         </KsFormItem>
                     </KsForm>
                 </KsDialog>
-
-                <component
-                    :is="action"
-                    v-for="(action, i) in bulkActionComponents"
-                    :key="i"
-                    :selection="selection"
-                    :queryBulkAction="queryBulkAction"
-                    :namespace="props.namespace"
-                    :loadQuery="loadQuery"
-                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
-                />
             </template>
 
             <KsTableColumn
@@ -224,7 +224,7 @@
                             :status="scope.row?.state?.current"
                             size="small"
                             clickable
-                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            :aria-label="$t('filter by status', {status: scope.row?.state?.current})"
                             @click.stop="onStateClick(scope.row?.state?.current)"
                         />
                     </template>

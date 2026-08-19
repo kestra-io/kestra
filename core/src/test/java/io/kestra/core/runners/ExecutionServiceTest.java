@@ -704,12 +704,12 @@ class ExecutionServiceTest {
     @LoadFlows("flows/valids/minimal.yaml")
     void createShouldSetOriginalIdToCreateCommandExecutionId() throws Exception {
         // Given
-        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        FlowWithSource flow = flowRepository.findByIdWithSource(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
         String executionId = IdUtils.create();
         Create createCommand = Create.of(new ExecutionId(flow.toFlowId(), executionId));
 
         // When
-        Execution execution = executionService.create(createCommand, flow);
+        Execution execution = executionService.create(createCommand, ProcessedFlow.of(flow));
 
         // Then
         // originalId must match the provided execution id, not the auto-generated id from newExecution().

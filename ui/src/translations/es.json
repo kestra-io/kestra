@@ -526,9 +526,10 @@
         "openInDashboardEditor": "Abrir en el Editor del Dashboard"
       },
       "missingPlugins": {
-        "title": "Plugins faltantes",
-        "description": "Este blueprint usa tasks de plugin(s) que no están instalados en esta instancia: {plugins}. Instálalos para usar este blueprint.",
-        "card": "Requiere plugin(s) no instalados en esta instancia: {plugins}",
+        "title": "Tasks no disponibles",
+        "description": "Este blueprint usa tipos de task que no están disponibles en esta instancia:",
+        "installHint": "Instala los plugin(s) que faltan para usar este blueprint: {plugins}.",
+        "card": "Usa tipos de task que no están disponibles en esta instancia: {tasks}",
         "install": "Instalar plugins"
       }
     },
@@ -888,6 +889,10 @@
         "files": "Eliminar {count} archivos seleccionados",
         "folders": "Eliminar {count} carpetas seleccionadas"
       },
+      "move": {
+        "bulk_success": "Archivos seleccionados movidos correctamente.",
+        "bulk_error": "Error al mover {count} de los elementos seleccionados."
+      },
       "import": {
         "files": "Importar archivos",
         "folder": "Importar carpeta",
@@ -1189,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "Mejora la Gestión de tu Namespace",
-          "message": "En Kestra Enterprise Edition, los namespaces proporcionan aislamiento avanzado y gobernanza de secrets, variables y valores predeterminados de plugins a escala. Los administradores pueden configurar gestores de secrets personalizados, backends de almacenamiento aislados, grupos de worker dedicados y permisos detallados por namespace. Esto garantiza que los secrets, las variables y las configuraciones de plugins permanezcan seguros y fáciles de mantener en diferentes equipos y proyectos."
+          "message": "En Kestra Enterprise Edition, los namespaces proporcionan aislamiento avanzado y control de secretos, variables y políticas de gobernanza a escala. Los administradores pueden configurar gestores de secretos personalizados, backends de almacenamiento aislados, grupos de workers dedicados y permisos detallados por namespace. Esto garantiza que los secretos, las variables y las reglas de gobernanza permanezcan seguros y fáciles de mantener en diferentes equipos y proyectos."
         },
         "secrets": {
           "title": "Gestionar Secretos de Forma Segura",
@@ -1751,10 +1756,6 @@
           "title": "Actualmente no hay dependencias.",
           "content": "Este recurso no tiene dependencias ascendentes o descendentes con flows u otros recursos."
         }
-      },
-      "plugins": {
-        "title": "No se han establecido valores predeterminados de plugin para este Namespace.",
-        "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> en nuestra documentación."
       },
       "triggers": {
         "title": "Tu flow no tiene ningún trigger.",

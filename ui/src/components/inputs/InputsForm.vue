@@ -23,7 +23,7 @@
                         <KsButton
                             type="text"
                             :icon="ContentCopyIcon"
-                            :tooltip="t('copy_to_clipboard')"
+                            :tooltip="$t('copy_to_clipboard')"
                             class="input-copy-btn"
                             @click.prevent="copyInputRef(input.id)"
                         />
@@ -50,7 +50,7 @@
                     @update:model-value="onChange(input)"
                     :allowCreate="input.allowCustomValue"
                     :disabled="isComputingInput(input.id)"
-                    :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                    :placeholder="isComputingInput(input.id) ? $t('loading') : undefined"
                     :loading="isLoadingInput(input.id)"
                     filterable
                     clearable
@@ -92,7 +92,7 @@
                     selectAll
                     :allowCreate="input.allowCustomValue"
                     :disabled="isComputingInput(input.id)"
-                    :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                    :placeholder="isComputingInput(input.id) ? $t('loading') : undefined"
                     :loading="isLoadingInput(input.id)"
                 >
                     <KsOption

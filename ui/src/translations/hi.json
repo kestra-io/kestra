@@ -526,9 +526,10 @@
         "openInDashboardEditor": "डैशबोर्ड एडिटर में खोलें"
       },
       "missingPlugins": {
-        "title": "अनुपलब्ध plugins",
-        "description": "यह blueprint ऐसे plugin(s) के tasks का उपयोग करता है जो इस instance पर इंस्टॉल नहीं हैं: {plugins}। इस blueprint का उपयोग करने के लिए उन्हें इंस्टॉल करें।",
-        "card": "इस instance पर इंस्टॉल न किए गए plugin(s) की आवश्यकता है: {plugins}",
+        "title": "अनुपलब्ध tasks",
+        "description": "यह blueprint ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं:",
+        "installHint": "इस blueprint का उपयोग करने के लिए अनुपलब्ध plugin(s) इंस्टॉल करें: {plugins}।",
+        "card": "ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं: {tasks}",
         "install": "Plugins इंस्टॉल करें"
       }
     },
@@ -888,6 +889,10 @@
         "files": "{count} चयनित फ़ाइलें हटाएं",
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
+      "move": {
+        "bulk_success": "चयनित फ़ाइलें सफलतापूर्वक स्थानांतरित हो गईं।",
+        "bulk_error": "चयनित आइटम(आइटमों) में से {count} को स्थानांतरित करने में विफल।"
+      },
       "import": {
         "files": "फ़ाइलें आयात करें",
         "folder": "फ़ोल्डर आयात करें",
@@ -1189,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें",
-          "message": "Kestra Enterprise Edition में, namespaces बड़े पैमाने पर secrets, variables और plugin defaults का उन्नत अलगाव और शासन प्रदान करते हैं। व्यवस्थापक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और plugin कॉन्फ़िगरेशन विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
+          "message": "Kestra Enterprise Edition में, namespace बड़े पैमाने पर secrets, variables और governance Policies का उन्नत अलगाव और नियंत्रण प्रदान करते हैं। प्रशासक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और governance rules विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
         },
         "secrets": {
           "title": "सुरक्षित तरीके से Secrets प्रबंधित करें",
@@ -1751,10 +1756,6 @@
           "title": "वर्तमान में कोई निर्भरता नहीं है।",
           "content": "इस संपत्ति का flows या अन्य संपत्तियों के साथ कोई upstream या downstream निर्भरता नहीं है।"
         }
-      },
-      "plugins": {
-        "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।",
-        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।"
       },
       "triggers": {
         "title": "आपके flow में कोई Triggers नहीं हैं।",

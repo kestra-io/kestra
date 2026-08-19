@@ -28,13 +28,14 @@
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision != item.value"
+                                        v-if="item.value !== undefined && currentRevision != item.value && canDelete"
                                     />
                                 </div>
                             </el-option>
                         </el-select>
                         <el-button-group>
                             <el-button
+                                v-if="canRestore"
                                 :icon="Restore"
                                 :disabled="revisionLeftText === currentRevisionWithSource.source"
                                 @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
@@ -71,6 +72,7 @@
                         </el-select>
                         <el-button-group>
                             <el-button
+                                v-if="canRestore"
                                 :icon="Restore"
                                 :disabled="revisionRightText === currentRevisionWithSource.source"
                                 @click="restoreRevision(revisionRightIndex, revisionRightText)"
@@ -152,8 +154,10 @@
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
-        editRouteQuery?: boolean
-    }>(), {editRouteQuery: true});
+        editRouteQuery?: boolean,
+        canRestore?: boolean,
+        canDelete?: boolean
+    }>(), {editRouteQuery: true, canRestore: true, canDelete: true});
 
     const sortedRevisions = computed(() => {
         return props.revisions.toSorted((a, b) => a.revision - b.revision);

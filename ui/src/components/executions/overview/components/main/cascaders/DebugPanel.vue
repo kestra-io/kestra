@@ -10,7 +10,7 @@
         />
 
         <div class="buttons">
-            <el-button type="primary" :icon="Refresh" @click="onRender">
+            <el-button type="primary" :icon="Refresh" :disabled="!isAllowedEval" @click="onRender">
                 {{ $t("eval.render") }}
             </el-button>
             <el-button
@@ -55,6 +55,9 @@
 
     import {Execution} from "../../../../../../stores/executions";
     import {useFlowStore} from "../../../../../../stores/flow";
+    import {useAuthStore} from "override/stores/auth";
+    import permission from "../../../../../../models/permission";
+    import action from "../../../../../../models/action";
 
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
@@ -92,6 +95,14 @@
 
     const axios = useAxios();
 
+    // Rendering an expression calls the eval endpoint, which requires FLOW UPDATE on the execution's namespace.
+    const isAllowedEval = computed(() =>
+        Boolean(
+            props.execution &&
+                useAuthStore().user?.isAllowed(permission.FLOW, action.UPDATE, props.execution.namespace),
+        ),
+    );
+
     const result = ref<{ value: string; type: string } | undefined>(undefined);
     const error = ref<string | undefined>(undefined);
     const stackTrace = ref<string | undefined>(undefined);
@@ -122,7 +133,7 @@
     );
 
     const onRender = () => {
-        if (!props.execution) return;
+        if (!props.execution || !isAllowedEval.value) return;
 
         clearAll();
 

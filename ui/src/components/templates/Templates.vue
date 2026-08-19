@@ -1,8 +1,8 @@
 <template>
     <TopNavBar :title="routeInfo.title">
-        <template #additional-right v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
+        <template #additional-right v-if="canImport || canCreate">
             <ul>
-                <li>
+                <li v-if="canImport">
                     <div class="el-input el-input-file el-input--large custom-upload">
                         <div class="el-input__wrapper">
                             <label for="importTemplates">
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                 </li>
-                <li>
+                <li v-if="canCreate">
                     <router-link :to="{name: 'templates/create'}">
                         <el-button :icon="Plus" type="primary" size="large">
                             {{ $t('create') }}
@@ -183,10 +183,18 @@
                 };
             },
             canRead() {
-                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(permission.TEMPLATE, action.READ);
             },
             canDelete() {
-                return this.authStore.user?.isAllowed(permission.FLOW, action.DELETE);
+                return this.authStore.user?.isAllowed(permission.TEMPLATE, action.DELETE);
+            },
+            canCreate() {
+                return this.authStore.user?.hasAnyAction(permission.TEMPLATE, action.CREATE);
+            },
+            // Import replays each template through the flow import path, which the backend
+            // authorizes with FLOW CREATE+UPDATE (not TEMPLATE) — gate it accordingly.
+            canImport() {
+                return this.authStore.user?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
             },
         },
         methods: {

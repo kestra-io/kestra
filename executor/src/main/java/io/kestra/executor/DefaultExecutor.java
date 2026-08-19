@@ -89,6 +89,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final ExecutionStateStore executionStateStore;
     private final ExecutionDelayStateStore executionDelayStateStore;
     private final SLAMonitorStateStore slaMonitorStateStore;
+    private final io.kestra.core.services.TaskOutputService taskOutputService;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final TriggerEventQueue triggerEventQueue;
 
@@ -149,6 +150,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ExecutionTerminatedNotifier executionTerminatedNotifier,
         ExecutorService executorService,
         ExecutionService executionService,
+        io.kestra.core.services.TaskOutputService taskOutputService,
         FlowTriggerService flowTriggerService,
         SLAService slaService,
         MaintenanceService maintenanceService,
@@ -194,6 +196,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.executionStateStore = executionStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
         this.slaMonitorStateStore = slaMonitorStateStore;
+        this.taskOutputService = taskOutputService;
         this.concurrencySlotReleaseProcessor = concurrencySlotReleaseProcessor;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
@@ -589,6 +592,22 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         }
                     } catch (Exception e) {
                         executor = executorService.handleFailedExecutionFromExecutor(executor, e);
+                    }
+
+                    if (execution.getId().equals(executor.getExecution().getId())) {
+                        List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+                        List<String> newIds = executor.getExecution().getTaskRunList() != null
+                            ? executor.getExecution().getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+
+                        if (originalIds.size() != newIds.size() || !newIds.containsAll(originalIds)) {
+                            List<String> pruned = new ArrayList<>(originalIds);
+                            pruned.removeAll(newIds);
+                            if (!pruned.isEmpty()) {
+                                taskOutputService.deleteByTaskRunIds(executor.getExecution(), pruned);
+                            }
+                        }
                     }
 
                     return executor;

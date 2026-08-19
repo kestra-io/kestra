@@ -99,4 +99,27 @@ describe("LogsWrapper initial load", () => {
 
         expect(listSearches().map(levelOf)).toEqual(["INFO", "WARN"])
     })
+
+    it("searches anyway when the navigation writing the default never lands", async () => {
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [{name: "logs/list", path: "/:tenant?/logs", component: {template: "<div/>"}}],
+        })
+        await router.push({name: "logs/list", params: {tenant: "main"}})
+        await router.isReady()
+        // Stands in for anything that keeps the default out of the URL for good — a route guard
+        // rejecting the navigation, or one that supersedes it and drops the level again.
+        router.beforeEach((to, _from, next) => {
+            next(!to.query["filters[level][GREATER_THAN_OR_EQUAL_TO]"])
+        })
+
+        const wrapper = mountLogsWrapper(router)
+        await settle()
+        // The gate gives up 2s after mount rather than leaving the page blank.
+        await new Promise((resolve) => setTimeout(resolve, 2200))
+        await flushPromises()
+
+        expect(listSearches()).toHaveLength(1)
+        expect(wrapper.text()).toContain("a log line")
+    })
 })

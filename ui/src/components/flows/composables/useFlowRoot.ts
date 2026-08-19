@@ -8,7 +8,7 @@ import {useRouteTabsStore} from "../../../stores/routeTabs"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
-import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
+import {dependenciesTabMeta, FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
 
 export function useFlowRoot() {
     const {t} = useI18n()
@@ -64,12 +64,7 @@ export function useFlowRoot() {
                     title: t(meta.title as string),
                     locked: meta.locked as boolean | undefined,
                     // Dependencies surfaces a live count and is disabled when there are none.
-                    ...(name === "dependencies"
-                        ? {
-                            count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
-                            disabled: !dependenciesCount.value,
-                        }
-                        : {}),
+                    ...(name === "dependencies" ? dependenciesTabMeta(dependenciesCount.value) : {}),
                 }
             })
     })

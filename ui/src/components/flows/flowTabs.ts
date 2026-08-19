@@ -30,6 +30,22 @@ export function isFlowTabAllowed(tabName: string, ctx: {user: any; namespace: st
     }
 }
 
+/**
+ * Badge + disabled state of the Dependencies tab, derived from the flow's dependency count.
+ *
+ * `count` is the number of *other* flows the topology links to this one, so the flow's own
+ * node is already excluded by the store (see `loadDependencies`). Subtracting it a second
+ * time here left every flow with exactly one dependency showing a count of 0, which read as
+ * "no dependencies" and greyed the tab out - see kestra-io/kestra-ee#10028. Shared with
+ * kestra-ee's `FlowRoot.vue`, which builds the same tab bar.
+ */
+export function dependenciesTabMeta(count: number | undefined): {count?: number; disabled: boolean} {
+    return {
+        count: (count ?? 0) > 0 ? count : undefined,
+        disabled: !count,
+    }
+}
+
 /** localStorage key remembering the user's preferred default tab (see BasicSettings.vue), used as the redirect fallback below. */
 const DEFAULT_TAB_STORAGE_KEY = "flowDefaultTab"
 

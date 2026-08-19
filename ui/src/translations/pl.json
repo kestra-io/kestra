@@ -476,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "Ten plik ma rozmiar {size}. Może to chwilę potrwać, blokując przeglądarkę. Czy chcesz go mimo to załadować?",
+      "big_file_download_only": "Ten plik ma rozmiar {size}. Jest zbyt duży, aby otworzyć go w edytorze, pobierz go zamiast tego.",
       "load_anyway": "Załaduj mimo to",
       "load_error": "Nie udało się załadować podglądu pliku. Może to być problem tymczasowy lub problem z uprawnieniami.",
       "retry": "Ponów próbę",

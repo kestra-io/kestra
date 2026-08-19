@@ -176,7 +176,6 @@ public class PluginCatalogService {
                     String artifactId = (String) plugin.get("name");
                     return new PluginManifest(
                         (String) plugin.get("title"),
-                        (String) plugin.get("group"),
                         groupId,
                         artifactId,
                         (String) plugin.get("group")
@@ -262,17 +261,18 @@ public class PluginCatalogService {
         }
     }
 
+    /**
+     * @param title human-readable plugin title
+     * @param groupId Maven group id of the plugin artifact
+     * @param artifactId Maven artifact id of the plugin artifact
+     * @param group Java package group of the plugin (e.g. {@code io.kestra.plugin.aws}), used for
+     *        type-to-artifact matching; may be {@code null}
+     */
     public record PluginManifest(
         String title,
-        String icon,
         String groupId,
         String artifactId,
         String group) {
-
-        /** Backward-compatible constructor for callers that don't provide a Java package group. */
-        public PluginManifest(String title, String icon, String groupId, String artifactId) {
-            this(title, icon, groupId, artifactId, null);
-        }
 
         @Override
         public String toString() {

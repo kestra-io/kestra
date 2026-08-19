@@ -3,17 +3,17 @@
         <template v-if="job">
             <div
                 v-if="job.status === 'SUCCEEDED'"
-                class="status-line status-line--success"
+                class="status-line status-line-success"
             >
                 <KsIcon name="check-circle" />
-                <span>{{ t("plugins.autoInstall.succeeded", artifactCount) }}</span>
+                <span>{{ $t("plugins.autoInstall.succeeded", artifactCount) }}</span>
             </div>
             <div
                 v-else-if="job.status === 'FAILED'"
-                class="status-line status-line--error"
+                class="status-line status-line-error"
             >
                 <KsIcon name="alert-circle" />
-                <span>{{ job.error ?? t("plugins.autoInstall.failed") }}</span>
+                <span>{{ job.error ?? $t("plugins.autoInstall.failed") }}</span>
             </div>
             <template v-else>
                 <div
@@ -21,13 +21,17 @@
                     :key="artifact.artifactId"
                     class="artifact-row"
                 >
-                    <span class="artifact-label">{{ artifact.artifactId }}</span>
+                    <KsText size="small" truncated class="artifact-label">
+                        {{ artifact.artifactId }}
+                    </KsText>
                     <KsProgress
                         :percentage="artifactPercentage(artifact)"
                         :stroke-width="6"
                         class="artifact-progress"
                     />
-                    <span class="artifact-bytes">{{ artifactBytesLabel(artifact) }}</span>
+                    <KsText size="small" class="artifact-bytes">
+                        {{ artifactBytesLabel(artifact) }}
+                    </KsText>
                 </div>
             </template>
         </template>
@@ -37,7 +41,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted} from "vue"
     import {useI18n} from "vue-i18n"
-    import {usePluginsStore, type PluginArtifact, type PluginInstallJob} from "../../stores/plugins"
+    import {usePluginsStore, type ArtifactProgress, type PluginArtifact, type PluginInstallJob} from "../../stores/plugins"
 
     const props = defineProps<{
         jobId: string;
@@ -45,26 +49,41 @@
         onFailure?: () => void;
     }>()
 
+    const POLL_INTERVAL_MS = 500
+    // A single failed poll can be transient (network blip, server hiccup) — only treat the job as
+    // lost after several consecutive failures.
+    const MAX_CONSECUTIVE_POLL_FAILURES = 10
+
     const {t} = useI18n()
     const pluginsStore = usePluginsStore()
 
     const job = ref<PluginInstallJob | null>(null)
     let pollTimer: ReturnType<typeof setInterval> | null = null
+    let consecutivePollFailures = 0
 
     const artifactCount = computed(() => job.value?.artifacts.length ?? 0)
 
+    function escapeRegExp(value: string): string {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    }
+
+    function progressFor(artifact: PluginArtifact): ArtifactProgress | undefined {
+        const progress = job.value?.progress ?? {}
+        // Match the artifact's own file segment ("…/plugin-aws-1.2.3.jar") — a plain includes()
+        // would also match "plugin-aws" against a "plugin-aws-s3" resource.
+        const pattern = new RegExp(`(^|/)${escapeRegExp(artifact.artifactId)}-\\d`)
+        const key = Object.keys(progress).find(k => pattern.test(k))
+        return key ? progress[key] : undefined
+    }
+
     function artifactPercentage(artifact: PluginArtifact): number {
-        const key = Object.keys(job.value?.progress ?? {}).find(k => k.includes(artifact.artifactId))
-        if (!key) return 0
-        const p = job.value!.progress[key]
+        const p = progressFor(artifact)
         if (!p || p.total <= 0) return 0
         return Math.round((p.transferred / p.total) * 100)
     }
 
     function artifactBytesLabel(artifact: PluginArtifact): string {
-        const key = Object.keys(job.value?.progress ?? {}).find(k => k.includes(artifact.artifactId))
-        if (!key) return ""
-        const p = job.value!.progress[key]
+        const p = progressFor(artifact)
         if (!p) return ""
         return t("plugins.autoInstall.progress", {
             transferred: humanBytes(p.transferred),
@@ -81,12 +100,20 @@
     async function poll() {
         const latest = await pluginsStore.getInstallJob(props.jobId)
         if (latest) {
+            consecutivePollFailures = 0
             job.value = latest
+            if (latest.status === "SUCCEEDED") {
+                stopPolling()
+                props.onSuccess?.()
+            } else if (latest.status === "FAILED") {
+                stopPolling()
+                props.onFailure?.()
+            }
+            return
         }
-        if (latest?.status === "SUCCEEDED") {
-            stopPolling()
-            props.onSuccess?.()
-        } else if (latest?.status === "FAILED" || latest === null) {
+
+        consecutivePollFailures++
+        if (consecutivePollFailures >= MAX_CONSECUTIVE_POLL_FAILURES) {
             stopPolling()
             props.onFailure?.()
         }
@@ -105,8 +132,8 @@
 
     onMounted(async () => {
         await poll()
-        if (job.value && !isTerminal(job.value)) {
-            pollTimer = setInterval(poll, 500)
+        if (!isTerminal(job.value) && pollTimer === null && consecutivePollFailures < MAX_CONSECUTIVE_POLL_FAILURES) {
+            pollTimer = setInterval(poll, POLL_INTERVAL_MS)
         }
     })
 
@@ -119,27 +146,17 @@
     .plugin-install-toast {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
-        min-width: 260px;
+        gap: var(--ks-spacing-2);
+        min-width: 16rem;
     }
 
     .artifact-row {
         display: flex;
         flex-direction: column;
-        gap: 0.2rem;
-    }
-
-    .artifact-label {
-        font-size: 0.8rem;
-        color: var(--ks-content-secondary);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        gap: var(--ks-spacing-1);
     }
 
     .artifact-bytes {
-        font-size: 0.75rem;
-        color: var(--ks-content-secondary);
         text-align: right;
     }
 
@@ -150,14 +167,14 @@
     .status-line {
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: var(--ks-spacing-1);
+    }
 
-        &--success {
-            color: var(--ks-content-success);
-        }
+    .status-line-success {
+        color: var(--ks-text-success);
+    }
 
-        &--error {
-            color: var(--ks-content-error);
-        }
+    .status-line-error {
+        color: var(--ks-text-error);
     }
 </style>

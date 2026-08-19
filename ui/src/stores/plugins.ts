@@ -70,10 +70,6 @@ interface LoadOptions {
     all?: boolean;
     commit?: boolean;
     hash?: number;
-    // Best-effort lookups (e.g. as-you-type task type documentation) expect a 404 as a normal
-    // outcome for a not-yet-known type — set this to avoid tripping the shared HTTP client's
-    // global error handling, which otherwise blanks the whole page for any 404 response.
-    silentOn404?: boolean;
 }
 
 interface JsonSchemaDef {
@@ -355,7 +351,10 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc
         }
 
-        const requestOptions = options.silentOn404 ? ({ignoreNotFound: true} as any) : undefined
+        // A 404 is a normal outcome here (e.g. as-you-type documentation for a not-yet-installed
+        // catalog type) — every caller handles it locally, so never trip the shared HTTP client's
+        // global not-found page.
+        const requestOptions = {ignoreNotFound: true} as Parameters<typeof PluginsAPI.pluginDocumentation>[1]
         const data = (options.version
             ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
             : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, requestOptions)) as PluginComponent
@@ -419,9 +418,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             return
         }
 
-        // silentOn404: with the catalog merged into the plugin list, the cursor can sit on a type
-        // that is not installed yet — its doc endpoint 404s and must not trigger the error page.
-        let payload: LoadOptions = {cls, version, hash, silentOn404: true}
+        let payload: LoadOptions = {cls, version, hash}
 
         if (version !== undefined) {
             if (semver.valid(version) !== null ||
@@ -518,11 +515,16 @@ export const usePluginsStore = defineStore("plugins", () => {
         return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
     }
 
+    // Auto-install requests are best-effort and handled locally by their callers: a 403 (feature
+    // disabled) or a 404 (job evicted while the toast is still polling) must never trip the shared
+    // HTTP client's global error page or toast.
+    const silentRequest = {ignoreNotFound: true, showMessageOnError: false}
+
     async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {
         const response = await axios.post<PluginAutoInstallDetectResult>(
             `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
             flowYaml,
-            {headers: {"Content-Type": "text/plain"}},
+            {headers: {"Content-Type": "text/plain"}, ...silentRequest},
         )
         return response.data
     }
@@ -531,6 +533,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         const response = await axios.post<PluginInstallJob>(
             `${apiUrlWithoutTenants()}/plugins/install`,
             artifacts,
+            silentRequest,
         )
         return response.data
     }
@@ -539,6 +542,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         try {
             const response = await axios.get<PluginInstallJob>(
                 `${apiUrlWithoutTenants()}/plugins/install/${jobId}`,
+                silentRequest,
             )
             return response.data
         } catch {

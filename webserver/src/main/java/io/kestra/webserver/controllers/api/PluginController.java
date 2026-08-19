@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.kestra.core.docs.*;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
@@ -24,7 +25,6 @@ import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginInstallJob;
 import io.kestra.core.plugins.PluginInstallJobRegistry;
-import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -106,9 +106,6 @@ public class PluginController {
     protected PluginCatalogService pluginCatalogService;
 
     @Inject
-    protected PluginManager pluginManager;
-
-    @Inject
     protected PluginAutoInstallService pluginAutoInstallService;
 
     @Inject
@@ -127,7 +124,8 @@ public class PluginController {
     public HttpResponse<Map<String, Object>> getSchemasFromType(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
         @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf,
-        @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
+        @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable
+        @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
         if (Boolean.TRUE.equals(includeCatalog)) {
             // Catalog-merged schema: a short browser cache rather than ETag revalidation — the merged
@@ -155,23 +153,42 @@ public class PluginController {
         summary = "Start async plugin installation",
         description = "Enqueues installation of the specified plugin artifacts and returns a job id " +
             "immediately (HTTP 202). Poll GET /plugins/install/{jobId} for status and per-artifact " +
-            "byte-level progress. In distributed (EE) deployments the installation is propagated " +
-            "cluster-wide after the job succeeds. Returns 403 when the auto-install feature is disabled " +
-            "on this instance."
+            "byte-level progress. Only artifacts provided by the plugin catalog (as returned by " +
+            "POST /plugins/auto-install/detect) are accepted. In distributed (EE) deployments the " +
+            "installation is propagated cluster-wide after the job succeeds. Returns 403 when the " +
+            "auto-install feature is disabled on this instance."
     )
     @ApiResponse(responseCode = "202", description = "Installation job accepted")
+    @ApiResponse(responseCode = "400", description = "An artifact is not part of the plugin catalog")
     @ApiResponse(responseCode = "403", description = "Auto-install feature is disabled on this instance")
-    public HttpResponse<PluginInstallJob> installPlugins(
+    @ApiResponse(responseCode = "429", description = "Too many install jobs are already pending or running")
+    public HttpResponse<?> installPlugins(
         @Valid @Body List<PluginArtifact> artifacts) {
-        // Same gate as detectMissingPlugins: without it, any caller could make the server resolve,
-        // download and load arbitrary Maven artifacts in-process regardless of the feature flag.
+        // Same gate as detectMissingPlugins: the feature flag must always win.
         if (!pluginAutoInstallService.isEnabled()) {
-            return HttpResponse.status(HttpStatus.FORBIDDEN);
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                .body(new ApiMessage("Plugin auto-install is disabled on this instance."));
         }
 
-        UUID jobId = pluginInstallJobRegistry.submit(artifacts);
+        // Catalog allowlist: never resolve, download and class-load an arbitrary Maven coordinate.
+        List<PluginArtifact> unknownArtifacts = artifacts.stream()
+            .filter(artifact -> !pluginAutoInstallService.isFromCatalog(artifact))
+            .toList();
+        if (!unknownArtifacts.isEmpty()) {
+            return HttpResponse.badRequest(
+                new ApiMessage("Cannot install artifacts %s: they are not part of the plugin catalog.".formatted(unknownArtifacts))
+            );
+        }
+
+        UUID jobId;
+        try {
+            jobId = pluginInstallJobRegistry.submit(artifacts);
+        } catch (KestraRuntimeException e) {
+            return HttpResponse.status(HttpStatus.TOO_MANY_REQUESTS).body(new ApiMessage(e.getMessage()));
+        }
+
         PluginInstallJob job = pluginInstallJobRegistry.get(jobId)
-            .orElseThrow(() -> new IllegalStateException("Job vanished immediately after submit: " + jobId));
+            .orElseThrow(() -> new KestraRuntimeException("Plugin install job %s vanished immediately after submit.".formatted(jobId)));
         return HttpResponse.status(HttpStatus.ACCEPTED).body(job);
     }
 
@@ -203,19 +220,7 @@ public class PluginController {
     )
     @ApiResponse(responseCode = "200", description = "Detection result")
     public HttpResponse<PluginAutoInstallDetectResult> detectMissingPlugins(@Body String flowYaml) {
-        if (!pluginAutoInstallService.isEnabled()) {
-            return HttpResponse.ok(new PluginAutoInstallDetectResult(false, Set.of(), List.of()));
-        }
-
-        var missingTypes = pluginAutoInstallService.findMissingTypes(flowYaml);
-        var artifacts = missingTypes.stream()
-            .map(pluginAutoInstallService::findArtifactForType)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .distinct()
-            .toList();
-
-        return HttpResponse.ok(new PluginAutoInstallDetectResult(true, missingTypes, artifacts));
+        return HttpResponse.ok(pluginAutoInstallService.detect(flowYaml));
     }
 
     @Get(uri = "properties/{type}")
@@ -247,7 +252,7 @@ public class PluginController {
     }
 
     private <T> HttpResponse<T> notModified(final String etag) {
-        return HttpResponse.<T>notModified()
+        return HttpResponse.<T> notModified()
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
@@ -738,6 +743,10 @@ public class PluginController {
      * the purpose of {@link #getPluginIcon} always answering 200.
      */
     public record PluginIconResponse(@Nullable PluginIcon icon) {
+    }
+
+    /** JSON-object error body, so no API response is ever an empty or non-object payload. */
+    public record ApiMessage(String message) {
     }
 
     /**

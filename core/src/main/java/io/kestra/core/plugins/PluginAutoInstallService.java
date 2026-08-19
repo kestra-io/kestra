@@ -63,6 +63,11 @@ public class PluginAutoInstallService {
 
     private static final Duration DEFAULT_INSTALL_TIMEOUT = Duration.ofMinutes(2);
 
+    // Shorter bound for the synchronous save-path hook: a flow save runs on an IO thread and a
+    // namespace bulk import serializes behind the small install pool, so it must not wait the
+    // full boot/migration timeout per flow.
+    private static final Duration DEFAULT_SAVE_TIMEOUT = Duration.ofSeconds(30);
+
     /** Maven coordinates template for storage backend plugins, e.g. {@code io.kestra.storage:storage-s3:LATEST}. */
     private static final String STORAGE_ARTIFACT_TEMPLATE = "io.kestra.storage:storage-%s:LATEST";
 
@@ -71,6 +76,7 @@ public class PluginAutoInstallService {
     private final Provider<PluginInstallJobRegistry> installJobRegistry;
     private final boolean enabled;
     private final Duration installTimeout;
+    private final Duration saveTimeout;
     private final Optional<String> configuredStorageType;
 
     @Inject
@@ -81,7 +87,8 @@ public class PluginAutoInstallService {
         final EditionProvider editionProvider,
         @Value("${kestra.storage.type}") final Optional<String> storageType,
         @Value("${kestra.plugins.auto-install.enabled}") final Optional<Boolean> enabledProperty,
-        @Value("${kestra.plugins.auto-install.install-timeout}") final Optional<Duration> installTimeoutProperty) {
+        @Value("${kestra.plugins.auto-install.install-timeout}") final Optional<Duration> installTimeoutProperty,
+        @Value("${kestra.plugins.auto-install.save-timeout}") final Optional<Duration> saveTimeoutProperty) {
         // Default on only for OSS + local-filesystem storage (the "local" persona): the storage type
         // is the signal that distinguishes `server local` from a generic standalone deployment on
         // S3/GCS, which must stay inert. An explicit property value always wins, so an operator who
@@ -95,6 +102,7 @@ public class PluginAutoInstallService {
                     && storageType.map("local"::equalsIgnoreCase).orElse(false)
             ),
             installTimeoutProperty.orElse(DEFAULT_INSTALL_TIMEOUT),
+            saveTimeoutProperty.orElse(DEFAULT_SAVE_TIMEOUT),
             storageType
         );
     }
@@ -105,12 +113,14 @@ public class PluginAutoInstallService {
         final Provider<PluginInstallJobRegistry> installJobRegistry,
         final boolean enabled,
         final Duration installTimeout,
+        final Duration saveTimeout,
         final Optional<String> configuredStorageType) {
         this.catalogService = Objects.requireNonNull(catalogService);
         this.pluginRegistry = Objects.requireNonNull(pluginRegistry);
         this.installJobRegistry = Objects.requireNonNull(installJobRegistry);
         this.enabled = enabled;
         this.installTimeout = Objects.requireNonNull(installTimeout);
+        this.saveTimeout = Objects.requireNonNull(saveTimeout);
         this.configuredStorageType = Objects.requireNonNull(configuredStorageType);
     }
 
@@ -166,6 +176,49 @@ public class PluginAutoInstallService {
     }
 
     /**
+     * Detects the plugin types missing from the registry in the given flow YAML and resolves
+     * their catalog artifacts, without installing anything.
+     * <p>
+     * This backs {@code POST /plugins/auto-install/detect}. When the feature is disabled the
+     * result is empty (not an error), so the caller can always treat it as "nothing to install".
+     *
+     * @param flowYaml the YAML source of the flow.
+     * @return the detection result: feature flag, missing type FQCNs and their catalog artifacts.
+     */
+    public PluginAutoInstallDetectResult detect(final String flowYaml) {
+        if (!enabled) {
+            return new PluginAutoInstallDetectResult(false, Set.of(), List.of());
+        }
+
+        Set<String> missingTypes = findMissingTypes(flowYaml);
+        List<PluginArtifact> artifacts = missingTypes.stream()
+            .map(this::findArtifactForType)
+            .flatMap(Optional::stream)
+            .distinct()
+            .toList();
+
+        return new PluginAutoInstallDetectResult(true, missingTypes, artifacts);
+    }
+
+    /**
+     * Returns whether the given artifact is provided by the plugin catalog.
+     * <p>
+     * The install endpoint uses this as an allowlist: only artifacts the catalog itself maps
+     * (exactly what {@link #detect(String)} can return) may be installed, so a caller can never
+     * make the server resolve, download and class-load an arbitrary Maven coordinate.
+     *
+     * @param artifact the artifact to check.
+     * @return {@code true} when a catalog manifest matches the artifact's groupId and artifactId.
+     */
+    public boolean isFromCatalog(final PluginArtifact artifact) {
+        return artifact != null && catalogService.get().stream()
+            .anyMatch(
+                manifest -> manifest.groupId().equals(artifact.groupId())
+                    && manifest.artifactId().equals(artifact.artifactId())
+            );
+    }
+
+    /**
      * Detects the plugin types missing from the registry in the given flow YAML, resolves their
      * catalog artifacts, and installs the deduplicated set synchronously with a bounded wait.
      * <p>
@@ -181,7 +234,7 @@ public class PluginAutoInstallService {
         if (!enabled) {
             return;
         }
-        installMissingTypes(findMissingTypes(flowYaml));
+        installMissingTypes(findMissingTypes(flowYaml), saveTimeout);
     }
 
     /**
@@ -196,6 +249,10 @@ public class PluginAutoInstallService {
      * @param missingTypes the plugin type FQCNs missing from the local registry.
      */
     public void installMissingTypes(final Set<String> missingTypes) {
+        installMissingTypes(missingTypes, installTimeout);
+    }
+
+    private void installMissingTypes(final Set<String> missingTypes, final Duration timeout) {
         if (!enabled || missingTypes.isEmpty()) {
             return;
         }
@@ -211,7 +268,7 @@ public class PluginAutoInstallService {
             return;
         }
 
-        installArtifacts(artifacts, missingTypes);
+        installArtifacts(artifacts, missingTypes, timeout);
     }
 
     /**
@@ -243,7 +300,8 @@ public class PluginAutoInstallService {
             .ifPresent(
                 type -> installArtifacts(
                     List.of(PluginArtifact.fromCoordinates(STORAGE_ARTIFACT_TEMPLATE.formatted(type))),
-                    Set.of(type)
+                    Set.of(type),
+                    installTimeout
                 )
             );
     }
@@ -254,17 +312,17 @@ public class PluginAutoInstallService {
             .anyMatch(cls -> Plugin.getId(cls).map(type::equals).orElse(false));
     }
 
-    private void installArtifacts(final List<PluginArtifact> artifacts, final Set<String> missingTypes) {
+    private void installArtifacts(final List<PluginArtifact> artifacts, final Set<String> missingTypes, final Duration timeout) {
         try {
             PluginInstallJobRegistry registry = installJobRegistry.get();
             UUID jobId = registry.submit(artifacts);
-            Optional<PluginInstallJob> job = registry.awaitTerminal(jobId, installTimeout);
+            Optional<PluginInstallJob> job = registry.awaitTerminal(jobId, timeout);
             if (job.isPresent() && PluginInstallJob.Status.SUCCEEDED == job.get().status()) {
                 log.info("Auto-installed plugin artifacts {} for missing types {}.", artifacts, missingTypes);
             } else {
                 log.warn(
                     "Plugin auto-install did not succeed within {} for artifacts {}: {}.",
-                    installTimeout,
+                    timeout,
                     artifacts,
                     job.map(it -> it.error() != null ? it.error() : "job is still " + it.status()).orElse("job not found")
                 );
@@ -282,7 +340,9 @@ public class PluginAutoInstallService {
     private void collectTypes(final Object node, final Set<String> types) {
         if (node instanceof Map<?, ?> map) {
             Object typeValue = ((Map<String, Object>) map).get("type");
-            if (typeValue instanceof String type && !type.isBlank()) {
+            // Only package-shaped FQCNs are plugin types: `type:` keys are also used by flow
+            // inputs (`type: STRING`), retry blocks (`type: constant`), etc.
+            if (typeValue instanceof String type && type.indexOf('.') >= 0) {
                 types.add(type);
             }
             for (Object value : ((Map<String, Object>) map).values()) {

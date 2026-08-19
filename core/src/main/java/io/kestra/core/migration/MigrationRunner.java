@@ -218,6 +218,13 @@ public class MigrationRunner implements MigrationRunnerInterface {
             return;
         }
 
+        // Not applicable yet (e.g. gated on a disabled feature flag): skip WITHOUT recording, so
+        // the script stays pending and runs on a later startup once applicable.
+        if (!historyStore.isApplied(scriptId) && !script.shouldRun()) {
+            log.info("Migration [{}] is not applicable on this instance; it stays pending and will run once applicable.", scriptId);
+            return;
+        }
+
         if (historyStore.isApplied(scriptId)) {
             historyStore.validateChecksum(script);
             if (!shouldForceRerun(scriptId)) {

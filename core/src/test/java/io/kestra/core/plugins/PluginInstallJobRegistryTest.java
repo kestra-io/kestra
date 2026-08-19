@@ -14,8 +14,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.docs.JsonSchemaCache;
+import io.kestra.core.exceptions.KestraRuntimeException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -74,6 +76,58 @@ class PluginInstallJobRegistryTest {
     void shouldReturnEmptyForUnknownJobId() {
         // When / Then
         assertThat(registry.get(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void shouldReuseInFlightJobForSameArtifacts() throws Exception {
+        // Given — an install that stays in flight while we submit the same artifact set again
+        List<PluginArtifact> artifacts = List.of(artifact("io.kestra.plugin", "plugin-scripts", "1.0.0"));
+        CountDownLatch releaseInstall = new CountDownLatch(1);
+
+        when(pluginManager.install(anyList(), anyList(), anyBoolean(), isNull(), any(TransferListener.class)))
+            .thenAnswer(invocation ->
+            {
+                releaseInstall.await(5, TimeUnit.SECONDS);
+                return artifacts;
+            });
+
+        // When
+        UUID firstJobId = registry.submit(artifacts);
+        UUID secondJobId = registry.submit(List.copyOf(artifacts));
+
+        // Then — the duplicate submission joins the in-flight job instead of stacking a second one
+        assertThat(secondJobId).isEqualTo(firstJobId);
+
+        releaseInstall.countDown();
+        awaitTerminal(firstJobId, Duration.ofSeconds(5));
+
+        // A submission after the job is terminal starts a fresh one
+        UUID thirdJobId = registry.submit(artifacts);
+        assertThat(thirdJobId).isNotEqualTo(firstJobId);
+        awaitTerminal(thirdJobId, Duration.ofSeconds(5));
+    }
+
+    @Test
+    void shouldRejectSubmissionWhenTooManyJobsAreActive() throws Exception {
+        // Given — jobs that never finish, each with a distinct artifact set so dedup does not kick in
+        CountDownLatch releaseInstall = new CountDownLatch(1);
+        when(pluginManager.install(anyList(), anyList(), anyBoolean(), isNull(), any(TransferListener.class)))
+            .thenAnswer(invocation ->
+            {
+                releaseInstall.await(10, TimeUnit.SECONDS);
+                return List.of();
+            });
+
+        for (int i = 0; i < 16; i++) {
+            registry.submit(List.of(artifact("io.kestra.plugin", "plugin-" + i, "1.0.0")));
+        }
+
+        // When / Then — the 17th distinct submission is rejected instead of growing the queue unbounded
+        assertThatThrownBy(() -> registry.submit(List.of(artifact("io.kestra.plugin", "plugin-overflow", "1.0.0"))))
+            .isInstanceOf(KestraRuntimeException.class)
+            .hasMessageContaining("already pending or running");
+
+        releaseInstall.countDown();
     }
 
     // ─── successful install ───────────────────────────────────────────────────

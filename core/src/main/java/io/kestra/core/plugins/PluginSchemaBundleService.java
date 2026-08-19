@@ -59,17 +59,17 @@ import lombok.extern.slf4j.Slf4j;
  * The bundle source is resolved once, at construction, in priority order (see
  * {@link #resolveBundleSource}):
  * <ol>
- *   <li>{@code kestra.plugins.schema-bundle-path} — an explicit local file. Highest priority so a
- *       developer (or the plugin-devtools setup) can point at a full-catalog bundle and always win
- *       over the JAR-bundled default.</li>
- *   <li>The {@code /plugins-schema.json} classpath resource — the bundle shipped inside the Kestra
- *       JAR. Loaded with no network access, so autocompletion works offline / air-gapped out of the
- *       box once CI embeds it.</li>
- *   <li>{@code kestra.plugins.schema-bundle-url-template} — a self-hosted remote URL where
- *       {@code {version}} is replaced by the stripped stable Kestra version (e.g. {@code 1.2.3},
- *       never {@code -SNAPSHOT}). Empty by default: the bundle is not published anywhere, so this is
- *       only an escape hatch for a custom build that ships no embedded resource. A failed fetch is
- *       logged and swallowed.</li>
+ * <li>{@code kestra.plugins.schema-bundle-path} — an explicit local file. Highest priority so a
+ * developer (or the plugin-devtools setup) can point at a full-catalog bundle and always win
+ * over the JAR-bundled default.</li>
+ * <li>The {@code /plugins-schema.json} classpath resource — the bundle shipped inside the Kestra
+ * JAR. Loaded with no network access, so autocompletion works offline / air-gapped out of the
+ * box once CI embeds it.</li>
+ * <li>{@code kestra.plugins.schema-bundle-url-template} — a self-hosted remote URL where
+ * {@code {version}} is replaced by the stripped stable Kestra version (e.g. {@code 1.2.3},
+ * never {@code -SNAPSHOT}). Empty by default: the bundle is not published anywhere, so this is
+ * only an escape hatch for a custom build that ships no embedded resource. A failed fetch is
+ * logged and swallowed.</li>
  * </ol>
  * When none of the three resolves, the service is a no-op. That is the expected state on a plain
  * {@code ./gradlew build} or a {@code develop} build, where CI has not embedded a bundle.
@@ -95,9 +95,14 @@ public class PluginSchemaBundleService {
 
     private final String resolvedBundleUrl;
 
+    // Negative cache: while the source is failing, don't make every request pay the initial-fetch
+    // wait — back off between attempts instead.
+    private static final Duration FAILURE_BACKOFF = Duration.ofMinutes(1);
+
     private volatile CompletableFuture<Bundle> future;
     private volatile Bundle cached = Bundle.EMPTY;
     private volatile Instant cacheLastLoaded = Instant.now();
+    private volatile Instant lastFailure;
     private final AtomicBoolean loading = new AtomicBoolean(false);
 
     public PluginSchemaBundleService(
@@ -121,10 +126,10 @@ public class PluginSchemaBundleService {
      * resolution order can be unit-tested without a real classpath entry or a running
      * {@link KestraContext}.
      *
-     * @param bundlePath        value of {@code kestra.plugins.schema-bundle-path}, may be {@code null}/blank
+     * @param bundlePath value of {@code kestra.plugins.schema-bundle-path}, may be {@code null}/blank
      * @param bundleUrlTemplate value of {@code kestra.plugins.schema-bundle-url-template}, may be {@code null}/blank
-     * @param classpathBundle   the {@link #CLASSPATH_BUNDLE} resource URL, or {@code null} when not bundled
-     * @param versionSupplier   supplies the running Kestra version, read only for the URL-template branch
+     * @param classpathBundle the {@link #CLASSPATH_BUNDLE} resource URL, or {@code null} when not bundled
+     * @param versionSupplier supplies the running Kestra version, read only for the URL-template branch
      * @return the resolved source as a URL string, or {@code ""} when the service should be a no-op
      */
     static String resolveBundleSource(
@@ -228,9 +233,25 @@ public class PluginSchemaBundleService {
      * concurrent {@code ?includeCatalog=true} request behind one slow/hung GCS fetch.
      */
     private Bundle getBundle() {
+        // Negative cache: while the source keeps failing, serve what we have (possibly nothing)
+        // without re-fetching or making every caller pay the initial-fetch wait.
+        Instant failedAt = lastFailure;
+        if (cached.isEmpty() && failedAt != null && failedAt.plus(FAILURE_BACKOFF).isAfter(Instant.now())) {
+            return cached;
+        }
+
         boolean staleOrEmpty = cached.isEmpty() || cacheLastLoaded.plus(MAX_CACHE_DURATION).isBefore(Instant.now());
         if (staleOrEmpty && loading.compareAndSet(false, true)) {
-            future = CompletableFuture.supplyAsync(this::load);
+            // Publish the result here too: the first-caller branch below only covers the very
+            // first fetch — without this, a background refresh's bundle would be discarded and
+            // the stale cache served forever.
+            future = CompletableFuture.supplyAsync(this::load)
+                .whenComplete((bundle, throwable) ->
+                {
+                    if (throwable == null && bundle != null && !bundle.isEmpty()) {
+                        cached = bundle;
+                    }
+                });
         }
 
         if (!cached.isEmpty()) {
@@ -284,10 +305,12 @@ public class PluginSchemaBundleService {
                 }
 
                 cacheLastLoaded = Instant.now();
+                lastFailure = null;
                 log.debug("Plugin schema bundle loaded ({} shared definitions, {} root types)", definitions.size(), roots.size());
                 return new Bundle(definitions, roots);
             }
         } catch (IOException e) {
+            lastFailure = Instant.now();
             log.warn("Could not fetch plugin schema bundle from '{}': {}", resolvedBundleUrl, e.getMessage());
             return Bundle.EMPTY;
         } finally {

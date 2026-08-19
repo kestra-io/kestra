@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
@@ -475,9 +476,9 @@ public class FlowService {
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
                     String friendlyMessage = formatValidationError(cve.getMessage());
-                    // When auto-install is enabled, "Invalid type" is a warning — the missing plugin
-                    // will be installed transparently when the user saves the flow.
-                    if (pluginAutoInstallService.isEnabled() && cve.getMessage().startsWith("Invalid type:")) {
+                    // When auto-install is enabled, a missing plugin type is a warning — it will be
+                    // installed transparently when the user saves the flow.
+                    if (pluginAutoInstallService.isEnabled() && cve instanceof InvalidTypeConstraintViolationException) {
                         constraintsBuilder.warnings(List.of(friendlyMessage));
                     } else {
                         constraintsBuilder.constraints(friendlyMessage);

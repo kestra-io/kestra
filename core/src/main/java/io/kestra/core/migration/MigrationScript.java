@@ -97,6 +97,21 @@ public interface MigrationScript {
     void migrate() throws Exception;
 
     /**
+     * Returns whether this script is applicable on this instance right now.
+     *
+     * <p>
+     * When {@code false}, the script is skipped <strong>without</strong> being recorded in the
+     * migration history, so it stays pending and runs on a later startup once applicable — unlike
+     * an applied script, which never re-runs. Use this for migrations gated on configuration
+     * (e.g. a feature flag) that an operator may enable after the first upgrade.
+     *
+     * @return {@code true} (the default) to run and record the script as usual
+     */
+    default boolean shouldRun() {
+        return true;
+    }
+
+    /**
      * Classpath path(s) to the SQL resource(s) this migration executes, in execution order.
      *
      * <p>

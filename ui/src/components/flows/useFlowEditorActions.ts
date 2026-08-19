@@ -71,8 +71,20 @@ export function useFlowEditorActions() {
      * the backend re-validates it, otherwise the save is rejected as an unknown type; polling for
      * that terminal state is owned solely by {@link PluginInstallToast} (single poll loop, reused
      * here via its success/failure callbacks) rather than duplicated with a second timer.
+     * Concurrent calls (held-down Ctrl+S, double-clicked Save) join the in-flight cycle instead
+     * of stacking duplicate jobs and toasts.
      */
-    async function triggerPluginInstallIfNeeded(): Promise<void> {
+    let pluginInstallInFlight: Promise<void> | null = null
+
+    function triggerPluginInstallIfNeeded(): Promise<void> {
+        if (pluginInstallInFlight) return pluginInstallInFlight
+        pluginInstallInFlight = doTriggerPluginInstall().finally(() => {
+            pluginInstallInFlight = null
+        })
+        return pluginInstallInFlight
+    }
+
+    async function doTriggerPluginInstall(): Promise<void> {
         const yaml = flowStore.flowYaml
         if (!yaml) return
 

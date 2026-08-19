@@ -127,17 +127,17 @@ public abstract class AbstractV2_0_24PluginAutoInstallMigrationTest {
     }
 
     @Test
-    void shouldSkipWhenAutoInstallIsDisabled() throws Exception {
-        // Given
-        insertFlowRow(null, "flow-a", 1, false, "source-a-rev1");
+    void shouldNotRunWhileAutoInstallIsDisabled() {
+        // Given — the runner consults shouldRun() and skips WITHOUT recording, so the one-time
+        // crawl still happens on a later startup once the flag is enabled
         when(autoInstallService.isEnabled()).thenReturn(false);
 
-        // When
-        migration.migrate();
+        // When / Then
+        assertThat(migration.shouldRun()).isFalse();
 
-        // Then
-        verify(autoInstallService, never()).findMissingTypes(any());
-        verify(autoInstallService, never()).installMissingTypes(anySet());
+        // And once the operator enables the flag, the pending script becomes applicable
+        when(autoInstallService.isEnabled()).thenReturn(true);
+        assertThat(migration.shouldRun()).isTrue();
     }
 
     // --- helpers ---

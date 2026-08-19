@@ -313,11 +313,9 @@
         if(types.length > 1 && val && dataTypes.value.length <= 1){
             isPluginSchemaLoading.value = true
             try{
-                // silentOn404: the type may come from the catalog and not be installed yet
                 const {schema} = await pluginsStore.load({
                     cls: val,
                     version: taskModel.value?.version,
-                    silentOn404: true,
                 })
                 versionedSchema.value = schema?.properties
             } catch {

@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 class PluginAutoInstallServiceTest {
 
     private static final Duration INSTALL_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration SAVE_TIMEOUT = Duration.ofSeconds(2);
 
     private PluginCatalogService catalogService;
     private PluginRegistry pluginRegistry;
@@ -117,6 +118,34 @@ class PluginAutoInstallServiceTest {
     }
 
     @Test
+    void shouldIgnoreNonFqcnTypeValues() {
+        // Given — `type:` keys that are not plugin types: flow inputs and retry blocks
+        String yaml = """
+            id: my-flow
+            namespace: company
+            inputs:
+              - id: my-input
+                type: STRING
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.http.request.Request
+                retry:
+                  type: constant
+                  interval: PT1S
+                  maxAttempt: 3
+            """;
+        when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn(null);
+
+        PluginAutoInstallService service = enabledService();
+
+        // When
+        Set<String> missing = service.findMissingTypes(yaml);
+
+        // Then — STRING and constant are not package-shaped and must not be reported
+        assertThat(missing).containsExactly("io.kestra.plugin.http.request.Request");
+    }
+
+    @Test
     void shouldReturnEmptySetForInvalidYaml() {
         // Given
         PluginAutoInstallService service = enabledService();
@@ -198,6 +227,55 @@ class PluginAutoInstallServiceTest {
         assertThat(service.isEnabled()).isFalse();
     }
 
+    // ─── detect / isFromCatalog ───────────────────────────────────────────────
+
+    @Test
+    void shouldReturnEmptyDetectionWhenDisabled() {
+        // Given
+        PluginAutoInstallService service = disabledService();
+
+        // When
+        PluginAutoInstallDetectResult result = service.detect("id: my-flow\ntasks:\n  - id: t\n    type: io.kestra.plugin.unknown.Task\n");
+
+        // Then
+        assertThat(result.enabled()).isFalse();
+        assertThat(result.missingTypes()).isEmpty();
+        assertThat(result.artifacts()).isEmpty();
+    }
+
+    @Test
+    void shouldDetectMissingTypesAndTheirCatalogArtifacts() {
+        // Given
+        when(pluginRegistry.findClassByIdentifier(anyString())).thenReturn(null);
+        when(catalogService.get()).thenReturn(
+            List.of(manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http"))
+        );
+        PluginAutoInstallService service = enabledService();
+
+        // When
+        PluginAutoInstallDetectResult result = service.detect("id: my-flow\ntasks:\n  - id: t\n    type: io.kestra.plugin.http.request.Request\n");
+
+        // Then
+        assertThat(result.enabled()).isTrue();
+        assertThat(result.missingTypes()).containsExactly("io.kestra.plugin.http.request.Request");
+        assertThat(result.artifacts()).hasSize(1);
+        assertThat(result.artifacts().getFirst().artifactId()).isEqualTo("plugin-http");
+    }
+
+    @Test
+    void shouldAcceptOnlyCatalogArtifacts() {
+        // Given
+        when(catalogService.get()).thenReturn(
+            List.of(manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http"))
+        );
+        PluginAutoInstallService service = enabledService();
+
+        // When / Then — the allowlist matches on groupId + artifactId
+        assertThat(service.isFromCatalog(PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST"))).isTrue();
+        assertThat(service.isFromCatalog(PluginArtifact.fromCoordinates("com.evil:backdoor:1.0.0"))).isFalse();
+        assertThat(service.isFromCatalog(null)).isFalse();
+    }
+
     // ─── installMissingPlugins ────────────────────────────────────────────────
 
     @Test
@@ -219,7 +297,7 @@ class PluginAutoInstallServiceTest {
 
         UUID jobId = UUID.randomUUID();
         when(installJobRegistry.submit(anyList())).thenReturn(jobId);
-        when(installJobRegistry.awaitTerminal(jobId, INSTALL_TIMEOUT))
+        when(installJobRegistry.awaitTerminal(jobId, SAVE_TIMEOUT))
             .thenAnswer(invocation -> Optional.of(succeededJob()));
 
         PluginAutoInstallService service = enabledService();
@@ -227,12 +305,12 @@ class PluginAutoInstallServiceTest {
         // When
         service.installMissingPlugins(yaml);
 
-        // Then — the shared artifact is submitted exactly once
+        // Then — the shared artifact is submitted exactly once, waited on with the shorter save-path timeout
         ArgumentCaptor<List<PluginArtifact>> captor = ArgumentCaptor.captor();
         verify(installJobRegistry).submit(captor.capture());
         assertThat(captor.getValue()).hasSize(1);
         assertThat(captor.getValue().getFirst().artifactId()).isEqualTo("plugin-http");
-        verify(installJobRegistry).awaitTerminal(jobId, INSTALL_TIMEOUT);
+        verify(installJobRegistry).awaitTerminal(jobId, SAVE_TIMEOUT);
     }
 
     @Test
@@ -327,7 +405,7 @@ class PluginAutoInstallServiceTest {
         // Given / When — no explicit enabled property, OSS edition, local-filesystem storage
         PluginAutoInstallService service = new PluginAutoInstallService(
             catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
-            Optional.of("local"), Optional.empty(), Optional.empty()
+            Optional.of("local"), Optional.empty(), Optional.empty(), Optional.empty()
         );
 
         // Then
@@ -339,7 +417,7 @@ class PluginAutoInstallServiceTest {
         // Given / When — a standalone deployment on S3 must stay inert
         PluginAutoInstallService service = new PluginAutoInstallService(
             catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
-            Optional.of("s3"), Optional.empty(), Optional.empty()
+            Optional.of("s3"), Optional.empty(), Optional.empty(), Optional.empty()
         );
 
         // Then
@@ -351,7 +429,7 @@ class PluginAutoInstallServiceTest {
         // Given / When — an explicit opt-in always wins over the computed default
         PluginAutoInstallService service = new PluginAutoInstallService(
             catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
-            Optional.of("s3"), Optional.of(true), Optional.empty()
+            Optional.of("s3"), Optional.of(true), Optional.empty(), Optional.empty()
         );
 
         // Then
@@ -471,11 +549,11 @@ class PluginAutoInstallServiceTest {
     }
 
     private PluginAutoInstallService enabledService(Optional<String> storageType) {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, true, INSTALL_TIMEOUT, storageType);
+        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, true, INSTALL_TIMEOUT, SAVE_TIMEOUT, storageType);
     }
 
     private PluginAutoInstallService disabledService() {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, false, INSTALL_TIMEOUT, Optional.of("s3"));
+        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, false, INSTALL_TIMEOUT, SAVE_TIMEOUT, Optional.of("s3"));
     }
 
     private PluginInstallJob succeededJob() {
@@ -483,7 +561,7 @@ class PluginAutoInstallServiceTest {
     }
 
     private PluginCatalogService.PluginManifest manifest(String groupId, String artifactId, String group) {
-        return new PluginCatalogService.PluginManifest(artifactId, null, groupId, artifactId, group);
+        return new PluginCatalogService.PluginManifest(artifactId, groupId, artifactId, group);
     }
 
     @Plugin.Id("s3")

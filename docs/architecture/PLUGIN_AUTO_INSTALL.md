@@ -257,7 +257,8 @@ that were never installed.
 
 When a flow referencing an uninstalled plugin is saved, `PluginAutoInstallService`:
 
-1. Parses the flow YAML and collects every `type` FQCN (recursive walk, `collectTypes`).
+1. Parses the flow YAML and collects every package-shaped `type` value (recursive walk,
+   `collectTypes`; non-FQCN values like input `type: STRING` or retry `type: constant` are ignored).
 2. Keeps those absent from the `PluginRegistry` — `findMissingTypes`.
 3. Maps each missing FQCN to a Maven artifact via `PluginCatalogService`, using **longest-prefix
    match** on the plugin's package group (so `io.kestra.plugin.scripts.python` beats
@@ -272,9 +273,12 @@ When a flow referencing an uninstalled plugin is saved, `PluginAutoInstallServic
 ### Async job + live progress
 
 - `POST /api/v1/plugins/install` enqueues the install and returns a **job id** immediately (HTTP
-  202). `PluginInstallJobRegistry` runs the job; `PluginInstallTransferListener` reports byte-level
-  download progress. Poll `GET /api/v1/plugins/install/{jobId}` for status (jobs kept ~1h after
-  completion).
+  202). Only artifacts the plugin catalog maps are accepted (**allowlist** — an arbitrary Maven
+  coordinate is rejected with 400; the feature flag off yields 403). `PluginInstallJobRegistry` runs
+  the job with in-flight **dedup** (a resubmitted identical artifact set joins the running job), a
+  cap on concurrent active jobs (429 beyond it) and a hard per-job timeout that cancels a stalled
+  resolve. `PluginInstallTransferListener` reports byte-level download progress. Poll
+  `GET /api/v1/plugins/install/{jobId}` for status (jobs kept ~1h after completion).
 - `POST /api/v1/plugins/auto-install/detect` parses a flow YAML and returns the missing types +
   resolved artifacts (empty result — not an error — when disabled or all types are known).
 - The frontend shows `PluginInstallToast.vue` with live progress and **blocks the flow save until the
@@ -315,6 +319,8 @@ default, and `server local` sets it to `true` explicitly. Resolved once in
 | `kestra.plugins.schema-bundle-path` | unset | Explicit local-file bundle, highest priority — wins over the JAR-embedded resource and the URL template. Used by `plugin-devtools` to inject a full-catalog dev bundle. |
 | `kestra.plugins.schema-bundle-url-template` | empty | URL of a self-hosted bundle (`{version}` placeholder, resolved to the stripped stable version, e.g. `1.2.3`). Lowest priority, and empty by default because the bundle ships in the jar — set it only for a custom build that has no embedded bundle. |
 | `kestra.plugins.auto-install.enabled` | unset → `true` on OSS+local storage, else `false` | Auto-download missing plugins on save. Unset → computed default (`edition == OSS && storage.type == local`); an explicit value always wins. `server local` sets it to `true` explicitly. |
+| `kestra.plugins.auto-install.install-timeout` | `PT2M` | Bounded wait for the boot-time and first-sync-migration installs. |
+| `kestra.plugins.auto-install.save-timeout` | `PT30S` | Bounded wait for the synchronous save-path install hook — shorter so a bulk import never serializes minutes per flow behind the install pool. |
 
 > **No instance phones home for the bundle.** It is read from the jar's own classpath, so an air-gapped or offline deployment gets catalog completion with no egress and nothing to configure. Both remaining sources are opt-in and empty by default: an explicit local file (`schema-bundle-path`) or a self-hosted URL (`schema-bundle-url-template`). Downloading the plugin **JARs** on save is a separate, gated concern — see `kestra.plugins.auto-install.enabled` and the table below.
 

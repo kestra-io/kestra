@@ -118,7 +118,6 @@ public class FlowController {
     @Inject
     private SourceSearchService sourceSearchService;
 
-
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
     @Operation(
@@ -281,22 +280,28 @@ public class FlowController {
         @Parameter(description = "Whether the query must match on word boundaries only") @QueryValue(defaultValue = "false") boolean wholeWord,
         @Parameter(description = "Whether the query is a regular expression rather than a literal string") @QueryValue(defaultValue = "false") boolean regex,
         @Parameter(description = "Restricts matches to a top-level section of the flow YAML") @QueryValue(defaultValue = "all") SourceSearchScope scope) throws HttpStatusException {
-        return PagedResults.of(sourceSearchService.search(
-            PageableUtils.from(page, size, sort),
-            tenantService.resolveTenant(),
-            namespace,
-            query,
-            caseSensitive,
-            wholeWord,
-            regex,
-            scope
-        ));
+        return PagedResults.of(
+            sourceSearchService.search(
+                PageableUtils.from(page, size, sort),
+                tenantService.resolveTenant(),
+                namespace,
+                query,
+                caseSensitive,
+                wholeWord,
+                regex,
+                scope
+            )
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/preview")
-    @Operation(tags = { "Flows" }, summary = "Preview a Source Search replace-all operation", description = "Computes the matched lines and their proposed replacement for every matching flow, without persisting anything.")
-    public SourceSearchReplacePreviewResponse previewReplaceBySourceCode(@RequestBody(description = "The search query and replacement") @Body @Valid SourceSearchReplacePreviewRequest request) {
+    @Operation(
+        tags = { "Flows" }, summary = "Preview a Source Search replace-all operation",
+        description = "Computes the matched lines and their proposed replacement for every matching flow, without persisting anything."
+    )
+    public SourceSearchReplacePreviewResponse previewReplaceBySourceCode(
+        @RequestBody(description = "The search query and replacement") @Body @Valid SourceSearchReplacePreviewRequest request) {
         return sourceSearchService.preview(
             tenantService.resolveTenant(),
             request.namespace(),
@@ -311,8 +316,12 @@ public class FlowController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/apply")
-    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace-all operation", description = "Replaces every match in the given flows and persists the new revisions. Flows the caller is not allowed to edit are skipped.")
-    public SourceSearchReplaceApplyResponse applyReplaceBySourceCode(@RequestBody(description = "The search query, replacement and target flows") @Body @Valid SourceSearchReplaceApplyRequest request) throws QueueException {
+    @Operation(
+        tags = { "Flows" }, summary = "Apply a Source Search replace-all operation",
+        description = "Replaces every match in the given flows and persists the new revisions. Flows the caller is not allowed to edit are skipped."
+    )
+    public SourceSearchReplaceApplyResponse applyReplaceBySourceCode(
+        @RequestBody(description = "The search query, replacement and target flows") @Body @Valid SourceSearchReplaceApplyRequest request) throws QueueException {
         return sourceSearchService.apply(
             tenantService.resolveTenant(),
             request.query(),
@@ -327,8 +336,12 @@ public class FlowController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/line")
-    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace on a single match line", description = "Replaces the matches on one line of one flow and persists the new revision. Returns the flow as skipped if it is not editable or fails validation.")
-    public SourceSearchReplaceApplyResponse replaceLineBySourceCode(@RequestBody(description = "The search query, replacement and target match line") @Body @Valid SourceSearchReplaceLineRequest request) throws QueueException {
+    @Operation(
+        tags = { "Flows" }, summary = "Apply a Source Search replace on a single match line",
+        description = "Replaces the matches on one line of one flow and persists the new revision. Returns the flow as skipped if it is not editable or fails validation."
+    )
+    public SourceSearchReplaceApplyResponse replaceLineBySourceCode(
+        @RequestBody(description = "The search query, replacement and target match line") @Body @Valid SourceSearchReplaceLineRequest request) throws QueueException {
         return sourceSearchService.applyLine(
             tenantService.resolveTenant(),
             request.query(),
@@ -794,7 +807,6 @@ public class FlowController {
         }
         return validateConstraintViolationBuilder.build();
     }
-
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)

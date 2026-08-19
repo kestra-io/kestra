@@ -178,7 +178,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
 
         // the flow may reference a catalog type that isn't installed yet — its doc 404s
-        const pluginDoc = await this.pluginsStore.load({cls: taskType, commit: false, silentOn404: true})
+        const pluginDoc = await this.pluginsStore.load({cls: taskType, commit: false})
             .catch(() => undefined)
 
         return Object.keys((pluginDoc?.schema as any)?.outputs?.properties ?? {})
@@ -195,7 +195,6 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     const triggerDoc: {schema: JSONSchema} | undefined = await this.pluginsStore.load({
                         cls: triggerType,
                         commit: false,
-                        silentOn404: true,
                     }).catch(() => undefined) as any
                     return Object.keys(triggerDoc?.schema?.outputs?.properties ?? {})
                 }),

@@ -34,9 +34,10 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>
  * Installation is best-effort with a bounded wait, exactly like the save-path hook: a failure is
- * logged as a warning and never fails the startup. The script is recorded in the migration history
- * either way, so it runs once per instance — a later run with auto-install enabled will not
- * re-crawl; individual flow saves then install what is still missing.
+ * logged as a warning and never fails the startup. While auto-install is disabled the script is
+ * skipped without being recorded ({@link #shouldRun()}), so enabling the flag on a later startup
+ * still runs the one-time crawl instead of leaving every pre-existing flow broken until it is
+ * individually re-saved.
  */
 @Slf4j
 @Singleton
@@ -81,12 +82,14 @@ public class V2_0_24PluginAutoInstallMigration implements MigrationScript {
     }
 
     @Override
+    public boolean shouldRun() {
+        // Skipped without being recorded while disabled, so enabling the flag later still runs the crawl.
+        return autoInstallService.get().isEnabled();
+    }
+
+    @Override
     public void migrate() throws Exception {
         PluginAutoInstallService service = autoInstallService.get();
-        if (!service.isEnabled()) {
-            log.info("Plugin auto-install is disabled, skipping the first-sync plugin install migration.");
-            return;
-        }
 
         // Migrations run at ApplicationContext.start(), before AbstractCommand.maybeInitPlugins()
         // registers the external plugins directory — without this, every already-installed plugin

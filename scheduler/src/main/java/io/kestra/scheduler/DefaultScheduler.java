@@ -49,6 +49,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     private final TriggerSchedulingLoopFactory schedulerEventLoopFactory;
 
     private ExecutorService executorService;
+    private int maxThreads;
     // Thread-safe: mutated by the vNodes rebalance listener thread and iterated from doStop().
     private final List<TriggerSchedulingLoop> schedulingLoops = new CopyOnWriteArrayList<>();
     private final VNodesAssigner vNodesAssigner;
@@ -140,6 +141,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     }
 
     private void doStart(int maxThreads) {
+        this.maxThreads = maxThreads;
         this.metricRegistry.gauge(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX_DESCRIPTION, maxThreads);
 
         // Create the scheduling loops
@@ -175,32 +177,18 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
                 metricAssignedVNodesCount.set(vNodes.size());
 
-                final int numSchedulingLoop = Math.min(maxThreads, vNodes.size());
-
                 // (Re)initialize trigger state store for assigned VNodes
                 triggerStateStore.init(vNodes);
 
-                // (Re)create TriggerSchedulingLoop
-                for (int i = 0; i < numSchedulingLoop; i++) {
-                    TriggerSchedulingLoop schedulingLoop = schedulerEventLoopFactory.create(i, clock);
-                    schedulingLoops.add(schedulingLoop);
-                }
-
-                // Assign scheduling-loops to VNodes
-                schedulingLoops.forEach(schedulingLoop ->
-                {
-                    // Compute vNodes assignments for the current event-loop
-                    Set<Integer> assignments = vNodes.stream()
-                        .filter(vNodeId -> vNodeId % maxThreads == schedulingLoop.id())
-                        .collect(Collectors.toSet());
-                    schedulingLoop.setAssignments(assignments);
-                });
-
                 currentVNodesAssignment.addAll(vNodes);
+
+                // Create and assign the scheduling-loops even in maintenance mode, so that exiting
+                // maintenance only has to resubmit them.
+                assignVNodesToSchedulingLoops();
 
                 // Restart scheduling only if not in maintenance mode
                 if (!maintenanceService.isInMaintenanceMode()) {
-                    startScheduling();
+                    startScheduling(false);
                 }
             }
         });
@@ -225,15 +213,47 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                     return; // scheduler is either terminating or already terminated.
                 }
 
-                // restart scheduling
-                startScheduling();
+                // restart scheduling, restoring the vNode assignments revoked when entering maintenance
+                startScheduling(true);
                 setState(ServiceState.RUNNING);
             }
         });
 
     }
 
-    private void startScheduling() {
+    /**
+     * (Re)creates the {@link TriggerSchedulingLoop} for the currently assigned vNodes and distributes
+     * those vNodes across them.
+     */
+    private void assignVNodesToSchedulingLoops() {
+        if (currentVNodesAssignment.isEmpty()) {
+            return; // nothing to assign
+        }
+
+        final int numSchedulingLoop = Math.min(maxThreads, currentVNodesAssignment.size());
+        for (int i = schedulingLoops.size(); i < numSchedulingLoop; i++) {
+            schedulingLoops.add(schedulerEventLoopFactory.create(i, clock));
+        }
+
+        schedulingLoops.forEach(schedulingLoop ->
+        {
+            Set<Integer> assignments = currentVNodesAssignment.stream()
+                .filter(vNodeId -> vNodeId % schedulingLoops.size() == schedulingLoop.id())
+                .collect(Collectors.toSet());
+            schedulingLoop.setAssignments(assignments);
+        });
+    }
+
+    /**
+     * Starts, or restarts, the scheduling.
+     *
+     * @param reassignVNodes whether the vNodes must be redistributed across the scheduling-loops first.
+     */
+    private void startScheduling(boolean reassignVNodes) {
+        if (reassignVNodes) {
+            assignVNodesToSchedulingLoops();
+        }
+
         if (schedulingLoops.isEmpty()) {
             return; // nothing to start
         }

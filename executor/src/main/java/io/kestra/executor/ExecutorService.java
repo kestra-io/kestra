@@ -461,7 +461,7 @@ public class ExecutorService {
         Execution newExecution = executor.getExecution()
             .withState(finalState);
 
-        if (flow.getOutputs() != null) {
+        if (flow.getOutputs() != null && executor.getExecution().getKind() != ExecutionKind.LOOP) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             var inputAndOutput = runContext.inputAndOutput();
 

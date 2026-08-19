@@ -205,9 +205,7 @@
             if (value === 0 || value === undefined || value === null) {
                 continue
             }
-            const swatch = p.seriesType === "line"
-                ? `<span style="display:inline-block;width:14px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
-                : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
+            const swatch = `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
             const label = isPie ? "" : toCapitalCase(p.seriesName ?? "")
             const suffix = isPie ? ` (${p.percent}%)` : ""
             rows.push(

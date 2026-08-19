@@ -132,8 +132,8 @@
         }
 
         .line {
-            width: 14px;
-            height: 2px;
+            width: 10px;
+            height: 10px;
             flex-shrink: 0;
             border-radius: var(--ks-radius-sm);
             background: var(--ks-chart-duration);

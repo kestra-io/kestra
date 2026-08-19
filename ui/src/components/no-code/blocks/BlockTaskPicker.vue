@@ -12,13 +12,13 @@
                 @click.stop
                 @keydown="onPickerKeydown"
             >
-                <p class="block-editor-picker-context">{{ t('block_editor.inserting_into', {section: sectionLabel}) }}</p>
+                <p class="block-editor-picker-context">{{ $t('block_editor.inserting_into', {section: sectionLabel}) }}</p>
 
                 <KsInput
                     :ref="(el) => (picker.pickerSearchInput.value = el)"
                     v-model="taskPickerSearch"
-                    :placeholder="t('block_editor.search_task_placeholder')"
-                    :aria-label="t('block_editor.search_task_placeholder')"
+                    :placeholder="$t('block_editor.search_task_placeholder')"
+                    :aria-label="$t('block_editor.search_task_placeholder')"
                     aria-controls="block-editor-picker-listbox"
                     :aria-activedescendant="pickerFocusedIndex >= 0 ? `block-editor-picker-option-${pickerFocusedIndex}` : undefined"
                     clearable
@@ -38,7 +38,7 @@
                         @click="setPickerTab(tab.id)"
                     >
                         <component :is="tab.icon" class="block-editor-picker-tab-ico" />
-                        {{ t(tab.labelKey) }}
+                        {{ $t(tab.labelKey) }}
                         <span v-if="tab.id === 'apps'" class="block-editor-picker-tab-count">{{ appGroups.length }}</span>
                     </button>
                 </div>
@@ -48,7 +48,7 @@
                     v-ks-loading="pluginsLoading"
                     class="block-editor-picker-list"
                     :class="{'block-editor-picker-list--loading': pluginsLoading}"
-                    :aria-label="t('block_editor.pick_task_type')"
+                    :aria-label="$t('block_editor.pick_task_type')"
                     data-test="block-editor-picker-list"
                     role="listbox"
                 >
@@ -62,7 +62,7 @@
                         >
                             <TaskIcon class="block-editor-picker-icon" :cls="grp.sampleFqcn" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" :onlyIcon="true" />
                             <span class="block-editor-picker-app-name">{{ grp.group }}</span>
-                            <span class="block-editor-picker-app-count">{{ t('block_editor.app_actions', {count: grp.count}) }}</span>
+                            <span class="block-editor-picker-app-count">{{ $t('block_editor.app_actions', {count: grp.count}) }}</span>
                         </button>
                     </template>
 
@@ -76,7 +76,7 @@
                             @keydown.enter="appFilter = undefined"
                         >
                             <ChevronLeft class="block-editor-picker-back-ico" />
-                            {{ t('block_editor.all_apps') }}
+                            {{ $t('block_editor.all_apps') }}
                         </div>
 
                         <button
@@ -100,19 +100,19 @@
                         </button>
 
                         <p v-if="!pluginsLoading && displayedEntries.length === 0" class="block-editor-picker-empty">
-                            {{ (!hasSearch && pickerTab === "recent") ? t("block_editor.no_recent") : t("block_editor.no_task_results") }}
+                            {{ (!hasSearch && pickerTab === "recent") ? $t("block_editor.no_recent") : $t("block_editor.no_task_results") }}
                         </p>
 
                         <p v-else-if="hasSearch && pickerHiddenCount > 0" class="block-editor-picker-more">
-                            {{ t("block_editor.picker_more_results", {count: pickerHiddenCount}) }}
+                            {{ $t("block_editor.picker_more_results", {count: pickerHiddenCount}) }}
                         </p>
                     </template>
                 </div>
 
                 <div class="block-editor-picker-footer" aria-hidden="true">
-                    <span><kbd>↑</kbd><kbd>↓</kbd> {{ t('block_editor.kbd_navigate') }}</span>
-                    <span><kbd>↵</kbd> {{ t('block_editor.kbd_add') }}</span>
-                    <span><kbd>esc</kbd> {{ t('block_editor.kbd_close') }}</span>
+                    <span><kbd>↑</kbd><kbd>↓</kbd> {{ $t('block_editor.kbd_navigate') }}</span>
+                    <span><kbd>↵</kbd> {{ $t('block_editor.kbd_add') }}</span>
+                    <span><kbd>esc</kbd> {{ $t('block_editor.kbd_close') }}</span>
                 </div>
             </div>
         </div>
@@ -122,14 +122,12 @@
 <script setup lang="ts">
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import {KsInput, vKsLoading} from "@kestra-io/design-system"
-    import {useI18n} from "vue-i18n"
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../stores/plugins"
     import type {TaskPickerApi} from "./useTaskPicker"
 
     const props = defineProps<{picker: TaskPickerApi}>()
 
-    const {t} = useI18n()
     const pluginsStore = usePluginsStore()
 
     const {

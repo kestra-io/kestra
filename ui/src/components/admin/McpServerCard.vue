@@ -14,21 +14,21 @@
 
             <div class="meta-row">
                 <span class="meta">
-                    <span class="label">{{ t("type") }}:</span>
+                    <span class="label">{{ $t("type") }}:</span>
                     <span>{{ typeLabel }}</span>
                 </span>
                 <span
                     v-if="tenant"
                     class="meta"
                 >
-                    <span class="label">{{ t("tenant.name") }}:</span>
+                    <span class="label">{{ $t("tenant.name") }}:</span>
                     <span>{{ tenant }}</span>
                 </span>
             </div>
 
             <div class="meta-row">
                 <span class="meta">
-                    <span class="label">{{ t("mcp.auth_type") }}:</span>
+                    <span class="label">{{ $t("mcp.auth_type") }}:</span>
                     <span>{{ authLabel }}</span>
                 </span>
             </div>
@@ -40,7 +40,7 @@
                 size="small"
                 class="status-tag managed"
             >
-                {{ t("mcp.managed_by_kestra") }}
+                {{ $t("mcp.managed_by_kestra") }}
                 <KsIcon>
                     <Lock />
                 </KsIcon>
@@ -56,7 +56,7 @@
 
             <KsIconButton
                 v-if="canDelete && !isDefault"
-                :tooltip="t('delete')"
+                :tooltip="$t('delete')"
                 placement="left"
                 @click.stop.prevent="emit('delete')"
             >

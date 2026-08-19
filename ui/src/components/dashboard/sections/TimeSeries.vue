@@ -115,8 +115,8 @@
 
     const shortAxisLabel = (value: string): string => {
         if (typeof value !== "string") return value
-        const [datePart, ...timeParts] = value.split(":")
-        if (timeParts.length) return timeParts.join(":")
+        const [datePart, timePart] = value.split(" ")
+        if (timePart) return timePart
         const segments = datePart.split("-")
         return segments.length === 3 ? segments.slice(1).join("-") : datePart
     }

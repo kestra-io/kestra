@@ -311,8 +311,6 @@
         "1d": "1日",
         "7d": "7日"
       },
-      "last14days": "直近14日間",
-      "last28days": "過去28日間",
       "14days": "14日間",
       "28days": "28日間"
     },
@@ -1194,7 +1192,7 @@
       "namespace": {
         "edit": {
           "title": "名前空間管理をアップグレードする",
-          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルト設定を大規模に分離し、ガバナンスを強化します。管理者は、カスタムのシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、およびnamespaceごとのきめ細かな権限を設定できます。これにより、シークレット、変数、プラグインの設定が、異なるチームやプロジェクト間で安全かつ簡単に維持されます。"
+          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、ガバナンスPolicyの高度な分離と大規模な制御を提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、およびnamespaceごとのきめ細かな権限を設定できます。これにより、シークレット、変数、ガバナンスルールが異なるチームやプロジェクト間で安全かつ簡単に維持されます。"
         },
         "secrets": {
           "title": "秘密を安全に管理する方法",
@@ -1755,10 +1753,6 @@
           "title": "現在、依存関係はありません。",
           "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。"
         }
-      },
-      "plugins": {
-        "title": "このNamespaceにはプラグインのデフォルトが設定されていません。",
-        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。"
       },
       "triggers": {
         "title": "あなたのflowにはTriggerがありません。",

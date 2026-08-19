@@ -1,14 +1,14 @@
 <template>
     <TopNavBar
-        :title="t('mcp.servers')"
-        :longDescription="t('mcp.page_description')"
+        :title="$t('mcp.servers')"
+        :longDescription="$t('mcp.page_description')"
     >
         <template
             v-if="showCreate"
             #actions
         >
             <Action
-                :label="t('mcp.create')"
+                :label="$t('mcp.create')"
                 :to="{name: 'admin/mcp-servers/create', params: {tab: 'edit', tenant: route.params.tenant}}"
             />
         </template>
@@ -30,18 +30,18 @@
         <KsNoData
             v-else-if="displayServers.length === 0"
             class="empty"
-            :description="t('mcp.no_servers')"
+            :description="$t('mcp.no_servers')"
         />
 
         <div
             v-else
             class="server-list"
         >
-            <h2 class="list-title">{{ t("mcp.your_servers") }}</h2>
+            <h2 class="list-title">{{ $t("mcp.your_servers") }}</h2>
 
             <section class="list-card">
                 <header class="list-header">
-                    {{ t("mcp.servers_count", {count: displayServers.length}) }}
+                    {{ $t("mcp.servers_count", {count: displayServers.length}) }}
                 </header>
 
                 <McpServerCard

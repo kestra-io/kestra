@@ -195,8 +195,9 @@ public class TriggerEventHandler {
                     .lastEventId(clock, event.eventId())
                     // clear the backfill
                     .backfill(clock, null)
-                    // restore the previous next-evaluation date.
-                    .updateForNextEvaluationDate(clock, nextEvaluationDate);
+                    // restore the previous next-evaluation date, or clear it when the trigger was
+                    // backfilled before its first evaluation so the scheduler computes a new one.
+                    .updateForNextEvaluationDate(clock, nextEvaluationDate != null ? nextEvaluationDate.toInstant() : null);
                 triggerStateStore.save(state);
             }
         });

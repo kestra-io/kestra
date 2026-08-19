@@ -1129,6 +1129,58 @@ class TriggerEventHandlerTest {
         assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
     }
 
+    @Test
+    void shouldRestoreLiveNextEvaluationDateWhenDeleteBackfillEventHandledAfterPause() {
+        // GIVEN
+        ZonedDateTime liveNextEvaluationDate = SchedulerClock.now().plusHours(1);
+        Backfill backfill = Backfill.builder()
+            .start(SchedulerClock.now().minusDays(7))
+            .end(SchedulerClock.now().minusDays(6))
+            .paused(false)
+            .build();
+        // the backfill has progressed, so the next evaluation date now points inside the backfill window
+        triggerStateStore.save(triggerState
+            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+            .backfill(CLOCK, backfill)
+            .updateForNextEvaluationDate(CLOCK, backfill.getStart().plusHours(8))
+        );
+        handler = newTriggerEventHandler(List.of());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, new SetPauseBackfillTrigger(triggerId, true));
+        DeleteBackfillTrigger event = new DeleteBackfillTrigger(triggerId);
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
+        assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isEqualTo(liveNextEvaluationDate.toInstant());
+        assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldClearNextEvaluationDateWhenDeleteBackfillEventHandledGivenTriggerNeverEvaluated() {
+        // GIVEN
+        Backfill backfill = Backfill.builder()
+            .start(SchedulerClock.now().minusDays(1))
+            .end(SchedulerClock.now())
+            .paused(false)
+            .build();
+        // a trigger backfilled before its first evaluation has no next-evaluation date to restore
+        triggerStateStore.save(triggerState.backfill(CLOCK, backfill));
+        handler = newTriggerEventHandler(List.of());
+        DeleteBackfillTrigger event = new DeleteBackfillTrigger(triggerId);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
+        assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isNull();
+        assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
+    }
+
     // Fixed clock on Wednesday 2024-01-03 at 10:00 in the system default zone.
     // With cron "*/1 * * * *" + DayWeek=SUNDAY condition, the next matching tick is the next
     // Sunday 00:00 in the Schedule's timezone (system default). The exact instant depends on

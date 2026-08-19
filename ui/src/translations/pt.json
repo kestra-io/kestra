@@ -311,8 +311,6 @@
         "1d": "1d",
         "7d": "7d"
       },
-      "last14days": "Últimos 14 dias",
-      "last28days": "Últimos 28 dias",
       "14days": "14 dias",
       "28days": "28 dias"
     },
@@ -1194,7 +1192,7 @@
       "namespace": {
         "edit": {
           "title": "Atualize o Gerenciamento do seu Namespace",
-          "message": "Na Kestra Enterprise Edition, os namespaces fornecem isolamento avançado e governança de segredos, variáveis e padrões de plugins em escala. Os administradores podem configurar gerenciadores de segredos personalizados, backends de armazenamento isolados, grupos de worker dedicados e permissões granulares por namespace. Isso garante que segredos, variáveis e configurações de plugins permaneçam seguros e fáceis de manter em diferentes equipes e projetos."
+          "message": "Na Kestra Enterprise Edition, os namespaces fornecem isolamento avançado e controle de segredos, variáveis e Políticas de governança em escala. Os administradores podem configurar gerenciadores de segredos personalizados, backends de armazenamento isolados, grupos de worker dedicados e permissões granulares por namespace. Isso garante que segredos, variáveis e regras de governança permaneçam seguros e fáceis de manter em diferentes equipes e projetos."
         },
         "secrets": {
           "title": "Gerenciar Segredos de Forma Segura",
@@ -1755,10 +1753,6 @@
           "title": "Atualmente, não há dependências.",
           "content": "Este ativo não possui dependências upstream ou downstream com flows ou outros ativos."
         }
-      },
-      "plugins": {
-        "title": "Nenhum padrão de plugin está definido para este Namespace.",
-        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação."
       },
       "triggers": {
         "title": "Seu flow não possui nenhum trigger.",

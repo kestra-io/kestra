@@ -20,12 +20,14 @@ import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -75,12 +77,45 @@ class OutputControllerTest {
         String taskRunId = "notFound";
         String tenantId = TenantService.MAIN_TENANT;
 
-        assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/executionId/" + taskRunId),
-                TaskOutput.class
-            )
+        assertThatThrownBy(() -> client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/executionId/" + taskRunId),
+            TaskOutput.class
+        ))
+            .isInstanceOf(HttpClientResponseException.class)
+            .extracting(e -> ((HttpClientResponseException) e).getStatus())
+            .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void getTaskOutputInformationShouldSkipOrphanedTaskOutput() {
+        String tenantId = TenantService.MAIN_TENANT;
+        String executionId = IdUtils.create();
+        String taskRunId = "taskRunId";
+        String orphanTaskRunId = "orphanTaskRunId";
+        // A LoopUntil iteration prunes the previous iteration's task run but not its stored output,
+        // so the execution can carry an output row whose task run id no longer exists (#18231).
+        var execution = Execution.builder()
+            .tenantId(tenantId)
+            .id(executionId)
+            .namespace("namespace")
+            .flowId("flowId")
+            .taskRunList(List.of(TaskRun.builder().tenantId(tenantId).id(taskRunId).build()))
+            .state(new State())
+            .build();
+        String value = """
+            {"some":"output"}""";
+        executionRepository.save(execution);
+
+        taskOutputRepository.save(new TaskOutput(taskRunId, tenantId, executionId, value.getBytes(StandardCharsets.UTF_8), null));
+        taskOutputRepository.save(new TaskOutput(orphanTaskRunId, tenantId, executionId, value.getBytes(StandardCharsets.UTF_8), null));
+
+        List<OutputController.TaskOutputInformation> response = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/" + executionId),
+            Argument.listOf(OutputController.TaskOutputInformation.class)
         );
+
+        assertThat(response).hasSize(1);
+        assertThat(response.getFirst().taskRunId()).isEqualTo(taskRunId);
     }
 
     @Test
@@ -116,12 +151,13 @@ class OutputControllerTest {
     void getTaskOutputInformationShouldThrowNotFoundWhenTaskRunNotFound() {
         String tenantId = TenantService.MAIN_TENANT;
 
-        assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/not-found"),
-                Argument.listOf(OutputController.TaskOutputInformation.class)
-            )
-        );
+        assertThatThrownBy(() -> client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/not-found"),
+            Argument.listOf(OutputController.TaskOutputInformation.class)
+        ))
+            .isInstanceOf(HttpClientResponseException.class)
+            .extracting(e -> ((HttpClientResponseException) e).getStatus())
+            .isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test

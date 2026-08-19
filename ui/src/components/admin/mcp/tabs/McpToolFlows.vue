@@ -13,7 +13,7 @@
                     :icon="Plus"
                     @click="createToolFlow"
                 >
-                    {{ t("mcp.tools.create_tool_flow") }}
+                    {{ $t("mcp.tools.create_tool_flow") }}
                 </KsButton>
             </template>
         </Empty>
@@ -25,7 +25,7 @@
             :total="filteredTools.length"
             :loading="loading"
             :rowKey="rowKey"
-            :noDataText="t('mcp.tools.no_tools')"
+            :noDataText="$t('mcp.tools.no_tools')"
         >
             <template #navbar>
                 <KSFilter
@@ -50,7 +50,7 @@
 
             <KsTableColumn
                 prop="toolName"
-                :label="t('mcp.tools.tool_name')"
+                :label="$t('mcp.tools.tool_name')"
             >
                 <template #default="scope">
                     <KsId :value="(scope.row as McpTool).toolName" :shrink="false" />
@@ -85,7 +85,7 @@
                                 :key="ann"
                                 class="annotation"
                             >
-                                {{ t(`mcp.tools.${ann}`) }}
+                                {{ $t(`mcp.tools.${ann}`) }}
                             </KsTag>
                         </div>
                     </template>
@@ -110,7 +110,7 @@
 
             <KsTableColumn
                 prop="state"
-                :label="t('mcp.tools.state')"
+                :label="$t('mcp.tools.state')"
                 width="120"
             >
                 <template #default="scope">

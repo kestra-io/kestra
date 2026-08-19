@@ -311,8 +311,6 @@
         "1d": "1T",
         "7d": "7T"
       },
-      "last14days": "Letzte 14 Tage",
-      "last28days": "Letzte 28 Tage",
       "14days": "14 Tage",
       "28days": "28 Tage"
     },
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
+      "big_file_download_only": "Diese Datei ist {size} groß. Sie ist zu groß, um sie im Editor zu öffnen, laden Sie sie stattdessen herunter.",
       "load_anyway": "Trotzdem laden",
       "load_error": "Die Dateivorschau konnte nicht geladen werden. Möglicherweise handelt es sich um ein vorübergehendes Problem oder ein Berechtigungsproblem.",
       "retry": "Erneut versuchen",

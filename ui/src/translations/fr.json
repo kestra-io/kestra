@@ -311,8 +311,6 @@
         "1d": "1j",
         "7d": "7j"
       },
-      "last14days": "Les 14 derniers jours",
-      "last28days": "Les 28 derniers jours",
       "14days": "14 jours",
       "28days": "28 jours"
     },
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "Ce fichier fait {size}. Le chargement peut prendre un certain temps et bloquer votre navigateur. Voulez-vous quand même le charger ?",
+      "big_file_download_only": "Ce fichier fait {size}. Il est trop volumineux pour être ouvert dans l'éditeur, téléchargez-le à la place.",
       "load_anyway": "Charger quand même",
       "load_error": "Échec du chargement de l'aperçu du fichier. Il peut s'agir d'un problème temporaire ou d'un problème d'autorisations.",
       "retry": "Réessayer",

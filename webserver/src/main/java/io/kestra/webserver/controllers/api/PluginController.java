@@ -28,7 +28,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.services.UiResourceCacheService;
+import io.kestra.webserver.utils.HttpCacheUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
@@ -95,9 +95,6 @@ public class PluginController {
     @Inject
     @Named("withIcons")
     protected PluginCatalogService pluginCatalogService;
-
-    @Inject
-    protected UiResourceCacheService uiResourceCacheService;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -566,25 +563,20 @@ public class PluginController {
             .forExtension(NameUtils.extension(resourcePath))
             .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
 
-        if (!uiResourceCacheService.isCacheable(UiResourceCacheService.resourceSize(resourceUrl))) {
-            // Oversized plugin files are streamed straight from the plugin jar, as before this cache
-            // existed, so a single huge artifact cannot occupy the whole cache.
-            return HttpResponse.ok(new StreamedFile(resourceUrl.openStream(), mediaType));
+        // Plugin files are third-party artifacts of arbitrary size, so they are always streamed and
+        // never buffered. The entity tag derives from the plugin UI source hash, which changes with
+        // the content, so revalidation costs no read; the weak marker reflects that any transfer
+        // coding is applied downstream per request.
+        String etag = "W/\"" + plugin.getPluginUiSourceHash() + "-" + HttpCacheUtils.sha256Hex(path.getBytes(java.nio.charset.StandardCharsets.UTF_8)).substring(0, 16) + "\"";
+        if (HttpCacheUtils.anyEtagMatches(request.getHeaders().get(io.micronaut.http.HttpHeaders.IF_NONE_MATCH), etag)) {
+            return HttpResponse.notModified()
+                .header(io.micronaut.http.HttpHeaders.ETAG, etag)
+                .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
         }
 
-        // The key includes the plugin UI source hash and the classloader identity so a reloaded or
-        // upgraded plugin never serves stale bytes from the cache.
-        String cacheKey = "plugin-ui:" + plugin.group()
-            + ":" + plugin.getPluginUiSourceHash()
-            + ":" + System.identityHashCode(plugin.getClassLoader())
-            + ":" + path;
-
-        // Only the plugin-ui entry file is cache-busted by the frontend (via a sourceHash query parameter),
-        // so every plugin UI response must be revalidated; 304s are answered from memory.
-        return uiResourceCacheService
-            .get(cacheKey, mediaType, () -> Optional.of(UiResourceCacheService.readResource(resourceUrl)))
-            .map(resource -> uiResourceCacheService.respond(request, resource, REVALIDATE_CACHE_DIRECTIVE))
-            .orElseThrow(NotFoundException::new);
+        return HttpResponse.ok(new StreamedFile(resourceUrl.openStream(), mediaType))
+            .header(io.micronaut.http.HttpHeaders.ETAG, etag)
+            .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {

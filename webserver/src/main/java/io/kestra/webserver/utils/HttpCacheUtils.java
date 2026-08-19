@@ -5,10 +5,29 @@ import java.util.Locale;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * HTTP content negotiation and conditional-request helpers for cached static UI resources.
+ * HTTP content negotiation and conditional-request helpers for static UI resources.
  */
 public final class HttpCacheUtils {
     private HttpCacheUtils() {
+    }
+
+    /**
+     * @return the strong entity tag for a content-coding variant of a resource.
+     */
+    public static String etagFor(String etagBase, @Nullable String contentEncoding) {
+        String suffix = contentEncoding == null ? "" : "-" + ("br".equals(contentEncoding) ? "br" : "gz");
+        return "\"" + etagBase + suffix + "\"";
+    }
+
+    /**
+     * @return the hex-encoded SHA-256 digest of the given bytes.
+     */
+    public static String sha256Hex(byte[] bytes) {
+        try {
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**

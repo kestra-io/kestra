@@ -149,12 +149,6 @@ kestra:
       # content-security-policy-report-only: true # report-only intermediate step
       # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
 
-    # UI and plugin-UI static resources are served from a bounded in-memory cache holding raw bytes,
-    # precompressed variants and ETags, so requests never re-read or re-compress files from the jar.
-    ui-resource-cache:
-      max-size: 64mb
-      # Files bigger than this bypass the cache and are streamed directly from the jar.
-      max-entry-size: 8mb
 
   retries:
     attempts: 5

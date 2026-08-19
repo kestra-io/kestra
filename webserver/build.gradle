@@ -24,13 +24,6 @@ dependencies {
 
     implementation "io.micronaut.security:micronaut-security-csrf"
 
-    // Brotli precompression for the UI resource cache; natives resolve per platform, gzip-only fallback when the native library cannot load.
-    implementation "com.aayushatharva.brotli4j:brotli4j"
-    runtimeOnly "com.aayushatharva.brotli4j:native-linux-x86_64"
-    runtimeOnly "com.aayushatharva.brotli4j:native-linux-aarch64"
-    runtimeOnly "com.aayushatharva.brotli4j:native-osx-x86_64"
-    runtimeOnly "com.aayushatharva.brotli4j:native-osx-aarch64"
-    runtimeOnly "com.aayushatharva.brotli4j:native-windows-x86_64"
 
     implementation("com.posthog.java:posthog:1.2.0")
 

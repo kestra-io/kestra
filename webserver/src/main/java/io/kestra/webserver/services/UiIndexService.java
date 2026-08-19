@@ -6,10 +6,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.zip.Deflater;
 
 import io.kestra.webserver.configuration.WebserverConfiguration;
-import io.kestra.webserver.utils.UiResourceCompression;
 import io.kestra.webserver.utils.HttpCacheUtils;
 
 import io.micronaut.context.annotation.Requires;
@@ -93,14 +91,14 @@ public class UiIndexService {
         byte[] body = html.getBytes(StandardCharsets.UTF_8);
         String acceptEncoding = request.getHeaders().get(HttpHeaders.ACCEPT_ENCODING);
         String contentEncoding = HttpCacheUtils.accepts(acceptEncoding, GZIP) ? GZIP : null;
-        String etag = UiResourceCacheService.etagFor(UiResourceCacheService.sha256Hex(body), contentEncoding);
+        String etag = HttpCacheUtils.etagFor(HttpCacheUtils.sha256Hex(body), contentEncoding);
 
         if (HttpCacheUtils.anyEtagMatches(request.getHeaders().get(HttpHeaders.IF_NONE_MATCH), etag)) {
             return applyHeaders(HttpResponse.notModified(), etag);
         }
 
         if (GZIP.equals(contentEncoding)) {
-            body = UiResourceCompression.gzip(body, Deflater.DEFAULT_COMPRESSION);
+            body = gzip(body);
         }
 
         MutableHttpResponse<byte[]> response = applyHeaders(HttpResponse.ok(body), etag)
@@ -170,6 +168,18 @@ public class UiIndexService {
         line = line.replace("<meta name=\"html-head\" content=\"replace\">", webserverConfiguration.htmlHead() == null ? "" : webserverConfiguration.htmlHead());
 
         return line;
+    }
+
+    // index.html is small and rewritten per user (CSRF token), so this is the one place content
+    // is still compressed on the request path.
+    private static byte[] gzip(byte[] raw) {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream(Math.max(64, raw.length / 3));
+        try (java.util.zip.GZIPOutputStream stream = new java.util.zip.GZIPOutputStream(out)) {
+            stream.write(raw);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return out.toByteArray();
     }
 
     /**

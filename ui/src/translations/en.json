@@ -311,8 +311,6 @@
         "1d": "1d",
         "7d": "7d"
       },
-      "last14days": "Last 14 days",
-      "last28days": "Last 28 days",
       "14days": "14 days",
       "28days": "28 days"
     },
@@ -1194,7 +1192,7 @@
       "namespace": {
         "edit": {
           "title": "Upgrade Your Namespace Management",
-          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables, and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
+          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and control of secrets, variables, and governance Policies at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and governance rules remain secure and easy to maintain across different teams and projects."
         },
         "secrets": {
           "title": "Manage Secrets in a Secure Way",
@@ -1219,8 +1217,7 @@
         "audit-logs": {
           "title": "Track All Changes in One Place",
           "message": "In Kestra Enterprise Edition, you can view namespace-level audit logs with detailed diffs, giving you a clear history of who changed what and when across all resources."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1757,10 +1754,6 @@
           "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
-      "plugins": {
-        "title": "No plugin defaults are set for this for this Namespace.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-      },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in our documentation."
@@ -1776,8 +1769,7 @@
       "panels": {
         "title": "No panel open",
         "content": "You've closed all panels.\nPick a tab above to continue."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
     "copied_logs_to_clipboard": "Copied logs to clipboard.",
@@ -2462,7 +2454,6 @@
     "blocks": "Blocks",
     "flow_description": "Flow Description",
     "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
-    "pluginDefaults": {},
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {

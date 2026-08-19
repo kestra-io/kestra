@@ -94,18 +94,18 @@
                 <div class="dp-intro-icon">
                     <BookOpenVariant :size="22" />
                 </div>
-                <h2 class="dp-intro-title">{{ t("plugins.intro_title") }}</h2>
-                <p class="dp-intro-sub">{{ t("plugins.intro_sub") }}</p>
+                <h2 class="dp-intro-title">{{ $t("plugins.intro_title") }}</h2>
+                <p class="dp-intro-sub">{{ $t("plugins.intro_sub") }}</p>
                 <div class="dp-intro-callout">
                     <CursorPointer :size="17" class="dp-intro-callout-icon" />
-                    <p>{{ t("plugins.intro_callout_prefix") }}<code>type</code>{{ t("plugins.intro_callout_suffix") }}</p>
+                    <p>{{ $t("plugins.intro_callout_prefix") }}<code>type</code>{{ $t("plugins.intro_callout_suffix") }}</p>
                 </div>
             </div>
 
             <div class="dp-intro-search-wrap">
                 <KsInput
                     v-model="introSearch"
-                    :placeholder="t('plugins.intro_search_placeholder')"
+                    :placeholder="$t('plugins.intro_search_placeholder')"
                     clearable
                     size="small"
                     class="dp-intro-search"
@@ -131,38 +131,38 @@
 
             <div class="dp-intro-body">
                 <template v-if="introSection === 'overview'">
-                    <div class="dp-intro-sec-label">{{ t("plugins.intro_start_here") }}</div>
+                    <div class="dp-intro-sec-label">{{ $t("plugins.intro_start_here") }}</div>
                     <div class="dp-intro-qstart">
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'flow'">
                             <span class="dp-intro-qnum">1</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step1_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step1_desc_prefix") }}<code>id</code>{{ t("plugins.intro_step1_desc_mid") }}<code>namespace</code>{{ t("plugins.intro_step1_desc_suffix") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step1_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step1_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step1_desc_prefix") }}<code>id</code>{{ $t("plugins.intro_step1_desc_mid") }}<code>namespace</code>{{ $t("plugins.intro_step1_desc_suffix") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step1_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'tasks'">
                             <span class="dp-intro-qnum">2</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step2_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step2_desc") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step2_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step2_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step2_desc") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step2_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'inputs'">
                             <span class="dp-intro-qnum">3</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step3_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step3_desc_prefix") }}<code>inputs</code>{{ t("plugins.intro_step3_desc_mid") }}<code>variables</code>{{ t("plugins.intro_step3_desc_suffix") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step3_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step3_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step3_desc_prefix") }}<code>inputs</code>{{ $t("plugins.intro_step3_desc_mid") }}<code>variables</code>{{ $t("plugins.intro_step3_desc_suffix") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step3_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                     </div>
 
-                    <div class="dp-intro-sec-label">{{ t("plugins.intro_learn_more") }}</div>
+                    <div class="dp-intro-sec-label">{{ $t("plugins.intro_learn_more") }}</div>
                     <div class="dp-intro-linkgrid">
                         <a
                             v-for="link in learnMoreLinks"
@@ -183,9 +183,9 @@
                     <template v-if="introSearch && filteredFlowRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -199,9 +199,9 @@
                     <template v-if="introSearch && filteredTaskRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -215,9 +215,9 @@
                     <template v-if="introSearch && filteredInputRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -231,12 +231,12 @@
                     <template v-if="introSearch">
                         <div v-if="filteredPebbleRows.length === 0" class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                         <template v-else>
-                            <p class="dp-intro-result-count">{{ t("plugins.intro_result_count", {count: filteredPebbleRows.length}) }}</p>
+                            <p class="dp-intro-result-count">{{ $t("plugins.intro_result_count", {count: filteredPebbleRows.length}) }}</p>
                             <div class="dp-intro-fn-list">
                                 <div
                                     v-for="row in filteredPebbleRows"

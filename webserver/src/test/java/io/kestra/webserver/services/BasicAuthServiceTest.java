@@ -425,7 +425,7 @@ class BasicAuthServiceTest {
     @Test
     void shouldRejectAuthentication_withUnmigratedSha512StoredPassword() {
         // Given – simulate a pre-migration row where the password is stored as plain SHA-512
-        // (as it would be before V2_0_10BasicAuthPasswordMigration runs).
+        // (as it would be before V2_0_04BasicAuthPasswordMigration runs).
         var tmpSettingsRepo = new InMemorySettingRepository();
         String salt = AuthUtils.generateSalt();
         String sha512Hash = AuthUtils.encodePassword(salt, "Kestra123");

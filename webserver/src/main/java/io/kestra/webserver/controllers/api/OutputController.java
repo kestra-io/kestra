@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NotFoundException;
@@ -51,7 +50,7 @@ public class OutputController {
     )
     public Map<String, Object> getExecutionOutputs(@Parameter(description = "The execution id") @PathVariable String executionId) throws InternalException {
         var execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
-        return executionOutputService.getOutputs(execution);
+        return Optional.ofNullable(executionOutputService.getOutputs(execution)).orElse(Collections.emptyMap());
     }
 
     @ExecuteOn(TaskExecutors.IO)

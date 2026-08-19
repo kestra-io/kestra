@@ -311,8 +311,6 @@
         "1d": "1天",
         "7d": "7天"
       },
-      "last14days": "最近 14 天",
-      "last28days": "最近 28 天",
       "14days": "14 天",
       "28days": "28 天"
     },
@@ -1194,7 +1192,7 @@
       "namespace": {
         "edit": {
           "title": "升级您的Namespace管理",
-          "message": "在 Kestra Enterprise Edition 中，namespace 提供了对 secrets、变量和插件默认值进行大规模高级隔离和治理的功能。管理员可以为每个 namespace 配置自定义 secrets 管理器、隔离的存储后端、专用的 worker 组以及细粒度权限。这确保了 secrets、变量和插件配置在不同团队和项目之间保持安全且易于维护。"
+          "message": "在 Kestra 企业版中，namespace 提供高级隔离，并大规模控制 secrets、variables 和治理 Policies。管理员可以配置自定义 secrets manager、隔离的存储后端、专用 worker 组以及基于 namespace 的精细权限。这确保了 secrets、variables 和治理规则在不同团队和项目之间保持安全且易于维护。"
         },
         "secrets": {
           "title": "以安全方式管理Secrets",
@@ -1755,10 +1753,6 @@
           "title": "当前没有依赖项。",
           "content": "此资产与flow或其他资产没有上游或下游依赖关系。"
         }
-      },
-      "plugins": {
-        "title": "此Namespace未设置插件默认值。",
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。"
       },
       "triggers": {
         "title": "您的 flow 没有任何 Triggers。",

@@ -224,7 +224,7 @@
                             :status="scope.row?.state?.current"
                             size="small"
                             clickable
-                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            :aria-label="$t('filter by status', {status: scope.row?.state?.current})"
                             @click.stop="onStateClick(scope.row?.state?.current)"
                         />
                     </template>

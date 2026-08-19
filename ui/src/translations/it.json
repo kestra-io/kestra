@@ -1194,7 +1194,7 @@
       "namespace": {
         "edit": {
           "title": "Aggiorna la Gestione del tuo Namespace",
-          "message": "Nell'edizione Kestra Enterprise, i namespace offrono isolamento avanzato e governance di segreti, variabili e impostazioni predefinite dei plugin su larga scala. Gli amministratori possono configurare gestori di segreti personalizzati, backend di archiviazione isolati, gruppi di worker dedicati e autorizzazioni granulari per ogni namespace. Ciò garantisce che segreti, variabili e configurazioni dei plugin rimangano sicuri e facili da mantenere tra diversi team e progetti."
+          "message": "In Kestra Enterprise Edition, i namespace forniscono isolamento avanzato e controllo di secrets, variabili e Policies di governance su larga scala. Gli amministratori possono configurare custom secrets managers, storage backends isolati, worker groups dedicati e permessi granulari per ogni namespace. Questo assicura che secrets, variabili e regole di governance rimangano sicuri e facili da mantenere tra diversi team e progetti."
         },
         "secrets": {
           "title": "Gestisci i Segreti in Modo Sicuro",
@@ -1755,10 +1755,6 @@
           "title": "Attualmente non ci sono dipendenze.",
           "content": "Questo asset non ha dipendenze upstream o downstream con flow o altri asset."
         }
-      },
-      "plugins": {
-        "title": "Nessun valore predefinito del plugin è impostato per questo Namespace.",
-        "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione."
       },
       "triggers": {
         "title": "Il tuo flow non ha alcun trigger.",

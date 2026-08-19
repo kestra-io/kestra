@@ -33,7 +33,7 @@
         <div v-if="!props.short && canExpand" class="chart-footer">
             <KsButton text size="small" :aria-expanded="expanded" @click="expanded = !expanded">
                 <span class="expand-toggle">
-                    {{ expanded ? t("showLess") : `${t("dashboards.viewAll")} (${totalNamespaces})` }}
+                    {{ expanded ? $t("showLess") : `${$t("dashboards.viewAll")} (${totalNamespaces})` }}
                     <component :is="expanded ? ChevronUp : ChevronDown" :size="14" />
                 </span>
             </KsButton>

@@ -150,7 +150,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
             // A terminal execution (e.g. a trigger that failed to render its inputs) needs no
             // further processing by the executor — it is already in its final state.
             if (newExecution.getState().isTerminated()) {
-                return Optional.empty();
+                return Optional.of(new ExecutorContext(newExecution)); // short-circuit execution processing
             }
 
             var eventType = newExecution.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
@@ -202,8 +202,16 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 command.executionId()
             );
 
-            if (persistNewExecutionWithKillSwitch(newExecution).isEmpty()) {
+            var persisted = persistNewExecutionWithKillSwitch(newExecution);
+            if (persisted.isEmpty()) {
                 return Optional.empty();
+            }
+            newExecution = persisted.get();
+
+            // A terminal execution (e.g. killed or cancelled by the kill switch) needs no further
+            // processing by the executor — it is already in its final state.
+            if (newExecution.getState().isTerminated()) {
+                return Optional.of(new ExecutorContext(newExecution)); // short-circuit execution processing
             }
 
             return executionEventMessageHandler.handle(new ExecutionEvent(newExecution, ExecutionEventType.CREATED));
@@ -230,25 +238,30 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
      * </p>
      *
      * @return {@code Optional.of(execution)} if the execution should proceed to normal processing;
-     *         {@code Optional.empty()} if it was kill-switched (already persisted in its terminal state).
+     *         {@code Optional.empty()} if it was kill-switched IGNORE.
      */
-    private Optional<Execution> persistNewExecutionWithKillSwitch(Execution newExecution) {
-        EvaluationType evaluationType = killSwitchService.evaluate(newExecution);
-        if (evaluationType == EvaluationType.KILL) {
-            log.warn("Kill switch active (KILL): killing execution {}", newExecution.getId());
-            executionStateStore.create(newExecution.withState(State.Type.KILLED).addLabel(new Label(Label.KILL_SWITCH, "killed")));
-            return Optional.empty();
-        }
-        if (evaluationType == EvaluationType.CANCEL) {
-            log.warn("Kill switch active (CANCEL): cancelling execution {}", newExecution.getId());
-            executionStateStore.create(newExecution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled")));
-            return Optional.empty();
-        }
-        executionStateStore.create(newExecution);
+    private Optional<Execution> persistNewExecutionWithKillSwitch(Execution execution) {
+        EvaluationType evaluationType = killSwitchService.evaluate(execution);
         if (evaluationType == EvaluationType.IGNORE) {
-            log.warn("Kill switch active (IGNORE): ignoring execution {}", newExecution.getId());
-            return Optional.empty();
+            log.warn("Kill switch active (IGNORE): ignoring execution {}", execution.getId());
+            executionStateStore.create(execution.addLabel(new Label(Label.KILL_SWITCH, "ignored")));
+            return Optional.empty(); // short-circuit execution processing
         }
+
+        // KILL and CANCEL should still reach toExecution so terminal steps are done
+        Execution newExecution;
+        if (evaluationType == EvaluationType.KILL) {
+            log.warn("Kill switch active (KILL): killing execution {}", execution.getId());
+            newExecution = execution.withState(State.Type.KILLED).addLabel(new Label(Label.KILL_SWITCH, "killed"));
+        }
+        else if (evaluationType == EvaluationType.CANCEL) {
+            log.warn("Kill switch active (CANCEL): cancelling execution {}", execution.getId());
+            newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
+        } else {
+            newExecution = execution;
+        }
+
+        executionStateStore.create(newExecution);
         return Optional.of(newExecution);
     }
 

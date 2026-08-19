@@ -16,17 +16,6 @@
         <KsSplitter v-else class="dependencies">
             <KsSplitterPanel id="graph" v-bind="PANEL">
                 <div class="graph-pane">
-                    <KsGraph
-                        ref="graphRef"
-                        class="graph-canvas"
-                        :nodes="chartNodes"
-                        :edges="chartEdges"
-                        :loading="isRendering"
-                        :layout="graphLayout"
-                        :options="graphOptions"
-                        @node-click="handleNodeClick"
-                    />
-
                     <div v-if="dagView" class="dag-bar">
                         <KsSegmented
                             v-model="layoutMode"
@@ -68,6 +57,17 @@
                             {{ chip.label }} ({{ chip.count }})
                         </button>
                     </div>
+
+                    <KsGraph
+                        ref="graphRef"
+                        class="graph-canvas"
+                        :nodes="chartNodes"
+                        :edges="chartEdges"
+                        :loading="isRendering"
+                        :layout="graphLayout"
+                        :options="graphOptions"
+                        @node-click="handleNodeClick"
+                    />
 
                     <div v-if="dagView && layoutMode === 'dag'" class="dag-legend">
                         <span v-for="state in presentStatuses" :key="state" class="legend-item">
@@ -508,13 +508,20 @@
         // The splitter panel itself stays static, so overlays anchor to .graph-pane.
 
         & .graph-pane {
-            position: relative; // anchors the layout bar and the zoom controls
+            position: relative; // anchors the legend and the zoom controls
             height: 100%;
+            // The toolbar and chip row are docked rows, not overlays, so they can never
+            // sit on top of a node. The legend and controls stay absolute: both are
+            // bottom-anchored, so they float over the canvas by design.
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         & .graph-canvas {
             width: 100%;
-            height: 100%;
+            flex: 1;
+            min-height: 0;
             overflow: hidden;
             background-color: transparent;
             background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 30%, transparent) 1px, transparent 1px);
@@ -527,42 +534,37 @@
         }
 
         & .dag-bar {
-            position: absolute;
-            top: var(--ks-spacing-2);
-            left: var(--ks-spacing-2);
-            right: var(--ks-spacing-2);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: var(--ks-spacing-3);
-            pointer-events: none; // the canvas keeps its own drag and zoom
+            flex-wrap: wrap;
+            gap: var(--ks-spacing-2) var(--ks-spacing-3);
+            padding: var(--ks-spacing-2);
         }
 
         & .layout-toggle {
-            pointer-events: auto;
+            flex: 0 0 auto;
         }
 
+        // The summary answers "is anything wrong here" and is the highest-priority text
+        // on the screen, so it never shrinks. The group select absorbs the loss instead.
         & .group-select {
-            pointer-events: auto;
-            width: 11rem;
+            flex: 0 1 11rem;
+            min-width: 0;
         }
 
         & .layout-summary {
+            flex: 0 0 auto;
             color: var(--ks-text-secondary);
             text-align: right;
-            overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
         }
 
         & .group-chips {
-            position: absolute;
-            top: var(--ks-spacing-8);
-            left: var(--ks-spacing-2);
             display: flex;
             flex-wrap: wrap;
             gap: var(--ks-spacing-2);
-            pointer-events: auto;
+            padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
         }
 
         & .group-chip {
@@ -590,11 +592,15 @@
             bottom: var(--ks-spacing-3);
             left: 50%;
             transform: translateX(-50%);
+            // Single line: a wrapping legend grows upward into the graph. It already
+            // prunes itself to the statuses present, so one line is enough.
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             justify-content: center;
-            gap: var(--ks-spacing-1) var(--ks-spacing-4);
-            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            max-width: calc(100% - var(--ks-spacing-6));
+            overflow-x: auto;
+            gap: var(--ks-spacing-3);
+            padding: var(--ks-spacing-2) var(--ks-spacing-3);
             border: 1px solid var(--ks-border-subtle);
             border-radius: var(--ks-radius-base);
             background: var(--ks-bg-surface);
@@ -603,7 +609,9 @@
         & .legend-item {
             display: flex;
             align-items: center;
-            gap: var(--ks-spacing-2);
+            flex: 0 0 auto;
+            gap: var(--ks-spacing-1);
+            white-space: nowrap;
         }
 
         & .legend-swatch {
@@ -631,12 +639,12 @@
 
         & .controls {
             position: absolute;
-            bottom: 16px;
-            left: 10px;
+            bottom: var(--ks-spacing-4);
+            left: var(--ks-spacing-3);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            gap: 0.25rem;
+            gap: var(--ks-spacing-1);
 
             & button {
                 width: 2rem;

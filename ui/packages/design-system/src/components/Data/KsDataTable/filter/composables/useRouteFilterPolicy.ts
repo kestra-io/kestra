@@ -37,6 +37,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
     const route = useRoute()
     const router = useRouter()
     const normalizedOnce = ref(false)
+    const normalizationPending = ref(false)
 
     const isEnabled = () => options.enabled?.() ?? true
     const shouldApplyDefaultIfMissing = () => options.applyDefaultIfMissing?.() ?? false
@@ -85,6 +86,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
                 return
             }
 
+            normalizationPending.value = true
             router.replace({
                 query: options.writeToRoute(route.query as Record<string, any>, nextValue),
             })
@@ -121,9 +123,18 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         setRouteValue(options.readFromAppliedFilters(filters))
     }
 
+    watch(routeValue, (value) => {
+        if (value !== undefined) {
+            normalizationPending.value = false
+        }
+    }, {flush: "sync"})
+
+    const isRouteSettled = computed(() => !normalizationPending.value)
+
     return {
         routeValue,
         effectiveValue,
+        isRouteSettled,
         hasUnsupportedRouteValue,
         syncFromAppliedFilters,
         setRouteValue,

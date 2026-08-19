@@ -202,6 +202,7 @@
     )
     const {
         effectiveValue: effectiveLogLevel,
+        isRouteSettled: isLevelRouteSettled,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
     } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
@@ -273,7 +274,7 @@
     }
 
     const loadData = async ({page, size}: {page: number; size: number; sort?: string}) => {
-        if (!loadInit.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value) return
         isLoading.value = true
 
         await logsStore.findLogs(loadQuery({
@@ -344,7 +345,7 @@
 
     let lastCountedKey = ""
     const refreshLevelCounts = () => {
-        if (!loadInit.value || lastCountedKey === filterQueryKey.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value || lastCountedKey === filterQueryKey.value) return
         const key = filterQueryKey.value
         lastCountedKey = key
         logsStore.levelCounts(loadQuery({})).then((counts) => {

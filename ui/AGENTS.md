@@ -148,6 +148,10 @@ const pageSize = ref(25)
 
 **Never** maintain a separate `internalPage` / `pageNumber` ref *and* bind the prop to a different value — that re-introduces the drift bug (URL says page 2, UI shows page 1) that this contract exists to prevent.
 
+**Defaults that land in the URL after mount** — a page whose filter defaults are written by a `router.replace` (e.g. the Logs page's default level, via `useRouteFilterPolicy`) must gate its first `loadData` on `isRouteSettled`. `KsDataTable` loads on mount, so without the gate the page fires a request for the bare query, throws that result away when the defaults arrive, and leaves the two responses racing each other.
+
+**Stores that back a filterable list** must ignore superseded responses: keep a sequence number per search and drop a response whose sequence is no longer the newest (see `stores/logs.ts`). Otherwise the response that happens to land last wins and the list can show results for filters the user already left — or nothing at all, when the stale search matched nothing.
+
 ### The deep-watch / computed-spread trap
 
 A `computed` that returns a fresh object (via spread or `{...}`) returns a new reference on every evaluation. Watching it with `{deep: true}` does **not** add structural equality — `deep: true` enables deep dependency tracking; the equality check at the top is still `Object.is`. The callback therefore fires on every dependency change, even when the content is unchanged.

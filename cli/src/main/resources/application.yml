@@ -135,6 +135,13 @@ endpoints:
       enabled: false
     discovery-client:
       enabled: false
+  # Micronaut ships /metrics non-sensitive but not /prometheus: align both so scrapers work out of the box.
+  metrics:
+    enabled: true
+    sensitive: false
+  prometheus:
+    enabled: true
+    sensitive: false
 
 kestra:
   tutorial-flows:

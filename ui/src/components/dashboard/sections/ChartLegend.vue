@@ -133,7 +133,7 @@
 
         .line {
             width: 10px;
-            height: 10px;
+            height: 2px;
             flex-shrink: 0;
             border-radius: var(--ks-radius-sm);
             background: var(--ks-chart-duration);

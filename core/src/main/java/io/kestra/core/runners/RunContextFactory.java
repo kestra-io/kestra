@@ -128,8 +128,6 @@ public class RunContextFactory {
                 .withExecution(execution)
                 .withOutputs(taskOutputService.computeOutputs(execution))
                 .withExecutionOutputs(executionOutputs(flow, execution))
-                .withDecryptVariables(decryptVariables)
-                .withSecretInputs(secretInputsFromFlow(flow))
         );
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
 
@@ -141,8 +139,8 @@ public class RunContextFactory {
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory))
             .withVariableRenderer(variableRenderer)
             .withVariables(variables)
+            .withDecryptVariables(decryptVariables)
             .withSecretInputs(secretInputsFromFlow(flow))
-            .withSecretOutputs(runVariablesBuilder.secretOutputs())
             .build();
     }
 
@@ -163,9 +161,7 @@ public class RunContextFactory {
             .withExecution(execution)
             .withOutputs(taskOutputService.computeOutputs(execution))
             .withExecutionOutputs(executionOutputs(flow, execution))
-            .withTaskRun(taskRun)
-            .withDecryptVariables(decryptVariables)
-            .withSecretInputs(secretInputsFromFlow(flow));
+            .withTaskRun(taskRun);
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
 
         return newBuilder()
@@ -175,8 +171,8 @@ public class RunContextFactory {
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
             .withVariables(variables)
+            .withDecryptVariables(decryptVariables)
             .withSecretInputs(secretInputsFromFlow(flow))
-            .withSecretOutputs(runVariablesBuilder.secretOutputs())
             .withTask(task)
             .withVariableRenderer(variableRenderer)
             .build();
@@ -193,7 +189,6 @@ public class RunContextFactory {
                 newRunVariablesBuilder()
                     .withFlow(flow)
                     .withTrigger(trigger)
-                    .withSecretInputs(secretInputsFromFlow(flow))
                     .build(runContextLogger, PropertyContext.create(this.variableRenderer))
             )
             .withSecretInputs(secretInputsFromFlow(flow))
@@ -311,7 +306,7 @@ public class RunContextFactory {
     }
 
     protected RunVariables.Builder newRunVariablesBuilder() {
-        return new RunVariables.DefaultBuilder(encryptionConfig.asOptional())
+        return new RunVariables.DefaultBuilder()
             .withEnvs(runContextCache.getEnvVars())
             .withGlobals(runContextCache.getGlobalVars())
             .withKestraConfiguration(

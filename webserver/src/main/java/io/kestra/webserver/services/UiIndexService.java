@@ -42,7 +42,8 @@ public class UiIndexService {
     private final Optional<CsrfConfiguration> csrfConfiguration;
     private final Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator;
 
-    private volatile Optional<IndexTemplate> template;
+    // Empty when the UI is not packaged on the classpath (backend-only builds).
+    private final Optional<IndexTemplate> template;
 
     @Inject
     public UiIndexService(
@@ -55,6 +56,7 @@ public class UiIndexService {
         this.webserverConfiguration = Objects.requireNonNull(webserverConfiguration);
         this.csrfConfiguration = Objects.requireNonNull(csrfConfiguration);
         this.csrfTokenGenerator = Objects.requireNonNull(csrfTokenGenerator);
+        this.template = load();
     }
 
     /**
@@ -62,7 +64,7 @@ public class UiIndexService {
      * packaged on the classpath.
      */
     public Optional<MutableHttpResponse<byte[]>> render(HttpRequest<?> request) {
-        return template().map(indexTemplate -> render(request, indexTemplate));
+        return template.map(indexTemplate -> render(request, indexTemplate));
     }
 
     private MutableHttpResponse<byte[]> render(HttpRequest<?> request, IndexTemplate indexTemplate) {
@@ -118,19 +120,6 @@ public class UiIndexService {
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL_NO_CACHE)
             .header(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING);
-    }
-
-    private Optional<IndexTemplate> template() {
-        Optional<IndexTemplate> local = this.template;
-        if (local == null) {
-            synchronized (this) {
-                if (this.template == null) {
-                    this.template = load();
-                }
-                local = this.template;
-            }
-        }
-        return local;
     }
 
     private Optional<IndexTemplate> load() {

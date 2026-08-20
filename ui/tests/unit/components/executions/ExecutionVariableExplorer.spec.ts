@@ -5,6 +5,7 @@ import {createI18n} from "vue-i18n"
 
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
+import {executionOutputs} from "@kestra-io/kestra-sdk/outputs"
 
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
@@ -119,6 +120,11 @@ describe("ExecutionVariableExplorer", () => {
     test("sections computed yields expression: \"execution.outputs.myname\" for a flow output", async () => {
         // This is a direct regression guard for the Bug #1 fix: the flowOutputs
         // section must prefix items with "execution.outputs" (not bare "outputs").
+
+        // Override the SDK mock so the async loadExecutionOutputs call returns
+        // flow-level output data instead of the default empty object.
+        vi.mocked(executionOutputs).mockResolvedValueOnce({myname: "Hello"} as any)
+
         const executionsStore = useExecutionsStore()
         executionsStore.execution = {
             id: "execution-id",
@@ -129,7 +135,6 @@ describe("ExecutionVariableExplorer", () => {
             metadata: {originalCreatedDate: "2026-01-01T00:00:00Z", attemptNumber: 1},
             variables: {},
             inputs: {},
-            outputs: {myname: "Hello"},
             taskRunList: [],
             state: {
                 current: "SUCCESS",

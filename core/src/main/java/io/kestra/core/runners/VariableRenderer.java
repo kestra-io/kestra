@@ -83,11 +83,39 @@ public class VariableRenderer {
             ? renderRecursively(inline, variables, stringify)
             : renderOnce(inline, variables, stringify);
 
-        if (render instanceof String renderStr) {
-            return RAW_PATTERN.matcher(renderStr).replaceAll("$2");
-        }
+        return stripRawTags(render);
+    }
 
-        return render;
+    /**
+     * Strips raw-tag markers ({@link #RAW_PATTERN}) from a render result. A typed render (e.g. a
+     * list literal such as {@code {{ [secret('X')] }} }) can return the raw-wrapped value nested
+     * inside a Map/List/Set rather than as the top-level String, so the markers must be stripped
+     * wherever a String ends up in the result, not only when the result itself is a String.
+     */
+    private static Object stripRawTags(Object value) {
+        if (value instanceof String stringValue) {
+            return RAW_PATTERN.matcher(stringValue).replaceAll("$2");
+        }
+        if (value instanceof Map<?, ?> map) {
+            Map<Object, Object> result = new LinkedHashMap<>();
+            map.forEach((key, val) -> result.put(stripRawTags(key), stripRawTags(val)));
+            return result;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> result = new ArrayList<>(list.size());
+            for (Object item : list) {
+                result.add(stripRawTags(item));
+            }
+            return result;
+        }
+        if (value instanceof Set<?> set) {
+            Set<Object> result = new LinkedHashSet<>();
+            for (Object item : set) {
+                result.add(stripRawTags(item));
+            }
+            return result;
+        }
+        return value;
     }
 
     public Object renderOnce(Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {

@@ -188,6 +188,16 @@ order (`resolveBundleSource`):
 When none of the three resolves the service is a **no-op**. The resolved source is cached ~1h and
 loaded asynchronously. This is pure JSON — **no plugin JAR is ever downloaded here.**
 
+> **Special case — self-built JAR / running from source.** The bundle is embedded by *release CI*
+> only, so a plain `./gradlew build` jar or an IDE/`gradlew run` instance has no
+> `/plugins-schema.json` resource: catalog completion for un-installed types is silently inactive
+> (feature 1 no-ops). This does **not** affect feature 2 — auto-download never reads the bundle; it
+> relies on the live plugin catalog and the Maven repositories, so it works identically on a
+> source build. To get catalog completion on such a build, generate a bundle
+> (`kestra plugins-schema --plugins <catalog-dir> -o bundle.json`) and point
+> `kestra.plugins.schema-bundle-path` at it — `plugin-devtools`' `kestra-core-run` does exactly
+> that.
+
 ### (c) Serve — merge on the fly
 
 `GET /api/v1/plugins/schemas/{type}?includeCatalog=true` (`PluginController`) starts from the

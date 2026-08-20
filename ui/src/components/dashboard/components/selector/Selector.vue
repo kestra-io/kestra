@@ -9,6 +9,7 @@
         <template #dropdown>
             <el-dropdown-menu class="p-3 dropdown">
                 <el-button
+                    v-if="canCreate"
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
@@ -74,6 +75,14 @@
     import {getDashboard} from "../../composables/useDashboards";
 
     import Item from "./Item.vue";
+
+    import {useAuthStore} from "override/stores/auth";
+    import permission from "../../../../models/permission";
+    import action from "../../../../models/action";
+    const authStore = useAuthStore();
+
+    // Creating a dashboard requires DASHBOARD CREATE (browsing the selector only requires READ).
+    const canCreate = computed(() => authStore.user?.isAllowed(permission.DASHBOARD, action.CREATE, "*"));
 
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");

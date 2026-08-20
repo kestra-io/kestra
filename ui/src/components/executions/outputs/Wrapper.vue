@@ -67,6 +67,7 @@
                         </div>
 
                         <el-collapse
+                            v-if="isAllowedEval"
                             v-model="debugCollapse"
                             class="mb-3 debug bordered"
                         >
@@ -157,6 +158,9 @@
     import {ElTree} from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
+    import {useAuthStore} from "override/stores/auth";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
@@ -261,6 +265,14 @@
     const executionsStore = useExecutionsStore();
 
     const execution = computed(() => executionsStore.execution);
+
+    // Expression evaluation calls the eval endpoint, which requires FLOW UPDATE on the execution's namespace.
+    const isAllowedEval = computed(() =>
+        Boolean(
+            execution.value &&
+                useAuthStore().user?.isAllowed(permission.FLOW, action.UPDATE, execution.value.namespace),
+        ),
+    );
 
     function isValidURL(url: string) {
         try {

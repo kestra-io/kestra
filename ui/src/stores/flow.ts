@@ -869,6 +869,18 @@ function deleteFlowAndDependencies() {
         );
     })
 
+    const isAllowedDelete = computed((): boolean => {
+        if (!flow.value || !authStore.user) {
+            return false;
+        }
+
+        return authStore.user.isAllowed(
+            permission.FLOW,
+            action.DELETE,
+            flow.value?.namespace,
+        );
+    })
+
     const readOnlySystemLabel = computed(() => {
         if (!flow.value || !flow.value.labels) {
             return false;
@@ -935,6 +947,7 @@ function deleteFlowAndDependencies() {
     return {
         creationId,
         isAllowedEdit,
+        isAllowedDelete,
         readOnlySystemLabel,
         isReadOnly,
         baseOutdatedTranslationKey,

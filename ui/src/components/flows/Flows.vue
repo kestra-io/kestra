@@ -8,7 +8,7 @@
                     </el-button>
                 </li>
                 <li>
-                    <el-button :icon="Upload" @click="file?.click()">
+                    <el-button v-if="canCreate" :icon="Upload" @click="file?.click()">
                         {{ $t("import") }}
                     </el-button>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">

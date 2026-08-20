@@ -26,6 +26,7 @@
             </el-select>
             <el-button-group class="d-flex">
                 <el-tooltip
+                    v-if="canCreate"
                     effect="light"
                     :content="$t('namespace files.create.file')"
                     transition=""
@@ -38,6 +39,7 @@
                     </el-button>
                 </el-tooltip>
                 <el-tooltip
+                    v-if="canCreate"
                     effect="light"
                     :content="$t('namespace files.create.folder')"
                     transition=""
@@ -70,7 +72,7 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <el-dropdown>
+                <el-dropdown v-if="canCreate">
                     <el-button>
                         <PlusBox />
                     </el-button>
@@ -110,7 +112,7 @@
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
-            draggable
+            :draggable="canUpdate"
             nodeKey="id"
             v-loading="filesStore.fileTree === undefined"
             :props="{class: nodeClass, isLeaf: 'leaf'}"
@@ -163,13 +165,13 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item
-                                v-if="!data.leaf && !multiSelected"
+                                v-if="!data.leaf && !multiSelected && canCreate"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                v-if="!data.leaf && !multiSelected"
+                                v-if="!data.leaf && !multiSelected && canCreate"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
@@ -184,7 +186,7 @@
                                 {{ $t("namespace files.export_single") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                v-if="data.leaf && !multiSelected"
+                                v-if="data.leaf && !multiSelected && canUpdate"
                                 @click="
                                     toggleRenameDialog(
                                         true,
@@ -202,7 +204,7 @@
                                     )
                                 }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="removeSelectedFiles(data, node)">
+                            <el-dropdown-item v-if="canDelete" @click="removeSelectedFiles(data, node)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -342,6 +344,8 @@
                 :lang="revisionsHistory.path.split('.').pop()!"
                 :revisions="revisionsHistory.revisions"
                 :revisionSource="fetchRevisionSource"
+                :canRestore="canUpdate"
+                :canDelete="canDelete"
                 @restore="restore"
                 :editRouteQuery="false"
                 class="revision-history-dialog-body"
@@ -353,7 +357,7 @@
         </el-dialog>
 
         <el-menu
-            v-if="tabContextMenu.visible"
+            v-if="tabContextMenu.visible && canCreate"
             :style="{
                 left: `${tabContextMenu.x}px`,
                 top: `${tabContextMenu.y}px`,
@@ -382,6 +386,9 @@
     import {ref, computed, nextTick, inject, watch} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useAuthStore} from "override/stores/auth";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -483,6 +490,13 @@
     const toast = useToast();
 
     const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string);
+
+    // Namespace files are governed by the FLOW permission on the file's namespace (see NamespaceFileController):
+    // read/export need READ, create/import need CREATE, rename/move need UPDATE, delete needs DELETE.
+    const authStore = useAuthStore();
+    const canCreate = computed(() => authStore.user?.isAllowed(permission.FLOW, action.CREATE, namespaceId.value) ?? false);
+    const canUpdate = computed(() => authStore.user?.isAllowed(permission.FLOW, action.UPDATE, namespaceId.value) ?? false);
+    const canDelete = computed(() => authStore.user?.isAllowed(permission.FLOW, action.DELETE, namespaceId.value) ?? false);
 
     const multiSelected = computed(() => selectedNodes.value.length > 1);
 
@@ -663,6 +677,7 @@
     }
 
     async function restore(source: string) {
+        if (!canUpdate.value) return;
         await namespacesStore.saveOrCreateFile({
             namespace: namespaceId.value,
             path: revisionsHistory.value.path,
@@ -688,6 +703,7 @@
     }
 
     async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+        if (!canDelete.value) return;
         if (selectedFiles.value.length <= 1 && node) {
             selectedNodes.value = [node.data.id];
         }
@@ -727,6 +743,7 @@
     }
 
     async function dialogHandler() {
+        if (!canCreate.value) return;
         if (dialog.value.type === "file") {
             await addFile({creation: true});
         } else {
@@ -773,6 +790,7 @@
     }
 
     function renameItem() {
+        if (!canUpdate.value) return;
         const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : "";
         const start = path.substring(0, path.lastIndexOf("/") + 1);
         namespacesStore.renameFileDirectory({
@@ -813,6 +831,7 @@
     }
 
     async function importFiles(event: Event) {
+        if (!canCreate.value) return;
         const importedFiles = (event.target as HTMLInputElement).files;
         if (!importedFiles) return;
         try {

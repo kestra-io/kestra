@@ -2,7 +2,7 @@
     <Navbar :title="routeInfo.title">
         <template #additional-right v-if="miscStore.configs?.secretsEnabled">
             <ul>
-                <li>
+                <li v-if="canAddSecret">
                     <el-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">
                         {{ $t('secret.add') }}
                     </el-button>
@@ -85,8 +85,15 @@
     import {useMiscStore} from "override/stores/misc";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EnterpriseTag from "../EnterpriseTag.vue";
+    import action from "../../models/action";
+    import permission from "../../models/permission";
+    import {useAuthStore} from "override/stores/auth";
 
     const miscStore = useMiscStore();
+    const authStore = useAuthStore();
+
+    // Backend putSecrets enforces SECRET UPDATE (there is no CREATE endpoint for secrets).
+    const canAddSecret = computed(() => authStore.user?.hasAnyAction(permission.SECRET, action.UPDATE));
 
     const props = defineProps({
         namespace: {

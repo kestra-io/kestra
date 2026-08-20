@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title">
         <template #additional-right>
             <ul>
-                <li>
+                <li v-if="canAddKv">
                     <el-button :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
                         {{ $t("kv.add") }}
                     </el-button>
@@ -23,8 +23,15 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import KVTable from "./KVTable.vue";
+    import action from "../../models/action";
+    import permission from "../../models/permission";
+    import {useAuthStore} from "override/stores/auth";
 
     const namespacesStore = useNamespacesStore();
+    const authStore = useAuthStore();
+
+    // Backend setKeyValue enforces KVSTORE CREATE for a new key.
+    const canAddKv = computed(() => authStore.user?.hasAnyAction(permission.KVSTORE, action.CREATE));
 
     const {t} = useI18n({useScope: "global"});
     const routeInfo = computed(() => ({title: t("kv.name")}));

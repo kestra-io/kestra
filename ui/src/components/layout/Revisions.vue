@@ -40,7 +40,7 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionLeftText === currentRevisionWithSource.source"
+                                :disabled="revisionLeftText === currentRevisionWithSource?.source"
                                 @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
                                 data-testid="restore-left"
                             >
@@ -82,7 +82,7 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionRightText === currentRevisionWithSource.source"
+                                :disabled="revisionRightText === currentRevisionWithSource?.source"
                                 @click="restoreRevision(revisionRightIndex, revisionRightText)"
                                 data-testid="restore-right"
                             >
@@ -200,6 +200,14 @@
         return sortedRevisions.value[sortedRevisions.value.length - 1]
     })
 
+    const selectedLeftRevision = computed(() => {
+        return revisionNumber(revisionLeftIndex.value)
+    })
+
+    const selectedRightRevision = computed(() => {
+        return revisionNumber(revisionRightIndex.value)
+    })
+
     function load() {
         const currentRevision = currentRevisionWithSource.value?.revision ?? 1
 
@@ -227,18 +235,24 @@
         }
     }
 
-    function revisionIndex(revision: string) {
-        const revisionInt = parseInt(revision)
+    function revisionIndex(revision: string | number | undefined) {
+        if (revision === undefined || revision === null) return undefined
+        const revisionInt = typeof revision === "number" ? revision : parseInt(revision.toString())
         const idx = sortedRevisions.value.findIndex(rev => rev.revision === revisionInt)
         return idx === -1 ? undefined : idx
     }
 
-    function revisionNumber(index: number) {
+    function revisionNumber(index: number | undefined) {
+        if (index === undefined || !sortedRevisions.value || !sortedRevisions.value[index]) {
+            return undefined
+        }
         return sortedRevisions.value[index].revision
     }
 
     function restoreRevision(index: number, revisionSource: string) {
-        toast.confirm(t("restore confirm", {revision: revisionNumber(index)}), () => {
+        const revNum = revisionNumber(index)
+        if (revNum === undefined) return
+        toast.confirm(t("restore confirm", {revision: revNum}), () => {
             emit("restore", revisionSource)
             return Promise.resolve()
         })
@@ -250,13 +264,17 @@
         }
 
         if (props.editRouteQuery) {
-            router.push({
-                query: {
-                    ...route.query,
-                    revisionLeft: sortedRevisions.value[revisionLeftIndex.value].revision,
-                    revisionRight: sortedRevisions.value[revisionRightIndex.value].revision,
-                },
-            })
+            const leftRevision = revisionNumber(revisionLeftIndex.value)
+            const rightRevision = revisionNumber(revisionRightIndex.value)
+            if (leftRevision !== undefined && rightRevision !== undefined) {
+                router.push({
+                    query: {
+                        ...route.query,
+                        revisionLeft: leftRevision,
+                        revisionRight: rightRevision,
+                    },
+                })
+            }
         }
     }
 
@@ -269,7 +287,7 @@
     function formatRevisionText(revision: number): string {
         let text = revision.toString()
 
-        if (currentRevisionWithSource.value.revision === revision) {
+        if (currentRevisionWithSource.value?.revision === revision) {
             text += ` (${t("current")})`
         }
 
@@ -280,7 +298,7 @@
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
             .map(({revision, updated, draft}) => {
-                const isCurrent = currentRevisionWithSource.value.revision === revision
+                const isCurrent = currentRevisionWithSource.value?.revision === revision
                 return {
                     value: revisionIndex(revision.toString()),
                     revision: revision,
@@ -322,6 +340,7 @@
 
     async function onDelete(index: number) {
         const revisionToDelete = revisionNumber(index)
+        if (revisionToDelete === undefined) return
         toast.confirm(t("delete revision confirm", {revision: revisionToDelete}), async () => {
             try {
                 await flowStore.deleteRevision({
@@ -338,19 +357,27 @@
         })
     };
 
-    watch(revisionLeftIndex, async (newValue) => {
+    watch(selectedLeftRevision, async (newValue) => {
+        if (newValue === undefined) {
+            revisionLeftText.value = undefined
+            return
+        }
         isLoadingRevisions.value = true
         try {
-            revisionLeftText.value = await loadRevisionContent(newValue)
+            revisionLeftText.value = await loadRevisionContent(revisionIndex(newValue))
         } finally {
             isLoadingRevisions.value = false
         }
     })
 
-    watch(revisionRightIndex, async (newValue) => {
+    watch(selectedRightRevision, async (newValue) => {
+        if (newValue === undefined) {
+            revisionRightText.value = undefined
+            return
+        }
         isLoadingRevisions.value = true
         try {
-            revisionRightText.value = await loadRevisionContent(newValue)
+            revisionRightText.value = await loadRevisionContent(revisionIndex(newValue))
         } finally {
             isLoadingRevisions.value = false
         }
@@ -374,10 +401,14 @@
         }
     })
 
-    watch(() => currentRevisionWithSource.value.revision, (newRevision, oldRevision) => {
-        if (revisionNumber(revisionRightIndex.value) === oldRevision) {
+    watch(() => currentRevisionWithSource.value?.revision, (newRevision, oldRevision) => {
+        if (newRevision && oldRevision && revisionNumber(revisionRightIndex.value) === oldRevision) {
             revisionRightIndex.value = revisionIndex(newRevision.toString())
         }
+    })
+
+    watch(sortedRevisions, () => {
+        load()
     })
 
     load()

@@ -53,8 +53,6 @@ const FAKE_EXECUTION = {
         customerId: "cust-42",
         sendCopy: true,
     },
-    // Flow-level outputs — required for the Flow Outputs section to render.
-    outputs: {myname: "Hello"},
 };
 
 const ROUTER_ROUTES = [
@@ -87,6 +85,7 @@ const meta: Meta<typeof ExecutionVariableExplorer> = {
             [`GET /outputs/tasks/${FAKE_EXECUTION.id}`]: OUTPUTS_INFORMATION,
             [`GET /outputs/tasks/${FAKE_EXECUTION.id}/run-http`]: OUTPUTS_BY_TASK_RUN_ID["run-http"],
             [`GET /outputs/tasks/${FAKE_EXECUTION.id}/run-check`]: OUTPUTS_BY_TASK_RUN_ID["run-check"],
+            [`GET /outputs/executions/${FAKE_EXECUTION.id}`]: {myname: "Hello"},
         });
     },
 };

@@ -320,9 +320,10 @@
             // dragging on the whole canvas once the fit is aspect-contained.
             preserveAspect: true,
             roamTrigger: "global",
-            // Dims everything but the hovered node and its neighbours, which is what makes
-            // a dense force graph readable.
-            emphasis: {focus: "adjacency"},
+            // Asset view only: dims everything but the hovered node and its neighbours,
+            // which is what makes a dense force graph readable. The flow, execution and
+            // namespace graphs keep the focus: "none" they have always had.
+            emphasis: {focus: props.dagView ? "adjacency" : "none"},
         }],
     }))
 
@@ -367,7 +368,7 @@
         // chart only ever shows Tree. That leaves the composable's whole DAG branch
         // unreachable, pending its removal, and keeps this call identical to the one the
         // flow, execution and namespace views make.
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, undefined, groupOf)
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, undefined, groupOf, Boolean(props.dagView))
 
     const dagCanvasRef = ref<{zoomIn: () => void; zoomOut: () => void; fit: () => void} | null>(null)
     const hoveredNodeID = ref<string | undefined>(undefined)
@@ -393,16 +394,18 @@
         }
         : handlers))
 
-    /** Table-row hover drives the vue-flow trace, or the chart's own emphasis. */
+    /** Table-row hover drives the vue-flow trace, or the chart's own emphasis. Asset view only. */
     const onHover = (id?: string): void => {
         if (isDagCanvas.value) hoveredNodeID.value = id
-        else highlightNode(id)
+        else if (props.dagView) highlightNode(id)
     }
 
     const router = useRouter()
 
-    /** Double click opens the node's own page; single click only selects. */
+    /** Double click opens the node's own page; single click only selects. Asset view only. */
     const openNode = (node: Node): void => {
+        // The flow, execution and namespace views never navigated on double click.
+        if (!props.dagView) return
         const {subtype} = node.metadata
         const tenant = route.params.tenant
 
@@ -424,7 +427,7 @@
     }
 
     watch(openedNodeID, (id) => {
-        if (!id) return
+        if (!props.dagView || !id) return
         const element = getElements().find((el): el is {data: Node} => el.data.type === "NODE" && el.data.id === id)
         if (element) openNode(element.data)
     })
@@ -628,42 +631,6 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
-        }
-
-        & .canvas-stack {
-            position: relative;
-            flex: 1;
-            min-height: 0;
-        }
-
-        & .echarts-layer,
-        & .dag-layer {
-            position: absolute;
-            inset: 0;
-        }
-
-        // visibility, not opacity: an opacity-0 canvas still hit-tests, so it would eat
-        // clicks and wheel events meant for the vue-flow layer above it.
-        & .echarts-layer.is-hidden {
-            visibility: hidden;
-        }
-
-        & .dag-layer {
-            z-index: 1;
-        }
-
-        & .graph-canvas {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: transparent;
-            background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 30%, transparent) 1px, transparent 1px);
-            background-repeat: repeat;
-            background-size: 24px 24px;
-
-            .dark & {
-                background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 20%, transparent) 1px, transparent 1px);
-            }
         }
 
         & .canvas-stack {

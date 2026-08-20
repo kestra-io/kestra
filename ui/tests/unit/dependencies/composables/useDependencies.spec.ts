@@ -88,6 +88,8 @@ function makeGraphRef() {
 }
 
 // ECharts instance mock that exposes known node positions via getData().
+// `handlers`/`zrHandlers` record what bindCanvasClicks registered, keyed by event
+// name, so the asset-view gating tests can assert which listeners exist and fire them.
 function makeChartMock(nodePositions: Record<string, {x: number; y: number}>, W = 600, H = 400) {
     const ids = Object.keys(nodePositions)
     const layouts = Object.values(nodePositions)
@@ -97,20 +99,32 @@ function makeChartMock(nodePositions: Record<string, {x: number; y: number}>, W 
         getName:       vi.fn((i: number) => ids[i]),
         getItemLayout: vi.fn((i: number) => layouts[i]),
     }
+    const handlers: Record<string, ((payload: any) => void)[]> = {}
+    const zrHandlers: Record<string, ((payload: any) => void)[]> = {}
     return {
         setOption:      vi.fn(),
         dispatchAction: vi.fn(),
         getWidth:       vi.fn(() => W),
         getHeight:      vi.fn(() => H),
-        // Immediately invoke "finished" so capturePositions runs synchronously in tests
-        on:             vi.fn((event: string, handler: () => void) => { if (event === "finished") handler() }),
+        // Record every handler; immediately invoke "finished" so capturePositions runs synchronously in tests
+        on:             vi.fn((event: string, handler: (payload?: any) => void) => {
+            (handlers[event] ??= []).push(handler)
+            if (event === "finished") handler()
+        }),
         off:            vi.fn(),
+        getZr:          vi.fn(() => ({
+            on: (event: string, handler: (payload: any) => void) => {
+                (zrHandlers[event] ??= []).push(handler)
+            },
+        })),
         getModel:   vi.fn(() => ({
             getSeriesByIndex: vi.fn(() => ({
                 getData:          vi.fn(() => dataMock),
                 coordinateSystem: null,
             })),
         })),
+        handlers,
+        zrHandlers,
     }
 }
 
@@ -304,65 +318,79 @@ describe("useDependencies composable", () => {
     })
   })
 
+  // Known layout:
+  //   A(100,200)  B(300,400)  C(200,100)
+  //   canvas W=600 H=400
+  //
+  // ECharts graph `center` is in data coordinates.
+  // focusNode sets center=[pos.x, pos.y] to place the node at canvas centre.
+  const NODE_POSITIONS = {A: {x: 100, y: 200}, B: {x: 300, y: 400}, C: {x: 200, y: 100}}
+  const CANVAS_W = 600
+  const CANVAS_H = 400
+
+  async function mountWithChart(initialNodeID = "X", dagView = false) {
+      const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H)
+      const graphRef = ref({
+          fit:                vi.fn(),
+          zoomIn:             vi.fn(),
+          zoomOut:            vi.fn(),
+          exportAsImage:      vi.fn(),
+          getEchartsInstance: vi.fn(() => chartMock),
+          $el:                document.createElement("div"),
+      })
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+          data: [
+              {data: {id: "A", type: "NODE", flow: "fa", namespace: "ns", metadata: {subtype: "FLOW"}}},
+              {data: {id: "B", type: "NODE", flow: "fb", namespace: "ns", metadata: {subtype: "FLOW"}}},
+              {data: {id: "C", type: "NODE", flow: "fc", namespace: "ns", metadata: {subtype: "FLOW"}}},
+              // D exists in the data but not in NODE_POSITIONS, so it never gets a
+              // captured position — the stored-position guard's case.
+              {data: {id: "D", type: "NODE", flow: "fd", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          ],
+          count: 4,
+      })
+      vi.useFakeTimers()
+      const wrapper = mount({
+          template: "<div></div>",
+          setup() {
+              // Defaults to initialNodeID="X" (nonexistent) so no node is pre-selected,
+              // leaving selectedNodeID undefined and letting tests control selection.
+              const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, undefined, dagView)
+              return {composable}
+          },
+      })
+      // Flush microtasks (promise resolution + Vue reactivity) so onMounted's
+      // async fetch resolves, then advance fake timers past jsdom's rAF polyfill
+      // (setTimeout 16 ms) so capturePositions() runs and storedPositions is populated.
+      await nextTick()
+      await nextTick()
+      await vi.runAllTimersAsync()
+      await nextTick()
+      vi.useRealTimers()
+      // Snapshot the mount-time calls before clearing: the initial auto-selection
+      // centres the graph from captureAndFocusWhenReady, and that is the only path
+      // that still calls focusNode.
+      const mountCalls = [...chartMock.setOption.mock.calls]
+      chartMock.setOption.mockClear()
+      const {selectNode, selectedNodeID, openedNodeID} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+      return {selectNode, selectedNodeID, openedNodeID, chartMock, mountCalls}
+  }
+
+  // zoom OR center: a regression that pans via `center` alone must not slip past.
+  const cameraCalls = (calls: any[][]) =>
+      calls.filter((args) => {
+          const series = args[0]?.series?.[0]
+          return series?.zoom !== undefined || series?.center !== undefined
+      })
+
+  // Any dispatchAction beyond the style-only highlight/downplay pair, so a camera
+  // move routed through dispatchAction is caught too.
+  const cameraActions = (chartMock: {dispatchAction: {mock: {calls: any[][]}}}) =>
+      chartMock.dispatchAction.mock.calls.filter(
+          (args) => !["highlight", "downplay"].includes(args[0]?.type),
+      )
+
   describe("focusNode", () => {
-    // Known layout:
-    //   A(100,200)  B(300,400)  C(200,100)
-    //   canvas W=600 H=400
-    //
-    // ECharts graph `center` is in data coordinates.
-    // focusNode sets center=[pos.x, pos.y] to place the node at canvas centre.
-    const NODE_POSITIONS = {A: {x: 100, y: 200}, B: {x: 300, y: 400}, C: {x: 200, y: 100}}
-    const CANVAS_W = 600
-    const CANVAS_H = 400
-
-    async function mountWithChart(initialNodeID = "X") {
-        const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H)
-        const graphRef = ref({
-            fit:                vi.fn(),
-            zoomIn:             vi.fn(),
-            zoomOut:            vi.fn(),
-            exportAsImage:      vi.fn(),
-            getEchartsInstance: vi.fn(() => chartMock),
-            $el:                document.createElement("div"),
-        })
-        const fetchAssetDependencies = vi.fn().mockResolvedValue({
-            data: [
-                {data: {id: "A", type: "NODE", flow: "fa", namespace: "ns", metadata: {subtype: "FLOW"}}},
-                {data: {id: "B", type: "NODE", flow: "fb", namespace: "ns", metadata: {subtype: "FLOW"}}},
-                {data: {id: "C", type: "NODE", flow: "fc", namespace: "ns", metadata: {subtype: "FLOW"}}},
-            ],
-            count: 3,
-        })
-        vi.useFakeTimers()
-        const wrapper = mount({
-            template: "<div></div>",
-            setup() {
-                // Defaults to initialNodeID="X" (nonexistent) so no node is pre-selected,
-                // leaving selectedNodeID undefined and letting tests control selection.
-                const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies)
-                return {composable}
-            },
-        })
-        // Flush microtasks (promise resolution + Vue reactivity) so onMounted's
-        // async fetch resolves, then advance fake timers past jsdom's rAF polyfill
-        // (setTimeout 16 ms) so capturePositions() runs and storedPositions is populated.
-        await nextTick()
-        await nextTick()
-        await vi.runAllTimersAsync()
-        await nextTick()
-        vi.useRealTimers()
-        // Snapshot the mount-time calls before clearing: the initial auto-selection
-        // centres the graph from captureAndFocusWhenReady, and that is the only path
-        // that still calls focusNode.
-        const mountCalls = [...chartMock.setOption.mock.calls]
-        chartMock.setOption.mockClear()
-        const {selectNode, selectedNodeID} = wrapper.vm.composable as ReturnType<typeof useDependencies>
-        return {selectNode, selectedNodeID, chartMock, mountCalls}
-    }
-
-    const cameraCalls = (calls: any[][]) =>
-        calls.filter((args) => args[0]?.series?.[0]?.zoom !== undefined)
-
     it("centres on the initially selected node at zoom=1.8 on mount", async () => {
         // center = [pos.x, pos.y] — ECharts graph center is in data coordinates.
         // The initial auto-selection is the only path that still moves the viewport.
@@ -395,19 +423,49 @@ describe("useDependencies composable", () => {
         expect(selectedNodeID.value).toBe("B")
         expect(chartMock.setOption).toHaveBeenCalled()
         expect(cameraCalls(chartMock.setOption.mock.calls)).toEqual([])
+        expect(cameraActions(chartMock)).toEqual([])
     })
 
-    it("does not call setOption for centering when node has no stored position", async () => {
-        const {selectNode, chartMock} = await mountWithChart()
+    it("does not move the camera when the selected node has no stored position", async () => {
+        // "D" is real data ECharts never reported a position for, and the initial
+        // auto-selection is the one surviving focusNode caller — so this exercises
+        // focusNode's stored-position guard for real: without it, the mount would
+        // emit a camera setOption (or throw on the missing position).
+        const {selectedNodeID, mountCalls} = await mountWithChart("D")
 
-        selectNode("nonexistent")
-        await nextTick()
-        await nextTick()
+        expect(selectedNodeID.value).toBe("D")
+        expect(cameraCalls(mountCalls)).toEqual([])
+    })
+  })
 
-        const focusCalls = chartMock.setOption.mock.calls.filter(
-            (args: any[]) => args[0]?.series?.[0]?.zoom !== undefined,
-        )
-        expect(focusCalls).toHaveLength(0)
+  describe("asset-view gating (dagView)", () => {
+    it("registers no canvas click or dblclick handler outside the asset view", async () => {
+        // The flow, execution and namespace views regressed repeatedly by inheriting
+        // the asset view's canvas behaviour; this pins the gate shut.
+        const {chartMock} = await mountWithChart("A")
+
+        expect(chartMock.zrHandlers["click"]).toBeUndefined()
+        expect(chartMock.handlers["dblclick"]).toBeUndefined()
+        // Camera sync through graphRoam is a cross-view fix and stays bound everywhere.
+        expect(chartMock.handlers["graphRoam"]).toBeDefined()
+    })
+
+    it("binds bare-canvas click-to-clear and dblclick-to-open in the asset view", async () => {
+        const {chartMock, selectNode, selectedNodeID, openedNodeID} = await mountWithChart("A", true)
+
+        selectNode("B")
+        await nextTick()
+        expect(selectedNodeID.value).toBe("B")
+
+        // A click that lands on a node (target set) must keep the selection;
+        // a bare-canvas click clears it.
+        chartMock.zrHandlers["click"][0]({target: {}})
+        expect(selectedNodeID.value).toBe("B")
+        chartMock.zrHandlers["click"][0]({})
+        expect(selectedNodeID.value).toBeUndefined()
+
+        chartMock.handlers["dblclick"][0]({dataType: "node", data: {id: "C"}})
+        expect(openedNodeID.value).toBe("C")
     })
   })
 
@@ -422,6 +480,32 @@ describe("useDependencies composable", () => {
       handlers.clearSelection()
 
       expect(selectedNodeID.value).toBeUndefined()
+    })
+
+    it("clearSelection unpins the active group along with the isolation", async () => {
+      // Clearing only isolatedIDs left activeGroup pinned: the chip showed as active
+      // while nothing was isolated, and clicking it un-pinned instead of re-isolating.
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: makeControlledElements(), count: 4})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const groupOf = ref<((node: Node) => string | undefined) | undefined>((node) => node.namespace)
+          return {composable: useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies, undefined, groupOf)}
+        },
+      })
+      await nextTick()
+      await nextTick()
+      const {toggleGroup, activeGroup, shownNodeIDs, handlers} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      toggleGroup("ns")
+      expect(activeGroup.value).toBe("ns")
+      expect(shownNodeIDs.value).not.toBeNull()
+
+      handlers.clearSelection()
+
+      expect(activeGroup.value).toBeUndefined()
+      expect(shownNodeIDs.value).toBeNull()
     })
 
     it("should call graphRef.fit when fit handler is invoked", async () => {

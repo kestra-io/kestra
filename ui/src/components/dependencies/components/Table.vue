@@ -39,7 +39,15 @@
                 <section id="row">
                     <section id="left">
                         <div id="link">
-                            <code class="name">{{ row.data.flow }}</code>
+                            <!-- subtype === ASSET is this component's stand-in for the dagView
+                                 gate: only kestra-ee's AssetDependencies view mounts the table
+                                 with the ASSET subtype prop. -->
+                            <code v-if="isAssetView" class="name">{{ row.data.flow }}</code>
+                            <Link
+                                v-else
+                                :node="row.data"
+                                :subtype="row.data.metadata.subtype"
+                            />
                         </div>
 
                         <p class="description">
@@ -54,8 +62,9 @@
                             size="small"
                         />
                         <RouterLink
+                            v-if="isAssetView || [FLOW, NAMESPACE, ASSET].includes(row.data.metadata.subtype)"
                             :to="row.to"
-                            :title="$t('open')"
+                            :title="isAssetView ? $t('open') : undefined"
                         >
                             <KsIcon size="sm">
                                 <OpenInNew />
@@ -71,17 +80,18 @@
 <script setup lang="ts">
     import {watch, nextTick, ref, computed} from "vue"
 
+    import Link from "./Link.vue"
     import {KsExecutionStatus} from "@kestra-io/design-system"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import {NODE, FLOW, EXECUTION, ASSET} from "../utils/types"
+    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
     import type {Types, Node, Element} from "../utils/types"
 
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
 
-    /** Where a row's open arrow goes; executions carry their own execution id. */
+    /** Asset view: where a row's open arrow goes; executions carry their own execution id. */
     const openRoute = (node: Node) => {
         const {subtype} = node.metadata
         if (subtype === ASSET) return {name: "assets/update", params: {assetId: node.flow}}
@@ -90,6 +100,14 @@
         }
         return {name: "flows/update", params: {namespace: node.namespace, id: node.flow}}
     }
+
+    /** The pre-DAG arrow target, kept as-is for the flow, execution and namespace views. */
+    const baseOpenRoute = (node: Node) => ({
+        name: node.metadata.subtype === ASSET ? "assets/update" : "flows/update",
+        params: node.metadata.subtype === ASSET
+            ? {namespace: node.namespace, assetId: node.flow}
+            : {namespace: node.namespace, id: node.flow},
+    })
 
     const emits = defineEmits<{
         (e: "select", id: Node["id"]): void;
@@ -102,6 +120,9 @@
         selected: Node["id"] | undefined;
         subtype?: Types;
     }>()
+
+    /** Equivalent to Dependencies' dagView gate: only the asset view passes the ASSET subtype. */
+    const isAssetView = computed(() => props.subtype === ASSET)
 
     const focusSelectedRow = () => {
         const row = document.querySelector<HTMLElement>(".kel-table__row.selected")
@@ -179,7 +200,7 @@
 
         // The open route is resolved here rather than called from the template: Element Plus
         // renders this column's slot from its own instance, where a setup binding is not in scope.
-        return filtered.map((element) => ({...element, to: openRoute(element.data)}))
+        return filtered.map((element) => ({...element, to: isAssetView.value ? openRoute(element.data) : baseOpenRoute(element.data)}))
     })
 </script>
 

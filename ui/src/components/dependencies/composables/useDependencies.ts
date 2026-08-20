@@ -210,6 +210,7 @@ export function transformResponse(
  * @param isTesting   - When true, uses generated fixture data instead of the API.
  * @param fetchAssetDependencies - Custom async fetcher for ASSET subtypes.
  * @param layoutMode  - Force simulation (default) or the layered DAG layout.
+ * @param dagView     - True only for the asset view; gates its canvas click/dblclick behaviour.
  */
 export function useDependencies(
     graphRef: Ref<KsGraphRef | null>,
@@ -220,6 +221,8 @@ export function useDependencies(
     layoutMode: Ref<LayoutMode> = ref<LayoutMode>("force"),
     /** Field the graph is grouped by; returns undefined for nodes it says nothing about. */
     groupOf: Ref<((node: Node) => string | undefined) | undefined> = ref(undefined),
+    /** True only for the asset view: click-to-clear and dblclick-to-open are asset-only. */
+    dagView = false,
 ) {
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -782,33 +785,45 @@ export function useDependencies(
      */
     const clearSelection = (): void => {
         selectedNodeID.value = undefined
-        isolatedIDs.value = null
+        // Both halves of the dimming, matching the single shownNodeIDs ref this replaced:
+        // clearing only the isolation would leave a table filter dimming the graph, and
+        // clearing isolatedIDs without activeGroup desyncs the picker from what is isolated.
+        tableFilterIDs.value = null
+        clearGroup()
         fitGraph()
     }
 
-    /** Clicking the canvas away from any node clears the selection, like the back button. */
+    /**
+     * Camera sync for every view; only the asset view (dagView) additionally gets
+     * bare-canvas click-to-clear and double-click-to-open — the flow, execution and
+     * namespace graphs never had either.
+     */
     const bindCanvasClicks = (): void => {
         requestAnimationFrame(() => {
             const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
             const zr = chart?.getZr?.()
             if (!zr || zr.__ksDependenciesBound) return
             zr.__ksDependenciesBound = true
-            zr.on("click", (event: {target?: unknown}) => {
-                // Clicking bare canvas clears every lens the user has applied — selection
-                // and group isolation — while the viewport stays exactly where they left it.
-                if (!event.target) {
-                    selectedNodeID.value = undefined
-                    clearGroup()
-                }
-            })
+            if (dagView) {
+                zr.on("click", (event: {target?: unknown}) => {
+                    // Clicking bare canvas clears every lens the user has applied — selection
+                    // and group isolation — while the viewport stays exactly where they left it.
+                    if (!event.target) {
+                        selectedNodeID.value = undefined
+                        clearGroup()
+                    }
+                })
+            }
             chart?.on?.("graphRoam", () => {
                 const series = (chart.getOption?.() as Record<string, any> | undefined)?.series?.[0]
                 if (series?.zoom !== undefined) viewState.value = {zoom: series.zoom, center: series.center}
             })
-            // Single click selects, double click opens: the same contract as the side table.
-            chart?.on?.("dblclick", (params: Record<string, any>) => {
-                if (params?.dataType === "node") openedNodeID.value = params.data?.id as string
-            })
+            if (dagView) {
+                // Single click selects, double click opens: the same contract as the side table.
+                chart?.on?.("dblclick", (params: Record<string, any>) => {
+                    if (params?.dataType === "node") openedNodeID.value = params.data?.id as string
+                })
+            }
         })
     }
 

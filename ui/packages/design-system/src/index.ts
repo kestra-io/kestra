@@ -1,6 +1,6 @@
 import {defineAsyncComponent} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
-import ElementPlus, {INSTALLED_KEY} from "element-plus"
+import {INSTALLED_KEY, provideGlobalConfig} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
 
@@ -455,7 +455,10 @@ export {
 const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
-            app.use(ElementPlus, {namespace: "kel"})
+            // Every Ks* component imports its own El* dependency directly, so global registration
+            // is unneeded and only defeats tree-shaking of the ~96 Element Plus components.
+            (app as any)[INSTALLED_KEY] = true
+            provideGlobalConfig({namespace: "kel"}, app, true)
         }
         for (const [name, component] of Object.entries(components)) {
             app.component(name, component)

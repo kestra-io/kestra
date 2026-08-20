@@ -1224,6 +1224,7 @@
         "error": "Ocurrieron errores al copiar la ruta al portapapeles",
         "success": "Ruta copiada al portapapeles"
       },
+      "read_only": "No tienes permiso para gestionar archivos en este namespace",
       "rename": {
         "file": "Renombrar archivo",
         "folder": "Renombrar carpeta",

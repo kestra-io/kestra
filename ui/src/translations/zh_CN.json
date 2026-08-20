@@ -1224,6 +1224,7 @@
         "error": "复制路径到剪贴板时出错",
         "success": "路径已复制到剪贴板"
       },
+      "read_only": "您没有权限管理此 namespace 中的文件",
       "rename": {
         "file": "重命名文件",
         "folder": "重命名文件夹",

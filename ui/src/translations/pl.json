@@ -1224,6 +1224,7 @@
         "error": "Wystąpiły błędy podczas kopiowania ścieżki do schowka",
         "success": "Ścieżka skopiowana do schowka"
       },
+      "read_only": "Nie masz uprawnień do zarządzania plikami w tym namespace",
       "rename": {
         "file": "Zmień nazwę pliku",
         "folder": "Zmień nazwę folderu",

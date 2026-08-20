@@ -15,7 +15,7 @@
             :lang="lang"
             :extension="extension"
             :navbar="false"
-            :readOnly="flow && flowStore.isReadOnly"
+            :readOnly="flow ? flowStore.isReadOnly : !canWriteFiles"
             :creating="isCreating"
             :path="path"
             :diffOverviewBar="false"
@@ -36,7 +36,17 @@
                     :opened="aiCopilotOpened"
                     @click="onAiCopilotButtonClick"
                 />
-                <ContentSave v-if="!flow" @click="saveFileContent" />
+                <el-tooltip
+                    v-if="!flow && !canWriteFiles"
+                    effect="light"
+                    :content="$t('namespace files.read_only')"
+                    placement="left"
+                >
+                    <span class="save-read-only">
+                        <ContentSave data-test="file-save" />
+                    </span>
+                </el-tooltip>
+                <ContentSave v-else-if="!flow" data-test="file-save" @click="saveFileContent" />
             </template>
             <template v-if="playgroundStore.enabled" #widget-content>
                 <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -150,6 +160,12 @@
 
     const aiCopilotAllowed = computed(() => {
         return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
+    });
+
+    // Saving a namespace file hits POST /namespaces/{namespace}/files, guarded by FLOW:CREATE.
+    const canWriteFiles = computed<boolean>(() => {
+        const fileNamespace = namespace.value ?? route.params?.namespace;
+        return authStore.user?.isAllowed(permission.FLOW, action.CREATE, fileNamespace?.toString()) ?? false;
     });
 
     async function loadFile() {
@@ -356,7 +372,7 @@
 
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
-        if(!namespace.value || !props.path || props.flow) return
+        if(!namespace.value || !props.path || props.flow || !canWriteFiles.value) return
         await namespacesStore.saveOrCreateFile({
             namespace: namespace.value,
             path: props.path,
@@ -430,6 +446,12 @@
 </script>
 
 <style scoped lang="scss">
+    .save-read-only {
+        display: inline-flex;
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
     .prompt {
         bottom: 10%;
         width: calc(100% - 5rem);

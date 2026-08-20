@@ -687,6 +687,7 @@
                 "hide": "Hide namespace files"
             },
             "filter": "Filter",
+            "read_only": "You don't have permission to manage files in this namespace",
             "no_items": {
                 "heading": "No files found in your namespace yet.",
                 "paragraph": "Create or import files to share code across flows in your namespace."

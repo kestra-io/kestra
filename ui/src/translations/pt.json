@@ -1224,6 +1224,7 @@
         "error": "Ocorreu(ram) erro(s) ao copiar o caminho para a área de transferência",
         "success": "Caminho copiado para a área de transferência"
       },
+      "read_only": "Não tem permissão para gerir ficheiros neste namespace",
       "rename": {
         "file": "Renomear arquivo",
         "folder": "Renomear pasta",

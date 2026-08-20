@@ -1224,6 +1224,7 @@
         "error": "Fehler beim Kopieren des Pfads in die Zwischenablage",
         "success": "Pfad in die Zwischenablage kopiert"
       },
+      "read_only": "Sie haben keine Berechtigung, Dateien in diesem namespace zu verwalten",
       "rename": {
         "file": "Datei umbenennen",
         "folder": "Ordner umbenennen",

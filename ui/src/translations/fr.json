@@ -1224,6 +1224,7 @@
         "error": "Des erreurs se sont produites lors de la copie du chemin dans le presse-papiers",
         "success": "Chemin copié dans le presse-papiers"
       },
+      "read_only": "Vous n'avez pas la permission de gérer les fichiers de ce namespace",
       "rename": {
         "file": "Renommer le fichier",
         "folder": "Renommer le dossier",

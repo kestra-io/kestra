@@ -18,6 +18,7 @@ export type DagDetail = "full" | "compact"
 /** Selection, hover, dim and detail reach the cards by injection rather than through
  * node `data`, so changing any of them never rebuilds the node array. */
 export const DAG_SELECTED = Symbol("dagSelected") as InjectionKey<Ref<string | undefined>>
+export const DAG_HOVERED = Symbol("dagHovered") as InjectionKey<Ref<string | undefined>>
 export const DAG_TRACED = Symbol("dagTraced") as InjectionKey<Ref<Set<string> | null>>
 export const DAG_DIMMED = Symbol("dagDimmed") as InjectionKey<Ref<Set<string> | null>>
 export const DAG_DETAIL = Symbol("dagDetail") as InjectionKey<Ref<DagDetail>>

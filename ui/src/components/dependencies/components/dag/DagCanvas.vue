@@ -56,6 +56,7 @@
         DAG_CARD,
         DAG_LOD,
         DAG_SELECTED,
+        DAG_HOVERED,
         DAG_TRACED,
         DAG_DIMMED,
         DAG_DETAIL,
@@ -183,10 +184,12 @@
 
     const detail = ref<DagDetail>("full")
     const selectedRef = computed(() => props.selected)
+    const hoveredRef = computed(() => props.hovered)
     const tracedRef = computed(() => trace.value?.nodes ?? null)
     const dimmedRef = computed(() => props.dimmed ?? null)
 
     provide(DAG_SELECTED, selectedRef)
+    provide(DAG_HOVERED, hoveredRef)
     provide(DAG_TRACED, tracedRef)
     provide(DAG_DIMMED, dimmedRef)
     provide(DAG_DETAIL, detail)

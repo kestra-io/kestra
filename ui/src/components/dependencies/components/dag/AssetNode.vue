@@ -48,7 +48,7 @@
     import CircleOutline from "vue-material-design-icons/CircleOutline.vue"
     import HelpCircleOutline from "vue-material-design-icons/HelpCircleOutline.vue"
 
-    import {DAG_SELECTED, DAG_TRACED, DAG_DIMMED, DAG_DETAIL} from "../../utils/dagConstants"
+    import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_DIMMED, DAG_DETAIL} from "../../utils/dagConstants"
 
     const props = defineProps<{
         id: string;
@@ -87,6 +87,7 @@
     const statusLabel = computed(() => t(`dependency.dag.status.${status.value}`))
 
     const selected = inject(DAG_SELECTED)
+    const hovered = inject(DAG_HOVERED)
     const traced = inject(DAG_TRACED)
     const dimmed = inject(DAG_DIMMED)
     const detail = inject(DAG_DETAIL)
@@ -97,6 +98,9 @@
      */
     const cardState = computed(() => {
         if (selected?.value === props.id) return "is-selected"
+        // Above the dim: hovering a side-table row exists to find that node on the canvas,
+        // so it has to show even when the node sits outside an isolated group.
+        if (hovered?.value === props.id) return "is-hovered"
         if (dimmed?.value && !dimmed.value.has(props.id)) return "is-dimmed"
         if (traced?.value) return traced.value.has(props.id) ? "is-traced" : "is-faded"
         return ""
@@ -147,6 +151,16 @@
     .asset-card.is-selected {
         border-color: var(--ks-border-focus);
         box-shadow: 0 0 0 1px var(--ks-border-focus);
+    }
+
+    // The node being pointed at, from the canvas or from a side-table row. Shares the
+    // selection colour but not its ring, so a hovered card and a selected one stay
+    // distinguishable. Opacity and filter are reset so it shows through a dim it may be
+    // sitting under, which is the whole point when the row is outside an isolated group.
+    .asset-card.is-hovered {
+        border-color: var(--ks-border-focus);
+        opacity: 1;
+        filter: none;
     }
 
     .asset-card.is-traced {

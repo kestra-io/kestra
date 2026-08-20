@@ -311,8 +311,6 @@
         "1d": "1d",
         "7d": "7d"
       },
-      "last14days": "Last 14 days",
-      "last28days": "Last 28 days",
       "14days": "14 days",
       "28days": "28 days"
     },
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "big_file_download_only": "This file is {size}. It is too large to open in the editor, download it instead.",
       "load_anyway": "Load anyway",
       "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
       "retry": "Retry",
@@ -521,12 +520,15 @@
       "detail": {
         "category": "Category type",
         "links": "Link & Resources",
-        "openInEditor": "Open in Edit Flow"
+        "openInEditor": "Open in Edit Flow",
+        "openInAppsEditor": "Open in Apps Editor",
+        "openInDashboardEditor": "Open in Dashboard Editor"
       },
       "missingPlugins": {
-        "title": "Missing plugins",
-        "description": "This blueprint uses tasks from plugin(s) that aren't installed on this instance: {plugins}. Install them to use this blueprint.",
-        "card": "Requires plugin(s) not installed on this instance: {plugins}",
+        "title": "Unavailable tasks",
+        "description": "This blueprint uses task types that aren't available on this instance:",
+        "installHint": "Install the missing plugin(s) to use this blueprint: {plugins}.",
+        "card": "Uses task types that aren't available on this instance: {tasks}",
         "install": "Install plugins"
       }
     },
@@ -886,6 +888,10 @@
         "files": "Delete {count} selected files",
         "folders": "Delete {count} selected folders"
       },
+      "move": {
+        "bulk_success": "Selected files moved successfully.",
+        "bulk_error": "Failed to move {count} of the selected item(s)."
+      },
       "import": {
         "files": "Import files",
         "folder": "Import folder",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Build custom Apps with Kestra",
-        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval."
+        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval.",
+        "blueprints": {
+          "title": "Start from an app blueprint.",
+          "message": "App blueprints are ready-made apps for common use cases such as forms, approvals and data submission. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt it to build custom UIs on top of your workflows."
+        }
       },
       "tests": {
         "label": "Tests",
@@ -1183,7 +1193,7 @@
       "namespace": {
         "edit": {
           "title": "Upgrade Your Namespace Management",
-          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables, and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
+          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and control of secrets, variables, and governance Policies at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and governance rules remain secure and easy to maintain across different teams and projects."
         },
         "secrets": {
           "title": "Manage Secrets in a Secure Way",
@@ -1208,8 +1218,7 @@
         "audit-logs": {
           "title": "Track All Changes in One Place",
           "message": "In Kestra Enterprise Edition, you can view namespace-level audit logs with detailed diffs, giving you a clear history of who changed what and when across all resources."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1746,10 +1755,6 @@
           "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
-      "plugins": {
-        "title": "No plugin defaults are set for this for this Namespace.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-      },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in our documentation."
@@ -1765,8 +1770,7 @@
       "panels": {
         "title": "No panel open",
         "content": "You've closed all panels.\nPick a tab above to continue."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
     "copied_logs_to_clipboard": "Copied logs to clipboard.",
@@ -1794,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Default Dashboard",
-      "switch": "Switch Dashboard",
-      "preview": "Preview Dashboard",
       "empty": "There are no results to be shown.",
-      "creation": {
-        "label": "Create Dashboard",
-        "confirmation": "Dashboard <code>{title}</code> is created."
-      },
       "edition": {
         "label": "Edit Dashboard",
-        "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
-        "chart": "Edit this chart",
-        "id readonly": "The property `id` cannot be changed — it's now set to its initial values. If you want to change it, you can create a new dashboard and remove the old one."
-      },
-      "deletion": {
-        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
+        "chart": "Edit this chart"
       },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
       "viewAll": "View all",
-      "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export",
       "exportTo": {
         "csv": "Export to CSV",
@@ -2464,7 +2455,6 @@
     "blocks": "Blocks",
     "flow_description": "Flow Description",
     "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
-    "pluginDefaults": {},
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {

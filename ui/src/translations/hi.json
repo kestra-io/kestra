@@ -311,8 +311,6 @@
         "1d": "1दिन",
         "7d": "7दिन"
       },
-      "last14days": "पिछले 14 दिन",
-      "last28days": "पिछले 28 दिन",
       "14days": "14 दिन",
       "28days": "28 दिन"
     },
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "यह फ़ाइल {size} है। इसे लोड करने में कुछ समय लग सकता है जिससे आपका ब्राउज़र ब्लॉक हो सकता है। क्या आप इसे फिर भी लोड करना चाहते हैं?",
+      "big_file_download_only": "यह फ़ाइल {size} है। यह एडिटर में खोलने के लिए बहुत बड़ी है, इसके बजाय इसे डाउनलोड करें।",
       "load_anyway": "फिर भी लोड करें",
       "load_error": "फ़ाइल पूर्वावलोकन लोड करने में विफल। यह एक अस्थायी समस्या या अनुमति संबंधी समस्या हो सकती है।",
       "retry": "पुनः प्रयास करें",
@@ -521,12 +520,15 @@
       "detail": {
         "category": "श्रेणी प्रकार",
         "links": "लिंक और संसाधन",
-        "openInEditor": "एडिट Flow में खोलें"
+        "openInEditor": "एडिट Flow में खोलें",
+        "openInAppsEditor": "Apps एडिटर में खोलें",
+        "openInDashboardEditor": "डैशबोर्ड एडिटर में खोलें"
       },
       "missingPlugins": {
-        "title": "अनुपलब्ध plugins",
-        "description": "यह blueprint ऐसे plugin(s) के tasks का उपयोग करता है जो इस instance पर इंस्टॉल नहीं हैं: {plugins}। इस blueprint का उपयोग करने के लिए उन्हें इंस्टॉल करें।",
-        "card": "इस instance पर इंस्टॉल न किए गए plugin(s) की आवश्यकता है: {plugins}",
+        "title": "अनुपलब्ध tasks",
+        "description": "यह blueprint ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं:",
+        "installHint": "इस blueprint का उपयोग करने के लिए अनुपलब्ध plugin(s) इंस्टॉल करें: {plugins}।",
+        "card": "ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं: {tasks}",
         "install": "Plugins इंस्टॉल करें"
       }
     },
@@ -886,6 +888,10 @@
         "files": "{count} चयनित फ़ाइलें हटाएं",
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
+      "move": {
+        "bulk_success": "चयनित फ़ाइलें सफलतापूर्वक स्थानांतरित हो गईं।",
+        "bulk_error": "चयनित आइटम(आइटमों) में से {count} को स्थानांतरित करने में विफल।"
+      },
       "import": {
         "files": "फ़ाइलें आयात करें",
         "folder": "फ़ोल्डर आयात करें",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Kestra के साथ कस्टम ऐप्स बनाएं",
-        "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।"
+        "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।",
+        "blueprints": {
+          "title": "एक ऐप blueprint से शुरू करें।",
+          "message": "ऐप ब्लूप्रिंट सामान्य उपयोग के मामलों जैसे फ़ॉर्म, अनुमोदन और डेटा सबमिशन के लिए तैयार ऐप हैं। Kestra Enterprise Edition के साथ, आप किसी भी ब्लूप्रिंट को शुरुआती बिंदु के रूप में उपयोग कर सकते हैं और अपने वर्कफ़्लो के शीर्ष पर कस्टम UI बनाने के लिए इसे अनुकूलित कर सकते हैं।"
+        }
       },
       "tests": {
         "label": "टेस्ट्स",
@@ -1183,7 +1193,7 @@
       "namespace": {
         "edit": {
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें",
-          "message": "Kestra Enterprise Edition में, namespaces बड़े पैमाने पर secrets, variables और plugin defaults का उन्नत अलगाव और शासन प्रदान करते हैं। व्यवस्थापक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और plugin कॉन्फ़िगरेशन विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
+          "message": "Kestra Enterprise Edition में, namespace बड़े पैमाने पर secrets, variables और governance Policies का उन्नत अलगाव और नियंत्रण प्रदान करते हैं। प्रशासक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और governance rules विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
         },
         "secrets": {
           "title": "सुरक्षित तरीके से Secrets प्रबंधित करें",
@@ -1745,10 +1755,6 @@
           "content": "इस संपत्ति का flows या अन्य संपत्तियों के साथ कोई upstream या downstream निर्भरता नहीं है।"
         }
       },
-      "plugins": {
-        "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।",
-        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।"
-      },
       "triggers": {
         "title": "आपके flow में कोई Triggers नहीं हैं।",
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।"
@@ -1792,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
       "labels": {
-        "singular": "डैशबोर्ड",
         "plural": "डैशबोर्ड्स"
       },
       "default": "डिफ़ॉल्ट डैशबोर्ड",
-      "switch": "डैशबोर्ड स्विच करें",
-      "preview": "पूर्वावलोकन डैशबोर्ड",
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
-      "creation": {
-        "label": "डैशबोर्ड बनाएं",
-        "confirmation": "डैशबोर्ड <code>{title}</code> बनाया गया है।"
-      },
       "edition": {
         "label": "डैशबोर्ड संपादित करें",
-        "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
-        "chart": "इस चार्ट को संपादित करें",
-        "id readonly": "संपत्ति `id` को बदला नहीं जा सकता — यह अब अपनी प्रारंभिक मानों पर सेट है। यदि आप इसे बदलना चाहते हैं, तो आप एक नया डैशबोर्ड बना सकते हैं और पुराने को हटा सकते हैं।"
-      },
-      "deletion": {
-        "confirmation": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?"
+        "chart": "इस चार्ट को संपादित करें"
       },
       "no_description": "कोई विवरण नहीं",
       "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "others": "अन्य",
       "viewAll": "सभी देखें",
-      "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
       "export": "एक्सपोर्ट करें",
       "exportTo": {
         "csv": "CSV में निर्यात करें",

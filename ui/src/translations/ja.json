@@ -311,8 +311,6 @@
         "1d": "1日",
         "7d": "7日"
       },
-      "last14days": "直近14日間",
-      "last28days": "過去28日間",
       "14days": "14日間",
       "28days": "28日間"
     },
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "このファイルのサイズは{size}です。読み込みに時間がかかり、ブラウザがブロックされる可能性があります。それでも読み込みますか？",
+      "big_file_download_only": "このファイルのサイズは{size}です。エディタで開くには大きすぎるため、代わりにダウンロードしてください。",
       "load_anyway": "読み込みを続行",
       "load_error": "ファイルプレビューの読み込みに失敗しました。一時的な問題または権限の問題である可能性があります。",
       "retry": "再試行",
@@ -521,12 +520,15 @@
       "detail": {
         "category": "カテゴリタイプ",
         "links": "リンクとリソース",
-        "openInEditor": "フローを編集で開く"
+        "openInEditor": "フローを編集で開く",
+        "openInAppsEditor": "Appsエディターで開く",
+        "openInDashboardEditor": "ダッシュボードエディターで開く"
       },
       "missingPlugins": {
-        "title": "不足しているplugin",
-        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
-        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "title": "利用できないtask",
+        "description": "このblueprintは、このインスタンスで利用できないtaskタイプを使用しています:",
+        "installHint": "このblueprintを使用するには、不足しているpluginをインストールしてください: {plugins}。",
+        "card": "このインスタンスで利用できないtaskタイプを使用しています: {tasks}",
         "install": "pluginをインストール"
       }
     },
@@ -886,6 +888,10 @@
         "files": "{count} 個の選択されたファイルを削除",
         "folders": "{count} 個の選択されたフォルダーを削除"
       },
+      "move": {
+        "bulk_success": "選択されたファイルは正常に移動されました。",
+        "bulk_error": "選択された項目 {count} 個のうち、移動に失敗しました。"
+      },
       "import": {
         "files": "ファイルをインポート",
         "folder": "フォルダーをインポート",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Kestraでカスタムアプリを構築する",
-        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。"
+        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
+        "blueprints": {
+          "title": "アプリのblueprintから開始します。",
+          "message": "アプリのblueprintは、フォーム、承認、データ送信などの一般的なユースケースに対応する既製のアプリです。Kestra Enterprise Editionでは、任意のblueprintを起点として使用し、ワークフローの上にカスタムUIを構築するために適応させることができます。"
+        }
       },
       "tests": {
         "label": "テスト",
@@ -1183,7 +1193,7 @@
       "namespace": {
         "edit": {
           "title": "名前空間管理をアップグレードする",
-          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルト設定を大規模に分離し、ガバナンスを強化します。管理者は、カスタムのシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、およびnamespaceごとのきめ細かな権限を設定できます。これにより、シークレット、変数、プラグインの設定が、異なるチームやプロジェクト間で安全かつ簡単に維持されます。"
+          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、ガバナンスPolicyの高度な分離と大規模な制御を提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、およびnamespaceごとのきめ細かな権限を設定できます。これにより、シークレット、変数、ガバナンスルールが異なるチームやプロジェクト間で安全かつ簡単に維持されます。"
         },
         "secrets": {
           "title": "秘密を安全に管理する方法",
@@ -1745,10 +1755,6 @@
           "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。"
         }
       },
-      "plugins": {
-        "title": "このNamespaceにはプラグインのデフォルトが設定されていません。",
-        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。"
-      },
       "triggers": {
         "title": "あなたのflowにはTriggerがありません。",
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。"
@@ -1792,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
       "labels": {
-        "singular": "ダッシュボード",
         "plural": "ダッシュボード"
       },
       "default": "デフォルトダッシュボード",
-      "switch": "ダッシュボードを切り替える",
-      "preview": "プレビュー ダッシュボード",
       "empty": "表示する結果がありません。",
-      "creation": {
-        "label": "ダッシュボードを作成",
-        "confirmation": "ダッシュボード <code>{title}</code> が作成されました。"
-      },
       "edition": {
         "label": "ダッシュボードを編集",
-        "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
-        "chart": "このチャートを編集",
-        "id readonly": "プロパティ `id` は変更できません — 現在、初期値に設定されています。変更したい場合は、新しいダッシュボードを作成し、古いものを削除してください。"
-      },
-      "deletion": {
-        "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
+        "chart": "このチャートを編集"
       },
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
       "viewAll": "すべて表示",
-      "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
       "export": "エクスポート",
       "exportTo": {
         "csv": "CSVにエクスポート",

@@ -103,12 +103,14 @@
         KsIconButton,
         KsEditor,
         KsJsonTree,
+        copyToClipboard,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
     import {useExecutionsStore} from "../../../stores/executions"
+    import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
@@ -180,8 +182,8 @@
 
     /* ------------------------- Task outputs sourcing ------------------------- */
     // Sourced exactly like Wrapper.vue: the list of task runs that have outputs
-    // is fetched from the /outputs/{executionId} endpoint, then each task's
-    // values are lazily loaded from /outputs/{executionId}/{taskRunId}.
+    // is fetched from the /outputs/tasks/{executionId} endpoint, then each task's
+    // values are lazily loaded from /outputs/tasks/{executionId}/{taskRunId}.
 
     interface TaskOutputMeta {
         taskId: string;
@@ -192,14 +194,21 @@
     const tasksWithOutputs = ref<string[] | undefined>(undefined)
     const taskOutputMetaByRunId = ref<Record<string, TaskOutputMeta>>({})
     const taskOutputs = ref<Record<string, Record<string, unknown>>>({})
+    const flowOutputs = ref<Record<string, unknown>>({})
 
+    // Re-fetch on state changes too: outputs are written as the execution progresses.
     watch(
-        () => execution.value?.id,
-        async (id) => {
-            tasksWithOutputs.value = undefined
-            taskOutputMetaByRunId.value = {}
-            taskOutputs.value = {}
+        () => [execution.value?.id, execution.value?.state?.current] as const,
+        async ([id], previous) => {
+            if (id !== previous?.[0]) {
+                tasksWithOutputs.value = undefined
+                taskOutputMetaByRunId.value = {}
+                taskOutputs.value = {}
+                flowOutputs.value = {}
+            }
             if (!id) return
+
+            flowOutputs.value = await loadExecutionOutputs(id)
 
             const data = await OutputsAPI.taskOutputsInformation({
                 executionId: id,
@@ -320,7 +329,7 @@
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
             {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "execution.outputs")},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(flowOutputs.value, "execution.outputs")},
         ]
     })
 
@@ -433,7 +442,7 @@
     const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
     function copyValue() {
-        navigator.clipboard?.writeText(rawValue.value)
+        copyToClipboard(rawValue.value)
     }
 
     /* --------------------------------- Layout -------------------------------- */

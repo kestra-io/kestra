@@ -15,6 +15,7 @@ vi.mock("vue-router", async (importOriginal) => ({
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskOutputsInformation: vi.fn().mockResolvedValue([]),
     taskRunOutputs: vi.fn().mockResolvedValue({}),
+    executionOutputs: vi.fn().mockResolvedValue({}),
 }))
 
 vi.mock("../../../../src/components/executions/FilePreview.vue", () => ({

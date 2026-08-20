@@ -311,8 +311,6 @@
         "1d": "1g",
         "7d": "7g"
       },
-      "last14days": "Ultimi 14 giorni",
-      "last28days": "Ultimi 28 giorni",
       "14days": "14 giorni",
       "28days": "28 giorni"
     },
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "Questo file è {size}. Potrebbe richiedere del tempo per caricarsi bloccando il tuo browser. Vuoi caricarlo comunque?",
+      "big_file_download_only": "Questo file è {size}. È troppo grande per essere aperto nell'editor, scaricalo invece.",
       "load_anyway": "Carica comunque",
       "load_error": "Impossibile caricare l'anteprima del file. Potrebbe trattarsi di un problema temporaneo o di autorizzazioni.",
       "retry": "Riprova",
@@ -521,12 +520,15 @@
       "detail": {
         "category": "Tipo di categoria",
         "links": "Link e Risorse",
-        "openInEditor": "Apri in Modifica Flow"
+        "openInEditor": "Apri in Modifica Flow",
+        "openInAppsEditor": "Apri nell'editor delle app",
+        "openInDashboardEditor": "Apri nell'Editor Dashboard"
       },
       "missingPlugins": {
-        "title": "Plugin mancanti",
-        "description": "Questo blueprint utilizza task di plugin non installati su questa istanza: {plugins}. Installali per usare questo blueprint.",
-        "card": "Richiede plugin non installati su questa istanza: {plugins}",
+        "title": "Task non disponibili",
+        "description": "Questo blueprint utilizza tipi di task non disponibili su questa istanza:",
+        "installHint": "Installa i plugin mancanti per usare questo blueprint: {plugins}.",
+        "card": "Utilizza tipi di task non disponibili su questa istanza: {tasks}",
         "install": "Installa plugin"
       }
     },
@@ -886,6 +888,10 @@
         "files": "Elimina {count} file selezionati",
         "folders": "Elimina {count} cartelle selezionate"
       },
+      "move": {
+        "bulk_success": "File selezionati spostati con successo.",
+        "bulk_error": "Impossibile spostare {count} degli elementi selezionati."
+      },
       "import": {
         "files": "Importa file",
         "folder": "Importa cartella",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Crea App personalizzate con Kestra",
-        "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione."
+        "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione.",
+        "blueprints": {
+          "title": "Inizia da un blueprint di app.",
+          "message": "I blueprint delle app sono app predefinite per casi d'uso comuni come moduli, approvazioni e invio di dati. Con Kestra Enterprise Edition, puoi usare qualsiasi blueprint come punto di partenza e adattarlo per creare UI personalizzate sui tuoi workflow."
+        }
       },
       "tests": {
         "label": "Test",
@@ -1183,7 +1193,7 @@
       "namespace": {
         "edit": {
           "title": "Aggiorna la Gestione del tuo Namespace",
-          "message": "Nell'edizione Kestra Enterprise, i namespace offrono isolamento avanzato e governance di segreti, variabili e impostazioni predefinite dei plugin su larga scala. Gli amministratori possono configurare gestori di segreti personalizzati, backend di archiviazione isolati, gruppi di worker dedicati e autorizzazioni granulari per ogni namespace. Ciò garantisce che segreti, variabili e configurazioni dei plugin rimangano sicuri e facili da mantenere tra diversi team e progetti."
+          "message": "In Kestra Enterprise Edition, i namespace forniscono isolamento avanzato e controllo di secrets, variabili e Policies di governance su larga scala. Gli amministratori possono configurare custom secrets managers, storage backends isolati, worker groups dedicati e permessi granulari per ogni namespace. Questo assicura che secrets, variabili e regole di governance rimangano sicuri e facili da mantenere tra diversi team e progetti."
         },
         "secrets": {
           "title": "Gestisci i Segreti in Modo Sicuro",
@@ -1745,10 +1755,6 @@
           "content": "Questo asset non ha dipendenze upstream o downstream con flow o altri asset."
         }
       },
-      "plugins": {
-        "title": "Nessun valore predefinito del plugin è impostato per questo Namespace.",
-        "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione."
-      },
       "triggers": {
         "title": "Il tuo flow non ha alcun trigger.",
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Trigger</a></strong> nella nostra documentazione."
@@ -1792,31 +1798,18 @@
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboard"
       },
       "default": "Dashboard predefinito",
-      "switch": "Dashboard Switch",
-      "preview": "Anteprima Dashboard",
       "empty": "Non ci sono risultati da mostrare.",
-      "creation": {
-        "label": "Crea Dashboard",
-        "confirmation": "Il dashboard <code>{title}</code> è stato creato."
-      },
       "edition": {
         "label": "Modifica Dashboard",
-        "confirmation": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
-        "chart": "Modifica questo grafico",
-        "id readonly": "La proprietà `id` non può essere modificata — è ora impostata sui suoi valori iniziali. Se desideri cambiarla, puoi creare una nuova dashboard e rimuovere quella vecchia."
-      },
-      "deletion": {
-        "confirmation": "Sei sicuro di voler eliminare la dashboard <code>{title}</code>?"
+        "chart": "Modifica questo grafico"
       },
       "no_description": "Nessuna descrizione",
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "others": "Altri",
       "viewAll": "Vedi tutti",
-      "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
       "export": "Esporta",
       "exportTo": {
         "csv": "Esporta in CSV",

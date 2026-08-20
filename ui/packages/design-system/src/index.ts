@@ -146,6 +146,7 @@ export {KsMessageBox} from "./components/Feedback/KsMessageBox"
 export {KsNotification} from "./components/Feedback/KsNotification"
 
 export {cssVar} from "./utils/css"
+export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export * as durationUtils from "./utils/duration"

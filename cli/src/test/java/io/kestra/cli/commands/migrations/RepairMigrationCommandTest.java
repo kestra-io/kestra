@@ -17,12 +17,12 @@ class RepairMigrationCommandTest {
             JdbcMigrationHistoryStore historyStore = ctx.getBean(JdbcMigrationHistoryStore.class);
 
             historyStore.bootstrapIfNeeded();
-            if (!historyStore.isApplied("2.0.01-upgrade")) {
-                historyStore.markApplied(testScript("2.0.01-upgrade", "current-checksum"), 0L);
+            if (!historyStore.isApplied("2.0.01-schema")) {
+                historyStore.markApplied(testScript("2.0.01-schema", "current-checksum"), 0L);
             }
-            historyStore.updateChecksum(testScript("2.0.01-upgrade", "original-checksum"));
+            historyStore.updateChecksum(testScript("2.0.01-schema", "original-checksum"));
 
-            Integer call = PicocliRunner.call(RepairMigrationCommand.class, ctx, "2.0.01-upgrade");
+            Integer call = PicocliRunner.call(RepairMigrationCommand.class, ctx, "2.0.01-schema");
             assertThat(call).isZero();
         }
     }

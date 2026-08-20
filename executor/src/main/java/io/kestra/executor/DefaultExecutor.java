@@ -859,7 +859,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     private void sendTriggerExecutionTerminated(Execution execution) {
         // The scheduler didn't manage states for the WebHook and the Flow trigger
-        if (!execution.getTrigger().getType().equals(Webhook.class.getName()) && !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName())) {
+        if (!execution.getTrigger().getType().equals(Webhook.class.getName()) &&
+            !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
+            !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
+        ) {
             TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
             triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
         }

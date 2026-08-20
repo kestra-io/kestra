@@ -16,7 +16,8 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * MySQL-specific integration test for {@link V2_0_23FixDatetimeOffsetMigration}.
+ * MySQL-specific integration test for the datetime-offset fix applied by
+ * {@link V2_0_01SchemaMigration} (formerly V2_0_23FixDatetimeOffsetMigration).
  *
  * <p>
  * Only offsets with a non-zero minutes part were corrupted; a whole-hour offset passes either way
@@ -61,7 +62,7 @@ class MysqlV2_0_23FixDatetimeOffsetMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_23FixDatetimeOffsetMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach

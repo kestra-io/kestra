@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" :disabled="isFreshChat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -253,8 +253,8 @@
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
     )
 
-    // "New chat" resets the conversation — so it's a no-op (and disabled) when we're already on a
-    // fresh, empty chat with no thread to clear.
+    // "New chat" resets the conversation - so it's hidden when we're already on a fresh, empty
+    // chat with no thread to clear.
     const isFreshChat = computed(() => isEmpty.value && !thread.value)
 
     // The pending proposal is always the last PROPOSED_ACTION message; the interactive card below the
@@ -390,20 +390,12 @@
         transition: background 0.15s ease, box-shadow 0.15s ease;
     }
 
-    /* Hover feedback so the pills read as interactive (the disabled New-chat pill excepted). The
-       bg interaction tokens are all near-identical dark greys, so a fill change alone is barely
-       visible — pair it with a lighter inset ring (border-strong) so the hover clearly reads. */
-    .copilot-topbar-pill:not(.is-disabled):hover {
+    /* Hover feedback so the pills read as interactive. The bg interaction tokens are all
+       near-identical dark greys, so a fill change alone is barely visible - pair it with a
+       lighter inset ring (border-strong) so the hover clearly reads. */
+    .copilot-topbar-pill:hover {
         background: var(--ks-bg-hover-elevated);
         box-shadow: inset 0 0 0 1px var(--ks-border-strong);
-    }
-
-    /* Disabled New-chat — already on a fresh, empty chat with nothing to reset. Dim the whole
-       pill (opacity) so it clearly reads as non-interactive, not just muted text. */
-    .copilot-topbar-pill.is-disabled {
-        color: var(--ks-text-inactive);
-        cursor: not-allowed;
-        opacity: 0.5;
     }
 
     .copilot-empty {

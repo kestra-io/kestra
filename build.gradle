@@ -654,7 +654,7 @@ tasks.register('runLocal') {
 
 tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server standalone"
+    description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     dependsOn ':cli:runStandalone'
 }
 
@@ -698,7 +698,7 @@ subprojects {subProject ->
         }
 
         //These modules should not be published
-        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver", "worker", "scheduler", "worker-controller", "executor"]
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
         if (subProject.name in unpublishedModules){
             return
         }

@@ -132,7 +132,7 @@
         }
 
         .line {
-            width: 14px;
+            width: 10px;
             height: 2px;
             flex-shrink: 0;
             border-radius: var(--ks-radius-sm);

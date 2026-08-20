@@ -38,7 +38,10 @@ public class DefaultStartupHook implements StartupHookInterface {
 
     @Override
     public void start(AbstractCommand cmd) {
-        legacyConfigurationChecker.check();
+        // only servers are checked: the maintenance commands are the ones an operator runs to fix a stale configuration
+        if (cmd instanceof ServerCommandInterface) {
+            legacyConfigurationChecker.check();
+        }
 
         if (cmd instanceof ServerCommandInterface && !(cmd instanceof WorkerCommand)) {
             saveKestraVersion();

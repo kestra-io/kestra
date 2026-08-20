@@ -94,6 +94,13 @@ class LegacyConfigurationCheckerTest {
     }
 
     @Test
+    void shouldRejectABlankReplacement() {
+        // When - Then
+        assertThatThrownBy(() -> LegacyConfiguration.renamed("kestra.jdbc.cleaner", " ", Severity.WARN))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void shouldRejectABlankKey() {
         // When - Then
         assertThatThrownBy(() -> LegacyConfiguration.removed("  ", Severity.WARN))

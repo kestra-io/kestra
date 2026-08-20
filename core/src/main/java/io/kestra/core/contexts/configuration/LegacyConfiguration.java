@@ -25,6 +25,10 @@ public record LegacyConfiguration(String key, String replacement, Severity sever
     }
 
     public static LegacyConfiguration renamed(final String key, final String replacement, final Severity severity) {
+        if (replacement == null || replacement.isBlank()) {
+            throw new IllegalArgumentException("The replacement of the legacy configuration key '%s' cannot be null or blank.".formatted(key));
+        }
+
         return new LegacyConfiguration(key, replacement, severity);
     }
 

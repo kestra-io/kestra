@@ -8,7 +8,6 @@ import io.kestra.core.validations.TimezoneId;
 import io.kestra.core.validations.WindowValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -76,17 +75,6 @@ public class Window {
     @PluginProperty
     @TimezoneId
     private String timezone;
-
-    @Schema(
-        title = "Whether the trigger can fire only once per window",
-        description = """
-            When `false` (the default), the window state is NOT reset after a successful evaluation, meaning the trigger can fire again within the same window each time conditions are satisfied.
-            When `true`, after a successful evaluation the window state is reset, so the same set of conditions must be met again within the window to trigger a new execution."""
-    )
-    @Builder.Default
-    @PluginProperty
-    @NotNull
-    private boolean fireOnce = false;
 
     /**
      * Converts this {@code Window} to a {@link TimeWindow}.

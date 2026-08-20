@@ -151,6 +151,22 @@ public class SecretFunctionTest {
     }
 
     @Test
+    void shouldNotLeakRawTagMarkersWhenSecretIsElementOfATypedList() throws IllegalVariableEvaluationException {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When
+        // a typed (non-string) render, e.g. a MULTISELECT input expression, returns the list
+        // literal directly rather than a stringified template output
+        Object rendered = variableRenderer.renderTyped("{{ [secret('string-secret')] }}", context);
+
+        // Then
+        assertThat(rendered).isEqualTo(List.of("string-value"));
+    }
+
+    @Test
     void getUnknownSecret() {
         var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
         assertThat(exception.getMessage()).isEqualTo("Cannot find secret for key 'unknown_secret_key'.");

@@ -29,19 +29,18 @@
     import {computed, Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import {useMiscStore} from "override/stores/misc"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
     import {useActiveTab} from "../../../composables/useActiveTab"
     import {routeFamily} from "../../../utils/routeFamily"
     import {NAMESPACE_PARENT_ROUTE} from "../../../utils/namespaceTabRoutes"
+    import {useSystemNamespace} from "../../../composables/useSystemNamespace"
     import FamilyTree from "vue-material-design-icons/FamilyTree.vue"
 
     const route = useRoute()
     const router = useRouter()
     const namespacesStore = useNamespacesStore()
-    const miscStore = useMiscStore()
 
     const onSelectDashboard = (value: any) => {
         router.replace({
@@ -52,7 +51,7 @@
     const tab = useActiveTab()
     const namespace = computed(() => route.params?.id) as Ref<string>
 
-    const systemNamespace = computed(() => miscStore.configs?.systemNamespace ?? "system")
+    const systemNamespace = useSystemNamespace()
 
     /*
      * The system namespace has a guided recipe builder of its own, so sending its users

@@ -155,7 +155,7 @@
 <script setup lang="ts">
     import {computed, ref, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useMiscStore} from "override/stores/misc"
+    import {useSystemNamespace} from "../../../composables/useSystemNamespace"
     import {useFlowRecipe} from "../../../composables/useFlowRecipe"
     import {recipeToYaml, SYSTEM_FLOW_RECIPE_ID} from "../../../utils/recipeToYaml"
     import {useNamespaceOptions} from "../../../composables/useNamespaceOptions"
@@ -187,9 +187,9 @@
     }>()
 
     const {t} = useI18n()
-    const miscStore = useMiscStore()
 
-    const systemNamespace = computed(() => props.namespace ?? miscStore.configs?.systemNamespace ?? "system")
+    const instanceSystemNamespace = useSystemNamespace()
+    const systemNamespace = computed(() => props.namespace ?? instanceSystemNamespace.value)
 
     const flowId = `${SYSTEM_FLOW_RECIPE_ID}-${getRandomID()}`
 

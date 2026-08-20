@@ -2,47 +2,6 @@
   "en": {
     "loading": "Loading...",
     "more actions": "More actions",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Use letters, digits, dots, dashes and underscores only, starting with a letter or a digit.",
-        "id_label": "Flow id",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Use lowercase letters, digits, dots, dashes and underscores only, starting with a lowercase letter or a digit.",
-        "namespace_placeholder": "Select a namespace",
-        "namespaces_error": "Could not load namespaces. Type a namespace manually.",
-        "open_editor": "Open editor",
-        "subtitle": "Start with a hello-world starter and build from scratch.",
-        "title": "Blank flow"
-      },
-      "blueprints": {
-        "subtitle": "Pick a ready-made flow from the community catalog.",
-        "title": "Browse blueprints"
-      },
-      "import": {
-        "back": "Back",
-        "error": {
-          "empty": "YAML content is empty.",
-          "invalid_mapping": "Invalid flow YAML: expected a key-value mapping, not a list or scalar.",
-          "parse_error": "Could not parse YAML.",
-          "too_large": "That file is too large. Paste the flow definition instead, or upload a file under 1 MB."
-        },
-        "paste_label": "Paste YAML",
-        "read_error": "Could not read the file.",
-        "submit": "Import flow",
-        "subtitle": "Paste or upload an existing flow definition.",
-        "title": "Import YAML",
-        "upload_button": "Upload .yml / .yaml",
-        "upload_label": "Or upload a file",
-        "upload_tip": "Accepts .yml and .yaml files."
-      },
-      "subtitle": "Start from a blank canvas, explore blueprints, or import an existing YAML.",
-      "system": {
-        "badge": "SYSTEM",
-        "subtitle": "Build an alert or automation flow for your platform.",
-        "title": "Create a system flow"
-      },
-      "title": "Create a new flow"
-    },
     "recipe": {
       "create_flow": "Create flow",
       "email": "Email",

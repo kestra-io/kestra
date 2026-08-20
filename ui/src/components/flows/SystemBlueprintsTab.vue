@@ -25,7 +25,7 @@
             </router-link>
 
             <router-link
-                :to="{name: 'flows/create', params: {tenant: route.params.tenant}, query: {blank: 'true', namespace: systemNamespace}}"
+                :to="{name: 'flows/create', params: {tenant: route.params.tenant}, query: {namespace: systemNamespace}}"
                 class="blueprint-link"
                 data-test="system-blank-flow-link"
             >

@@ -28,8 +28,6 @@ const mountCreate = () => mount(FlowCreate, {
             TopNavBar: {template: "<div><slot name='actions' /></div>"},
             Actions: true,
             MultiPanelFlowEditorView: {template: "<div data-test='editor' />"},
-            NewFlowLanding: {name: "NewFlowLanding", template: "<div data-test='landing' />", emits: ["proceed", "import"]},
-            ImportYaml: {name: "ImportYaml", template: "<div data-test='import' />", emits: ["submit", "back"]},
         },
     },
 })
@@ -54,27 +52,34 @@ afterAll(() => {
     document.title = documentTitle
 })
 
-describe("FlowCreate landing gate", () => {
-    test("shows the funnel and touches no flow when opened without context", () => {
+describe("FlowCreate", () => {
+    test("opens the editor on a starter flow without asking anything first", async () => {
         // Given / When
         const wrapper = mountCreate()
+        await flushPromises()
 
         // Then
-        expect(wrapper.find("[data-test='landing']").exists()).toBe(true)
-        expect(wrapper.find("[data-test='editor']").exists()).toBe(false)
-        expect(flowStore.flow).toBeUndefined()
+        expect(wrapper.find("[data-test='editor']").exists()).toBe(true)
+        expect(flowStore.flow?.id).toBeTruthy()
+        expect(flowStore.flow?.source).toContain(`id: ${flowStore.flow?.id}`)
+        expect(flowStore.flow?.source).toContain("type: io.kestra.plugin.core.log.Log")
     })
 
-    test("shows the funnel for a namespace-scoped create link", () => {
+    test("uses the namespace carried by the create link", async () => {
         // Given
-        route.query = {namespace: "company.team"}
+        route.query = {namespace: "company.analytics"}
 
-        // When / Then
-        expect(mountCreate().find("[data-test='landing']").exists()).toBe(true)
+        // When
+        mountCreate()
+        await flushPromises()
+
+        // Then
+        expect(flowStore.flow?.namespace).toBe("company.analytics")
+        expect(flowStore.flow?.source).toContain("namespace: company.analytics")
     })
 
     test.each(["copy", "onboardingPreset", "recipePreset", "ai", "createTrigger"])(
-        "goes straight to the editor for ?%s",
+        "still opens the editor for ?%s",
         async (key) => {
             // Given
             route.query = {[key]: "true"}
@@ -84,61 +89,10 @@ describe("FlowCreate landing gate", () => {
             await flushPromises()
 
             // Then
-            expect(wrapper.find("[data-test='landing']").exists()).toBe(false)
+            expect(wrapper.find("[data-test='editor']").exists()).toBe(true)
             expect(flowStore.flow).toBeDefined()
         },
     )
-})
-
-describe("FlowCreate hand-off from the funnel", () => {
-    test("opens the editor on the id and namespace chosen in the blank-flow form", async () => {
-        // Given
-        const wrapper = mountCreate()
-
-        // When
-        wrapper.findComponent({name: "NewFlowLanding"}).vm.$emit("proceed", {id: "my-flow", namespace: "company.analytics"})
-        await flushPromises()
-
-        // Then
-        expect(flowStore.flow?.id).toBe("my-flow")
-        expect(flowStore.flow?.namespace).toBe("company.analytics")
-        expect(flowStore.flow?.source).toContain("id: my-flow")
-        expect(wrapper.find("[data-test='editor']").exists()).toBe(true)
-    })
-
-    test("keeps the pasted definition intact when it already carries its metadata", async () => {
-        // Given
-        const wrapper = mountCreate()
-        const yaml = "id: pasted-flow\nnamespace: company.team\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n"
-
-        // When
-        wrapper.findComponent({name: "NewFlowLanding"}).vm.$emit("import")
-        await flushPromises()
-        wrapper.findComponent({name: "ImportYaml"}).vm.$emit("submit", {yaml})
-        await flushPromises()
-
-        // Then
-        expect(flowStore.flow?.id).toBe("pasted-flow")
-        expect(flowStore.flow?.namespace).toBe("company.team")
-        expect(flowStore.flow?.source).toBe(yaml)
-    })
-
-    test("adds the missing id and namespace to an imported fragment so it can be saved", async () => {
-        // Given
-        const wrapper = mountCreate()
-        const fragment = "tasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n"
-
-        // When
-        wrapper.findComponent({name: "NewFlowLanding"}).vm.$emit("import")
-        await flushPromises()
-        wrapper.findComponent({name: "ImportYaml"}).vm.$emit("submit", {yaml: fragment})
-        await flushPromises()
-
-        // Then
-        expect(flowStore.flow?.source).toContain(`id: ${flowStore.flow?.id}`)
-        expect(flowStore.flow?.source).toContain(`namespace: ${flowStore.flow?.namespace}`)
-        expect(flowStore.flow?.source).toContain("type: io.kestra.plugin.core.log.Log")
-    })
 })
 
 describe("FlowCreate recipe hand-off", () => {

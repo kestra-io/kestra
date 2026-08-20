@@ -2,47 +2,6 @@
   "ja": {
     "loading": "読み込み中...",
     "more actions": "その他のアクション",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "文字、数字、ドット、ダッシュ、アンダースコアのみを使用し、文字または数字で始めてください。",
-        "id_label": "flow id",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "小文字、数字、ドット、ダッシュ、アンダースコアのみを使用し、小文字または数字で始めてください。",
-        "namespace_placeholder": "namespaceを選択",
-        "namespaces_error": "namespaceを読み込めませんでした。namespaceを手動で入力してください。",
-        "open_editor": "エディターを開く",
-        "subtitle": "hello-worldスターターから始めて、ゼロから構築します。",
-        "title": "空のflow"
-      },
-      "blueprints": {
-        "subtitle": "コミュニティカタログから既製のflowを選択してください。",
-        "title": "ブループリントを参照"
-      },
-      "import": {
-        "back": "戻る",
-        "error": {
-          "empty": "YAMLコンテンツが空です。",
-          "invalid_mapping": "無効なflow YAML: リストまたはスカラーではなく、キーと値のマッピングが必要です。",
-          "parse_error": "YAMLをパースできませんでした。",
-          "too_large": "ファイルが大きすぎます。代わりにflow定義を貼り付けるか、1 MB未満のファイルをアップロードしてください。"
-        },
-        "paste_label": "YAMLを貼り付け",
-        "read_error": "ファイルを読み取れませんでした。",
-        "submit": "flowをインポート",
-        "subtitle": "既存のflow定義を貼り付けるか、アップロードしてください。",
-        "title": "YAMLをインポート",
-        "upload_button": ".yml / .yaml をアップロード",
-        "upload_label": "またはファイルをアップロード",
-        "upload_tip": ".yml および .yaml ファイルを受け入れます。"
-      },
-      "subtitle": "空白のキャンバスから開始するか、blueprintを探索するか、既存のYAMLをインポートします。",
-      "system": {
-        "badge": "システム",
-        "subtitle": "プラットフォームのアラートまたは自動化flowを構築します。",
-        "title": "システムflowを作成"
-      },
-      "title": "新しいflowを作成"
-    },
     "recipe": {
       "create_flow": "flowを作成",
       "email": "Eメール",

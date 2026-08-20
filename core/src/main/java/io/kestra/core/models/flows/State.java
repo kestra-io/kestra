@@ -337,6 +337,10 @@ public class State {
             return this == Type.QUEUED;
         }
 
+        public boolean isCancelled() {
+            return this == Type.CANCELLED;
+        }
+
         /**
          * @return states that are terminal to an execution
          */

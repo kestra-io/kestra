@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, onScopeDispose, ref, watch} from "vue"
 import {
     type LocationQuery,
     type LocationQueryRaw,
@@ -37,6 +37,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
     const route = useRoute()
     const router = useRouter()
     const normalizedOnce = ref(false)
+    const normalizationPending = ref(false)
 
     const isEnabled = () => options.enabled?.() ?? true
     const shouldApplyDefaultIfMissing = () => options.applyDefaultIfMissing?.() ?? false
@@ -67,6 +68,30 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         return options.fallbackValue?.()
     })
 
+    /**
+     * `isRouteSettled` stays false until the normalized query lands, so a consumer can hold its
+     * first load back instead of running it against the URL the defaults are about to replace.
+     * The navigation can also never land — a route guard aborts it, or one that supersedes it
+     * drops the value again — and a consumer waiting on it would then show nothing at all, with
+     * no request in flight and nothing to retry it. Give up after a grace period: by then the
+     * single load the gate buys is lost anyway, and loading the URL's own filters beats that.
+     */
+    const SETTLE_TIMEOUT_MS = 2000
+    let settleTimer: ReturnType<typeof setTimeout> | undefined
+
+    const settleNow = () => {
+        clearTimeout(settleTimer)
+        settleTimer = undefined
+        normalizationPending.value = false
+    }
+
+    const startSettleTimeout = () => {
+        clearTimeout(settleTimer)
+        settleTimer = setTimeout(settleNow, SETTLE_TIMEOUT_MS)
+    }
+
+    onScopeDispose(() => clearTimeout(settleTimer))
+
     watch(
         [routeValue, explicitValue, hasUnsupportedRouteValue],
         ([routeValueNow, explicitValueNow, hasUnsupportedNow]) => {
@@ -85,6 +110,8 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
                 return
             }
 
+            normalizationPending.value = true
+            startSettleTimeout()
             router.replace({
                 query: options.writeToRoute(route.query as Record<string, any>, nextValue),
             })
@@ -121,9 +148,18 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         setRouteValue(options.readFromAppliedFilters(filters))
     }
 
+    watch(routeValue, (value) => {
+        if (value !== undefined) {
+            settleNow()
+        }
+    }, {flush: "sync"})
+
+    const isRouteSettled = computed(() => !normalizationPending.value)
+
     return {
         routeValue,
         effectiveValue,
+        isRouteSettled,
         hasUnsupportedRouteValue,
         syncFromAppliedFilters,
         setRouteValue,

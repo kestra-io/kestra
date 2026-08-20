@@ -956,7 +956,7 @@
       "search": "{count}+ Plugins durchsuchen",
       "searchTasks": "{count} Tasks durchsuchen",
       "noResults": "Keine Plugins entsprechen deiner Suche.",
-      "loadError": "Plugins konnten nicht geladen werden. Bitte versuch es erneut.",
+      "loadError": "Plugins konnten nicht geladen werden. Bitte versuche es erneut.",
       "notFound": "Dieses Plugin konnte nicht gefunden werden.",
       "elementType": {
         "tasks": "Task",
@@ -1936,15 +1936,15 @@
           "revise": "Zur Überarbeitung antworten"
         },
         "notice": {
-          "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuch es erneut.",
+          "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuche es erneut.",
           "retry": "Wiederholen"
         },
         "cancelled": "Turn abgebrochen",
         "error": {
           "turnCap": "Diese Unterhaltung hat ihr Limit erreicht – starte einen neuen Chat.",
           "turnInProgress": "Ein Turn läuft bereits.",
-          "request": "Die Anfrage ist fehlgeschlagen. Bitte versuch es erneut.",
-          "generic": "Etwas ist schiefgelaufen. Bitte versuch es erneut."
+          "request": "Die Anfrage ist fehlgeschlagen. Bitte versuche es erneut.",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
         },
         "emptyHelper": "Ich kann diesen Flow bearbeiten, Tests generieren, zugehörige Dateien anlegen oder erklären, wie er funktioniert.",
         "suggestions": {
@@ -1960,7 +1960,7 @@
         },
         "unavailable": {
           "title": "Der AI Copilot ist nicht verfügbar",
-          "detail": "Es ist kein AI-Anbieter konfiguriert. Bitte einen Administrator, einen einzurichten, und versuch es dann erneut.",
+          "detail": "Es ist kein AI-Anbieter konfiguriert. Bitte einen Administrator, einen einzurichten, und versuche es dann erneut.",
           "retry": "Erneut versuchen"
         },
         "thinkingWords": [
@@ -1996,8 +1996,8 @@
           "applyTitle": "Flow anwenden",
           "applyConfirm": "Den Flow {namespace}.{id} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
           "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
-          "applyError": "Der Flow konnte nicht angewendet werden. Bitte versuch es erneut.",
-          "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuch es erneut.",
+          "applyError": "Der Flow konnte nicht angewendet werden. Bitte versuche es erneut.",
+          "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuche es erneut.",
           "applyNoTarget": "Dieser Entwurf hat keinen Namespace und keine ID zum Anwenden.",
           "applyTitleDashboard": "Dashboard anwenden",
           "title": {
@@ -2085,7 +2085,7 @@
           },
           "slack": {
             "title": "Slack-Community",
-            "description": "Vernetze dich mit anderen Nutzern und hol dir Hilfe aus der Community"
+            "description": "Vernetze dich mit anderen Nutzern und hole dir Hilfe aus der Community"
           },
           "videos": {
             "title": "Video-Tutorials",

@@ -7,6 +7,7 @@ import {useFlowStore} from "../../../src/stores/flow"
 // does not declare, so each story needs them registered or useLink() throws.
 const routes = [
     {path: "/", name: "home", component: {template: "<div />"}},
+    {path: "/flows/edit/:namespace/:id/edit", name: "flows/update/edit", component: {template: "<div />"}},
     {path: "/kv", name: "kv/list", component: {template: "<div />"}},
     {path: "/secrets", name: "secrets/list", component: {template: "<div />"}},
     {path: "/namespaces/edit/:id/files", name: "namespaces/update/files", component: {template: "<div />"}},

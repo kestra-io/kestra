@@ -134,7 +134,7 @@
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-4);
-        padding: var(--ks-spacing-6) var(--ks-spacing-4);
+        padding: var(--ks-spacing-6) var(--ks-spacing-4) 0;
         width: 100%;
         max-width: 48rem;
         margin: 0 auto;
@@ -210,5 +210,6 @@
     .import-actions {
         display: flex;
         justify-content: flex-end;
+        margin-bottom: var(--ks-spacing-6);
     }
 </style>

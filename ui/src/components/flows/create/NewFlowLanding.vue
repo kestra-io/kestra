@@ -197,7 +197,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: var(--ks-spacing-8) var(--ks-spacing-4);
+        padding: var(--ks-spacing-8) var(--ks-spacing-4) 0;
         min-height: 100%;
     }
 
@@ -223,6 +223,7 @@
         gap: var(--ks-spacing-4);
         width: 100%;
         max-width: 36rem;
+        margin-bottom: var(--ks-spacing-8);
     }
 
     .primary-card-body {

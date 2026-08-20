@@ -293,6 +293,12 @@ off everywhere else — a standalone deployment on S3/GCS stays inert. Setting
 default, and `server local` sets it to `true` explicitly. Resolved once in
 `PluginAutoInstallService` from `EditionProvider` and the `kestra.storage.type` property.
 
+There is deliberately **no per-user permission gating** on the install endpoints beyond the
+instance's authentication: enabling the flag *is* the admin's governance decision — self-service
+plugin acquisition for every authenticated user — and the catalog allowlist bounds what can be
+installed to official plugins, so the residual risk is resource usage, capped by the install-job
+registry's active-job limit.
+
 ---
 
 ## Key files

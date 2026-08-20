@@ -8,7 +8,7 @@ import "monaco-editor/basic-languages/monaco.contribution"
 import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {useStorage} from "@vueuse/core"
-import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../utils/fontScale"
+import {APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode} from "../utils/fontScale"
 import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
 import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
 // @ts-expect-error tab focus path lacks types
@@ -82,7 +82,7 @@ export function useKsEditor(
     })
     const storedAppFontSizeMode = useStorage<AppFontSizeMode>(APP_FONT_SIZE_KEY, "medium")
     const resolvedEditorFontSize = computed(
-        () => storedEditorFontSizeOverride.value ?? (BASE_PX[storedAppFontSizeMode.value] ?? BASE_PX.medium),
+        () => storedEditorFontSizeOverride.value ?? (MONO_BASE_PX[storedAppFontSizeMode.value] ?? MONO_BASE_PX.medium),
     )
 
     const isFocused = ref(false)

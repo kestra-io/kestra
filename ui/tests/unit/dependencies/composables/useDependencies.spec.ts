@@ -38,7 +38,7 @@ function setCSSVars() {
 
 // ─── Controlled graph fixture ─────────────────────────────────────────────────
 // A --e1--> B --e2--> C    D (isolated, no edges)
-// A is the pre-selected initial node.
+// A is the preselected initial node.
 function makeControlledElements() {
     return [
         {data: {id: "A", type: "NODE", flow: "flow-a", namespace: "ns", metadata: {subtype: "FLOW"}}},
@@ -337,7 +337,7 @@ describe("useDependencies composable", () => {
         const wrapper = mount({
             template: "<div></div>",
             setup() {
-                // Use initialNodeID="X" (nonexistent) so no node is pre-selected,
+                // Use initialNodeID="X" (nonexistent) so no node is preselected,
                 // leaving selectedNodeID undefined and letting tests control selection.
                 const composable = useDependencies(graphRef as any, FLOW, "X", {}, fetchAssetDependencies)
                 return {composable}

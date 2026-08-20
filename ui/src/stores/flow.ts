@@ -124,10 +124,6 @@ export const useFlowStore = defineStore("flow", () => {
             return "no_op"
         }
 
-        if (flowErrors.value?.length && !isDraft) {
-            return "blocked"
-        }
-
         if (!flow.value) return "blocked"
         const source = flowYaml.value
         const validation = await onEdit({source})
@@ -167,10 +163,6 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     async function save(draft: boolean = false): Promise<FlowSaveOutcome> {
-        if (flowErrors.value?.length && !draft) {
-            return "blocked"
-        }
-
         const source = flowYaml.value
 
         if (source) {
@@ -567,7 +559,10 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
+    // The editor wants this count twice - tab badge and toolbar stat - so they share one request.
+    const inFlightDependencyCounts = new Map<string, ReturnType<typeof requestDependencies>>()
+
+    function requestDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount: boolean) {
         return FlowsAPI.flowDependencies({namespace: options.namespace, id: options.id, expandAll: !onlyCount}).then(data => {
             const totalNodes = data.nodes ? new Set(data.nodes.map((r:{uid:string}) => r.uid)).size : 0
             const count = Math.max(0, totalNodes - 1)
@@ -577,6 +572,30 @@ export const useFlowStore = defineStore("flow", () => {
                 count,
             }
         })
+    }
+
+    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
+        if (!onlyCount) {
+            return requestDependencies(options, onlyCount)
+        }
+
+        const key = `${options.namespace}/${options.id}`
+        const inFlight = inFlightDependencyCounts.get(key)
+        if (inFlight) {
+            return inFlight
+        }
+
+        const request = requestDependencies(options, onlyCount)
+        inFlightDependencyCounts.set(key, request)
+        // Both handlers, so this derived promise never becomes an unhandled rejection.
+        const settle = () => {
+            if (inFlightDependencyCounts.get(key) === request) {
+                inFlightDependencyCounts.delete(key)
+            }
+        }
+        request.then(settle, settle)
+
+        return request
     }
 
 function deleteFlowAndDependencies() {

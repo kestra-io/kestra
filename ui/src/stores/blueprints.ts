@@ -1,9 +1,8 @@
-import {ref} from "vue"
+import {computed, ref} from "vue"
 import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
-import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
 import {useMiscStore} from "override/stores/misc"
 
@@ -59,6 +58,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     const validateYAML = ref<boolean>(true) // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
 
+    const validation = ref<{constraints?: string} | undefined>(undefined)
+
+    const validationErrors = computed<string[] | undefined>(
+        () => validation.value?.constraints ? [validation.value.constraints] : undefined,
+    )
+
     const getBlueprints = async (options: Options) => {
         if (options.type === "community") {
             const PARAMS = {params: options.params, ...VALIDATE}
@@ -76,22 +81,16 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         }
     }
 
-    /**
-     * The /blueprints/custom backend reads search/tag filters from the QueryFilter format.
-     * Legacy callers still pass `q` / `tags` as scalar params, so translate them into a
-     * QueryFilter[] here. The external community API (api.kestra.io) still expects the legacy
-     * scalar form, so this is only used for `custom`.
-     */
     function toCustomBlueprintParams(params?: Record<string, any>) {
         const {q, tags, ...rest} = params ?? {}
-        const filters: QueryFilter[] = []
+        const converted: Record<string, any> = {...rest}
         if (q !== undefined && q !== null) {
-            filters.push({field: "q", operation: "EQUALS", value: q})
+            converted["filters[q][EQUALS]"] = q
         }
         if (tags !== undefined && tags !== null) {
-            filters.push({field: "tags", operation: "IN", value: Array.isArray(tags) ? tags.join(",") : tags})
+            converted["filters[tags][IN]"] = Array.isArray(tags) ? tags.join(",") : tags
         }
-        return {...rest, filters}
+        return converted
     }
 
     const getBlueprint = async (options: Options) => {
@@ -172,6 +171,14 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return data
     }
 
+    const validateFlowBlueprint = async (source: string): Promise<void> => {
+        const {data} = await axios.post<{constraints?: string}>(`${apiUrl()}/blueprints/flows/validate`, source, {
+            headers: {"Content-Type": "application/x-yaml"},
+            showMessageOnError: false,
+        })
+        validation.value = data
+    }
+
     const deleteFlowBlueprint = async (idToDelete: string) => {
         await axios.delete(`${apiUrl()}/blueprints/flows/${idToDelete}`)
     }
@@ -193,6 +200,9 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         getFlowBlueprint,
         createFlowBlueprint,
         updateFlowBlueprint,
+        validation,
+        validationErrors,
+        validateFlowBlueprint,
         deleteFlowBlueprint,
     }
 })

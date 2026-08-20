@@ -66,7 +66,7 @@
                         @click="openBlueprint(bp.id)"
                     >
                         <template #footer-content>
-                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
+                            <BlueprintIconStack :clses="blueprintTaskTypes(bp.includedTasks)" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
                         </template>
                     </PluginCard>
                 </div>
@@ -99,6 +99,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import useRouteContext from "../../composables/useRouteContext"
+    import {blueprintTaskTypes} from "../../composables/useBlueprintPlugins"
     import {API_URL} from "../../stores/api"
 
     type Blueprint = {

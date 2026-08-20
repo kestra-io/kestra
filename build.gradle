@@ -21,11 +21,8 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.3.1.8318"
+    id "org.sonarqube" version "7.4.0.8496"
     id 'jacoco-report-aggregation'
-
-    // helper
-    id "com.github.ben-manes.versions" version "0.60.0"
 
     // release
     id 'net.researchgate.release' version '3.1.0'
@@ -479,6 +476,27 @@ tasks.named('testCodeCoverageReport') {
 }
 
 /**********************************************************************************************************************\
+ * Allure Reports
+ **********************************************************************************************************************/
+subprojects {
+    plugins.withId('java') {
+        dependencies {
+            testImplementation "io.qameta.allure:allure-junit5"
+        }
+
+        test {
+            // allure-junit5 writes results as a side effect of the test JVM, invisible to Gradle's
+            // dependency tracking. Without declaring it as a task output, a build-cache hit on :test
+            // (org.gradle.caching=true) restores build/test-results/ but skips the JVM entirely, so
+            // no allure-results are ever produced for that run.
+            def allureResultsDir = layout.buildDirectory.dir("allure-results")
+            systemProperty 'allure.results.directory', allureResultsDir.get().asFile.absolutePath
+            outputs.dir(allureResultsDir)
+        }
+    }
+}
+
+/**********************************************************************************************************************\
  * Sonar
  **********************************************************************************************************************/
 subprojects {
@@ -636,7 +654,7 @@ tasks.register('runLocal') {
 
 tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server standalone"
+    description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     dependsOn ':cli:runStandalone'
 }
 
@@ -680,7 +698,7 @@ subprojects {subProject ->
         }
 
         //These modules should not be published
-        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver", "worker", "scheduler", "worker-controller", "executor"]
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
         if (subProject.name in unpublishedModules){
             return
         }

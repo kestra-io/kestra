@@ -232,7 +232,9 @@ public final class TriggerState implements TriggerId {
                 .toBuilder()
                 .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now(clock))
                 .currentDate(backfill.getCurrentDate() != null ? backfill.getCurrentDate() : backfill.getStart())
-                .previousNextExecutionDate(toZonedDateTime(nextEvaluationDate))
+                // captured once, on backfill creation: pausing re-enters this method while
+                // nextEvaluationDate points inside the backfill window.
+                .previousNextExecutionDate(backfill.getPreviousNextExecutionDate() != null ? backfill.getPreviousNextExecutionDate() : toZonedDateTime(nextEvaluationDate))
                 .build();
         }
         return update(clock).backfill(backfill).build();

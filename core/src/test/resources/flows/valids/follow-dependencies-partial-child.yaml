@@ -1,0 +1,7 @@
+id: follow-dependencies-partial-child
+namespace: io.kestra.tests
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "Terminated dependency of {{ labels.system.correlationId }}"

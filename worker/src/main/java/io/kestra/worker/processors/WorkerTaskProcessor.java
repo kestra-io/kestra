@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -458,21 +457,21 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 // We need to have the task outputs injected before rendering the assets
                 Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
 
-                List<AssetEmit> assetEmits = runContext.assets().emitted();
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
 
-                taskRun = taskRun.withAssets(
-                    new AssetsInOut(
-                        Stream.concat(
-                            runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap).stream(),
-                            assetEmits.stream().map(AssetEmit::inputs).flatMap(Collection::stream)
-                        ).toList(),
-                        Stream.concat(
-                            runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap).stream(),
-                            assetEmits.stream().map(AssetEmit::outputs).flatMap(Collection::stream)
-                        ).toList()
-                    )
-                );
+                // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
+                // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
+                List<AssetsInOut> bundles = new ArrayList<>();
+                List<AssetIdentifier> declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
+                List<Asset> declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
+                if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
+                    bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
+                }
+                runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
+
+                if (!bundles.isEmpty()) {
+                    taskRun = taskRun.withAssetEmits(bundles);
+                }
             }
         } catch (Exception e) {
             logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);

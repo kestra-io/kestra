@@ -8,7 +8,7 @@ const apply = vi.fn()
 // Mutable so a test can simulate the EE app path being present (apps are unsupported in OSS).
 const appSupported = {value: false}
 vi.mock("../../../../../src/components/ai/copilot/useApplyDraft", () => ({
-    useApplyDraft: () => ({applying: ref(false), appSupported: appSupported.value, openInEditor, apply}),
+    useApplyDraft: () => ({applying: ref(false), appSupported: appSupported.value, dashboardSupported: ref(true), openInEditor, apply}),
 }))
 
 import CopilotArtefactDraft from "../../../../../src/components/ai/copilot/CopilotArtefactDraft.vue"

@@ -1,7 +1,7 @@
 package io.kestra.core.models.executions.statistics;
 
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,7 +27,7 @@ public class DailyExecutionStatistics {
 
     @Builder.Default
     @JsonInclude
-    private Map<State.Type, Long> executionCounts = new HashMap<>(
+    private Map<State.Type, Long> executionCounts = new EnumMap<>(
         ImmutableMap.<State.Type, Long> builder()
             .put(State.Type.CREATED, 0L)
             .put(State.Type.RUNNING, 0L)

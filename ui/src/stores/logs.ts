@@ -39,8 +39,14 @@ export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
 
+    let latestSearchId = 0
+
     function findLogs(options: Record<string, any>) {
+        const searchId = ++latestSearchId
         return LogsAPI.searchLogs(toSearchParams(options)).then(response => {
+            const isSuperseded = searchId !== latestSearchId
+            if (isSuperseded) return
+
             logs.value = response.results as unknown as Log[]
             total.value = response.total ?? 0
         })

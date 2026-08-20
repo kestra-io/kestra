@@ -182,6 +182,10 @@ export const useBaseNamespacesStore = () => {
         }
     }
 
+    async function fileMetadata(payload: {namespace: string; path: string}) {
+        return await FilesAPI.fileMetadatas(payload)
+    }
+
     async function readFile(payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
         if (!payload.path) return {error: "Path is required"}
 
@@ -259,6 +263,7 @@ export const useBaseNamespacesStore = () => {
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,
+        fileMetadata,
         readFile,
         fileRevisions,
         searchFiles,

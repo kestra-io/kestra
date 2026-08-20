@@ -5,7 +5,6 @@
         trigger="click"
         :width="260"
         :showArrow="false"
-        popperClass="p-0"
         @hide="onHide"
     >
         <div class="group-picker">
@@ -25,6 +24,8 @@
                     :class="['group-row', {'is-active': group.key === activeGroup}]"
                     @mouseenter="emit('preview', group.key)"
                     @mouseleave="emit('preview', activeGroup)"
+                    @focus="emit('preview', group.key)"
+                    @blur="emit('preview', activeGroup)"
                     @click="onSelect(group.key)"
                 >
                     <KsIcon v-if="group.key === activeGroup" size="xs" class="group-check">
@@ -122,11 +123,12 @@
 </script>
 
 <style lang="scss" scoped>
+    // No padding of its own: the popover's default inset applies, since KsPopover exposes
+    // no compliant way to strip it and a utility class (p-0) is banned in feature code.
     .group-picker {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-2);
     }
 
     .group-list {

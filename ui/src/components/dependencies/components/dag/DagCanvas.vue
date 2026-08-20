@@ -92,11 +92,15 @@
      * column: it has outgoing edges only, which ranks it first.
      */
     const edges = computed(() => {
+        // Endpoints must exist: the adapter can emit edges whose source or target is not a
+        // node (e.g. a dbt manifest parent that is neither a manifest key nor a graph node),
+        // and vue-flow drops such edges with a console warning.
+        const known = new Set(nodes.value.map((node) => node.id))
         const flowIDs = new Set(nodes.value.filter((node) => node.metadata.subtype !== ASSET).map((node) => node.id))
         return props.elements
             .filter((el): el is {data: Edge} => el.data.type === EDGE)
             .map(({data}) => data)
-            .filter((edge) => !flowIDs.has(edge.target))
+            .filter((edge) => known.has(edge.source) && known.has(edge.target) && !flowIDs.has(edge.target))
     })
 
     const layout = computed(() => computeDagLayout(
@@ -137,12 +141,17 @@
         }]
     }))
 
+    const theme = useTheme()
+
     /** The node whose chain is lit: a pinned selection, or whatever is hovered. */
     const focusedID = computed(() => props.hovered ?? props.selected)
 
     const trace = computed(() => computeTrace(edges.value, focusedID.value))
 
     const vfEdges = computed(() => {
+        // cssVar resolves to a plain string, so a theme switch would not re-run this
+        // computed on its own; depending on the theme signal keeps edge colours current.
+        void theme.value
         const lit = trace.value
         return edges.value.map((edge) => {
             const key = traceEdgeKey(edge.source, edge.target)
@@ -170,7 +179,6 @@
     // Matches the Tree canvas exactly: same token at the same 30%/20% opacity and the
     // same 24px pitch, so the two layouts read as one surface. `color`, not the
     // deprecated `patternColor`.
-    const theme = useTheme()
     const dotColor = computed(() => cssVar("--ks-topology-dash", "dark" === theme.value ? 0.2 : 0.3))
 
     const detail = ref<DagDetail>("full")
@@ -234,9 +242,25 @@
             && Math.abs(zoom - lastAppliedView.zoom) < 0.001
     }
 
-    watch(bounds, (value) => {
-        if (lastAppliedView || !value) return
-        requestAnimationFrame(applyFit)
+    /**
+     * A rounded string rather than the bounds object: the computed returns a fresh object
+     * every evaluation, so watching it directly would fire on every recompute regardless
+     * of content (the deep-watch/computed-spread trap). The string only changes when the
+     * extent genuinely moves.
+     */
+    const boundsKey = computed(() => {
+        const value = bounds.value
+        if (!value) return ""
+        return [value.x, value.y, value.width, value.height].map(Math.round).join(":")
+    })
+
+    // Refit whenever the extent genuinely changes (first data, a re-grouping that
+    // re-stacks columns) — but only while we still own the camera: a viewport the user
+    // has panned or zoomed is theirs and must not be yanked back.
+    watch(boundsKey, () => {
+        requestAnimationFrame(() => {
+            if (bounds.value && ownsViewport()) applyFit()
+        })
     }, {immediate: true})
 
     /**
@@ -258,7 +282,9 @@
     defineExpose({
         zoomIn: () => zoomIn(),
         zoomOut: () => zoomOut(),
-        fit: fitToBounds,
+        // applyFit, not the bare fitToBounds: the fit must update the ownership snapshot,
+        // or a user-initiated Fit leaves ownsViewport() false and kills resize refits.
+        fit: applyFit,
     })
 </script>
 

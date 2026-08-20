@@ -122,7 +122,7 @@
         border: 1px solid var(--ks-border-subtle);
         border-radius: var(--ks-radius-base);
         background: var(--ks-bg-surface);
-        box-shadow: 0 2px 4px var(--ks-shadow-surface);
+        box-shadow: 0 0.125rem 0.25rem var(--ks-shadow-surface);
         transition: opacity var(--ks-duration-fast), filter var(--ks-duration-fast), border-color var(--ks-duration-fast);
     }
 

@@ -16,7 +16,7 @@
       },
       "blueprints": {
         "subtitle": "Wybierz gotowy Flow z katalogu społeczności.",
-        "title": "Przeglądaj blueprinty"
+        "title": "Przeglądaj Blueprinty"
       },
       "import": {
         "back": "Wstecz",
@@ -116,9 +116,9 @@
       },
       "trigger": {
         "case_sub": "Funkcja tylko w Enterprise Edition",
-        "case_title": "Status Case'a",
+        "case_title": "Status sprawy",
         "execution_sub": "Reaguje na zmiany statusu Flow",
-        "execution_title": "Status Execution",
+        "execution_title": "Status egzekucji",
         "other_sub": "Dowolny dostępny plugin Triggera",
         "other_title": "Inny Trigger",
         "schedule_sub": "Uruchamia się zgodnie z harmonogramem",
@@ -159,8 +159,8 @@
     "bulk actions": "Akcje zbiorcze",
     "view metrics": "Zobacz metryki",
     "remove this item": "Usuń ten element",
-    "add label": "Dodaj Label",
-    "remove label": "Usuń Label",
+    "add label": "Dodaj etykietę",
+    "remove label": "Usuń etykietę",
     "id": "ID",
     "type": "Typ",
     "ok": "OK",
@@ -172,7 +172,7 @@
     "show details": "Pokaż szczegóły",
     "show more details": "Pokaż więcej szczegółów",
     "skipped": "Pominięto",
-    "revision": "Rewizja",
+    "revision": "Wersja",
     "theme": "Motyw",
     "flows": "Flows",
     "flow": "Flow",
@@ -187,33 +187,33 @@
     "outdated revision save confirmation": {
       "confirm": "Czy chcesz to nadpisać?",
       "update": {
-        "title": "Przestarzała Rewizja",
-        "description": "Rewizja, którą edytujesz, jest przestarzała.",
-        "details": "Sprawdź zakładkę Rewizje, aby poznać szczegóły najnowszej wersji."
+        "title": "Przestarzała wersja",
+        "description": "Wersja, którą edytujesz, jest przestarzała.",
+        "details": "Sprawdź zakładkę Wersje, aby poznać szczegóły najnowszej wersji."
       },
       "create": {
         "title": "Flow już istnieje",
         "description": "Flow o tym samym ID już istnieje w tym namespace'ie.",
-        "details": "Zapisz, aby nadpisać i utworzyć nową Rewizję."
+        "details": "Zapisz, aby nadpisać i utworzyć nową wersję."
       }
     },
     "override": {
       "title": "Zamierzasz nadpisać bieżący Flow",
-      "details": "Poprzedni Flow można przywrócić z zakładki Rewizje."
+      "details": "Poprzedni Flow można przywrócić z zakładki Wersje."
     },
     "is deprecated": "jest przestarzały",
     "success": "Sukces",
     "save": "Zapisz",
-    "save_as_draft": "Zapisz jako wersję roboczą",
+    "save_as_draft": "Zapisz jako szkic",
     "publish": "Opublikuj",
-    "publish_draft": "Opublikuj wersję roboczą",
+    "publish_draft": "Opublikuj szkic",
     "draft": "Wersja robocza",
-    "draft_flow_warning": "Najnowsza Rewizja tego Flow jest wersją roboczą. Execution zostanie uruchomiony na najnowszej opublikowanej Rewizji. Opublikuj wersję roboczą (lub uruchom ją w Playground), aby wykonać swoje najnowsze zmiany.",
+    "draft_flow_warning": "Najnowsza wersja tego Flow jest szkicem. Egzekucja zostanie uruchomiona na najnowszej opublikowanej wersji. Opublikuj szkic (lub uruchom go w Playground), aby wykonać swoje najnowsze zmiany.",
     "save task": "Zapisz Task",
     "saved": "Pomyślnie zapisano",
-    "saved as draft": "Pomyślnie zapisano jako wersję roboczą",
+    "saved as draft": "Pomyślnie zapisano jako szkic",
     "saved done": "<em>{name}</em> został pomyślnie zapisany",
-    "saved as draft done": "<em>{name}</em> został pomyślnie zapisany jako wersja robocza",
+    "saved as draft done": "<em>{name}</em> został pomyślnie zapisany jako szkic",
     "multiple saved done": "{name} zostały zapisane",
     "fileTypeNotAllowed": "Niedozwolony typ pliku. Akceptowane typy: {types}",
     "delete": "Usuń",
@@ -230,13 +230,13 @@
     "done": "Gotowe",
     "review your inputs": "Sprawdź swoje Inputy",
     "edit flow": "Edytuj Flow",
-    "executions": "Executiony",
-    "execution": "Execution",
-    "execution id": "ID Execution",
+    "executions": "Egzekucje",
+    "execution": "Egzekucja",
+    "execution id": "ID egzekucji",
     "details": "Szczegóły",
     "overview": "Przegląd",
     "gantt": "Gantt",
-    "gantt_no_tasks_executed": "Ten Execution zakończył się bez uruchomienia żadnego Taska.\nSprawdź jego przegląd i logi, aby poznać przyczynę.",
+    "gantt_no_tasks_executed": "Ta egzekucja zakończyła się bez uruchomienia żadnego Taska.\nSprawdź jej przegląd i logi, aby poznać przyczynę.",
     "gantt_no_tasks_match_filters": "Spróbuj dostosować filtry wyszukiwania, statusu lub poziomu logów.",
     "gantt_no_tasks_match_filters_title": "Żaden Task nie pasuje do wybranych filtrów.",
     "logs": "Logs",
@@ -247,17 +247,17 @@
     "running duration": "Czas działania",
     "queued duration": "Czas w kolejce",
     "executionProgress": {
-      "title": "Postęp Execution",
+      "title": "Postęp egzekucji",
       "estimatedRemaining": "Szacowany pozostały czas: {duration}",
       "noBaseline": "Brak danych historycznych — nie można oszacować pozostałego czasu",
       "pastEstimate": "Trwa dłużej niż zwykle"
     },
     "launch execution": "Wykonaj",
-    "triggered done": "Execution <em>{name}</em> został pomyślnie uruchomiony",
+    "triggered done": "Egzekucja <em>{name}</em> została pomyślnie uruchomiona",
     "topology": "Topologia",
     "date": "Data",
-    "prev_execution": "Poprzedni Execution",
-    "next_execution": "Następny Execution",
+    "prev_execution": "Poprzednia egzekucja",
+    "next_execution": "Następna egzekucja",
     "datepicker": {
       "invalid duration": "Nieprawidłowy format czasu trwania. Użyj ISO 8601 (np. PT30M, P1D).",
       "leave empty for infinite": "Pozostaw puste dla nieskończonego czasu trwania lub wpisz czas trwania w formacie ISO 8601 (np. „P1DT1H1M1S”)",
@@ -318,7 +318,7 @@
     "latest_update": "Najnowsza aktualizacja",
     "expiration date": "Data wygaśnięcia",
     "healthcheck date": "Data Healthcheck",
-    "last execution status": "Status ostatniego Execution",
+    "last execution status": "Status ostatniej egzekucji",
     "jump to...": "Przejdź do…",
     "contextBar": {
       "ai": "AI",
@@ -351,15 +351,15 @@
     "end date": "Data zakończenia",
     "restart": "Uruchom ponownie",
     "restart latest revision": "Uruchom ponownie najnowszą wersję",
-    "restart tooltip": "Uruchom ponownie Execution od Taska <code>{state}</code>",
-    "restarted": "Execution został uruchomiony ponownie",
-    "restart confirm": "Czy na pewno chcesz ponownie uruchomić Execution <code>{id}</code>?",
+    "restart tooltip": "Uruchom ponownie egzekucję od Taska <code>{state}</code>",
+    "restarted": "Egzekucja została uruchomiona ponownie",
+    "restart confirm": "Czy na pewno chcesz ponownie uruchomić egzekucję <code>{id}</code>?",
     "replay": "Replay",
-    "replay from task tooltip": "Utwórz podobny Execution, zaczynając od Taska <code>{taskId}</code>",
-    "replay from beginning tooltip": "Utwórz podobny Execution, zaczynając od początku",
-    "replay latest revision": "Replay z najnowszą Rewizją",
-    "replayed": "Replay Execution został uruchomiony",
-    "replay the execution": "Replay Execution <code>{executionId}</code> dla Flow <code>{flowId}</code>",
+    "replay from task tooltip": "Utwórz podobną egzekucję, zaczynając od Taska <code>{taskId}</code>",
+    "replay from beginning tooltip": "Utwórz podobną egzekucję, zaczynając od początku",
+    "replay latest revision": "Replay z najnowszą wersją",
+    "replayed": "Uruchomiono Replay egzekucji",
+    "replay the execution": "Replay egzekucji <code>{executionId}</code> dla Flow <code>{flowId}</code>",
     "prefill inputs": "Wypełnij",
     "current": "bieżący",
     "change state": "Zmień status",
@@ -368,47 +368,47 @@
     "are you sure change state": "Czy na pewno chcesz zmienić status?",
     "yes": "Tak",
     "change state done": "Status Taska został zaktualizowany",
-    "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w Execution <code>{id}</code>?<br/>Execution zostanie wtedy uruchomiony ponownie od następnego Taska, a nadrzędny Execution, jeśli istnieje, również.",
+    "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
     "change state current state": "Aktualny status:",
-    "replay execution title": "Replay Execution",
-    "restart execution title": "Uruchom ponownie Execution",
-    "replay execution description": "Spowoduje to utworzenie nowego Execution na podstawie wybranego Execution.",
+    "replay execution title": "Replay egzekucji",
+    "restart execution title": "Uruchom ponownie egzekucję",
+    "replay execution description": "Spowoduje to utworzenie nowej egzekucji na podstawie wybranej egzekucji.",
     "replay using": "Replay z użyciem",
-    "flow revision original": "Oryginalna Rewizja Flow",
-    "flow revision latest": "Najnowsza Rewizja Flow",
-    "flow revision specific": "Konkretna Rewizja Flow",
+    "flow revision original": "Oryginalna wersja Flow",
+    "flow revision latest": "Najnowsza wersja Flow",
+    "flow revision specific": "Konkretna wersja Flow",
     "replay inputs": "Inputy",
     "reuse original inputs": "Użyj ponownie oryginalnych Inputów",
     "modify inputs": "Zmień Inputy",
-    "replay inputs new required": "Ta Rewizja ma Inputy. Zostaniesz poproszony o ich wypełnienie.",
+    "replay inputs new required": "Ta wersja ma Inputy. Zostaniesz poproszony o ich wypełnienie.",
     "replay select taskrun": "Wybierz Task Run, od którego ma zacząć się Replay:",
-    "change execution state done": "Status Execution zaktualizowany",
+    "change execution state done": "Status egzekucji zaktualizowany",
     "mark as": "Oznacz jako <code>{status}</code>",
     "unqueue as": "Usuń z kolejki jako <code>{status}</code>",
     "kill": "Zabij",
-    "kill parents and subflow": "Zabij bieżący Execution i Subflowy",
-    "kill only parents": "Zabij tylko bieżący Execution",
-    "killed confirm": "Czy na pewno chcesz zabić Execution <code>{id}</code>?",
-    "killed done": "Execution został skierowany do zabicia",
+    "kill parents and subflow": "Zabij bieżącą egzekucję i Subflowy",
+    "kill only parents": "Zabij tylko bieżącą egzekucję",
+    "killed confirm": "Czy na pewno chcesz zabić egzekucję <code>{id}</code>?",
+    "killed done": "Egzekucja została skierowana do zabicia",
     "resume": "Wznów",
-    "resumed title": "Wznów Execution <code>{id}</code>",
-    "resumed confirm": "Czy na pewno chcesz wznowić Execution <code>{id}</code>?",
-    "resumed done": "Execution został wznowiony",
-    "resume from breakpoint title": "Wznów Execution <code>{id}</code> od Breakpointa",
-    "resume from breakpoint done": "Execution został wznowiony od Breakpointa",
+    "resumed title": "Wznów egzekucję <code>{id}</code>",
+    "resumed confirm": "Czy na pewno chcesz wznowić egzekucję <code>{id}</code>?",
+    "resumed done": "Egzekucja została wznowiona",
+    "resume from breakpoint title": "Wznów egzekucję <code>{id}</code> od Breakpointa",
+    "resume from breakpoint done": "Egzekucja została wznowiona od Breakpointa",
     "breakpoints": "Breakpointy",
     "pause": "Wstrzymaj",
-    "pause title": "Wstrzymaj Execution <code>{id}</code>.<br/>Pamiętaj, że aktualnie uruchomione Taski będą nadal przetwarzane, a Execution trzeba będzie wznowić ręcznie.",
-    "pause confirm": "Czy na pewno chcesz wstrzymać Execution <code>{id}</code>?",
-    "pause done": "Execution został wstrzymany",
+    "pause title": "Wstrzymaj egzekucję <code>{id}</code>.<br/>Pamiętaj, że aktualnie uruchomione Taski będą nadal przetwarzane, a egzekucję trzeba będzie wznowić ręcznie.",
+    "pause confirm": "Czy na pewno chcesz wstrzymać egzekucję <code>{id}</code>?",
+    "pause done": "Egzekucja została wstrzymana",
     "unqueue": "Usuń z kolejki",
-    "unqueue title": "Czy na pewno chcesz usunąć z kolejki Execution <code>{id}</code>?<br/><br/>Pamiętaj, że limit współbieżności Flow nie będzie wtedy przestrzegany, więc może działać więcej Executionów niż dozwolony limit.",
-    "unqueue title multiple": "Czy na pewno chcesz usunąć z kolejki <code>{count}</code> Executionów?<br/><br/>Pamiętaj, że limit współbieżności Flow nie będzie wtedy przestrzegany, więc może działać więcej Executionów niż dozwolony limit.",
-    "unqueue done": "Execution został usunięty z kolejki",
+    "unqueue title": "Czy na pewno chcesz usunąć z kolejki egzekucję <code>{id}</code>?<br/><br/>Pamiętaj, że limit Concurrency Flow nie będzie wtedy przestrzegany, więc może działać więcej egzekucji niż dozwolony limit.",
+    "unqueue title multiple": "Czy na pewno chcesz usunąć z kolejki <code>{count}</code> egzekucji?<br/><br/>Pamiętaj, że limit Concurrency Flow nie będzie wtedy przestrzegany, więc może działać więcej egzekucji niż dozwolony limit.",
+    "unqueue done": "Egzekucja została usunięta z kolejki",
     "force run": "Wymuś uruchomienie",
-    "force run title": "Wymuś uruchomienie Execution <code>{id}</code>.",
-    "force run confirm": "Czy na pewno chcesz wymusić uruchomienie Execution <code>{id}</code>?<br/><br/>OSTRZEŻENIE: wymuszone uruchomienie Execution nie jest gwarantowane i może spowodować zduplikowane Task Runy.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w statusie CREATED przejdą do statusu RUNNING.</li><li>Taski w statusie RUNNING zostaną ponownie przesłane.</li><li>Taski w statusie QUEUED zostaną usunięte z kolejki.</li><li>Taski w statusie PAUSED zostaną wznowione.</li></ul>",
-    "force run done": "Wymuszono uruchomienie Execution",
+    "force run title": "Wymuś uruchomienie egzekucji <code>{id}</code>.",
+    "force run confirm": "Czy na pewno chcesz wymusić uruchomienie egzekucji <code>{id}</code>?<br/><br/>OSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane Task Runy.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w statusie CREATED przejdą do statusu RUNNING.</li><li>Taski w statusie RUNNING zostaną ponownie przesłane.</li><li>Taski w statusie QUEUED zostaną usunięte z kolejki.</li><li>Taski w statusie PAUSED zostaną wznowione.</li></ul>",
+    "force run done": "Wymuszono uruchomienie egzekucji",
     "metrics": "Metryki",
     "no metrics available": "Brak metryk zarejestrowanych dla tego Task Runa.",
     "no outputs available": "Brak Outputów dostępnych dla tego Task Runa.",
@@ -425,11 +425,11 @@
     "name": "Nazwa",
     "key": "Key",
     "value": "Value",
-    "parent execution": "Nadrzędny Execution",
-    "original execution": "Oryginalny Execution",
+    "parent execution": "Nadrzędna egzekucja",
+    "original execution": "Oryginalna egzekucja",
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "refresh": "Odśwież",
-    "filter by status": "Filtruj Executiony według statusu {status}",
+    "filter by status": "Filtruj egzekucje według statusu {status}",
     "topology-graph": {
       "graph-orientation": "Orientacja grafu",
       "zoom-in": "Powiększ",
@@ -444,13 +444,13 @@
     "show task outputs": "Pokaż Outputy Taska",
     "show task source": "Pokaż źródło Taska",
     "stream": "Strumień",
-    "execution statistics": "Statystyki Executionów",
-    "concurrency limits": "Limity współbieżności",
+    "execution statistics": "Statystyki egzekucji",
+    "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
     "usage": "Użycie",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
-    "executions duration (in minutes)": "Całkowity czas trwania Executionów (w minutach)",
+    "executions duration (in minutes)": "Całkowity czas trwania egzekucji (w minutach)",
     "last 48 hours": "ostatnie 48 godzin",
     "email": "E-mail",
     "password": "Hasło",
@@ -468,7 +468,7 @@
       "raw_json": "Surowy JSON",
       "select_prompt": "Wybierz zmienną, aby sprawdzić jej Value.",
       "select_hint": "Zmienne, Trigger i Outputy Tasków są wymienione po lewej stronie.",
-      "empty": "Brak zmiennych dostępnych dla tego Execution.",
+      "empty": "Brak zmiennych dostępnych dla tej egzekucji.",
       "one_key": "\\{ 1 key \\}",
       "n_keys": "\\{ {count} keys \\}",
       "one_item": "[ 1 element ]",
@@ -486,14 +486,14 @@
     "download": "Pobierz",
     "jsonl": "JSONL",
     "concurrency_limit": {
-      "dialog_title": "Limity współbieżności",
-      "warning": "Zmiana licznika uruchomień może naruszyć współbieżność, więc Executiony mogą przekroczyć dozwolony limit"
+      "dialog_title": "Limity Concurrency",
+      "warning": "Zmiana licznika uruchomień może naruszyć Concurrency, więc egzekucje mogą przekroczyć dozwolony limit"
     },
     "flowConcurrency": {
-      "loadError": "Nie udało się wczytać limitu współbieżności tego Flow.",
+      "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
       "staleLimit": {
-        "message": "Ten Flow nie deklaruje już bloku współbieżności, ale rekord limitu wciąż zlicza {count} działających Executionów. Nie wpływa już na nowe Executiony i można go zresetować w Administracja → Limity współbieżności.",
-        "title": "Pozostały limit współbieżności"
+        "message": "Ten Flow nie deklaruje już bloku Concurrency, ale rekord limitu wciąż zlicza {count} działających egzekucji. Nie wpływa już na nowe egzekucje i można go zresetować w Administracja → Limity Concurrency.",
+        "title": "Pozostały limit Concurrency"
       }
     },
     "documentation": {
@@ -505,7 +505,7 @@
       "create": "Utwórz Blueprint",
       "edit": "Edytuj Blueprint",
       "title": "Blueprints",
-      "empty": "Brak blueprintów do wyświetlenia.",
+      "empty": "Brak Blueprintów do wyświetlenia.",
       "header": {
         "catch phrase": {
           "1": "Pierwszy krok jest zawsze najtrudniejszy.",
@@ -580,10 +580,10 @@
       "non_dynamic": "niedynamiczny",
       "required": "Wymagane"
     },
-    "last execution date": "Data ostatniego Execution",
-    "revisions": "Rewizje",
-    "no revisions found": "Dla tego Flow istnieje tylko jedna Rewizja",
-    "no revisions": "Brak Rewizji",
+    "last execution date": "Data ostatniej egzekucji",
+    "revisions": "Wersje",
+    "no revisions found": "Dla tego Flow istnieje tylko jedna wersja",
+    "no revisions": "Brak wersji",
     "side-by-side": "obok siebie",
     "line-by-line": "linia po linii",
     "template": "Szablon",
@@ -597,7 +597,7 @@
       "send": "Wyślij zdarzenie",
       "sending": "Wysyłanie",
       "response": "Odpowiedź {status}",
-      "execution_created": "Execution utworzony",
+      "execution_created": "Egzekucja utworzona",
       "failed": "Webhook odpowiedział {status}. Sprawdź, czy Flow jest zapisany i Trigger jest włączony.",
       "button": "Wyślij zdarzenie testowe"
     },
@@ -609,28 +609,28 @@
     "triggers_add_filter_all": "Wszystko",
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Nie znaleziono Triggerów",
-    "triggers_add_ee_tooltip": "Ten trigger wymaga Enterprise Edition.",
+    "triggers_add_ee_tooltip": "Ten Trigger wymaga Enterprise Edition.",
     "triggers_add_card_add": "Dodaj",
     "triggers_add_modal_tab_form": "Formularz",
     "triggers_add_modal_tab_source": "Źródło",
     "triggers_add_modal_tab_documentation": "Dokumentacja",
     "triggers_add_modal_namespace_placeholder": "Wybierz namespace",
-    "triggers_add_modal_flow_placeholder": "Wybierz flow",
+    "triggers_add_modal_flow_placeholder": "Wybierz Flow",
     "triggers_add_modal_trigger_id": "ID Triggera",
     "triggers_add_modal_trigger_id_placeholder": "Unikalne ID dla tego Triggera",
     "triggers_add_modal_properties_hint": "Skonfiguruj właściwości Triggera w edytorze Flow po dodaniu Triggera.",
     "triggers_add_modal_add_button": "Dodaj Trigger do Flow",
     "trigger details": "Szczegóły Triggera",
-    "triggerflow disabled": "Trigger jest wyłączony w definicji flow",
+    "triggerflow disabled": "Trigger jest wyłączony w definicji Flow",
     "last trigger date": "Data ostatniego uruchomienia",
     "trigger_states": "Statusy",
     "state updated date": "Data aktualizacji statusu",
     "next evaluation date": "Data następnej oceny",
     "last evaluation date": "Data ostatniej oceny",
     "last trigger date tooltip": "Kiedy Trigger został ostatnio uruchomiony. Może wskazywać przeszłość, gdy trwa Backfill.",
-    "context updated date tooltip": "Kiedy kontekst Triggera został ostatnio zaktualizowany. Dzieje się to, gdy Execution zostaje uruchomiony, gdy się kończy (blokada zwolniona) lub po ocenie (nawet jeśli żaden Execution nie powstanie).",
-    "next evaluation date tooltip": "Kiedy scheduler ponownie oceni ten Trigger, na podstawie jego interwału. Ocena tworzy Execution tylko wtedy, gdy warunki Triggera są spełnione.",
-    "last evaluation date tooltip": "Kiedy Trigger był ostatnio oceniany przez schedulera, niezależnie od tego, czy powstał z tego Execution.",
+    "context updated date tooltip": "Kiedy kontekst Triggera został ostatnio zaktualizowany. Dzieje się to, gdy egzekucja zostaje uruchomiona, gdy się kończy (blokada zwolniona) lub po ocenie (nawet jeśli żadna egzekucja nie powstanie).",
+    "next evaluation date tooltip": "Kiedy scheduler ponownie oceni ten Trigger, na podstawie jego interwału. Ocena tworzy egzekucję tylko wtedy, gdy warunki Triggera są spełnione.",
+    "last evaluation date tooltip": "Kiedy Trigger był ostatnio oceniany przez schedulera, niezależnie od tego, czy powstała z tego egzekucja.",
     "conditions": "Warunki",
     "triggerId": "ID Triggera",
     "tenantId": "ID Tenanta",
@@ -641,11 +641,11 @@
     "Total": "Całkowity",
     "sub flow": "Subflow",
     "execute": "Wykonaj",
-    "execute flow behaviour": "Wykonaj flow",
+    "execute flow behaviour": "Wykonaj Flow",
     "open in same tab": "W tej samej zakładce",
     "open in new tab": "W nowej zakładce",
-    "execute the flow": "Wykonaj flow <code>{id}</code>",
-    "discard execution confirmation": "Masz niezapisane Inputy. Czy na pewno chcesz odrzucić ten Execution?",
+    "execute the flow": "Wykonaj Flow <code>{id}</code>",
+    "discard execution confirmation": "Masz niezapisane Inputy. Czy na pewno chcesz odrzucić tę egzekucję?",
     "discard changes confirmation": "Masz niezapisane zmiany. Czy na pewno chcesz je odrzucić?",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
     "unsaved changes": "Niezapisane zmiany",
@@ -665,7 +665,7 @@
       "404": {
         "title": "Strona nie znaleziona",
         "content": "Żądany URL nie został znaleziony na tym serwerze.<br />To wszystko, co wiemy.",
-        "flow or execution": "Flow lub Execution, którego szukasz, nie istnieje."
+        "flow or execution": "Flow lub egzekucja, której szukasz, nie istnieje."
       }
     },
     "back_to_dashboard": "Powrót do Dashboardu",
@@ -680,56 +680,56 @@
     "tags": "Tagi",
     "disabled flow title": "Ten Flow jest wyłączony",
     "disabled flow desc": "Ten Flow jest wyłączony. Włącz go, aby móc go uruchomić.",
-    "label": "Label",
-    "labels": "Labele",
-    "execution labels": "Labele Execution",
-    "wrong labels": "Pusty Key lub Value nie jest dozwolony w Labelach",
+    "label": "Etykieta",
+    "labels": "Etykiety",
+    "execution labels": "Etykiety egzekucji",
+    "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
     "feeds": {
       "heading": "Wszystko o Kestra.",
       "subheading": "Najnowsze aktualizacje, przewodniki i historie"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Ten Execution nadal trwa, a usunięcie go nie zatrzyma procesu.<br />Aby go zatrzymać, musisz zabić Execution.</div>",
+    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Ta egzekucja nadal trwa, a usunięcie jej nie zatrzyma procesu.<br />Aby ją zatrzymać, musisz zabić egzekucję.</div>",
     "restore": "Przywróć",
-    "restore confirm": "Czy na pewno chcesz przywrócić Rewizję <code>{revision}</code>?",
-    "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> Executionów?",
-    "bulk replay": "Czy na pewno chcesz uruchomić Replay dla <code>{executionCount}</code> Executionów?",
-    "bulk change state": "Czy na pewno chcesz zmienić status <code>{executionCount}</code> Executionów?",
-    "bulk resume": "Czy na pewno chcesz wznowić <code>{executionCount}</code> Executionów?",
-    "bulk pause": "Czy na pewno chcesz wstrzymać <code>{executionCount}</code> Executionów?",
-    "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> Executionów?<br/><br/>OSTRZEŻENIE: wymuszone uruchomienie Execution nie jest gwarantowane i może spowodować zduplikowane Task Runy.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w statusie CREATED przejdą do statusu RUNNING.</li><li>Taski w statusie RUNNING zostaną ponownie przesłane.</li><li>Taski w statusie QUEUED zostaną usunięte z kolejki.</li><li>Taski w statusie PAUSED zostaną wznowione.</li></ul>",
-    "bulk restart": "Czy na pewno chcesz ponownie uruchomić <code>{executionCount}</code> Executionów?",
-    "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> Executionów?",
+    "restore confirm": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
+    "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> egzekucji?",
+    "bulk replay": "Czy na pewno chcesz uruchomić Replay dla <code>{executionCount}</code> egzekucji?",
+    "bulk change state": "Czy na pewno chcesz zmienić status <code>{executionCount}</code> egzekucji?",
+    "bulk resume": "Czy na pewno chcesz wznowić <code>{executionCount}</code> egzekucji?",
+    "bulk pause": "Czy na pewno chcesz wstrzymać <code>{executionCount}</code> egzekucji?",
+    "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> egzekucji?<br/><br/>OSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane Task Runy.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w statusie CREATED przejdą do statusu RUNNING.</li><li>Taski w statusie RUNNING zostaną ponownie przesłane.</li><li>Taski w statusie QUEUED zostaną usunięte z kolejki.</li><li>Taski w statusie PAUSED zostaną wznowione.</li></ul>",
+    "bulk restart": "Czy na pewno chcesz ponownie uruchomić <code>{executionCount}</code> egzekucji?",
+    "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> egzekucji?",
     "cancel": "Anuluj",
     "errorLogs": "Logi błędów",
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, aby uruchomić swój pierwszy Flow?"
     },
     "product_tour": "Przewodnik po produkcie",
-    "executions replayed": "Uruchomiono Replay dla <code>{executionCount}</code> Executionów",
-    "executions state changed": "Status <code>{executionCount}</code> Executionów został zmieniony",
-    "executions resumed": "Wznowiono <code>{executionCount}</code> Executionów",
-    "executions paused": "Wstrzymano <code>{executionCount}</code> Executionów",
-    "executions unqueue": "Usunięto z kolejki <code>{executionCount}</code> Executionów",
-    "executions force run": "Wymuszono uruchomienie <code>{executionCount}</code> Executionów",
-    "executions restarted": "Uruchomiono ponownie <code>{executionCount}</code> Executionów",
-    "executions killed": "Zabito <code>{executionCount}</code> Executionów",
-    "executions deleted": "Usunięto <code>{executionCount}</code> Executionów",
-    "invalid bulk replay": "Nie można uruchomić Replaya Executionów",
-    "invalid bulk resume": "Nie można wznowić Executionów",
-    "invalid bulk pause": "Nie można wstrzymać Executionów",
-    "invalid bulk unqueue": "Nie można usunąć Executionów z kolejki",
-    "invalid bulk force run": "Nie można wymusić uruchomienia Executionów",
-    "invalid bulk restart": "Nie można ponownie uruchomić Executionów",
-    "invalid bulk kill": "Nie można zabić Executionów",
-    "invalid bulk delete": "Nie można usunąć Executionów",
-    "execution not found": "Nie znaleziono Execution {executionId}.",
-    "execution not in state PAUSED": "Execution <code>{executionId}</code> nie jest w statusie PAUSED",
-    "execution already finished": "Execution <code>{executionId}</code> już się zakończył",
-    "seeing old revision": "Widzisz starą Rewizję: {revision}",
+    "executions replayed": "Uruchomiono Replay dla <code>{executionCount}</code> egzekucji",
+    "executions state changed": "Status <code>{executionCount}</code> egzekucji został zmieniony",
+    "executions resumed": "Wznowiono <code>{executionCount}</code> egzekucji",
+    "executions paused": "Wstrzymano <code>{executionCount}</code> egzekucji",
+    "executions unqueue": "Usunięto z kolejki <code>{executionCount}</code> egzekucji",
+    "executions force run": "Wymuszono uruchomienie <code>{executionCount}</code> egzekucji",
+    "executions restarted": "Uruchomiono ponownie <code>{executionCount}</code> egzekucji",
+    "executions killed": "Zabito <code>{executionCount}</code> egzekucji",
+    "executions deleted": "Usunięto <code>{executionCount}</code> egzekucji",
+    "invalid bulk replay": "Nie można uruchomić Replaya egzekucji",
+    "invalid bulk resume": "Nie można wznowić egzekucji",
+    "invalid bulk pause": "Nie można wstrzymać egzekucji",
+    "invalid bulk unqueue": "Nie można usunąć egzekucji z kolejki",
+    "invalid bulk force run": "Nie można wymusić uruchomienia egzekucji",
+    "invalid bulk restart": "Nie można ponownie uruchomić egzekucji",
+    "invalid bulk kill": "Nie można zabić egzekucji",
+    "invalid bulk delete": "Nie można usunąć egzekucji",
+    "execution not found": "Nie znaleziono egzekucji {executionId}.",
+    "execution not in state PAUSED": "Egzekucja <code>{executionId}</code> nie jest w statusie PAUSED",
+    "execution already finished": "Egzekucja <code>{executionId}</code> już się zakończyła",
+    "seeing old revision": "Widzisz starą wersję: {revision}",
     "export": "Eksportuj",
     "exports": "Eksporty",
     "export_csv": "Eksportuj jako CSV",
-    "flow_export": "Eksportuj flow",
+    "flow_export": "Eksportuj Flow",
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
     "flows exported": "Wyeksportowano <code>{count}</code> Flowów",
     "import": "Importuj",
@@ -743,8 +743,8 @@
     "flows disabled": "Wyłączono <code>{count}</code> Flowów",
     "flows enabled": "Włączono <code>{count}</code> Flowów",
     "dependencies": "Zależności",
-    "see timeline": "Zobacz Timeline",
-    "run timeline": "Timeline uruchomień",
+    "see timeline": "Zobacz oś czasu",
+    "run timeline": "Oś czasu uruchomień",
     "dependencies delete flow": "Ten Flow ma zależności. Usunięcie go uniemożliwi wykonanie tych zależności.<br /><br /> Oto lista Flowów, których to dotyczy:",
     "reset": "Uruchom ponownie",
     "validate": "Zatwierdź",
@@ -760,7 +760,7 @@
     "can not have less than 1 task": "Flow musi mieć co najmniej jednego Taska. Dodaj kolejnego Taska przed usunięciem tego.",
     "task id": "ID Taska",
     "taskid column details": "Ostatni wykonywany Task i liczba jego prób.",
-    "flow already exists message": "Flow <code>{id}</code> już istnieje w namespace'ie <code>{namespace}</code>. Czy chcesz utworzyć nową Rewizję?",
+    "flow already exists message": "Flow <code>{id}</code> już istnieje w namespace'ie <code>{namespace}</code>. Czy chcesz utworzyć nową wersję?",
     "editor": "Edytor",
     "delete task confirm": "Czy chcesz usunąć Taska <code>{taskId}</code>?",
     "flow must not be empty": "Flow nie może być pusty",
@@ -842,13 +842,13 @@
     "encoding": "Kodowanie",
     "show": "Pokaż",
     "advanced configuration": "Inne właściwości",
-    "execution_status": "Execution jest: ",
+    "execution_status": "Egzekucja jest: ",
     "no_tasks_running": "Żaden Task jeszcze nie działa.",
-    "execution_starts_progress": "Gdy Execution się rozpocznie, zobaczysz tutaj aktualizacje postępu.",
+    "execution_starts_progress": "Gdy egzekucja się rozpocznie, zobaczysz tutaj aktualizacje postępu.",
     "trigger filter": {
       "options": {
-        "CHILD": "Podrzędne Executiony",
-        "MAIN": "Nadrzędne Executiony"
+        "CHILD": "Podrzędne egzekucje",
+        "MAIN": "Nadrzędne egzekucje"
       }
     },
     "namespace files": {
@@ -917,9 +917,9 @@
         }
       },
       "revisions": {
-        "history": "Historia Rewizji",
+        "history": "Historia wersji",
         "restore": {
-          "success": "Rewizja pliku została przywrócona"
+          "success": "Wersja pliku została przywrócona"
         }
       },
       "path": {
@@ -928,30 +928,30 @@
         "error": "Wystąpiły błędy podczas kopiowania ścieżki do schowka"
       }
     },
-    "continue backfill": "Kontynuuj backfill",
-    "delete backfill": "Usuń backfill",
-    "pause backfill": "Wstrzymaj backfill",
+    "continue backfill": "Kontynuuj Backfill",
+    "delete backfill": "Usuń Backfill",
+    "pause backfill": "Wstrzymaj Backfill",
     "continue backfills": "Kontynuuj Backfille",
     "delete backfills": "Usuń Backfille",
     "pause backfills": "Wstrzymaj Backfille",
-    "backfill executions": "Executiony Backfillu",
-    "execute backfill": "Wykonaj backfill",
+    "backfill executions": "Egzekucje Backfillu",
+    "execute backfill": "Wykonaj Backfill",
     "relative": "Względny",
     "relative start date": "Względna data rozpoczęcia",
     "now": "Teraz",
     "absolute": "Absolutny",
     "backfill": "Backfill",
-    "Set labels": "Ustaw Labele",
-    "manage labels": "Zarządzaj Labelami",
-    "Set labels to execution": "Dodaj lub zaktualizuj Labele Execution <code>{id}</code>",
-    "Set labels done": "Labele Execution zostały ustawione",
-    "bulk set labels": "Czy na pewno chcesz ustawić Labele dla <code>{executionCount}</code> Executionów?",
+    "Set labels": "Ustaw etykiety",
+    "manage labels": "Zarządzaj etykietami",
+    "Set labels to execution": "Dodaj lub zaktualizuj etykiety egzekucji <code>{id}</code>",
+    "Set labels done": "Etykiety egzekucji zostały ustawione",
+    "bulk set labels": "Czy na pewno chcesz ustawić etykiety dla <code>{executionCount}</code> egzekucji?",
     "true": "Prawda",
     "false": "Fałsz",
     "undefined": "Niezdefiniowane",
-    "execution-include-non-terminated": "Uwzględnić niezakończone Executiony?",
+    "execution-include-non-terminated": "Uwzględnić niezakończone egzekucje?",
     "execution-warn-title": "Ważne ostrzeżenie!",
-    "execution-warn-deleting-still-running": "Zdecydowanie zalecamy anulowanie tej akcji i zabicie najpierw wszystkich trwających Executionów. Usunięcie niezakończonych Executionów może prowadzić do problemów ze współbieżnością, niespójności w zarządzaniu zależnościami Flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka, zanim przejdziesz do usuwania.",
+    "execution-warn-deleting-still-running": "Zdecydowanie zalecamy anulowanie tej akcji i zabicie najpierw wszystkich trwających egzekucji. Usunięcie niezakończonych egzekucji może prowadzić do problemów z Concurrency, niespójności w zarządzaniu zależnościami Flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka, zanim przejdziesz do usuwania.",
     "pluginPage": {
       "search": "Przeszukaj ponad {count} pluginów",
       "searchTasks": "Przeszukaj {count} Tasków",
@@ -966,7 +966,7 @@
         "charts": "Wykres",
         "apps": "App",
         "logExporters": "Eksporter logów",
-        "secrets": "Secret"
+        "secrets": "Sekret"
       },
       "sortBy": "Sortuj według",
       "sort": {
@@ -1014,7 +1014,7 @@
             "log_display": "Domyślne wyświetlanie logów",
             "editor_type": "Domyślny typ edytora",
             "execute_flow": "Uruchamianie Flow",
-            "execute_default_tab": "Domyślna zakładka Execution",
+            "execute_default_tab": "Domyślna zakładka egzekucji",
             "flow_default_tab": "Domyślna zakładka Flow",
             "triggers_default_tab": "Domyślna zakładka Triggerów",
             "playground": "Playground",
@@ -1023,11 +1023,11 @@
           },
           "descriptions": {
             "default_namespace": "Używane podczas tworzenia nowych Flowów bez namespace'u.",
-            "log_level": "Minimalny poziom logów wyświetlany w logach Execution.",
-            "log_display": "Jak logi są prezentowane przy otwieraniu Execution.",
+            "log_level": "Minimalny poziom logów wyświetlany w logach egzekucji.",
+            "log_display": "Jak logi są prezentowane przy otwieraniu egzekucji.",
             "editor_type": "Edytor wyświetlany przy pierwszym otwarciu Flow.",
-            "execute_flow": "Gdzie otwierają się wyniki Execution po uruchomieniu.",
-            "execute_default_tab": "Zakładka wybierana przy przejściu do Execution.",
+            "execute_flow": "Gdzie otwierają się wyniki egzekucji po uruchomieniu.",
+            "execute_default_tab": "Zakładka wybierana przy przejściu do egzekucji.",
             "flow_default_tab": "Zakładka wybierana przy przejściu do Flow.",
             "triggers_default_tab": "Zakładka wybierana przy przejściu do strony Triggerów.",
             "auto_refresh_interval": "Sekundy między automatycznymi odświeżeniami danych na stronach list.",
@@ -1088,7 +1088,7 @@
           },
           "descriptions": {
             "language": "Język interfejsu dla menu i etykiet.",
-            "time_zone": "Używane do wyświetlania dat Executionów i zaplanowanych Triggerów.",
+            "time_zone": "Używane do wyświetlania dat egzekucji i zaplanowanych Triggerów.",
             "date_format": "Format używany do wyświetlania dat w całym Dashboardzie."
           }
         },
@@ -1112,13 +1112,13 @@
       "get_a_demo_button": "Uzyskaj Demo",
       "contact_sales": "Skontaktuj się z działem sprzedaży",
       "secrets": {
-        "title": "Ulepsz zarządzanie Secretami",
-        "message": "Wersja Enterprise Edition (EE) umożliwia dodawanie, edytowanie lub usuwanie secrets bezpośrednio w UI — bez konieczności ponownego uruchamiania instancji. Organizuj secrets według namespace z precyzyjnymi uprawnieniami RBAC i dziedzicz je z nadrzędnych do podrzędnych namespaces. EE integruje się z menedżerami secrets, takimi jak HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager i Elasticsearch. Skonfiguruj dedykowane backends dla każdego namespace, tenant lub instancji, aby izolować secrets między zespołami, lub włącz secrets tylko do odczytu przechowywane w zewnętrznych vaults. Secrets pozostają zaszyfrowane w spoczynku i w transicie. Opcjonalne buforowanie zmniejsza liczbę wywołań API, a ścieżki audytu rejestrują wszystkie dostępy.",
+        "title": "Ulepsz zarządzanie sekretami",
+        "message": "Wersja Enterprise Edition (EE) umożliwia dodawanie, edytowanie i usuwanie sekretów bezpośrednio w UI, bez ponownego uruchamiania instancji. Organizuj sekrety według namespace'u z precyzyjnymi uprawnieniami RBAC i dziedzicz je z nadrzędnych do podrzędnych namespace'ów. EE integruje się z menedżerami sekretów, takimi jak HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager i Elasticsearch. Skonfiguruj dedykowane backendy dla każdego namespace'u, Tenanta lub instancji, aby izolować sekrety między zespołami, albo włącz sekrety tylko do odczytu przechowywane w zewnętrznych vaultach. Sekrety pozostają zaszyfrowane w spoczynku i w transmisji. Opcjonalne buforowanie zmniejsza liczbę wywołań API, a ścieżki audytu rejestrują wszystkie dostępy.",
         "add_env": {
-          "intro": "Utwórz nowy Secret",
-          "first": "Zakoduj <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">wartość Secreta w Base64</a>",
+          "intro": "Utwórz nowy sekret",
+          "first": "Zakoduj <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">wartość sekretu w Base64</a>",
           "second": "Ustaw zmienną środowiskową o nazwie <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> z zakodowaną wartością.",
-          "third": "Uruchom ponownie instancję Kestra, aby Secret został wczytany."
+          "third": "Uruchom ponownie instancję Kestra, aby sekret został wczytany."
         }
       },
       "apps": {
@@ -1126,7 +1126,7 @@
         "message": "Apps w Kestra Enterprise Edition pozwalają tworzyć własne interfejsy, które współpracują z workflowami Kestry spoza platformy. Dzięki temu możesz używać swoich workflowów jako backendu dla własnych aplikacji, a osoby nietechniczne mogą wprowadzać dane przez formularze lub wznawiać wstrzymane workflowy oczekujące na zatwierdzenie.",
         "blueprints": {
           "title": "Zacznij od Blueprintu Apps.",
-          "message": "Blueprinty Apps to gotowe aplikacje do typowych zastosowań, takich jak formularze, zatwierdzenia i przesyłanie danych. Dzięki Kestra Enterprise Edition możesz wziąć dowolny Blueprint jako punkt wyjścia i dostosować go, aby zbudować własne interfejsy na swoich workflowach."
+          "message": "Blueprinty Apps to gotowe Apps do typowych zastosowań, takich jak formularze, zatwierdzenia i przesyłanie danych. Dzięki Kestra Enterprise Edition możesz wziąć dowolny Blueprint jako punkt wyjścia i dostosować go, aby zbudować własne interfejsy na swoich workflowach."
         }
       },
       "tests": {
@@ -1142,19 +1142,19 @@
         "message": "Assety łączą metadane observability, lineage i własności, aby zespoły platformowe mogły szybciej diagnozować problemy i wdrażać z pewnością."
       },
       "cases": {
-        "label": "Case'y",
+        "label": "Sprawy",
         "header": "Zarządzanie incydentami",
         "title": "Segreguj i rozwiązuj incydenty bez opuszczania Kestry.",
-        "message": "Case'y w Kestra Enterprise Edition pozwalają otwierać, przypisywać i śledzić incydenty bezpośrednio z nieudanych Executionów, wraz z monitorowaniem SLA, Timeline'ami aktywności oraz powiązanymi Executionami i Assetami, aby przyspieszyć analizę przyczyn źródłowych."
+        "message": "Sprawy w Kestra Enterprise Edition pozwalają otwierać, przypisywać i śledzić incydenty bezpośrednio z nieudanych egzekucji, wraz z monitorowaniem SLA, osiami czasu aktywności oraz powiązanymi egzekucjami i Assetami, aby przyspieszyć analizę przyczyn źródłowych."
       },
       "promote": {
         "title": "Promuj Flowy między środowiskami",
-        "message": "Kestra Enterprise Edition umożliwia promowanie flow z jednego środowiska do drugiego — na przykład z dev do staging, a następnie do production — bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
+        "message": "Kestra Enterprise Edition umożliwia promowanie Flow z jednego środowiska do drugiego — na przykład z dev do staging, a następnie do production — bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
       },
       "dashboards": {
         "header": "Niestandardowe Dashboardy",
         "title": "Twórz własne Dashboardy dopasowane do Twojego zespołu.",
-        "message": "Niestandardowe Dashboardy w Kestra Enterprise Edition pozwalają tworzyć i udostępniać własne widoki Executionów, logów i metryk. Możesz łączyć szeregi czasowe, KPI, tabele i wykresy Markdown, korzystając z edytora kodu i no-code, podglądu na żywo oraz domyślnych Dashboardów dla każdego Tenanta.",
+        "message": "Niestandardowe Dashboardy w Kestra Enterprise Edition pozwalają tworzyć i udostępniać własne widoki egzekucji, logów i metryk. Możesz łączyć szeregi czasowe, KPI, tabele i wykresy Markdown, korzystając z edytora kodu i no-code, podglądu na żywo oraz domyślnych Dashboardów dla każdego Tenanta.",
         "blueprints": {
           "title": "Zacznij od Blueprintu Dashboardu.",
           "message": "Blueprinty Dashboardów to gotowe Dashboardy do typowych potrzeb monitoringu. Dzięki Kestra Enterprise Edition możesz wziąć dowolny Blueprint jako punkt wyjścia i dostosować jego wykresy, KPI oraz tabele do swojego zespołu w edytorze Dashboardów."
@@ -1166,38 +1166,38 @@
       },
       "tenants": {
         "title": "Zarządzaj workflowami w izolowanych Tenantach",
-        "message": "Kestra Enterprise Edition obsługuje multi-tenancy, zapewniając w pełni izolowane środowiska dla różnych zespołów lub projektów, każde z własnymi zasobami, takimi jak dedykowane Worker Groupy, Secrety i wewnętrzne backendy Storage."
+        "message": "Kestra Enterprise Edition obsługuje multi-tenancy, zapewniając w pełni izolowane środowiska dla różnych zespołów lub projektów, każde z własnymi zasobami, takimi jak dedykowane Worker Groupy, sekrety i wewnętrzne backendy pamięci masowej."
       },
       "audit-logs": {
         "title": "Śledź zmiany za pomocą Audit Logów",
         "message": "Kestra Enterprise Edition rejestruje każdą aktywność za pomocą solidnych, niezmiennych zapisów, co ułatwia śledzenie zmian, utrzymanie zgodności oraz rozwiązywanie problemów."
       },
       "quotas": {
-        "title": "Wymuszaj Quoty Executionów dla Flowów",
-        "message": "Kestra Enterprise Edition umożliwia definiowanie Quot dla Flowów, aby ograniczyć liczbę równoczesnych lub łącznych Executionów w danym oknie czasowym. Quoty pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflowy."
+        "title": "Wymuszaj limity egzekucji dla Flowów",
+        "message": "Kestra Enterprise Edition umożliwia definiowanie limitów dla Flowów, aby ograniczyć liczbę równoczesnych lub łącznych egzekucji w danym oknie czasowym. Limity pomagają chronić współdzieloną infrastrukturę, egzekwować SLA i zapobiegać nadmiernemu zużyciu zasobów przez niekontrolowane workflowy."
       },
       "instance": {
         "title": "Zarządzaj infrastrukturą w całej swojej instancji",
-        "message": "Kestra Enterprise Edition udostępnia operacyjny Dashboard, który pomaga obserwować kondycję Twojej platformy i śledzić metryki dostępności wszystkich usług, takich jak Workery, Schedulery i Executory. Z tej samej strony możesz też tworzyć Ogłoszenia, aby informować użytkowników o planowanych przerwach, oraz włączyć tryb konserwacji, który tymczasowo wstrzymuje wszystkie usługi i Executiony workflowów, aby przeprowadzić aktualizację."
+        "message": "Kestra Enterprise Edition udostępnia operacyjny Dashboard, który pomaga obserwować kondycję Twojej platformy i śledzić metryki dostępności wszystkich usług, takich jak Workery, Schedulery i Executory. Z tej samej strony możesz też tworzyć Ogłoszenia, aby informować użytkowników o planowanych przerwach, oraz włączyć tryb konserwacji, który tymczasowo wstrzymuje wszystkie usługi i egzekucje workflowów, aby przeprowadzić aktualizację."
       },
       "blueprints": {
         "title": "Dodaj niestandardowe Blueprinty",
         "message": "W Kestra Enterprise Edition możesz tworzyć niestandardowe Blueprinty dostępne tylko dla Twojej organizacji. Możesz ich używać jako szablonów najlepszych praktyk do udostępniania, centralizowania i dokumentowania często używanych workflowów w Twoim zespole."
       },
       "policies": {
-        "header": "Policies zarządzania",
-        "label": "Policies",
-        "message": "Policies pozwalają zespołom platformowym centralnie zarządzać regułami we wszystkich Flowach i je egzekwować: wstrzykiwać wspólne wartości domyślne, blokować pluginy, ograniczać wartości właściwości i wymagać Labeli zgodności. Reguły obowiązują na poziomie Tenanta lub namespace'u z etapowym wdrożeniem, a każda wstrzyknięta lub zastąpiona wartość pozostaje widoczna dla autorów Flowów.",
-        "title": "Zarządzaj każdym Flow za pomocą Policies"
+        "header": "Polityki zarządzania",
+        "label": "Polityki",
+        "message": "Polityki pozwalają zespołom platformowym centralnie zarządzać regułami we wszystkich Flowach i je egzekwować: wstrzykiwać wspólne wartości domyślne, blokować pluginy, ograniczać wartości właściwości i wymagać etykiet zgodności. Reguły obowiązują na poziomie Tenanta lub namespace'u z etapowym wdrożeniem, a każda wstrzyknięta lub zastąpiona wartość pozostaje widoczna dla autorów Flowów.",
+        "title": "Zarządzaj każdym Flow za pomocą polityk"
       },
       "namespace": {
         "edit": {
           "title": "Ulepsz zarządzanie namespace'ami",
-          "message": "W Kestra Enterprise Edition namespace'y zapewniają zaawansowaną izolację i kontrolę nad Secretami, zmiennymi oraz Policies zarządzania na dużą skalę. Administratorzy mogą konfigurować własne menedżery Secretów, izolowane backendy Storage, dedykowane Worker Groups oraz szczegółowe uprawnienia dla każdego namespace'u. Dzięki temu Secrety, zmienne i reguły zarządzania pozostają bezpieczne i łatwe w utrzymaniu w różnych zespołach i projektach."
+          "message": "W Kestra Enterprise Edition namespace'y zapewniają zaawansowaną izolację i kontrolę nad sekretami, zmiennymi oraz politykami zarządzania na dużą skalę. Administratorzy mogą konfigurować własne menedżery sekretów, izolowane backendy pamięci masowej, dedykowane Worker Groupy oraz szczegółowe uprawnienia dla każdego namespace'u. Dzięki temu sekrety, zmienne i reguły zarządzania pozostają bezpieczne i łatwe w utrzymaniu w różnych zespołach i projektach."
         },
         "secrets": {
-          "title": "Zarządzaj Secretami w bezpieczny sposób",
-          "message": "W Kestra Enterprise Edition możesz przechowywać i kontrolować Secrety na poziomie namespace'u, minimalizując ryzyko i zapewniając izolację danych uwierzytelniających każdego zespołu. Dzięki zagnieżdżonej hierarchii możesz też skonfigurować dane uwierzytelniające w nadrzędnym namespace'ie, a odziedziczą je wszystkie podrzędne namespace'y. Obsługa dedykowanych menedżerów Secretów i szczegółowe uprawnienia na poziomie namespace'u dodatkowo wzmacniają bezpieczeństwo i zgodność."
+          "title": "Zarządzaj sekretami w bezpieczny sposób",
+          "message": "W Kestra Enterprise Edition możesz przechowywać i kontrolować sekrety na poziomie namespace'u, minimalizując ryzyko i zapewniając izolację poświadczeń każdego zespołu. Dzięki zagnieżdżonej hierarchii możesz też skonfigurować poświadczenia w nadrzędnym namespace'ie, a odziedziczą je wszystkie podrzędne namespace'y. Obsługa dedykowanych menedżerów sekretów i szczegółowe uprawnienia na poziomie namespace'u dodatkowo wzmacniają bezpieczeństwo i zgodność."
         },
         "assets": {
           "title": "Centralizuj zarządzanie Assetami",
@@ -1209,11 +1209,11 @@
         },
         "policies": {
           "title": "Wymuszaj reguły zarządzania w tym namespace'ie",
-          "message": "W Kestra Enterprise Edition Policies pozwalają definiować reguły obowiązujące każdy Flow w tym namespace'ie i w jego namespace'ach podrzędnych: wstrzykiwać wspólne wartości domyślne, ograniczać wartości właściwości, blokować pluginy i wymagać Labeli zgodności, przy czym każda zmiana jest w pełni widoczna dla autorów Flowów."
+          "message": "W Kestra Enterprise Edition polityki pozwalają definiować reguły obowiązujące każdy Flow w tym namespace'ie i w jego namespace'ach podrzędnych: wstrzykiwać wspólne wartości domyślne, ograniczać wartości właściwości, blokować pluginy i wymagać etykiet zgodności, przy czym każda zmiana jest w pełni widoczna dla autorów Flowów."
         },
         "history": {
-          "title": "Zarządzaj historią Rewizji w jednym miejscu",
-          "message": "W Kestra Enterprise Edition możesz zarządzać historią Rewizji swoich namespace'ów."
+          "title": "Zarządzaj historią wersji w jednym miejscu",
+          "message": "W Kestra Enterprise Edition możesz zarządzać historią wersji swoich namespace'ów."
         },
         "audit-logs": {
           "title": "Śledź wszystkie zmiany w jednym miejscu",
@@ -1257,11 +1257,11 @@
             "next": "Zapisz i wykonaj"
           },
           "first_execution": {
-            "title": "Każdy Execution jest rejestrowany",
+            "title": "Każda egzekucja jest rejestrowana",
             "body": "Czas każdego Taska jest mierzony w widoku Gantta. Kliknięcie Taska pokazuje jego logi.",
-            "milestone": "Twój pierwszy Execution zakończył się sukcesem",
+            "milestone": "Twoja pierwsza egzekucja zakończyła się sukcesem",
             "next": "Edytuj Flow",
-            "callout": "W przeciwieństwie do zadania cron lub skryptu uruchamianego ręcznie, każdy Execution jest przechowywany wraz ze swoimi Inputami, Outputami i logami, dzięki czemu można później zaudytować to, co zostało uruchomione."
+            "callout": "W przeciwieństwie do zadania cron lub skryptu uruchamianego ręcznie, każda egzekucja jest przechowywana wraz ze swoimi Inputami, Outputami i logami, dzięki czemu można później zaudytować to, co zostało uruchomione."
           },
           "add_task": {
             "title": "Flowy edytuje się jak kod",
@@ -1283,7 +1283,7 @@
           },
           "fix_and_replay": {
             "title": "Zmieniono jeden znak",
-            "body": "Wyrażenie to teraz <code>vars.revenue</code>. Diff pokazuje jedną zmienioną linię, a dla nieudanego Execution można uruchomić Replay od Taska <code>notify</code> względem nowej Rewizji.",
+            "body": "Wyrażenie to teraz <code>vars.revenue</code>. Diff pokazuje jedną zmienioną linię, a dla nieudanej egzekucji można uruchomić Replay od Taska <code>notify</code> względem nowej wersji.",
             "next": "Replay od nieudanego Taska"
           },
           "replayed_execution": {
@@ -1295,7 +1295,7 @@
           },
           "webhook_trigger": {
             "title": "Twój Flow może zostać uruchomiony zdarzeniem",
-            "body": "Z Triggerem Webhook ten Flow ma swój własny URL. Za każdym razem, gdy na ten URL trafi żądanie HTTP, tworzony jest Execution, a treść żądania jest dostępna dla Tasków jako <code>trigger.body</code>.",
+            "body": "Z Triggerem Webhook ten Flow ma swój własny URL. Za każdym razem, gdy na ten URL trafi żądanie HTTP, tworzona jest egzekucja, a treść żądania jest dostępna dla Tasków jako <code>trigger.body</code>.",
             "next": "Zobacz Trigger"
           },
           "test_event": {
@@ -1304,15 +1304,15 @@
             "next": "Wyślij zdarzenie testowe"
           },
           "event_execution": {
-            "title": "Zdarzenie utworzyło Execution",
-            "body": "Zdarzenie nadeszło i na jego podstawie powstał Execution, mierzony i logowany jak każdy inny. Nie trzeba do tego hostować osobnej usługi; endpoint Triggera jest częścią Kestry.",
-            "milestone": "Execution, którego nie uruchomiłeś",
+            "title": "Zdarzenie utworzyło egzekucję",
+            "body": "Zdarzenie nadeszło i na jego podstawie powstała egzekucja, mierzona i logowana jak każda inna. Nie trzeba do tego hostować osobnej usługi; endpoint Triggera jest częścią Kestry.",
+            "milestone": "Egzekucja, której nie uruchomiłeś",
             "next": "Przejrzyj Payload"
           },
           "explore_payload": {
             "title": "Zmienne, Trigger i Outputy Tasków",
-            "body": "Zakładka <strong>Input/Output</strong> zawiera listę wszystkich wartości dostępnych dla tego Execution.",
-            "callout": "<code>trigger.body</code> jest już wypełnione po prawej stronie. Naciśnij <strong>Debug Expression</strong>, aby zobaczyć, co zwraca dla tego Execution.",
+            "body": "Zakładka <strong>Input/Output</strong> zawiera listę wszystkich wartości dostępnych dla tej egzekucji.",
+            "callout": "<code>trigger.body</code> jest już wypełnione po prawej stronie. Naciśnij <strong>Debug Expression</strong>, aby zobaczyć, co zwraca dla tej egzekucji.",
             "next": "Połącz drugi Flow"
           },
           "report_flow": {
@@ -1322,9 +1322,9 @@
             "callout": "Te dwa Flowy mogą należeć do różnych zespołów: <code>daily_report</code> deklaruje, na co czeka, a <code>order_summary</code> nie musi wiedzieć, że tamten istnieje."
           },
           "chain": {
-            "title": "Jak został uruchomiony każdy Execution",
-            "body": "Executiony uruchomione przez Ciebie mają Label <code>started_by:you</code>. Pozostałe powstały ze zdarzenia webhook lub z Triggera typu Flow.",
-            "milestone": "Dwa Executiony z jednego zdarzenia",
+            "title": "Jak została uruchomiona każda egzekucja",
+            "body": "Egzekucje uruchomione przez Ciebie mają etykietę <code>started_by:you</code>. Pozostałe powstały ze zdarzenia webhook lub z Triggera typu Flow.",
+            "milestone": "Dwie egzekucje z jednego zdarzenia",
             "next": "Zakończ"
           }
         },
@@ -1338,11 +1338,11 @@
             },
             "restart": {
               "title": "Replay zamiast uruchamiania wszystkiego od nowa",
-              "body": "Task Runy, które już zakończyły się sukcesem, są używane ponownie, więc tylko nieudana praca musi uruchomić się jeszcze raz, względem najnowszej Rewizji Flow. Replay i ponowne uruchomienie znajdziesz w sekcji <strong>Akcje</strong> przy Execution oraz przy Task Runie w widoku Gantta."
+              "body": "Task Runy, które już zakończyły się sukcesem, są używane ponownie, więc tylko nieudana praca musi uruchomić się jeszcze raz, względem najnowszej wersji Flow. Replay i ponowne uruchomienie znajdziesz w sekcji <strong>Akcje</strong> przy egzekucji oraz przy Task Runie w widoku Gantta."
             },
             "events": {
-              "title": "Executiony uruchamiane zdarzeniami",
-              "body": "Triggery Webhook i Schedule są częścią Kestry, dzięki czemu Execution może zostać uruchomiony zdarzeniem lub zgodnie z harmonogramem, bez hostowania czegokolwiek dodatkowego."
+              "title": "Egzekucje uruchamiane zdarzeniami",
+              "body": "Triggery Webhook i Schedule są częścią Kestry, dzięki czemu egzekucja może zostać uruchomiona zdarzeniem lub zgodnie z harmonogramem, bez hostowania czegokolwiek dodatkowego."
             },
             "chain": {
               "title": "Flowy zależne od innych Flowów",
@@ -1358,20 +1358,20 @@
             "copilot": "AI Copilot",
             "agentSkills": "Agent Skills",
             "autocompletion": "Autouzupełnianie",
-            "execution": "Executiony",
+            "execution": "Egzekucje",
             "replay": "Replay",
-            "revision": "Rewizje",
+            "revision": "Wersje",
             "webhook": "Webhook",
             "schedule": "Harmonogram",
             "flowTrigger": "Triggery Flow",
             "namespace": "Namespaces",
-            "secret": "Secrety"
+            "secret": "Sekrety"
           }
         },
         "errors": {
-          "first_execution": "Pierwszy Execution zakończył się statusem {state}, zamiast sukcesem. Otwórz logi na tej stronie, aby zobaczyć dlaczego, a potem spróbuj ponownie.",
-          "expected_failure": "Ten Execution zakończył się statusem {state}, więc nie ma jeszcze błędu do naprawienia. Sprawdź, czy Flow nadal ma Taska <code>notify</code>, a potem spróbuj ponownie.",
-          "no_execution_to_replay": "Nie ma jeszcze Execution, dla którego można uruchomić Replay. Uruchom Flow w poprzednim kroku, a potem spróbuj ponownie.",
+          "first_execution": "Pierwsza egzekucja zakończyła się statusem {state}, zamiast sukcesem. Otwórz logi na tej stronie, aby zobaczyć dlaczego, a potem spróbuj ponownie.",
+          "expected_failure": "Ta egzekucja zakończyła się statusem {state}, więc nie ma jeszcze błędu do naprawienia. Sprawdź, czy Flow nadal ma Taska <code>notify</code>, a potem spróbuj ponownie.",
+          "no_execution_to_replay": "Nie ma jeszcze egzekucji, dla której można uruchomić Replay. Uruchom Flow w poprzednim kroku, a potem spróbuj ponownie.",
           "replay": "Replay zakończył się statusem {state}. Otwórz logi na tej stronie, aby zobaczyć, co zgłosił <code>notify</code>, a potem spróbuj ponownie.",
           "save_flow": "Nie udało się zapisać Flow przewodnika. {reason}",
           "test_event": "Webhook odpowiedział statusem {status}. Sprawdź, czy Flow jest zapisany i Trigger jest włączony, a potem spróbuj ponownie."
@@ -1389,7 +1389,7 @@
       }
     },
     "auditlogs": "Audit Logi",
-    "quotas": "Quoty",
+    "quotas": "Limity",
     "iam": "IAM",
     "tenant": {
       "name": "Tenant",
@@ -1418,14 +1418,14 @@
     "system_namespace_description": "Automatyzuj Taski konserwacyjne, od alertów o awariach po automatyczne porządki.",
     "secret": {
       "add": "Utwórz",
-      "update": "Aktualizuj Secret '{name}'",
-      "isReadOnly": "Secret jest tylko do odczytu",
-      "names": "Secrety",
+      "update": "Aktualizuj sekret '{name}'",
+      "isReadOnly": "Sekret jest tylko do odczytu",
+      "names": "Sekrety",
       "key": "Nazwa",
-      "keyPlaceholder": "Nazwa używana do odwoływania się do tego Secreta, np. MY_API_TOKEN",
-      "name": "Wartość Secreta",
+      "keyPlaceholder": "Nazwa używana do odwoływania się do tego sekretu, np. MY_API_TOKEN",
+      "name": "Wartość sekretu",
       "description": "Opis",
-      "descriptionPlaceholder": "Opisz ten Secret",
+      "descriptionPlaceholder": "Opisz ten sekret",
       "tags": "Tagi",
       "addTag": "Dodaj tag"
     },
@@ -1467,7 +1467,7 @@
     "execution_deletion": {
       "logs": "Usuń logi",
       "metrics": "Usuń metryki",
-      "storage": "Usuń pliki z wewnętrznego Storage"
+      "storage": "Usuń pliki z wewnętrznej pamięci masowej"
     },
     "scope_filter": {
       "user": "Użytkownik {label}",
@@ -1484,10 +1484,10 @@
     "docs": "Dokumentacja",
     "active-slots": "Aktywne sloty",
     "behavior": "Zachowanie",
-    "concurrency": "Współbieżność",
+    "concurrency": "Concurrency",
     "no-executions-view": {
       "title": "Zacznij automatyzować z Kestrą",
-      "sub_title": "Kliknij przycisk Wykonaj, aby uruchomić swój pierwszy Execution workflow.",
+      "sub_title": "Kliknij przycisk Wykonaj, aby uruchomić swoją pierwszą egzekucję workflow.",
       "namespace_sub_title": "Uruchom jeden lub więcej Flowów z tego namespace'u, aby wypełnić ten Dashboard.",
       "namespace_guidance_desc": "Potrzebujesz wskazówek, jak zarządzać swoim namespace'em?",
       "need_help": "Potrzebujesz pomocy?"
@@ -1523,8 +1523,8 @@
     "items": "elementy",
     "iterations": "Iteracje",
     "cron": "Cron",
-    "execution_started": "Execution został uruchomiony!",
-    "execution_failed": "Execution nie powiódł się!",
+    "execution_started": "Egzekucja została uruchomiona!",
+    "execution_failed": "Egzekucja nie powiodła się!",
     "last error was": "Ostatni błąd to",
     "active": "Aktywny",
     "flows imported": "Zaimportowano Flowy",
@@ -1562,10 +1562,10 @@
         "general": {
           "retry": "Ponów próbę",
           "sla": "SLA",
-          "labels": "Labele",
+          "labels": "Etykiety",
           "outputs": "Outputy",
           "variables": "Zmienne",
-          "concurrency": "Współbieżność",
+          "concurrency": "Concurrency",
           "disabled": "Wyłączony",
           "listeners": "Listenery",
           "taskDefaults": "Task Defaults",
@@ -1573,7 +1573,7 @@
           "workerSelector": "Worker Selector",
           "checks": "Kontrole",
           "updated": "Zaktualizowano",
-          "quotas": "Quoty"
+          "quotas": "Limity"
         }
       },
       "select": {
@@ -1605,7 +1605,7 @@
       },
       "remove": {
         "default": "Usuń ten wpis",
-        "cases": "Usuń ten Case"
+        "cases": "Usuń ten przypadek"
       },
       "adding_to": "+ Dodaj do {what}",
       "choose_placeholder": "Wybierz {field}",
@@ -1646,7 +1646,7 @@
     },
     "instance": "Instancja",
     "something_went_wrong": {
-      "loading_execution": "Wystąpił problem podczas wczytywania Execution",
+      "loading_execution": "Wystąpił problem podczas wczytywania egzekucji",
       "connection_lost": {
         "title": "Połączenie przerwane",
         "message": "Nie udało się połączyć z Twoją instancją Kestry. Upewnij się, że jest uruchomiona, a potem odśwież stronę."
@@ -1667,8 +1667,8 @@
     "deleted_label": "Usunięto",
     "fold_all_multi_lines": "Zwiń wszystkie linie wielokrotne",
     "watch": "Oglądaj",
-    "for flow": "dla flow",
-    "forbidden system labels": "Tylko system.correlationId może być użyty jako systemowy Label",
+    "for flow": "dla Flow",
+    "forbidden system labels": "Tylko system.correlationId może być użyty jako etykieta systemowa",
     "confirm": "Potwierdź",
     "taskRunners": "Task Runners",
     "additionalPlugins": "Dodatkowe pluginy",
@@ -1678,8 +1678,8 @@
     "logExporters": "Log Exportery",
     "empty": {
       "secrets": {
-        "title": "Nie masz jeszcze żadnych Secretów!",
-        "content": "Klucze API, hasła i tokeny można przechowywać jako Secrety, zamiast zapisywać je na stałe w swoich Flowach. Każdy Secret należy do namespace'u, jest dziedziczony przez jego podrzędne namespace'y i może być używany przez dowolnego Taska."
+        "title": "Nie masz jeszcze żadnych sekretów!",
+        "content": "Klucze API, hasła i tokeny można przechowywać jako sekrety, zamiast zapisywać je na stałe w swoich Flowach. Każdy sekret należy do namespace'u, jest dziedziczony przez jego podrzędne namespace'y i może być używany przez dowolnego Taska."
       },
       "namespaceFiles": {
         "title": "Brak plików w tym namespace'ie",
@@ -1691,7 +1691,7 @@
       },
       "kill_switches": {
         "title": "Nie masz jeszcze Kill Switches!",
-        "content": "Kill Switch daje mechanizm w interfejsie do zatrzymywania problematycznych Executionów. Zastępuje dostępne tylko z CLI polecenia <code>--skip-executions</code> i <code>--skip-flows</code> kompleksowym interfejsem administracyjnym."
+        "content": "Kill Switch daje mechanizm w interfejsie do zatrzymywania problematycznych egzekucji. Zastępuje dostępne tylko z CLI polecenia <code>--skip-executions</code> i <code>--skip-flows</code> kompleksowym interfejsem administracyjnym."
       },
       "apps": {
         "title": "Nie masz jeszcze żadnych Apps!",
@@ -1706,24 +1706,24 @@
         "content": "Dodaj Assety, aby śledzić swoje zasoby danych, usługi i infrastrukturę oraz nimi zarządzać."
       },
       "cases": {
-        "title": "Nie masz jeszcze żadnych Case'ów!",
-        "content": "Otwórz Case'a, aby posegregować i śledzić incydent, albo powiąż go automatycznie z nieudanym Executionem."
+        "title": "Nie masz jeszcze żadnych spraw!",
+        "content": "Otwórz sprawę, aby posegregować i śledzić incydent, albo powiąż ją automatycznie z nieudaną egzekucją."
       },
       "apiTokens": {
         "title": "Zarządzaj swoimi tokenami API",
         "content": "Tokeny API są używane wtedy, gdy chcesz przyznać programowy dostęp do API Kestry."
       },
       "concurrency_executions": {
-        "title": "Brak trwających Executionów dla tego Flow.",
-        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executionach</a></strong> w naszej dokumentacji."
+        "title": "Brak trwających egzekucji dla tego Flow.",
+        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">egzekucjach</a></strong> w naszej dokumentacji."
       },
       "concurrency_limit": {
         "title": "Dla tego Flow nie ustawiono żadnych limitów.",
-        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">limitach współbieżności</a></strong> w naszej dokumentacji."
+        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">limitach Concurrency</a></strong> w naszej dokumentacji."
       },
       "concurrency_limits": {
-        "title": "Nie ustawiono limitów współbieżności.",
-        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">limitach współbieżności</a></strong> w naszej dokumentacji."
+        "title": "Nie ustawiono limitów Concurrency.",
+        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">limitach Concurrency</a></strong> w naszej dokumentacji."
       },
       "variables": {
         "title": "Jeszcze brak zmiennych",
@@ -1744,7 +1744,7 @@
         },
         "EXECUTION": {
           "title": "Obecnie brak zależności.",
-          "content": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">zależnościach Execution</a> w naszej dokumentacji."
+          "content": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">zależnościach egzekucji</a> w naszej dokumentacji."
         },
         "NAMESPACE": {
           "title": "Obecnie brak zależności.",
@@ -1787,13 +1787,13 @@
     "searching": "Szukanie…",
     "worker information": "Informacje o Workerze",
     "test-badge-text": "Test",
-    "test-badge-tooltip": "Ten Execution został utworzony przez Test",
+    "test-badge-tooltip": "Ta egzekucja została utworzona przez Test",
     "no_results": {
-      "executions": "Nie znaleziono Executionów",
+      "executions": "Nie znaleziono egzekucji",
       "triggers": "Nie znaleziono Triggerów",
       "flows": "Nie znaleziono Flowów",
       "kv_pairs": "Nie znaleziono par KV",
-      "secrets": "Nie znaleziono Secretów"
+      "secrets": "Nie znaleziono sekretów"
     },
     "duplicate-pair": "{label} „{key}” jest zduplikowany, pierwszy Key został zignorowany.",
     "dashboards": {
@@ -1851,7 +1851,7 @@
         "email_invalid": "Nieprawidłowy email",
         "email_temporary_not_allowed": "Tymczasowe lub jednorazowe adresy e-mail nie są dozwolone",
         "password_required": "Hasło jest wymagane",
-        "incorrect_creds": "Nieprawidłowa nazwa użytkownika lub hasło. Upewnij się, że Twoje dane uwierzytelniające są poprawne.",
+        "incorrect_creds": "Nieprawidłowa nazwa użytkownika lub hasło. Upewnij się, że Twoje poświadczenia są poprawne.",
         "config_message": "Zaktualizuj swoją konfigurację, aby naprawić ten komunikat o błędzie"
       },
       "confirm": {
@@ -1867,7 +1867,7 @@
         "company_personal": "Inne",
         "use_case": "Do czego planujesz to używać?",
         "use_case_infrastructure": "Automatyzacja infrastruktury",
-        "use_case_business": "Biznesowe flow",
+        "use_case_business": "Biznesowe Flow",
         "use_case_data": "Przepływy danych",
         "use_case_ml": "Potoki ML",
         "use_case_scheduling": "Planowanie i cykliczne zadania",
@@ -1902,7 +1902,7 @@
           "app": "App: {app}",
           "blueprint": "Blueprint: {blueprint}",
           "dashboard": "Dashboard: {dashboard}",
-          "execution": "Execution: {id}",
+          "execution": "Egzekucja: {id}",
           "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
           "plugin": "Plugin: {plugin}",
@@ -1913,7 +1913,7 @@
           "app": "App",
           "blueprint": "Blueprint",
           "dashboard": "Dashboard",
-          "execution": "Execution",
+          "execution": "egzekucja",
           "flow": "Flow",
           "namespace": "namespace",
           "plugin": "plugin",
@@ -2065,12 +2065,12 @@
     "delete triggers": "Usuń Triggery",
     "bulk delete triggers": "Czy na pewno chcesz usunąć {count} Triggerów?",
     "bulk success delete triggers": "Pomyślnie usunięto {count} Triggerów",
-    "delete trigger confirmation": "Czy na pewno chcesz usunąć Trigger {id}? OSTRZEŻENIE: usunięcie Triggera może prowadzić do zduplikowanych Executionów, jeśli Trigger jest nadal aktywny w jakimś Flow",
+    "delete trigger confirmation": "Czy na pewno chcesz usunąć Trigger {id}? OSTRZEŻENIE: usunięcie Triggera może prowadzić do zduplikowanych egzekucji, jeśli Trigger jest nadal aktywny w jakimś Flow",
     "delete trigger success": "Trigger {id} został pomyślnie usunięty",
-    "delete trigger error": "Błąd podczas usuwania triggera {id}",
-    "revision deleted": "Rewizja {revision} została pomyślnie usunięta",
-    "delete revision confirm": "Czy na pewno chcesz usunąć Rewizję {revision}?",
-    "delete revision error": "Błąd podczas usuwania Rewizji {revision}: {error}",
+    "delete trigger error": "Błąd podczas usuwania Triggera {id}",
+    "revision deleted": "Wersja {revision} została pomyślnie usunięta",
+    "delete revision confirm": "Czy na pewno chcesz usunąć wersję {revision}?",
+    "delete revision error": "Błąd podczas usuwania wersji {revision}: {error}",
     "no_history": "Brak dostępnej historii",
     "export_as": "Eksportuj jako .{format}",
     "save_and_execute": "Zapisz i Wykonaj",
@@ -2138,7 +2138,7 @@
         "no_tools": "Żaden Tool Flow nie pasuje do Twojego wyszukiwania.",
         "create_tool_flow": "Utwórz Tool Flow",
         "tool_name": "Nazwa narzędzia",
-        "trigger_id": "ID triggera",
+        "trigger_id": "ID Triggera",
         "title": "Tytuł",
         "description": "Opis",
         "annotations": "Adnotacje",
@@ -2170,8 +2170,8 @@
     },
     "flow_editor_stats": {
       "revisions": {
-        "suffix": "Rewizja(e)",
-        "tooltip": "Zobacz Rewizje Flow"
+        "suffix": "Wersja(e)",
+        "tooltip": "Zobacz wersje Flow"
       },
       "dependencies": {
         "suffix": "Zależności",
@@ -2202,7 +2202,7 @@
       "count_types": "{count} typ | {count} typy | {count} typów",
       "diff_preview_aria": "Podgląd różnic zamiennika",
       "diff_preview_label": "podgląd różnic · jeszcze nie zastosowano",
-      "empty_description": "Flowy są przeszukiwane w swoim kodzie źródłowym. Pliki namespace'u są dopasowywane po ścieżce, a KV i Secrety po nazwie Key. Wybierz typy powyżej, a potem wpisz zapytanie.",
+      "empty_description": "Flowy są przeszukiwane w swoim kodzie źródłowym. Pliki namespace'u są dopasowywane po ścieżce, a KV i sekrety po nazwie Key. Wybierz typy powyżej, a potem wpisz zapytanie.",
       "empty_title": "Znajdź wartość we Flowach, plikach i Keyach",
       "error_title": "Nieprawidłowe wyrażenie regularne",
       "examples_aria": "Przykładowe zapytania",
@@ -2239,7 +2239,7 @@
       "open_flow": "Otwórz Flow",
       "open_in_editor": "Otwórz w edytorze",
       "open_in_kv": "Otwórz w KV Store",
-      "open_in_secrets": "Otwórz w Secretach",
+      "open_in_secrets": "Otwórz w sekretach",
       "options_aria": "Opcje wyszukiwania",
       "path_only_hint": "Przeszukuje tylko ścieżkę pliku, nie jego zawartość. Nie można zamienić.",
       "preview_empty": "Wybierz wynik, aby zobaczyć podgląd. Kliknij Flow na liście wyników, aby zobaczyć jego kod źródłowy.",
@@ -2278,9 +2278,9 @@
       "search_aria": "Szukaj w kodzie źródłowym Flow",
       "search_failed": "Wyszukiwanie nie powiodło się",
       "search_in": "Szukaj w",
-      "search_placeholder": "Szukaj w kodzie źródłowym Flowów, ścieżkach plików, Keyach KV i Secretów…",
+      "search_placeholder": "Szukaj w kodzie źródłowym Flowów, ścieżkach plików, Keyach KV i sekretów…",
       "searching_namespace": "Przeszukiwanie {namespace}",
-      "secret_match_notice": "Wartości Secretów nigdy nie są odczytywane przez wyszukiwanie. Dopasowywane są tylko nazwy Keyów.",
+      "secret_match_notice": "Wartości sekretów nigdy nie są odczytywane przez wyszukiwanie. Dopasowywane są tylko nazwy Keyów.",
       "select_all_in_flow": "Wybierz wszystkie dopasowania w {namespace} / {id}",
       "select_all_types": "Wybierz wszystkie typy",
       "select_match": "Wybierz dopasowanie w linii {line}",
@@ -2300,7 +2300,7 @@
       "type_kv": "Keye KV",
       "type_meta": "{matches} · {resources}",
       "type_search_failed": "Nie udało się przeszukać {type}",
-      "type_secrets": "Keye Secretów",
+      "type_secrets": "Keye sekretów",
       "use_regex": "Użyj wyrażenia regularnego",
       "value_never_shown": "Nigdy nie wyświetlana ani przeszukiwana",
       "value_withheld": "Nie wyświetlana"
@@ -2310,11 +2310,11 @@
     "license": "Licencja",
     "block_editor": {
       "add_error_task": "Dodaj Error Task",
-      "add_switch_case": "Dodaj Case",
+      "add_switch_case": "Dodaj przypadek",
       "adding_to": "Nowy wpis w {section}",
       "add_task": "Dodaj Taska",
       "add_to_lane": "Dodaj do {lane}",
-      "add_trigger": "Dodaj trigger",
+      "add_trigger": "Dodaj Trigger",
       "all_apps": "Wszystkie Apps",
       "app_actions": "{count} akcji",
       "block_deleted": "Usunięto {name}",
@@ -2325,7 +2325,7 @@
       "cluster_expand_aria": "Rozwiń {id} ({count} Tasków)",
       "collapsed_summary": "{count} Tasków",
       "command_menu": {
-        "context_flow": "kontekst: flow",
+        "context_flow": "kontekst: Flow",
         "context_selected": "kontekst: {name}",
         "delete": "Usuń {name}",
         "duplicate": "Duplikuj {name}",
@@ -2363,7 +2363,7 @@
       "empty_add_hint": "lub naciśnij /, aby wyszukać Taski",
       "empty_add_lead": "Kliknij, aby dodać {label}",
       "error_task_noun": "Error Task",
-      "execution_context": "Kontekst Execution",
+      "execution_context": "Kontekst egzekucji",
       "filter_data": "Filtruj dostępne dane…",
       "flow_inputs": "Inputy Flow",
       "flowable_todo": "Zagnieżdżone Taski (edycja już wkrótce)",
@@ -2382,7 +2382,7 @@
       "kbd_add": "dodaj",
       "kbd_close": "zamknij",
       "kbd_navigate": "nawiguj",
-      "lane_case": "Case: {key}",
+      "lane_case": "Przypadek: {key}",
       "lane_defaults": "Domyślny",
       "lane_else": "Else",
       "lane_empty": "Brak Tasków w {lane}",
@@ -2439,8 +2439,8 @@
       },
       "split_into": "Widok {count}-kolumnowy",
       "split_view": "Podzielony widok",
-      "switch_case_key_placeholder": "Nowy Key Case'a",
-      "switch_case_key_taken": "Case {key} już istnieje",
+      "switch_case_key_placeholder": "Nowy klucz przypadku",
+      "switch_case_key_taken": "Przypadek {key} już istnieje",
       "tab_apps": "Według aplikacji",
       "tab_recent": "Ostatnie",
       "tab_suggested": "Sugerowane",

@@ -19,6 +19,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.EditionProvider;
 
 import io.micronaut.context.annotation.Value;
+import io.netty.util.concurrent.FastThreadLocalThread;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -227,6 +228,12 @@ public class PluginAutoInstallService {
      * plugins installed before validation. It is best-effort by design: any failure — no catalog
      * match, download error, timeout — is logged as a warning and never propagated, so a save
      * fails only through the pre-existing type validation, exactly as it would without this hook.
+     * <p>
+     * When invoked from a Netty event-loop thread (a reactive caller of the flow save path),
+     * the install runs in the background instead of blocking: parking an event loop here starves
+     * the very event loops the catalog HTTP client needs, deadlocking the lookup until its read
+     * timeout. The save then proceeds without waiting and a not-yet-installed type surfaces as
+     * the pre-existing type validation error, consistent with the best-effort contract.
      *
      * @param flowYaml the YAML source of the flow being saved.
      */
@@ -234,7 +241,16 @@ public class PluginAutoInstallService {
         if (!enabled) {
             return;
         }
-        installMissingTypes(findMissingTypes(flowYaml), saveTimeout);
+        Set<String> missingTypes = findMissingTypes(flowYaml);
+        if (missingTypes.isEmpty()) {
+            return;
+        }
+        if (Thread.currentThread() instanceof FastThreadLocalThread) {
+            log.debug("Called from an event-loop thread: installing plugins for missing types {} in the background.", missingTypes);
+            Thread.startVirtualThread(() -> installMissingTypes(missingTypes, saveTimeout));
+            return;
+        }
+        installMissingTypes(missingTypes, saveTimeout);
     }
 
     /**

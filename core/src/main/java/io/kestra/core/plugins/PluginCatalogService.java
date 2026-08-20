@@ -38,6 +38,9 @@ public class PluginCatalogService {
 
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
 
+    /** How long to wait before retrying after a failed load — a transient outage must not pin an empty catalog for MAX_CACHE_DURATION. */
+    private static final Duration FAILED_LOAD_RETRY_DELAY = Duration.ofSeconds(30);
+
     private final HttpClient httpClient;
 
     private CompletableFuture<List<PluginManifest>> plugins;
@@ -45,6 +48,7 @@ public class PluginCatalogService {
     private List<PluginManifest> loaded = List.of();
 
     private Instant cacheLastLoaded = Instant.now();
+    private Instant retryFailedLoadAt;
     private final AtomicBoolean isLoaded = new AtomicBoolean(false);
 
     private final Map<String, Optional<byte[]>> iconBytesByGroup = new ConcurrentHashMap<>();
@@ -124,11 +128,13 @@ public class PluginCatalogService {
 
     public synchronized List<PluginManifest> get() {
         try {
-            if (this.plugins == null) {
+            if (this.plugins == null || shouldRetryFailedLoad()) {
+                this.retryFailedLoadAt = null;
                 this.isLoaded.set(true);
                 this.plugins = CompletableFuture.supplyAsync(this::load);
             }
             List<PluginManifest> artifacts = this.plugins.get();
+            this.retryFailedLoadAt = null;
             if (!artifacts.isEmpty()) {
                 loaded = artifacts;
             }
@@ -141,13 +147,28 @@ public class PluginCatalogService {
         } catch (ExecutionException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
-                log.warn("Failed to retrieve available plugins from Kestra API. Cause: Interrupted");
+            }
+            // Warn once per outage; repeated calls inside the retry window only log at debug.
+            boolean newFailure = this.retryFailedLoadAt == null;
+            if (newFailure) {
+                this.retryFailedLoadAt = Instant.now().plus(FAILED_LOAD_RETRY_DELAY);
+            }
+            String cause = e instanceof InterruptedException
+                ? "Interrupted"
+                : (e.getCause() != null ? e.getCause() : e).getMessage();
+            if (newFailure) {
+                log.warn("Failed to retrieve available plugins from Kestra API (retrying in {}s). Cause: {}", FAILED_LOAD_RETRY_DELAY.toSeconds(), cause);
             } else {
-                Throwable cause = e.getCause() != null ? e.getCause() : e;
-                log.warn("Failed to retrieve available plugins from Kestra API. Cause: {}", cause.getMessage());
+                log.debug("Plugin catalog still unavailable. Cause: {}", cause);
             }
         }
         return loaded;
+    }
+
+    private boolean shouldRetryFailedLoad() {
+        return this.plugins.isCompletedExceptionally()
+            && this.retryFailedLoadAt != null
+            && Instant.now().isAfter(this.retryFailedLoadAt);
     }
 
     private List<PluginManifest> load() {

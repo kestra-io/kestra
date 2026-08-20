@@ -13,6 +13,10 @@
 {{- $type = $name }}
 {{- end }}
 {{- end }}
+{{- $resourceName := printf "%s-%s" (include "kestra.fullname" $) $name }}
+{{- if and (eq $type "worker") (ne $name "worker") }}
+{{- $resourceName = printf "%s-workergroup-%s" (include "kestra.fullname" $) $name }}
+{{- end }}
 {{- $dind := false }}
 {{- if and ($global.dind.enabled) (eq $type "worker") }}
 {{- $dind = true }}
@@ -24,11 +28,7 @@
 apiVersion: apps/v1
 kind: {{ $kind }}
 metadata:
-  {{- if and (eq $type "worker") (ne $name "worker") }}
-  name: "{{ include "kestra.fullname" $ }}-workergroup-{{ $name }}"
-  {{- else }}
-  name: "{{ include "kestra.fullname" $ }}-{{ $name }}"
-  {{- end }}
+  name: "{{ $resourceName }}"
   labels:
     {{- include "kestra.labels" $ | nindent 4 }}
     app.kubernetes.io/component: {{ $type }}
@@ -173,7 +173,7 @@ spec:
           command:
             - "sh"
             - "-c"
-            - | 
+            - |
                 exec /app/kestra server {{ $type }} \
                 {{- if $content.workerThreads }}
                 {{- if eq $type "standalone" }}
@@ -341,12 +341,12 @@ apiVersion: autoscaling/v2beta2
 {{- end }}
 kind: HorizontalPodAutoscaler
 metadata:
-  name: "{{ include "kestra.fullname" $ }}-{{ $name }}"
+  name: "{{ $resourceName }}"
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: {{ $kind }}
-    name: "{{ include "kestra.fullname" $ }}-{{ $name }}"
+    name: "{{ $resourceName }}"
   minReplicas: {{ $hpa.minReplicas | default 1 }}
   maxReplicas: {{ $hpa.maxReplicas | default 1 }}
   {{- if $hpa.extra }}{{ toYaml $hpa.extra | trim | nindent 2 }}{{ end }}

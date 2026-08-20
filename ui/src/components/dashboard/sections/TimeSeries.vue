@@ -1,6 +1,8 @@
 <template>
+    <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
+
     <div
-        v-if="generated?.total > 0"
+        v-else-if="generated?.total > 0"
         class="chart"
         :class="{short: props.short, execution: props.execution}"
     >
@@ -36,7 +38,7 @@
     import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    import {KsEchart, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
@@ -113,8 +115,8 @@
 
     const shortAxisLabel = (value: string): string => {
         if (typeof value !== "string") return value
-        const [datePart, ...timeParts] = value.split(":")
-        if (timeParts.length) return timeParts.join(":")
+        const [datePart, timePart] = value.split(" ")
+        if (timePart) return timePart
         const segments = datePart.split("-")
         return segments.length === 3 ? segments.slice(1).join("-") : datePart
     }
@@ -324,8 +326,8 @@
 
         return {
             grid: isCompact
-                ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: 0, right: 0, bottom: "3%", top: "5%", containLabel: true},
+                ? {top: 2, right: 2, bottom: 2, left: 2, outerBoundsMode: "none"}
+                : {left: 0, right: 0, bottom: "3%", top: "5%", outerBoundsMode: "same"},
             xAxis: {
                 type: "category",
                 data: xAxisData,
@@ -343,7 +345,7 @@
         }
     })
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const showLegend = computed(() => !props.short && !props.execution && !!chartOptions?.legend?.enabled)
 
@@ -384,6 +386,7 @@
 
     defineExpose({
         refresh,
+        total: computed(() => generated.value?.total ?? 0),
     })
 
     watch(() => route.params.filters, () => refresh(), {deep: true})

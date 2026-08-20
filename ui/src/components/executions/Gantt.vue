@@ -14,7 +14,7 @@
         <KsEmptyState v-if="series.length === 0" :image="emptyIllustration">
             <template #description>
                 <span class="gantt-empty-status">
-                    {{ t("execution_status") }}
+                    {{ $t("execution_status") }}
                     <KsExecutionStatus :status="execution.state.current" />
                 </span>
                 <span v-if="emptyStateHint" class="gantt-empty-hint">{{ emptyStateHint }}</span>
@@ -43,18 +43,18 @@
                             <div class="top">
                                 <div class="summary">
                                     <span class="item">
-                                        <span class="label">{{ t("total_duration") }}</span>
+                                        <span class="label">{{ $t("total_duration") }}</span>
                                         <Duration class="value" :histories="execution.state.histories" />
                                     </span>
                                     <span class="separator">/</span>
                                     <span class="item">
-                                        <span class="label">{{ t("tasks") }}</span>
+                                        <span class="label">{{ $t("tasks") }}</span>
                                         <span class="value">{{ tasksSummary }}</span>
                                     </span>
                                 </div>
                                 <div class="actions">
                                     <KsButton class="copy-logs" :icon="ContentCopy" link @click="copyAllLogs">
-                                        {{ t("copy all logs") }}
+                                        {{ $t("copy all logs") }}
                                     </KsButton>
                                     <KsExecutionStatus :status="execution.state.current" />
                                 </div>
@@ -84,7 +84,6 @@
                                     :item="item"
                                     :active="active"
                                     :data-index="index"
-                                    :sizeDependencies="[selectedTaskRuns]"
                                 >
                                     <div class="d-flex flex-column">
                                         <div
@@ -117,7 +116,7 @@
                                             <div>
                                                 <KsTooltip v-if="item.attempts > 1" placement="right">
                                                     <template #content>
-                                                        <span>{{ t("this_task_has") }} {{ item.attempts }} {{ t("attempts").toLowerCase() }}.</span>
+                                                        <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                                     </template>
                                                     <Warning class="attempt_warn me-3" />
                                                 </KsTooltip>
@@ -177,8 +176,8 @@
                         <!-- Task runs exist but the active filters/search hid them all. -->
                         <KsNoData
                             v-else
-                            :title="t('gantt_no_tasks_match_filters_title')"
-                            :description="t('gantt_no_tasks_match_filters')"
+                            :title="$t('gantt_no_tasks_match_filters_title')"
+                            :description="$t('gantt_no_tasks_match_filters')"
                         />
                     </template>
                 </KsCard>

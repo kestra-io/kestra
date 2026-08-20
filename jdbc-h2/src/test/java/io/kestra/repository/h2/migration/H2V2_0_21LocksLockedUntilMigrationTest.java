@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * H2-specific integration test for {@link V2_0_21LocksLockedUntilMigration}: the generated
- * {@code locked_until} column must reflect the JSON value's {@code lockedUntil} for lease rows, stay
- * NULL for rows without one, and the migration must be re-runnable.
+ * H2-specific integration test for the {@code locks.locked_until} generated column created by
+ * {@link V2_0_01SchemaMigration}: it must reflect the JSON value's {@code lockedUntil} for lease
+ * rows, stay NULL for rows without one, and the migration must be re-runnable.
  */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
@@ -38,7 +38,7 @@ class H2V2_0_21LocksLockedUntilMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_0_21LocksLockedUntilMigration migration;
+    V2_0_01SchemaMigration migration;
 
     @BeforeEach
     @AfterEach
@@ -55,7 +55,7 @@ class H2V2_0_21LocksLockedUntilMigrationTest {
     void generatedColumnReflectsLockedUntilFromValue() throws Exception {
         migration.migrate();
 
-        // JdbcMapper always serializes a 6-digit fraction (production-shaped); the generated column
+        // KestraDateTimeModule always serializes a 6-digit fraction (production-shaped); the generated column
         // truncates to millisecond precision (LEFT(...,23)), so the round trip must drop the last 3 digits
         Instant lockedUntil = Instant.parse("2026-01-01T00:00:00.123Z");
         insertLock(LEASE_KEY, "{\"category\":\"lease\",\"id\":\"locked-until-seed-1\",\"tenantId\":\"tenant-a\",\"owner\":\"o\",\"lockedUntil\":\"2026-01-01T00:00:00.123456Z\"}");

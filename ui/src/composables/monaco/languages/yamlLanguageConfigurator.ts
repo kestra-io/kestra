@@ -1,11 +1,11 @@
 import {computed, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {configureMonacoYaml} from "monaco-yaml"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-import {languages} from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
+import {languages} from "monaco-editor/editor/editor.api"
 import {yamlSchemas} from "override/utils/yamlSchemas"
-import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices"
-import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures"
+import {StandaloneServices} from "monaco-editor/editor/standalone/browser/standaloneServices"
+import {ILanguageFeaturesService} from "monaco-editor/editor/common/services/languageFeatures"
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
@@ -33,14 +33,12 @@ import {
     filterExistingSubflowLinks,
     SUBFLOW_LINK_SCHEME,
 } from "./subflowLinkProvider"
-import IPosition = monaco.IPosition;
-import IDisposable = monaco.IDisposable;
+import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
 import CompletionContext = languages.CompletionContext;
-import CancellationToken = monaco.CancellationToken;
 
 type TaskLike = Record<string, unknown>;
 
@@ -128,19 +126,22 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         const validateYAML = computed(() => useBlueprintsStore().validateYAML)
-        // Keep Monaco YAML validation in sync with the blueprint store setting.
-        watch(validateYAML, (shouldValidate) =>
-            configureMonacoYaml(monaco, {validate: shouldValidate}),
-        )
 
         // Base YAML language setup shared across all YAML editors.
-        configureMonacoYaml(monaco, {
+        const monacoYaml = configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
             validate: validateYAML.value ?? true,
             schemas: yamlSchemas(),
         })
+
+        // Keep Monaco YAML validation in sync with the blueprint store setting. The single instance must be
+        // updated in place: calling configureMonacoYaml again would stack a second undisposed instance whose
+        // validate flag can never be turned off again.
+        watch(validateYAML, (shouldValidate) =>
+            monacoYaml.update({validate: shouldValidate ?? true}),
+        )
 
         const yamlCompletion = (
             StandaloneServices.get(ILanguageFeaturesService).completionProvider

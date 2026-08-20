@@ -34,9 +34,8 @@
   "overrides": [
     {
       "files": [
-        "scripts/**", 
-        "**/scripts/**", 
-        "src/translations/check.js", 
+        "scripts/**",
+        "**/scripts/**",
         "**/tests/**"
       ],
       "rules": {

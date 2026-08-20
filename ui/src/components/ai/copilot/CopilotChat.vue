@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" :disabled="isFreshChat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -71,6 +71,7 @@
                     :key="message.id"
                     :message="message"
                     :isPending="message.id === pendingProposalMessageId"
+                    :isRunning="message.id === runningToolCallId"
                 />
 
                 <CopilotThinking v-if="working" :phase="workPhase" />
@@ -155,9 +156,9 @@
 
     const mode = ref<AgentMode>(props.initialMode ?? "EDIT")
 
-    // Context-awareness: when the copilot opens on a flow / execution / namespace page, send that
-    // page as `inFocus` so the agent knows what the user is looking at. An explicit `inFocus` prop
-    // (if a parent ever passes one) still wins. Recomputed as the route changes while the drawer is open.
+    // When the copilot opens on a flow / execution / namespace page, send that page as `inFocus` so
+    // the agent knows what the user is looking at; recomputed as the route changes. An explicit
+    // `inFocus` prop still wins.
     const routeInFocus = computed<ScopeBinding | null>(() => props.inFocus ?? scopeFromRoute(route))
 
     // The user can dismiss individual context pills to run a turn without that resource. Dismissals
@@ -181,9 +182,9 @@
         // Once every focused resource is dismissed there's nothing left to show or send.
         return Object.entries(effective).some(([field, value]) => field !== "kind" && value) ? effective : null
     })
-    // Announce focus changes in the transcript (display-only). Navigating to a new resource adds its
-    // primary pill; dismissing a pill removes it. Also re-arms dismissals for the newly-focused
-    // resource. `noteContext` no-ops until a conversation has started, so the empty state stays clean.
+    // Announce focus changes in the transcript (display-only) and re-arm dismissals for the
+    // newly-focused resource. `noteContext` no-ops until a conversation has started, so the empty
+    // state stays clean.
     let previousFocus: ScopeBinding | null = routeInFocus.value
     watch(
         () => JSON.stringify(routeInFocus.value),
@@ -252,8 +253,8 @@
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
     )
 
-    // "New chat" resets the conversation — so it's a no-op (and disabled) when we're already on a
-    // fresh, empty chat with no thread to clear.
+    // "New chat" resets the conversation - so it's hidden when we're already on a fresh, empty
+    // chat with no thread to clear.
     const isFreshChat = computed(() => isEmpty.value && !thread.value)
 
     // The pending proposal is always the last PROPOSED_ACTION message; the interactive card below the
@@ -264,12 +265,16 @@
             : null,
     )
 
-    // The working indicator (animated Kestra mark) persists across the whole turn, switching
-    // movement by phase: "thinking" before any output (right after the user's turn or a tool
-    // result), "answering" while tokens stream into the assistant bubble, and a brief "end"
-    // gather when the turn closes. It stays hidden while a tool is running — the tool strip owns
-    // that UI.
+    // The working indicator (animated Kestra mark) persists across the whole turn, switching movement
+    // by phase — "thinking" before any output, "answering" while tokens stream, an "end" gather when
+    // the turn closes. It stays hidden while a tool runs — the tool strip owns that UI.
     const lastMessage = computed(() => messages.value[messages.value.length - 1])
+
+    // While a turn streams and the latest message is a tool call, that tool is still executing (its
+    // result hasn't arrived) — flag it so its strip shows a spinner instead of sitting blank.
+    const runningToolCallId = computed(() =>
+        streaming.value && lastMessage.value?.type === "TOOL_CALL" ? lastMessage.value.id : null,
+    )
 
     const answering = computed(
         () => streaming.value && lastMessage.value?.role === "ASSISTANT" && lastMessage.value?.type === "TEXT",
@@ -331,10 +336,9 @@
         footerComposer.value?.focus()
     }
 
-    // Seeded prompts: an entry point (e.g. "Fix with AI") calls miscStore.promptCopilot(text),
-    // which opens this tab and stashes the text. Prefill the composer with it and focus, then
-    // clear the store so it doesn't re-seed on the next open. Runs on mount (drawer just opened)
-    // and via a watcher (drawer already open / kept alive).
+    // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
+    // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
+    // run on mount (drawer just opened) and via a watcher (already open / kept alive).
     async function consumeSeededPrompt(): Promise<void> {
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
@@ -386,20 +390,12 @@
         transition: background 0.15s ease, box-shadow 0.15s ease;
     }
 
-    /* Hover feedback so the pills read as interactive (the disabled New-chat pill excepted). The
-       bg interaction tokens are all near-identical dark greys, so a fill change alone is barely
-       visible — pair it with a lighter inset ring (border-strong) so the hover clearly reads. */
-    .copilot-topbar-pill:not(.is-disabled):hover {
+    /* Hover feedback so the pills read as interactive. The bg interaction tokens are all
+       near-identical dark greys, so a fill change alone is barely visible - pair it with a
+       lighter inset ring (border-strong) so the hover clearly reads. */
+    .copilot-topbar-pill:hover {
         background: var(--ks-bg-hover-elevated);
         box-shadow: inset 0 0 0 1px var(--ks-border-strong);
-    }
-
-    /* Disabled New-chat — already on a fresh, empty chat with nothing to reset. Dim the whole
-       pill (opacity) so it clearly reads as non-interactive, not just muted text. */
-    .copilot-topbar-pill.is-disabled {
-        color: var(--ks-text-inactive);
-        cursor: not-allowed;
-        opacity: 0.5;
     }
 
     .copilot-empty {

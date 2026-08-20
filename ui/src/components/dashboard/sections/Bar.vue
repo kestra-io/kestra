@@ -1,6 +1,8 @@
 <template>
+    <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
+
     <div
-        v-if="generated?.results?.length"
+        v-else-if="generated?.results?.length"
         class="chart-wrapper"
         :class="{short: props.short}"
     >
@@ -31,7 +33,7 @@
         <div v-if="!props.short && canExpand" class="chart-footer">
             <KsButton text size="small" :aria-expanded="expanded" @click="expanded = !expanded">
                 <span class="expand-toggle">
-                    {{ expanded ? t("showLess") : `${t("dashboards.viewAll")} (${totalNamespaces})` }}
+                    {{ expanded ? $t("showLess") : `${$t("dashboards.viewAll")} (${totalNamespaces})` }}
                     <component :is="expanded ? ChevronUp : ChevronDown" :size="14" />
                 </span>
             </KsButton>
@@ -46,7 +48,7 @@
     import {useI18n} from "vue-i18n"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    import {ChartFeature, KsBar, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
+    import {ChartFeature, KsBar, KsSkeleton, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle} from "../composables/charts"
@@ -80,7 +82,7 @@
     const expanded = ref(false)
 
     const {data, chartOptions} = props.chart
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg)
     const isDurationAgg = () => aggregator[0][1].field === "DURATION"
@@ -163,8 +165,8 @@
 
         return {
             grid: props.short
-                ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: "0", right: "4%", top: "5%", bottom: "3%", containLabel: true},
+                ? {top: 2, right: 2, bottom: 2, left: 2, outerBoundsMode: "none"}
+                : {left: "0", right: "4%", top: "5%", bottom: "3%", outerBoundsMode: "same"},
             xAxis: {
                 type: "value",
                 show: showAxes,

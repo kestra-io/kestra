@@ -4,7 +4,7 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 import {useCoreStore} from "./core"
 import throttle from "lodash/throttle"
-import {useRoute} from "vue-router"
+import {useRoute, type LocationQuery} from "vue-router"
 import {CLUSTER_PREFIX} from "@kestra-io/design-system"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {TaskRun, useClient, type Execution as SDKExecution, type StateType} from "@kestra-io/kestra-sdk"
@@ -102,7 +102,6 @@ export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> &
     tenantId?: string;
     taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, any>;
-    outputs?: Record<string, any>;
     variables?: Record<string, any>;
 }
 
@@ -308,7 +307,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const findDistinctFieldValues = async (options: {
         field: string;
-        filters?: Record<string, string>;
+        filters?: LocationQuery;
         size?: number;
     }): Promise<string[]> => {
         return ExecutionsAPI.findDistinctFieldValues({
@@ -612,6 +611,20 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    // Fetches the complete, untruncated file as text. Unlike filePreview (which
+    // caps rows and bytes for the RAW/TEXT viewer), this returns the whole file
+    // so callers such as the HTML iframe preview can render a valid document.
+    // The /file endpoint sets Content-Disposition: attachment, but that only
+    // affects browser navigation — an XHR reads the body normally, and the
+    // shared client attaches auth automatically.
+    const fileContent = (options: { executionId: string; path: string }): Promise<string> => {
+        return axios.get(`${apiUrl()}/executions/${options.executionId}/file`, {
+            params: {path: options.path},
+            responseType: "text",
+            transformResponse: [(data: string) => data],
+        }).then(response => response.data as string)
+    }
+
     const setLabels = (options: { executionId: string; labels: any }) => {
         return ExecutionsAPI.setLabelsOnTerminatedExecution({executionId: options.executionId, body: options.labels})
     }
@@ -902,6 +915,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         downloadLogsFile,
         deleteLogs,
         filePreview,
+        fileContent,
         setLabels,
         querySetLabels,
         bulkSetLabels,

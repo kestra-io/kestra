@@ -110,7 +110,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                     if (label instanceof Map<?, ?> labelMap) {
                         return Map.entry(
                             runContext.render((String) labelMap.get("key")),
-                            runContext.render((String) labelMap.get("value"))
+                            renderValue(runContext, labelMap.get("value"))
                         );
                     } else {
                         throw new IllegalVariableEvaluationException("Unknown value type: " + label.getClass());
@@ -120,13 +120,13 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                     Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (first, second) -> second
+                        (_, second) -> second
                     )
                 );
         } else if (labels instanceof Map<?, ?> map) {
             labelsAsMap = map.entrySet()
                 .stream()
-                .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), runContext.render((String) entry.getValue()))))
+                .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), renderValue(runContext, entry.getValue()))))
                 .collect(
                     Collectors.toMap(
                         Map.Entry::getKey,
@@ -178,5 +178,18 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                 )
                 .toList()
         );
+    }
+
+    private String renderValue(RunContext runContext, Object value) throws IllegalVariableEvaluationException {
+        return switch (value) {
+            case Map<?, ?> map -> {
+                try {
+                    yield JacksonMapper.ofJson().writeValueAsString(runContext.render((Map<String, Object>) map));
+                } catch (JsonProcessingException e) {
+                    throw new IllegalVariableEvaluationException(e);
+                }
+            }
+            default -> runContext.render(value.toString());
+        };
     }
 }

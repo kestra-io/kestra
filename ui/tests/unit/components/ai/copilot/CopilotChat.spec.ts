@@ -219,18 +219,18 @@ describe("CopilotChat", () => {
     })
 
     it("starts a new chat via the top bar", async () => {
-        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}] // something to reset → enabled
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}] // something to reset → shown
         const w = mountChat()
         await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
         expect(state.reset).toHaveBeenCalled()
     })
 
-    it("disables New chat on a fresh, empty chat and enables it once there is something to reset", () => {
+    it("hides New chat on a fresh, empty chat and shows it once there is something to reset", () => {
         // beforeEach leaves the chat fresh (no messages, no thread) → nothing to reset.
-        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeDefined()
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").exists()).toBe(false)
 
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
-        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeUndefined()
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").exists()).toBe(true)
     })
 
     it("mounts the thread controls (EE-only Recents; a no-op in OSS)", () => {
@@ -284,5 +284,25 @@ describe("CopilotChat", () => {
         state.error.value = null
         state.notice.value = "emptyTurn"
         expect(mountChat().find("[data-test=\"copilot-notice\"]").attributes("role")).toBe("status")
+    })
+
+    it("spins the in-flight tool call while streaming, and stops once its result arrives", async () => {
+        state.messages.value = [
+            {id: "u1", role: "USER", type: "TEXT", content: "make a flow"},
+            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author-flow", family: "AUTHOR", arguments: {}}},
+        ]
+        state.streaming.value = true
+        const w = mountChat()
+        await flushPromises()
+        // Last message is the tool call and the turn is streaming → the step shows its spinner.
+        expect(w.find(".copilot-tool-spinner").exists()).toBe(true)
+
+        // Its result arrives → the tool call is no longer the last message, so the spinner clears.
+        state.messages.value = [
+            ...state.messages.value,
+            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author-flow", outcome: "ok"}},
+        ]
+        await flushPromises()
+        expect(w.find(".copilot-tool-spinner").exists()).toBe(false)
     })
 })

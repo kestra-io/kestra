@@ -218,11 +218,13 @@ public abstract class AbstractScopedConcurrencyLimitStateStoreTest {
 
         // When: the execution terminates, carrying the claim stamp the gate persisted at
         // admission (ExecutionMetadata#concurrencyScopes)
-        Execution terminated = Execution.newExecution(flow, List.of())
-            .withState(State.Type.RUNNING)
-            .withState(State.Type.SUCCESS);
-        terminated = terminated.withMetadata(terminated.getMetadata().withConcurrencyScopes(List.of(tenantScope.uid())));
-        Optional<Execution> popped = processor.release(new ExecutorContext(terminated, io.kestra.core.models.flows.FlowWithSource.of(flow, "")));
+        Execution running = Execution.newExecution(flow, List.of()).withState(State.Type.RUNNING);
+        running = running.withMetadata(running.getMetadata().withConcurrencyScopes(List.of(tenantScope.uid())));
+        // the context models a real cycle: it is built from the row as loaded before this cycle
+        // moved the execution to its terminal state
+        ExecutorContext executor = new ExecutorContext(running, io.kestra.core.models.flows.FlowWithSource.of(flow, ""))
+            .withExecution(running.withState(State.Type.SUCCESS), "test");
+        Optional<Execution> popped = processor.release(executor, true);
 
         // Then: the slot it was admitted under is released — the counter must not leak and
         // block the tenant until a manual reset

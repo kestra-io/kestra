@@ -47,6 +47,8 @@ test.describe("AI Copilot v2 — tool catalog", () => {
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
 
+        // Fresh tab per test (see fixtures/auth.ts): boot the SPA from the worker's
+        // warm context — a couple of seconds, not the ~9s a cold context pays.
         await page.goto("/ui")
         await openCopilotDock(page)
     })

@@ -10,6 +10,7 @@
                             :sections="sections"
                             :selectedExpression="selectedBase"
                             @select="selectItem"
+                            @search-change="onSearchChange"
                         />
                     </KsSplitterPanel>
 
@@ -91,7 +92,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useMediaQuery} from "@vueuse/core"
+    import {useDebounceFn, useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
@@ -102,16 +103,19 @@
         KsIconButton,
         KsEditor,
         KsJsonTree,
+        copyToClipboard,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
     import {useExecutionsStore} from "../../../stores/executions"
+    import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
+    import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
 
@@ -178,19 +182,33 @@
 
     /* ------------------------- Task outputs sourcing ------------------------- */
     // Sourced exactly like Wrapper.vue: the list of task runs that have outputs
-    // is fetched from the /outputs/{executionId} endpoint, then each task's
-    // values are lazily loaded from /outputs/{executionId}/{taskRunId}.
+    // is fetched from the /outputs/tasks/{executionId} endpoint, then each task's
+    // values are lazily loaded from /outputs/tasks/{executionId}/{taskRunId}.
+
+    interface TaskOutputMeta {
+        taskId: string;
+        value?: string | null;
+        iteration?: number | null;
+    }
 
     const tasksWithOutputs = ref<string[] | undefined>(undefined)
+    const taskOutputMetaByRunId = ref<Record<string, TaskOutputMeta>>({})
     const taskOutputs = ref<Record<string, Record<string, unknown>>>({})
+    const flowOutputs = ref<Record<string, unknown>>({})
 
+    // Re-fetch on state changes too: outputs are written as the execution progresses.
     watch(
-        () => execution.value?.id,
-        async (id) => {
-            tasksWithOutputs.value = undefined
-            taskOutputs.value = {}
+        () => [execution.value?.id, execution.value?.state?.current] as const,
+        async ([id], previous) => {
+            if (id !== previous?.[0]) {
+                tasksWithOutputs.value = undefined
+                taskOutputMetaByRunId.value = {}
+                taskOutputs.value = {}
+                flowOutputs.value = {}
+            }
             if (!id) return
 
+            flowOutputs.value = await loadExecutionOutputs(id)
 
             const data = await OutputsAPI.taskOutputsInformation({
                 executionId: id,
@@ -198,26 +216,75 @@
                 validateStatus: (s: number) => s === 200 || s === 404,
             })
 
-            tasksWithOutputs.value = data
-                .map((task) => task.taskRunId)
-                .filter((taskRunId) => taskRunId !== undefined)
+            const metaByRunId: Record<string, TaskOutputMeta> = {}
+            const taskRunIds = data
+                .map((task) => {
+                    if (task.taskRunId !== undefined) {
+                        metaByRunId[task.taskRunId] = {
+                            taskId: task.taskId ?? "",
+                            value: task.value,
+                            iteration: task.iteration,
+                        }
+                    }
 
+                    return task.taskRunId
+                })
+                .filter((taskRunId): taskRunId is string => taskRunId !== undefined)
+
+            taskOutputMetaByRunId.value = metaByRunId
+            tasksWithOutputs.value = taskRunIds
         },
         {immediate: true},
     )
 
-    async function loadTaskOutputs(item: ExplorerItem) {
+    async function fetchTaskRunOutputs(taskRunId: string) {
         const id = execution.value?.id
-        if (!id || !item.taskRunId || taskOutputs.value[item.taskRunId]) return
+        if (!id) return {}
+
+        const cached = taskOutputs.value[taskRunId]
+        if (cached) {
+            return cached
+        }
 
         const data = await OutputsAPI.taskRunOutputs({
-            taskRunId: item.taskRunId,
+            taskRunId,
             executionId: id,
         }, {
             validateStatus: (s: number) => s === 200 || s === 404,
         })
 
-        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}}
+        const outputs = data || {}
+        taskOutputs.value = {...taskOutputs.value, [taskRunId]: outputs}
+        return outputs
+    }
+
+    async function loadTaskOutputs(item: ExplorerItem) {
+        if (!item.taskRunId) return
+
+        await fetchTaskRunOutputs(item.taskRunId)
+    }
+
+    async function prefetchTaskOutputsForSearch() {
+        const taskRunIds = tasksWithOutputs.value ?? []
+        const missingTaskRunIds = taskRunIds.filter((taskRunId) => !taskOutputs.value[taskRunId])
+
+        if (missingTaskRunIds.length === 0) {
+            return
+        }
+
+        await Promise.all(missingTaskRunIds.map((taskRunId) => fetchTaskRunOutputs(taskRunId)))
+    }
+
+    const debouncedPrefetchTaskOutputsForSearch = useDebounceFn(async (query: string) => {
+        if (!query.trim()) {
+            return
+        }
+
+        await prefetchTaskOutputsForSearch()
+    }, 300)
+
+    function onSearchChange(query: string) {
+        void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
     function isOutputTaskAFile(item: any): item is { uri: string } {
@@ -234,14 +301,23 @@
         const taskRunList = execution.value?.taskRunList ?? []
         return taskRunList
             .filter((task) => tasksWithOutputs.value?.includes(task.id))
-            .map((task) => ({
-                label: task.taskId,
-                value: taskOutputs.value[task.id],
-                type: isOutputTaskAFile(taskOutputs.value[task.id]) ? "file" : "object",
-                preview: "",
-                expression: `outputs${formatStep(task.taskId)}`,
-                taskRunId: task.id,
-            }))
+            .map((task) => {
+                const outputs = taskOutputs.value[task.id]
+                const meta = taskOutputMetaByRunId.value[task.id]
+                const iterationValue = meta?.value ?? meta?.iteration
+
+                return {
+                    label: taskOutputLabel(task.taskId, iterationValue),
+                    value: outputs,
+                    type: isOutputTaskAFile(outputs) ? "file" : "object",
+                    preview: outputs ? preview(outputs) : "",
+                    expression: `outputs${formatStep(task.taskId)}`,
+                    taskRunId: task.id,
+                    searchText: [task.taskId, meta?.value, meta?.iteration]
+                        .filter((value) => value !== undefined && value !== null && value !== "")
+                        .join(" "),
+                }
+            })
     })
 
     /* ------------------------------- Sections -------------------------------- */
@@ -253,7 +329,7 @@
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
             {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(flowOutputs.value, "outputs")},
         ]
     })
 
@@ -373,7 +449,7 @@
     const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
     function copyValue() {
-        navigator.clipboard?.writeText(rawValue.value)
+        copyToClipboard(rawValue.value)
     }
 
     /* --------------------------------- Layout -------------------------------- */

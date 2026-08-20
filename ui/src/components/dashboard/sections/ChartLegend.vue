@@ -8,7 +8,7 @@
             @click="toggle(item.label)"
         >
             <span :style="swatchStyle(item.color)" />
-            {{ displayLabel(item.label) }} {{ item.count }}
+            {{ displayLabel(item.label) }} ({{ item.count }})
         </span>
 
         <KsTooltip v-if="hidden.length" placement="top">
@@ -132,7 +132,7 @@
         }
 
         .line {
-            width: 14px;
+            width: 10px;
             height: 2px;
             flex-shrink: 0;
             border-radius: var(--ks-radius-sm);

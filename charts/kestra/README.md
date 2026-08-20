@@ -347,6 +347,7 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 | common.podLabels | object | `{}` | Labels applied specifically to pods. |
 | common.podSecurityContext | object | `{}` | Security context settings for pods. |
 | common.priorityClassName | string | `""` | Priority class for scheduling pods. |
+| common.progressDeadlineSeconds | int | `""` | Seconds a Deployment rollout may make no progress before the controller reports `ProgressDeadlineExceeded`. Unset uses the Kubernetes default of 600, which a large image can exceed on a cold pull. Deployments only. |
 | common.readinessProbe | object | `{"failureThreshold":3,"httpGet":{"path":"/health/readiness","port":"management"},"initialDelaySeconds":0,"periodSeconds":5,"successThreshold":1,"timeoutSeconds":3}` | Readiness probe configuration to determine pod availability. |
 | common.replicas | int | `1` | Number of pod replicas to run. |
 | common.resources | object | `{}` | Resource requests and limits for containers. |
@@ -392,7 +393,7 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| dind.base.insecure | object | `{"args":["--log-level=fatal"],"image":{"pullPolicy":"IfNotPresent","repository":"docker","tag":"dind-rootless"},"securityContext":{"allowPrivilegeEscalation":true,"capabilities":{"add":["SYS_ADMIN","NET_ADMIN","DAC_OVERRIDE","SETUID","SETGID"]},"privileged":true,"runAsGroup":0,"runAsUser":0}}` | Insecure dind configuration (privileged). |
+| dind.base.insecure | object | `{"args":["--log-level=fatal","--group=1000"],"image":{"pullPolicy":"IfNotPresent","repository":"docker","tag":"dind-rootless"},"securityContext":{"allowPrivilegeEscalation":true,"capabilities":{"add":["SYS_ADMIN","NET_ADMIN","DAC_OVERRIDE","SETUID","SETGID"]},"privileged":true,"runAsGroup":0,"runAsUser":0}}` | Insecure dind configuration (privileged). |
 
 ### kestra dind rootless
 

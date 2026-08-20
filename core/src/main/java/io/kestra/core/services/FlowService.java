@@ -118,7 +118,8 @@ public class FlowService {
     /**
      * Validates and creates the given flow.
      * <p>
-     * The validation of the flow is done from the source after injecting all plugin default values.
+     * The validation of the flow is done from the source, as it will run: the governance applied at runtime is
+     * applied first, so a flow whose required properties are supplied by governance stays valid.
      *
      * @param flow The flow.
      * @return The created {@link FlowWithSource}.
@@ -136,7 +137,7 @@ public class FlowService {
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(flowParsingService.parse(parsed, false));
+            modelValidator.validate(flowParsingService.parseForValidation(parsed));
         }
 
         FlowWithSource created = flowRepository.create(flow);
@@ -148,12 +149,13 @@ public class FlowService {
     }
 
     /**
-     * Validates and creates the given flow.
+     * Validates and updates the given flow.
      * <p>
-     * The validation of the flow is done from the source after injecting all plugin default values.
+     * The validation of the flow is done from the source, as it will run: the governance applied at runtime is
+     * applied first, so a flow whose required properties are supplied by governance stays valid.
      *
      * @param flow The flow.
-     * @return The created {@link FlowWithSource}.
+     * @return The updated {@link FlowWithSource}.
      */
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws FlowProcessingException, QueueException {
         // FIXME validation is done both here and in the repo
@@ -169,7 +171,7 @@ public class FlowService {
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(flowParsingService.parse(parsed, false));
+            modelValidator.validate(flowParsingService.parseForValidation(parsed));
         }
 
         FlowWithSource updated = flowRepository.update(flow, previous);
@@ -321,6 +323,22 @@ public class FlowService {
     }
 
     private void updateConcurrencyLimit(FlowWithSource flow) {
+        if (flow.isDeleted()) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
+        // A draft revision is never picked up by the executor, so it must neither get a live
+        // concurrency limit nor remove the one belonging to the live revision.
+        if (flow.isDraft()) {
+            return;
+        }
+
+        if (flow.getConcurrency() == null) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
         // If the previous revision was soft-deleted, its concurrency limit was already removed:
@@ -329,25 +347,7 @@ public class FlowService {
             previous = null;
         }
 
-        if (flow.isDeleted()) {
-            removeConcurrencyLimit(flow);
-            return;
-        }
-
-        // A draft revision is never picked up by the executor, so it must not get a live concurrency limit.
-        if (flow.isDraft()) {
-            return;
-        }
-
-        if (previous != null) {
-            if (previous.getConcurrency() == null && flow.getConcurrency() != null) {
-                initConcurrencyLimit(flow);
-            }
-
-            if (previous.getConcurrency() != null && flow.getConcurrency() == null) {
-                removeConcurrencyLimit(flow);
-            }
-        } else if (flow.getConcurrency() != null) {
+        if (previous == null || previous.getConcurrency() == null) {
             initConcurrencyLimit(flow);
         }
     }
@@ -449,7 +449,7 @@ public class FlowService {
                     constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                 }
 
-                FlowWithSource parsedFlow = flowParsingService.parse(flow, false);
+                FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
                 constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
                 constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
                 constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
@@ -890,7 +890,7 @@ public class FlowService {
      */
     public Optional<ConstraintViolationException> validateForExecution(Flow flow) {
         try {
-            return modelValidator.isValid(flowParsingService.parse(flow, false));
+            return modelValidator.isValid(flowParsingService.parseForValidation(flow));
         } catch (FlowProcessingException e) {
             // The flow could not be processed (e.g., unknown plugin). Surface this as a violation
             // so the execution fails with the same error path as other invalid flows.

@@ -1,6 +1,15 @@
 import {defineAsyncComponent} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
-import {INSTALLED_KEY, provideGlobalConfig} from "element-plus"
+import {
+    INSTALLED_KEY,
+    provideGlobalConfig,
+    ElInfiniteScroll,
+    ElLoading,
+    ElMessage,
+    ElMessageBox,
+    ElNotification,
+    ElPopoverDirective,
+} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
 
@@ -456,9 +465,15 @@ const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
             // Every Ks* component imports its own El* dependency directly, so global registration
-            // is unneeded and only defeats tree-shaking of the ~96 Element Plus components.
+            // is unneeded and only defeats tree-shaking of the ~96 Element Plus components. The
+            // services below still need app.use(): it's what wires their _context to this app, so
+            // their detached render trees (e.g. an ElNotification's content) can still resolve
+            // globally-registered Ks* components like KsButton/KsMarkdown.
             (app as any)[INSTALLED_KEY] = true
             provideGlobalConfig({namespace: "kel"}, app, true)
+            for (const plugin of [ElInfiniteScroll, ElLoading, ElMessage, ElMessageBox, ElNotification, ElPopoverDirective]) {
+                app.use(plugin)
+            }
         }
         for (const [name, component] of Object.entries(components)) {
             app.component(name, component)

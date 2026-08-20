@@ -186,9 +186,25 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
     public void usedSecret(String secret) {
         if (secret != null && !secret.isEmpty()) {
-            this.useSecrets.add(secret);
-            this.useSecrets.add(Base64.getEncoder().encodeToString(secret.getBytes(StandardCharsets.UTF_8)));
+            this.addSecretToMask(secret);
+            this.addSecretToMask(Base64.getEncoder().encodeToString(secret.getBytes(StandardCharsets.UTF_8)));
         }
+    }
+
+    /**
+     * Inserts a secret keeping the list ordered by descending length, because masking is a plain sequence of
+     * replacements: were a secret masked before a longer one containing it, the remainder of the longer secret
+     * would survive in the log line (masking 'pass' before 'password' leaves '******word').
+     */
+    private void addSecretToMask(final String secret) {
+        if (this.useSecrets.contains(secret)) {
+            return;
+        }
+        int index = 0;
+        while (index < this.useSecrets.size() && this.useSecrets.get(index).length() >= secret.length()) {
+            index++;
+        }
+        this.useSecrets.add(index, secret);
     }
 
     public org.slf4j.Logger logger() {

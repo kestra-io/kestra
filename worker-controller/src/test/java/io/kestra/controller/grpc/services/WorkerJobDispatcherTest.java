@@ -240,7 +240,7 @@ class WorkerJobDispatcherTest {
                     .build()
             )
             .task(Log.builder().id("task-1").type(Log.class.getName()).build())
-            .data(new WorkerTaskData(Map.of(), List.of(), null, null))
+            .data(new WorkerTaskData(Map.of(), List.of(), null))
             .build();
     }
 

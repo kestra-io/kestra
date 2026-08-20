@@ -169,12 +169,13 @@ class RunContextLoggerTest {
             false
         );
 
-        // When the outputs are decrypted while building the run variables
-        new RunVariables.DefaultBuilder(Optional.of(secretKey))
-            .withExecution(execution)
-            .withOutputs(outputs)
-            .withDecryptVariables(true)
-            .build(runContextLogger, PropertyContext.create(renderer));
+        // When the outputs are decrypted as the run context reads them
+        new DefaultRunContext.Builder()
+            .withSecretKey(Optional.of(secretKey))
+            .withLogger(runContextLogger)
+            .withVariables(Map.of("outputs", outputs))
+            .build()
+            .getVariables();
 
         // Then the decrypted plaintext is registered for log masking, exactly like a SECRET input
         runContextLogger.logger().info("the secret is {}", "my-super-secret-value");

@@ -273,10 +273,13 @@ export function useDependencies(
 
     /** Restricts the graph to one group; undefined shows all of them. */
     const isolateGroup = (key?: string): void => {
-        if (!key) { isolatedIDs.value = null; return }
+        // Only undefined means "no group": the ungrouped bucket is a real, selectable group
+        // whose key is the empty string, and a falsy check isolated it into a no-op. Its
+        // members read as undefined from the accessor, so both sides normalise to "".
+        if (key === undefined) { isolatedIDs.value = null; return }
         const match = elements.value.data
             .filter((el): el is {data: Node} => el.data.type === NODE)
-            .filter(({data}) => laneOf.value?.(data.id) === key)
+            .filter(({data}) => (laneOf.value?.(data.id) ?? "") === key)
             .map(({data}) => data.id)
         isolatedIDs.value = match.length ? new Set(match) : null
     }
@@ -450,8 +453,16 @@ export function useDependencies(
                     bgColor     = execColor ?? cssVar(NODE_BG.selected)
                     borderColor = execColor ?? cssVar(NODE_BORDER.selected)
                 } else if (isFaded) {
-                    bgColor     = cssVar(NODE_BG.faded)
-                    borderColor = cssVar(NODE_BORDER.faded)
+                    // An isolated group is a scope the user set; selecting a node is a focus
+                    // inside it. Focus must not erase scope, so a member that is merely not
+                    // adjacent to the selection keeps its colour and only softens. Gated on
+                    // hasFilter so views with nothing isolated are unchanged.
+                    const inScope = hasFilter && shownNodeIDs.value!.has(node.id)
+                    const scopeBG = isAsset ? NODE_BG.assets : NODE_BG.default
+                    const scopeBorder = isAsset ? NODE_BORDER.assets : NODE_BORDER.default
+
+                    bgColor     = inScope ? (execColor ?? cssVar(scopeBG)) : cssVar(NODE_BG.faded)
+                    borderColor = inScope ? (execColor ?? cssVar(scopeBorder)) : cssVar(NODE_BORDER.faded)
                     opacity     = 0.75
                 } else if (isAsset) {
                     bgColor     = execColor ?? cssVar(NODE_BG.assets)
@@ -1117,6 +1128,8 @@ export function useDependencies(
         chartEdges,
         /** Layout to hand KsGraph: explicit coordinates once any are known. */
         graphLayout,
+        /** Intersection of the table filter and any isolated group; dims everything outside it. */
+        shownNodeIDs,
         /** Fades every node outside one group, without pinning it. */
         isolateGroup,
         /** Pins or unpins a group; the chip row reads activeGroup for its active state. */

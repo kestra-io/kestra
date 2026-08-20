@@ -11,63 +11,79 @@
                 execution
             />
         </div>
+        <div v-if="dagView && !isLoading && getElements().length" class="dag-bar">
+            <KsSegmented
+                v-model="layoutMode"
+                class="layout-toggle"
+                size="small"
+                :options="layoutOptions"
+            />
+            <KsSelect
+                v-model="groupField"
+                class="group-select"
+                size="small"
+                :placeholder="$t('dependency.dag.group_by')"
+            >
+                <KsOption :label="$t('dependency.dag.group_none')" value="" />
+                <KsOption
+                    v-for="field in groupFields"
+                    :key="field.key"
+                    :label="`${field.label} (${field.groups})`"
+                    :value="field.key"
+                    :disabled="!field.usable"
+                />
+            </KsSelect>
+
+            <GroupPicker
+                v-if="groupChips.length"
+                :groups="groupChips"
+                :activeGroup="activeGroup"
+                @preview="isolateGroup"
+                @toggle="toggleGroup"
+            />
+
+            <KsText v-if="summary" size="small" class="layout-summary">
+                {{ summary }}
+            </KsText>
+        </div>
         <div v-if="isLoading" v-ks-loading="true" class="h-100" />
         <Empty v-else-if="!getElements().length" :type="`dependencies.${SUBTYPE}`" />
         <KsSplitter v-else class="dependencies">
             <KsSplitterPanel id="graph" v-bind="PANEL">
                 <div class="graph-pane">
-                    <div v-if="dagView" class="dag-bar">
-                        <KsSegmented
-                            v-model="layoutMode"
-                            class="layout-toggle"
-                            size="small"
-                            :options="layoutOptions"
-                        />
-                        <KsSelect
-                            v-model="groupField"
-                            class="group-select"
-                            size="small"
-                            :placeholder="$t('dependency.dag.group_by')"
-                        >
-                            <KsOption :label="$t('dependency.dag.group_none')" value="" />
-                            <KsOption
-                                v-for="field in groupFields"
-                                :key="field.key"
-                                :label="`${field.label} (${field.groups})`"
-                                :value="field.key"
-                                :disabled="!field.usable"
+                    <div class="canvas-stack">
+                        <!-- Kept mounted under visibility:hidden rather than v-if or v-show:
+                             remounting re-runs the force simulation and loses the settled
+                             positions and camera, and a display:none chart measures 0x0, so
+                             a later resize would corrupt the Tree view. -->
+                        <div class="echarts-layer" :class="{'is-hidden': isDagCanvas}">
+                            <KsGraph
+                                ref="graphRef"
+                                class="graph-canvas"
+                                :nodes="chartNodes"
+                                :edges="chartEdges"
+                                :loading="isRendering"
+                                :layout="graphLayout"
+                                :options="graphOptions"
+                                @node-click="handleNodeClick"
                             />
-                        </KsSelect>
+                        </div>
 
-                        <KsText v-if="summary" size="small" class="layout-summary">
-                            {{ summary }}
-                        </KsText>
+                        <DagCanvas
+                            v-if="isDagCanvas"
+                            ref="dagCanvasRef"
+                            class="dag-layer"
+                            :elements="getElements()"
+                            :selected="selectedNodeID"
+                            :hovered="hoveredNodeID"
+                            :dimmed="shownNodeIDs"
+                            :priorityOf="dagPriority"
+                            @select="selectNode"
+                            @hover="(id) => (hoveredNodeID = id)"
+                            @open="(id) => (openedNodeID = id)"
+                            @pane-click="() => {selectedNodeID = undefined; clearGroup()}"
+                        />
                     </div>
-
-                    <div v-if="groupChips.length" class="group-chips">
-                        <button
-                            v-for="chip in groupChips"
-                            :key="chip.key"
-                            type="button"
-                            :class="['group-chip', {'is-active': chip.key === activeGroup}]"
-                            @mouseenter="isolateGroup(chip.key)"
-                            @mouseleave="isolateGroup(activeGroup)"
-                            @click="toggleGroup(chip.key)"
-                        >
-                            {{ chip.label }} ({{ chip.count }})
-                        </button>
-                    </div>
-
-                    <KsGraph
-                        ref="graphRef"
-                        class="graph-canvas"
-                        :nodes="chartNodes"
-                        :edges="chartEdges"
-                        :loading="isRendering"
-                        :layout="graphLayout"
-                        :options="graphOptions"
-                        @node-click="handleNodeClick"
-                    />
 
                     <div v-if="dagView && layoutMode === 'dag'" class="dag-legend">
                         <span v-for="state in presentStatuses" :key="state" class="legend-item">
@@ -80,32 +96,35 @@
                         <KsButton
                             size="small"
                             :title="$t('dependency.controls.zoom_in')"
-                            @click="handlers.zoomIn"
+                            @click="controls.zoomIn"
                         >
                             <Plus />
                         </KsButton>
                         <KsButton
                             size="small"
                             :title="$t('dependency.controls.zoom_out')"
-                            @click="handlers.zoomOut"
+                            @click="controls.zoomOut"
                         >
                             <Minus />
                         </KsButton>
                         <KsButton
                             size="small"
                             :title="$t('dependency.controls.clear_selection')"
-                            @click="handlers.clearSelection"
+                            @click="controls.clearSelection"
                         >
                             <SelectionRemove />
                         </KsButton>
                         <KsButton
                             size="small"
                             :title="$t('dependency.controls.fit_view')"
-                            @click="handlers.fit"
+                            @click="controls.fit"
                         >
                             <FitToScreenOutline />
                         </KsButton>
-                        <KsDropdown>
+                        <!-- Hidden rather than disabled while the vue-flow canvas is up:
+                             image export still targets the chart, and exporting the hidden
+                             Tree would hand the user a picture of the wrong graph. -->
+                        <KsDropdown v-if="!isDagCanvas">
                             <KsButton size="small" :title="$t('export')">
                                 <Download />
                             </KsButton>
@@ -124,12 +143,14 @@
                 </div>
             </KsSplitterPanel>
 
-            <KsSplitterPanel id="table">
+            <!-- Absolute floor, not a percentage: at 20% of a small window this pane is
+                 narrow enough that the detail table wraps values one character per line. -->
+            <KsSplitterPanel id="table" min="320px">
                 <NodeDetails
                     v-if="selectedNode"
                     :node="selectedNode"
                     :subtype="SUBTYPE"
-                    @close="handlers.clearSelection"
+                    @close="controls.clearSelection"
                 />
                 <Table
                     v-else
@@ -138,7 +159,7 @@
                     :selected="selectedNodeID"
                     :subtype="SUBTYPE"
                     @select="selectNode"
-                    @hover="highlightNode"
+                    @hover="onHover"
                     @open="openNode"
                 />
             </KsSplitterPanel>
@@ -151,6 +172,8 @@
 
     import Table from "./components/Table.vue"
     import NodeDetails from "./components/NodeDetails.vue"
+    import DagCanvas from "./components/dag/DagCanvas.vue"
+    import GroupPicker from "./components/dag/GroupPicker.vue"
     import Empty from "../layout/empty/Empty.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
     import ChartDurationSelect from "../executions/date-select/ChartDurationSelect.vue"
@@ -261,10 +284,26 @@
     })
 
     /**
+     * Group index per node, so members sit adjacent within their rank. Chip order is the
+     * source of truth, so the canvas and the chip row agree on which group comes first.
+     */
+    const dagPriority = computed(() => {
+        const accessor = groupOf.value
+        if (!accessor) return undefined
+
+        const rank = new Map(groupChips.value.map((chip, index) => [chip.key, index]))
+        const byNode = new Map(graphNodesList.value.map((node) => [node.id, rank.get(accessor(node) ?? "") ?? 0]))
+        return (id: string) => byNode.get(id) ?? 0
+    })
+
+    /**
      * DAG view insets the series box so the graph never touches the toolbar, the
      * legend or the pane edges, and clamps roam so cards cannot be zoomed into a
      * pile: ECharts scales positions but not symbol size.
      */
+    // Pinned to the force arm: the chart only ever renders Tree now, and letting the
+    // view-local toggle reach these options would strip preserveAspect and roamTrigger
+    // from a live Tree series, which is the anisotropic fit that renders nodes as ellipses.
     const graphOptions = computed(() => ({
         series: [{
             // Both layouts share this canvas, so they share its fixes. The series box is
@@ -275,18 +314,15 @@
             top: 0,
             right: 0,
             bottom: 0,
-            // Only DAG needs a floor: its cards are sized in pixels, so zooming out piles
-            // them up. A large force graph may legitimately need to zoom out further.
-            ...(layoutMode.value === "dag"
-                ? {scaleLimit: {min: 0.4, max: 2.5}}
-                // Tree captures force positions and switches to layout:"none"; without this
-                // ECharts stretch-fits that bounding rect onto the box with independent
-                // scaleX/scaleY, which squashes every node into an ellipse. roamTrigger keeps
-                // dragging on the whole canvas once the fit is aspect-contained.
-                : {preserveAspect: true, roamTrigger: "global"}),
-            // Tree view dims everything but the hovered node and its neighbours, which is
-            // what makes a dense force graph readable; DAG columns already read on their own.
-            emphasis: {focus: layoutMode.value === "dag" ? "none" : "adjacency"},
+            // Tree captures force positions and switches to layout:"none"; without this
+            // ECharts stretch-fits that bounding rect onto the box with independent
+            // scaleX/scaleY, which squashes every node into an ellipse. roamTrigger keeps
+            // dragging on the whole canvas once the fit is aspect-contained.
+            preserveAspect: true,
+            roamTrigger: "global",
+            // Dims everything but the hovered node and its neighbours, which is what makes
+            // a dense force graph readable.
+            emphasis: {focus: "adjacency"},
         }],
     }))
 
@@ -326,7 +362,42 @@
         openedNodeID,
         handleNodeClick,
         handlers,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, layoutMode, groupOf)
+        shownNodeIDs,
+        // layoutMode is deliberately not passed: DAG now renders through DagCanvas, so the
+        // chart only ever shows Tree. That leaves the composable's whole DAG branch
+        // unreachable, pending its removal, and keeps this call identical to the one the
+        // flow, execution and namespace views make.
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, undefined, groupOf)
+
+    const dagCanvasRef = ref<{zoomIn: () => void; zoomOut: () => void; fit: () => void} | null>(null)
+    const hoveredNodeID = ref<string | undefined>(undefined)
+
+    /** DAG renders through vue-flow; Tree and the three sibling views stay on the chart. */
+    const isDagCanvas = computed(() => Boolean(props.dagView) && layoutMode.value === "dag")
+
+    /**
+     * Identical to `handlers` unless the vue-flow canvas is up, so the three sibling views
+     * keep the exact functions they call today. The DAG arm rebuilds clearSelection rather
+     * than delegating: `handlers.clearSelection` also refits the chart, which is hidden.
+     */
+    const controls = computed(() => (isDagCanvas.value
+        ? {
+            zoomIn:  () => dagCanvasRef.value?.zoomIn(),
+            zoomOut: () => dagCanvasRef.value?.zoomOut(),
+            fit:     () => dagCanvasRef.value?.fit(),
+            clearSelection: () => {
+                selectedNodeID.value = undefined
+                clearGroup()
+                dagCanvasRef.value?.fit()
+            },
+        }
+        : handlers))
+
+    /** Table-row hover drives the vue-flow trace, or the chart's own emphasis. */
+    const onHover = (id?: string): void => {
+        if (isDagCanvas.value) hoveredNodeID.value = id
+        else highlightNode(id)
+    }
 
     const router = useRouter()
 
@@ -498,6 +569,47 @@
     padding-bottom: 0;
 }
 
+// Not space-between: that spread the view toggle, the grouping field and the group picker
+// to opposite ends of the row, when the field and the picker are one control in two parts.
+// They sit together on the left; only the summary is pushed to the far edge.
+// align-items: stretch, not center: KsSelect carries a 30px min-height for every size
+// while a small KsButton and KsSegmented are 24px, so centring leaves the grouping field
+// visibly taller than its neighbours. Stretching sizes them all from the tallest without
+// hardcoding a height that would drift if the design system changes it.
+.dag-bar {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-2);
+    padding: var(--ks-spacing-2);
+}
+
+// A gap step rather than a divider: the bar is too light to earn a rule, but the view
+// switch is a different kind of control from the grouping pair beside it.
+.layout-toggle {
+    flex: 0 0 auto;
+    margin-right: var(--ks-spacing-4);
+}
+
+// The summary answers "is anything wrong here" and is the highest-priority text
+// on the screen, so it never shrinks. The group select absorbs the loss instead.
+.group-select {
+    flex: 0 1 11rem;
+    min-width: 0;
+}
+
+// Anchors the right edge, which is what makes this read as a page header rather than a
+// graph toolbar. It may wrap but must never be cut: the select has min-width 0 so it
+// collapses first, and the floor here means the summary only wraps once it is alone on
+// its own row.
+.layout-summary {
+    flex: 0 1 auto;
+    min-width: 12rem;
+    margin-left: auto;
+    color: var(--ks-text-secondary);
+    text-align: right;
+}
+
 .dependencies {
     display: flex;
     width: 100%;
@@ -518,10 +630,31 @@
             min-height: 0;
         }
 
-        & .graph-canvas {
-            width: 100%;
+        & .canvas-stack {
+            position: relative;
             flex: 1;
             min-height: 0;
+        }
+
+        & .echarts-layer,
+        & .dag-layer {
+            position: absolute;
+            inset: 0;
+        }
+
+        // visibility, not opacity: an opacity-0 canvas still hit-tests, so it would eat
+        // clicks and wheel events meant for the vue-flow layer above it.
+        & .echarts-layer.is-hidden {
+            visibility: hidden;
+        }
+
+        & .dag-layer {
+            z-index: 1;
+        }
+
+        & .graph-canvas {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             background-color: transparent;
             background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 30%, transparent) 1px, transparent 1px);
@@ -533,58 +666,40 @@
             }
         }
 
-        & .dag-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: var(--ks-spacing-2) var(--ks-spacing-3);
-            padding: var(--ks-spacing-2);
+        & .canvas-stack {
+            position: relative;
+            flex: 1;
+            min-height: 0;
         }
 
-        & .layout-toggle {
-            flex: 0 0 auto;
+        & .echarts-layer,
+        & .dag-layer {
+            position: absolute;
+            inset: 0;
         }
 
-        // The summary answers "is anything wrong here" and is the highest-priority text
-        // on the screen, so it never shrinks. The group select absorbs the loss instead.
-        & .group-select {
-            flex: 0 1 11rem;
-            min-width: 0;
+        // visibility, not opacity: an opacity-0 canvas still hit-tests, so it would eat
+        // clicks and wheel events meant for the vue-flow layer above it.
+        & .echarts-layer.is-hidden {
+            visibility: hidden;
         }
 
-        & .layout-summary {
-            flex: 0 0 auto;
-            color: var(--ks-text-secondary);
-            text-align: right;
-            white-space: nowrap;
+        & .dag-layer {
+            z-index: 1;
         }
 
-        & .group-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--ks-spacing-2);
-            padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
-        }
+        & .graph-canvas {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: transparent;
+            background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 30%, transparent) 1px, transparent 1px);
+            background-repeat: repeat;
+            background-size: 24px 24px;
 
-        & .group-chip {
-            padding: var(--ks-spacing-1) var(--ks-spacing-3);
-            border: 1px solid var(--ks-border-subtle);
-            border-radius: var(--ks-radius-base);
-            background: var(--ks-bg-surface);
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-xs);
-            cursor: pointer;
-        }
-
-        & .group-chip:hover {
-            color: var(--ks-text-primary);
-            border-color: var(--ks-border-default);
-        }
-
-        & .group-chip.is-active {
-            border-color: var(--ks-border-focus);
-            color: var(--ks-text-primary);
+            .dark & {
+                background-image: radial-gradient(circle, color-mix(in srgb, var(--ks-topology-dash) 20%, transparent) 1px, transparent 1px);
+            }
         }
 
         & .dag-legend {
@@ -639,6 +754,7 @@
 
         & .controls {
             position: absolute;
+            z-index: 2;
             bottom: var(--ks-spacing-4);
             left: var(--ks-spacing-3);
             display: flex;

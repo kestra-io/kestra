@@ -7,3 +7,9 @@ kestra:
     type: memory
   queue:
     type: memory
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

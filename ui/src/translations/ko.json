@@ -1113,7 +1113,7 @@
       "contact_sales": "영업팀에 문의하세요",
       "secrets": {
         "title": "비밀 관리 업그레이드",
-        "message": "Enterprise Edition(EE)을 사용하면 UI에서 직접 시크릿을 추가, 편집 또는 삭제할 수 있으며 인스턴스를 다시 시작할 필요가 없습니다. 세분화된 RBAC 권한으로 namespace별로 시크릿을 구성하고, 부모 namespace에서 자식 namespace로 시크릿을 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 시크릿 관리자와 통합됩니다. 팀 간에 시크릿을 격리하기 위해 namespace, tenant 또는 인스턴스별로 전용 백엔드를 설정하거나 외부 볼트에 저장된 읽기 전용 시크릿을 활성화할 수 있습니다. 시크릿은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 액세스를 기록합니다.",
+        "message": "Enterprise Edition을 사용하면 UI에서 직접 시크릿을 추가, 편집, 삭제하고 RBAC으로 namespace별로 구성하며 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager 또는 Elasticsearch를 백엔드로 사용할 수 있습니다.",
         "add_env": {
           "intro": "새 Secret 생성",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",

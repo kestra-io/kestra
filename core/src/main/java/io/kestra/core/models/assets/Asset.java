@@ -85,6 +85,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
         // Type is immutable, if it was set before we keep it
         this.type = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(this.type);
+        this.namespace = Optional.ofNullable(this.namespace).or(() -> Optional.ofNullable(previousAsset).map(Asset::getNamespace)).orElse(null);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null

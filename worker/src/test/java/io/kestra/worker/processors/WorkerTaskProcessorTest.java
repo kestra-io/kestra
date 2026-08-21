@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -117,6 +118,24 @@ class WorkerTaskProcessorTest {
         assertThat(results)
             .as("an interrupted task's failure must be deferred for resubmission, not reported")
             .noneMatch(result -> result.getTaskRun().getState().isFailed());
+    }
+
+    @Test
+    void shouldKeepDeclaredInputsWhenOutputsCannotBeRendered() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        processor.process(unrenderableOutputsWorkerTask());
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        assertThat(results.getLast().getTaskRun().getAssetEmits())
+            .as("a failing output must not discard the declared inputs")
+            .singleElement()
+            .satisfies(bundle ->
+            {
+                assertThat(bundle.getInputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
+                assertThat(bundle.getOutputs()).isEmpty();
+            });
     }
 
     @Test
@@ -271,6 +290,24 @@ class WorkerTaskProcessorTest {
             .task(task)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();
+    }
+
+    private WorkerTask unrenderableOutputsWorkerTask() {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, "io.kestra.unit-test", "declared-input", "MY_OWN_ASSET_TYPE"))),
+                    // rendered value is a plain string, not JSON, so binding it as List<Asset> fails
+                    Property.ofExpression("{{ 'not-json' }}"),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
     }
 
     private WorkerTask assetEmissionFailureWorkerTask(AssetFailureBehavior assetFailureBehavior) {

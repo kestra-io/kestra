@@ -459,11 +459,26 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
 
+                // Rendered independently so an unrenderable output doesn't discard the inputs of the same task.
+                List<AssetIdentifier> declaredInputs = List.of();
+                try {
+                    declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
+                } catch (Exception e) {
+                    logger.warn("Unable to render the declared asset inputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmissionFailed = true;
+                }
+
+                List<Asset> declaredOutputs = List.of();
+                try {
+                    declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
+                } catch (Exception e) {
+                    logger.warn("Unable to render the declared asset outputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmissionFailed = true;
+                }
+
                 // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
                 // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
                 List<AssetsInOut> bundles = new ArrayList<>();
-                List<AssetIdentifier> declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
-                List<Asset> declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
                     bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
                 }
@@ -474,7 +489,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 }
             }
         } catch (Exception e) {
-            logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
+            logger.warn("Unable to emit the assets of task '{}'", taskRun.getTaskId(), e);
             assetEmissionFailed = true;
         }
 

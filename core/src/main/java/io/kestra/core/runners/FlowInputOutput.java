@@ -475,9 +475,27 @@ public class FlowInputOutput {
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                     yield EncryptedString.from(encrypted);
                 }
-                case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
+                case INT -> {
+                    if (current instanceof Integer) {
+                        yield current;
+                    }
+                    try {
+                        yield Integer.valueOf(current.toString());
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException("not a valid `INT`");
+                    } 
+                }
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
-                case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
+                case FLOAT -> {
+                    if (current instanceof Float) {
+                        yield current;
+                    }
+                    try {
+                        yield Float.valueOf(current.toString());
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException("not a valid `FLOAT`");
+                    } 
+                }
                 case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
                 case BOOL -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
                 case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());

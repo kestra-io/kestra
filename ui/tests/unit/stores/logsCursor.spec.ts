@@ -90,4 +90,67 @@ describe("logs store cursor pagination", () => {
         expect(store.hasNextCursor).toBe(false)
         expect(store.nextCursor).toBeUndefined()
     })
+
+    it("loadNextPage advances using the current nextCursor and enables Previous", async () => {
+        searchLogs.mockResolvedValueOnce({results: [{message: "p0"}], type: "CURSOR", nextCursor: "tok-1"})
+        const {useLogsStore} = await import("../../../src/stores/logs")
+        const store = useLogsStore()
+        await store.findLogs({page: 1, size: 25})
+        expect(store.hasPreviousPage).toBe(false)
+
+        searchLogs.mockResolvedValueOnce({results: [{message: "p1"}], type: "CURSOR", nextCursor: "tok-2"})
+        await store.loadNextPage({size: 25})
+
+        expect(searchLogs).toHaveBeenLastCalledWith(expect.objectContaining({cursor: "tok-1"}))
+        expect(store.logs).toEqual([{message: "p1"}])
+        expect(store.nextCursor).toBe("tok-2")
+        expect(store.hasPreviousPage).toBe(true)
+    })
+
+    it("loadNextPage on an empty page keeps current rows and drops Next (dead-end fix)", async () => {
+        searchLogs.mockResolvedValueOnce({results: [{message: "last"}], type: "CURSOR", nextCursor: "tok-1"})
+        const {useLogsStore} = await import("../../../src/stores/logs")
+        const store = useLogsStore()
+        await store.findLogs({page: 1, size: 25})
+
+        searchLogs.mockResolvedValueOnce({results: [], type: "CURSOR"})
+        await store.loadNextPage({size: 25})
+
+        expect(store.logs).toEqual([{message: "last"}])
+        expect(store.hasNextCursor).toBe(false)
+        expect(store.hasPreviousPage).toBe(false)
+    })
+
+    it("loadPreviousPage returns to the prior page and disables Previous at the first page", async () => {
+        searchLogs.mockResolvedValueOnce({results: [{message: "p0"}], type: "CURSOR", nextCursor: "tok-1"})
+        const {useLogsStore} = await import("../../../src/stores/logs")
+        const store = useLogsStore()
+        await store.findLogs({page: 1, size: 25})
+        searchLogs.mockResolvedValueOnce({results: [{message: "p1"}], type: "CURSOR", nextCursor: "tok-2"})
+        await store.loadNextPage({size: 25})
+        expect(store.hasPreviousPage).toBe(true)
+
+        searchLogs.mockResolvedValueOnce({results: [{message: "p0"}], type: "CURSOR", nextCursor: "tok-1"})
+        await store.loadPreviousPage({size: 25})
+
+        expect(searchLogs).toHaveBeenLastCalledWith(expect.objectContaining({cursor: undefined}))
+        expect(store.logs).toEqual([{message: "p0"}])
+        expect(store.nextCursor).toBe("tok-1")
+        expect(store.hasPreviousPage).toBe(false)
+    })
+
+    it("findLogs (fresh load) resets the back-stack", async () => {
+        searchLogs.mockResolvedValueOnce({results: [{message: "p0"}], type: "CURSOR", nextCursor: "tok-1"})
+        const {useLogsStore} = await import("../../../src/stores/logs")
+        const store = useLogsStore()
+        await store.findLogs({page: 1, size: 25})
+        searchLogs.mockResolvedValueOnce({results: [{message: "p1"}], type: "CURSOR", nextCursor: "tok-2"})
+        await store.loadNextPage({size: 25})
+        expect(store.hasPreviousPage).toBe(true)
+
+        searchLogs.mockResolvedValueOnce({results: [{message: "fresh"}], type: "CURSOR", nextCursor: "tok-9"})
+        await store.findLogs({page: 1, size: 25})
+
+        expect(store.hasPreviousPage).toBe(false)
+    })
 })

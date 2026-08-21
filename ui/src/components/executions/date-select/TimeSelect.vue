@@ -25,7 +25,7 @@
                 </table>
             </div>
         </template>
-        <KsInput class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
+        <KsInput class="mt-2" data-test="custom-duration" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
     </KsTooltip>
 </template>
 

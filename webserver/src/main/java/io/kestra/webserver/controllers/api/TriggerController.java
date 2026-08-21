@@ -405,7 +405,9 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters,
         @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled,
-        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped") @QueryValue @Nullable Boolean recoverMissedSchedules) {
+        @Parameter(
+            description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped"
+        ) @QueryValue @Nullable Boolean recoverMissedSchedules) {
         return HttpResponse.accepted().body(
             triggerStateService.toggleAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null), disabled, recoverMissedSchedules)
         );
@@ -424,7 +426,9 @@ public class TriggerController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 triggerRepository.find(this.tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                    .map(this::toApiTriggerAndState)
+                    .filter(java.util.Objects::nonNull)
+                    .map(state -> objectMapper.convertValue(state, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=triggers.csv");
@@ -463,7 +467,9 @@ public class TriggerController {
     public record SetDisabledRequest(
         @NotNull @NotEmpty List<ApiTriggerId> triggers,
         @NotNull Boolean disabled,
-        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped")
+        @Parameter(
+            description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped"
+        )
         @Nullable Boolean recoverMissedSchedules) {
 
         public SetDisabledRequest(List<ApiTriggerId> triggers, Boolean disabled) {
@@ -491,7 +497,9 @@ public class TriggerController {
         @Parameter(description = "The ID of the flow.") String flowId,
         @Parameter(description = "The ID of the trigger.") String triggerId,
         @Parameter(description = "Specifies whether trigger should be disabled") boolean disabled,
-        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped")
+        @Parameter(
+            description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped"
+        )
         @Nullable Boolean recoverMissedSchedules) {
 
         public ApiDisableTriggerRequest(String namespace, String flowId, String triggerId, boolean disabled) {

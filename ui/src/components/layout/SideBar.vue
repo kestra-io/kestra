@@ -30,7 +30,7 @@
                 @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
                 <template v-if="getSectionCollapsed(section) && sectionHasNewChild(section)" #suffix>
-                    <KsNewBadge>{{ t("new") }}</KsNewBadge>
+                    <KsNewBadge>{{ $t("new") }}</KsNewBadge>
                 </template>
                 <MenuLink
                     v-for="item in getDisplayedItems(section)"

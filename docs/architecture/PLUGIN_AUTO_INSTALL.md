@@ -59,14 +59,20 @@ default:
 - **Enterprise Edition** — plugin installation is a governed, cluster-level admin operation;
   auto-fetch on save would bypass that governance.
 
-### Distribution: two images
+### Distribution: three images
 
-The feature assumes a dual-image distribution (the build itself lives in the `actions` repo, out of
+The feature assumes this image line-up (the build itself lives in the `actions` repo, out of
 scope for this codebase):
 
 - `kestra/kestra:<version>` — **full** image, all plugins bundled (offline / air-gapped use).
-- `kestra/kestra:<version>-slim` — **slim** image, core engine only. This is the image that
-  relies on the two features below to stay usable.
+- `kestra/kestra:<version>-slim` — **slim** image, core engine only, **auto-install enabled by
+  default**. This is the image that relies on the two features below to stay usable.
+- `kestra/kestra:<version>-no-plugins` — no plugins, **auto-install off**, and that's all. Used by
+  customers who want to control the exact plugin set on hardened environments; unchanged by this
+  feature.
+
+The base images (`kestra-base:*-no-plugins`) are shared and untouched — slim vs no-plugins differ
+only in the Kestra configuration baked into the final image by the `actions` repo.
 
 ---
 

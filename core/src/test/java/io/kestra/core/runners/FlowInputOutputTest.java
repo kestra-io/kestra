@@ -55,6 +55,7 @@ import reactor.core.publisher.Mono;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
 class FlowInputOutputTest {

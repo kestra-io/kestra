@@ -191,8 +191,9 @@ order (`resolveBundleSource`):
    bundle you host yourself. No default: nothing is published for Kestra to fetch, so this is purely
    an escape hatch for custom builds that ship no embedded bundle.
 
-When none of the three resolves the service is a **no-op**. The resolved source is cached ~1h and
-loaded asynchronously. This is pure JSON — **no plugin JAR is ever downloaded here.**
+When none of the three resolves the service is a **no-op**. The bundle is immutable per release, so
+it is loaded once on first use and cached forever (a failed remote fetch retries with a backoff).
+This is pure JSON — **no plugin JAR is ever downloaded here.**
 
 > **Special case — self-built JAR / running from source.** The bundle is embedded by *release CI*
 > only, so a plain `./gradlew build` jar or an IDE/`gradlew run` instance has no

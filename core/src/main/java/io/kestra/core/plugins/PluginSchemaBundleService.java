@@ -4,29 +4,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -41,51 +32,25 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Fetches and caches a pre-baked, per-release plugin schema bundle.
+ * Loads the pre-baked plugin schema bundle (built by {@code PluginsSchemaCommand}) and merges it
+ * into locally-generated schemas via {@link PluginSchemaBundleMerger}, so the editor can complete
+ * plugin types that are not installed locally (KIP-45). Installed plugins always take precedence.
  *
  * <p>
- * Flow/task/trigger/dashboard schemas overlap heavily, so the bundle (built by
- * {@code PluginsSchemaCommand}) stores their {@code definitions} once, in a single shared pool,
- * plus a {@code roots} map of {@link SchemaType} name (lower-case) → the {@code $ref} into that
- * pool for that type's root class — see {@code PluginsSchemaCommand}'s Javadoc for the exact
- * shape.
- *
- * <p>
- * This allows the editor to offer autocompletion for plugin types that are not yet installed
- * locally (KIP-45 auto-install flow). Installed-plugin schemas always take precedence when
- * {@link #mergeWithBundle(SchemaType, Map)} is called.
- *
- * <p>
- * The bundle source is resolved once, at construction, in priority order (see
- * {@link #resolveBundleSource}):
- * <ol>
- * <li>{@code kestra.plugins.schema-bundle-path} — an explicit local file. Highest priority so a
- * developer (or the plugin-devtools setup) can point at a full-catalog bundle and always win
- * over the JAR-bundled default.</li>
- * <li>The {@code /plugins-schema.json} classpath resource — the bundle shipped inside the Kestra
- * JAR. Loaded with no network access, so autocompletion works offline / air-gapped out of the
- * box once CI embeds it.</li>
- * <li>{@code kestra.plugins.schema-bundle-url-template} — a self-hosted remote URL where
- * {@code {version}} is replaced by the stripped stable Kestra version (e.g. {@code 1.2.3},
- * never {@code -SNAPSHOT}). Empty by default: the bundle is not published anywhere, so this is
- * only an escape hatch for a custom build that ships no embedded resource. A failed fetch is
- * logged and swallowed.</li>
- * </ol>
- * When none of the three resolves, the service is a no-op. That is the expected state on a plain
- * {@code ./gradlew build} or a {@code develop} build, where CI has not embedded a bundle.
+ * The bundle source is resolved once at construction, in priority order (see
+ * {@link #resolveBundleSource}): an explicit local file ({@code kestra.plugins.schema-bundle-path}),
+ * the {@code /plugins-schema.json} classpath resource embedded by release CI, then a self-hosted
+ * URL template ({@code kestra.plugins.schema-bundle-url-template}). When none resolves the service
+ * is a no-op — the expected state on a plain {@code ./gradlew build} or a {@code develop} build.
+ * The bundle is immutable per release, so it is loaded once on first use and cached forever; a
+ * failed remote fetch is retried with a backoff.
  */
 @Singleton
 @Slf4j
 public class PluginSchemaBundleService {
 
-    private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
-    // Bounds the one-time blocking wait for the very first caller when no bundle is cached yet.
-    // Later callers never wait on the network: a stale cache is served immediately while a
-    // background refresh runs, and a still-empty cache after this timeout just means the merge
-    // is skipped for this request rather than the caller hanging on a slow/unreachable GCS fetch.
-    private static final Duration INITIAL_FETCH_TIMEOUT = Duration.ofSeconds(15);
-    private static final int CONNECT_TIMEOUT_MILLIS = 5_000;
-    private static final int READ_TIMEOUT_MILLIS = 10_000;
+    private static final Duration FETCH_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration FAILURE_BACKOFF = Duration.ofMinutes(1);
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
@@ -95,15 +60,8 @@ public class PluginSchemaBundleService {
 
     private final String resolvedBundleUrl;
 
-    // Negative cache: while the source is failing, don't make every request pay the initial-fetch
-    // wait — back off between attempts instead.
-    private static final Duration FAILURE_BACKOFF = Duration.ofMinutes(1);
-
-    private volatile CompletableFuture<Bundle> future;
-    private volatile Bundle cached = Bundle.EMPTY;
-    private volatile Instant cacheLastLoaded = Instant.now();
-    private volatile Instant lastFailure;
-    private final AtomicBoolean loading = new AtomicBoolean(false);
+    private volatile Bundle bundle;
+    private volatile Instant lastFailureAt;
 
     public PluginSchemaBundleService(
         @Nullable @Value("${kestra.plugins.schema-bundle-path:}") String bundlePath,
@@ -119,12 +77,8 @@ public class PluginSchemaBundleService {
     /**
      * Resolves the single bundle source URL, in priority order: explicit local file, then the
      * JAR-bundled classpath resource, then the remote URL template. Returns {@code ""} when none
-     * applies (the service is then a no-op).
-     *
-     * <p>
-     * Package-private and side-effect-free (the classpath resource and version are passed in) so the
-     * resolution order can be unit-tested without a real classpath entry or a running
-     * {@link KestraContext}.
+     * applies (the service is then a no-op). Package-private and side-effect-free so the
+     * resolution order can be unit-tested.
      *
      * @param bundlePath value of {@code kestra.plugins.schema-bundle-path}, may be {@code null}/blank
      * @param bundleUrlTemplate value of {@code kestra.plugins.schema-bundle-url-template}, may be {@code null}/blank
@@ -137,8 +91,8 @@ public class PluginSchemaBundleService {
         @Nullable String bundleUrlTemplate,
         @Nullable URL classpathBundle,
         Supplier<String> versionSupplier) {
-        // 1. Explicit local-file override — highest priority so a developer (or plugin-devtools) can
-        //    point at a full-catalog bundle and always win over the JAR-bundled default.
+        // Explicit local-file override — highest priority so a developer (or plugin-devtools) can
+        // point at a full-catalog bundle and always win over the JAR-bundled default.
         if (bundlePath != null && !bundlePath.isBlank()) {
             Path path = Path.of(bundlePath.trim());
             if (Files.isRegularFile(path)) {
@@ -147,12 +101,12 @@ public class PluginSchemaBundleService {
             log.warn("Configured plugin schema bundle path '{}' is not a readable file; ignoring it.", bundlePath);
         }
 
-        // 2. Bundle shipped inside the Kestra JAR — no network access, works offline / air-gapped.
+        // Bundle shipped inside the Kestra JAR — no network access, works offline / air-gapped.
         if (classpathBundle != null) {
             return classpathBundle.toString();
         }
 
-        // 3. Remote URL template fallback, keyed by the stripped stable version.
+        // Remote URL template fallback, keyed by the stripped stable version.
         if (bundleUrlTemplate != null && !bundleUrlTemplate.isBlank()) {
             Version version = Version.of(versionSupplier.get());
             String stable = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null).toString();
@@ -171,36 +125,19 @@ public class PluginSchemaBundleService {
     }
 
     /**
-     * Returns a copy of {@code localSchema} enriched with lightweight type entries for {@code type}.
-     *
-     * <p>
-     * {@code JsonSchemaGenerator.schemas()} emits Draft-7 schemas: definitions live under the root
-     * {@code definitions} object (not {@code $defs}, a 2019-09 keyword), and each polymorphic
-     * discriminator definition's {@code anyOf} lists one branch per registered subtype, each branch
-     * carrying a {@code type} {@code const} discriminator.
-     *
-     * <p>
-     * Autocompletion of a task/trigger {@code type} only needs that {@code const} — not the plugin's
-     * full property schema. So rather than copying the bundle's (multi-MB) definitions pool into the
-     * response, the merge adds, for each catalog subtype not already installed locally, a
-     * <em>lightweight definition</em> ({@code {type: object, properties: {type: {const: <fqcn>}},
-     * required: [type]}}, plus {@code title}/{@code markdownDescription} when present) and a
-     * {@code $ref} branch to it in the discriminator's {@code anyOf}. This mirrors the exact shape of
-     * an installed subtype (the editor's YAML language service only offers a {@code type} const from an
-     * {@code anyOf} branch that resolves to an object definition — an inline, type-less stub is
-     * skipped), while omitting the heavy property schema keeps the response small enough for the
-     * browser worker (the full-catalog pool of thousands of types would otherwise balloon it).
-     * Property-level completion for a given plugin arrives once it is actually installed and its full
-     * definition enters {@code localSchema}.
-     *
-     * <p>
-     * It walks every discriminator the bundle knows about — not just the requested {@code type}'s own
-     * root, but any occurrence embedded in {@code localSchema}, including subtype lists the generator
-     * inlined directly at property sites (e.g. {@code Flow.tasks.items.anyOf}) — see
-     * {@link #mergeLightweightSubtypes}. Dedup is by FQCN, so an installed subtype (already an
-     * {@code anyOf} branch) is never shadowed by a stub and re-merging is idempotent. When the
-     * service is disabled or no bundle could be loaded, the original {@code localSchema} is returned
-     * unchanged.
+     * Returns a fingerprint of the loaded bundle, usable in an HTTP ETag: it changes when a
+     * different bundle (or none) is loaded, and is stable otherwise.
+     */
+    public String fingerprint() {
+        Bundle loaded = bundle;
+        return loaded == null ? "none" : Integer.toHexString(resolvedBundleUrl.hashCode()) + "-" + loaded.definitions().size();
+    }
+
+    /**
+     * Returns a copy of {@code localSchema} enriched with a lightweight definition and a
+     * {@code $ref} branch for every catalog subtype not installed locally — see
+     * {@link PluginSchemaBundleMerger}. When the service is disabled or no bundle could be loaded,
+     * the original {@code localSchema} is returned unchanged.
      *
      * @param type the schema type to look up in the bundle
      * @param localSchema the locally-generated schema (not modified)
@@ -211,296 +148,84 @@ public class PluginSchemaBundleService {
             return localSchema;
         }
 
-        Bundle bundle = getBundle();
-        if (bundle.isEmpty() || bundle.definitions().isEmpty()) {
+        Bundle loaded = getBundle();
+        if (loaded.isEmpty() || loaded.definitions().isEmpty()) {
             return localSchema;
         }
 
         ObjectNode mutable = MAPPER.convertValue(localSchema, ObjectNode.class);
-        mergeLightweightSubtypes(mutable, bundle.definitions(), bundle.roots());
+        PluginSchemaBundleMerger.mergeLightweightSubtypes(mutable, loaded.definitions(), loaded.roots());
         return MAPPER.convertValue(mutable, MAP_TYPE);
     }
 
-    // ── internal ──────────────────────────────────────────────────────────────
-
-    /**
-     * Returns the cached bundle, kicking off an async (re)load when needed.
-     * <p>
-     * Only the very first call — before anything is cached — blocks the caller, and only up to
-     * {@link #INITIAL_FETCH_TIMEOUT}; every subsequent call (cache populated, even if stale) returns
-     * {@code cached} immediately while a background refresh runs. This method deliberately does not
-     * synchronize on the fetch itself: holding a monitor across a network call would serialize every
-     * concurrent {@code ?includeCatalog=true} request behind one slow/hung GCS fetch.
-     */
+    // The bundle is immutable per release: load it once on first use, keep it forever. On failure
+    // (only really possible for the remote-URL escape hatch) retry after a backoff.
     private Bundle getBundle() {
-        // Negative cache: while the source keeps failing, serve what we have (possibly nothing)
-        // without re-fetching or making every caller pay the initial-fetch wait.
-        Instant failedAt = lastFailure;
-        if (cached.isEmpty() && failedAt != null && failedAt.plus(FAILURE_BACKOFF).isAfter(Instant.now())) {
-            return cached;
+        Bundle loaded = bundle;
+        if (loaded != null) {
+            return loaded;
         }
-
-        boolean staleOrEmpty = cached.isEmpty() || cacheLastLoaded.plus(MAX_CACHE_DURATION).isBefore(Instant.now());
-        if (staleOrEmpty && loading.compareAndSet(false, true)) {
-            // Publish the result here too: the first-caller branch below only covers the very
-            // first fetch — without this, a background refresh's bundle would be discarded and
-            // the stale cache served forever.
-            future = CompletableFuture.supplyAsync(this::load)
-                .whenComplete((bundle, throwable) ->
-                {
-                    if (throwable == null && bundle != null && !bundle.isEmpty()) {
-                        cached = bundle;
-                    }
-                });
-        }
-
-        if (!cached.isEmpty()) {
-            // Serve the current (possibly stale) cache immediately; any refresh kicked off above
-            // (or already in flight from another thread) completes in the background.
-            return cached;
-        }
-
-        // Nothing cached yet: bound the wait so the very first caller gets real data instead of an
-        // empty schema, without risking a hung caller if the fetch stalls.
-        CompletableFuture<Bundle> inFlight = future;
-        if (inFlight == null) {
-            return cached;
-        }
-        try {
-            Bundle result = inFlight.get(INITIAL_FETCH_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
-            if (!result.isEmpty()) {
-                cached = result;
+        synchronized (this) {
+            if (bundle != null) {
+                return bundle;
             }
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
+            Instant failedAt = lastFailureAt;
+            if (failedAt != null && failedAt.plus(FAILURE_BACKOFF).isAfter(Instant.now())) {
+                return Bundle.EMPTY;
             }
-            Throwable cause = e.getCause() != null ? e.getCause() : e;
-            log.warn("Failed to load plugin schema bundle from '{}': {}", resolvedBundleUrl, cause.getMessage());
+            Bundle result = load();
+            if (result.isEmpty()) {
+                lastFailureAt = Instant.now();
+            } else {
+                bundle = result;
+            }
+            return result;
         }
-
-        return cached;
     }
 
     private Bundle load() {
-        try {
-            log.debug("Fetching plugin schema bundle from {}", resolvedBundleUrl);
-            URLConnection connection = URI.create(resolvedBundleUrl).toURL().openConnection();
-            connection.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
-            connection.setReadTimeout(READ_TIMEOUT_MILLIS);
-            try (InputStream in = connection.getInputStream()) {
-                JsonNode root = MAPPER.readTree(in);
-                ObjectNode definitions = root.get("definitions") instanceof ObjectNode defs ? defs : JsonNodeFactory.instance.objectNode();
+        try (InputStream in = openBundleStream()) {
+            JsonNode root = MAPPER.readTree(in);
+            ObjectNode definitions = root.get("definitions") instanceof ObjectNode defs ? defs : JsonNodeFactory.instance.objectNode();
 
-                Map<SchemaType, String> roots = new EnumMap<>(SchemaType.class);
-                if (root.get("roots") instanceof ObjectNode rootsNode) {
-                    rootsNode.properties().forEach(entry ->
-                    {
-                        try {
-                            roots.put(SchemaType.fromString(entry.getKey()), entry.getValue().asText());
-                        } catch (Exception e) {
-                            log.debug("Ignoring unknown schema type '{}' in bundle", entry.getKey());
-                        }
-                    });
-                }
-
-                cacheLastLoaded = Instant.now();
-                lastFailure = null;
-                log.debug("Plugin schema bundle loaded ({} shared definitions, {} root types)", definitions.size(), roots.size());
-                return new Bundle(definitions, roots);
+            Map<SchemaType, String> roots = new EnumMap<>(SchemaType.class);
+            if (root.get("roots") instanceof ObjectNode rootsNode) {
+                rootsNode.properties().forEach(entry ->
+                {
+                    try {
+                        roots.put(SchemaType.fromString(entry.getKey()), entry.getValue().asText());
+                    } catch (Exception e) {
+                        log.debug("Ignoring unknown schema type '{}' in bundle", entry.getKey());
+                    }
+                });
             }
-        } catch (IOException e) {
-            lastFailure = Instant.now();
-            log.warn("Could not fetch plugin schema bundle from '{}': {}", resolvedBundleUrl, e.getMessage());
+
+            log.debug("Plugin schema bundle loaded from '{}' ({} shared definitions, {} root types)", resolvedBundleUrl, definitions.size(), roots.size());
+            return new Bundle(definitions, roots);
+        } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            log.warn("Could not load plugin schema bundle from '{}': {}", resolvedBundleUrl, e.getMessage());
             return Bundle.EMPTY;
-        } finally {
-            loading.set(false);
         }
     }
 
-    /**
-     * For every polymorphic subtype list present in {@code local}, adds, for each catalog subtype
-     * not already installed locally, a <b>lightweight definition</b> plus a {@code $ref} branch
-     * pointing at it. The added entry mirrors the exact shape of an installed subtype (a definition
-     * with {@code type: object} + a {@code type} {@code const}, referenced from the site's
-     * {@code anyOf}) — only without the plugin's full property schema. That structural parity
-     * matters: the editor's YAML language service offers a {@code type} value from an {@code anyOf}
-     * branch that resolves to an object definition; an inline branch without {@code type: object}
-     * is silently skipped, which is why a type-only stub failed to autocomplete.
-     *
-     * <p>
-     * Crucially, the generator does <em>not</em> route every subtype list through the discriminator
-     * base-class definition: the "flow" schema inlines the full installed-subtype {@code anyOf}
-     * directly at each property site ({@code Flow.tasks.items}, {@code errors}, every flowable
-     * task's nested {@code tasks}, …) while the {@code Task} definition itself is barely referenced.
-     * Patching only the named discriminator definition therefore never reaches what the editor
-     * actually completes from. Instead, every {@code anyOf} array in {@code local} whose {@code $ref}
-     * branch keys intersect a bundle discriminator's subtype set is treated as an occurrence of that
-     * discriminator and extended. This is a heuristic, but a safe one: the generator always emits the
-     * <em>full</em> registered subtype list at such sites (verified against a real flow schema — every
-     * intersecting site carried the complete installed set), and subtype sets of distinct
-     * discriminators (task/trigger/…) are disjoint. Dedup is by FQCN per site, so an installed
-     * subtype is never shadowed and re-merging is idempotent.
-     */
-    private static void mergeLightweightSubtypes(ObjectNode local, ObjectNode bundleDefinitions, Map<SchemaType, String> bundleRoots) {
-        JsonNode localDefsNode = local.get("definitions");
-        ObjectNode localDefinitions = localDefsNode instanceof ObjectNode existing ? existing : local.putObject("definitions");
-
-        List<ArrayNode> anyOfSites = new ArrayList<>();
-        collectAnyOfSites(local, anyOfSites);
-
-        bundleRoots.values().forEach(bundleRootRef ->
-        {
-            ObjectNode bundleEntry = definitionEntry(bundleDefinitions, definitionKeyFromRef(bundleRootRef));
-            if (bundleEntry == null || !(bundleEntry.get("anyOf") instanceof ArrayNode bundleBranches)) {
-                return;
+    // http(s) goes through the JDK HttpClient with timeouts; file: and jar: (local file /
+    // classpath resource, the normal sources) are plain stream reads HttpClient cannot handle.
+    private InputStream openBundleStream() throws IOException, InterruptedException {
+        URI uri = URI.create(resolvedBundleUrl);
+        if ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme())) {
+            HttpClient client = HttpClient.newBuilder().connectTimeout(FETCH_TIMEOUT).followRedirects(HttpClient.Redirect.NORMAL).build();
+            HttpRequest request = HttpRequest.newBuilder(uri).timeout(FETCH_TIMEOUT).GET().build();
+            HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            if (response.statusCode() != 200) {
+                response.body().close();
+                throw new IOException("Fetching the plugin schema bundle from '%s' returned HTTP status %d.".formatted(resolvedBundleUrl, response.statusCode()));
             }
-
-            Set<String> bundleSubtypes = refKeys(bundleBranches);
-            if (bundleSubtypes.isEmpty()) {
-                return;
-            }
-
-            // The named discriminator definition, when present locally, is always an occurrence —
-            // even with an empty (or missing) anyOf, where the intersection heuristic can't see it.
-            ObjectNode localEntry = definitionEntry(localDefinitions, definitionKeyFromRef(bundleRootRef));
-            if (localEntry != null) {
-                ArrayNode namedAnyOf = localEntry.get("anyOf") instanceof ArrayNode existing ? existing : localEntry.putArray("anyOf");
-                extendSite(namedAnyOf, bundleSubtypes, localDefinitions, bundleDefinitions);
-            }
-
-            anyOfSites.forEach(site ->
-            {
-                if (Collections.disjoint(refKeys(site), bundleSubtypes)) {
-                    return;
-                }
-                extendSite(site, bundleSubtypes, localDefinitions, bundleDefinitions);
-            });
-        });
-    }
-
-    /** Appends a {@code $ref} branch (and its lightweight definition when missing) for every bundle subtype not already listed at {@code site}. */
-    private static void extendSite(ArrayNode site, Set<String> bundleSubtypes, ObjectNode localDefinitions, ObjectNode bundleDefinitions) {
-        Set<String> existingSubtypes = refKeys(site);
-        bundleSubtypes.forEach(subtypeKey ->
-        {
-            if (!existingSubtypes.add(subtypeKey)) {
-                return;
-            }
-            if (!localDefinitions.has(subtypeKey)) {
-                localDefinitions.set(subtypeKey, lightweightDefinition(subtypeKey, definitionEntry(bundleDefinitions, subtypeKey)));
-            }
-            site.add(JsonNodeFactory.instance.objectNode().put("$ref", "#/definitions/" + subtypeKey));
-        });
-    }
-
-    /** Collects every {@code anyOf} array node in the tree (before any mutation, so patching sites can't re-trigger traversal). */
-    private static void collectAnyOfSites(JsonNode node, List<ArrayNode> sites) {
-        if (node instanceof ObjectNode obj) {
-            obj.properties().forEach(entry ->
-            {
-                if ("anyOf".equals(entry.getKey()) && entry.getValue() instanceof ArrayNode anyOf) {
-                    sites.add(anyOf);
-                }
-                collectAnyOfSites(entry.getValue(), sites);
-            });
-        } else if (node instanceof ArrayNode arr) {
-            arr.forEach(child -> collectAnyOfSites(child, sites));
+            return response.body();
         }
-    }
-
-    /** Returns the definition keys of every {@code $ref} branch in {@code anyOf} (insertion-ordered). */
-    private static Set<String> refKeys(ArrayNode anyOf) {
-        Set<String> keys = new LinkedHashSet<>();
-        anyOf.forEach(branch ->
-        {
-            JsonNode ref = branch.get("$ref");
-            if (ref != null && ref.isTextual()) {
-                keys.add(definitionKeyFromRef(ref.asText()));
-            }
-        });
-        return keys;
-    }
-
-    /**
-     * Builds a minimal object definition that pins the discriminator {@code type} to the subtype's
-     * FQCN (plus its {@code title}/{@code markdownDescription} for the completion popup when the
-     * bundle carries them). Includes {@code type: object} so it matches the shape of an installed
-     * subtype definition — the editor won't offer a {@code type} const from a branch that isn't an
-     * object schema.
-     *
-     * <p>
-     * The bundle definition's other properties are copied <b>by name only</b> — each as a
-     * {@code {title?, markdownDescription?}} shell with no type, no nested schema, no {@code $ref}
-     * (which would dangle, since the referenced definitions stay in the bundle pool). That is enough
-     * for the editor to offer <em>key</em> completion (e.g. {@code apiToken}, {@code monitorId})
-     * under a not-yet-installed task, while still omitting the heavy nested property schemas that
-     * would balloon the merged response. The bundle's {@code required} list is carried over too, so
-     * mandatory keys are prompted exactly like on an installed plugin. Value-level completion and
-     * real validation arrive once the plugin is installed.
-     */
-    private static ObjectNode lightweightDefinition(String fqcn, @Nullable ObjectNode bundleDefinition) {
-        String typeConst = fqcn;
-        if (bundleDefinition != null && bundleDefinition.path("properties").path("type").path("const").isTextual()) {
-            typeConst = bundleDefinition.path("properties").path("type").path("const").asText();
-        }
-
-        ObjectNode definition = JsonNodeFactory.instance.objectNode();
-        definition.put("type", "object");
-        ObjectNode properties = definition.putObject("properties");
-        properties.putObject("type").put("const", typeConst);
-
-        ArrayNode required = definition.putArray("required");
-        required.add("type");
-
-        if (bundleDefinition != null) {
-            copyText(bundleDefinition, definition, "title");
-            copyText(bundleDefinition, definition, "markdownDescription");
-
-            if (bundleDefinition.get("properties") instanceof ObjectNode bundleProperties) {
-                bundleProperties.properties().forEach(entry ->
-                {
-                    if (properties.has(entry.getKey())) {
-                        return;
-                    }
-                    ObjectNode shell = properties.putObject(entry.getKey());
-                    if (entry.getValue() instanceof ObjectNode bundleProperty) {
-                        copyText(bundleProperty, shell, "title");
-                        copyText(bundleProperty, shell, "markdownDescription");
-                    }
-                });
-            }
-
-            if (bundleDefinition.get("required") instanceof ArrayNode bundleRequired) {
-                Set<String> present = new LinkedHashSet<>();
-                required.forEach(name -> present.add(name.asText()));
-                bundleRequired.forEach(name ->
-                {
-                    if (name.isTextual() && present.add(name.asText())) {
-                        required.add(name);
-                    }
-                });
-            }
-        }
-        return definition;
-    }
-
-    private static void copyText(ObjectNode from, ObjectNode to, String field) {
-        JsonNode value = from.get(field);
-        if (value != null && value.isTextual()) {
-            to.set(field, value);
-        }
-    }
-
-    private static String definitionKeyFromRef(String ref) {
-        return ref == null ? null : ref.substring(ref.lastIndexOf('/') + 1);
-    }
-
-    private static ObjectNode definitionEntry(JsonNode definitions, String key) {
-        if (!(definitions instanceof ObjectNode defs) || !(defs.get(key) instanceof ObjectNode entry)) {
-            return null;
-        }
-        return entry;
+        return uri.toURL().openStream();
     }
 
     /** The bundle's shared {@code definitions} pool plus each {@link SchemaType}'s root {@code $ref} into it. */

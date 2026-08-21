@@ -457,7 +457,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.USER,
+                Field.INSTANCE_OWNER, Resource.USER,
                 Set.of(
                     Op.EQUALS
                 )
@@ -555,7 +555,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.INVITATION,
+                Field.INSTANCE_OWNER, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS
                 )
@@ -1482,7 +1482,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.INVITATION,
+                Field.INSTANCE_OWNER, Resource.INVITATION,
                 Set.of(
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,

@@ -493,7 +493,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete a list of executions")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> deleteExecutionsByIds(
         @RequestBody(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
@@ -505,12 +505,12 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && (execution.get().getState().isTerminated() || includeNonTerminated)) {
+            if (execution.isPresent() && (execution.get().getState().isTerminated() || Boolean.TRUE.equals(includeNonTerminated))) {
                 executions.add(execution.get());
             } else {
                 invalids.add(
                     ManualConstraintViolation.of(
-                        "execution not found",
+                        execution.isEmpty() ? "execution not found" : "execution not in a deletable state",
                         executionId,
                         String.class,
                         "execution",
@@ -540,7 +540,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete executions filter by query parameters")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",

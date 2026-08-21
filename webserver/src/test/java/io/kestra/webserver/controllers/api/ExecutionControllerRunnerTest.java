@@ -2230,6 +2230,27 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/sleep-long.yml" })
+    void shouldReturnTheCauseForEachInvalidExecutionWhenDeletingByIds() throws QueueException, JsonProcessingException {
+        Execution runningExecution = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep-long");
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.DELETE("/api/v1/main/executions/by-ids", List.of(runningExecution.getId(), "not-found"))
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        String responseBody = exception.getResponse().getBody(String.class).orElseThrow();
+        var responseJson = JacksonMapper.ofJson().readTree(responseBody);
+        assertThat(responseJson.path("message").asText()).isEqualTo("invalid bulk delete");
+        assertThat(responseJson.path("invalids").isArray()).isTrue();
+        assertThat(responseJson.path("invalids").findValuesAsText("message"))
+            .contains("execution not in a deletable state", "execution not found");
+    }
+
+    @Test
     @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void deleteExecutionByQuery(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2538,7 +2559,7 @@ class ExecutionControllerRunnerTest {
             long afterException = System.currentTimeMillis();
             String errorMessage = "Duration before executions -> %d <-> duration after the exception -> %d <-> Error while pausing execution, err: %s, response: %s";
             String formatedError = String.format(
-                errorMessage, afterExec - start, afterException - start, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse("errors")
+                errorMessage, afterExec - start, afterException - start, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse(Set.of())
             );
             log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
             fail(formatedError);

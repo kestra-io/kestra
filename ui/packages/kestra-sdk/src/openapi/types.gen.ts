@@ -532,9 +532,9 @@ export type BulkErrorResponse = {
     /**
      * The list of items that failed validation
      */
-    invalids?: {
+    invalids?: Array<{
         [key: string]: unknown;
-    };
+    }>;
 };
 
 export type BulkResponse = {
@@ -3747,9 +3747,9 @@ export type DeleteExecutionsByIdsData = {
 
 export type DeleteExecutionsByIdsErrors = {
     /**
-     * Deleted with errors
+     * Validation errors
      */
-    422: BulkErrorResponse;
+    400: BulkErrorResponse;
 };
 
 export type DeleteExecutionsByIdsError = DeleteExecutionsByIdsErrors[keyof DeleteExecutionsByIdsErrors];
@@ -3795,9 +3795,9 @@ export type DeleteExecutionsByQueryData = {
 
 export type DeleteExecutionsByQueryErrors = {
     /**
-     * Deleted with errors
+     * Validation errors
      */
-    422: BulkErrorResponse;
+    400: BulkErrorResponse;
 };
 
 export type DeleteExecutionsByQueryError = DeleteExecutionsByQueryErrors[keyof DeleteExecutionsByQueryErrors];

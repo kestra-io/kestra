@@ -16,19 +16,23 @@ import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 public class SubflowGraphTask extends AbstractGraphTask {
-    @Setter
-    private boolean subflowFlowDisabled;
+    private final boolean disabled;
 
-    public SubflowGraphTask(String uid, ExecutableTask<?> task, TaskRun taskRun, List<String> values, RelationType relationType) {
+    public SubflowGraphTask(String uid, ExecutableTask<?> task, TaskRun taskRun, List<String> values, RelationType relationType, boolean disabled) {
         super(uid, (TaskInterface) task, taskRun, values, relationType);
+        this.disabled = disabled;
     }
 
     public SubflowGraphTask(ExecutableTask<?> task, TaskRun taskRun, List<String> values, RelationType relationType) {
+        this(task, taskRun, values, relationType, false);
+    }
+
+    public SubflowGraphTask(ExecutableTask<?> task, TaskRun taskRun, List<String> values, RelationType relationType, boolean disabled) {
         super((TaskInterface) task, taskRun, values, relationType);
+        this.disabled = disabled;
     }
 
     public ExecutableTask<?> executableTask() {
@@ -41,16 +45,23 @@ public class SubflowGraphTask extends AbstractGraphTask {
     }
 
     public SubflowGraphTask withRenderedSubflowId(RunContext runContext) {
-        SubflowGraphTask previous = this;
-        SubflowGraphTask rendered = new SubflowGraphTask(this.getUid(), new SubflowTaskWrapper<>(runContext, this.executableTask()), this.getTaskRun(), this.getValues(), this.getRelationType()) {
-            @Override
-            public int hashCode() {
-                // Since edges are handled by a hashmap, we need to keep the same hash and uid is not a good candidate as it changes whenever a node is moved to a cluster
-                return previous.hashCode();
-            }
-        };
-        rendered.setSubflowFlowDisabled(this.subflowFlowDisabled);
-        return rendered;
+        return withRenderedSubflowId(runContext, this.disabled);
+    }
+
+    public SubflowGraphTask withRenderedSubflowId(RunContext runContext, boolean disabled) {
+        return copy(new SubflowTaskWrapper<>(runContext, this.executableTask()), disabled);
+    }
+
+    public SubflowGraphTask withDisabled(boolean disabled) {
+        return copy(this.executableTask(), disabled);
+    }
+
+    private SubflowGraphTask copy(ExecutableTask<?> task, boolean disabled) {
+        SubflowGraphTask copy = new SubflowGraphTask(this.getUid(), task, this.getTaskRun(), this.getValues(), this.getRelationType(), disabled);
+        if (this.getBranchType() != null) {
+            copy.updateWithChildren(this.getBranchType());
+        }
+        return copy;
     }
 
     public record SubflowTaskWrapper<T extends Output>(RunContext runContext, ExecutableTask<T> subflowTask) implements TaskInterface, ExecutableTask<T> {

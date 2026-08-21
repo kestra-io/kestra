@@ -70,7 +70,8 @@ public class GraphService {
             triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId(), null);
         }
         GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, execution, triggers);
-        this.enrichSubflowFlowDisabled(graphCluster, flow, flowByUid, execution);
+
+        this.replaceCollapsedDisabledSubflows(graphCluster, flow, flowByUid, execution, expandedSubflows);
 
         Stream<Map.Entry<GraphCluster, SubflowGraphTask>> subflowToReplaceByParent = graphCluster.allNodesByParent().entrySet().stream()
             .flatMap(entry ->
@@ -90,13 +91,13 @@ public class GraphService {
         FlowWithSource finalFlow = flow;
         subflowToReplaceByParent.map(throwFunction(parentWithSubflowGraphTask ->
         {
-            SubflowGraphTask subflowGraphTask = parentWithSubflowGraphTask.getValue();
-            Task task = (Task) subflowGraphTask.getTask();
-            RunContext runContext = PebbleUtil.containsOpeningBlockDelimiter(subflowGraphTask.executableTask().subflowId().flowUid()) && execution != null
-                ? runContextFactory.of(finalFlow, task, execution, subflowGraphTask.getTaskRun())
+            SubflowGraphTask original = parentWithSubflowGraphTask.getValue();
+            Task task = (Task) original.getTask();
+            RunContext runContext = PebbleUtil.containsOpeningBlockDelimiter(original.executableTask().subflowId().flowUid()) && execution != null
+                ? runContextFactory.of(finalFlow, task, execution, original.getTaskRun())
                 : null;
-            subflowGraphTask = subflowGraphTask.withRenderedSubflowId(runContext);
-            ExecutableTask.SubflowId subflowId = subflowGraphTask.executableTask().subflowId();
+
+            ExecutableTask.SubflowId subflowId = original.withRenderedSubflowId(runContext).executableTask().subflowId();
 
             if (PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowUid())) {
                 throw new IllegalArgumentException(
@@ -112,13 +113,13 @@ public class GraphService {
                             + " for task " + task.getId()
                     )
                 );
-            subflowGraphTask.setSubflowFlowDisabled(subflow.isDisabled());
+            SubflowGraphTask subflowGraphTask = original.withRenderedSubflowId(runContext, subflow.isDisabled());
             subflow = flowParsingService.parse(subflow, false);
 
             SubflowGraphTask finalSubflowGraphTask = subflowGraphTask;
             return new TaskToClusterReplacer(
                 parentWithSubflowGraphTask.getKey(),
-                subflowGraphTask,
+                original,
                 this.of(
                     new SubflowGraphCluster(subflowGraphTask.getUid(), subflowGraphTask),
                     subflow,
@@ -133,45 +134,53 @@ public class GraphService {
         return graphCluster;
     }
 
-    private void enrichSubflowFlowDisabled(
+    private void replaceCollapsedDisabledSubflows(
         GraphCluster graphCluster,
         FlowWithSource flow,
         Map<String, FlowWithSource> flowByUid,
-        Execution execution
+        Execution execution,
+        List<String> expandedSubflows
     ) {
         String tenantId = flow.getTenantId();
-        graphCluster.allNodesByParent().values().stream()
-            .flatMap(List::stream)
-            .filter(SubflowGraphTask.class::isInstance)
-            .map(SubflowGraphTask.class::cast)
-            .forEach(subflowGraphTask -> {
-                if (subflowGraphTask.executableTask() == null) {
-                    return;
-                }
+        List<Map.Entry<GraphCluster, SubflowGraphTask>> collapsed = graphCluster.allNodesByParent().entrySet().stream()
+            .flatMap(entry -> entry.getValue().stream()
+                .filter(SubflowGraphTask.class::isInstance)
+                .map(SubflowGraphTask.class::cast)
+                .filter(node -> !expandedSubflows.contains(node.getUid()))
+                .map(node -> Map.entry(entry.getKey(), node)))
+            .toList();
 
-                ExecutableTask.SubflowId subflowId = this.renderedSubflowId(flow, subflowGraphTask, execution);
-                if (PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowUid())) {
-                    return;
-                }
+        for (Map.Entry<GraphCluster, SubflowGraphTask> entry : collapsed) {
+            SubflowGraphTask original = entry.getValue();
+            if (original.executableTask() == null) {
+                continue;
+            }
 
-                this.findSubflow(tenantId, subflowId, flowByUid, execution)
-                    .ifPresent(subflow -> subflowGraphTask.setSubflowFlowDisabled(subflow.isDisabled()));
-            });
+            ExecutableTask.SubflowId subflowId = original.executableTask().subflowId();
+            if (PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowUid())) {
+                continue;
+            }
+
+            boolean disabled = this.findSubflow(tenantId, subflowId, flowByUid, execution)
+                .map(FlowWithSource::isDisabled)
+                .orElse(false);
+            if (disabled) {
+                replaceNode(entry.getKey(), original, original.withDisabled(true));
+            }
+        }
     }
 
-    private ExecutableTask.SubflowId renderedSubflowId(FlowWithSource flow, SubflowGraphTask subflowGraphTask, Execution execution) {
-        ExecutableTask<?> executableTask = Objects.requireNonNull(
-            subflowGraphTask.executableTask(),
-            "Subflow graph task must wrap an executable task."
-        );
-        ExecutableTask.SubflowId subflowId = executableTask.subflowId();
-        if (!PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowUid()) || execution == null) {
-            return subflowId;
+    private static void replaceNode(GraphCluster parent, SubflowGraphTask original, SubflowGraphTask replacement) {
+        List<Graph.Edge<AbstractGraph, Relation>> edges = new ArrayList<>(parent.getGraph().edges());
+        parent.getGraph().removeNode(original);
+        parent.addNode(replacement, false);
+        for (Graph.Edge<AbstractGraph, Relation> edge : edges) {
+            AbstractGraph source = edge.getSource().equals(original) ? replacement : edge.getSource();
+            AbstractGraph target = edge.getTarget().equals(original) ? replacement : edge.getTarget();
+            if (source.equals(replacement) || target.equals(replacement)) {
+                parent.addEdge(source, target, edge.getValue());
+            }
         }
-
-        Task task = (Task) subflowGraphTask.getTask();
-        RunContext runContext = runContextFactory.of(flow, task, execution, subflowGraphTask.getTaskRun());
-        return subflowGraphTask.withRenderedSubflowId(runContext).executableTask().subflowId();
     }
 
     private Optional<FlowWithSource> findSubflow(

@@ -266,7 +266,7 @@ class FlowGraphTest {
         SubflowGraphTask subflowGraphTask = (SubflowGraphTask) nodeByUid(flowGraph, "root.launch");
         assertThat(subflowGraphTask.getTask()).isInstanceOf(SubflowGraphTask.SubflowTaskWrapper.class);
         assertThat(subflowGraphTask.getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
-        assertThat(subflowGraphTask.isSubflowFlowDisabled()).isFalse();
+        assertThat(subflowGraphTask.isDisabled()).isFalse();
 
         GraphTask switchNode = (GraphTask) nodeByUid(flowGraph, "root.launch.parent-seq");
         assertThat(switchNode.getTask()).isInstanceOf(Switch.class);
@@ -291,11 +291,11 @@ class FlowGraphTest {
 
         FlowGraph collapsed = graphService.flowGraph(flow, Collections.emptyList());
         SubflowGraphTask collapsedSubflow = (SubflowGraphTask) nodeByUid(collapsed, "root.subflow");
-        assertThat(collapsedSubflow.isSubflowFlowDisabled()).isTrue();
+        assertThat(collapsedSubflow.isDisabled()).isTrue();
 
         FlowGraph expanded = graphService.flowGraph(flow, Collections.singletonList("root.subflow"));
         SubflowGraphTask expandedSubflow = (SubflowGraphTask) ((SubflowGraphCluster) cluster(expanded, "root\\.subflow").getCluster()).getTaskNode();
-        assertThat(expandedSubflow.isSubflowFlowDisabled()).isTrue();
+        assertThat(expandedSubflow.isDisabled()).isTrue();
     }
 
     @Test

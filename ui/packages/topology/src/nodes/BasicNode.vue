@@ -105,9 +105,9 @@
             {
                 "unused-path": props.data.unused,
                 disabled: node.value?.disabled
-                    || props.data.node?.subflowFlowDisabled
+                    || props.data.node?.disabled
                     || props.data.parent?.taskNode?.task?.disabled
-                    || props.data.parent?.taskNode?.subflowFlowDisabled,
+                    || props.data.parent?.taskNode?.disabled,
             },
             props.class,
         ]

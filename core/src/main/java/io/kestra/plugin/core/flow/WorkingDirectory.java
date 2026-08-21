@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -33,6 +34,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 
@@ -240,6 +242,16 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
         // resolve to no next tasks as the worker will execute all tasks
         return Collections.emptyList();
+    }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        // subtasks run inside the Worker and each reports through its own queue message, so a failed
+        // subtask must not terminate the WorkingDirectory while a sibling's terminal result is still in flight
+        boolean hasInFlightSubtask = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .anyMatch(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && !taskRun.getState().isTerminated());
+
+        return hasInFlightSubtask ? Optional.empty() : super.resolveState(runContext, execution, parentTaskRun);
     }
 
     public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {

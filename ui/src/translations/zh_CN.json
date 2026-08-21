@@ -1113,7 +1113,7 @@
       "contact_sales": "联系我们的销售团队",
       "secrets": {
         "title": "升级您的Secrets管理",
-        "message": "企业版 (EE) 允许您直接在 UI 中添加、编辑或删除 secrets，无需重新启动实例。通过细粒度的 RBAC 权限按 namespace 组织 secrets，并从父 namespace 继承到子 namespace。EE 与 HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager 和 Elasticsearch 等 secrets 管理器集成。为每个 namespace、tenant 或实例设置专用后端，以隔离团队间的 secrets，或启用存储在外部 vaults 中的只读 secrets。Secrets 在静态和传输过程中保持加密。可选缓存可减少 API 调用，审计 trail 会记录所有访问。",
+        "message": "企业版允许您直接在 UI 中添加、编辑和删除 secrets，通过 RBAC 按 namespace 组织它们，并使用 HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager 或 Elasticsearch 作为后端。",
         "add_env": {
           "intro": "创建新 Secret",
           "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",

@@ -113,29 +113,29 @@
                         lang="yaml"
                         :options="{fullHeight: false, lineNumbers: true}"
                         :navbar="false"
-                        class="flow-template__editor"
+                        class="flow-template-editor"
                         data-test="flow-template-editor"
                         @focusout="onFlowTemplate"
                     />
 
-                    <div class="flow-template__footer">
+                    <div class="flow-template-footer">
                         <KsAlert
                             v-if="flowTemplateError"
                             type="warning"
                             :closable="false"
-                            class="flow-template__error"
+                            class="flow-template-error"
                             data-test="flow-template-error"
                         >
                             {{ $t(`settings.blocks.configuration.flow_template_error.${flowTemplateError.errorCode}`) }}
                             <template v-if="flowTemplateError.parseMessage">
                                 <br>
-                                <KsText class="flow-template__error-detail">{{ flowTemplateError.parseMessage }}</KsText>
+                                <KsText class="flow-template-error-detail">{{ flowTemplateError.parseMessage }}</KsText>
                             </template>
                         </KsAlert>
-                        <span v-else />
 
                         <KsButton
                             link
+                            class="flow-template-reset"
                             :disabled="!settings.flowTemplate.trim()"
                             data-test="flow-template-reset"
                             @click="onFlowTemplateReset"
@@ -740,31 +740,34 @@
     flex-direction: column;
     gap: var(--ks-spacing-2);
     width: 100%;
+}
 
-    &__editor {
-        min-height: 12rem;
-        border: var(--ks-border-width-thin) solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        overflow: hidden;
-    }
+.flow-template-editor {
+    min-height: 12rem;
+    border: var(--ks-border-width-thin) solid var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    overflow: hidden;
+}
 
-    &__footer {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: var(--ks-spacing-2);
-    }
+.flow-template-footer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ks-spacing-2);
+}
 
-    &__error {
-        margin: 0;
-    }
+.flow-template-error {
+    margin: 0;
+}
 
-    &__error-detail {
-        display: block;
-        font-family: var(--ks-font-family-mono, monospace);
-        font-size: var(--ks-font-size-sm);
-        word-break: break-word;
-    }
+.flow-template-error-detail {
+    display: block;
+    font-family: var(--ks-font-family-mono, monospace);
+    font-size: var(--ks-font-size-sm);
+    word-break: break-word;
+}
+
+.flow-template-reset {
+    margin-left: auto;
 }
 
 :deep(kbd) {

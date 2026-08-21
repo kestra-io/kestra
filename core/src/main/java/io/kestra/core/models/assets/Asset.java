@@ -81,8 +81,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.deleted = deleted;
     }
 
+    /**
+     * Merges this asset over {@code previousAsset}, which is {@code null} on creation.
+     *
+     * @param previousAsset the stored asset this one is merged over, or {@code null} when creating.
+     * @param allowTypeChange whether the incoming type wins over the stored one; either falls back to the other
+     *                        when null, so creation (no previous asset) keeps the incoming type either way.
+     * @return this asset, merged.
+     */
     public <T extends Asset> T toUpdated(T previousAsset, boolean allowTypeChange) {
-        this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset.getCreated())).orElseGet(Instant::now);
+        this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset).map(Asset::getCreated)).orElseGet(Instant::now);
         this.updated = Instant.now();
 
         String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);

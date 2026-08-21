@@ -198,7 +198,6 @@
         flex-direction: column;
         align-items: center;
         padding: var(--ks-spacing-8) var(--ks-spacing-4);
-        min-height: 100%;
     }
 
     .landing-header {

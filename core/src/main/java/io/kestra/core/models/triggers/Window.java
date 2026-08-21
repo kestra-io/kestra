@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalTime;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.validations.TimezoneId;
 import io.kestra.core.validations.WindowValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,7 +23,8 @@ import lombok.Getter;
         - `deadline` set: daily time deadline window (conditions must be met before the given time each day).
         - `from` and `to` both set: daily time window (conditions must be met within the given time range each day).
         - `lookback` set: sliding window (conditions must be met within the past duration).
-        - otherwise: duration window (default, conditions must be met within a fixed duration, configurable via `every` and `offset`)."""
+        - otherwise: duration window (default, conditions must be met within a fixed duration, configurable via `every` and `offset`).
+        `deadline`, `from`, `to`, `every` and `offset` are resolved daily/midnight boundaries anchored on `timezone` (defaults to the server timezone); `lookback` is unaffected by `timezone`."""
 )
 public class Window {
     @Schema(
@@ -68,6 +70,14 @@ public class Window {
     private Duration lookback;
 
     @Schema(
+        title = "The timezone used to resolve the daily deadline, start and end times",
+        description = "Defaults to the server timezone. Set a time-zone ID such as `Europe/Paris` so that daily windows follow the intended zone, including daylight-saving transitions. Has no effect on `lookback`."
+    )
+    @PluginProperty
+    @TimezoneId
+    private String timezone;
+
+    @Schema(
         title = "Whether the trigger can fire only once per window",
         description = """
             When `false` (the default), the window state is NOT reset after a successful evaluation, meaning the trigger can fire again within the same window each time conditions are satisfied.
@@ -96,6 +106,7 @@ public class Window {
             return TimeWindow.builder()
                 .type(TimeWindow.Type.DAILY_TIME_DEADLINE)
                 .deadline(deadline)
+                .timezone(timezone)
                 .build();
         }
         if (from != null && to != null) {
@@ -103,18 +114,21 @@ public class Window {
                 .type(TimeWindow.Type.DAILY_TIME_WINDOW)
                 .startTime(from)
                 .endTime(to)
+                .timezone(timezone)
                 .build();
         }
         if (lookback != null) {
             return TimeWindow.builder()
                 .type(TimeWindow.Type.SLIDING_WINDOW)
                 .window(lookback)
+                .timezone(timezone)
                 .build();
         }
         return TimeWindow.builder()
             .type(TimeWindow.Type.DURATION_WINDOW)
             .window(every)
             .windowAdvance(offset)
+            .timezone(timezone)
             .build();
     }
 }

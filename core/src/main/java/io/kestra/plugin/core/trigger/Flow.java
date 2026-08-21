@@ -116,7 +116,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM Paris time.
 
                 ```yaml
                 id: bronze_layer
@@ -141,6 +141,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     type: io.kestra.plugin.core.trigger.Flow
                     window:
                       deadline: "09:00:00"
+                      timezone: Europe/Paris
                     dependsOn:
                       - namespace: company.team
                         flowId: bronze_layer

@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, useTemplateRef} from "vue"
+    import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
@@ -202,6 +202,7 @@
     )
     const {
         effectiveValue: effectiveLogLevel,
+        isRouteSettled: isLevelRouteSettled,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
     } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
@@ -272,8 +273,10 @@
         return _merge(base, queryFilter)
     }
 
+    let hasLoadedOnce = false
     const loadData = async ({page, size}: {page: number; size: number; sort?: string}) => {
-        if (!loadInit.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value) return
+        hasLoadedOnce = true
         isLoading.value = true
 
         await logsStore.findLogs(loadQuery({
@@ -344,7 +347,7 @@
 
     let lastCountedKey = ""
     const refreshLevelCounts = () => {
-        if (!loadInit.value || lastCountedKey === filterQueryKey.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value || lastCountedKey === filterQueryKey.value) return
         const key = filterQueryKey.value
         lastCountedKey = key
         logsStore.levelCounts(loadQuery({})).then((counts) => {
@@ -412,6 +415,17 @@
     })
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
+    })
+
+    // The first load is gated on the level default having landed in the URL, and the query change
+    // that lands it is what reloads the table. When the gate opens without one — `isRouteSettled`
+    // giving up on a navigation that never lands — nothing else would trigger that first load.
+    watch(isLevelRouteSettled, (settled) => {
+        if (!settled) return
+        nextTick(() => {
+            if (hasLoadedOnce || isLoading.value) return
+            dataTable.value?.reload()
+        })
     })
 
     const showStatChart = () => props.withCharts && showChart.value

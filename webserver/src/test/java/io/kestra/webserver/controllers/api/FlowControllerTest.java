@@ -1335,11 +1335,9 @@ class FlowControllerTest {
         body = response.body();
         assertThat(body.size()).isEqualTo(2);
         assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
-        // Auto-install is enabled by default on OSS standalone: an unknown plugin type is a
-        // non-blocking warning (the plugin is installed on save) instead of a constraint.
-        assertThat(body.get(1).getConstraints()).isNull();
-        assertThat(body.get(1).getWarnings())
-            .anySatisfy(warning -> assertThat(warning).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
+        // The unknown type is absent from the schema bundle (none in the test env), so even with
+        // auto-install enabled it stays a hard constraint.
+        assertThat(body.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
 
     @Test
@@ -1494,17 +1492,15 @@ class FlowControllerTest {
         assertNull(violations.getFirst().getWarnings());
         assertNull(violations.getFirst().getInfos());
 
-        // Second flow references an unknown task type: with auto-install enabled (the OSS
-        // standalone default) this is a non-blocking warning instead of a constraint.
+        // Second flow references an unknown task type: it is absent from the schema bundle
+        // (none in the test env), so even with auto-install enabled it stays a hard constraint.
         assertEquals("invalidFlow2.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
         assertNull(violations.get(1).getDeprecationPaths());
         assertNull(violations.get(1).getInfos());
 
         assertThat(violations.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
-        assertThat(violations.get(1).getConstraints()).isNull();
-        assertThat(violations.get(1).getWarnings())
-            .anySatisfy(warning -> assertThat(warning).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
+        assertThat(violations.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
 
     @Test

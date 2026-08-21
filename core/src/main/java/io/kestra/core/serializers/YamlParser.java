@@ -125,6 +125,7 @@ public final class YamlParser {
             // This error is thrown when a non-existing task is used
             return new InvalidTypeConstraintViolationException(
                 "Invalid type: " + invalidTypeIdException.getTypeId(),
+                invalidTypeIdException.getTypeId(),
                 Set.of(
                     ManualConstraintViolation.of(
                         "Invalid type: " + invalidTypeIdException.getTypeId(),

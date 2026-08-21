@@ -36,6 +36,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
@@ -103,6 +104,9 @@ public class FlowService {
 
     @Inject
     private PluginAutoInstallService pluginAutoInstallService;
+
+    @Inject
+    private PluginSchemaBundleService pluginSchemaBundleService;
 
     private final ExecutorService executorService;
 
@@ -476,10 +480,13 @@ public class FlowService {
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
                     String friendlyMessage = formatValidationError(cve.getMessage());
-                    // When auto-install is enabled, a missing plugin type is a warning — it will be
-                    // installed transparently when the user saves the flow.
-                    if (pluginAutoInstallService.isEnabled() && cve instanceof InvalidTypeConstraintViolationException) {
-                        constraintsBuilder.warnings(List.of(friendlyMessage));
+                    // A missing plugin type is only recoverable when auto-install is on AND the type
+                    // exists in the schema bundle: it is then a simple notice (installed on save); a
+                    // type unknown to the bundle is a genuine error.
+                    if (pluginAutoInstallService.isEnabled()
+                        && cve instanceof InvalidTypeConstraintViolationException invalidType
+                        && pluginSchemaBundleService.containsType(invalidType.getTypeId())) {
+                        constraintsBuilder.infos(List.of(friendlyMessage + ". The plugin is not installed yet and will be installed automatically when the flow is saved."));
                     } else {
                         constraintsBuilder.constraints(friendlyMessage);
                     }

@@ -134,6 +134,14 @@ public class PluginSchemaBundleService {
     }
 
     /**
+     * Returns whether the loaded bundle carries a definition for the given type FQCN, i.e. the
+     * type exists in the plugin catalog this release was built against.
+     */
+    public boolean containsType(String fqcn) {
+        return isEnabled() && fqcn != null && getBundle().definitions().has(fqcn);
+    }
+
+    /**
      * Returns a copy of {@code localSchema} enriched with a lightweight definition and a
      * {@code $ref} branch for every catalog subtype not installed locally — see
      * {@link PluginSchemaBundleMerger}. When the service is disabled or no bundle could be loaded,

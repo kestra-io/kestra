@@ -11,12 +11,9 @@ permissions: {}
 
 jobs:
   welcome:
-    # author_association filters out publicly visible insiders cheaply, but it reports private organization members as plain contributors,
-    # so the authoritative check is the explicit membership lookup in the steps below (see https://github.com/kestra-io/docs/pull/4318).
+    # author_association misses organization members with private membership, so the membership lookup below is the authoritative check.
     if: ${{ github.event.pull_request.user.type != 'Bot' && !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) && (github.event.action == 'opened' || github.event.pull_request.merged) }}
     runs-on: ubuntu-latest
-    # No GITHUB_TOKEN permissions needed: every API call below goes through the bot app token,
-    # which also makes the comments show up as the Kestra bot instead of github-actions.
     steps:
       - name: Generate a bot token
         id: bot-token
@@ -39,7 +36,7 @@ jobs:
               core.info(`@${username} is a member of the ${context.repo.owner} organization. Exiting..`);
               core.setOutput('is-member', 'true');
             } catch (error) {
-              // 404 is the API's way of saying "not a member"; anything else is a real failure worth surfacing.
+              // 404 means the author is not an organization member.
               if (error.status !== 404) {
                 throw error;
               }

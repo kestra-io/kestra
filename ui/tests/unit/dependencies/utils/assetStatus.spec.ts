@@ -13,6 +13,9 @@ describe("dependencies assetStatus", () => {
     it("gives never and unknown different glyphs, since both render neutral", () => {
         expect(statusIconOf("never")).not.toBe(statusIconOf("unknown"))
         expect(statusIconOf("unrecognised")).toBe(statusIconOf("unknown"))
+        // Inherited keys resolve off a plain object literal, so an unnormalised lookup
+        // handed `<component :is>` a Function instead of an icon.
+        expect(statusIconOf("toString")).toBe(statusIconOf("unknown"))
     })
 
     // P1. Depends on humanDuration pinning largest: 2 internally and on the design system's

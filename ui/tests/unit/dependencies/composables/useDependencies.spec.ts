@@ -355,7 +355,7 @@ describe("useDependencies composable", () => {
           setup() {
               // Defaults to initialNodeID="X" (nonexistent) so no node is pre-selected,
               // leaving selectedNodeID undefined and letting tests control selection.
-              const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, undefined, dagView)
+              const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, dagView)
               return {composable}
           },
       })
@@ -491,7 +491,7 @@ describe("useDependencies composable", () => {
         template: "<div></div>",
         setup() {
           const groupOf = ref<((node: Node) => string | undefined) | undefined>((node) => node.namespace)
-          return {composable: useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies, undefined, groupOf)}
+          return {composable: useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies, groupOf)}
         },
       })
       await nextTick()

@@ -88,20 +88,35 @@
         .filter((el): el is {data: Node} => el.data.type === NODE)
         .map(({data}) => data))
 
-    /**
-     * Edges into a flow node are dropped so the producing flow keeps its own leading
-     * column: it has outgoing edges only, which ranks it first.
-     */
     const edges = computed(() => {
         // Endpoints must exist: the adapter can emit edges whose source or target is not a
         // node (e.g. a dbt manifest parent that is neither a manifest key nor a graph node),
         // and vue-flow drops such edges with a console warning.
         const known = new Set(nodes.value.map((node) => node.id))
-        const flowIDs = new Set(nodes.value.filter((node) => node.metadata.subtype !== ASSET).map((node) => node.id))
         return props.elements
             .filter((el): el is {data: Edge} => el.data.type === EDGE)
             .map(({data}) => data)
-            .filter((edge) => known.has(edge.source) && known.has(edge.target) && !flowIDs.has(edge.target))
+            .filter((edge) => known.has(edge.source) && known.has(edge.target))
+    })
+
+    /** Flow nodes, as a set: ownColumn is called once per node, so a scan per call is quadratic. */
+    const flowNodeIDs = computed(() => new Set(
+        nodes.value.filter((node) => node.metadata.subtype !== ASSET).map((node) => node.id),
+    ))
+
+    /**
+     * Flows with nothing feeding them, which is what earns the leading column: a producing
+     * flow has outgoing edges only.
+     *
+     * Edges into a flow used to be dropped outright to get the same effect, but the adapter
+     * emits real asset→flow lineage (a flow CONSUMING an asset), so that deleted those edges
+     * from the canvas and from computeTrace — "what depends on this table" silently
+     * under-reported. Excluding consumers from the pinned column instead keeps the edges and
+     * ranks a consuming flow after the assets it reads, so no edge runs backwards.
+     */
+    const producingFlowIDs = computed(() => {
+        const consumed = new Set(edges.value.map((edge) => edge.target))
+        return new Set([...flowNodeIDs.value].filter((id) => !consumed.has(id)))
     })
 
     const layout = computed(() => computeDagLayout(
@@ -111,7 +126,7 @@
             columnGap: DAG_CARD.width + 120,
             rowGap:    DAG_CARD.height + 32,
             priority:  props.priorityOf,
-            ownColumn: (id) => nodes.value.some((node) => node.id === id && node.metadata.subtype !== ASSET),
+            ownColumn: (id) => producingFlowIDs.value.has(id),
         },
     ))
 

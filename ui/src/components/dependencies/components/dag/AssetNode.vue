@@ -67,7 +67,7 @@
     import Sitemap from "vue-material-design-icons/Sitemap.vue"
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
 
-    import {statusIconOf, statusColorOf} from "../../utils/assetStatus"
+    import {statusIconOf, statusColorOf, normalizeStatus} from "../../utils/assetStatus"
 
     import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_DIMMED, DAG_DETAIL} from "../../utils/dagConstants"
 
@@ -86,13 +86,15 @@
         };
     }>()
 
-    const {t} = useI18n()
+    const {t} = useI18n({useScope: "global"})
 
     const taskIconComponent = useTaskIcon()
     const pluginsStore = usePluginsStore()
 
     const name = computed(() => props.data.name)
-    const status = computed(() => props.data.status)
+    // Normalised, not raw: an unrecognised value would interpolate straight into the
+    // i18n key below and render `dependency.dag.status.<value>` on the card.
+    const status = computed(() => normalizeStatus(props.data.status))
     const updated = computed(() => props.data.updated)
     const iconCls = computed(() => props.data.iconCls)
     const fallbackIcon = computed(() => (props.data.isFlow ? Sitemap : PackageVariantClosed))

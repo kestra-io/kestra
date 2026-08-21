@@ -60,6 +60,7 @@
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
 
     import Link from "./Link.vue"
+    import {normalizeStatus} from "../utils/assetStatus"
     import {ASSET} from "../utils/types"
     import type {Types, Node, AssetRun} from "../utils/types"
 
@@ -85,10 +86,13 @@
 
     const shortName = computed(() => props.node.flow.split(".").pop() || props.node.flow)
 
-    const status = computed(() => (metadata.value.subtype === ASSET ? metadata.value.status : undefined))
+    const status = computed(() => (metadata.value.subtype === ASSET ? normalizeStatus(metadata.value.status) : undefined))
 
     // A run without an execution id cannot be linked to, and would collide as a v-for key.
-    const runs = computed(() => (metadata.value.runs ?? []).filter((run) => run.executionId))
+    // Namespace and flow id are just as load-bearing: the execution route needs all three,
+    // and a partial row resolves to a broken link rather than an execution.
+    const runs = computed(() => (metadata.value.runs ?? [])
+        .filter((run) => run.executionId && run.namespace && run.flowId))
 
     const rows = computed(() => [
         {label: t("dependency.dag.last_update"), value: metadata.value.updated, date: true},

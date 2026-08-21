@@ -5,7 +5,7 @@ import KestraDesignSystem from "@kestra-io/design-system"
 
 import NodeDetails from "../../../../src/components/dependencies/components/NodeDetails.vue"
 import {ASSET, FLOW} from "../../../../src/components/dependencies/utils/types"
-import type {Node} from "../../../../src/components/dependencies/utils/types"
+import type {Node, Types} from "../../../../src/components/dependencies/utils/types"
 
 const i18n = createI18n({
     legacy: false,
@@ -27,7 +27,7 @@ const i18n = createI18n({
     },
 })
 
-const mountDetails = (node: Node, subtype = ASSET) => mount(NodeDetails, {
+const mountDetails = (node: Node, subtype: Types = ASSET) => mount(NodeDetails, {
     props: {node, subtype},
     global: {
         plugins: [i18n, KestraDesignSystem],

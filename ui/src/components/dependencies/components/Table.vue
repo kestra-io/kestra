@@ -127,7 +127,7 @@
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import {statusIconOf, statusColorOf, compactAge} from "../utils/assetStatus"
+    import {statusIconOf, statusColorOf, compactAge, normalizeStatus} from "../utils/assetStatus"
     import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
     import type {Types, Node, Element} from "../utils/types"
 
@@ -276,7 +276,7 @@
 
     /** Freshness state, on assets only: the other three views have nothing to show here. */
     const statusOf = (node: Node): string | undefined =>
-        (node.metadata.subtype === ASSET ? ((node.metadata as {status?: string}).status ?? "unknown") : undefined)
+        (node.metadata.subtype === ASSET ? normalizeStatus((node.metadata as {status?: string}).status) : undefined)
 
     /**
      * Longest dotted prefix shared by every asset id on screen. In a real graph that is the

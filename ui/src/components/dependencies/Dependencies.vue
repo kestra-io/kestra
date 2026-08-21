@@ -431,11 +431,10 @@
         handleNodeClick,
         handlers,
         shownNodeIDs,
-        // layoutMode is deliberately not passed: DAG now renders through DagCanvas, so the
-        // chart only ever shows Tree. That leaves the composable's whole DAG branch
-        // unreachable, pending its removal, and keeps this call identical to the one the
-        // flow, execution and namespace views make.
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, undefined, groupOf, Boolean(props.dagView))
+        // The chart only ever shows Tree: DAG renders through DagCanvas, so this call is
+        // identical to the one the flow, execution and namespace views make, plus the
+        // grouping accessor and the asset-only interaction gate.
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, groupOf, Boolean(props.dagView))
 
     const dagCanvasRef = ref<{zoomIn: () => void; zoomOut: () => void; fit: () => void} | null>(null)
     const hoveredNodeID = ref<string | undefined>(undefined)
@@ -497,6 +496,9 @@
         if (!props.dagView || !id) return
         const element = getElements().find((el): el is {data: Node} => el.data.type === "NODE" && el.data.id === id)
         if (element) openNode(element.data)
+        // Released so the next double click on the same node fires the watch again; latched,
+        // it stayed on that id and every later double click on it was a no-op.
+        openedNodeID.value = undefined
     })
 
     /** One line answering "is anything wrong here" before the user reads a single node. */
@@ -511,8 +513,13 @@
 
         const stale = assets.filter((asset) => asset.status === "stale").length
         const failed = assets.filter((asset) => asset.status === "failed").length
+        // Parsed epochs, not string order: ISO timestamps with different UTC offsets sort
+        // wrongly as strings, which would name the wrong run as the latest.
+        const at = (value?: string): number => (value ? Date.parse(value) : Number.NaN)
         const latest = assets.reduce<string | undefined>(
-            (newest, asset) => (asset.updated && (!newest || asset.updated > newest) ? asset.updated : newest),
+            (newest, asset) => (!Number.isNaN(at(asset.updated)) && (!newest || at(asset.updated) > at(newest))
+                ? asset.updated
+                : newest),
             undefined,
         )
 

@@ -59,8 +59,7 @@ const i18n = createI18n({
         en: {
             download: "Download",
             file_preview: {
-                big_file_warning: "This file is {size}. Do you want to load it anyway?",
-                load_anyway: "Load anyway",
+                big_file_download_only: "This file is {size}. It is too large to open in the editor, download it instead.",
             },
         },
     },
@@ -111,21 +110,6 @@ describe("FlowFileEditorTab", () => {
         const downloadLink = wrapper.findAll("button").find((button) => button.attributes("href") !== undefined)
         expect(downloadLink?.attributes("href")).toBe("/api/v1/main/namespaces/io.kestra.test/files?path=/data.txt")
         expect(downloadLink?.attributes("download")).toBe("data.txt")
-    })
-
-    it("should load the content when the user clicks load anyway", async () => {
-        fileMetadata.mockResolvedValue({size: 11 * 1024 * 1024})
-
-        const wrapper = mountTab()
-        await flushPromises()
-        expect(readFile).not.toHaveBeenCalled()
-
-        await wrapper.find("[data-test=\"big-file-load-anyway\"]").trigger("click")
-        await flushPromises()
-
-        expect(readFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt"})
-        expect(wrapper.find("[data-test=\"big-file-warning\"]").exists()).toBe(false)
-        expect(wrapper.find("[data-test=\"ks-editor\"]").exists()).toBe(true)
     })
 
     it("should load the file content when the size stats are unavailable", async () => {

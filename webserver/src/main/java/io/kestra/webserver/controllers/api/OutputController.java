@@ -4,6 +4,7 @@ import java.util.*;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
@@ -21,8 +22,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Controller("/api/v1/{tenant}/outputs")
 public class OutputController {
@@ -64,28 +63,26 @@ public class OutputController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The task run id") @PathVariable String taskRunId) throws InternalException {
         var execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
-        var taskRun = execution.findTaskRunByTaskRunId(taskRunId);
+        var taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(NotFoundException::new);
         return taskOutputService.getOutputs(taskRun);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "tasks/{executionId}")
     @Operation(tags = { "Outputs" }, summary = "List the task runs of an execution having outputs")
-    public List<TaskOutputInformation> getTaskOutputsInformation(@Parameter(description = "The execution id") @PathVariable String executionId) throws InternalException {
+    public List<TaskOutputInformation> getTaskOutputsInformation(@Parameter(description = "The execution id") @PathVariable String executionId) {
         var execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         return taskOutputRepository.findByExecution(execution).stream()
-            .map(throwFunction(taskOutput ->
-            {
-                var taskRun = execution.findTaskRunByTaskRunId(taskOutput.taskRunId());
-                return new TaskOutputInformation(
+            // A LoopUntil iteration prunes its previous iteration's task runs but not their stored outputs,
+            // so an output row can outlive the task run it belongs to: skip it rather than fail the whole list.
+            .flatMap(taskOutput -> execution.findTaskRunByTaskRunIdIfPresent(taskOutput.taskRunId()).stream()
+                .map((TaskRun taskRun) -> new TaskOutputInformation(
                     taskRun.getTaskId(),
                     taskRun.getId(),
                     taskRun.getValue(),
                     taskRun.getIteration(),
                     taskOutput.value() != null
-                );
-            }
-            ))
+                )))
             .toList();
     }
 

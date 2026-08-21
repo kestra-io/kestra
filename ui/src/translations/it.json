@@ -2,47 +2,6 @@
   "it": {
     "loading": "Caricamento...",
     "more actions": "Altre azioni",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Usa solo lettere, cifre, punti, trattini e underscore, iniziando con una lettera o una cifra.",
-        "id_label": "ID del flow",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Utilizzare solo lettere minuscole, cifre, punti, trattini e underscore, iniziando con una lettera minuscola o una cifra.",
-        "namespace_placeholder": "Seleziona un namespace",
-        "namespaces_error": "Impossibile caricare i namespace. Digitare un namespace manualmente.",
-        "open_editor": "Apri editor",
-        "subtitle": "Inizia con un esempio \"hello-world\" e costruisci da zero.",
-        "title": "flow vuoto"
-      },
-      "blueprints": {
-        "subtitle": "Scegli un flow già pronto dal catalogo della community.",
-        "title": "Sfoglia i blueprint"
-      },
-      "import": {
-        "back": "Indietro",
-        "error": {
-          "empty": "Il contenuto YAML è vuoto.",
-          "invalid_mapping": "YAML del flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
-          "parse_error": "Impossibile analizzare il YAML.",
-          "too_large": "Il file è troppo grande. Incolla invece la definizione del flow o carica un file di dimensioni inferiori a 1 MB."
-        },
-        "paste_label": "Incolla YAML",
-        "read_error": "Impossibile leggere il file.",
-        "submit": "Importa flow",
-        "subtitle": "Incolla o carica una definizione di flow esistente.",
-        "title": "Importa YAML",
-        "upload_button": "Carica .yml / .yaml",
-        "upload_label": "O carica un file",
-        "upload_tip": "Accetta file .yml e .yaml."
-      },
-      "subtitle": "Inizia da una tela vuota, esplora i blueprint o importa un file YAML esistente.",
-      "system": {
-        "badge": "SISTEMA",
-        "subtitle": "Crea un flow di avviso o automazione per la tua piattaforma.",
-        "title": "Crea un system flow"
-      },
-      "title": "Crea un nuovo flow"
-    },
     "recipe": {
       "create_flow": "Crea flow",
       "email": "Email",
@@ -311,8 +270,6 @@
         "1d": "1g",
         "7d": "7g"
       },
-      "last14days": "Ultimi 14 giorni",
-      "last28days": "Ultimi 28 giorni",
       "14days": "14 giorni",
       "28days": "28 giorni"
     },
@@ -478,6 +435,7 @@
     },
     "file_preview": {
       "big_file_warning": "Questo file è {size}. Potrebbe richiedere del tempo per caricarsi bloccando il tuo browser. Vuoi caricarlo comunque?",
+      "big_file_download_only": "Questo file è {size}. È troppo grande per essere aperto nell'editor, scaricalo invece.",
       "load_anyway": "Carica comunque",
       "load_error": "Impossibile caricare l'anteprima del file. Potrebbe trattarsi di un problema temporaneo o di autorizzazioni.",
       "retry": "Riprova",
@@ -1020,7 +978,8 @@
             "triggers_default_tab": "Scheda Trigger Predefiniti",
             "playground": "Playground",
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
-            "task_edit_default_mode": "Modalità di Modifica Task Predefinita"
+            "task_edit_default_mode": "Modalità di Modifica Task Predefinita",
+            "flow_template": "Modello di flow predefinito"
           },
           "descriptions": {
             "default_namespace": "Utilizzato quando si creano nuovi flow senza un namespace.",
@@ -1033,11 +992,17 @@
             "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger.",
             "auto_refresh_interval": "Secondi tra gli aggiornamenti automatici dei dati nelle pagine elenco.",
             "playground": "Esegui i task singolarmente nel playground dell'editor.",
-            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code."
+            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code.",
+            "flow_template": "YAML aperto nell'editor quando crei un nuovo flow. L'id e il namespace possono essere omessi, poiché vengono generati automaticamente. Quando è vuoto, viene utilizzato il template configurato per l'istanza."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Scheda"
+          },
+          "flow_template_reset": "Ripristina predefiniti",
+          "flow_template_error": {
+            "invalid_mapping": "Modello di flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
+            "parse_error": "Impossibile analizzare il YAML. Il template è stato salvato, quindi l'editor potrebbe mostrare lo stesso errore quando crei un flow."
           }
         },
         "theme": {
@@ -1114,7 +1079,7 @@
       "contact_sales": "Contatta il reparto vendite",
       "secrets": {
         "title": "Aggiorna il tuo Secrets Management",
-        "message": "L'Enterprise Edition (EE) ti consente di aggiungere, modificare o eliminare i secret direttamente nell'interfaccia utente, senza bisogno di riavvii dell'istanza. Organizza i secret per namespace con permessi RBAC granulari e ereditale dai namespace padre a quelli figlio. L'EE si integra con i gestori di secret come HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager ed Elasticsearch. Configura backend dedicati per namespace, tenant o istanza per isolare i secret tra i team, o abilita i secret di sola lettura archiviati in vault esterni. I secret rimangono crittografati a riposo e in transito. La cache opzionale riduce le chiamate API e i log di audit registrano tutti gli accessi.",
+        "message": "L'Enterprise Edition ti consente di aggiungere, modificare ed eliminare i secret direttamente nell'interfaccia utente, di organizzarli per namespace con RBAC e di archiviarli in HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager o Elasticsearch.",
         "add_env": {
           "intro": "Crea un nuovo Secret",
           "first": "Codifica il <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valore segreto in Base64</a>",

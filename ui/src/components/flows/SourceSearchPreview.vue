@@ -27,7 +27,7 @@
                         <KsButton
                             v-if="!replaceMode"
                             tag="router-link"
-                            :to="{path: `/flows/edit/${selection.namespace}/${selection.id}/source`}"
+                            :to="editorLinkTarget"
                         >
                             {{ $t('source_search.open_in_editor') }}
                         </KsButton>
@@ -144,6 +144,7 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
     import {KsEditor} from "@kestra-io/design-system"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
@@ -179,6 +180,7 @@
     }>()
 
     const {t} = useI18n()
+    const route = useRoute()
     const flowStore = useFlowStore()
 
     const isLoading = ref(false)
@@ -189,6 +191,14 @@
     const flowSelection = computed(() => props.selection?.type === "flows" ? props.selection : null)
 
     const editorKey = computed(() => flowSelection.value ? `${flowSelection.value.namespace}/${flowSelection.value.id}` : "")
+
+    const editorLinkTarget = computed(() => {
+        if (!flowSelection.value) return {}
+        return {
+            name: "flows/update/edit",
+            params: {tenant: route.params.tenant, namespace: flowSelection.value.namespace, id: flowSelection.value.id},
+        }
+    })
 
     const excludedFromReplaceCount = computed(() => props.excludedFromReplaceCount ?? 0)
 

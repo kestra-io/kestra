@@ -57,9 +57,13 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     }
 })
 
+const {mockRoute} = vi.hoisted(() => ({
+    mockRoute: {query: {} as Record<string, unknown>, params: {} as Record<string, unknown>},
+}))
+
 vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn()}),
-    useRoute: () => ({query: {}, params: {}}),
+    useRoute: () => mockRoute,
     RouterLink: {
         template: "<a><slot /></a>",
         props: ["to"],
@@ -71,10 +75,16 @@ import en from "../../../../src/translations/en.json"
 
 const i18n = createI18n({legacy: false, locale: "en", messages: en})
 
+const RouterLinkProbe = {
+    props: ["to"],
+    template: "<a data-test=\"router-link-probe\" :data-to=\"JSON.stringify(to)\"><slot /></a>",
+}
+
 function createGlobal() {
     setActivePinia(createPinia())
     return {
         plugins: [i18n, KestraDesignSystem],
+        stubs: {RouterLink: RouterLinkProbe},
     }
 }
 
@@ -99,6 +109,7 @@ describe("SourceSearchPreview", () => {
         mockRevealLineInCenter.mockReset()
         mockClearDecoration.mockReset()
         mockCreateDecorationsCollection.mockClear()
+        mockRoute.params = {}
     })
 
     test("shows empty state when nothing is selected", async () => {
@@ -278,5 +289,38 @@ describe("SourceSearchPreview", () => {
         await flushPromises()
 
         expect(wrapper.text()).toContain("Never shown or searched")
+    })
+
+    test("points the Open in editor link at the flow's edit tab route with the current tenant", async () => {
+        mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
+        mockRoute.params = {tenant: "acme"}
+
+        const wrapper = mount(SourceSearchPreview, {
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: ""}),
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        const link = wrapper.get("[data-test='router-link-probe']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: "acme", namespace: "ns", id: "my-flow"},
+        })
+    })
+
+    test("resolves the Open in editor link without a tenant in OSS single-tenant mode", async () => {
+        mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
+
+        const wrapper = mount(SourceSearchPreview, {
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: ""}),
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        const link = wrapper.get("[data-test='router-link-probe']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: undefined, namespace: "ns", id: "my-flow"},
+        })
     })
 })

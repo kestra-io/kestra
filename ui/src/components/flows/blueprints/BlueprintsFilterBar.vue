@@ -1,7 +1,8 @@
 <template>
     <div :class="{'embed-top': showEmbed}">
-        <KsRow :class="{'mb-3': !showEmbed && !inline}" justify="center">
+        <KsRow class="filter-row" :class="{'mb-3': !showEmbed && !inline}" justify="center">
             <KsFilter
+                class="filter"
                 :configuration="blueprintFilter"
                 :buttons="{
                     savedFilters: {shown: false},
@@ -15,6 +16,7 @@
                 searchInputFullWidth
                 @search="emit('search', $event)"
             />
+            <slot v-if="showEmbed" name="beside-search" />
         </KsRow>
 
         <div v-if="showEmbed && tagList.length" class="embed-tag-pills">
@@ -73,9 +75,22 @@
     .embed-top {
         display: flex;
         flex-direction: column;
+        gap: var(--ks-spacing-4);
         margin-inline: calc(var(--ks-data-table-gutter) * -1);
         padding: var(--ks-spacing-5) 1.25rem;
         border-bottom: 1px solid var(--ks-border-default);
+
+        .filter-row {
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: var(--ks-spacing-3);
+
+            .filter {
+                flex: 1;
+                min-width: 0;
+                margin-bottom: 0;
+            }
+        }
     }
 
     .embed-tag-pills {

@@ -26,34 +26,14 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service that detects flow task/trigger types missing from the local plugin registry and maps
- * them to their catalog Maven artifact.
+ * Detects flow task/trigger types missing from the local plugin registry, maps them to their
+ * catalog Maven artifact and installs them (KIP-45 "Save &amp; Fetch"). Backs the detect/install
+ * endpoints, the server-side flow save hook, the first-sync migration and the boot-time install
+ * of config-referenced plugins. All installs are best-effort: a failure is logged and never turns
+ * a save into a hard error beyond the pre-existing validation failure.
  * <p>
- * This backs the KIP-45 "Save &amp; Fetch" flow in two ways:
- * <ul>
- * <li><b>Frontend-orchestrated</b>: the editor calls
- * {@code POST /api/v1/plugins/auto-install/detect} (backed by {@link #findMissingTypes} and
- * {@link #findArtifactForType}) to learn what's missing before save, then
- * {@code POST /api/v1/plugins/install} (backed by {@link PluginInstallJobRegistry}) to actually
- * download and install the artifacts.</li>
- * <li><b>Server-side</b>: {@link #installMissingPlugins(String)} is invoked from the flow save
- * path ({@code FlowService}) so every non-UI entry point (flow import, namespace bulk update,
- * CLI, kestractl, EE) transparently installs missing plugins before validation. Installation is
- * best-effort: a failure is logged as a warning and never turns a save into a hard error beyond
- * the pre-existing validation failure.</li>
- * <li><b>First-sync / boot</b>: {@link #installMissingTypes(Set)} backs the 1.3 → 2.0 migration
- * that crawls every existing flow once, and {@link #installMissingConfiguredPlugins()} installs
- * config-referenced plugins (storage backend) at server startup, before the corresponding
- * services initialize.</li>
- * </ul>
- * <p>
- * Feature gating: on by default only for OSS with local-filesystem storage — the KIP-45 "local"
- * persona ({@code server local} hardcodes {@code kestra.storage.type=local}). The storage type is
- * the discriminating signal because {@code server local} extends the standalone command and always
- * reports {@code ServerType.STANDALONE}, while a standalone deployment on S3/GCS must stay inert.
- * Everywhere else (non-local storage, Enterprise Edition) it is off unless
- * {@code kestra.plugins.auto-install.enabled} is set explicitly — an explicit value always wins
- * over the computed default.
+ * On by default only for OSS + local-filesystem storage (the {@code server local} persona); an
+ * explicit {@code kestra.plugins.auto-install.enabled} always wins over that computed default.
  */
 @Singleton
 @Slf4j
@@ -178,10 +158,7 @@ public class PluginAutoInstallService {
 
     /**
      * Detects the plugin types missing from the registry in the given flow YAML and resolves
-     * their catalog artifacts, without installing anything.
-     * <p>
-     * This backs {@code POST /plugins/auto-install/detect}. When the feature is disabled the
-     * result is empty (not an error), so the caller can always treat it as "nothing to install".
+     * their catalog artifacts, without installing anything. Backs {@code POST /plugins/auto-install/detect}.
      *
      * @param flowYaml the YAML source of the flow.
      * @return the detection result: feature flag, missing type FQCNs and their catalog artifacts.
@@ -202,11 +179,9 @@ public class PluginAutoInstallService {
     }
 
     /**
-     * Returns whether the given artifact is provided by the plugin catalog.
-     * <p>
-     * The install endpoint uses this as an allowlist: only artifacts the catalog itself maps
-     * (exactly what {@link #detect(String)} can return) may be installed, so a caller can never
-     * make the server resolve, download and class-load an arbitrary Maven coordinate.
+     * Returns whether the given artifact is provided by the plugin catalog — the install
+     * endpoint's allowlist, so a caller can never make the server class-load an arbitrary
+     * Maven coordinate.
      *
      * @param artifact the artifact to check.
      * @return {@code true} when a catalog manifest matches the artifact's groupId and artifactId.
@@ -220,20 +195,9 @@ public class PluginAutoInstallService {
     }
 
     /**
-     * Detects the plugin types missing from the registry in the given flow YAML, resolves their
-     * catalog artifacts, and installs the deduplicated set synchronously with a bounded wait.
-     * <p>
-     * This is the server-side hook used by the flow save path so that flows saved through any
-     * entry point (flow import, namespace bulk update, CLI, kestractl, EE) get their missing
-     * plugins installed before validation. It is best-effort by design: any failure — no catalog
-     * match, download error, timeout — is logged as a warning and never propagated, so a save
-     * fails only through the pre-existing type validation, exactly as it would without this hook.
-     * <p>
-     * When invoked from a Netty event-loop thread (a reactive caller of the flow save path),
-     * the install runs in the background instead of blocking: parking an event loop here starves
-     * the very event loops the catalog HTTP client needs, deadlocking the lookup until its read
-     * timeout. The save then proceeds without waiting and a not-yet-installed type surfaces as
-     * the pre-existing type validation error, consistent with the best-effort contract.
+     * Detects the missing plugin types in the given flow YAML and installs their catalog
+     * artifacts synchronously with a bounded wait — the server-side flow save hook, so every
+     * entry point (import, bulk update, CLI, EE) gets missing plugins before validation.
      *
      * @param flowYaml the YAML source of the flow being saved.
      */
@@ -245,6 +209,9 @@ public class PluginAutoInstallService {
         if (missingTypes.isEmpty()) {
             return;
         }
+        // Never block a Netty event loop: the catalog HTTP client needs those very event loops,
+        // so waiting here would deadlock the lookup until its read timeout. The save proceeds and
+        // a not-yet-installed type surfaces as the pre-existing validation error.
         if (Thread.currentThread() instanceof FastThreadLocalThread) {
             log.debug("Called from an event-loop thread: installing plugins for missing types {} in the background.", missingTypes);
             Thread.startVirtualThread(() -> installMissingTypes(missingTypes, saveTimeout));
@@ -254,13 +221,9 @@ public class PluginAutoInstallService {
     }
 
     /**
-     * Resolves the catalog artifacts for the given missing plugin type FQCNs and installs the
+     * Bulk variant of {@link #installMissingPlugins(String)}, used by the first-sync migration:
+     * resolves the catalog artifacts for the given missing type FQCNs and installs the
      * deduplicated set synchronously with a bounded wait.
-     * <p>
-     * This is the bulk variant of {@link #installMissingPlugins(String)}, reused by the
-     * 1.3 → 2.0 first-sync migration which aggregates the missing types of every existing flow
-     * before triggering a single install. Same best-effort semantics: any failure is logged as a
-     * warning and never propagated.
      *
      * @param missingTypes the plugin type FQCNs missing from the local registry.
      */
@@ -288,22 +251,11 @@ public class PluginAutoInstallService {
     }
 
     /**
-     * Detects plugin types referenced by the resolved configuration — not by flow YAML — that are
-     * missing from the local plugin registry, and installs them synchronously with a bounded wait.
-     * <p>
-     * This covers the {@code kestra.storage.type} storage backend, which is needed at boot before
-     * the {@code StorageInterface} singleton is first resolved, so a slim distribution configured
-     * for e.g. S3 does not fail startup. Storage plugins follow the fixed Maven convention
-     * {@code io.kestra.storage:storage-<id>}, so no catalog lookup is involved. The other
-     * config-referenced plugin kinds need no boot-time install in OSS: secret managers are
-     * Enterprise Edition plugins resolved by the EE secret factory, log datastores (h2, mysql,
-     * postgres) ship in the distribution itself, and file renderers are discovered per request
-     * after installation.
-     * <p>
-     * Must be called after the external plugins directory has been registered (see
-     * {@code AbstractCommand#maybeInitPlugins()}) and before the corresponding services initialize.
-     * Best-effort: on failure the boot continues and fails later with the pre-existing
-     * "no storage interface found" error.
+     * Installs the config-referenced storage backend plugin ({@code kestra.storage.type}) when it
+     * is missing, so a slim distribution configured for e.g. S3 does not fail startup. Storage
+     * plugins follow the fixed {@code io.kestra.storage:storage-<id>} convention, no catalog
+     * lookup involved. Must run after the external plugins directory is registered and before the
+     * {@code StorageInterface} singleton is first resolved.
      */
     public void installMissingConfiguredPlugins() {
         if (!enabled) {

@@ -306,7 +306,7 @@ public class RunContextFactory {
     }
 
     protected RunVariables.Builder newRunVariablesBuilder() {
-        return new RunVariables.DefaultBuilder()
+        return new RunVariables.DefaultBuilder(encryptionConfig.asOptional())
             .withEnvs(runContextCache.getEnvVars())
             .withGlobals(runContextCache.getGlobalVars())
             .withKestraConfiguration(

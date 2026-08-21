@@ -2,47 +2,6 @@
   "pt_BR": {
     "loading": "Carregando...",
     "more actions": "Mais ações",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Use apenas letras, dígitos, pontos, traços e sublinhados, começando com uma letra ou um dígito.",
-        "id_label": "id do flow",
-        "id_placeholder": "meu-flow",
-        "namespace_invalid": "Use apenas letras minúsculas, dígitos, pontos, traços e sublinhados, começando com uma letra minúscula ou um dígito.",
-        "namespace_placeholder": "Selecione um namespace",
-        "namespaces_error": "Não foi possível carregar os namespaces. Digite um namespace manualmente.",
-        "open_editor": "Abrir editor",
-        "subtitle": "Comece com um hello-world starter e construa do zero.",
-        "title": "flow em branco"
-      },
-      "blueprints": {
-        "subtitle": "Escolha um flow pronto do catálogo da comunidade.",
-        "title": "Navegar pelos blueprints"
-      },
-      "import": {
-        "back": "Voltar",
-        "error": {
-          "empty": "O conteúdo YAML está vazio.",
-          "invalid_mapping": "YAML de flow inválido: esperado um mapeamento de chave-valor, não uma lista ou escalar.",
-          "parse_error": "Não foi possível analisar o YAML.",
-          "too_large": "Esse arquivo é muito grande. Cole a definição do flow ou faça upload de um arquivo com menos de 1 MB."
-        },
-        "paste_label": "Colar YAML",
-        "read_error": "Não foi possível ler o arquivo.",
-        "submit": "Importar flow",
-        "subtitle": "Cole ou carregue uma definição de flow existente.",
-        "title": "Importar YAML",
-        "upload_button": "Carregar .yml / .yaml",
-        "upload_label": "Ou faça upload de um arquivo",
-        "upload_tip": "Aceita arquivos .yml e .yaml."
-      },
-      "subtitle": "Comece com uma tela em branco, explore blueprints ou importe um YAML existente.",
-      "system": {
-        "badge": "SISTEMA",
-        "subtitle": "Crie um flow de alerta ou automação para sua plataforma.",
-        "title": "Criar um system flow"
-      },
-      "title": "Criar um novo flow"
-    },
     "recipe": {
       "create_flow": "Criar flow",
       "email": "Email",
@@ -1020,7 +979,8 @@
             "triggers_default_tab": "Aba de Triggers Padrão",
             "playground": "Playground",
             "auto_refresh_interval": "Intervalo de Atualização Automática",
-            "task_edit_default_mode": "Modo de Edição de Task Padrão"
+            "task_edit_default_mode": "Modo de Edição de Task Padrão",
+            "flow_template": "Modelo de flow padrão"
           },
           "descriptions": {
             "default_namespace": "Usado ao criar novos flows sem um namespace.",
@@ -1033,11 +993,17 @@
             "triggers_default_tab": "Aba selecionada ao navegar para a página de triggers.",
             "auto_refresh_interval": "Segundos entre atualizações automáticas de dados nas páginas de lista.",
             "playground": "Execute tasks individualmente no playground do editor.",
-            "task_edit_default_mode": "Como uma task é aberta por padrão a partir do editor no-code."
+            "task_edit_default_mode": "Como uma task é aberta por padrão a partir do editor no-code.",
+            "flow_template": "YAML aberto no editor quando você cria um novo flow. O id e o namespace podem ser omitidos, pois são gerados automaticamente. Quando este campo está vazio, o template configurado para a instância é usado."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Aba"
+          },
+          "flow_template_reset": "Redefinir para o padrão",
+          "flow_template_error": {
+            "invalid_mapping": "Template de flow inválido: esperado um mapeamento de chave-valor, não uma lista ou escalar.",
+            "parse_error": "Não foi possível analisar o YAML. O template foi salvo, então o editor pode mostrar o mesmo erro ao criar um flow."
           }
         },
         "theme": {
@@ -1114,7 +1080,7 @@
       "contact_sales": "Entre em Contato com Vendas",
       "secrets": {
         "title": "Atualize seu Gerenciamento de Secrets",
-        "message": "A Enterprise Edition (EE) permite adicionar, editar ou excluir secrets diretamente na UI — sem a necessidade de reiniciar a instância. Organize secrets por namespace com permissões RBAC granulares e herde-os de namespaces pai para filho. A EE se integra com gerenciadores de secrets como HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager e Elasticsearch. Configure backends dedicados por namespace, tenant ou instância para isolar secrets entre equipes, ou habilite secrets somente leitura armazenados em vaults externos. Os secrets permanecem criptografados em repouso e em trânsito. O cache opcional reduz as chamadas de API, e os audit trails registram todos os acessos.",
+        "message": "A Enterprise Edition permite adicionar, editar e excluir secrets diretamente na UI, organizá-los por namespace com RBAC e armazená-los no HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager ou Elasticsearch.",
         "add_env": {
           "intro": "Criar um Novo Secret",
           "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",

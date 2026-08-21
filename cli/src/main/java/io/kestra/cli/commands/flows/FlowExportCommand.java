@@ -28,7 +28,7 @@ public class FlowExportCommand extends AbstractApiCommand {
     @Inject
     private TenantIdSelectorService tenantService;
 
-    @CommandLine.Option(names = { "--namespace" }, description = "The namespace of flows to export")
+    @CommandLine.Option(names = { "--namespace" }, description = "The namespace of flows to export", required = true)
     public String namespace;
 
     @CommandLine.Parameters(index = "0", description = "The directory to export the ZIP file to")

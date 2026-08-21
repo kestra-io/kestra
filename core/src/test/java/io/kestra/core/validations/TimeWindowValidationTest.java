@@ -121,4 +121,21 @@ class TimeWindowValidationTest {
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).isEqualTo(": Time window of type `SLIDING_WINDOW` cannot have a deadline.\n");
     }
+
+    @Test
+    void shouldValidateWhenTimezoneIsValid() {
+        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).timezone("Europe/Paris").build();
+
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
+        assertThat(valid.isEmpty()).isTrue();
+    }
+
+    @Test
+    void shouldNotValidateWhenTimezoneIsInvalid() {
+        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).timezone("Not/AZone").build();
+
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
+        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid.get().getMessage()).contains("is not a valid time-zone ID");
+    }
 }

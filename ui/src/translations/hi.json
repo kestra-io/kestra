@@ -2,47 +2,6 @@
   "hi": {
     "loading": "लोड हो रहा है...",
     "more actions": "अधिक क्रियाएँ",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "केवल अक्षर, अंक, बिंदु, डैश और अंडरस्कोर का उपयोग करें, जो अक्षर या अंक से शुरू होते हों।",
-        "id_label": "flow id",
-        "id_placeholder": "मेरा-flow",
-        "namespace_invalid": "केवल छोटे अक्षरों, अंकों, बिंदुओं, डैश और अंडरस्कोर का उपयोग करें, जिनकी शुरुआत छोटे अक्षर या अंक से हो।",
-        "namespace_placeholder": "एक namespace चुनें",
-        "namespaces_error": "namespace लोड नहीं किए जा सके। मैन्युअल रूप से एक namespace टाइप करें।",
-        "open_editor": "एडिटर खोलें",
-        "subtitle": "हैलो-वर्ल्ड स्टार्टर से शुरू करें और स्क्रैच से बनाएं।",
-        "title": "खाली flow"
-      },
-      "blueprints": {
-        "subtitle": "समुदाय कैटलॉग से एक तैयार flow चुनें।",
-        "title": "ब्लूप्रिंट्स ब्राउज़ करें"
-      },
-      "import": {
-        "back": "वापस",
-        "error": {
-          "empty": "YAML सामग्री खाली है।",
-          "invalid_mapping": "अमान्य flow YAML: एक key-value मैपिंग अपेक्षित थी, न कि एक सूची या स्केलर।",
-          "parse_error": "YAML पार्स नहीं किया जा सका।",
-          "too_large": "वह फ़ाइल बहुत बड़ी है। इसके बजाय flow परिभाषा पेस्ट करें, या 1 MB से कम की फ़ाइल अपलोड करें।"
-        },
-        "paste_label": "YAML पेस्ट करें",
-        "read_error": "फ़ाइल पढ़ी नहीं जा सकी।",
-        "submit": "flow इम्पोर्ट करें",
-        "subtitle": "मौजूदा flow परिभाषा पेस्ट या अपलोड करें।",
-        "title": "YAML इम्पोर्ट करें",
-        "upload_button": ".yml / .yaml अपलोड करें",
-        "upload_label": "या एक फ़ाइल अपलोड करें",
-        "upload_tip": ".yml और .yaml फ़ाइलें स्वीकार करता है।"
-      },
-      "subtitle": "एक खाली कैनवास से शुरू करें, blueprints एक्सप्लोर करें, या मौजूदा YAML इम्पोर्ट करें।",
-      "system": {
-        "badge": "सिस्टम",
-        "subtitle": "अपने प्लेटफ़ॉर्म के लिए एक अलर्ट या ऑटोमेशन flow बनाएँ।",
-        "title": "एक सिस्टम flow बनाएँ"
-      },
-      "title": "नया flow बनाएँ"
-    },
     "recipe": {
       "create_flow": "flow बनाएँ",
       "email": "ईमेल",
@@ -1020,7 +979,8 @@
             "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब",
             "playground": "प्लेग्राउंड",
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
-            "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड"
+            "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड",
+            "flow_template": "डिफ़ॉल्ट flow टेम्पलेट"
           },
           "descriptions": {
             "default_namespace": "नए flows को बिना namespace के बनाते समय उपयोग किया जाता है।",
@@ -1033,11 +993,17 @@
             "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।",
             "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
             "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
-            "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।"
+            "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।",
+            "flow_template": "जब आप एक नया flow बनाते हैं तो YAML एडिटर में खुलता है। id और namespace को छोड़ा जा सकता है, क्योंकि वे आपके लिए जनरेट किए जाते हैं। जब यह खाली होता है, तो इंस्टेंस के लिए कॉन्फ़िगर किया गया टेम्पलेट उपयोग किया जाता है।"
           },
           "task_edit_default_mode_options": {
             "modal": "मॉडल",
             "tab": "टैब"
+          },
+          "flow_template_reset": "डिफ़ॉल्ट पर रीसेट करें",
+          "flow_template_error": {
+            "invalid_mapping": "अमान्य flow टेम्पलेट: एक key-value मैपिंग अपेक्षित थी, सूची या स्केलर नहीं।",
+            "parse_error": "YAML पार्स नहीं किया जा सका। टेम्पलेट सहेज लिया गया था, इसलिए जब आप कोई flow बनाते हैं तो एडिटर वही त्रुटि दिखा सकता है।"
           }
         },
         "theme": {
@@ -1114,7 +1080,7 @@
       "contact_sales": "सेल्स से संपर्क करें",
       "secrets": {
         "title": "अपने Secrets Management को अपग्रेड करें",
-        "message": "एंटरप्राइज़ एडिशन (EE) आपको सीधे UI में सीक्रेट्स जोड़ने, संपादित करने या हटाने की सुविधा देता है - किसी इंस्टेंस रीस्टार्ट की आवश्यकता नहीं है। ग्रेन्युलर RBAC परमिशन के साथ namespace द्वारा सीक्रेट्स को व्यवस्थित करें, और उन्हें पैरेंट से चाइल्ड namespaces में इनहेरिट करें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे सीक्रेट्स मैनेजर के साथ इंटीग्रेट होता है। टीमों में सीक्रेट्स को अलग करने के लिए प्रति namespace, tenant, या इंस्टेंस के लिए डेडिकेटेड बैकएंड सेट करें, या बाहरी वॉल्ट में संग्रहीत रीड-ओनली सीक्रेट्स को सक्षम करें। सीक्रेट्स रेस्ट और ट्रांजिट में एन्क्रिप्टेड रहते हैं। वैकल्पिक कैशिंग API कॉल को कम करती है, और ऑडिट ट्रेल सभी एक्सेस को लॉग करते हैं।",
+        "message": "एंटरप्राइज़ एडिशन आपको UI में सीधे सीक्रेट्स जोड़ने, संपादित करने और हटाने, उन्हें RBAC के साथ namespace के अनुसार व्यवस्थित करने, और HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager या Elasticsearch में संग्रहीत करने की सुविधा देता है।",
         "add_env": {
           "intro": "एक नया Secret बनाएँ",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",

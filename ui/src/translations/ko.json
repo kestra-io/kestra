@@ -2,47 +2,6 @@
   "ko": {
     "loading": "로딩 중...",
     "more actions": "추가 작업",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "문자, 숫자, 점, 대시, 밑줄만 사용하고, 문자로 시작하거나 숫자로 시작해야 합니다.",
-        "id_label": "flow id",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "소문자, 숫자, 점, 대시, 밑줄만 사용하며, 소문자 또는 숫자로 시작해야 합니다.",
-        "namespace_placeholder": "namespace를 선택하세요",
-        "namespaces_error": "namespace를 로드할 수 없습니다. namespace를 수동으로 입력하세요.",
-        "open_editor": "에디터 열기",
-        "subtitle": "hello-world 스타터로 시작하여 처음부터 빌드하세요.",
-        "title": "빈 flow"
-      },
-      "blueprints": {
-        "subtitle": "커뮤니티 카탈로그에서 미리 만들어진 flow를 선택하세요.",
-        "title": "블루프린트 찾아보기"
-      },
-      "import": {
-        "back": "뒤로",
-        "error": {
-          "empty": "YAML 콘텐츠가 비어 있습니다.",
-          "invalid_mapping": "유효하지 않은 flow YAML: 목록 또는 스칼라가 아닌 키-값 매핑이 필요합니다.",
-          "parse_error": "YAML을 구문 분석할 수 없습니다.",
-          "too_large": "파일이 너무 큽니다. 대신 flow 정의를 붙여넣거나 1MB 미만의 파일을 업로드하세요."
-        },
-        "paste_label": "YAML 붙여넣기",
-        "read_error": "파일을 읽을 수 없습니다.",
-        "submit": "flow 가져오기",
-        "subtitle": "기존 flow 정의를 붙여넣거나 업로드하세요.",
-        "title": "YAML 가져오기",
-        "upload_button": ".yml / .yaml 업로드",
-        "upload_label": "또는 파일 업로드",
-        "upload_tip": ".yml 및 .yaml 파일을 허용합니다."
-      },
-      "subtitle": "빈 캔버스에서 시작하거나, blueprint를 탐색하거나, 기존 YAML을 가져오세요.",
-      "system": {
-        "badge": "시스템",
-        "subtitle": "플랫폼을 위한 알림 또는 자동화 flow를 구축하세요.",
-        "title": "시스템 flow 생성"
-      },
-      "title": "새 flow 생성"
-    },
     "recipe": {
       "create_flow": "flow 생성",
       "email": "이메일",
@@ -1020,7 +979,8 @@
             "triggers_default_tab": "기본 Trigger 탭",
             "playground": "플레이그라운드",
             "auto_refresh_interval": "자동 새로고침 간격",
-            "task_edit_default_mode": "기본 Task 편집 모드"
+            "task_edit_default_mode": "기본 Task 편집 모드",
+            "flow_template": "기본 flow 템플릿"
           },
           "descriptions": {
             "default_namespace": "namespace 없이 새로운 flow를 생성할 때 사용됩니다.",
@@ -1033,11 +993,17 @@
             "triggers_default_tab": "트리거 페이지로 이동할 때 선택된 탭.",
             "auto_refresh_interval": "목록 페이지에서 자동 데이터 새로 고침 간격(초).",
             "playground": "편집기 플레이그라운드에서 개별적으로 task 실행.",
-            "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다."
+            "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다.",
+            "flow_template": "새 flow를 생성할 때 YAML이 에디터에서 열립니다. id와 namespace는 자동으로 생성되므로 비워둘 수 있습니다. 이 필드가 비어 있으면 인스턴스에 구성된 템플릿이 사용됩니다."
           },
           "task_edit_default_mode_options": {
             "modal": "모달",
             "tab": "탭"
+          },
+          "flow_template_reset": "기본값으로 재설정",
+          "flow_template_error": {
+            "invalid_mapping": "잘못된 flow 템플릿: 목록 또는 스칼라가 아닌 키-값 매핑이 필요합니다.",
+            "parse_error": "YAML을 파싱할 수 없습니다. 템플릿이 저장되었으므로 flow를 생성할 때 편집기에 동일한 오류가 표시될 수 있습니다."
           }
         },
         "theme": {
@@ -1114,7 +1080,7 @@
       "contact_sales": "영업팀에 문의하세요",
       "secrets": {
         "title": "비밀 관리 업그레이드",
-        "message": "Enterprise Edition(EE)을 사용하면 UI에서 직접 시크릿을 추가, 편집 또는 삭제할 수 있으며 인스턴스를 다시 시작할 필요가 없습니다. 세분화된 RBAC 권한으로 namespace별로 시크릿을 구성하고, 부모 namespace에서 자식 namespace로 시크릿을 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 시크릿 관리자와 통합됩니다. 팀 간에 시크릿을 격리하기 위해 namespace, tenant 또는 인스턴스별로 전용 백엔드를 설정하거나 외부 볼트에 저장된 읽기 전용 시크릿을 활성화할 수 있습니다. 시크릿은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 액세스를 기록합니다.",
+        "message": "Enterprise Edition을 사용하면 UI에서 직접 시크릿을 추가, 편집, 삭제하고 RBAC으로 namespace별로 구성하며 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager 또는 Elasticsearch를 백엔드로 사용할 수 있습니다.",
         "add_env": {
           "intro": "새 Secret 생성",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",

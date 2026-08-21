@@ -258,8 +258,10 @@ same discriminator layout. To keep that alignment (and shrink the bundle), `sche
 single-use `<Class>` + `<Class>-2` discriminator-wrapper pair into one definition, applied identically
 on both sides.
 
-The merged response is cached only **60s** (`CATALOG_CACHE_DIRECTIVE`), not the usual hour — a
-newly-installed plugin must show up in the editor promptly, not up to an hour later.
+The merged response uses the same **ETag revalidation** as the plain schema endpoint (the tag also
+covers the bundle fingerprint): the browser re-downloads the big merged JSON only when the installed
+plugin set or the bundle changed, gets a cheap 304 otherwise, and a newly-installed plugin shows up
+on the next request.
 
 ### (d) Frontend
 

@@ -78,9 +78,6 @@ public class PluginController {
     // They must therefore be revalidated on every use (via ETag) instead of being cached blindly, otherwise
     // the editor keeps validating/completing against a stale schema after a plugin is added or removed (#12102).
     private static final String REVALIDATE_CACHE_DIRECTIVE = "no-cache";
-    // Merged responses can go stale the moment a plugin finishes auto-installing — a full-hour
-    // cache would hide the newly-installed type from the editor for up to an hour afterwards.
-    private static final String CATALOG_CACHE_DIRECTIVE = "public, max-age=60";
 
     @Inject
     protected JsonSchemaGenerator jsonSchemaGenerator;
@@ -128,11 +125,17 @@ public class PluginController {
         @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
         if (Boolean.TRUE.equals(includeCatalog)) {
-            // Catalog-merged schema: a short browser cache rather than ETag revalidation — the merged
-            // response can go stale the moment a plugin finishes auto-installing, so cap it at 60s.
+            // Same ETag revalidation as the plain schema (#12102): the browser re-downloads the big
+            // merged JSON only when the installed plugin set or the bundle actually changed, and
+            // gets a cheap 304 otherwise — a newly-installed plugin shows up on the next request.
+            final String catalogEtag = schemaETag("schema-catalog-" + pluginSchemaBundleService.fingerprint(), type, arrayOf);
+            if (catalogEtag.equals(ifNoneMatch)) {
+                return notModified(catalogEtag);
+            }
             Map<String, Object> merged = pluginSchemaBundleService.mergeWithBundle(type, jsonSchemaCache.getSchemaForType(type, arrayOf));
             return HttpResponse.ok(merged)
-                .header(HttpHeaders.CACHE_CONTROL, CATALOG_CACHE_DIRECTIVE);
+                .header(HttpHeaders.ETAG, catalogEtag)
+                .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
         }
 
         // Non-merged schema: revalidate on every use via ETag so the editor never validates against a
@@ -216,10 +219,15 @@ public class PluginController {
         summary = "Detect missing plugins in a flow",
         description = "Parses the provided flow YAML, identifies task and trigger types that are not " +
             "yet registered, and maps them to their Maven artifacts via the plugin catalog. " +
-            "Returns an empty result (not an error) when auto-install is disabled or all types are known."
+            "Returns 403 when the auto-install feature is disabled on this instance."
     )
     @ApiResponse(responseCode = "200", description = "Detection result")
-    public HttpResponse<PluginAutoInstallDetectResult> detectMissingPlugins(@Body String flowYaml) {
+    @ApiResponse(responseCode = "403", description = "Auto-install feature is disabled on this instance")
+    public HttpResponse<?> detectMissingPlugins(@Body String flowYaml) {
+        if (!pluginAutoInstallService.isEnabled()) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                .body(new ApiMessage("Plugin auto-install is disabled on this instance."));
+        }
         return HttpResponse.ok(pluginAutoInstallService.detect(flowYaml));
     }
 

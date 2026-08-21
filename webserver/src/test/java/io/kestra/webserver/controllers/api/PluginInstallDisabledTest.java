@@ -46,18 +46,20 @@ class PluginInstallDisabledTest {
     }
 
     @Test
-    void shouldReturnEmptyDetectionWhenAutoInstallDisabled() {
+    void shouldReturnForbiddenDetectionWhenAutoInstallDisabled() {
         // Given - kestra.plugins.auto-install.enabled=false is set via @Property
         String flowYaml = "id: test\nnamespace: test\ntasks:\n  - id: t\n    type: io.kestra.plugin.unknown.Task\n";
 
         // When
-        var result = client.toBlocking().retrieve(
-            HttpRequest.POST(PATH + "/auto-install/detect", flowYaml).contentType("text/plain"),
-            io.kestra.core.plugins.PluginAutoInstallDetectResult.class
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(PATH + "/auto-install/detect", flowYaml).contentType("text/plain"),
+                Void.class
+            )
         );
 
-        // Then
-        assertThat(result.enabled()).isFalse();
-        assertThat(result.missingTypes()).isEmpty();
+        // Then - the feature flag is a hard gate for every auto-install endpoint
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.FORBIDDEN.getCode());
     }
 }

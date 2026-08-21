@@ -117,7 +117,6 @@ describe("FlowCreate default template", () => {
 
     const openBlankFlow = async () => {
         const wrapper = mountCreate()
-        wrapper.findComponent({name: "NewFlowLanding"}).vm.$emit("proceed", {id: "my-flow", namespace: "company.team"})
         await flushPromises()
         return wrapper
     }
@@ -164,7 +163,7 @@ describe("FlowCreate default template", () => {
         await openBlankFlow()
 
         // Then
-        expect(flowStore.flow?.source).toContain("id: my-flow")
+        expect(flowStore.flow?.source).toContain(`id: ${flowStore.flow?.id}`)
         expect(flowStore.flow?.source).toContain("namespace: company.team")
         expect(flowStore.flow?.source).toContain("owner: Thibault")
     })
@@ -177,8 +176,9 @@ describe("FlowCreate default template", () => {
         await openBlankFlow()
 
         // Then
+        expect(flowStore.flow?.id).toBe("pinned")
         expect(flowStore.flow?.source).toContain("id: pinned")
-        expect(flowStore.flow?.source).not.toContain("id: my-flow")
+        expect(flowStore.flow?.source.match(/^id:/gm)).toHaveLength(1)
     })
 
     test("falls back to the instance template when the user cleared theirs", async () => {

@@ -164,7 +164,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         final String value = rendererValue(runContext);
-        return cases.entrySet()
+        return (this.cases == null ? Map.<String, List<Task>>of() : this.cases).entrySet()
             .stream()
             .filter(throwPredicate(entry -> entry.getKey().equals(value)))
             .map(Map.Entry::getValue)
@@ -203,7 +203,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
         return Output.builder()
             .value(rendererValue(runContext))
             .defaults(
-                cases
+                this.cases == null || this.cases
                     .entrySet()
                     .stream()
                     .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))

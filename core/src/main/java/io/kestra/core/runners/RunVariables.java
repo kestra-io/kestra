@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -13,8 +14,10 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -337,8 +340,14 @@ public final class RunVariables {
         protected Map<String, ?> envs;
         protected Map<?, ?> globals;
         private KestraConfiguration kestraConfiguration;
+        private final Optional<String> secretKey;
 
         public DefaultBuilder() {
+            this(Optional.empty());
+        }
+
+        public DefaultBuilder(final Optional<String> secretKey) {
+            this.secretKey = secretKey;
         }
 
         // Note: for performance reason, cloning maps should be avoided as much as possible.
@@ -411,9 +420,18 @@ public final class RunVariables {
                         .forEach(input ->
                         {
                             try {
-                                putNested(inputs, input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
+                                Object value = FlowInputOutput.resolveDefaultValue(input, context);
+                                // resolveDefaultValue renders a SECRET default as plaintext, so it is encrypted here:
+                                // every secret in the variables map must be encrypted until it is read, otherwise it
+                                // would be serialized in cleartext onto the worker job queue
+                                if (Type.SECRET == input.getType() && value != null) {
+                                    value = EncryptedString.from(new Secret(secretKey, logger::logger).encrypt(value.toString()));
+                                }
+                                putNested(inputs, input.getId(), value);
                             } catch (IllegalVariableEvaluationException e) {
                                 // Silent catch, if an input depends on another input, or a variable that is populated at runtime / input filling time, we can't resolve it here.
+                            } catch (GeneralSecurityException e) {
+                                throw new RuntimeException(e);
                             }
                         });
                 }

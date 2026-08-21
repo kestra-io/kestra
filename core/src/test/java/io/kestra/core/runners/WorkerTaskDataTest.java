@@ -57,6 +57,34 @@ class WorkerTaskDataTest {
         assertThat(rendered).isEqualTo("s3cr3t-n3st3d");
     }
 
+
+    @Test
+    @LoadFlows(value = { "flows/valids/input-log-secret.yaml" }, tenantId = "tenant6624ter")
+    void shouldNotSerializePlaintextSecretsWhenTheValueComesFromAnInputDefault() throws Exception {
+        // Given
+        Flow flow = flowRepository.findById("tenant6624ter", "io.kestra.tests", "input-log-secret").orElseThrow();
+        // an execution whose inputs were never resolved, so the flow defaults are filled in while building variables
+        Execution execution = Execution.builder()
+            .id("exec6624ter")
+            .namespace(flow.getNamespace())
+            .tenantId(flow.getTenantId())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .state(new State())
+            .build();
+
+        var task = flow.getTasks().getFirst();
+        var runContext = runContextFactory.of(flow, task, execution, TaskRun.of(execution, ResolvedTask.of(task)));
+
+        // When
+        String serialized = JacksonMapper.ofJson().writeValueAsString(WorkerTaskData.from(runContext));
+
+        // Then
+        assertThat(serialized).doesNotContain("password");
+        assertThat(serialized).contains("io.kestra.datatype:aes_encrypted");
+        assertThat(runContext.render("{{ inputs.secret }}")).isEqualTo("password");
+    }
+
     /**
      * Builds a run context for the {@code input-log-secret} flow, which declares both a top-level and a dotted
      * SECRET input so one payload covers both shapes.

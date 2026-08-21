@@ -558,7 +558,7 @@
       "intro_step1_desc_suffix": ".",
       "intro_step1_title": "Nadaj ID i namespace",
       "intro_step2_cta": "Zobacz dokumentację Tasków",
-      "intro_step2_desc": "Niepodzielne akcje wykonywane w kolejności. Kliknij Taska, aby zobaczyć jego dokumentację.",
+      "intro_step2_desc": "Niepodzielne akcje wykonywane w kolejności. Kliknij Task, aby zobaczyć jego dokumentację.",
       "intro_step2_title": "Dodaj Taski",
       "intro_step3_cta": "Zobacz dokumentację Inputów",
       "intro_step3_desc_mid": ", ",
@@ -757,12 +757,12 @@
     "choice": "Choice",
     "sequential": "Sekwencyjny",
     "can not delete": "Nie można usunąć tego Taska",
-    "can not have less than 1 task": "Flow musi mieć co najmniej jednego Taska. Dodaj kolejnego Taska przed usunięciem tego.",
+    "can not have less than 1 task": "Flow musi mieć co najmniej jeden Task. Dodaj kolejny Task przed usunięciem tego.",
     "task id": "ID Taska",
     "taskid column details": "Ostatni wykonywany Task i liczba jego prób.",
     "flow already exists message": "Flow <code>{id}</code> już istnieje w namespace'ie <code>{namespace}</code>. Czy chcesz utworzyć nową wersję?",
     "editor": "Edytor",
-    "delete task confirm": "Czy chcesz usunąć Taska <code>{taskId}</code>?",
+    "delete task confirm": "Czy chcesz usunąć Task <code>{taskId}</code>?",
     "flow must not be empty": "Flow nie może być pusty",
     "flow creation denied in namespace": "Nie masz uprawnień do tworzenia Flowów w namespace'ie `{namespace}`.",
     "readonly property": "Właściwość tylko do odczytu",
@@ -828,7 +828,7 @@
     },
     "flow source not found": "Nie znaleziono źródła Flow",
     "timezone": "Strefa czasowa",
-    "add task": "Dodaj Taska",
+    "add task": "Dodaj Task",
     "unable to generate graph": "Wystąpił problem podczas generowania grafu, co uniemożliwia wyświetlenie topologii.",
     "attempts": "Próba(y)",
     "version": "Wersja",
@@ -1205,7 +1205,7 @@
         },
         "variables": {
           "title": "Zarządzaj swoimi zmiennymi centralnie",
-          "message": "W Kestra Enterprise Edition możesz definiować zmienne na poziomie namespace'u i nimi zarządzać, aby wyeliminować powtarzające się konfiguracje w różnych Flowach. Te zmienne zapewniają spójność, upraszczają aktualizacje konfiguracji i mogą być łatwo używane przez dowolnego Taska lub Trigger, co daje czystsze i łatwiejsze w utrzymaniu workflowy."
+          "message": "W Kestra Enterprise Edition możesz definiować zmienne na poziomie namespace'u i nimi zarządzać, aby wyeliminować powtarzające się konfiguracje w różnych Flowach. Te zmienne zapewniają spójność, upraszczają aktualizacje konfiguracji i mogą być łatwo używane przez dowolny Task lub Trigger, co daje czystsze i łatwiejsze w utrzymaniu workflowy."
         },
         "policies": {
           "title": "Wymuszaj reguły zarządzania w tym namespace'ie",
@@ -1578,12 +1578,12 @@
       },
       "select": {
         "default": "Wybierz typ",
-        "task": "Wybierz Taska",
-        "tasks": "Wybierz Taska",
+        "task": "Wybierz Task",
+        "tasks": "Wybierz Task",
         "triggers": "Wybierz Trigger",
-        "errors": "Wybierz Taska",
-        "finally": "Wybierz Taska",
-        "afterExecution": "Wybierz Taska",
+        "errors": "Wybierz Task",
+        "finally": "Wybierz Task",
+        "afterExecution": "Wybierz Task",
         "conditions": "Wybierz warunek",
         "inputs": "Wybierz typ pola Input",
         "charts": "Wybierz typ wykresu",
@@ -1592,7 +1592,7 @@
       },
       "creation": {
         "default": "Dodaj",
-        "tasks": "Dodaj Taska",
+        "tasks": "Dodaj Task",
         "triggers": "Dodaj Trigger",
         "errors": "Dodaj Error Handler",
         "finally": "Dodaj blok Finally",
@@ -1679,7 +1679,7 @@
     "empty": {
       "secrets": {
         "title": "Nie masz jeszcze żadnych sekretów!",
-        "content": "Klucze API, hasła i tokeny można przechowywać jako sekrety, zamiast zapisywać je na stałe w swoich Flowach. Każdy sekret należy do namespace'u, jest dziedziczony przez jego podrzędne namespace'y i może być używany przez dowolnego Taska."
+        "content": "Klucze API, hasła i tokeny można przechowywać jako sekrety, zamiast zapisywać je na stałe w swoich Flowach. Każdy sekret należy do namespace'u, jest dziedziczony przez jego podrzędne namespace'y i może być używany przez dowolny Task."
       },
       "namespaceFiles": {
         "title": "Brak plików w tym namespace'ie",
@@ -2012,12 +2012,12 @@
     },
     "playground": {
       "title": "Playground",
-      "run_task_info": "Najedź kursorem na dowolnego Taska w edytorze Flow Code i kliknij „Run task”, aby przetestować swojego Taska.",
+      "run_task_info": "Najedź kursorem na dowolny Task w edytorze Flow Code i kliknij „Run task”, aby przetestować swój Task.",
       "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No-Code lub Topology.",
       "toggle": "Playground",
-      "run_task": "Uruchom Taska",
-      "run_this_task": "Uruchom tego Taska",
-      "run_task_and_downstream": "Uruchom Taska i downstream",
+      "run_task": "Uruchom Task",
+      "run_this_task": "Uruchom ten Task",
+      "run_task_and_downstream": "Uruchom Task i downstream",
       "run_all_tasks": "Uruchom wszystkie Taski",
       "history": "Ostatnie 10 uruchomień",
       "clear_history": "Wyczyść historię",
@@ -2029,7 +2029,7 @@
     "reject": "Odrzuć",
     "draft_available": "Szkic zmiany jest dostępny w edytorze",
     "last modified": "Ostatnia modyfikacja",
-    "run task in playground": "Uruchom Taska w Playground",
+    "run task in playground": "Uruchom Task w Playground",
     "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",
     "no_file_choosen": "Nie wybrano pliku",
     "dependency": {
@@ -2312,7 +2312,7 @@
       "add_error_task": "Dodaj Error Task",
       "add_switch_case": "Dodaj przypadek",
       "adding_to": "Nowy wpis w {section}",
-      "add_task": "Dodaj Taska",
+      "add_task": "Dodaj Task",
       "add_to_lane": "Dodaj do {lane}",
       "add_trigger": "Dodaj Trigger",
       "all_apps": "Wszystkie Apps",
@@ -2359,7 +2359,7 @@
       "depth_pill": "Głębokość {depth}",
       "drag_reorder": "Przeciągnij, aby zmienić kolejność",
       "duplicate": "Duplikuj",
-      "empty": "Brak Tasków i Triggerów. Dodaj swojego pierwszego Taska, aby rozpocząć.",
+      "empty": "Brak Tasków i Triggerów. Dodaj swój pierwszy Task, aby rozpocząć.",
       "empty_add_hint": "lub naciśnij /, aby wyszukać Taski",
       "empty_add_lead": "Kliknij, aby dodać {label}",
       "error_task_noun": "Error Task",
@@ -2413,7 +2413,7 @@
         "message": "Napraw błędy przed zapisaniem.",
         "title": "Nie można zapisać Flow"
       },
-      "search_task_placeholder": "Wyszukaj lub opisz Taska…",
+      "search_task_placeholder": "Wyszukaj lub opisz Task…",
       "shortcuts": {
         "add_after": "Wstaw blok po zaznaczeniu",
         "add_before": "Wstaw blok przed zaznaczeniem",

@@ -2,47 +2,6 @@
   "pt": {
     "loading": "A carregar...",
     "more actions": "Mais ações",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Use apenas letras, dígitos, pontos, traços e sublinhados, começando com uma letra ou um dígito.",
-        "id_label": "id do flow",
-        "id_placeholder": "meu-flow",
-        "namespace_invalid": "Use apenas letras minúsculas, dígitos, pontos, traços e sublinhados, começando com uma letra minúscula ou um dígito.",
-        "namespace_placeholder": "Selecione um namespace",
-        "namespaces_error": "Não foi possível carregar os namespaces. Digite um namespace manualmente.",
-        "open_editor": "Abrir editor",
-        "subtitle": "Comece com um modelo hello-world e construa do zero.",
-        "title": "flow em branco"
-      },
-      "blueprints": {
-        "subtitle": "Escolha um flow pronto do catálogo da comunidade.",
-        "title": "Procurar blueprints"
-      },
-      "import": {
-        "back": "Voltar",
-        "error": {
-          "empty": "O conteúdo YAML está vazio.",
-          "invalid_mapping": "YAML de flow inválido: esperado um mapeamento de chave-valor, não uma lista ou escalar.",
-          "parse_error": "Não foi possível analisar o YAML.",
-          "too_large": "Esse arquivo é muito grande. Cole a definição do flow ou carregue um arquivo com menos de 1 MB."
-        },
-        "paste_label": "Colar YAML",
-        "read_error": "Não foi possível ler o arquivo.",
-        "submit": "Importar flow",
-        "subtitle": "Cole ou carregue uma definição de flow existente.",
-        "title": "Importar YAML",
-        "upload_button": "Carregar .yml / .yaml",
-        "upload_label": "Ou carregar um arquivo",
-        "upload_tip": "Aceita arquivos .yml e .yaml."
-      },
-      "subtitle": "Comece com uma tela em branco, explore blueprints ou importe um YAML existente.",
-      "system": {
-        "badge": "SISTEMA",
-        "subtitle": "Crie um alerta ou um flow de automação para a sua plataforma.",
-        "title": "Criar um system flow"
-      },
-      "title": "Criar um novo flow"
-    },
     "recipe": {
       "create_flow": "Criar um flow",
       "email": "E-mail",

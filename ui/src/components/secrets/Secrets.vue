@@ -18,7 +18,7 @@
                     v-show="hasData === true"
                     :filterable="false"
                     keyOnly
-                    :namespace="miscStore.configs?.systemNamespace ?? 'system'"
+                    :namespace="systemNamespace"
                     :addSecretModalVisible="addSecretModalVisible"
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
@@ -70,11 +70,13 @@
     import {computed, ref} from "vue"
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
+    import {useSystemNamespace} from "../../composables/useSystemNamespace"
     import {useMiscStore} from "override/stores/misc"
 
     useRestoreUrl()
 
     const miscStore = useMiscStore()
+    const systemNamespace = useSystemNamespace()
 
     const props = defineProps({
         namespace: {

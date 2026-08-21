@@ -2,47 +2,6 @@
   "zh_CN": {
     "loading": "加载中...",
     "more actions": "更多操作",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "只能使用字母、数字、点、破折号和下划线，并以字母或数字开头。",
-        "id_label": "flow id",
-        "id_placeholder": "我的 flow",
-        "namespace_invalid": "仅可使用小写字母、数字、点、破折号和下划线，并以小写字母或数字开头。",
-        "namespace_placeholder": "选择一个 namespace",
-        "namespaces_error": "无法加载 namespace。请手动输入一个 namespace。",
-        "open_editor": "打开编辑器",
-        "subtitle": "从 hello-world 模板开始，然后从头构建。",
-        "title": "空白 flow"
-      },
-      "blueprints": {
-        "subtitle": "从社区目录中选择一个现成的flow。",
-        "title": "浏览 blueprints"
-      },
-      "import": {
-        "back": "返回",
-        "error": {
-          "empty": "YAML 内容为空。",
-          "invalid_mapping": "无效的 flow YAML：预期为键值映射，而非列表或标量。",
-          "parse_error": "无法解析 YAML。",
-          "too_large": "文件过大。请粘贴 flow 定义，或上传小于 1 MB 的文件。"
-        },
-        "paste_label": "粘贴 YAML",
-        "read_error": "无法读取文件。",
-        "submit": "导入 flow",
-        "subtitle": "粘贴或上传现有 flow 定义。",
-        "title": "导入 YAML",
-        "upload_button": "上传 .yml / .yaml",
-        "upload_label": "或上传文件",
-        "upload_tip": "接受 .yml 和 .yaml 文件。"
-      },
-      "subtitle": "从空白画布开始，探索 blueprints，或导入现有 YAML。",
-      "system": {
-        "badge": "系统",
-        "subtitle": "为您的平台构建警报或自动化 flow。",
-        "title": "创建系统 flow"
-      },
-      "title": "创建新 flow"
-    },
     "recipe": {
       "create_flow": "创建 flow",
       "email": "电子邮件",

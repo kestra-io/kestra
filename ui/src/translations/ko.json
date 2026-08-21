@@ -495,9 +495,11 @@
     "plugins": {
       "autoInstall": {
         "failed": "플러그인 설치에 실패했습니다",
+        "failedHint": "flow가 저장되지 않았습니다. 문제를 해결하거나 flow에서 plugin을 제거한 후 다시 저장하세요.",
+        "preparing": "플러그인 설치를 준비하는 중...",
         "progress": "{transferred} / {total}",
         "succeeded": "플러그인이 성공적으로 설치되었습니다 | 플러그인이 성공적으로 설치되었습니다",
-        "timeout": "플러그인 설치가 예상보다 오래 걸리고 있어 그대로 저장합니다",
+        "timeout": "플러그인 설치가 예상보다 오래 걸리고 있습니다. flow가 저장되지 않았으므로 설치가 완료되면 다시 저장하세요.",
         "title": "플러그인 {count}개 설치 중 | 플러그인 {count}개 설치 중"
       },
       "names": "플러그인들",

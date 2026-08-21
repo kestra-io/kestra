@@ -495,9 +495,11 @@
     "plugins": {
       "autoInstall": {
         "failed": "Échec de l'installation du plugin",
+        "failedHint": "Le flow n'a pas été enregistré. Corrigez le problème ou retirez le plugin du flow, puis enregistrez à nouveau.",
+        "preparing": "Préparation de l'installation du plugin...",
         "progress": "{transferred} / {total}",
         "succeeded": "Plugin installé avec succès | Plugins installés avec succès",
-        "timeout": "L'installation du plugin prend plus de temps que prévu, enregistrement en cours quand même",
+        "timeout": "L'installation du plugin prend plus de temps que prévu. Le flow n'a pas été enregistré, enregistrez à nouveau une fois l'installation terminée.",
         "title": "Installation de {count} plugin | Installation de {count} plugins"
       },
       "names": "Plugins",

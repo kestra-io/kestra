@@ -5,9 +5,15 @@ import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
 import type {PluginInstallJob} from "../../../../src/stores/plugins"
 
 const getInstallJobMock = vi.fn()
+const findPluginByNameMock = vi.fn((_name: string): {title: string} | null => null)
 
 vi.mock("../../../../src/stores/plugins", () => ({
-    usePluginsStore: () => ({getInstallJob: getInstallJobMock}),
+    usePluginsStore: () => ({
+        getInstallJob: getInstallJobMock,
+        findPluginByName: findPluginByNameMock,
+        list: vi.fn(),
+        plugins: [],
+    }),
 }))
 
 vi.mock("vue-i18n", () => ({
@@ -39,7 +45,7 @@ async function mountToast(props: {onSuccess?: () => void; onFailure?: () => void
         props: {jobId: "job-1", ...props},
         global: {
             mocks: {$t: (key: string) => key},
-            stubs: {KsIcon: true, KsText: {template: "<span><slot /></span>"}, KsProgress: KsProgressStub},
+            stubs: {KsIcon: true, KsSkeleton: true, KsText: {template: "<span><slot /></span>"}, KsProgress: KsProgressStub},
         },
     })
     await flushPromises()
@@ -124,6 +130,15 @@ describe("PluginInstallToast", () => {
         const callsAtFailure = getInstallJobMock.mock.calls.length
         await tick(3)
         expect(getInstallJobMock.mock.calls.length).toBe(callsAtFailure)
+    })
+
+    it("shows the plugin's human title when the store knows it", async () => {
+        findPluginByNameMock.mockImplementation((name: string) => name === "plugin-aws" ? {title: "Amazon Web Services"} : null)
+        getInstallJobMock.mockResolvedValue(job("RUNNING"))
+
+        wrapper = await mountToast()
+
+        expect(wrapper.text()).toContain("Amazon Web Services")
     })
 
     it("matches each artifact's own progress entry, not a prefix-sharing sibling", async () => {

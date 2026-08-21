@@ -495,9 +495,11 @@
     "plugins": {
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
+        "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
+        "preparing": "Plugin-Installation wird vorbereitet...",
         "progress": "{transferred} / {total}",
         "succeeded": "Plugin erfolgreich installiert | Plugins erfolgreich installiert",
-        "timeout": "Die Plugin-Installation dauert länger als erwartet, wird trotzdem gespeichert",
+        "timeout": "Die Plugin-Installation dauert länger als erwartet. Der Flow wurde nicht gespeichert, speichere erneut, sobald die Installation abgeschlossen ist.",
         "title": "{count} Plugin wird installiert | {count} Plugins werden installiert"
       },
       "names": "Plugins",

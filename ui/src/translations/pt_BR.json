@@ -495,9 +495,11 @@
     "plugins": {
       "autoInstall": {
         "failed": "Falha na instalação do plugin",
+        "failedHint": "O flow não foi salvo. Corrija o problema ou remova o plugin do flow e salve novamente.",
+        "preparing": "Preparando a instalação do plugin...",
         "progress": "{transferred} / {total}",
         "succeeded": "Plugin instalado com sucesso | Plugins instalados com sucesso",
-        "timeout": "A instalação do plugin está demorando mais do que o esperado, salvando mesmo assim",
+        "timeout": "A instalação do plugin está demorando mais do que o esperado. O flow não foi salvo, salve novamente quando a instalação terminar.",
         "title": "Instalando {count} plugin | Instalando {count} plugins"
       },
       "names": "Plugins",

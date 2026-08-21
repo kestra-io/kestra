@@ -8,6 +8,7 @@ import {useExecutionsStore} from "../../stores/executions"
 import {useProductTourStore} from "../../stores/productTour"
 import {usePlaygroundStore} from "../../stores/playground"
 import {usePluginsStore} from "../../stores/plugins"
+import {useMiscStore} from "override/stores/misc"
 import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
@@ -58,25 +59,26 @@ export function useFlowEditorActions() {
         await flushDirtyFiles()
     }
 
-    // Upper bound on how long a save waits on a plugin install job before giving up and saving
-    // anyway. PluginInstallToast keeps polling and updating in the background past this point —
-    // this only stops the save button from hanging forever on a hung/slow download.
+    // Upper bound on how long a save waits on a plugin install job before giving up.
+    // PluginInstallToast keeps polling and updating in the background past this point — this only
+    // stops the save button from hanging forever on a hung/slow download.
     const INSTALL_WAIT_TIMEOUT_MS = 60_000
+
+    type PluginInstallOutcome = "none" | "installed" | "failed" | "timeout"
 
     /**
      * Detects missing plugins for the current flow YAML and, if any are found, enqueues an
-     * installation job and opens a live-progress notification toast. Resolves once the install
-     * reaches a terminal state, the wait times out, or immediately if nothing is missing — so
-     * callers can await it before saving. The type the flow references must be registered before
-     * the backend re-validates it, otherwise the save is rejected as an unknown type; polling for
-     * that terminal state is owned solely by {@link PluginInstallToast} (single poll loop, reused
-     * here via its success/failure callbacks) rather than duplicated with a second timer.
-     * Concurrent calls (held-down Ctrl+S, double-clicked Save) join the in-flight cycle instead
-     * of stacking duplicate jobs and toasts.
+     * installation job and opens a live-progress notification toast. Resolves with the install
+     * outcome once it reaches a terminal state or the wait times out, so callers can skip the
+     * save when the plugin never got installed (it would only fail again as an unknown type).
+     * The feature flag comes from the instance configs — no request is even made when it is off.
+     * Polling is owned solely by {@link PluginInstallToast} (single poll loop, reused here via
+     * its success/failure callbacks). Concurrent calls (held-down Ctrl+S, double-clicked Save)
+     * join the in-flight cycle instead of stacking duplicate jobs and toasts.
      */
-    let pluginInstallInFlight: Promise<void> | null = null
+    let pluginInstallInFlight: Promise<PluginInstallOutcome> | null = null
 
-    function triggerPluginInstallIfNeeded(): Promise<void> {
+    function triggerPluginInstallIfNeeded(): Promise<PluginInstallOutcome> {
         if (pluginInstallInFlight) return pluginInstallInFlight
         pluginInstallInFlight = doTriggerPluginInstall().finally(() => {
             pluginInstallInFlight = null
@@ -84,36 +86,40 @@ export function useFlowEditorActions() {
         return pluginInstallInFlight
     }
 
-    async function doTriggerPluginInstall(): Promise<void> {
+    async function doTriggerPluginInstall(): Promise<PluginInstallOutcome> {
+        // Global kill switch from the instance configs: when the feature is off, no auto-install
+        // request is made at all.
+        if (useMiscStore().configs?.isPluginAutoInstallEnabled !== true) return "none"
+
         const yaml = flowStore.flowYaml
-        if (!yaml) return
+        if (!yaml) return "none"
 
         let detection
         try {
             detection = await pluginsStore.detectMissingPlugins(yaml)
         } catch {
-            return
+            return "none"
         }
 
-        if (!detection.enabled || detection.artifacts.length === 0) return
+        if (!detection.enabled || detection.artifacts.length === 0) return "none"
 
         let job
         try {
             job = await pluginsStore.startInstall(detection.artifacts)
         } catch {
             toast.error(t("plugins.autoInstall.failed"))
-            return
+            return "failed"
         }
 
         const count = detection.artifacts.length
         let notificationHandle: ReturnType<typeof KsNotification> | undefined
 
-        await new Promise<void>((resolve) => {
+        return await new Promise<PluginInstallOutcome>((resolve) => {
             let settled = false
-            const settle = () => {
+            const settle = (outcome: PluginInstallOutcome) => {
                 if (settled) return
                 settled = true
-                resolve()
+                resolve(outcome)
             }
 
             notificationHandle = KsNotification({
@@ -123,9 +129,10 @@ export function useFlowEditorActions() {
                     onSuccess: () => {
                         pluginsStore.list()
                         setTimeout(() => notificationHandle?.close(), 3000)
-                        settle()
+                        settle("installed")
                     },
-                    onFailure: settle,
+                    // The toast itself explains the failure and that the flow was not saved.
+                    onFailure: () => settle("failed"),
                 }),
                 position: "bottom-right",
                 type: "info",
@@ -135,7 +142,7 @@ export function useFlowEditorActions() {
             setTimeout(() => {
                 if (settled) return
                 toast.warning(t("plugins.autoInstall.timeout"))
-                settle()
+                settle("timeout")
             }, INSTALL_WAIT_TIMEOUT_MS)
         })
     }
@@ -150,7 +157,10 @@ export function useFlowEditorActions() {
 
     async function save() {
         try {
-            await triggerPluginInstallIfNeeded()
+            // Skip the save when the install did not succeed: it would only fail downstream as an
+            // unknown type, burying the real cause under a second, unrelated-looking error.
+            const outcome = await triggerPluginInstallIfNeeded()
+            if (outcome === "failed" || outcome === "timeout") return
             await persistAll(false)
         } catch (error: any) {
             reportSaveError(error)
@@ -178,7 +188,8 @@ export function useFlowEditorActions() {
 
     async function saveAndExecute() {
         try {
-            await triggerPluginInstallIfNeeded()
+            const installOutcome = await triggerPluginInstallIfNeeded()
+            if (installOutcome === "failed" || installOutcome === "timeout") return
 
             const isCreating = flowStore.isCreating
             const outcome = await flowStore.saveAll()

@@ -30,10 +30,10 @@ vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat:
 let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
 vi.mock("vue-router", () => ({useRoute: () => routeStub}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
-vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
+vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([{id: "default", isDefault: true}])}))
 // CopilotChat reads a seeded prompt from the misc store on mount. Shared mutable stub so a
 // test can seed a prompt before mounting (no Pinia in the unit env).
-const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), promptCopilot: vi.fn()}
+const miscStore = {copilotPrompt: null as string | null, configs: undefined as any, openCopilot: vi.fn(), promptCopilot: vi.fn()}
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
@@ -62,6 +62,8 @@ describe("CopilotChat", () => {
         state.noteContext.mockReset()
         state.thread.value = null
         miscStore.copilotPrompt = null
+        miscStore.configs = undefined
+        ;(providersMock as any).mockResolvedValue([{id: "default", isDefault: true}])
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -240,6 +242,22 @@ describe("CopilotChat", () => {
     it("shows the AI-unavailable state (and no composer) when unavailable", () => {
         state.unavailable.value = true
         const w = mountChat()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
+    })
+
+    it("shows the AI-unavailable state on initial load when no provider is returned", async () => {
+        ;(providersMock as any).mockResolvedValueOnce([])
+        const w = mountChat()
+        await flushPromises()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
+    })
+
+    it("shows the AI-unavailable state on initial load when isAiApiKeyConfigured is false", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        const w = mountChat()
+        await flushPromises()
         expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
         expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
     })

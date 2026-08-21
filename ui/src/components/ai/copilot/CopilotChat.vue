@@ -17,7 +17,7 @@
             </KsIcon>
             <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
             <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
-            <KsButton size="small" data-test="copilot-unavailable-retry" @click="retry">
+            <KsButton size="small" data-test="copilot-unavailable-retry" @click="onRetry">
                 {{ $t("ai.copilot.unavailable.retry") }}
             </KsButton>
         </div>
@@ -217,15 +217,27 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    const fetchProviders = async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
             selectedProvider.value = (providers.value.find((p) => p.isDefault) ?? providers.value[0])?.id
+            if (!providers.value.length || miscStore.configs?.isAiApiKeyConfigured === false || miscStore.configs?.isAiEnabled === false) {
+                unavailable.value = true
+            } else {
+                unavailable.value = false
+            }
         } catch {
-            // No provider list (e.g. AI unavailable) — the composer just omits the picker.
+            unavailable.value = true
         }
-    })
+    }
+
+    onMounted(fetchProviders)
+
+    async function onRetry(): Promise<void> {
+        retry()
+        await fetchProviders()
+    }
 
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [

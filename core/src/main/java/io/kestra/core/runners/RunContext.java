@@ -42,12 +42,6 @@ public abstract class RunContext implements PropertyContext {
     public abstract Map<String, Object> getVariables();
 
     /**
-     * Returns the list of inputs of type SECRET.
-     */
-    @JsonInclude
-    public abstract List<String> getSecretInputs();
-
-    /**
      * OpenTelemetry trace parent
      */
     @JsonInclude

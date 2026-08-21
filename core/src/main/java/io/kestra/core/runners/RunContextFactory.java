@@ -97,9 +97,6 @@ public class RunContextFactory {
     @Inject
     private Provider<RunContextInitializer> runContextInitializerProvider;
 
-    @Inject
-    private Provider<ReusableInputsExpander> reusableInputsExpanderProvider;
-
     // hacky
     public RunContextInitializer initializer() {
         return runContextInitializerProvider.get();
@@ -140,7 +137,6 @@ public class RunContextFactory {
             .withVariableRenderer(variableRenderer)
             .withVariables(variables)
             .withDecryptVariables(decryptVariables)
-            .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
 
@@ -172,7 +168,6 @@ public class RunContextFactory {
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
             .withVariables(variables)
             .withDecryptVariables(decryptVariables)
-            .withSecretInputs(secretInputsFromFlow(flow))
             .withTask(task)
             .withVariableRenderer(variableRenderer)
             .build();
@@ -191,7 +186,6 @@ public class RunContextFactory {
                     .withTrigger(trigger)
                     .build(runContextLogger, PropertyContext.create(this.variableRenderer))
             )
-            .withSecretInputs(secretInputsFromFlow(flow))
             .withTrigger(trigger)
             .build();
     }
@@ -207,7 +201,6 @@ public class RunContextFactory {
                     .withVariables(variables)
                     .build(runContextLogger, PropertyContext.create(this.variableRenderer))
             )
-            .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
 
@@ -280,17 +273,6 @@ public class RunContextFactory {
         }
     }
 
-    private List<String> secretInputsFromFlow(FlowInterface flow) {
-        if (flow == null || flow.getInputs() == null) {
-            return Collections.emptyList();
-        }
-
-        // Use the expander so that REUSABLE_INPUTS-referenced SECRETs are inlined alongside FORM-nested ones.
-        // On OSS the expander is a no-op when no REUSABLE_INPUTS are present, so FORM-nested SECRETs still work.
-        return flow.resolvableInputs(reusableInputsExpanderProvider.get()).stream()
-            .filter(input -> input.getType() == Type.SECRET)
-            .map(Input::getId).toList();
-    }
 
     private DefaultRunContext.Builder newBuilder() {
         return new DefaultRunContext.Builder()

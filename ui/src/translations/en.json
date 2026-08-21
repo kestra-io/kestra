@@ -1019,7 +1019,8 @@
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval",
-            "task_edit_default_mode": "Default Task Edit Mode"
+            "task_edit_default_mode": "Default Task Edit Mode",
+            "flow_template": "Default Flow Template"
           },
           "descriptions": {
             "default_namespace": "Used when creating new flows without a namespace.",
@@ -1032,11 +1033,17 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
-            "task_edit_default_mode": "How a task opens by default from the no-code editor."
+            "task_edit_default_mode": "How a task opens by default from the no-code editor.",
+            "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Tab"
+          },
+          "flow_template_reset": "Reset to default",
+          "flow_template_error": {
+            "invalid_mapping": "Invalid flow template: expected a key-value mapping, not a list or scalar.",
+            "parse_error": "Could not parse YAML. The template was saved, so the editor may show the same error when you create a flow."
           }
         },
         "theme": {

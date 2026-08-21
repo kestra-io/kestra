@@ -56,6 +56,7 @@
     import action from "../../models/action"
     import {ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
     import {shouldShowLanding} from "../../utils/flowCreationLanding"
+    import {resolveFlowTemplate} from "../../utils/newFlowTemplate"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -69,22 +70,6 @@
     const showImport = ref(false)
 
     const setupError = ref<string>()
-
-    const defaultFlowTemplate = (id: string, namespace: string) => {
-        const configuredTemplate = miscStore.configs?.flowTemplate
-        if (typeof configuredTemplate === "string" && configuredTemplate.trim()) {
-            return configuredTemplate.trim()
-        }
-
-        return `
-id: ${id}
-namespace: ${namespace}
-
-tasks:
-  - id: hello
-    type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`.trim()
-    }
 
     const isRecord = (value: unknown): value is Record<string, unknown> => {
         return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -151,7 +136,7 @@ tasks:
                 flowYaml = flowBlueprint.source
             }
         } else {
-            flowYaml = defaultFlowTemplate(id, selectedNamespace)
+            flowYaml = resolveFlowTemplate(id, selectedNamespace, miscStore.configs?.flowTemplate)
             shouldApplyGeneratedMetadata = true
         }
 

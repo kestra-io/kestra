@@ -1019,7 +1019,8 @@
             "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब",
             "playground": "प्लेग्राउंड",
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
-            "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड"
+            "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड",
+            "flow_template": "डिफ़ॉल्ट flow टेम्पलेट"
           },
           "descriptions": {
             "default_namespace": "नए flows को बिना namespace के बनाते समय उपयोग किया जाता है।",
@@ -1032,11 +1033,17 @@
             "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।",
             "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
             "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
-            "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।"
+            "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।",
+            "flow_template": "जब आप एक नया flow बनाते हैं तो YAML एडिटर में खुलता है। id और namespace को छोड़ा जा सकता है, क्योंकि वे आपके लिए जनरेट किए जाते हैं। जब यह खाली होता है, तो इंस्टेंस के लिए कॉन्फ़िगर किया गया टेम्पलेट उपयोग किया जाता है।"
           },
           "task_edit_default_mode_options": {
             "modal": "मॉडल",
             "tab": "टैब"
+          },
+          "flow_template_reset": "डिफ़ॉल्ट पर रीसेट करें",
+          "flow_template_error": {
+            "invalid_mapping": "अमान्य flow टेम्पलेट: एक key-value मैपिंग अपेक्षित थी, सूची या स्केलर नहीं।",
+            "parse_error": "YAML पार्स नहीं किया जा सका। टेम्पलेट सहेज लिया गया था, इसलिए जब आप कोई flow बनाते हैं तो एडिटर वही त्रुटि दिखा सकता है।"
           }
         },
         "theme": {

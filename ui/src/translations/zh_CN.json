@@ -1019,7 +1019,8 @@
             "triggers_default_tab": "默认 Trigger 标签页",
             "playground": "游乐场",
             "auto_refresh_interval": "自动刷新间隔",
-            "task_edit_default_mode": "默认 Task 编辑模式"
+            "task_edit_default_mode": "默认 Task 编辑模式",
+            "flow_template": "默认 flow 模板"
           },
           "descriptions": {
             "default_namespace": "用于在没有namespace的情况下创建新flow。",
@@ -1032,11 +1033,17 @@
             "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。",
             "auto_refresh_interval": "列表页面上自动数据刷新的秒数。",
             "playground": "在编辑器游乐场中单独运行任务。",
-            "task_edit_default_mode": "无代码编辑器中 task 的默认打开方式。"
+            "task_edit_default_mode": "无代码编辑器中 task 的默认打开方式。",
+            "flow_template": "当您创建新的 flow 时，YAML 会在编辑器中打开。id 和 namespace 可以省略，因为它们是为您生成的。当此处为空时，将使用为实例配置的模板。"
           },
           "task_edit_default_mode_options": {
             "modal": "模态框",
             "tab": "选项卡"
+          },
+          "flow_template_reset": "重置为默认值",
+          "flow_template_error": {
+            "invalid_mapping": "无效的 flow 模板：预期为键值映射，而非列表或标量。",
+            "parse_error": "无法解析 YAML。模板已保存，因此当您创建 flow 时，编辑器可能会显示相同的错误。"
           }
         },
         "theme": {

@@ -1019,7 +1019,8 @@
             "triggers_default_tab": "Standard-Tab für Trigger",
             "playground": "Playground",
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
-            "task_edit_default_mode": "Standard-Bearbeitungsmodus für Tasks"
+            "task_edit_default_mode": "Standard-Bearbeitungsmodus für Tasks",
+            "flow_template": "Standard-Flow-Vorlage"
           },
           "descriptions": {
             "default_namespace": "Wird verwendet, wenn neue Flows ohne Namespace erstellt werden.",
@@ -1032,11 +1033,17 @@
             "triggers_default_tab": "Tab, der beim Navigieren zur Trigger-Seite ausgewählt wird.",
             "auto_refresh_interval": "Sekunden zwischen automatischen Datenaktualisierungen auf Listenseiten.",
             "playground": "Tasks einzeln im Editor-Playground ausführen.",
-            "task_edit_default_mode": "Wie ein Task standardmäßig aus dem No-Code-Editor geöffnet wird."
+            "task_edit_default_mode": "Wie ein Task standardmäßig aus dem No-Code-Editor geöffnet wird.",
+            "flow_template": "YAML, das im Editor geöffnet wird, wenn du einen neuen Flow erstellst. Die ID und der Namespace können weggelassen werden, da sie für dich generiert werden. Wenn das Feld leer ist, wird die für die Instanz konfigurierte Vorlage verwendet."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Tab"
+          },
+          "flow_template_reset": "Zurücksetzen auf Standard",
+          "flow_template_error": {
+            "invalid_mapping": "Ungültige Flow-Vorlage: erwartet wurde eine Zuordnung aus Key und Value, keine Liste und kein Skalar.",
+            "parse_error": "YAML konnte nicht geparst werden. Die Vorlage wurde gespeichert, daher kann der Editor denselben Fehler anzeigen, wenn du einen Flow erstellst."
           }
         },
         "theme": {

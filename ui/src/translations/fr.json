@@ -1019,7 +1019,8 @@
             "triggers_default_tab": "Onglet par défaut des Triggers",
             "playground": "Aire de jeu",
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
-            "task_edit_default_mode": "Mode d'édition de Task par défaut"
+            "task_edit_default_mode": "Mode d'édition de Task par défaut",
+            "flow_template": "Modèle de flow par défaut"
           },
           "descriptions": {
             "default_namespace": "Utilisé lors de la création de nouveaux flows sans namespace.",
@@ -1032,11 +1033,17 @@
             "triggers_default_tab": "Onglet sélectionné lors de la navigation vers la page des triggers.",
             "auto_refresh_interval": "Secondes entre les actualisations automatiques des données sur les pages de liste.",
             "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur.",
-            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code."
+            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code.",
+            "flow_template": "Le YAML s'ouvre dans l'éditeur lorsque vous créez un nouveau flow. L'id et le namespace peuvent être omis, car ils sont générés automatiquement. Si ce champ est vide, le template configuré pour l'instance est utilisé."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Onglet"
+          },
+          "flow_template_reset": "Réinitialiser par défaut",
+          "flow_template_error": {
+            "invalid_mapping": "Modèle de flow invalide : attendu un mappage clé-valeur, pas une liste ou un scalaire.",
+            "parse_error": "Impossible d'analyser le YAML. Le modèle a été enregistré, l'éditeur peut donc afficher la même erreur lorsque vous créez un flow."
           }
         },
         "theme": {

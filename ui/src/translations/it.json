@@ -1019,7 +1019,8 @@
             "triggers_default_tab": "Scheda Trigger Predefiniti",
             "playground": "Playground",
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
-            "task_edit_default_mode": "Modalità di Modifica Task Predefinita"
+            "task_edit_default_mode": "Modalità di Modifica Task Predefinita",
+            "flow_template": "Modello di flow predefinito"
           },
           "descriptions": {
             "default_namespace": "Utilizzato quando si creano nuovi flow senza un namespace.",
@@ -1032,11 +1033,17 @@
             "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger.",
             "auto_refresh_interval": "Secondi tra gli aggiornamenti automatici dei dati nelle pagine elenco.",
             "playground": "Esegui i task singolarmente nel playground dell'editor.",
-            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code."
+            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code.",
+            "flow_template": "YAML aperto nell'editor quando crei un nuovo flow. L'id e il namespace possono essere omessi, poiché vengono generati automaticamente. Quando è vuoto, viene utilizzato il template configurato per l'istanza."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Scheda"
+          },
+          "flow_template_reset": "Ripristina predefiniti",
+          "flow_template_error": {
+            "invalid_mapping": "Modello di flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
+            "parse_error": "Impossibile analizzare il YAML. Il template è stato salvato, quindi l'editor potrebbe mostrare lo stesso errore quando crei un flow."
           }
         },
         "theme": {

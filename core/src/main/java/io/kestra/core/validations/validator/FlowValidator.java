@@ -179,7 +179,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     }
 
     protected List<String> EEViolations(Flow flow) {
-        var assetViolations = flow.allTasks().filter(task -> task.getAssets() != null)
+        var assetViolations = flow.allTasks().filter(task -> task != null && task.getAssets() != null)
             .map(taskWithAssets -> "Task '" + taskWithAssets.getId() + "' can't have any `assets` because assets are only available in Enterprise Edition.")
             .toList();
         List<String> violations = new ArrayList<>(assetViolations);

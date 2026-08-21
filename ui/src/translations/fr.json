@@ -2,47 +2,6 @@
   "fr": {
     "loading": "Chargement...",
     "more actions": "Plus d'actions",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Utilisez uniquement des lettres, des chiffres, des points, des tirets et des underscores, en commençant par une lettre ou un chiffre.",
-        "id_label": "Id du flow",
-        "id_placeholder": "mon-flow",
-        "namespace_invalid": "Utilisez uniquement des lettres minuscules, des chiffres, des points, des tirets et des underscores, en commençant par une lettre minuscule ou un chiffre.",
-        "namespace_placeholder": "Sélectionner un namespace",
-        "namespaces_error": "Impossible de charger les namespaces. Saisissez un namespace manuellement.",
-        "open_editor": "Ouvrir l'éditeur",
-        "subtitle": "Commencez avec un modèle \"hello-world\" et construisez à partir de zéro.",
-        "title": "flow vierge"
-      },
-      "blueprints": {
-        "subtitle": "Choisissez un flow prêt à l'emploi dans le catalogue de la communauté.",
-        "title": "Parcourir les blueprints"
-      },
-      "import": {
-        "back": "Retour",
-        "error": {
-          "empty": "Le contenu YAML est vide.",
-          "invalid_mapping": "YAML de flow invalide : attendu un mappage clé-valeur, pas une liste ou un scalaire.",
-          "parse_error": "Impossible d'analyser le YAML.",
-          "too_large": "Ce fichier est trop volumineux. Collez plutôt la définition du flow, ou téléchargez un fichier de moins de 1 Mo."
-        },
-        "paste_label": "Coller le YAML",
-        "read_error": "Impossible de lire le fichier.",
-        "submit": "Importer un flow",
-        "subtitle": "Collez ou téléchargez une définition de flow existante.",
-        "title": "Importer du YAML",
-        "upload_button": "Uploader .yml / .yaml",
-        "upload_label": "Ou téléchargez un fichier",
-        "upload_tip": "Accepte les fichiers .yml et .yaml."
-      },
-      "subtitle": "Commencez à partir d'une toile vierge, explorez les blueprints ou importez un YAML existant.",
-      "system": {
-        "badge": "SYSTÈME",
-        "subtitle": "Créez un flow d'alerte ou d'automatisation pour votre plateforme.",
-        "title": "Créer un system flow"
-      },
-      "title": "Créer un nouveau flow"
-    },
     "recipe": {
       "create_flow": "Créer un flow",
       "email": "E-mail",
@@ -1019,7 +978,8 @@
             "triggers_default_tab": "Onglet par défaut des Triggers",
             "playground": "Aire de jeu",
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
-            "task_edit_default_mode": "Mode d'édition de Task par défaut"
+            "task_edit_default_mode": "Mode d'édition de Task par défaut",
+            "flow_template": "Modèle de flow par défaut"
           },
           "descriptions": {
             "default_namespace": "Utilisé lors de la création de nouveaux flows sans namespace.",
@@ -1032,11 +992,17 @@
             "triggers_default_tab": "Onglet sélectionné lors de la navigation vers la page des triggers.",
             "auto_refresh_interval": "Secondes entre les actualisations automatiques des données sur les pages de liste.",
             "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur.",
-            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code."
+            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code.",
+            "flow_template": "Le YAML s'ouvre dans l'éditeur lorsque vous créez un nouveau flow. L'id et le namespace peuvent être omis, car ils sont générés automatiquement. Si ce champ est vide, le template configuré pour l'instance est utilisé."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Onglet"
+          },
+          "flow_template_reset": "Réinitialiser par défaut",
+          "flow_template_error": {
+            "invalid_mapping": "Modèle de flow invalide : attendu un mappage clé-valeur, pas une liste ou un scalaire.",
+            "parse_error": "Impossible d'analyser le YAML. Le modèle a été enregistré, l'éditeur peut donc afficher la même erreur lorsque vous créez un flow."
           }
         },
         "theme": {

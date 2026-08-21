@@ -2,47 +2,6 @@
   "ru": {
     "loading": "Загрузка...",
     "more actions": "Дополнительные действия",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Используйте только буквы, цифры, точки, тире и нижние подчеркивания, начиная с буквы или цифры.",
-        "id_label": "ID flow",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Используйте только строчные буквы, цифры, точки, тире и подчеркивания, начиная со строчной буквы или цифры.",
-        "namespace_placeholder": "Выберите namespace",
-        "namespaces_error": "Не удалось загрузить namespaces. Введите namespace вручную.",
-        "open_editor": "Открыть редактор",
-        "subtitle": "Начните с шаблона hello-world и создайте с нуля.",
-        "title": "Пустой flow"
-      },
-      "blueprints": {
-        "subtitle": "Выберите готовый flow из каталога сообщества.",
-        "title": "Просмотр blueprints"
-      },
-      "import": {
-        "back": "Назад",
-        "error": {
-          "empty": "Содержимое YAML пусто.",
-          "invalid_mapping": "Недопустимый YAML flow: ожидалось сопоставление ключ-значение, а не список или скаляр.",
-          "parse_error": "Не удалось разобрать YAML.",
-          "too_large": "Этот файл слишком большой. Вместо этого вставьте определение flow или загрузите файл размером менее 1 МБ."
-        },
-        "paste_label": "Вставить YAML",
-        "read_error": "Не удалось прочитать файл.",
-        "submit": "Импортировать flow",
-        "subtitle": "Вставьте или загрузите существующее определение flow.",
-        "title": "Импортировать YAML",
-        "upload_button": "Загрузить .yml / .yaml",
-        "upload_label": "Или загрузите файл",
-        "upload_tip": "Принимает файлы .yml и .yaml."
-      },
-      "subtitle": "Начните с чистого листа, изучите blueprints или импортируйте существующий YAML.",
-      "system": {
-        "badge": "СИСТЕМА",
-        "subtitle": "Создайте flow оповещений или автоматизации для вашей платформы.",
-        "title": "Создать системный flow"
-      },
-      "title": "Создать новый flow"
-    },
     "recipe": {
       "create_flow": "Создать flow",
       "email": "Email",
@@ -1019,7 +978,8 @@
             "triggers_default_tab": "Вкладка по умолчанию Triggers",
             "playground": "Песочница",
             "auto_refresh_interval": "Интервал автоматического обновления",
-            "task_edit_default_mode": "Режим редактирования Task по умолчанию"
+            "task_edit_default_mode": "Режим редактирования Task по умолчанию",
+            "flow_template": "Шаблон flow по умолчанию"
           },
           "descriptions": {
             "default_namespace": "Используется при создании новых flow без namespace.",
@@ -1032,11 +992,17 @@
             "triggers_default_tab": "Вкладка выбрана при переходе на страницу триггеров.",
             "auto_refresh_interval": "Секунды между автоматическими обновлениями данных на страницах списков.",
             "playground": "Запускайте задачи по отдельности в редакторе playground.",
-            "task_edit_default_mode": "Как task открывается по умолчанию из no-code редактора."
+            "task_edit_default_mode": "Как task открывается по умолчанию из no-code редактора.",
+            "flow_template": "YAML открывается в редакторе при создании нового flow. id и namespace можно не указывать, так как они генерируются автоматически. Если это поле пусто, используется шаблон, настроенный для экземпляра."
           },
           "task_edit_default_mode_options": {
             "modal": "Модальное окно",
             "tab": "Вкладка"
+          },
+          "flow_template_reset": "Сбросить до значений по умолчанию",
+          "flow_template_error": {
+            "invalid_mapping": "Недопустимый шаблон flow: ожидалось сопоставление ключ-значение, а не список или скаляр.",
+            "parse_error": "Не удалось разобрать YAML. Шаблон был сохранен, поэтому редактор может показать ту же ошибку при создании flow."
           }
         },
         "theme": {

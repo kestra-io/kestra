@@ -32,7 +32,10 @@
             <span class="asset-name" :title="id">{{ name }}</span>
 
             <div v-if="detail === 'full'" class="asset-meta">
-                <KsIcon size="xs" class="asset-status" :tooltip="statusLabel">
+                <!-- Colour via the prop, not the class: a class lands on the ElIcon root
+                     where a kel-icon rule already sets colour and wins, so the glyph kept
+                     the default icon colour instead of the status one. -->
+                <KsIcon size="xs" class="asset-status" :color="statusColor" :tooltip="statusLabel">
                     <component :is="statusIcon" />
                 </KsIcon>
                 <!-- Wrapped in a span this component owns: KsDateAgo renders its text inside
@@ -63,11 +66,8 @@
 
     import Sitemap from "vue-material-design-icons/Sitemap.vue"
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
-    import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-    import ClockAlertOutline from "vue-material-design-icons/ClockAlertOutline.vue"
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
-    import CircleOutline from "vue-material-design-icons/CircleOutline.vue"
-    import HelpCircleOutline from "vue-material-design-icons/HelpCircleOutline.vue"
+
+    import {statusIconOf, statusColorOf} from "../../utils/assetStatus"
 
     import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_DIMMED, DAG_DETAIL} from "../../utils/dagConstants"
 
@@ -91,23 +91,14 @@
     const taskIconComponent = useTaskIcon()
     const pluginsStore = usePluginsStore()
 
-    // never is hollow and unknown is a question mark: both use --ks-status-neutral, so
-    // without different glyphs "has never run" and "we do not track this" look identical.
-    const STATUS_ICONS: Record<string, unknown> = {
-        fresh:   CheckCircle,
-        stale:   ClockAlertOutline,
-        failed:  AlertCircle,
-        never:   CircleOutline,
-        unknown: HelpCircleOutline,
-    }
-
     const name = computed(() => props.data.name)
     const status = computed(() => props.data.status)
     const updated = computed(() => props.data.updated)
     const iconCls = computed(() => props.data.iconCls)
     const fallbackIcon = computed(() => (props.data.isFlow ? Sitemap : PackageVariantClosed))
     const typeName = computed(() => (props.data.assetType ? stringUtils.afterLastDot(props.data.assetType) : undefined))
-    const statusIcon = computed(() => STATUS_ICONS[status.value] ?? HelpCircleOutline)
+    const statusIcon = computed(() => statusIconOf(status.value))
+    const statusColor = computed(() => statusColorOf(status.value))
     const statusLabel = computed(() => t(`dependency.dag.status.${status.value}`))
 
     const selected = inject(DAG_SELECTED)
@@ -226,7 +217,8 @@
         border: 1px solid color-mix(in srgb, var(--ks-dag-status) 60%, transparent);
         border-radius: var(--ks-radius-lg);
         background: color-mix(in srgb, var(--ks-dag-status) 10%, var(--ks-bg-badge));
-        // Inherited by the fallback material glyph, which is still monochrome.
+        // Inherited by the fallback material glyph, which is still monochrome. The status
+        // glyph in row 2 sets its own colour through KsIcon's prop.
         color: var(--ks-dag-status);
     }
 

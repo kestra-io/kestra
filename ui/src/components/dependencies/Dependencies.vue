@@ -18,10 +18,16 @@
                 size="small"
                 :options="layoutOptions"
             />
+            <!-- Clearable so returning to no grouping is one click on the control that set
+                 it. Empty-canvas click deliberately does NOT reset the field: it clears the
+                 selection and the pinned group per #10031's interaction table, and the canvas
+                 is mostly empty space, so tying the field to it would throw away the
+                 arrangement on any stray click. -->
             <KsSelect
                 v-model="groupField"
                 class="group-select"
                 size="small"
+                clearable
                 :placeholder="$t('dependency.dag.group_by')"
             >
                 <KsOption :label="$t('dependency.dag.group_none')" value="" />

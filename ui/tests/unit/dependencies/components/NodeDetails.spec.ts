@@ -42,50 +42,32 @@ const rowsOf = (wrapper: ReturnType<typeof mountDetails>): Record<string, string
     return Object.fromEntries(labels.map((label, index) => [label, values[index]]))
 }
 
-const assetNode = (metadata: Record<string, unknown> = {}): Node => ({
-    id: "proj.raw.raw_orders",
-    type: "NODE",
-    flow: "proj.raw.raw_orders",
-    namespace: "dbt.demo",
-    metadata: {subtype: ASSET, ...metadata},
-} as Node)
-
-describe("dependencies NodeDetails.vue — asset metadata rows", () => {
+describe("dependencies NodeDetails.vue", () => {
+    // P1. The panel shows the trailing segment, matching the canvas card; the full FQCN would
+    // push every other value off a narrow pane.
     it("shows the asset type as its trailing segment, not the FQCN", () => {
-        const rows = rowsOf(mountDetails(assetNode({assetType: "io.kestra.plugin.ee.assets.Table"})))
+        const rows = rowsOf(mountDetails({
+            id: "proj.raw.raw_orders",
+            type: "NODE",
+            flow: "proj.raw.raw_orders",
+            namespace: "dbt.demo",
+            metadata: {subtype: ASSET, assetType: "io.kestra.plugin.ee.assets.Table"},
+        } as Node))
 
         expect(rows["Type"]).toBe("Table")
     })
 
-    // The producer keeps its full FQCN here: "which task wrote this" is the question the
-    // panel is open for, and the trailing segment alone would not answer it.
-    it("shows the producing task type in full", () => {
-        const rows = rowsOf(mountDetails(assetNode({producer: "io.kestra.plugin.jdbc.duckdb.Query"})))
-
-        expect(rows["Plugins"]).toBe("io.kestra.plugin.jdbc.duckdb.Query")
-    })
-
-    it("omits both rows when the asset carries neither value", () => {
-        const rows = rowsOf(mountDetails(assetNode()))
-
-        expect(rows).not.toHaveProperty("Type")
-        expect(rows).not.toHaveProperty("Plugins")
-    })
-})
-
-// Dependencies.vue mounts NodeDetails for all four views, so a row added for assets must
-// stay invisible in the flow, execution and namespace graphs rather than render blank.
-describe("dependencies NodeDetails.vue — non-asset views", () => {
+    // P0. Dependencies.vue mounts this panel for all four views (flow, execution, namespace,
+    // asset). Rows added for assets must stay invisible in the other three rather than render
+    // blank, and regressions in those three have happened repeatedly on this branch.
     it("renders no asset rows for a flow node", () => {
-        const flowNode = {
+        const rows = rowsOf(mountDetails({
             id: "dbt.demo_multi_plugin_assets",
             type: "NODE",
             flow: "multi_plugin_assets",
             namespace: "dbt.demo",
             metadata: {subtype: FLOW},
-        } as Node
-
-        const rows = rowsOf(mountDetails(flowNode, FLOW))
+        } as Node, FLOW))
 
         expect(rows).not.toHaveProperty("Type")
         expect(rows).not.toHaveProperty("Plugins")

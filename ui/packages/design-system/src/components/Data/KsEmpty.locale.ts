@@ -3,7 +3,7 @@ export default {
         "no_data": "Looks like there's nothing here… yet!\nAdjust your filters, or give it another go!",
     },
     "de": {
-        "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!\nPassen Sie Ihre Filter an oder versuchen Sie es erneut!",
+        "no_data": "Sieht aus, als wäre hier noch nichts…\nPasse deine Filter an oder versuche es noch einmal!",
     },
     "es": {
         "no_data": "Parece que no hay nada aquí... ¡todavía!\nAjusta tus filtros o inténtalo de nuevo.",

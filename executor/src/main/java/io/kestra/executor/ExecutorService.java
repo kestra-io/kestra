@@ -68,6 +68,7 @@ public class ExecutorService {
     private final AssetService assetService;
     private final RunContextInitializer runContextInitializer;
     private final TaskOutputService taskOutputService;
+    private final ExecutionOutputService executionOutputService;
     private final PausedTaskNotifier pausedTaskNotifier;
 
     @Inject
@@ -85,6 +86,7 @@ public class ExecutorService {
         AssetService assetService,
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
+        ExecutionOutputService executionOutputService,
         PausedTaskNotifier pausedTaskNotifier) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
@@ -99,6 +101,7 @@ public class ExecutorService {
         this.assetService = assetService;
         this.runContextInitializer = runContextInitializer;
         this.taskOutputService = taskOutputService;
+        this.executionOutputService = executionOutputService;
         this.pausedTaskNotifier = pausedTaskNotifier;
     }
 
@@ -458,14 +461,14 @@ public class ExecutorService {
         Execution newExecution = executor.getExecution()
             .withState(finalState);
 
-        if (flow.getOutputs() != null) {
+        if (flow.getOutputs() != null && executor.getExecution().getKind() != ExecutionKind.LOOP) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             var inputAndOutput = runContext.inputAndOutput();
 
             try {
                 Map<String, Object> outputs = inputAndOutput.renderOutputs(flow.getOutputs());
                 outputs = inputAndOutput.typedOutputs(flow, executor.getExecution(), outputs);
-                newExecution = newExecution.withOutputs(outputs);
+                executionOutputService.saveOutputs(newExecution, outputs);
             } catch (Exception e) {
                 Logs.logExecution(
                     executor.getExecution(),

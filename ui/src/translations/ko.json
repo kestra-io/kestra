@@ -311,8 +311,6 @@
         "1d": "1일",
         "7d": "7일"
       },
-      "last14days": "지난 14일",
-      "last28days": "지난 28일",
       "14days": "14일",
       "28days": "28일"
     },
@@ -467,7 +465,7 @@
       "search_placeholder": "Key 또는 value 검색...",
       "tasks_outputs": "Tasks outputs",
       "tree": "트리",
-      "raw_json": "Raw JSON",
+      "raw_json": "원시 JSON",
       "select_prompt": "value를 확인할 변수를 선택하세요.",
       "select_hint": "변수, trigger, 그리고 task output이 왼쪽에 나열됩니다.",
       "empty": "이 실행에 사용할 수 있는 변수가 없습니다.",
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "이 파일의 크기는 {size}입니다. 브라우저가 차단될 수 있으니 로드하는 데 시간이 걸릴 수 있습니다. 그래도 로드하시겠습니까?",
+      "big_file_download_only": "이 파일의 크기는 {size}입니다. 에디터에서 열기에는 너무 크므로 대신 다운로드하세요.",
       "load_anyway": "그래도 로드하기",
       "load_error": "파일 미리보기를 로드하지 못했습니다. 일시적인 문제이거나 권한 문제일 수 있습니다.",
       "retry": "다시 시도",
@@ -521,12 +520,15 @@
       "detail": {
         "category": "카테고리 유형",
         "links": "링크 및 리소스",
-        "openInEditor": "편집 Flow에서 열기"
+        "openInEditor": "편집 Flow에서 열기",
+        "openInAppsEditor": "앱 편집기에서 열기",
+        "openInDashboardEditor": "대시보드 편집기에서 열기"
       },
       "missingPlugins": {
-        "title": "누락된 plugin",
-        "description": "이 blueprint는 이 인스턴스에 설치되지 않은 plugin의 task를 사용합니다: {plugins}. 이 blueprint를 사용하려면 설치하세요.",
-        "card": "이 인스턴스에 설치되지 않은 plugin이 필요합니다: {plugins}",
+        "title": "사용할 수 없는 task",
+        "description": "이 blueprint는 이 인스턴스에서 사용할 수 없는 task 유형을 사용합니다:",
+        "installHint": "이 blueprint를 사용하려면 누락된 plugin을 설치하세요: {plugins}.",
+        "card": "이 인스턴스에서 사용할 수 없는 task 유형을 사용합니다: {tasks}",
         "install": "plugin 설치"
       }
     },
@@ -534,7 +536,7 @@
     "plugins": {
       "names": "플러그인들",
       "release": "릴리스 노트",
-      "beta": "Beta",
+      "beta": "베타",
       "copy_type": "유형 복사",
       "deprecated": "사용 중단",
       "dynamic": "동적",
@@ -564,17 +566,17 @@
       "intro_step3_desc_suffix": "와 Pebble 표현식을 사용하세요.",
       "intro_step3_title": "동적으로 만들기",
       "intro_sub": "YAML로 flow를 만드는 데 필요한 모든 것：속성, inputs, Pebble templating을 한 곳에서.",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "예시",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "개요",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow 문서",
-      "nav_examples": "Examples",
+      "nav_examples": "예시",
       "nav_outputs": "Outputs",
       "nav_overview": "개요",
-      "nav_properties": "Properties",
+      "nav_properties": "속성",
       "non_dynamic": "비동적",
       "required": "필수"
     },
@@ -628,7 +630,7 @@
     "last trigger date tooltip": "트리거가 마지막으로 실행된 시점입니다. 백필을 실행할 때 과거일 수 있습니다.",
     "context updated date tooltip": "트리거의 컨텍스트가 마지막으로 업데이트된 시점입니다. 이는 실행이 트리거되거나, 완료되었을 때(잠금 해제), 또는 평가 후(실행이 발생하지 않더라도) 발생합니다.",
     "next evaluation date tooltip": "스케줄러가 간격에 따라 이 trigger를 다음에 평가할 시점입니다. 평가는 trigger의 조건이 충족될 경우에만 실행을 생성합니다.",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "스케줄러가 마지막으로 트리거를 평가한 시점 (실행 생성 여부와 무관).",
     "conditions": "조건",
     "triggerId": "트리거 ID",
     "tenantId": "tenant ID",
@@ -782,22 +784,22 @@
     "collapse all": "모두 축소",
     "expand": "확장",
     "collapse": "축소",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "필터링",
+    "filter_out": "필터링",
+    "copy_value": "값 복사",
+    "open_page": "페이지 열기",
+    "logs_copied": "로그가 클립보드에 복사되었습니다.",
+    "expand_by_default": "기본적으로 구조화된 log 확장",
+    "similar lines": "유사한 라인",
+    "download_logs_description": "내보낼 log를 선택하세요. 필터는 현재 보기에 기본 설정됩니다.",
+    "display_settings": "표시 설정",
+    "density": "밀도",
+    "density_compact": "압축",
+    "density_normal": "일반",
+    "density_expanded": "확장됨",
+    "pretty_json": "예쁜 JSON",
+    "body_line_clamp": "줄 높이 제한",
+    "font size": "글꼴 크기",
     "environment": "환경",
     "join_slack": "Slack 참여",
     "kestra": "Kestra",
@@ -886,6 +888,10 @@
         "files": "{count}개의 선택된 파일 삭제",
         "folders": "{count}개의 선택된 폴더 삭제"
       },
+      "move": {
+        "bulk_success": "선택한 파일이 성공적으로 이동되었습니다.",
+        "bulk_error": "선택한 항목 {count}개 중 이동에 실패했습니다."
+      },
       "import": {
         "files": "파일 가져오기",
         "folder": "폴더 가져오기",
@@ -940,9 +946,9 @@
     "Set labels to execution": "실행 <code>{id}</code>의 라벨 추가 또는 업데이트",
     "Set labels done": "실행의 라벨이 성공적으로 설정되었습니다",
     "bulk set labels": "<code>{executionCount}</code>개의 실행에 label을 설정하시겠습니까?",
-    "true": "True",
-    "false": "False",
-    "undefined": "Undefined",
+    "true": "참",
+    "false": "거짓",
+    "undefined": "정의되지 않음",
     "execution-include-non-terminated": "종료되지 않은 실행을 포함하시겠습니까?",
     "execution-warn-title": "중요한 WARNING!",
     "execution-warn-deleting-still-running": "이 작업을 취소하고 진행 중인 실행을 먼저 중지할 것을 강력히 권장합니다. 종료되지 않은 실행을 삭제하면 concurrency 문제, flow 종속성 관리 불일치, 인스턴스에서의 좀비 프로세스가 발생할 수 있으며, 이는 시스템 성능을 저하시킬 수 있습니다. 삭제를 진행하기 전에 이러한 위험을 충분히 이해했는지 확인하십시오.",
@@ -994,7 +1000,7 @@
       }
     },
     "no inputs": "이 flow에는 입력이 없습니다.",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "환경설정",
     "settings": {
       "label": "설정",
       "updated": "{name} 업데이트됨",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Kestra로 맞춤형 앱 만들기",
-        "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다."
+        "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다.",
+        "blueprints": {
+          "title": "앱 blueprint에서 시작하기.",
+          "message": "앱 blueprint는 양식, 승인 및 데이터 제출과 같은 일반적인 사용 사례를 위한 기성 앱입니다. Kestra Enterprise Edition을 사용하면 모든 blueprint를 시작점으로 사용하여 워크플로우 위에 사용자 지정 UI를 구축하도록 조정할 수 있습니다."
+        }
       },
       "tests": {
         "label": "테스트",
@@ -1132,14 +1142,23 @@
         "message": "자산은 관측 가능성, 계보, 소유권 메타데이터를 연결하여 플랫폼 팀이 더 빠르게 문제를 해결하고 자신 있게 배포할 수 있도록 합니다."
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "케이스",
+        "header": "인시던트 관리",
+        "title": "Kestra를 벗어나지 않고 인시던트를 분류하고 해결하세요.",
+        "message": "Kestra Enterprise Edition의 케이스를 사용하면 실패한 실행에서 직접 인시던트를 열고, 할당하고, 추적할 수 있으며, SLA 추적, 활동 타임라인, 연결된 실행 및 자산을 통해 근본 원인 분석 속도를 높일 수 있습니다."
       },
       "promote": {
         "title": "환경 간 flow 승격",
         "message": "Kestra Enterprise Edition을 사용하면 Git 또는 CI/CD 파이프라인 없이도 UI에서 직접 flow를 한 환경에서 다른 환경(예: 개발에서 스테이징, 프로덕션)으로 승격할 수 있습니다. 승격하기 전에 변경될 내용을 정확히 비교 검토하고, 확인 게이트로 중요한 대상을 보호하고, 드리프트를 한눈에 파악하고, 누가, 어디서, 언제 무엇을 승격했는지에 대한 전체 기록을 유지할 수 있습니다."
+      },
+      "dashboards": {
+        "header": "사용자 지정 대시보드",
+        "title": "팀에 맞춰 사용자 지정 대시보드를 구축하세요.",
+        "message": "Kestra Enterprise Edition의 사용자 지정 대시보드를 사용하면 실행, log 및 메트릭을 기반으로 자신만의 뷰를 생성하고 공유할 수 있습니다. 시계열, KPI, 테이블 및 Markdown 차트를 코드 및 노코드 편집기, 라이브 미리보기, tenant별 기본 대시보드와 결합할 수 있습니다.",
+        "blueprints": {
+          "title": "대시보드 blueprint에서 시작하세요.",
+          "message": "대시보드 blueprint는 일반적인 모니터링 요구사항을 위한 미리 만들어진 사용자 지정 대시보드입니다. Kestra Enterprise Edition을 사용하면 모든 blueprint를 시작점으로 사용하여 대시보드 편집기에서 차트, KPI 및 테이블을 팀에 맞게 조정할 수 있습니다."
+        }
       },
       "IAM": {
         "title": "IAM을 통해 SSO, SCIM 및 RBAC로 사용자 관리",
@@ -1174,7 +1193,7 @@
       "namespace": {
         "edit": {
           "title": "네임스페이스 관리 업그레이드",
-          "message": "Kestra Enterprise Edition에서 namespace는 대규모로 secrets, variables 및 플러그인 기본값에 대한 고급 격리 및 거버넌스를 제공합니다. 관리자는 namespace별로 사용자 지정 secrets manager, 격리된 스토리지 백엔드, 전용 worker 그룹 및 세분화된 권한을 구성할 수 있습니다. 이를 통해 secrets, variables 및 플러그인 구성이 여러 팀과 프로젝트에서 안전하고 쉽게 유지 관리됩니다."
+          "message": "Kestra Enterprise Edition에서 namespace는 시크릿, 변수 및 거버넌스 정책에 대한 고급 격리 및 제어를 대규모로 제공합니다. 관리자는 namespace별로 사용자 지정 시크릿 관리자, 격리된 스토리지 백엔드, 전용 worker 그룹 및 세분화된 권한을 구성할 수 있습니다. 이를 통해 시크릿, 변수 및 거버넌스 규칙이 여러 팀과 프로젝트에서 안전하고 쉽게 유지 관리되도록 보장합니다."
         },
         "secrets": {
           "title": "비밀을 안전하게 관리하기",
@@ -1434,7 +1453,7 @@
     },
     "webhook": {
       "curl_command": "Webhook cURL 명령어",
-      "payload": "Webhook Payload (JSON)",
+      "payload": "Webhook 페이로드 (JSON)",
       "curl_note": "이 cURL 명령어를 사용하여 사용자 정의 JSON 페이로드로 웹훅을 통해 flow를 trigger하십시오.",
       "no_triggers": "이 flow에는 활성화된 webhook trigger가 없습니다.",
       "copy_url": "웹훅 URL 복사"
@@ -1687,8 +1706,8 @@
         "content": "데이터 자산, 서비스 및 인프라를 추적하고 관리하기 위해 자산을 추가하세요."
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "아직 Case가 없습니다!",
+        "content": "인시던트를 분류하고 추적하기 위해 케이스를 열거나, 실패한 실행에서 자동으로 케이스를 연결합니다."
       },
       "apiTokens": {
         "title": "API 토큰 관리",
@@ -1736,10 +1755,6 @@
           "content": "이 자산은 flow 또는 다른 자산과 상위 또는 하위 종속성이 없습니다."
         }
       },
-      "plugins": {
-        "title": "이 Namespace에 대한 플러그인 기본값이 설정되지 않았습니다.",
-        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요."
-      },
       "triggers": {
         "title": "flow에 Triggers가 없습니다.",
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요."
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {
       "labels": {
-        "singular": "대시보드",
         "plural": "대시보드"
       },
       "default": "기본 대시보드",
-      "switch": "대시보드 전환",
-      "preview": "미리보기 대시보드",
       "empty": "결과가 표시되지 않습니다.",
-      "creation": {
-        "label": "대시보드 생성",
-        "confirmation": "대시보드 <code>{title}</code>이(가) 생성되었습니다."
-      },
       "edition": {
         "label": "대시보드 편집",
-        "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
-        "chart": "이 차트 편집",
-        "id readonly": "`id` 속성은 변경할 수 없습니다 — 현재 초기 값으로 설정되어 있습니다. 변경하려면 새 대시보드를 생성하고 기존 것을 제거할 수 있습니다."
-      },
-      "deletion": {
-        "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
+        "chart": "이 차트 편집"
       },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "others": "기타",
       "viewAll": "전체 보기",
-      "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
       "export": "내보내기",
       "exportTo": {
         "csv": "CSV로 내보내기",
@@ -2143,7 +2145,7 @@
         "flow": "flow",
         "state": "상태",
         "read_only": "읽기 전용",
-        "open_world": "Open world",
+        "open_world": "세계 열기",
         "destructive": "파괴적",
         "idempotent": "멱등",
         "return_direct": "직접 반환"
@@ -2190,28 +2192,56 @@
     "source_search": {
       "cannot_select_read_only": "선택할 수 없습니다. {namespace} / {id}에 대한 편집 권한이 없습니다.",
       "collapse_all": "모두 접기",
+      "confirm_bar_excluded": "일치 {count}개는 더 이상 변경되지 않습니다. | 일치 {count}개는 더 이상 변경되지 않습니다.",
       "confirm_bar_message": "{flows}개의 편집 가능한 flow에서 {matches}개를 바꿉니다. {skipped}개의 읽기 전용 flow는 건너뜁니다.",
+      "count_flows": "flow {count}개 | flow {count}개",
+      "count_keys": "key {count}개 | key {count}개",
+      "count_namespaces": "namespace {count}개 | namespace {count}개",
+      "count_paths": "경로 {count}개 | 경로 {count}개",
+      "count_resources": "리소스 {count}개 | 리소스 {count}개",
+      "count_types": "유형 {count}개 | 유형 {count}개",
       "diff_preview_aria": "교체 diff 미리보기",
       "diff_preview_label": "diff 미리보기 · 아직 적용되지 않음",
-      "empty_description": "모든 flow의 YAML 소스에서 플러그인 유형, 속성 또는 정의를 검색합니다. 정규 표현식에는 .*를, 대소문자 구분에는 Aa를 활성화하고, 권한에 따라 일치하는 항목을 즉시 변경하려면 바꾸기를 엽니다.",
-      "empty_title": "flow 전반에 걸쳐 사용되는 모든 것을 찾습니다.",
+      "empty_description": "flow는 소스 내에서 검색됩니다. namespace 파일은 경로로, KV와 비밀은 key 이름으로 일치합니다. 위에서 유형을 선택한 다음 검색어를 입력하세요.",
+      "empty_title": "flow, 파일, key에서 값 찾기",
       "error_title": "유효하지 않은 정규 표현식",
       "examples_aria": "예시 쿼리",
+      "exclusion_flows_readonly": "flow — 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다. | flow — 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다.",
+      "exclusion_search_only": "{type} — 일치 {count}개: 검색 전용이라 바꿀 수 없습니다. | {type} — 일치 {count}개: 검색 전용이라 바꿀 수 없습니다.",
+      "exclusion_title": "{count}개의 일치 항목이 모두 바꾸기에서 제외됩니다 | {count}개의 일치 항목이 모두 바꾸기에서 제외됩니다",
       "expand_all": "모두 확장",
+      "file_match_notice": "파일 경로가 일치했습니다. 파일 내용은 검색되지 않습니다 — 안을 검색하려면 파일을 여세요.",
+      "files_progress_banner_failed": "namespace 파일은 한 번에 하나씩 검색됩니다. {total}개 중 {done}개 완료, {failed}개 실패. 총계는 계속 바뀝니다.",
+      "files_progress_banner_ok": "namespace 파일은 한 번에 하나씩 검색됩니다. {total}개 중 {done}개 완료. 총계는 계속 바뀝니다.",
+      "flow_only_toggle_hint": "대소문자 구분, 단어 단위, 정규식은 flow에만 적용됩니다. 파일 경로와 key는 항상 일반 텍스트로 일치합니다.",
+      "flow_section": "flow 섹션",
       "flow_update_permission": "flow · 업데이트",
       "hide_replace": "대체 숨기기",
+      "key_only_hint": "key 이름만 검색합니다. 바꿀 수 없습니다.",
+      "kv_match_notice": "key 이름만 검색되었습니다. 값을 보려면 KV Store를 여세요.",
       "line_label": "줄 {line}",
       "match_case": "대소문자 일치",
       "match_count": "{count}개 일치 | {count}개 일치",
       "match_nav": "{current}/{total}",
       "match_nav_empty": "0개 중 0개",
       "match_whole_word": "단어 전체 일치",
+      "meta_created": "생성됨",
+      "meta_expires": "만료",
+      "meta_never": "없음",
+      "meta_updated": "수정됨",
+      "namespace_search_failed": "{namespace}을(를) 검색할 수 없습니다",
+      "namespace_search_failed_detail": "요청이 실패했습니다. 다른 namespace에는 영향이 없습니다.",
       "next_match": "다음 일치",
       "no_results_description": "namespace를 확장하거나, 범위를 '모든 소스'로 다시 전환하거나, '대소문자 일치' 및 '단어 전체 일치'를 끄십시오.",
+      "no_results_hidden_type": "선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다. | 선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다.",
+      "no_results_in_types": "{types}에서 “{query}”와 일치하는 항목이 없습니다",
       "no_results_title": "\"{query}\"에 대한 일치 항목 없음",
       "open_flow": "flow 열기",
       "open_in_editor": "에디터에서 열기",
+      "open_in_kv": "KV Store에서 열기",
+      "open_in_secrets": "비밀에서 열기",
       "options_aria": "검색 옵션",
+      "path_only_hint": "파일 경로만 검색하고 내용은 검색하지 않습니다. 바꿀 수 없습니다.",
       "preview_empty": "미리 볼 결과를 선택하세요. 결과 목록에서 flow를 클릭하면 소스를 확인할 수 있습니다.",
       "preview_error": "flow 소스를 불러오지 못했습니다",
       "previous_match": "이전 일치",
@@ -2227,6 +2257,7 @@
       "replace_aria": "다음으로 교체",
       "replace_placeholder": "교체…",
       "replace_preview_failed": "미리보기 교체 계산 실패",
+      "replace_scope_hint": "바꾸기는 flow에만 적용됩니다. 나머지 세 유형은 검색 전용입니다.",
       "replace_skip_reason": {
         "INVALID_FLOW": "유효하지 않게 됩니다",
         "NOT_FOUND": "더 이상 존재하지 않음",
@@ -2237,6 +2268,7 @@
       },
       "replace_this": "교체",
       "replace_this_match": "이 일치 항목 바꾸기",
+      "retry_namespace": "이 namespace 다시 시도",
       "retry_search": "검색 재시도",
       "scope": "범위",
       "scope_all": "모든 소스",
@@ -2245,12 +2277,33 @@
       "scope_triggers": "트리거",
       "search_aria": "flow 소스 검색",
       "search_failed": "검색 실패",
-      "search_placeholder": "모든 flow 소스에서 검색…",
+      "search_in": "검색 대상",
+      "search_placeholder": "flow 소스, 파일 경로, KV·비밀 key 검색…",
+      "searching_namespace": "{namespace} 검색 중",
+      "secret_match_notice": "비밀 값은 검색에서 읽히지 않습니다. key 이름만 비교됩니다.",
       "select_all_in_flow": "{namespace} / {id}에서 일치하는 항목 모두 선택",
+      "select_all_types": "모든 유형 선택",
       "select_match": "줄 {line}에서 일치 항목 선택",
       "show_replace": "바꾸기 표시",
       "summary": "{flows}개의 flow에서 {matches}개 일치",
-      "use_regex": "정규식 사용"
+      "summary_cross": "{types}, {resources}에서 {matches}",
+      "tag_keys_only_never": "key만 — 값은 표시되거나 검색되지 않습니다",
+      "tag_keys_only_values": "key만 — 값은 검색되지 않습니다",
+      "tag_paths_only": "경로만 — 파일 내용은 검색되지 않습니다",
+      "tag_search_only": "검색 전용 — 바뀌지 않습니다",
+      "tag_source_code": "소스 코드",
+      "truncated_flows": "전체 {total}개 중 처음 {shown}개의 일치 항목을 표시합니다. 모두 바꾸기는 표시된 항목에만 적용되므로 먼저 검색어를 좁히세요.",
+      "truncated_type": "{total}개 중 {shown}개",
+      "turn_off": "{option} 끄기",
+      "type_files": "Namespace 파일",
+      "type_flows": "Flows",
+      "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "{type}을(를) 검색할 수 없습니다",
+      "type_secrets": "비밀",
+      "use_regex": "정규식 사용",
+      "value_never_shown": "표시되거나 검색되지 않음",
+      "value_withheld": "표시되지 않음"
     },
     "open source": "오픈 소스",
     "pricing": "가격 책정",

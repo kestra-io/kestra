@@ -311,8 +311,6 @@
         "1d": "1d",
         "7d": "7d"
       },
-      "last14days": "Last 14 days",
-      "last28days": "Last 28 days",
       "14days": "14 days",
       "28days": "28 days"
     },
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "big_file_download_only": "This file is {size}. It is too large to open in the editor, download it instead.",
       "load_anyway": "Load anyway",
       "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
       "retry": "Retry",
@@ -521,12 +520,15 @@
       "detail": {
         "category": "Category type",
         "links": "Link & Resources",
-        "openInEditor": "Open in Edit Flow"
+        "openInEditor": "Open in Edit Flow",
+        "openInAppsEditor": "Open in Apps Editor",
+        "openInDashboardEditor": "Open in Dashboard Editor"
       },
       "missingPlugins": {
-        "title": "Missing plugins",
-        "description": "This blueprint uses tasks from plugin(s) that aren't installed on this instance: {plugins}. Install them to use this blueprint.",
-        "card": "Requires plugin(s) not installed on this instance: {plugins}",
+        "title": "Unavailable tasks",
+        "description": "This blueprint uses task types that aren't available on this instance:",
+        "installHint": "Install the missing plugin(s) to use this blueprint: {plugins}.",
+        "card": "Uses task types that aren't available on this instance: {tasks}",
         "install": "Install plugins"
       }
     },
@@ -886,6 +888,10 @@
         "files": "Delete {count} selected files",
         "folders": "Delete {count} selected folders"
       },
+      "move": {
+        "bulk_success": "Selected files moved successfully.",
+        "bulk_error": "Failed to move {count} of the selected item(s)."
+      },
       "import": {
         "files": "Import files",
         "folder": "Import folder",
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "Build custom Apps with Kestra",
-        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval."
+        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval.",
+        "blueprints": {
+          "title": "Start from an app blueprint.",
+          "message": "App blueprints are ready-made apps for common use cases such as forms, approvals and data submission. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt it to build custom UIs on top of your workflows."
+        }
       },
       "tests": {
         "label": "Tests",
@@ -1140,6 +1150,15 @@
       "promote": {
         "title": "Promote Flows Across Environments",
         "message": "Kestra Enterprise Edition lets you promote flows from one environment to another — such as dev to staging to production — directly from the UI, no Git or CI/CD pipelines required. Review a diff of exactly what will change before promoting, protect sensitive targets with a confirmation gate, spot drift at a glance, and keep a full history of who promoted what, where, and when."
+      },
+      "dashboards": {
+        "header": "Custom Dashboards",
+        "title": "Build custom dashboards tailored to your team.",
+        "message": "Custom dashboards in Kestra Enterprise Edition let you create and share your own views on top of executions, logs and metrics, combining time series, KPIs, tables and Markdown charts, with a code and no-code editor, live preview, and per-tenant default dashboards.",
+        "blueprints": {
+          "title": "Start from a dashboard blueprint.",
+          "message": "Dashboard blueprints are ready-made custom dashboards for common monitoring needs. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt its charts, KPIs and tables to your team in the dashboard editor."
+        }
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
@@ -1174,7 +1193,7 @@
       "namespace": {
         "edit": {
           "title": "Upgrade Your Namespace Management",
-          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables, and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
+          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and control of secrets, variables, and governance Policies at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and governance rules remain secure and easy to maintain across different teams and projects."
         },
         "secrets": {
           "title": "Manage Secrets in a Secure Way",
@@ -1199,8 +1218,7 @@
         "audit-logs": {
           "title": "Track All Changes in One Place",
           "message": "In Kestra Enterprise Edition, you can view namespace-level audit logs with detailed diffs, giving you a clear history of who changed what and when across all resources."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1737,10 +1755,6 @@
           "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
-      "plugins": {
-        "title": "No plugin defaults are set for this for this Namespace.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-      },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in our documentation."
@@ -1756,8 +1770,7 @@
       "panels": {
         "title": "No panel open",
         "content": "You've closed all panels.\nPick a tab above to continue."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
     "copied_logs_to_clipboard": "Copied logs to clipboard.",
@@ -1785,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Default Dashboard",
-      "switch": "Switch Dashboard",
-      "preview": "Preview Dashboard",
       "empty": "There are no results to be shown.",
-      "creation": {
-        "label": "Create Dashboard",
-        "confirmation": "Dashboard <code>{title}</code> is created."
-      },
       "edition": {
         "label": "Edit Dashboard",
-        "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
-        "chart": "Edit this chart",
-        "id readonly": "The property `id` cannot be changed — it's now set to its initial values. If you want to change it, you can create a new dashboard and remove the old one."
-      },
-      "deletion": {
-        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
+        "chart": "Edit this chart"
       },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
       "viewAll": "View all",
-      "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export",
       "exportTo": {
         "csv": "Export to CSV",
@@ -2192,28 +2192,56 @@
     "source_search": {
       "cannot_select_read_only": "Cannot select — you lack edit permission on {namespace} / {id}",
       "collapse_all": "Collapse all",
+      "confirm_bar_excluded": "{count} more match will not be changed. | {count} more matches will not be changed.",
       "confirm_bar_message": "Replace {matches} across {flows} editable flows. {skipped} read-only flows will be skipped.",
+      "count_flows": "{count} flow | {count} flows",
+      "count_keys": "{count} key | {count} keys",
+      "count_namespaces": "{count} namespace | {count} namespaces",
+      "count_paths": "{count} path | {count} paths",
+      "count_resources": "{count} resource | {count} resources",
+      "count_types": "{count} type | {count} types",
       "diff_preview_aria": "Replacement diff preview",
       "diff_preview_label": "diff preview · not yet applied",
-      "empty_description": "Search every flow's YAML source for a plugin type, a property, or any definition. Enable .* for regular expressions, Aa for case-sensitivity, and open Replace to change matches in place — respecting your permissions.",
-      "empty_title": "Find where anything is used across your flows",
+      "empty_description": "Flows are searched inside their source. Namespace files match on their path, KV and secrets on their key name. Pick the types above, then type a query.",
+      "empty_title": "Find a value across flows, files and keys",
       "error_title": "Invalid regular expression",
       "examples_aria": "Example queries",
+      "exclusion_flows_readonly": "Flows — {count} read-only match: you need FLOW · UPDATE permission. | Flows — {count} read-only matches: you need FLOW · UPDATE permission.",
+      "exclusion_search_only": "{type} — {count} match: search only, cannot be replaced. | {type} — {count} matches: search only, cannot be replaced.",
+      "exclusion_title": "{count} match is excluded from Replace all | {count} matches are excluded from Replace all",
       "expand_all": "Expand all",
+      "file_match_notice": "The file path matched. File content is not searched — open the file to search inside it.",
+      "files_progress_banner_failed": "Namespace files are searched one namespace at a time. {done} of {total} done, {failed} failed. The total will still change.",
+      "files_progress_banner_ok": "Namespace files are searched one namespace at a time. {done} of {total} done. The total will still change.",
+      "flow_only_toggle_hint": "Match case, whole word and regular expression apply to Flows only. File paths and keys always match plain text.",
+      "flow_section": "Flow section",
       "flow_update_permission": "FLOW · UPDATE",
       "hide_replace": "Hide replace",
+      "key_only_hint": "Searches key names only. Cannot be replaced.",
+      "kv_match_notice": "Only the key name was searched. Open the KV store to read the value.",
       "line_label": "line {line}",
       "match_case": "Match case",
       "match_count": "{count} match | {count} matches",
       "match_nav": "{current} of {total}",
       "match_nav_empty": "0 of 0",
       "match_whole_word": "Match whole word",
+      "meta_created": "Created",
+      "meta_expires": "Expires",
+      "meta_never": "Never",
+      "meta_updated": "Updated",
+      "namespace_search_failed": "{namespace} couldn't be searched",
+      "namespace_search_failed_detail": "Request failed. The other namespaces are unaffected.",
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
+      "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
+      "no_results_in_types": "No matches for “{query}” in {types}",
       "no_results_title": "No matches for “{query}”",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",
+      "open_in_kv": "Open in KV store",
+      "open_in_secrets": "Open in secrets",
       "options_aria": "Search options",
+      "path_only_hint": "Searches the file path only, not the file content. Cannot be replaced.",
       "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source",
       "previous_match": "Previous match",
@@ -2229,6 +2257,7 @@
       "replace_aria": "Replace with",
       "replace_placeholder": "Replace…",
       "replace_preview_failed": "Failed to compute replace preview",
+      "replace_scope_hint": "Replace applies to Flows only. The other three types are search-only.",
       "replace_skip_reason": {
         "INVALID_FLOW": "would become invalid",
         "NOT_FOUND": "no longer exists",
@@ -2239,6 +2268,7 @@
       },
       "replace_this": "Replace",
       "replace_this_match": "Replace this match",
+      "retry_namespace": "Retry this namespace",
       "retry_search": "Retry search",
       "scope": "Scope",
       "scope_all": "All source",
@@ -2247,12 +2277,33 @@
       "scope_triggers": "Triggers",
       "search_aria": "Search flow source",
       "search_failed": "Search failed",
-      "search_placeholder": "Search across all flow source…",
+      "search_in": "Search in",
+      "search_placeholder": "Search flow source, file paths, KV and secret keys…",
+      "searching_namespace": "Searching {namespace}",
+      "secret_match_notice": "Secret values are never read by search. Only key names are matched.",
       "select_all_in_flow": "Select all matches in {namespace} / {id}",
+      "select_all_types": "Select all types",
       "select_match": "Select match on line {line}",
       "show_replace": "Show replace",
       "summary": "{matches} matches in {flows} flows",
-      "use_regex": "Use regular expression"
+      "summary_cross": "{matches} in {resources} across {types}",
+      "tag_keys_only_never": "Keys only — values never shown or searched",
+      "tag_keys_only_values": "Keys only — values are not searched",
+      "tag_paths_only": "Paths only — file content is not searched",
+      "tag_search_only": "Search only — not replaced",
+      "tag_source_code": "Source code",
+      "truncated_flows": "Showing the first {shown} of {total} matches. Replace all only applies to the matches shown — narrow the query first.",
+      "truncated_type": "first {shown} of {total}",
+      "turn_off": "Turn off {option}",
+      "type_files": "Namespace files",
+      "type_flows": "Flows",
+      "type_kv": "KV keys",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "{type} couldn't be searched",
+      "type_secrets": "Secret keys",
+      "use_regex": "Use regular expression",
+      "value_never_shown": "Never shown or searched",
+      "value_withheld": "Not shown"
     },
     "open source": "Open Source",
     "pricing": "Pricing",
@@ -2404,7 +2455,6 @@
     "blocks": "Blocks",
     "flow_description": "Flow Description",
     "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
-    "pluginDefaults": {},
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {

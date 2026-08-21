@@ -32,6 +32,7 @@ export const links: Record<string, string> = {
     auditlogs: "https://kestra.io/docs/enterprise/governance/audit-logs?utm_source=kestra_app&utm_medium=referral&utm_campaign=auditlogs&utm_content=learn_more",
     quotas: "https://kestra.io/docs/workflow-components/quotas?utm_source=kestra_app&utm_medium=referral&utm_campaign=quotas&utm_content=learn_more",
     instance: "https://kestra.io/docs/enterprise/instance?utm_source=kestra_app&utm_medium=referral&utm_campaign=instance&utm_content=learn_more",
+    dashboards: "https://kestra.io/docs/ui/dashboards?utm_source=kestra_app&utm_medium=referral&utm_campaign=dashboards&utm_content=learn_more",
     blueprints: "https://kestra.io/docs/enterprise/governance/custom-blueprints?utm_source=kestra_app&utm_medium=referral&utm_campaign=blueprints&utm_content=learn_more",
     namespace: "https://kestra.io/docs/enterprise/governance/namespace-management?utm_source=kestra_app&utm_medium=referral&utm_campaign=namespace&utm_content=learn_more",
     variables: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore?utm_source=kestra_app&utm_medium=referral&utm_campaign=variables&utm_content=learn_more",

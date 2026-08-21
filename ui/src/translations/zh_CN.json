@@ -311,8 +311,6 @@
         "1d": "1天",
         "7d": "7天"
       },
-      "last14days": "最近 14 天",
-      "last28days": "最近 28 天",
       "14days": "14 天",
       "28days": "28 天"
     },
@@ -467,7 +465,7 @@
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "树",
-      "raw_json": "Raw JSON",
+      "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",
       "select_hint": "变量、trigger 和 task outputs 列在左侧。",
       "empty": "此执行没有可用的变量。",
@@ -478,6 +476,7 @@
     },
     "file_preview": {
       "big_file_warning": "此文件大小为{size}。加载可能需要一些时间，并可能阻塞您的浏览器。您是否仍然要加载它？",
+      "big_file_download_only": "此文件大小为{size}。它太大，无法在编辑器中打开，请改为下载。",
       "load_anyway": "仍然加载",
       "load_error": "无法加载文件预览。这可能是临时问题或权限问题。",
       "retry": "重试",
@@ -521,12 +520,15 @@
       "detail": {
         "category": "类别类型",
         "links": "链接与资源",
-        "openInEditor": "在编辑 Flow 中打开"
+        "openInEditor": "在编辑 Flow 中打开",
+        "openInAppsEditor": "在 Apps 编辑器中打开",
+        "openInDashboardEditor": "在仪表板编辑器中打开"
       },
       "missingPlugins": {
-        "title": "缺少 plugin",
-        "description": "此 blueprint 使用了此实例上未安装的 plugin 的 task：{plugins}。请安装它们以使用此 blueprint。",
-        "card": "需要此实例上未安装的 plugin：{plugins}",
+        "title": "不可用的 task",
+        "description": "此 blueprint 使用了此实例上不可用的 task 类型：",
+        "installHint": "请安装缺少的 plugin 以使用此 blueprint：{plugins}。",
+        "card": "使用了此实例上不可用的 task 类型：{tasks}",
         "install": "安装 plugin"
       }
     },
@@ -534,7 +536,7 @@
     "plugins": {
       "names": "插件",
       "release": "发行说明",
-      "beta": "Beta",
+      "beta": "测试版",
       "copy_type": "复制类型",
       "deprecated": "已弃用",
       "dynamic": "动态",
@@ -564,17 +566,17 @@
       "intro_step3_desc_suffix": "和Pebble表达式。",
       "intro_step3_title": "使其动态化",
       "intro_sub": "构建YAML flow所需的一切：属性、inputs和Pebble templating，集于一处。",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "示例",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "概览",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow文档",
-      "nav_examples": "Examples",
+      "nav_examples": "示例",
       "nav_outputs": "Outputs",
       "nav_overview": "概览",
-      "nav_properties": "Properties",
+      "nav_properties": "属性",
       "non_dynamic": "非动态",
       "required": "必填"
     },
@@ -628,7 +630,7 @@
     "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
     "context updated date tooltip": "触发器的上下文上次更新的时间。这发生在执行被触发、完成（锁释放）或评估后（即使没有执行发生）。",
     "next evaluation date tooltip": "调度器下次根据其间隔评估此 trigger 的时间。仅当 trigger 的条件满足时，评估才会产生一个 execution。",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "调度器上次评估此 trigger 的时间，无论是否生成了 execution。",
     "conditions": "条件",
     "triggerId": "触发器 ID",
     "tenantId": "tenant ID",
@@ -782,22 +784,22 @@
     "collapse all": "折叠所有",
     "expand": "展开",
     "collapse": "折叠",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "筛选",
+    "filter_out": "筛选",
+    "copy_value": "复制值",
+    "open_page": "打开页面",
+    "logs_copied": "日志已复制到剪贴板",
+    "expand_by_default": "默认展开结构化 log",
+    "similar lines": "相似行",
+    "download_logs_description": "选择要导出的 log。过滤器默认为当前视图。",
+    "display_settings": "显示设置",
+    "density": "密度",
+    "density_compact": "紧凑",
+    "density_normal": "正常",
+    "density_expanded": "已展开",
+    "pretty_json": "美观 JSON",
+    "body_line_clamp": "限制行高",
+    "font size": "字体大小",
     "environment": "环境",
     "join_slack": "加入 Slack",
     "kestra": "Kestra",
@@ -885,6 +887,10 @@
         "folder": "删除文件夹",
         "files": "删除 {count} 个已选择的文件",
         "folders": "删除 {count} 个已选文件夹"
+      },
+      "move": {
+        "bulk_success": "所选文件已成功移动。",
+        "bulk_error": "未能移动选定项目中的 {count} 个。"
       },
       "import": {
         "files": "导入文件",
@@ -994,7 +1000,7 @@
       }
     },
     "no inputs": "此流程没有输入。",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "偏好设置",
     "settings": {
       "label": "设置",
       "updated": "{name} 已更新",
@@ -1049,7 +1055,7 @@
           },
           "color_modes": {
             "dark_2": "深色模式 2.0",
-            "dark_1": "Dark 1.0",
+            "dark_1": "深色 1.0",
             "light": "浅色模式",
             "sync": "与系统同步"
           },
@@ -1117,7 +1123,11 @@
       },
       "apps": {
         "title": "使用 Kestra 构建自定义应用程序",
-        "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。"
+        "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
+        "blueprints": {
+          "title": "从应用 blueprint 开始。",
+          "message": "应用蓝图是针对常见用例（如表单、审批和数据提交）的预制应用程序。通过 Kestra 企业版，您可以将任何蓝图作为起点，并对其进行调整，以在您的工作流之上构建自定义 UI。"
+        }
       },
       "tests": {
         "label": "测试",
@@ -1132,14 +1142,23 @@
         "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。"
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "案例",
+        "header": "事件管理",
+        "title": "无需离开 Kestra 即可分类和解决事件。",
+        "message": "Kestra Enterprise Edition 中的案例允许您直接从失败的执行中打开、分配和跟踪事件，并提供 SLA 跟踪、活动时间线以及链接的执行和资产，以加快根本原因分析。"
       },
       "promote": {
         "title": "跨环境推广 flow",
         "message": "Kestra Enterprise Edition 允许您直接从 UI 将 flow 从一个环境（例如 dev、staging 到 production）提升到另一个环境，无需 Git 或 CI/CD 管道。在提升之前，您可以查看将要更改内容的 diff，通过确认门保护敏感目标，一目了然地发现漂移，并保留谁在何时何地提升了什么的完整历史记录。"
+      },
+      "dashboards": {
+        "header": "自定义仪表盘",
+        "title": "构建适合您团队的自定义仪表板。",
+        "message": "Kestra Enterprise Edition 中的自定义仪表板允许您创建和共享自己的视图，以查看 execution、log 和 metrics，结合时间序列、KPI、表格和 Markdown 图表，并提供代码和无代码编辑器、实时预览以及每个 tenant 的默认仪表板。",
+        "blueprints": {
+          "title": "从仪表盘 blueprint 开始。",
+          "message": "仪表盘 blueprint 是用于常见监控需求的预制自定义仪表盘。使用 Kestra Enterprise Edition，您可以将任何 blueprint 作为起点，并在仪表盘编辑器中根据您的团队调整其图表、KPI 和表格。"
+        }
       },
       "IAM": {
         "title": "通过IAM使用SSO、SCIM和RBAC管理用户",
@@ -1174,7 +1193,7 @@
       "namespace": {
         "edit": {
           "title": "升级您的Namespace管理",
-          "message": "在 Kestra Enterprise Edition 中，namespace 提供了对 secrets、变量和插件默认值进行大规模高级隔离和治理的功能。管理员可以为每个 namespace 配置自定义 secrets 管理器、隔离的存储后端、专用的 worker 组以及细粒度权限。这确保了 secrets、变量和插件配置在不同团队和项目之间保持安全且易于维护。"
+          "message": "在 Kestra 企业版中，namespace 提供高级隔离，并大规模控制 secrets、variables 和治理 Policies。管理员可以配置自定义 secrets manager、隔离的存储后端、专用 worker 组以及基于 namespace 的精细权限。这确保了 secrets、variables 和治理规则在不同团队和项目之间保持安全且易于维护。"
         },
         "secrets": {
           "title": "以安全方式管理Secrets",
@@ -1687,8 +1706,8 @@
         "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。"
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "您还没有任何案例！",
+        "content": "打开一个 Case 以分类和跟踪事件，或从失败的 execution 自动链接一个。"
       },
       "apiTokens": {
         "title": "管理您的API Tokens",
@@ -1736,10 +1755,6 @@
           "content": "此资产与flow或其他资产没有上游或下游依赖关系。"
         }
       },
-      "plugins": {
-        "title": "此Namespace未设置插件默认值。",
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。"
-      },
       "triggers": {
         "title": "您的 flow 没有任何 Triggers。",
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>的信息。"
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
       "labels": {
-        "singular": "仪表板",
         "plural": "仪表板"
       },
       "default": "默认仪表板",
-      "switch": "切换仪表板",
-      "preview": "预览仪表板",
       "empty": "没有结果显示。",
-      "creation": {
-        "label": "创建仪表板",
-        "confirmation": "仪表板 <code>{title}</code> 已创建。"
-      },
       "edition": {
         "label": "编辑仪表板",
-        "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
-        "chart": "编辑此图表",
-        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。"
-      },
-      "deletion": {
-        "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
+        "chart": "编辑此图表"
       },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
       "viewAll": "查看全部",
-      "chart_preview": "单击图表源代码以查看其预览",
       "export": "导出",
       "exportTo": {
         "csv": "导出为 CSV",
@@ -1968,7 +1970,7 @@
           "路由",
           "正在调度",
           "排队中",
-          "Triggering",
+          "触发中",
           "执行中",
           "协调",
           "置备",
@@ -2128,7 +2130,7 @@
       "server_id": "服务器 ID",
       "id_placeholder": "例如 my-mcp-server",
       "id_invalid": "ID必须以小写字母或数字开头，并且只能包含小写字母、数字、连字符或下划线。",
-      "main_tenant": "main",
+      "main_tenant": "主页",
       "tab_edit": "编辑",
       "tab_connect": "连接",
       "tab_tool_flows": "工具Flows",
@@ -2143,7 +2145,7 @@
         "flow": "flow",
         "state": "状态",
         "read_only": "只读",
-        "open_world": "Open world",
+        "open_world": "打开世界",
         "destructive": "破坏性",
         "idempotent": "幂等",
         "return_direct": "直接返回"
@@ -2190,28 +2192,56 @@
     "source_search": {
       "cannot_select_read_only": "无法选择 — 您没有 {namespace} / {id} 的编辑权限",
       "collapse_all": "全部收起",
+      "confirm_bar_excluded": "还有 {count} 个匹配项不会被更改。 | 还有 {count} 个匹配项不会被更改。",
       "confirm_bar_message": "替换 {flows} 个可编辑 flow 中的 {matches} 匹配项。将跳过 {skipped} 个只读 flow。",
+      "count_flows": "{count} 个 flow | {count} 个 flow",
+      "count_keys": "{count} 个键 | {count} 个键",
+      "count_namespaces": "{count} 个命名空间 | {count} 个命名空间",
+      "count_paths": "{count} 个路径 | {count} 个路径",
+      "count_resources": "{count} 个资源 | {count} 个资源",
+      "count_types": "{count} 种类型 | {count} 种类型",
       "diff_preview_aria": "替换差异预览",
       "diff_preview_label": "差异预览 · 尚未应用",
-      "empty_description": "搜索每个 flow 的 YAML 源代码，查找插件类型、属性或任何定义。启用 .* 用于正则表达式，Aa 用于区分大小写，并打开“替换”以就地更改匹配项 — 尊重您的权限。",
-      "empty_title": "查找您的所有 flow 中任何内容的使用位置",
+      "empty_description": "flow 在其源码内搜索。命名空间文件按路径匹配，KV 和 secrets 按键名匹配。请先在上方选择类型，然后输入搜索内容。",
+      "empty_title": "在 flow、文件和键中查找值",
       "error_title": "无效的正则表达式",
       "examples_aria": "示例查询",
+      "exclusion_flows_readonly": "flow — {count} 个只读匹配：需要 FLOW · UPDATE 权限。 | flow — {count} 个只读匹配：需要 FLOW · UPDATE 权限。",
+      "exclusion_search_only": "{type} — {count} 个匹配：仅可搜索，无法替换。 | {type} — {count} 个匹配：仅可搜索，无法替换。",
+      "exclusion_title": "{count} 个匹配项已从“全部替换”中排除 | {count} 个匹配项已从“全部替换”中排除",
       "expand_all": "全部展开",
+      "file_match_notice": "文件路径已匹配。文件内容不会被搜索 — 打开文件以在其中搜索。",
+      "files_progress_banner_failed": "命名空间文件按命名空间逐个搜索。已完成 {total} 个中的 {done} 个，{failed} 个失败。总数仍会变化。",
+      "files_progress_banner_ok": "命名空间文件按命名空间逐个搜索。已完成 {total} 个中的 {done} 个。总数仍会变化。",
+      "flow_only_toggle_hint": "区分大小写、全字匹配和正则表达式仅适用于 flow。文件路径和键始终按纯文本匹配。",
+      "flow_section": "Flow 部分",
       "flow_update_permission": "flow · 更新",
       "hide_replace": "隐藏替换",
+      "key_only_hint": "仅搜索键名。无法替换。",
+      "kv_match_notice": "仅搜索了键名。打开 KV 存储可查看值。",
       "line_label": "行 {line}",
       "match_case": "区分大小写",
       "match_count": "{count} 个匹配 | {count} 个匹配",
       "match_nav": "{current} / {total}",
       "match_nav_empty": "0/0",
       "match_whole_word": "匹配整个单词",
+      "meta_created": "创建时间",
+      "meta_expires": "过期时间",
+      "meta_never": "永不",
+      "meta_updated": "更新时间",
+      "namespace_search_failed": "无法搜索 {namespace}",
+      "namespace_search_failed_detail": "请求失败。其他命名空间不受影响。",
       "next_match": "下一个匹配项",
       "no_results_description": "尝试扩大 namespace 范围，将作用域切换回“所有来源”，或关闭“区分大小写”和“全字匹配”。",
+      "no_results_hidden_type": "在未选择的 {type} 中找到 {count} 个匹配项。 | 在未选择的 {type} 中找到 {count} 个匹配项。",
+      "no_results_in_types": "在 {types} 中没有找到 “{query}” 的匹配项",
       "no_results_title": "“{query}” 无匹配项",
       "open_flow": "打开 flow",
       "open_in_editor": "在编辑器中打开",
+      "open_in_kv": "在 KV 存储中打开",
+      "open_in_secrets": "在 secrets 中打开",
       "options_aria": "搜索选项",
+      "path_only_hint": "仅搜索文件路径，不搜索内容。无法替换。",
       "preview_empty": "选择一个结果进行预览。点击结果列表中的 flow 查看其源码。",
       "preview_error": "加载 flow 源码失败",
       "previous_match": "上一个匹配项",
@@ -2227,6 +2257,7 @@
       "replace_aria": "替换为",
       "replace_placeholder": "替换…",
       "replace_preview_failed": "计算替换预览失败",
+      "replace_scope_hint": "替换仅适用于 flow。其他三种类型仅支持搜索。",
       "replace_skip_reason": {
         "INVALID_FLOW": "将变为无效",
         "NOT_FOUND": "不再存在",
@@ -2237,6 +2268,7 @@
       },
       "replace_this": "替换",
       "replace_this_match": "替换此匹配项",
+      "retry_namespace": "重试此命名空间",
       "retry_search": "重试搜索",
       "scope": "范围",
       "scope_all": "所有源",
@@ -2245,12 +2277,33 @@
       "scope_triggers": "Triggers",
       "search_aria": "搜索 flow 源码",
       "search_failed": "搜索失败",
-      "search_placeholder": "搜索所有 flow 源码…",
+      "search_in": "搜索范围",
+      "search_placeholder": "搜索 flow 源码、文件路径、KV 和 secret 键…",
+      "searching_namespace": "正在搜索 {namespace}",
+      "secret_match_notice": "搜索从不读取 secret 的值，仅比较键名。",
       "select_all_in_flow": "选择 {namespace} / {id} 中的所有匹配项",
+      "select_all_types": "选择所有类型",
       "select_match": "选择匹配行 {line}",
       "show_replace": "显示替换",
       "summary": "在 {flows} 个 flow 中有 {matches} 个匹配项",
-      "use_regex": "使用正则表达式"
+      "summary_cross": "在 {types} 的 {resources} 中共 {matches}",
+      "tag_keys_only_never": "仅键 — 值从不显示或搜索",
+      "tag_keys_only_values": "仅键 — 不搜索值",
+      "tag_paths_only": "仅路径 — 不搜索文件内容",
+      "tag_search_only": "仅搜索 — 不会被替换",
+      "tag_source_code": "源码",
+      "truncated_flows": "显示 {total} 个匹配项中的前 {shown} 个。全部替换仅作用于已显示的匹配项，请先缩小查询范围。",
+      "truncated_type": "{total} 个中的前 {shown} 个",
+      "turn_off": "关闭{option}",
+      "type_files": "命名空间文件",
+      "type_flows": "流程",
+      "type_kv": "键值存储",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "无法搜索 {type}",
+      "type_secrets": "秘密",
+      "use_regex": "使用正则表达式",
+      "value_never_shown": "从不显示或搜索",
+      "value_withheld": "不显示"
     },
     "open source": "开源",
     "pricing": "定价",

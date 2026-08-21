@@ -46,17 +46,17 @@
                         data-test="block-editor-canvas"
                         :tabindex="focusedId ? -1 : 0"
                         role="group"
-                        :aria-label="t('block_editor.canvas_aria')"
+                        :aria-label="$t('block_editor.canvas_aria')"
                         @focus="onCanvasEntryFocus"
                     >
                         <BlockSectionCard
                             name="flow"
-                            :title="t('no_code.sections.flow')"
+                            :title="$t('no_code.sections.flow')"
                             :icon="FlowIcon"
                             :actionIcon="Cog"
                             hideCount
                             :count="0"
-                            :addLabel="t('block_editor.configure')"
+                            :addLabel="$t('block_editor.configure')"
                             addTest="block-editor-configure-flow"
                             @add="openFlowProperties"
                         >

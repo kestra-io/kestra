@@ -18,6 +18,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.DefaultFlowMetaStore;
 import io.kestra.core.runners.DeserializationIssuesCaseTest;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -40,9 +41,6 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
 
     @Inject
     private JdbcTableConfigs jdbcTableConfigs;
-
-    @Inject
-    private QueueService queueService;
 
     @Test
     void workerTaskDeserializationIssue() throws Exception {
@@ -107,7 +105,18 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
             }
 
             @Override
-            public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
+            public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant,
+                String fromNamespace, String fromId) {
                 return Optional.empty();
             }
         };

@@ -68,6 +68,8 @@ async function mountWrapper() {
         global: globalConfig,
     })
     await flushPromises()
+    // KsMarkdown is an async component; wait for its loader to resolve.
+    await vi.dynamicImportSettled()
     return wrapper
 }
 

@@ -7819,6 +7819,30 @@ export type SetKeyValueResponses = {
     200: unknown;
 };
 
+export type GetExecutionOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/outputs/executions/{executionId}';
+};
+
+export type GetExecutionOutputsResponses = {
+    /**
+     * The execution outputs as a map of output names to their values
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
+
 export type GetTaskOutputsInformationData = {
     body?: never;
     path: {
@@ -7829,7 +7853,7 @@ export type GetTaskOutputsInformationData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}';
 };
 
 export type GetTaskOutputsInformationResponses = {
@@ -7855,7 +7879,7 @@ export type GetTaskRunOutputsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}/{taskRunId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}';
 };
 
 export type GetTaskRunOutputsResponses = {

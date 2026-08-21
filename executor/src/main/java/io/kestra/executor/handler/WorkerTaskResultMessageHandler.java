@@ -74,7 +74,7 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
                     // process worker task result
                     executorService.addWorkerTaskResult(
                         current,
-                        () -> flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution)),
+                        () -> flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution)),
                         message
                     );
                     // join worker result

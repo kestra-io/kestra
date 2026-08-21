@@ -78,6 +78,7 @@
         --kel-input-border-color: var(--ks-border-strong);
         --kel-input-hover-border-color: var(--ks-border-strong);
         --kel-input-bg-color: var(--ks-bg-input);
+        --kel-input-placeholder-color: var(--ks-text-inactive);
     }
 
     .kel-input__inner, .kel-textarea__inner {

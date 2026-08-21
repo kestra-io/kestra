@@ -11,7 +11,7 @@
                 >
                     <span class="d-inline-flex align-items-center">
                         <AiIcon class="me-1" />
-                        <span>{{ t('fix_with_ai') }}</span>
+                        <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
                 <SubFlowLink
@@ -63,19 +63,19 @@
                     :icon="Download"
                     @click="downloadContent(taskRun.id)"
                 >
-                    {{ t("download logs") }}
+                    {{ $t("download logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Copy"
                     @click="copyContent(taskRun.id)"
                 >
-                    {{ t("copy logs") }}
+                    {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Delete"
                     @click="deleteLogs(taskRun.id)"
                 >
-                    {{ t("delete logs") }}
+                    {{ $t("delete logs") }}
                 </KsDropdownItem>
                 <WorkerInfo
                     component="KsDropdownItem"

@@ -44,8 +44,8 @@
                             </div>
                             <div class="logs-toolbar__actions">
                                 <LogDisplaySettings />
-                                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
-                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
+                                <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="openDownload" />
+                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs" />
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
@@ -75,22 +75,22 @@
             </KsDataTable>
         </div>
 
-        <KsDialog v-model="downloadOpen" :title="t('download logs')" destroyOnClose>
-            <p class="download-hint">{{ t('download_logs_description') }}</p>
+        <KsDialog v-model="downloadOpen" :title="$t('download logs')" destroyOnClose>
+            <p class="download-hint">{{ $t('download_logs_description') }}</p>
             <QuickFilters
                 :levels="VALUES.LEVELS"
                 :intervals="quickIntervals"
                 :level="downloadLevel"
                 :timeRange="downloadTimeRange"
-                :levelLabel="t('filter.level_log_executions.label')"
-                :intervalLabel="t('filter.timeRange_log.label')"
+                :levelLabel="$t('filter.level_log_executions.label')"
+                :intervalLabel="$t('filter.timeRange_log.label')"
                 @update:level="(value: string) => (downloadLevel = value)"
                 @update:time-range="(value: string) => (downloadTimeRange = value)"
             />
             <template #footer>
-                <KsButton @click="downloadOpen = false">{{ t('cancel') }}</KsButton>
+                <KsButton @click="downloadOpen = false">{{ $t('cancel') }}</KsButton>
                 <KsButton type="primary" :loading="downloading" @click="downloadLogs">
-                    {{ t('download') }}
+                    {{ $t('download') }}
                 </KsButton>
             </template>
         </KsDialog>
@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, useTemplateRef} from "vue"
+    import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
@@ -202,6 +202,7 @@
     )
     const {
         effectiveValue: effectiveLogLevel,
+        isRouteSettled: isLevelRouteSettled,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
     } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
@@ -272,8 +273,10 @@
         return _merge(base, queryFilter)
     }
 
+    let hasLoadedOnce = false
     const loadData = async ({page, size}: {page: number; size: number; sort?: string}) => {
-        if (!loadInit.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value) return
+        hasLoadedOnce = true
         isLoading.value = true
 
         await logsStore.findLogs(loadQuery({
@@ -344,7 +347,7 @@
 
     let lastCountedKey = ""
     const refreshLevelCounts = () => {
-        if (!loadInit.value || lastCountedKey === filterQueryKey.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value || lastCountedKey === filterQueryKey.value) return
         const key = filterQueryKey.value
         lastCountedKey = key
         logsStore.levelCounts(loadQuery({})).then((counts) => {
@@ -412,6 +415,17 @@
     })
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
+    })
+
+    // The first load is gated on the level default having landed in the URL, and the query change
+    // that lands it is what reloads the table. When the gate opens without one — `isRouteSettled`
+    // giving up on a navigation that never lands — nothing else would trigger that first load.
+    watch(isLevelRouteSettled, (settled) => {
+        if (!settled) return
+        nextTick(() => {
+            if (hasLoadedOnce || isLoading.value) return
+            dataTable.value?.reload()
+        })
     })
 
     const showStatChart = () => props.withCharts && showChart.value

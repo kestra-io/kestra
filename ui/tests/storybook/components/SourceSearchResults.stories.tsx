@@ -1,6 +1,15 @@
 import SourceSearchResults from "../../../src/components/flows/SourceSearchResults.vue"
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {vueRouter} from "storybook-vue3-router"
 import type {SearchResourceType, SearchStatus} from "../../../src/utils/crossResourceSearch"
+
+// Each flow group's "open in editor" link resolves a named route the global preview
+// router does not declare, so it needs to be registered here or useLink() throws.
+const routes = [
+    {path: "/", name: "home", component: {template: "<div />"}},
+    {path: "/flows/edit/:namespace/:id/edit", name: "flows/update/edit", component: {template: "<div />"}},
+    {path: "/:pathMatch(.*)*", name: "catchAll", component: {template: "<div />"}},
+]
 
 const meta: Meta<typeof SourceSearchResults> = {
     title: "flows/SourceSearchResults",
@@ -10,6 +19,7 @@ const meta: Meta<typeof SourceSearchResults> = {
             components: {story: storyFn},
             template: `<div style="height: 600px; width: 480px;"><story /></div>`,
         }),
+        vueRouter(routes, {initialRoute: "/"}),
     ],
 }
 

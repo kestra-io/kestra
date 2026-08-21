@@ -2,47 +2,6 @@
   "en": {
     "loading": "Loading...",
     "more actions": "More actions",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Use letters, digits, dots, dashes and underscores only, starting with a letter or a digit.",
-        "id_label": "Flow id",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Use lowercase letters, digits, dots, dashes and underscores only, starting with a lowercase letter or a digit.",
-        "namespace_placeholder": "Select a namespace",
-        "namespaces_error": "Could not load namespaces. Type a namespace manually.",
-        "open_editor": "Open editor",
-        "subtitle": "Start with a hello-world starter and build from scratch.",
-        "title": "Blank flow"
-      },
-      "blueprints": {
-        "subtitle": "Pick a ready-made flow from the community catalog.",
-        "title": "Browse blueprints"
-      },
-      "import": {
-        "back": "Back",
-        "error": {
-          "empty": "YAML content is empty.",
-          "invalid_mapping": "Invalid flow YAML: expected a key-value mapping, not a list or scalar.",
-          "parse_error": "Could not parse YAML.",
-          "too_large": "That file is too large. Paste the flow definition instead, or upload a file under 1 MB."
-        },
-        "paste_label": "Paste YAML",
-        "read_error": "Could not read the file.",
-        "submit": "Import flow",
-        "subtitle": "Paste or upload an existing flow definition.",
-        "title": "Import YAML",
-        "upload_button": "Upload .yml / .yaml",
-        "upload_label": "Or upload a file",
-        "upload_tip": "Accepts .yml and .yaml files."
-      },
-      "subtitle": "Start from a blank canvas, explore blueprints, or import an existing YAML.",
-      "system": {
-        "badge": "SYSTEM",
-        "subtitle": "Build an alert or automation flow for your platform.",
-        "title": "Create a system flow"
-      },
-      "title": "Create a new flow"
-    },
     "recipe": {
       "create_flow": "Create flow",
       "email": "Email",
@@ -1019,7 +978,8 @@
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval",
-            "task_edit_default_mode": "Default Task Edit Mode"
+            "task_edit_default_mode": "Default Task Edit Mode",
+            "flow_template": "Default Flow Template"
           },
           "descriptions": {
             "default_namespace": "Used when creating new flows without a namespace.",
@@ -1032,11 +992,17 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
-            "task_edit_default_mode": "How a task opens by default from the no-code editor."
+            "task_edit_default_mode": "How a task opens by default from the no-code editor.",
+            "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Tab"
+          },
+          "flow_template_reset": "Reset to default",
+          "flow_template_error": {
+            "invalid_mapping": "Invalid flow template: expected a key-value mapping, not a list or scalar.",
+            "parse_error": "Could not parse YAML. The template was saved, so the editor may show the same error when you create a flow."
           }
         },
         "theme": {
@@ -1113,7 +1079,7 @@
       "contact_sales": "Contact Sales",
       "secrets": {
         "title": "Upgrade your Secrets Management",
-        "message": "The Enterprise Edition (EE) lets you add, edit, or delete secrets directly in the UI—no instance restarts needed. Organize secrets by namespace with granular RBAC permissions, and inherit them from parent to child namespaces. EE integrates with secrets managers like HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, and Elasticsearch. Set up dedicated backends per namespace, tenant, or instance to isolate secrets across teams, or enable read-only secrets stored in external vaults. Secrets stay encrypted at rest and in transit. Optional caching reduces API calls, and audit trails log all access.",
+        "message": "The Enterprise Edition lets you add, edit, and delete secrets straight from the UI, organize them by namespace with RBAC, and back them with HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, or Elasticsearch.",
         "add_env": {
           "intro": "Create a New Secret",
           "first": "Encode the <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a>",

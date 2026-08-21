@@ -13,6 +13,7 @@ vi.mock("@kestra-io/kestra-sdk/logs", () => ({
 }))
 
 import LogsWrapper from "../../../../src/components/logs/LogsWrapper.vue"
+import LogLevelNavigator from "../../../../src/components/logs/LogLevelNavigator.vue"
 
 const logWith = (message: string) => ({
     level: "INFO",
@@ -129,5 +130,29 @@ describe("LogsWrapper cursor pagination", () => {
         searchLogs.mockResolvedValue({results: [logWith("offset")], total: 1, type: "OFFSET"})
         const offsetWrapper = await mountAtLogsList()
         expect((offsetWrapper.vm as any).logTableOptions.chart.shown).toBe(true)
+    })
+
+    // Cursor stores can't produce per-level counts, so the level quick-filter chips are hidden by
+    // design in cursor mode; level filtering stays available from the main filter bar. Offset mode
+    // (below) proves the row isn't hidden for some unrelated reason.
+    it("hides the level-navigator chips in cursor mode", async () => {
+        useTwoPageCursorStore()
+        const wrapper = await mountAtLogsList()
+
+        expect(wrapper.findAllComponents(LogLevelNavigator)).toHaveLength(0)
+    })
+
+    it("shows the level-navigator chips in offset mode when counts are available", async () => {
+        const countsByLevel: Record<string, number> = {TRACE: 5, DEBUG: 5, INFO: 5, WARN: 2, ERROR: 0}
+        searchLogs.mockImplementation((params: any) => {
+            if (params.size === 1) {
+                const level = params.filters?.find((f: any) => f.field === "level")?.value
+                return Promise.resolve({total: countsByLevel[level] ?? 0})
+            }
+            return Promise.resolve({results: [logWith("offset")], total: 1, type: "OFFSET"})
+        })
+        const wrapper = await mountAtLogsList()
+
+        expect(wrapper.findAllComponents(LogLevelNavigator).length).toBeGreaterThan(0)
     })
 })

@@ -68,7 +68,8 @@ export const AppTableBlock: Story = {
         fireEvent.click(await canvas.findByText("+ Add to data", {selector: ".task-array-item .add-value-btn"}));
 
         fireEvent.input(await canvas.findByPlaceholderText("Key"), {target: {value: "key1"}})
-        fireEvent.input(await canvas.findByTestId("monaco-editor-hidden-synced-textarea"), {target: {value: "value1"}})
+        // First editor of the run: KsEditor is async, so Monaco's chunk loads here.
+        fireEvent.input(await canvas.findByTestId("monaco-editor-hidden-synced-textarea", undefined, {timeout: 15000}), {target: {value: "value1"}})
 
         fireEvent.click(await canvas.findByText("+ Add to data", {selector: ".task-array-item .add-value-btn"}))
 

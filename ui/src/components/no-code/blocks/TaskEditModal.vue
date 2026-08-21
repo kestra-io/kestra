@@ -15,8 +15,8 @@
                 <KsIconButton
                     class="task-edit-modal-header-action"
                     :type="docsOpen ? 'primary' : 'default'"
-                    :aria-label="t('documentation.documentation')"
-                    :tooltip="t('documentation.documentation')"
+                    :aria-label="$t('documentation.documentation')"
+                    :tooltip="$t('documentation.documentation')"
                     data-test="task-edit-modal-docs-toggle"
                     @click="toggleDocs"
                 >
@@ -24,8 +24,8 @@
                 </KsIconButton>
                 <KsIconButton
                     class="task-edit-modal-header-action"
-                    :aria-label="t('block_editor.open_in_tabs')"
-                    :tooltip="t('block_editor.open_in_tabs')"
+                    :aria-label="$t('block_editor.open_in_tabs')"
+                    :tooltip="$t('block_editor.open_in_tabs')"
                     data-test="task-edit-modal-open-in-tabs"
                     @click="emit('open-in-tabs')"
                 >
@@ -33,8 +33,8 @@
                 </KsIconButton>
                 <KsIconButton
                     class="task-edit-modal-header-action"
-                    :aria-label="t('close')"
-                    :tooltip="t('close')"
+                    :aria-label="$t('close')"
+                    :tooltip="$t('close')"
                     data-test="task-edit-modal-close"
                     @click="emit('close')"
                 >
@@ -96,14 +96,14 @@
                 <KsText size="small">
                     <i18n-t keypath="block_editor.open_mode_hint" scope="global">
                         <template #settings>
-                            <router-link :to="{name: 'preferences'}">{{ t("settings.label") }}</router-link>
+                            <router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>
                         </template>
                     </i18n-t>
                 </KsText>
                 <KsIconButton
                     class="task-edit-modal-hint-dismiss"
-                    :aria-label="t('close')"
-                    :tooltip="t('close')"
+                    :aria-label="$t('close')"
+                    :tooltip="$t('close')"
                     data-test="task-edit-modal-open-mode-hint-dismiss"
                     @click="dismissHint"
                 >

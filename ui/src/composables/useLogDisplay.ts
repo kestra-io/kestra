@@ -1,6 +1,6 @@
 import {computed} from "vue"
 import {useStorage} from "@vueuse/core"
-import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../utils/appFontSize"
+import {APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode} from "../utils/appFontSize"
 
 export type LogDensity = "compact" | "normal" | "expanded";
 
@@ -59,12 +59,12 @@ export const editorFontSizeOverride = useStorage<number | null>("editorFontSize"
 })
 
 export const logsFontSize = computed({
-    get: () => logsFontSizeOverride.value ?? BASE_PX[appFontSizeMode.value],
+    get: () => logsFontSizeOverride.value ?? MONO_BASE_PX[appFontSizeMode.value],
     set: (v: number) => { logsFontSizeOverride.value = v },
 })
 
 export const effectiveEditorFontSize = computed(
-    () => editorFontSizeOverride.value ?? BASE_PX[appFontSizeMode.value],
+    () => editorFontSizeOverride.value ?? MONO_BASE_PX[appFontSizeMode.value],
 )
 
 export const logsDensity = useStorage<LogDensity>("logsDensity", "normal")

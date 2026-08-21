@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
+import io.kestra.core.exceptions.CyclicGraphException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -169,11 +170,7 @@ public class GraphUtils {
                 .forEach(startingUids::add);
         }
 
-        Set<String> edgeUuid = startingUids
-            .stream()
-            .flatMap(uid -> recursiveEdge(edges, uid).stream())
-            .map(FlowGraph.Edge::getSource)
-            .collect(Collectors.toSet());
+        Set<String> edgeUuid = reachableEdgeSources(edges, startingUids);
 
         return nodes
             .stream()
@@ -181,17 +178,63 @@ public class GraphUtils {
             .collect(Collectors.toSet());
     }
 
-    private static List<FlowGraph.Edge> recursiveEdge(List<FlowGraph.Edge> edges, String selectedUuid) {
-        return edges
+    private static Set<String> reachableEdgeSources(List<FlowGraph.Edge> edges, Set<String> fromUuids) {
+        Map<String, List<FlowGraph.Edge>> edgesBySource = edges
             .stream()
-            .filter(edge -> edge.getSource().equals(selectedUuid))
-            .flatMap(
-                edge -> Stream.concat(
-                    Stream.of(edge),
-                    recursiveEdge(edges, edge.getTarget()).stream()
-                )
-            )
-            .toList();
+            .collect(Collectors.groupingBy(FlowGraph.Edge::getSource));
+
+        Set<String> sources = new HashSet<>();
+        Set<String> walked = new HashSet<>();
+
+        for (String from : fromUuids) {
+            walkFrom(from, edgesBySource, sources, walked);
+        }
+
+        return sources;
+    }
+
+    private static void walkFrom(String from, Map<String, List<FlowGraph.Edge>> edgesBySource, Set<String> sources, Set<String> walked) {
+        if (walked.contains(from)) {
+            return;
+        }
+
+        Deque<Iterator<FlowGraph.Edge>> frames = new ArrayDeque<>();
+        List<String> path = new ArrayList<>();
+        Set<String> onPath = new HashSet<>();
+
+        frames.push(edgesBySource.getOrDefault(from, List.of()).iterator());
+        path.add(from);
+        onPath.add(from);
+
+        while (!frames.isEmpty()) {
+            Iterator<FlowGraph.Edge> frame = frames.peek();
+
+            if (!frame.hasNext()) {
+                frames.pop();
+                String done = path.remove(path.size() - 1);
+                onPath.remove(done);
+                walked.add(done);
+                continue;
+            }
+
+            FlowGraph.Edge edge = frame.next();
+            sources.add(edge.getSource());
+            String target = edge.getTarget();
+
+            if (onPath.contains(target)) {
+                List<String> cycle = new ArrayList<>(path.subList(path.indexOf(target), path.size()));
+                cycle.add(target);
+                throw CyclicGraphException.of(cycle);
+            }
+
+            if (walked.contains(target)) {
+                continue;
+            }
+
+            frames.push(edgesBySource.getOrDefault(target, List.of()).iterator());
+            path.add(target);
+            onPath.add(target);
+        }
     }
 
     public static void sequential(

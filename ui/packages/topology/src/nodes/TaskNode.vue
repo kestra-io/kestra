@@ -481,6 +481,8 @@ button.playground-button {
 
 .runner-badge {
     align-self: flex-start;
+    max-width: 100%;
+    margin-bottom: var(--ks-spacing-1);
     padding: 0 var(--ks-spacing-2);
     border-radius: var(--ks-radius-base);
     background-color: var(--ks-bg-tag);

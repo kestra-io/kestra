@@ -2,6 +2,116 @@
   "ja": {
     "loading": "読み込み中...",
     "more actions": "その他のアクション",
+    "recipe": {
+      "create_flow": "flowを作成",
+      "email": "Eメール",
+      "execution": {
+        "include_sub": "サブnamespaceを含める",
+        "include_sub_hint_off": "正確なnamespace内のflowのみがこのアラートをトリガーします。",
+        "include_sub_hint_on": "子 namespace の flow もこのアラートをトリガーします。",
+        "namespace_placeholder": "namespaceを選択",
+        "namespaces_error": "namespaceを読み込めませんでした。監視するnamespaceを入力するか、後で再試行してください。",
+        "states": "これらの状態の場合",
+        "states_recommended": "FAILED はアラートの推奨デフォルトです。",
+        "states_required": "少なくとも1つのstateを選択してください。",
+        "watch_namespace": "namespaceを監視"
+      },
+      "notify": {
+        "email_label": "Eメール",
+        "email_sub": "メール通知を送信",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "カスタム",
+        "custom_note": "プレースホルダーのtaskが追加されました — エディターで任意の通知プラグインと交換してください。",
+        "custom_sub": "独自の通知タスクを追加",
+        "plugin_unavailable": "Pluginがインストールされていません",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Slackチャンネルにメッセージを投稿する",
+        "teams_sub": "Teamsチャンネルにカードを送信",
+        "teams_webhook_placeholder": "Teamsの受信Webhook URL"
+      },
+      "other": {
+        "load_error": "トリガーを読み込めませんでした。後でもう一度お試しください。",
+        "no_results": "トリガーが見つかりません。",
+        "search_label": "トリガーを検索",
+        "search_placeholder": "名前またはタイプでフィルター"
+      },
+      "schedule": {
+        "cron": "Cron式",
+        "custom": "カスタム",
+        "daily": "毎日",
+        "daily_hint": "毎日午前9時に実行されます。",
+        "frequency": "頻度",
+        "hourly": "時間ごと",
+        "hourly_hint": "毎時0分に実行されます。",
+        "timezone": "タイムゾーン",
+        "timezone_placeholder": "タイムゾーンを選択してください (デフォルトはUTC)",
+        "weekly": "毎週",
+        "weekly_hint": "毎週月曜日午前9時に実行されます。"
+      },
+      "section_subtitle": "プラットフォームを監視し、チームに自動的に通知するflowを構築します。",
+      "section_title": "システムflowを作成",
+      "summary": {
+        "any_namespace": "任意のnamespace",
+        "empty": "flowをプレビューするには、triggerと少なくとも1つの通知チャネルを設定してください。",
+        "exact_match": "完全一致",
+        "execution": "{ns} ({scope}) 内のflowが{states}の状態に達した場合、{channels}経由で通知します。",
+        "including_sub": "とサブnamespace",
+        "invalid_hint": "少なくとも1つの通知チャネルを追加し、トリガー設定を完了してください。",
+        "invalid_hint_trigger": "トリガー設定を完了してください。",
+        "no_channel": "選択したチャンネル",
+        "other": "{trigger}トリガーが発火したときに、{channels}経由で通知します。",
+        "schedule": "スケジュール \"{cron}\" で、{channels} 経由で通知します。",
+        "selected_trigger": "選択済み",
+        "title": "概要",
+        "webhook": "Webhookを受信したときに、{channels}経由で通知します。",
+        "preview_title": "プレビュー",
+        "live": "ライブ"
+      },
+      "then": {
+        "no_channel_warning": "少なくとも1つの通知チャネルを選択してください。",
+        "subtitle": "チームへの通知方法を選択します。",
+        "title": "その後通知する",
+        "unavailable_channels_warning": "{channels}: このトリガータイプにはプラグインがインストールされていません。通知は送信されません。"
+      },
+      "trigger": {
+        "case_sub": "EEのみの機能",
+        "case_title": "ケースステータス",
+        "execution_sub": "flowの状態変化に反応します",
+        "execution_title": "実行状態",
+        "other_sub": "利用可能なトリガープラグイン",
+        "other_title": "その他のtrigger",
+        "schedule_sub": "時間スケジュールで実行",
+        "schedule_title": "スケジュール",
+        "webhook_sub": "HTTPリクエストによってトリガーされました",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "このURLにPOSTリクエストを送信してflowをトリガーします。",
+        "endpoint_url": "エンドポイントURL",
+        "key_label": "Webhook key",
+        "key_placeholder": "このwebhookに一意のkeyを入力してください"
+      },
+      "when": {
+        "subtitle": "このシステム flow をトリガーするものを選択してください。",
+        "title": "発生条件",
+        "trigger_type": "トリガータイプ"
+      },
+      "hero_eyebrow": "あなたのシステム flow",
+      "hero_empty": "flowをプレビューするために、トリガーとチャンネルを選択してください。",
+      "browse_blueprints": "テンプレートから開始しますか？コミュニティのシステム blueprint を参照する",
+      "start_blank": "ご自身で作成しますか？ステップをスキップして空のflowを開く",
+      "steps": {
+        "trigger_title": "トリガー",
+        "trigger_desc": "実行時",
+        "trigger_heading": "このflowはいつ実行されますか？",
+        "notify_title": "通知",
+        "notify_desc": "誰が聞くか",
+        "notify_heading": "チームにどのように通知しますか？",
+        "review_title": "レビュー",
+        "review_desc": "確認と作成",
+        "review_heading": "システムflowを確認"
+      }
+    },
     "toggle menu": "メニューを切り替え",
     "panel actions": "パネルアクション",
     "playground actions": "プレイグラウンドアクション",
@@ -32,7 +142,7 @@
       "back": "戻る",
       "openInNewTab": "新しいタブで開く"
     },
-    "delete confirm": "<code>{name}</code>を削除してもよろしいですか？",
+    "delete confirm": "<code>{name}</code> を削除してもよろしいですか？",
     "outdated revision save confirmation": {
       "confirm": "上書きしますか？",
       "update": {
@@ -51,7 +161,7 @@
       "details": "以前のflowはRevisionsタブから復元できます。"
     },
     "is deprecated": "非推奨です",
-    "success": "Success",
+    "success": "成功",
     "save": "保存",
     "save_as_draft": "下書きとして保存",
     "publish": "公開",
@@ -76,11 +186,12 @@
     "edit": "編集",
     "back": "戻る",
     "next": "次へ",
+    "previous": "前へ",
     "done": "完了",
     "review your inputs": "入力内容を確認してください",
     "edit flow": "Flowを編集",
     "executions": "実行",
-    "execution": "Execution",
+    "execution": "実行",
     "execution id": "実行 Id",
     "details": "詳細",
     "overview": "概要",
@@ -109,9 +220,9 @@
     "next_execution": "次回の実行",
     "datepicker": {
       "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
-      "leave empty for infinite": "無限の期間にするには空白のままにするか、ISO 8601期間を入力してください（例：'P1DT1H1M1S'）",
+      "leave empty for infinite": "無期限にする場合は空欄にするか、ISO 8601期間（例：'P1DT1H1M1S'）を入力してください",
       "duration example": "例：'P1DT1H1M1S'",
-      "error": "無効な期間形式です。ISO 8601期間である必要があります（例：P1DT1H1M1S）",
+      "error": "期間の形式が無効です。ISO 8601期間形式（例：P1DT1H1M1S）である必要があります。",
       "custom": "カスタム",
       "last5minutes": "過去5分",
       "last15minutes": "過去15分",
@@ -160,15 +271,13 @@
         "1d": "1日",
         "7d": "7日"
       },
-      "last14days": "直近14日間",
-      "last28days": "過去28日間",
       "14days": "14日間",
       "28days": "28日間"
     },
     "created date": "作成日",
     "latest_update": "最新の更新",
     "expiration date": "有効期限",
-    "healthcheck date": "HealthCheck日",
+    "healthcheck date": "HealthCheck 日付",
     "last execution status": "最後の実行ステータス",
     "jump to...": "ジャンプ先...",
     "contextBar": {
@@ -204,12 +313,12 @@
     "restart latest revision": "最新のリビジョンを再起動",
     "restart tooltip": "<code>{state}</code>タスクから実行を再起動",
     "restarted": "実行が再開されました",
-    "restart confirm": "実行<code>{id}</code>を再起動してもよろしいですか？",
+    "restart confirm": "実行 <code>{id}</code> を再起動してもよろしいですか？",
     "replay": "リプレイ",
     "replay from task tooltip": "Task <code>{taskId}</code>から開始する同様の実行を作成",
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
-    "replayed": "実行が再生されました",
+    "replayed": "実行がリプレイされました",
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
     "prefill inputs": "自動入力",
     "current": "現在",
@@ -219,7 +328,7 @@
     "are you sure change state": "状態を変更してもよろしいですか？",
     "yes": "はい",
     "change state done": "タスクの状態が更新されました",
-    "change state confirm": "タスク <code>{task}</code> の実行 <code>{id}</code> のタスク実行状態を変更してもよろしいですか？",
+    "change state confirm": "実行 <code>{id}</code> の <code>{task}</code> タスクのタスク実行状態を変更してもよろしいですか？<br/>これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
     "change state current state": "現在のステータスは:",
     "replay execution title": "実行の再実行",
     "restart execution title": "実行の再起動",
@@ -239,27 +348,27 @@
     "kill": "キル",
     "kill parents and subflow": "現在のflowとsubflowを終了",
     "kill only parents": "現在のもののみを終了",
-    "killed confirm": "実行<code>{id}</code>をキルしてもよろしいですか？",
+    "killed confirm": "実行 <code>{id}</code> を強制終了してもよろしいですか？",
     "killed done": "実行はキルのためにキューに入れられました",
     "resume": "再開",
     "resumed title": "実行<code>{id}</code>を再開",
-    "resumed confirm": "実行<code>{id}</code>を再開してもよろしいですか？",
+    "resumed confirm": "実行 <code>{id}</code> を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
     "resume from breakpoint title": "ブレークポイントから実行 <code>{id}</code> を再開します",
     "resume from breakpoint done": "ブレークポイントから実行が再開されました",
     "breakpoints": "ブレークポイント",
     "pause": "一時停止",
-    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "pause title": "実行 <code>{id}</code> を一時停止します。<br/>現在実行中のタスクは引き続き処理され、実行は手動で再開する必要があることに注意してください。",
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "unqueue": "キューから削除",
-    "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>ただし、flowの並行性制限には従わないため、許可された制限を超えて実行が行われる可能性があります。",
+    "unqueue title": "実行 <code>{id}</code> のキュー解除をしますか？<br/><br/>これはflowの同時実行制限に従わないため、許可された制限よりも多くの実行が実行される可能性があることに注意してください。",
     "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
     "unqueue done": "実行はキューから外されました",
     "force run": "強制実行",
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
-    "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
-    "force run done": "実行は強制的にRUNNINGです。",
+    "force run confirm": "実行 <code>{id}</code> を強制的に実行してもよろしいですか？<br/><br/>警告: 実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATED タスクは実行状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから削除されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run done": "実行は強制的に実行されました",
     "metrics": "メトリクス",
     "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
     "no outputs available": "このタスク実行には利用可能なoutputがありません。",
@@ -316,7 +425,7 @@
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",
       "tree": "ツリー",
-      "raw_json": "Raw JSON",
+      "raw_json": "生JSON",
       "select_prompt": "value を確認する変数を選択してください。",
       "select_hint": "変数、trigger、および task outputs は左側に一覧表示されます。",
       "empty": "この実行に利用可能な変数はありません。",
@@ -327,6 +436,7 @@
     },
     "file_preview": {
       "big_file_warning": "このファイルのサイズは{size}です。読み込みに時間がかかり、ブラウザがブロックされる可能性があります。それでも読み込みますか？",
+      "big_file_download_only": "このファイルのサイズは{size}です。エディタで開くには大きすぎるため、代わりにダウンロードしてください。",
       "load_anyway": "読み込みを続行",
       "load_error": "ファイルプレビューの読み込みに失敗しました。一時的な問題または権限の問題である可能性があります。",
       "retry": "再試行",
@@ -363,19 +473,22 @@
         },
         "alt": "ブループリントアイコン"
       },
-      "custom": "カスタムblueprint",
+      "custom": "カスタムBlueprint",
       "flows": "フローBlueprints",
       "apps": "アプリケーション Blueprints",
       "dashboards": "ダッシュボード Blueprints",
       "detail": {
         "category": "カテゴリタイプ",
         "links": "リンクとリソース",
-        "openInEditor": "フローを編集で開く"
+        "openInEditor": "フローを編集で開く",
+        "openInAppsEditor": "Appsエディターで開く",
+        "openInDashboardEditor": "ダッシュボードエディターで開く"
       },
       "missingPlugins": {
-        "title": "不足しているplugin",
-        "description": "このblueprintは、このインスタンスにインストールされていないpluginのtaskを使用しています: {plugins}。このblueprintを使用するにはインストールしてください。",
-        "card": "このインスタンスにインストールされていないpluginが必要です: {plugins}",
+        "title": "利用できないtask",
+        "description": "このblueprintは、このインスタンスで利用できないtaskタイプを使用しています:",
+        "installHint": "このblueprintを使用するには、不足しているpluginをインストールしてください: {plugins}。",
+        "card": "このインスタンスで利用できないtaskタイプを使用しています: {tasks}",
         "install": "pluginをインストール"
       }
     },
@@ -383,7 +496,7 @@
     "plugins": {
       "names": "プラグイン",
       "release": "リリースノート",
-      "beta": "Beta",
+      "beta": "ベータ",
       "copy_type": "タイプをコピー",
       "deprecated": "非推奨",
       "dynamic": "動的",
@@ -413,17 +526,17 @@
       "intro_step3_desc_suffix": "とPebble式を使用します。",
       "intro_step3_title": "動的にする",
       "intro_sub": "YAMLでflowを構築するために必要なすべて：プロパティ、inputs、Pebble templatingを一箇所で。",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "例",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "概要",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flowドキュメント",
-      "nav_examples": "Examples",
+      "nav_examples": "例",
       "nav_outputs": "Outputs",
       "nav_overview": "概要",
-      "nav_properties": "Properties",
+      "nav_properties": "プロパティ",
       "non_dynamic": "非動的",
       "required": "必須"
     },
@@ -476,11 +589,11 @@
     "last evaluation date": "最終評価日",
     "last trigger date tooltip": "トリガーが最後に実行された時刻。バックフィルを実行している場合、過去の時刻になることがあります。",
     "context updated date tooltip": "トリガーのコンテキストが最後に更新された時刻。これは、実行がトリガーされたとき、終了したとき（ロックが解除されたとき）、または評価後（実行が発生しない場合でも）に発生します。",
-    "next evaluation date tooltip": "トリガーが次に評価されるタイミングは、その間隔に基づきます。条件が満たされない場合、次の実行日と常に同じとは限りません。",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "next evaluation date tooltip": "スケジューラーが、その間隔に基づいてこのtriggerを次に評価する日時。評価は、triggerの条件が満たされた場合にのみ実行を生成します。",
+    "last evaluation date tooltip": "トリガーがスケジューラーによって最後に評価されたとき（実行が生成されたかどうかに関わらず）。",
     "conditions": "条件",
     "triggerId": "トリガーID",
-    "tenantId": "テナントID",
+    "tenantId": "tenant ID",
     "paused": "一時停止中",
     "running": "RUNNING",
     "Fold content lines": "複数行文字列を折りたたむ",
@@ -537,13 +650,13 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
     "restore": "復元",
-    "restore confirm": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
+    "restore confirm": "リビジョン <code>{revision}</code> を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk replay": "<code>{executionCount}</code>件の実行を再実行してもよろしいですか？",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
-    "bulk force run": "実行を強制的に実行しますか <code>{executionCount}</code> 回の実行を行いますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再送信されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "bulk force run": "<code>{executionCount}</code>件の実行を強制的に実行してもよろしいですか？<br/><br/>警告：実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATEDタスクは実行状態に移行します。</li><li>RUNNINGタスクは再提出されます。</li><li>QUEUEDタスクはキューから削除されます。</li><li>PAUSEDタスクは再開されます。</li></ul>",
     "bulk restart": "<code>{executionCount}</code>件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
     "cancel": "キャンセル",
@@ -613,7 +726,7 @@
     "flow must not be empty": "フローは空であってはなりません",
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "readonly property": "読み取り専用プロパティ",
-    "namespace and id readonly": "プロパティ`namespace`と`id`は変更できません — 初期値に設定されています。flowの名前を変更したりnamespaceを変更したい場合は、新しいflowを作成して古いものを削除してください。",
+    "namespace and id readonly": "プロパティの`namespace`と`id`は変更できません。これらは初期値に設定されています。flowの名前を変更したり、namespaceを変更したい場合は、新しいflowを作成して古いflowを削除してください。",
     "avg": "平均",
     "sum": "合計",
     "min": "Min",
@@ -631,22 +744,22 @@
     "collapse all": "すべて折りたたむ",
     "expand": "展開",
     "collapse": "折りたたむ",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "フィルタ",
+    "filter_out": "除外する",
+    "copy_value": "値をコピー",
+    "open_page": "ページを開く",
+    "logs_copied": "ログがクリップボードにコピーされました",
+    "expand_by_default": "デフォルトで構造化ログを展開する",
+    "similar lines": "類似の行",
+    "download_logs_description": "エクスポートするログを選択します。フィルターは現在のビューにデフォルト設定されます。",
+    "display_settings": "表示設定",
+    "density": "密度",
+    "density_compact": "コンパクト",
+    "density_normal": "通常",
+    "density_expanded": "展開済み",
+    "pretty_json": "整形済みJSON",
+    "body_line_clamp": "行の高さを制限する",
+    "font size": "フォントサイズ",
     "environment": "環境",
     "join_slack": "Slackに参加",
     "kestra": "Kestra",
@@ -676,7 +789,7 @@
     "flow source not found": "フローソースが見つかりません",
     "timezone": "タイムゾーン",
     "add task": "taskを追加",
-    "unable to generate graph": "グラフの生成中に問題が発生し、トポロジーが表示されません。",
+    "unable to generate graph": "グラフの生成中に問題が発生したため、トポロジーを表示できません。",
     "attempts": "試行回数",
     "version": "バージョン",
     "services": "サービス",
@@ -735,6 +848,10 @@
         "files": "{count} 個の選択されたファイルを削除",
         "folders": "{count} 個の選択されたフォルダーを削除"
       },
+      "move": {
+        "bulk_success": "選択されたファイルは正常に移動されました。",
+        "bulk_error": "選択された項目 {count} 個のうち、移動に失敗しました。"
+      },
       "import": {
         "files": "ファイルをインポート",
         "folder": "フォルダーをインポート",
@@ -788,8 +905,8 @@
     "manage labels": "ラベルを管理",
     "Set labels to execution": "実行<code>{id}</code>のラベルを追加または更新",
     "Set labels done": "実行のラベルが正常に設定されました",
-    "bulk set labels": "<code>{executionCount}</code>件の実行にラベルを設定してもよろしいですか？",
-    "true": "True",
+    "bulk set labels": "<code>{executionCount}</code>件の実行にlabelを設定してもよろしいですか？",
+    "true": "はい",
     "false": "False",
     "undefined": "未定義",
     "execution-include-non-terminated": "終了していない実行を含めますか？",
@@ -843,7 +960,7 @@
       }
     },
     "no inputs": "このflowにはinputがありません。",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "設定",
     "settings": {
       "label": "設定",
       "updated": "{name} が更新されました",
@@ -862,7 +979,8 @@
             "triggers_default_tab": "デフォルトトリガーのタブ",
             "playground": "プレイグラウンド",
             "auto_refresh_interval": "自動更新間隔",
-            "task_edit_default_mode": "デフォルトのタスク編集モード"
+            "task_edit_default_mode": "デフォルトのTask編集モード",
+            "flow_template": "デフォルトのflowテンプレート"
           },
           "descriptions": {
             "default_namespace": "namespaceなしで新しいflowを作成する際に使用されます。",
@@ -875,19 +993,25 @@
             "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。",
             "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
             "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
-            "task_edit_default_mode": "コードエディタなしでタスクがデフォルトでどのように開くか。"
+            "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。",
+            "flow_template": "新しいflowを作成すると、エディターでYAMLが開きます。idとnamespaceは自動生成されるため、省略できます。これが空の場合、インスタンスに設定されているテンプレートが使用されます。"
           },
           "task_edit_default_mode_options": {
             "modal": "モーダル",
             "tab": "タブ"
+          },
+          "flow_template_reset": "デフォルトにリセット",
+          "flow_template_error": {
+            "invalid_mapping": "無効なflowテンプレート: リストまたはスカラーではなく、キーと値のマッピングが必要です。",
+            "parse_error": "YAMLを解析できませんでした。テンプレートは保存されたため、flowを作成する際にエディタに同じエラーが表示される可能性があります。"
           }
         },
         "theme": {
-          "label": "テーマ設定",
+          "label": "外観",
           "fields": {
             "app_font_size": "アプリのフォントサイズ",
             "color_mode": "カラーモード",
-            "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
+            "editor_folding_stratgy": "エディターでのコードの自動折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
@@ -948,7 +1072,7 @@
     },
     "apps": "アプリケーション",
     "promote": {
-      "label": "プロモート"
+      "label": "昇格"
     },
     "demos": {
       "enterprise_edition": "エンタープライズエディション",
@@ -956,17 +1080,21 @@
       "contact_sales": "営業に問い合わせる",
       "secrets": {
         "title": "シークレット管理をアップグレード",
-        "message": "エンタープライズエディション (EE) では、UIで直接シークレットを追加、編集、または削除できます。インスタンスの再起動は不要です。シークレットをnamespaceごとに整理し、詳細なRBAC権限を設定し、親namespaceから子namespaceに継承します。EEは、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearchなどのシークレットマネージャーと統合します。namespace、テナント、またはインスタンスごとに専用のバックエンドを設定して、チーム間でシークレットを分離するか、外部のvaultに保存された読み取り専用のシークレットを有効にします。シークレットは、保存時および転送時に暗号化されたままです。オプションのキャッシュによりAPIコールが削減され、監査証跡がすべてのアクセスをログに記録します。",
+        "message": "Enterprise Edition では、UI で直接シークレットを追加、編集、削除し、RBAC で namespace ごとに整理し、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearch をバックエンドとして利用できます。",
         "add_env": {
-          "intro": "新しいSecretを作成するには：",
+          "intro": "新しいSecretを作成",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
-          "second": "`<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>`という名前の環境変数を上記の値で追加してください。",
-          "third": "Kestraインスタンスを再起動する"
+          "second": "エンコードされた値を持つ <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> という名前の環境変数を設定します。",
+          "third": "シークレットをロードするためにKestraインスタンスを再起動してください。"
         }
       },
       "apps": {
         "title": "Kestraでカスタムアプリを構築する",
-        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。"
+        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
+        "blueprints": {
+          "title": "アプリのblueprintから開始します。",
+          "message": "アプリのblueprintは、フォーム、承認、データ送信などの一般的なユースケースに対応する既製のアプリです。Kestra Enterprise Editionでは、任意のblueprintを起点として使用し、ワークフローの上にカスタムUIを構築するために適応させることができます。"
+        }
       },
       "tests": {
         "label": "テスト",
@@ -981,18 +1109,27 @@
         "message": "アセットは、観測性、系譜、および所有権のメタデータを接続し、プラットフォームチームが迅速にトラブルシューティングを行い、自信を持ってデプロイできるようにします。"
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "ケース",
+        "header": "インシデント管理",
+        "title": "Kestra から離れることなくインシデントをトリアージし、解決します。",
+        "message": "Kestra Enterprise Editionのケース機能では、SLAトラッキング、アクティビティタイムライン、リンクされた実行とアセットにより、失敗した実行から直接インシデントを開き、割り当て、追跡できるため、根本原因分析を迅速化できます。"
       },
       "promote": {
-        "title": "環境間でFlowsをプロモート",
-        "message": "Kestra Enterprise Editionでは、GitやCI/CDパイプラインを必要とせず、UIから直接、flowをある環境から別の環境へ（開発環境からステージング、本番環境など）プロモートできます。プロモートする前に、何が変更されるかを正確にdiffで確認し、機密性の高いターゲットを承認ゲートで保護し、変更のずれ（ドリフト）を一目で特定し、誰が、何を、どこで、いつプロモートしたかの完全な履歴を保持できます。"
+        "title": "環境間でのflowの昇格",
+        "message": "Kestra Enterprise Editionでは、GitやCI/CDパイプラインを必要とせず、UIから直接、ある環境から別の環境（開発からステージング、本番など）へflowを昇格させることができます。昇格前に変更内容の差分を正確に確認し、確認ゲートで機密性の高いターゲットを保護し、ドリフトを一目で特定し、誰が何を、どこで、いつ昇格させたかの完全な履歴を保持します。"
+      },
+      "dashboards": {
+        "header": "カスタムダッシュボード",
+        "title": "チームに合わせてカスタムダッシュボードを構築します。",
+        "message": "Kestra Enterprise Editionのカスタムダッシュボードでは、コードおよびノーコードエディター、ライブプレビュー、tenantごとのデフォルトダッシュボードを使用して、実行、log、メトリクスに関する独自のビューを作成および共有できます。時系列、KPI、テーブル、Markdownチャートを組み合わせることができます。",
+        "blueprints": {
+          "title": "ダッシュボードのblueprintから開始します。",
+          "message": "ダッシュボードのblueprintは、一般的な監視ニーズに対応する既製のカスタムダッシュボードです。Kestra Enterprise Editionでは、任意のblueprintを起点として、ダッシュボードエディターでそのチャート、KPI、テーブルをチームに合わせて調整できます。"
+        }
       },
       "IAM": {
         "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）",
-        "message": "Kestra Enterprise Editionには、シングルサインオン（SSO）、SCIMディレクトリ同期、ロールベースのアクセス制御（RBAC）を備えた組み込みのIAM機能があり、複数のアイデンティティプロバイダーと統合し、ユーザーおよびサービスアカウントに対して詳細な権限を割り当てることができます。"
+        "message": "Kestra Enterprise Editionは、シングルサインオン（SSO）、SCIMディレクトリ同期、ロールベースアクセス制御（RBAC）を備えたIAM機能を内蔵しており、複数のIDプロバイダーと統合し、ユーザーおよびサービスアカウントにきめ細かな権限を割り当てることができます。"
       },
       "tenants": {
         "title": "隔離されたTenantでWorkflowを管理する",
@@ -1017,17 +1154,17 @@
       "policies": {
         "header": "ガバナンスポリシー",
         "label": "ポリシー",
-        "message": "ポリシーにより、プラットフォームチームはすべての flow にわたってルールを一元的に管理および適用できます。これには、共有のデフォルト値の注入、プラグインのブロック、プロパティ値の制限、コンプライアンス label の要求などが含まれます。ルールはテナントまたは namespace レベルで段階的なロールアウトとともに適用され、注入または置換されたすべての値は flow の作成者から常に可視です。",
+        "message": "ポリシーを使用すると、プラットフォームチームはすべてのflowにわたってルールを一元的に管理および適用できます。共有のデフォルトを挿入したり、プラグインをブロックしたり、プロパティ値を制限したり、コンプライアンスlabelを要求したりできます。ルールは、段階的なロールアウトでtenantまたはnamespaceレベルで適用され、挿入または置換されたすべての値はflow作成者に表示されたままになります。",
         "title": "すべての Flow をポリシーで統制"
       },
       "namespace": {
         "edit": {
           "title": "名前空間管理をアップグレードする",
-          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルトの高度な分離とガバナンスを提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、および詳細な権限をnamespaceごとに設定できます。これにより、シークレット、変数、およびプラグインの設定が異なるチームやプロジェクト間で安全かつ簡単に管理されることが保証されます。"
+          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、ガバナンスPolicyの高度な分離と大規模な制御を提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、およびnamespaceごとのきめ細かな権限を設定できます。これにより、シークレット、変数、ガバナンスルールが異なるチームやプロジェクト間で安全かつ簡単に維持されます。"
         },
         "secrets": {
           "title": "秘密を安全に管理する方法",
-          "message": "Kestra Enterprise Editionでは、namespaceレベルでシークレットを保存および管理することができ、リスクを最小限に抑え、各チームの認証情報を分離して保持します。ネストされた階層のおかげで、親namespaceで認証情報を設定すると、すべての子namespaceに継承されます。専用のシークレットマネージャーのサポートと詳細なnamespaceレベルの権限設定により、セキュリティとコンプライアンスがさらに強化されます。"
+          "message": "Kestra Enterprise Editionでは、namespaceレベルでシークレットを保存および制御できるため、リスクを最小限に抑え、各チームの認証情報が分離された状態を保てます。ネストされた階層により、親namespaceで認証情報を設定すると、すべての子namespaceに継承されます。専用のシークレットマネージャーと詳細なnamespaceレベルの権限設定のサポートにより、セキュリティとコンプライアンスがさらに強化されます。"
         },
         "assets": {
           "title": "資産管理の集中化",
@@ -1048,8 +1185,7 @@
         "audit-logs": {
           "title": "すべての変更を一箇所で追跡",
           "message": "Kestra Enterprise Editionでは、namespaceレベルの監査Logを詳細な差分とともに表示でき、すべてのリソースにわたって誰が何をいつ変更したかの履歴を明確に確認できます。"
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1219,12 +1355,12 @@
         }
       }
     },
-    "auditlogs": "Audit Logs",
+    "auditlogs": "監査ログ",
     "quotas": "クォータ",
     "iam": "IAM",
     "tenant": {
-      "name": "テナント",
-      "names": "テナント"
+      "name": "Tenant",
+      "names": "Tenants"
     },
     "bulk action async warning": "少々お待ちください。",
     "bulk unpause backfills": "{count}個のbackfillを再開",
@@ -1280,7 +1416,7 @@
     },
     "curl": {
       "command": "cURLコマンド",
-      "note": "SECRETおよびFILEのinputタイプの場合、コマンドは実際の値に合わせて調整する必要があります。"
+      "note": "SECRETおよびFILE入力タイプの場合、コマンドは実際の値に合わせて調整する必要があることに注意してください。"
     },
     "webhook": {
       "curl_command": "Webhook cURL コマンド",
@@ -1291,7 +1427,7 @@
     },
     "logs_view": {
       "raw": "Temporalビュー",
-      "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示",
+      "raw_details": "Task logsとflow logsを、タイムスタンプ順の生の形式で表示します",
       "compact": "デフォルトビュー",
       "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示"
     },
@@ -1317,7 +1453,7 @@
     "behavior": "動作",
     "concurrency": "並行性",
     "no-executions-view": {
-      "title": "自動化を開始",
+      "title": "Kestraで自動化を始めましょう",
       "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
       "namespace_sub_title": "このダッシュボードを埋めるために、このnamespaceから1つ以上のflowを実行します。",
       "namespace_guidance_desc": "Namespaceを管理するためのガイダンスが必要ですか？",
@@ -1325,7 +1461,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "はじめに ⚡",
+        "title": "開始する",
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。"
       },
       "namespaces": {
@@ -1344,12 +1480,12 @@
     "customize sidebar": "サイドバーをカスタマイズ",
     "reset to defaults": "デフォルトにリセット",
     "drop items here": "ここにアイテムをドロップしてください",
-    "files": "ファイル",
+    "files": "Namespaceファイル",
     "optional": "オプション",
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "remove_bookmark": "このブックマークを削除してもよろしいですか？",
     "showLess": "表示を減らす",
-    "documentationMenu": "ドキュメントメニュー",
+    "documentationMenu": "Docsメニュー",
     "item": "アイテム",
     "items": "アイテム",
     "iterations": "イテレーション",
@@ -1381,7 +1517,7 @@
         "errors": "エラーハンドラー",
         "afterExecution": "実行後",
         "finally": "最後に",
-        "flow": "Flow"
+        "flow": "flow"
       },
       "fields": {
         "main": {
@@ -1438,8 +1574,8 @@
         "default": "このエントリを削除",
         "cases": "このケースを削除"
       },
-      "adding_to": "+ {what} に追加",
-      "choose_placeholder": "{field} を選択",
+      "adding_to": "+ {what}に追加",
+      "choose_placeholder": "{field}を選択",
       "duration": {
         "add_unit": "単位を追加",
         "units": {
@@ -1450,7 +1586,7 @@
           "week": "週"
         }
       },
-      "expression_placeholder": "ここに {field} を入力...",
+      "expression_placeholder": "ここに{field}を入力",
       "nav": {
         "back": "戻る",
         "breadcrumb_aria": "フィールドパス",
@@ -1508,12 +1644,16 @@
     "dataFilters": "データフィルター",
     "logExporters": "ログエクスポーター",
     "empty": {
+      "secrets": {
+        "title": "まだSecretsがありません！",
+        "content": "API key、パスワード、トークンは、flowにハードコードする代わりにシークレットとして保存できます。各シークレットはnamespaceに属し、その子namespaceに継承され、任意のtaskから参照できます。"
+      },
       "namespaceFiles": {
         "title": "このnamespaceにはまだファイルがありません",
         "content": "namespaceファイルは、このnamespaceのプロジェクトフォルダのように機能します。Python、SQL、dbt、Terraformのコードを保存し、flow内の任意のファイルを次の方法で参照できます"
       },
       "announcements": {
-        "title": "お知らせはまだありません！",
+        "title": "まだお知らせはありません！",
         "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。"
       },
       "kill_switches": {
@@ -1525,16 +1665,16 @@
         "content": "外部からKestraと連携するアプリを作成し始めましょう。"
       },
       "testSuites": {
-        "title": "テストスイートがまだありません！",
-        "content": "テストスイートを作成して、flowをテストし始めましょう。"
+        "title": "まだテストがありません！",
+        "content": "flowの品質を検証し、リグレッションを回避するためにテストを追加します。"
       },
       "assets": {
         "title": "まだアセットがありません！",
         "content": "データ資産、サービス、インフラストラクチャを追跡および管理するためのアセットを追加します。"
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "まだケースがありません！",
+        "content": "インシデントのトリアージと追跡のためにケースを開くか、失敗した実行から自動的にリンクします。"
       },
       "apiTokens": {
         "title": "APIトークンを管理する",
@@ -1562,7 +1702,7 @@
       },
       "groups": {
         "title": "まだグループがありません！",
-        "content": "グループを使用すると、ユーザーをまとめてバンドルし、テナント全体で権限とロールバインディングを一括管理できます。"
+        "content": "グループを使用すると、ユーザーをまとめてバンドルし、tenant全体で権限とロールバインディングをまとめて管理できます。"
       },
       "dependencies": {
         "FLOW": {
@@ -1582,10 +1722,6 @@
           "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。"
         }
       },
-      "plugins": {
-        "title": "このNamespaceにはプラグインのデフォルトが設定されていません。",
-        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。"
-      },
       "triggers": {
         "title": "あなたのflowにはTriggerがありません。",
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。"
@@ -1601,8 +1737,7 @@
       "panels": {
         "title": "パネルが開いていません",
         "content": "すべてのパネルを閉じました。  \n続行するには上のタブを選択してください。"
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "ワードラップを切り替え",
     "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
@@ -1611,7 +1746,7 @@
       "move_left": "左に移動",
       "close_all_tabs": "すべてのタブを閉じる",
       "close_all_panels": "すべてのパネルを閉じる",
-      "exit_fullscreen": "全画面表示を終了",
+      "exit_fullscreen": "フルスクリーンを終了",
       "fullscreen": "全画面表示"
     },
     "search_docs": "検索",
@@ -1630,32 +1765,19 @@
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
       "labels": {
-        "singular": "ダッシュボード",
         "plural": "ダッシュボード"
       },
       "default": "デフォルトダッシュボード",
-      "switch": "ダッシュボードを切り替える",
-      "preview": "プレビュー ダッシュボード",
       "empty": "表示する結果がありません。",
-      "creation": {
-        "label": "ダッシュボードを作成",
-        "confirmation": "ダッシュボード <code>{title}</code> が作成されました。"
-      },
       "edition": {
         "label": "ダッシュボードを編集",
-        "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
-        "chart": "このチャートを編集",
-        "id readonly": "プロパティ `id` は変更できません — 現在、初期値に設定されています。変更したい場合は、新しいダッシュボードを作成し、古いものを削除してください。"
-      },
-      "deletion": {
-        "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
+        "chart": "このチャートを編集"
       },
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
       "viewAll": "すべて表示",
-      "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
-      "export": "CSVにエクスポート",
+      "export": "エクスポート",
       "exportTo": {
         "csv": "CSVにエクスポート",
         "ion": "ION にエクスポート"
@@ -1671,9 +1793,9 @@
     },
     "setup": {
       "login": "ログイン",
-      "login_title": "サインイン",
+      "login_title": "Kestraにサインイン",
       "logout": "ログアウト",
-      "troubleshooting": "パスワードをお忘れですか？",
+      "troubleshooting": "サインインでお困りですか？",
       "steps": {
         "user": "管理者ユーザーを作成",
         "survey": "詳細を教えてください",
@@ -1728,7 +1850,7 @@
     },
     "ai": {
       "flow": {
-        "title": "AIエージェント"
+        "title": "AI Copilot"
       },
       "copilot": {
         "title": "AI Copilot",
@@ -1934,7 +2056,7 @@
           },
           "videos": {
             "title": "ビデオチュートリアル",
-            "description": "高度な機能のためのステップバイステップのビデオガイド"
+            "description": "ステップバイステップのビデオガイド"
           },
           "demo": {
             "title": "デモを取得",
@@ -1967,7 +2089,7 @@
       "oauth_provider_placeholder": "設定済みのOIDCプロバイダーを選択",
       "oauth_provider_required": "認証タイプがOAuthの場合、OAuthプロバイダーは必須です",
       "scopes_supported": "サポートされているscope",
-      "scopes_supported_placeholder": "openid, profile, email",
+      "scopes_supported_placeholder": "openid、profile、email",
       "scopes_supported_hint": "このサーバーのProtected Resource Metadataドキュメントに記載されたscope。仕様準拠のMCPクライアントは認可リクエストをこのリストに制限します。フィールドを省略してクライアントがIdPの公開scopeにフォールバックできるよう空のままにしてください。",
       "no_oauth_providers": "このインスタンスにOIDCプロバイダーが設定されていません",
       "delete_confirm": "このMCPサーバーを削除してもよろしいですか？",
@@ -1990,7 +2112,7 @@
         "flow": "flow",
         "state": "状態",
         "read_only": "読み取り専用",
-        "open_world": "Open world",
+        "open_world": "世界を開く",
         "destructive": "破壊的",
         "idempotent": "冪等",
         "return_direct": "直接返却"
@@ -2037,98 +2159,149 @@
     "source_search": {
       "cannot_select_read_only": "選択できません — {namespace} / {id} の編集権限がありません",
       "collapse_all": "すべて折りたたむ",
-      "confirm_bar_message": "{flows} 件の編集可能な flow で {matches} を置換します。読み取り専用の flow {skipped} 件はスキップされます。",
-      "diff_preview_aria": "置換の差分プレビュー",
-      "diff_preview_label": "差分プレビュー・まだ適用されていません",
-      "empty_description": "各 flow の YAML ソースからプラグインの種類、プロパティ、任意の定義を検索します。正規表現には .*、大文字と小文字の区別には Aa を有効にし、置換を開くと一致箇所をその場で変更できます — 権限の範囲内で。",
-      "empty_title": "flow 内で何がどこで使われているかを見つける",
-      "error_title": "正規表現が無効です",
-      "examples_aria": "検索例",
+      "confirm_bar_excluded": "他に{count}件の一致は変更されません。 | 他に{count}件の一致は変更されません。",
+      "confirm_bar_message": "{flows}個の編集可能なflowで{matches}個を置換します。{skipped}個の読み取り専用flowはスキップされます。",
+      "count_flows": "{count} flow | {count} flows",
+      "count_keys": "{count} key | {count} key",
+      "count_namespaces": "{count} namespace | {count} namespace",
+      "count_paths": "{count} 件のパス | {count} 件のパス",
+      "count_resources": "{count} 件のリソース | {count} 件のリソース",
+      "count_types": "{count} 種類 | {count} 種類",
+      "diff_preview_aria": "置換差分プレビュー",
+      "diff_preview_label": "差分プレビュー · まだ適用されていません",
+      "empty_description": "Flowsはそのソース内で検索されます。Namespaceファイルはパスで、KVとSecretsはキー名で一致します。上で種類を選び、検索語を入力してください。",
+      "empty_title": "Flows・ファイル・キーの中から値を探す",
+      "error_title": "無効な正規表現",
+      "examples_aria": "クエリ例",
+      "exclusion_flows_readonly": "Flows — 読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。 | Flows — 読み取り専用の一致が{count}件: FLOW · UPDATE 権限が必要です。",
+      "exclusion_search_only": "{type} — {count} 件: 検索専用のため置換できません。 | {type} — {count} 件: 検索専用のため置換できません。",
+      "exclusion_title": "{count} 件の一致が「すべて置換」から除外されています | {count} 件の一致が「すべて置換」から除外されています",
       "expand_all": "すべて展開",
-      "flow_update_permission": "FLOW · UPDATE",
+      "file_match_notice": "ファイルパスが一致しました。ファイルの内容は検索されません — 中を検索するにはファイルを開いてください。",
+      "files_progress_banner_failed": "Namespaceファイルは1つずつ検索されます。{total} 件中 {done} 件完了、{failed} 件失敗しました。合計はまだ変わります。",
+      "files_progress_banner_ok": "Namespaceファイルは1つずつ検索されます。{total} 件中 {done} 件完了しました。合計はまだ変わります。",
+      "flow_only_toggle_hint": "大文字/小文字の区別、単語単位、正規表現はFlowsにのみ適用されます。ファイルパスとキーは常にプレーンテキストとして一致します。",
+      "flow_section": "Flowセクション",
+      "flow_update_permission": "flow · 更新",
       "hide_replace": "置換を非表示",
-      "line_label": "{line} 行目",
-      "match_case": "大文字と小文字を区別",
+      "key_only_hint": "キー名のみを検索します。置換はできません。",
+      "kv_match_notice": "キー名のみが検索されました。値を確認するにはKV Storeを開いてください。",
+      "line_label": "行 {line}",
+      "match_case": "大文字・小文字を区別する",
       "match_count": "{count} 件一致 | {count} 件一致",
-      "match_nav": "{total} 件中 {current} 件目",
-      "match_nav_empty": "0 件中 0 件目",
-      "match_whole_word": "単語単位で一致",
+      "match_nav": "{total}件中{current}件",
+      "match_nav_empty": "0 / 0",
+      "match_whole_word": "単語全体を一致させる",
+      "meta_created": "作成日",
+      "meta_expires": "有効期限",
+      "meta_never": "なし",
+      "meta_updated": "更新日",
+      "namespace_search_failed": "{namespace} を検索できませんでした",
+      "namespace_search_failed_detail": "リクエストが失敗しました。他のnamespaceには影響しません。",
       "next_match": "次の一致",
-      "no_results_description": "namespace を広げる、範囲を「すべてのソース」に戻す、または「大文字と小文字を区別」と「単語単位で一致」をオフにしてみてください。",
-      "no_results_title": "「{query}」に一致する結果はありません",
+      "no_results_description": "namespaceを広げるか、スコープを「すべてのソース」に戻すか、「大文字と小文字を区別する」と「単語全体に一致」をオフにしてみてください。",
+      "no_results_hidden_type": "選択していない{type}で{count}件の一致が見つかりました。 | 選択していない{type}で{count}件の一致が見つかりました。",
+      "no_results_in_types": "“{query}” に一致する結果は{types}にありません",
+      "no_results_title": "「{query}」に一致する項目はありません",
       "open_flow": "flow を開く",
-      "open_in_editor": "エディタで開く",
+      "open_in_editor": "エディターで開く",
+      "open_in_kv": "KV Storeで開く",
+      "open_in_secrets": "Secretsで開く",
       "options_aria": "検索オプション",
+      "path_only_hint": "ファイルパスのみを検索し、内容は検索しません。置換はできません。",
       "preview_empty": "プレビューする結果を選択してください。結果リストの flow をクリックするとソースが表示されます。",
       "preview_error": "flow ソースの読み込みに失敗しました",
-      "previous_match": "前の一致",
-      "rbac_banner": "{count} 件の flow が置換の対象外です。{namespace} には読み取りアクセス権はありますが、編集権限がありません。含めるには namespace 管理者に {permission} 権限を依頼してください。",
+      "previous_match": "前のマッチ",
+      "rbac_banner": "{count} 個のflowが置換から除外されています。{namespace} に対する読み取りアクセス権はありますが、編集アクセス権はありません。これらを含めるには、namespace管理者に {permission} 権限を要求してください。",
       "read_only": "読み取り専用",
-      "read_only_tooltip": "この namespace には読み取りアクセス権はありますが、編集権限がありません",
+      "read_only_tooltip": "このnamespaceには読み取りアクセス権がありますが、編集アクセス権はありません",
       "replace_all": "すべて置換",
-      "replace_all_in_flow": "この flow 内をすべて置換",
-      "replace_all_tooltip": "編集可能な flow 内のすべての一致を置換",
+      "replace_all_in_flow": "flow内のすべてを置換",
+      "replace_all_tooltip": "編集可能なflow内のすべての一致を置換",
       "replace_apply_failed": "置換の適用に失敗しました",
-      "replace_apply_skipped": "{count} 件の flow をスキップしました ({reasons})",
-      "replace_apply_success": "{count} 件の flow を更新しました",
-      "replace_aria": "置換後の文字列",
+      "replace_apply_skipped": "{count} flowがスキップされました（{reasons}） | {count} flowsがスキップされました（{reasons}）",
+      "replace_apply_success": "{count} flowを更新しました | {count} flowsを更新しました",
+      "replace_aria": "置換",
       "replace_placeholder": "置換…",
       "replace_preview_failed": "置換プレビューの計算に失敗しました",
+      "replace_scope_hint": "置換はFlowsにのみ適用されます。他の3種類は検索専用です。",
       "replace_skip_reason": {
         "INVALID_FLOW": "無効になります",
-        "NOT_FOUND": "すでに存在しません",
+        "NOT_FOUND": "存在しません",
         "NO_CHANGE": "すでに最新です",
         "NO_MATCH": "一致が見つかりません",
         "READ_ONLY": "読み取り専用",
         "UNKNOWN": "保存できませんでした"
       },
       "replace_this": "置換",
-      "replace_this_match": "この一致を置換",
+      "replace_this_match": "この一致を置き換える",
+      "retry_namespace": "このnamespaceを再試行",
       "retry_search": "検索を再試行",
-      "scope": "範囲",
+      "scope": "スコープ",
       "scope_all": "すべてのソース",
       "scope_inputs": "Inputs",
-      "scope_tasks": "Tasks",
+      "scope_tasks": "タスク",
       "scope_triggers": "Triggers",
-      "search_aria": "flow のソースを検索",
+      "search_aria": "flowソースを検索",
       "search_failed": "検索に失敗しました",
-      "search_placeholder": "すべての flow のソースを検索…",
+      "search_in": "検索対象",
+      "search_placeholder": "Flowのソース、ファイルパス、KV・secretキーを検索…",
+      "searching_namespace": "{namespace} を検索中",
+      "secret_match_notice": "Secretの値は検索で読み取られることはありません。キー名のみが比較されます。",
       "select_all_in_flow": "{namespace} / {id} 内のすべての一致を選択",
-      "select_match": "{line} 行目の一致を選択",
+      "select_all_types": "すべての種類を選択",
+      "select_match": "行 {line} で一致を選択",
       "show_replace": "置換を表示",
-      "summary": "{flows} 件の flow で {matches} 件の一致",
-      "use_regex": "正規表現を使用"
+      "summary": "{flows} flow中{matches}件の一致",
+      "summary_cross": "{types}、{resources}で{matches}",
+      "tag_keys_only_never": "キーのみ — 値は表示も検索もされません",
+      "tag_keys_only_values": "キーのみ — 値は検索されません",
+      "tag_paths_only": "パスのみ — ファイルの内容は検索されません",
+      "tag_search_only": "検索専用 — 置換されません",
+      "tag_source_code": "ソースコード",
+      "truncated_flows": "{total} 件中 {shown} 件の一致を表示しています。すべて置換は表示中の一致にのみ適用されます。先に検索条件を絞り込んでください。",
+      "truncated_type": "{total} 件中 {shown} 件",
+      "turn_off": "{option} をオフにする",
+      "type_files": "Namespaceのファイル",
+      "type_flows": "Flows",
+      "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "{type} を検索できませんでした",
+      "type_secrets": "Secrets",
+      "use_regex": "正規表現を使用",
+      "value_never_shown": "表示も検索もされません",
+      "value_withheld": "表示されません"
     },
     "open source": "オープンソース",
     "pricing": "料金",
     "license": "ライセンス",
     "block_editor": {
-      "add_error_task": "エラーtaskを追加",
+      "add_error_task": "エラータスクを追加",
       "add_switch_case": "ケースを追加",
-      "adding_to": "{section}の新規エントリ",
-      "add_task": "taskを追加",
+      "adding_to": "{section}に新規エントリ",
+      "add_task": "タスクを追加",
       "add_to_lane": "{lane}に追加",
-      "add_trigger": "triggerを追加",
+      "add_trigger": "トリガーを追加",
       "all_apps": "すべてのアプリ",
-      "app_actions": "{count}個のアクション",
-      "block_deleted": "{name} を削除しました",
-      "card_aria_label": "タイプ{type}のブロック{id}",
-      "canvas_aria": "Flow ブロックキャンバス",
+      "app_actions": "{count} アクション",
+      "block_deleted": "{name}が削除されました",
+      "card_aria_label": "タイプ {type} のブロック {id}",
+      "canvas_aria": "flowブロックキャンバス",
       "close_all": "すべてのタブを閉じる",
       "cluster_collapse_aria": "{id}を折りたたむ",
-      "cluster_expand_aria": "{id}を展開 ({count} tasks)",
-      "collapsed_summary": "{count} tasks",
+      "cluster_expand_aria": "{id} ({count} tasks) を展開",
+      "collapsed_summary": "{count} タスク",
       "command_menu": {
-        "context_flow": "コンテキスト: flow",
+        "context_flow": "context: flow",
         "context_selected": "コンテキスト: {name}",
         "delete": "{name}を削除",
         "duplicate": "{name}を複製",
-        "goto": "{section}に移動",
+        "goto": "{section}へ移動",
         "group_block": "このブロック",
-        "group_flow": "Flow",
+        "group_flow": "flow",
         "group_goto": "移動",
         "group_insert": "挿入",
-        "group_types": "taskタイプ",
+        "group_types": "Taskタイプ",
         "insert_after": "{name}の後に挿入",
         "insert_at_end": "Tasksの最後に挿入",
         "insert_before": "{name}の前に挿入",
@@ -2137,119 +2310,118 @@
         "no_match": "一致なし",
         "open": "{name}を開く",
         "save": "flowを保存",
-        "search_placeholder": "コマンドを入力するかtaskを検索…",
+        "search_placeholder": "コマンドを入力するか、taskを検索…",
         "title": "コマンドメニュー"
       },
       "configure": "設定",
       "confirm_delete": {
-        "message": "{name}をflowから削除します。直後であれば元に戻せます。",
-        "message_group": "グループ{name}とその中身をすべて削除します。直後であれば元に戻せます。",
+        "message": "これにより、{name}がflowから削除されます。直後であれば元に戻すことができます。",
+        "message_group": "これにより、グループ {name} とその中のすべてが削除されます。直後であれば元に戻すことができます。",
         "title": "{name}を削除しますか？"
       },
-      "declared_outputs": "宣言されたOutputs",
+      "declared_outputs": "宣言されたoutput",
       "delete": "削除",
-      "depends_on_label": "依存先",
-      "depends_on_placeholder": "taskを選択…",
+      "depends_on_label": "依存元",
+      "depends_on_placeholder": "タスクを選択…",
       "depth_pill": "深さ {depth}",
-      "drag_reorder": "ドラッグして並び替え",
+      "drag_reorder": "ドラッグして並べ替え",
       "duplicate": "複製",
-      "empty": "まだtaskもtriggerもありません。最初のtaskを追加して始めましょう。",
-      "empty_add_hint": "または / を押してtaskを検索",
-      "empty_add_lead": "{label}を追加するにはクリック",
-      "error_task_noun": "エラーtask",
+      "empty": "まだタスクやトリガーがありません。最初のタスクを追加して開始してください。",
+      "empty_add_hint": "または / を押してタスクを検索",
+      "empty_add_lead": "クリックして{label}を追加",
+      "error_task_noun": "エラータスク",
       "execution_context": "実行コンテキスト",
-      "filter_data": "利用可能なデータを絞り込み…",
-      "flow_inputs": "Flow inputs",
-      "flowable_todo": "ネストされたtask（編集は近日公開）",
+      "filter_data": "利用可能なデータをフィルター…",
+      "flow_inputs": "flow inputs",
+      "flowable_todo": "ネストされたtask (編集は近日公開)",
       "footer": {
         "canvas": "キャンバス",
         "close_panel": "パネルを閉じる",
         "command_menu": "コマンドメニュー",
-        "editing": "ブロックを編集中",
+        "editing": "ブロックを編集",
         "inserting": "挿入中",
-        "selected": "選択中 · {name}"
+        "selected": "選択済み · {name}"
       },
       "inline_add": "{label}を追加",
-      "inputs": "Inputs",
-      "inputs_sub": "ここで使えるデータ",
-      "inserting_into": "{section}に挿入",
+      "inputs": "入力",
+      "inputs_sub": "ここで使用できるデータ",
+      "inserting_into": "{section}に挿入中",
       "kbd_add": "追加",
       "kbd_close": "閉じる",
-      "kbd_navigate": "移動",
+      "kbd_navigate": "ナビゲート",
       "lane_case": "ケース: {key}",
       "lane_defaults": "デフォルト",
-      "lane_else": "それ以外",
-      "lane_empty": "{lane}にtasksがありません",
+      "lane_else": "その他",
+      "lane_empty": "{lane} にタスクがありません",
       "lane_errors": "エラー",
-      "lane_finally": "最終的に",
-      "lane_tasks": "Tasks",
+      "lane_finally": "最後に",
+      "lane_tasks": "タスク",
       "lane_then": "その後",
       "loading_plugins": "プラグインを読み込み中...",
       "move_down": "下に移動",
       "move_up": "上に移動",
       "nav_rail_empty": "まだtaskもtriggerもありません。",
       "nav_rail_title": "アウトライン",
-      "nested_count": "{count}個のネストされたtask",
+      "nested_count": "{count} 個のネストされたタスク",
       "no_data_matches": "フィルターに一致するものがありません",
       "no_documentation": "このtaskのドキュメントはありません",
-      "no_recent": "最近使用したtaskはありません",
-      "no_task_results": "一致するtaskタイプが見つかりません。",
-      "open_details": "開いている詳細",
-      "open_in_split": "分割ビューで開く",
-      "output": "Output",
+      "no_recent": "最近のタスクタイプはまだありません",
+      "no_task_results": "一致するtaskタイプがありません。",
+      "open_details": "詳細を開く",
+      "open_in_split": "分割して開く",
+      "output": "出力",
       "output_sub": "このtaskが生成するもの",
-      "pick_task_type": "taskタイプを選択",
-      "picker_more_results": "他{count}件、検索を絞り込んでください",
+      "pick_task_type": "タスクタイプを選択",
+      "picker_more_results": "さらに {count} 件、検索を絞り込む",
       "plugin_default": "デフォルト: {value}",
-      "plugin_default_tooltip": "フローの pluginDefaults のデフォルト値",
-      "required_missing": "必須項目が未設定です",
+      "plugin_default_tooltip": "flowのpluginDefaultsからのデフォルト値",
+      "required_missing": "必須フィールドが設定されていません",
       "save_blocked": {
         "message": "保存する前にエラーを修正してください。",
-        "title": "フローを保存できません"
+        "title": "flowを保存できません"
       },
-      "search_task_placeholder": "taskタイプを検索...",
+      "search_task_placeholder": "タスクを検索または記述…",
       "shortcuts": {
-        "add_after": "選択の後にブロックを挿入",
-        "add_before": "選択の前にブロックを挿入",
+        "add_after": "選択後にブロックを挿入",
+        "add_before": "選択範囲の前にブロックを挿入",
         "add_task": "カーソル位置にクイック挿入",
-        "clear": "閉じる / 選択解除",
-        "collapse_expand": "折りたたみ / 展開",
-        "command_palette": "コマンドメニュー（コンテキスト対応）",
+        "clear": "選択を閉じる / クリア",
+        "collapse_expand": "折りたたむ / 展開する",
+        "command_palette": "コマンドメニュー (コンテキスト)",
         "group_edit": "編集",
         "group_global": "グローバル",
         "group_insert": "挿入",
-        "group_navigate": "移動",
+        "group_navigate": "ナビゲート",
         "move_between": "選択を移動",
         "open": "選択したブロックを開く",
         "open_split": "選択したブロックを分割ビューで開く",
         "or": "または",
-        "reorder": "上下に並べ替え",
+        "reorder": "並べ替え (上 / 下)",
         "save": "flowを保存",
-        "step_into": "展開してグループに入る",
-        "step_out": "折りたたんで親に戻る",
+        "step_into": "グループを展開 / ステップイン",
+        "step_out": "折りたたむ / 親にステップアウト",
         "title": "キーボードショートカット",
         "toggle": "このヘルプ",
         "undo": "元に戻す"
       },
       "split_into": "{count}列表示",
-      "split_view": "分割表示",
+      "split_view": "分割ビュー",
       "switch_case_key_placeholder": "新しいケースキー",
-      "switch_case_key_taken": "ケース{key}はすでに存在します",
+      "switch_case_key_taken": "Case {key} はすでに存在します",
       "tab_apps": "アプリ別",
       "tab_recent": "最近",
       "tab_suggested": "おすすめ",
-      "task_noun": "task",
-      "then_required_warning": "Thenブランチは必須です",
-      "trigger_noun": "trigger",
+      "task_noun": "タスク",
+      "then_required_warning": "Then branchは必須です",
+      "trigger_noun": "トリガー",
       "undo": "元に戻す",
-      "upstream_outputs": "上流のOutputs",
+      "upstream_outputs": "アップストリームのoutput",
       "open_in_tabs": "タブで開く",
-      "open_mode_hint": "Tasksはデフォルトでモーダルで開きます。{settings}でタブをデフォルトに設定できます。"
+      "open_mode_hint": "タスクはデフォルトでモーダルで開きます。{settings}でタブをデフォルトに設定できます。"
     },
     "blocks": "ブロック",
-    "flow_description": "Flowの説明",
-    "flow_no_description": "説明なし。flow YAMLに説明を追加してドキュメント化してください。",
-    "pluginDefaults": {},
+    "flow_description": "flowの説明",
+    "flow_no_description": "説明がありません。flowのYAMLに説明を追加して、その内容を文書化してください。",
     "split_horizontal": "水平分割",
     "split_vertical": "垂直分割",
     "pwa": {

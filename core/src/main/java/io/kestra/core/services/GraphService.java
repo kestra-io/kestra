@@ -70,7 +70,6 @@ public class GraphService {
             triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId(), null);
         }
         GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, execution, triggers);
-
         this.replaceCollapsedDisabledSubflows(graphCluster, flow, flowByUid, execution, expandedSubflows);
 
         Stream<Map.Entry<GraphCluster, SubflowGraphTask>> subflowToReplaceByParent = graphCluster.allNodesByParent().entrySet().stream()

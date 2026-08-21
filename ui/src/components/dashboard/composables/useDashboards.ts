@@ -9,6 +9,7 @@ import {useI18n} from "vue-i18n"
 import {decodeSearchParams} from "@kestra-io/design-system"
 
 import {Chart} from "../types.ts"
+import {chartLoadQueue} from "./chartLoadQueue"
 import {ChartFiltersOverrides, QueryFilter} from "@kestra-io/kestra-sdk"
 
 
@@ -40,6 +41,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     const EMPTY_TEXT = t("dashboards.empty")
 
     const data = ref()
+    const loading = ref(false)
     let isMounted = true
     onBeforeUnmount(() => {
         isMounted = false
@@ -50,33 +52,42 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         const allFilters = (appendFilters?.length ? [...filters, ...appendFilters] : filters)
         const parameters: ChartFiltersOverrides = {...pagination, filters: (allFilters ?? {})}
 
-        let result
-        if (!props.showDefault) {
-            if(!dashboardId){
-                throw new Error("to generate charts from backend we need a dashboard id")
-            }
-            result = await dashboardStore.generate(dashboardId, props.chart.id, parameters)
-        } else {
-            if (!props.chart.content){
-                throw new Error("Chart content must exist for preview.")
-            }
+        loading.value = true
+        try {
+            const result = await chartLoadQueue.enqueue(() => {
+                // the component may have been unmounted while waiting for a load slot
+                if (!isMounted) return Promise.resolve(undefined)
 
-            result = await dashboardStore.chartPreview({
-                chart: props.chart.content,
-                globalFilter: parameters,
+                if (!props.showDefault) {
+                    if(!dashboardId){
+                        throw new Error("to generate charts from backend we need a dashboard id")
+                    }
+                    return dashboardStore.generate(dashboardId, props.chart.id, parameters)
+                }
+
+                if (!props.chart.content){
+                    throw new Error("Chart content must exist for preview.")
+                }
+
+                return dashboardStore.chartPreview({
+                    chart: props.chart.content,
+                    globalFilter: parameters,
+                })
             })
-        }
 
-        if (!isMounted) return
-        data.value = result
-        return data.value
+            if (!isMounted) return
+            data.value = result
+            return data.value
+        } finally {
+            loading.value = false
+        }
     };
 
     onMounted(async () => {
         if (includeHooks) await generate()
     })
 
-    return {percentageShown, EMPTY_TEXT, data, generate}
+    return {percentageShown, EMPTY_TEXT, data, loading, generate}
 }
 
 export * from "../types"

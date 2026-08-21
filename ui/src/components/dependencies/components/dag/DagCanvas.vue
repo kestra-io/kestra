@@ -121,7 +121,8 @@
     const vfNodes = computed(() => nodes.value.flatMap((node) => {
         const position = layout.value.positions.get(node.id)
         if (!position) return []
-        const metadata = node.metadata as {kind?: string; status?: string; updated?: string}
+        const metadata = node.metadata as {assetType?: string; producer?: string; status?: string; updated?: string}
+        const isAsset = node.metadata.subtype === ASSET
 
         return [{
             id:   node.id,
@@ -134,9 +135,14 @@
             sourcePosition: Position.Right,
             targetPosition: Position.Left,
             data: {
-                name:    shortName(node.flow || node.id),
-                kind:    node.metadata.subtype === ASSET ? metadata.kind : "flow",
-                status:  node.metadata.subtype === ASSET ? (metadata.status ?? "unknown") : "unknown",
+                name: shortName(node.flow || node.id),
+                // The tile shows the producing plugin's logo, falling back to the asset
+                // type's own icon so a never-run asset still gets a real glyph rather
+                // than a placeholder. A flow has no plugin FQCN, so it keeps a material icon.
+                iconCls: isAsset ? (metadata.producer ?? metadata.assetType) : undefined,
+                isFlow: !isAsset,
+                assetType: isAsset ? metadata.assetType : undefined,
+                status:  isAsset ? (metadata.status ?? "unknown") : "unknown",
                 updated: metadata.updated,
             },
         }]

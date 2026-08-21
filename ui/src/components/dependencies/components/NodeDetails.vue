@@ -55,6 +55,8 @@
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
+    import {stringUtils} from "@kestra-io/design-system"
+
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
 
     import Link from "./Link.vue"
@@ -73,7 +75,8 @@
 
     const metadata = computed(() => props.node.metadata as {
         subtype: Types;
-        kind?: string;
+        assetType?: string;
+        producer?: string;
         system?: string;
         updated?: string;
         status?: string;
@@ -89,7 +92,10 @@
 
     const rows = computed(() => [
         {label: t("dependency.dag.last_update"), value: metadata.value.updated, date: true},
-        {label: t("dependency.dag.kind"), value: metadata.value.kind},
+        // Trailing segment on the type, matching the card; the producer keeps its full
+        // FQCN, because "which task wrote this" is the question the panel is open for.
+        {label: t("type"), value: metadata.value.assetType ? stringUtils.afterLastDot(metadata.value.assetType) : undefined},
+        {label: t("plugins.names"), value: metadata.value.producer},
         {label: t("dependency.dag.system"), value: metadata.value.system},
         {label: t("namespace"), value: props.node.namespace},
     ].filter((row) => Boolean(row.value)))

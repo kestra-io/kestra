@@ -7,11 +7,24 @@
 
         <!-- The tile is topology's node signature, so the asset graph reads as a sibling
              of the flow graph. It carries freshness as a tint because row 2 disappears at
-             the compact detail level, and status has to survive that. Sized and shaped to
-             take a plugin logo unchanged once assets carry their producing task type. -->
+             the compact detail level, and status has to survive that. -->
         <div class="asset-tile">
-            <KsIcon size="base">
-                <component :is="kindIcon" />
+            <!-- The producing plugin's logo, which is why the tile was sized for one. Falls
+                 back to the asset type's own icon, so a never-run asset still gets a real
+                 glyph. Assets always carry a type, so the material branch below is reached
+                 only by flow nodes; a cls that resolves nothing shows TaskIcon's own
+                 placeholder rather than this fallback. -->
+            <component
+                :is="taskIconComponent"
+                v-if="iconCls"
+                :cls="iconCls"
+                :icons="pluginsStore.icons"
+                :loadIcon="pluginsStore.loadIcon"
+                onlyIcon
+                class="asset-logo"
+            />
+            <KsIcon v-else size="base">
+                <component :is="fallbackIcon" />
             </KsIcon>
         </div>
 
@@ -22,8 +35,15 @@
                 <KsIcon size="xs" class="asset-status" :tooltip="statusLabel">
                     <component :is="statusIcon" />
                 </KsIcon>
-                <KsDateAgo v-if="updated" :date="updated" className="asset-age" />
+                <!-- Wrapped in a span this component owns: KsDateAgo renders its text inside
+                     KsTooltip, so the span is not the component root and never receives the
+                     scoped attribute. Passing className styled nothing, which is why the age
+                     wrapped to a second line and refused to shrink. -->
+                <span v-if="updated" class="asset-age"><KsDateAgo :date="updated" /></span>
                 <KsText v-else size="small" class="asset-age">{{ statusLabel }}</KsText>
+                <!-- Durable where the dbt manifest's `kind` was demo scaffolding, and
+                     populated on every asset. A technical identifier, so no i18n key. -->
+                <KsText v-if="typeName" size="small" class="asset-type">{{ typeName }}</KsText>
             </div>
         </div>
 
@@ -37,9 +57,10 @@
 
     import {Handle, Position} from "@vue-flow/core"
 
-    import Sprout from "vue-material-design-icons/Sprout.vue"
-    import Eye from "vue-material-design-icons/Eye.vue"
-    import Table from "vue-material-design-icons/Table.vue"
+    import {stringUtils, useTaskIcon} from "@kestra-io/design-system"
+
+    import {usePluginsStore} from "../../../../stores/plugins"
+
     import Sitemap from "vue-material-design-icons/Sitemap.vue"
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
@@ -54,7 +75,12 @@
         id: string;
         data: {
             name: string;
-            kind?: string;
+            /** Task or asset type FQCN whose plugin logo the tile shows. */
+            iconCls?: string;
+            /** Flow nodes have no plugin FQCN, so they keep a material glyph. */
+            isFlow?: boolean;
+            /** Asset type FQCN; row 2 shows its trailing segment. */
+            assetType?: string;
             status: string;
             updated?: string;
         };
@@ -62,12 +88,8 @@
 
     const {t} = useI18n()
 
-    const KIND_ICONS: Record<string, unknown> = {
-        seed:  Sprout,
-        view:  Eye,
-        table: Table,
-        flow:  Sitemap,
-    }
+    const taskIconComponent = useTaskIcon()
+    const pluginsStore = usePluginsStore()
 
     // never is hollow and unknown is a question mark: both use --ks-status-neutral, so
     // without different glyphs "has never run" and "we do not track this" look identical.
@@ -82,7 +104,9 @@
     const name = computed(() => props.data.name)
     const status = computed(() => props.data.status)
     const updated = computed(() => props.data.updated)
-    const kindIcon = computed(() => KIND_ICONS[props.data.kind ?? ""] ?? PackageVariantClosed)
+    const iconCls = computed(() => props.data.iconCls)
+    const fallbackIcon = computed(() => (props.data.isFlow ? Sitemap : PackageVariantClosed))
+    const typeName = computed(() => (props.data.assetType ? stringUtils.afterLastDot(props.data.assetType) : undefined))
     const statusIcon = computed(() => STATUS_ICONS[status.value] ?? HelpCircleOutline)
     const statusLabel = computed(() => t(`dependency.dag.status.${status.value}`))
 
@@ -193,10 +217,24 @@
         width: var(--ks-spacing-7);
         height: var(--ks-spacing-7);
         box-sizing: border-box;
-        border: 1px solid var(--ks-border-subtle);
+        // The border, not the fill, is what carries freshness now. The tile used to draw a
+        // monochrome glyph in the status colour, and that glyph was doing most of the work;
+        // a full-colour plugin logo replaces it and would leave only a 10% tint, which
+        // disappears under dbt orange on a warning tint. A ring survives any logo, and it
+        // survives the compact detail level where row 2 is hidden. Still not the CARD
+        // border, so "border means selection" holds.
+        border: 1px solid color-mix(in srgb, var(--ks-dag-status) 60%, transparent);
         border-radius: var(--ks-radius-lg);
         background: color-mix(in srgb, var(--ks-dag-status) 10%, var(--ks-bg-badge));
+        // Inherited by the fallback material glyph, which is still monochrome.
         color: var(--ks-dag-status);
+    }
+
+    // The logo is a plugin's own artwork, so it keeps its colours and only gets sized;
+    // the tile's status tint stays visible as the surface behind it.
+    .asset-logo {
+        width: var(--ks-spacing-5);
+        height: var(--ks-spacing-5);
     }
 
     .asset-body {
@@ -231,11 +269,62 @@
         flex: 0 0 auto;
     }
 
+    // The age is the item that yields: a clipped "a few seco..." still reads and the glyph
+    // still carries the status, whereas a type clipped to "Ta..." is noise.
     .asset-age {
+        flex: 1 1 auto;
+        min-width: 0;
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-secondary);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    // Dimmer than the age: the type is context you read once, not a value that changes.
+    // Shrinks before the age does, since the age is the freshness signal on this row.
+    // Pushed to the right edge so row 2 reads as two things (freshness left, type right)
+    // rather than one run-on string: at one size step and one colour step apart, an 8px
+    // gap was not enough separation to stop "21 hours ago Table" reading as a sentence.
+    .asset-type {
+        flex: 0 0 auto;
+        // Only a guard against an absurd type name; normal ones never hit it.
+        max-width: 40%;
+        margin-left: auto;
+        padding-left: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /**
+     * The age text is coloured for every state we actually know, and left neutral for the
+     * two that mean "no signal" (never run, not tracked). Colour therefore answers "do we
+     * know?" before it answers "is it healthy?", which is what stops a fresh asset and an
+     * untracked one from both reading as grey text.
+     *
+     * Emphasis still lives on the tile rather than here: fresh keeps a 60% ring, stale and
+     * failed get a full-strength ring and a stronger tint. That is what keeps a healthy
+     * graph from becoming a wall of green, and it is the part that survives the compact
+     * detail level, where row 2 and its coloured text are gone entirely.
+     */
+    .asset-card.status-fresh .asset-age {
+        color: var(--ks-text-success);
+    }
+
+    .asset-card.status-stale .asset-age {
+        color: var(--ks-text-warning);
+    }
+
+    .asset-card.status-failed .asset-age {
+        color: var(--ks-text-error);
+    }
+
+    .asset-card.status-stale .asset-tile,
+    .asset-card.status-failed .asset-tile {
+        border-color: var(--ks-dag-status);
+        background: color-mix(in srgb, var(--ks-dag-status) 18%, var(--ks-bg-badge));
     }
 </style>

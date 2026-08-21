@@ -179,7 +179,7 @@
     import ChartDurationSelect from "../executions/date-select/ChartDurationSelect.vue"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
-    import {KsGraph} from "@kestra-io/design-system"
+    import {KsGraph, stringUtils} from "@kestra-io/design-system"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {useI18n} from "vue-i18n"
@@ -229,13 +229,62 @@
         return LEGEND.filter((state) => present.has(state))
     })
 
-    /** Grouping fields, read off each node so only ones with data are offered. */
+    /**
+     * Bucket for nodes the grouping field cannot apply to at all, kept distinct from the
+     * ungrouped bucket: "this flow has no asset type" and "this asset is missing its type"
+     * are different facts, and folding both into Ungrouped mislabelled every flow on the
+     * canvas. Leading space so the key can never collide with a real field value.
+     */
+    const NOT_APPLICABLE = " not-applicable"
+
+    /**
+     * Grouping fields, read off each node so only ones with data are offered.
+     * `assetOnly` marks the fields a flow node cannot have; `namespace` is deliberately
+     * not one of them, since flows carry a namespace and grouping them by it is valid.
+     */
     const GROUP_FIELDS = [
-        {key: "dataset", label: () => t("dependency.dag.group_dataset"), of: (node: Node) => schemaOf(node.flow)},
-        {key: "kind", label: () => t("dependency.dag.kind"), of: (node: Node) => (node.metadata as {kind?: string}).kind},
-        {key: "system", label: () => t("dependency.dag.system"), of: (node: Node) => (node.metadata as {system?: string}).system},
-        {key: "namespace", label: () => t("namespace"), of: (node: Node) => node.namespace},
+        // Reads the real `schema` metadata field rather than slicing the asset id, which
+        // every plugin emitting a Table already sets (Table.java exposes system/database/
+        // schema/name over the metadata map, so this is plugin-agnostic: BigQuery dataset,
+        // Snowflake/Postgres/DuckDB schema). The id slice stays as a fallback for assets
+        // whose producer emitted a dotted id but no structured fields.
+        // `database` is deliberately NOT offered: it is the warehouse project/catalog, which
+        // is single-valued in a normal deployment, so grouping would disable itself. `name`
+        // is per-asset, which is a lane per node. Of the three, only schema groups usefully.
+        {key: "dataset", label: () => t("dependency.dag.group_dataset"), assetOnly: true, of: (node: Node) => (node.metadata as {schema?: string}).schema ?? schemaOf(node.flow)},
+        // Trailing segment, not the FQCN: `Table` and `VM` are what the grouping is about,
+        // and the raw type is already on the Asset Values panel for anyone who wants it.
+        {key: "type", label: () => t("type"), assetOnly: true, of: (node: Node) => typeNameOf((node.metadata as {assetType?: string}).assetType)},
+        // Fourth FQCN segment, not the whole thing: grouping on the full task type would
+        // give roughly one group per node, which isUsableGrouping then disables.
+        // Labelled "Plugins" because the keys ARE plugins (dbt, jdbc, scripts). "Plugin
+        // type" was both wrong about that and unreadable next to "Type" in one dropdown.
+        // The honest label is "Produced by", which needs an i18n key this branch cannot add.
+        {key: "producer", label: () => t("plugins.names"), assetOnly: true, of: (node: Node) => pluginOf((node.metadata as {producer?: string}).producer)},
+        {key: "system", label: () => t("dependency.dag.system"), assetOnly: true, of: (node: Node) => (node.metadata as {system?: string}).system},
+        // Not assetOnly: a flow has a namespace, so grouping flows by it is meaningful.
+        {key: "namespace", label: () => t("namespace"), assetOnly: false, of: (node: Node) => node.namespace},
     ] as const
+
+    const typeNameOf = (type?: string): string | undefined => (type ? stringUtils.afterLastDot(type) : undefined)
+
+    /**
+     * Plugin an FQCN belongs to. `io.kestra.plugin.jdbc.duckdb.Query` gives `jdbc`, which is
+     * the plugin ARTIFACT rather than the technology: DuckDB, Postgres and Snowflake all
+     * group under `jdbc`. That is the honest reading and it keeps cardinality middling.
+     *
+     * The fourth segment only means anything under `io.kestra.plugin.`. A customer's
+     * `com.acme.tasks.Upload` would otherwise group under its own class name, one lane per
+     * node, so those fall back to the package holding the class.
+     */
+    const KESTRA_PLUGIN_PREFIX = "io.kestra.plugin."
+
+    const pluginOf = (type?: string): string | undefined => {
+        if (!type) return undefined
+        const segments = type.split(".")
+        if (type.startsWith(KESTRA_PLUGIN_PREFIX)) return segments.length >= 4 ? segments[3] : undefined
+        return segments.length >= 2 ? segments[segments.length - 2] : undefined
+    }
 
     const schemaOf = (id: string): string | undefined => {
         const segments = id.split(".")
@@ -259,7 +308,7 @@
         }
     }).filter((field) => field.groups > 0))
 
-    /** One chip per group in the current graph, ungrouped last. */
+    /** One chip per group in the current graph; the two catch-all buckets sort last. */
     const groupChips = computed(() => {
         const accessor = groupOf.value
         if (!accessor) return []
@@ -270,9 +319,15 @@
             counts.set(key, (counts.get(key) ?? 0) + 1)
         })
 
+        // Real groups alphabetically, then the flows bucket, then ungrouped: both
+        // catch-alls belong after the values the user actually came to look at.
+        const rank = (key: string): number => (key === "" ? 2 : key === NOT_APPLICABLE ? 1 : 0)
+        const labelOf = (key: string): string =>
+            (key === NOT_APPLICABLE ? t("flows") : key || t("dependency.dag.ungrouped"))
+
         return [...counts.entries()]
-            .sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a < b ? -1 : 1))
-            .map(([key, count]) => ({key, count, label: key || t("dependency.dag.ungrouped")}))
+            .sort(([a], [b]) => (rank(a) - rank(b)) || (a < b ? -1 : 1))
+            .map(([key, count]) => ({key, count, label: labelOf(key)}))
     })
 
     // Switching the grouping field invalidates whichever group was pinned.
@@ -280,7 +335,13 @@
 
     const groupOf = computed(() => {
         const field = GROUP_FIELDS.find((candidate) => candidate.key === groupField.value)
-        return field ? (node: Node) => field.of(node) : undefined
+        if (!field) return undefined
+
+        // A flow has no asset type or producer, so it lands in its own bucket rather than
+        // in Ungrouped, which would claim the value is merely missing.
+        return (node: Node) => (field.assetOnly && node.metadata.subtype !== ASSET
+            ? NOT_APPLICABLE
+            : field.of(node))
     })
 
     /**

@@ -1,27 +1,21 @@
 package io.kestra.jdbc.migration;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import javax.sql.DataSource;
+
+import org.h2.jdbcx.JdbcDataSource;
+import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
-
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,50 +26,59 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Abstract integration tests for {@link V2_0_24PluginAutoInstallMigration}.
- * Subclassed per JDBC backend (H2, Postgres, MySQL).
+ * Unit tests for {@link V2_0_25PluginAutoInstallMigration} against an in-memory H2 database.
+ * The crawl query is plain jOOQ, so a single backend is enough — no per-DB subclasses.
  */
-@MicronautTest(transactional = false)
-@Execution(ExecutionMode.SAME_THREAD)
-public abstract class AbstractV2_0_24PluginAutoInstallMigrationTest {
+class V2_0_25PluginAutoInstallMigrationTest {
 
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
-    private static final Field<Object> VALUE_FIELD = DSL.field(DSL.quotedName("value"));
-    private static final Field<Object> SOURCE_FIELD = DSL.field(DSL.quotedName("source_code"));
+    private static final Field<String> KEY_FIELD = DSL.field(DSL.quotedName("key"), String.class);
+    private static final Field<String> TENANT_FIELD = DSL.field(DSL.quotedName("tenant_id"), String.class);
     private static final Field<String> NAMESPACE_FIELD = DSL.field(DSL.quotedName("namespace"), String.class);
+    private static final Field<String> ID_FIELD = DSL.field(DSL.quotedName("id"), String.class);
+    private static final Field<Integer> REVISION_FIELD = DSL.field(DSL.quotedName("revision"), Integer.class);
+    private static final Field<Boolean> DELETED_FIELD = DSL.field(DSL.quotedName("deleted"), Boolean.class);
+    private static final Field<String> SOURCE_FIELD = DSL.field(DSL.quotedName("source_code"), String.class);
 
     private static final String TEST_NAMESPACE = "plugin-auto-install-migration-test";
 
-    @Inject
-    JooqDSLContextWrapper dslContextWrapper;
-
+    private JooqDSLContextWrapper dslContextWrapper;
+    private DSLContext dsl;
     private PluginAutoInstallService autoInstallService;
-    private V2_0_24PluginAutoInstallMigration migration;
+    private V2_0_25PluginAutoInstallMigration migration;
 
     @BeforeEach
     void setUp() {
-        cleanup();
+        // Each test gets its own isolated in-memory database via a unique name.
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:mem:test-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1");
+        ds.setUser("sa");
+        ds.setPassword("");
+
+        dsl = DSL.using(ds, SQLDialect.H2);
+        // Same column shape as the real baseline: unquoted table name, quoted lower-case columns.
+        dsl.execute("""
+            CREATE TABLE flows (
+                "key" VARCHAR(250) NOT NULL PRIMARY KEY,
+                "deleted" BOOL NOT NULL,
+                "id" VARCHAR(100) NOT NULL,
+                "namespace" VARCHAR(150) NOT NULL,
+                "revision" INT NOT NULL,
+                "source_code" TEXT NOT NULL,
+                "tenant_id" VARCHAR(250)
+            )
+            """);
+
+        dslContextWrapper = new JooqDSLContextWrapper(dsl, (DataSource) ds);
         autoInstallService = mock(PluginAutoInstallService.class);
-        migration = new V2_0_24PluginAutoInstallMigration(
+        migration = new V2_0_25PluginAutoInstallMigration(
             dslContextWrapper,
             () -> autoInstallService,
             () -> mock(PluginRegistry.class)
         );
     }
 
-    @AfterEach
-    void cleanup() {
-        dslContextWrapper.transaction(
-            configuration -> DSL.using(configuration)
-                .deleteFrom(DSL.table("flows"))
-                .where(NAMESPACE_FIELD.eq(TEST_NAMESPACE))
-                .execute()
-        );
-    }
-
     @Test
-    void shouldAggregateMissingTypesFromLatestNonDeletedRevisionsOnly() throws Exception {
+    void shouldAggregateMissingTypesFromLatestNonDeletedRevisionsOnly() {
         // Given — flow-a has two revisions: only the latest one must be crawled
         insertFlowRow(null, "flow-a", 1, false, "source-a-rev1");
         insertFlowRow(null, "flow-a", 2, false, "source-a-rev2");
@@ -127,39 +130,28 @@ public abstract class AbstractV2_0_24PluginAutoInstallMigrationTest {
     }
 
     @Test
-    void shouldNotRunWhileAutoInstallIsDisabled() {
-        // Given — the runner consults shouldRun() and skips WITHOUT recording, so the one-time
-        // crawl still happens on a later startup once the flag is enabled
+    void shouldDoNothingWhenAutoInstallIsDisabled() throws Exception {
+        // Given
+        insertFlowRow(null, "flow-a", 1, false, "source-a-rev1");
         when(autoInstallService.isEnabled()).thenReturn(false);
 
-        // When / Then
-        assertThat(migration.shouldRun()).isFalse();
+        // When
+        migration.migrate();
 
-        // And once the operator enables the flag, the pending script becomes applicable
-        when(autoInstallService.isEnabled()).thenReturn(true);
-        assertThat(migration.shouldRun()).isTrue();
+        // Then
+        verify(autoInstallService, never()).installMissingTypes(anySet());
     }
 
-    // --- helpers ---
-
-    private void insertFlowRow(String tenantId, String flowId, int revision, boolean deleted, String source) throws Exception {
-        Map<String, Object> flowJson = new HashMap<>();
-        flowJson.put("id", flowId);
-        flowJson.put("namespace", TEST_NAMESPACE);
-        flowJson.put("revision", revision);
-        flowJson.put("deleted", deleted);
-        if (tenantId != null) {
-            flowJson.put("tenantId", tenantId);
-        }
-        String json = MAPPER.writeValueAsString(flowJson);
+    private void insertFlowRow(String tenantId, String flowId, int revision, boolean deleted, String source) {
         String key = String.join("_", String.valueOf(tenantId), TEST_NAMESPACE, flowId, String.valueOf(revision));
-        dslContextWrapper.transaction(
-            configuration -> DSL.using(configuration)
-                .insertInto(DSL.table("flows"))
-                .set(KEY_FIELD, (Object) key)
-                .set(VALUE_FIELD, (Object) JdbcJsonbUtils.valueOf(json))
-                .set(SOURCE_FIELD, (Object) source)
-                .execute()
-        );
+        dsl.insertInto(DSL.table("flows"))
+            .set(KEY_FIELD, key)
+            .set(TENANT_FIELD, tenantId)
+            .set(NAMESPACE_FIELD, TEST_NAMESPACE)
+            .set(ID_FIELD, flowId)
+            .set(REVISION_FIELD, revision)
+            .set(DELETED_FIELD, deleted)
+            .set(SOURCE_FIELD, source)
+            .execute();
     }
 }

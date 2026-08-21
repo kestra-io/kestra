@@ -1,10 +1,8 @@
 package io.kestra.jdbc.migration;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.jooq.Field;
@@ -12,6 +10,7 @@ import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.migration.MigrationScript;
+import io.kestra.core.plugins.ExternalPluginsPath;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -23,26 +22,15 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 1.3 → 2.0 first-sync plugin auto-install migration.
- *
- * <p>
- * An instance upgraded to a slim 2.0 distribution (no bundled plugins) would otherwise fail every
- * existing flow until each one is individually re-saved through the save-path install hook. This
- * migration crawls the latest revision of every non-deleted flow once, aggregates all task/trigger
- * types missing from the local plugin registry, and bulk-installs the deduplicated artifact set via
- * {@link PluginAutoInstallService#installMissingTypes(Set)}.
- *
- * <p>
- * Installation is best-effort with a bounded wait, exactly like the save-path hook: a failure is
- * logged as a warning and never fails the startup. While auto-install is disabled the script is
- * skipped without being recorded ({@link #shouldRun()}), so enabling the flag on a later startup
- * still runs the one-time crawl instead of leaving every pre-existing flow broken until it is
- * individually re-saved.
+ * 1.3 → 2.0 first-sync migration: crawls the latest non-deleted revision of every flow, aggregates
+ * the task/trigger types missing from the local plugin registry and bulk-installs their artifacts,
+ * so an instance upgraded to a slim distribution does not fail every pre-existing flow.
+ * Best-effort with a bounded wait: a failure is logged and never fails the startup.
  */
 @Slf4j
 @Singleton
 @JdbcRepositoryEnabled
-public class V2_0_24PluginAutoInstallMigration implements MigrationScript {
+public class V2_0_25PluginAutoInstallMigration implements MigrationScript {
 
     private static final Field<String> TENANT_FIELD = DSL.field(DSL.quotedName("tenant_id"), String.class);
     private static final Field<String> NAMESPACE_FIELD = DSL.field(DSL.quotedName("namespace"), String.class);
@@ -56,7 +44,7 @@ public class V2_0_24PluginAutoInstallMigration implements MigrationScript {
     private final Provider<PluginRegistry> pluginRegistry;
 
     @Inject
-    public V2_0_24PluginAutoInstallMigration(
+    public V2_0_25PluginAutoInstallMigration(
         final JooqDSLContextWrapper dslContextWrapper,
         final Provider<PluginAutoInstallService> autoInstallService,
         final Provider<PluginRegistry> pluginRegistry) {
@@ -67,7 +55,7 @@ public class V2_0_24PluginAutoInstallMigration implements MigrationScript {
 
     @Override
     public String scriptId() {
-        return "2.0.24-plugin-auto-install";
+        return "2.0.25-plugin-auto-install";
     }
 
     @Override
@@ -77,23 +65,20 @@ public class V2_0_24PluginAutoInstallMigration implements MigrationScript {
 
     @Override
     public String checksum() {
-        // Java-only migration – no SQL resource file, checksum validation not applicable.
+        // Java-only migration, no SQL resource file to checksum.
         return null;
-    }
-
-    @Override
-    public boolean shouldRun() {
-        // Skipped without being recorded while disabled, so enabling the flag later still runs the crawl.
-        return autoInstallService.get().isEnabled();
     }
 
     @Override
     public void migrate() throws Exception {
         PluginAutoInstallService service = autoInstallService.get();
+        if (!service.isEnabled()) {
+            log.info("Plugin auto-install is disabled, skipping the first-sync plugin crawl.");
+            return;
+        }
 
-        // Migrations run at ApplicationContext.start(), before AbstractCommand.maybeInitPlugins()
-        // registers the external plugins directory — without this, every already-installed plugin
-        // would be detected as missing and re-downloaded.
+        // Migrations run before AbstractCommand.maybeInitPlugins() registers the external plugins
+        // directory — without this, every already-installed plugin would be re-downloaded.
         registerExternalPluginsDirectory();
 
         Set<String> missingTypes = findMissingTypesInAllFlows();
@@ -107,8 +92,7 @@ public class V2_0_24PluginAutoInstallMigration implements MigrationScript {
     }
 
     private void registerExternalPluginsDirectory() {
-        Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH"))
-            .map(Paths::get)
+        ExternalPluginsPath.fromEnvironment()
             .filter(Files::isDirectory)
             .ifPresent(path -> pluginRegistry.get().registerIfAbsent(path));
     }
@@ -120,8 +104,10 @@ public class V2_0_24PluginAutoInstallMigration implements MigrationScript {
             // Unquoted on purpose: H2 folds the unquoted DDL name to upper case, so a quoted
             // lower-case reference would not resolve (same as the settings-table migrations).
             Table<?> flows = DSL.table("flows");
-            // Only the latest revision of each flow matters: older revisions may reference plugins
-            // that are no longer used, and deleted flows are excluded entirely.
+            // Same semantics as JdbcFlowRepositoryService.lastRevision + defaultFilter: the latest
+            // revision is computed over ALL rows, then deleted ones are filtered out. Deleting the
+            // last revision goes through deleteFlow (see deleteRevisions), so a deleted latest
+            // revision means the whole flow is deleted and must not be crawled.
             Table<?> latest = DSL.select(
                 TENANT_FIELD.as("latest_tenant_id"),
                 NAMESPACE_FIELD.as("latest_namespace"),

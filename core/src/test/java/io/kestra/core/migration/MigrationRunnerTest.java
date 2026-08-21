@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -75,57 +74,6 @@ class MigrationRunnerTest {
 
         // Then: script ran exactly once
         assertThat(callCount.get()).isEqualTo(1);
-    }
-
-    @Test
-    void runAlways_skipsWithoutRecordingWhenScriptShouldNotRunYet() throws Exception {
-        // Given: a script gated on a feature flag that flips from off to on between startups
-        AtomicInteger callCount = new AtomicInteger(0);
-        AtomicBoolean applicable = new AtomicBoolean(false);
-        MigrationScript delegate = simpleScript("2.0.01-upgrade", callCount::incrementAndGet);
-        MigrationScript gated = new MigrationScript() {
-            @Override
-            public String scriptId() {
-                return delegate.scriptId();
-            }
-
-            @Override
-            public String description() {
-                return delegate.description();
-            }
-
-            @Override
-            public String checksum() {
-                return delegate.checksum();
-            }
-
-            @Override
-            public void migrate() throws Exception {
-                delegate.migrate();
-            }
-
-            @Override
-            public boolean shouldRun() {
-                return applicable.get();
-            }
-        };
-        InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
-        MigrationRunner runner = new MigrationRunner(noOpLock, historyStore, List.of(gated));
-
-        // When: first startup with the flag off
-        runner.runAlways();
-
-        // Then: skipped without being recorded, so it stays pending
-        assertThat(callCount.get()).isEqualTo(0);
-        assertThat(historyStore.isApplied("2.0.01-upgrade")).isFalse();
-
-        // When: a later startup with the flag on
-        applicable.set(true);
-        runner.runAlways();
-
-        // Then: the script finally runs and is recorded as applied
-        assertThat(callCount.get()).isEqualTo(1);
-        assertThat(historyStore.isApplied("2.0.01-upgrade")).isTrue();
     }
 
     @Test

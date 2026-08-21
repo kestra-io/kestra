@@ -113,6 +113,7 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
                             smooth: true,
                             areaStyle: {opacity: 0.2},
                             data: [12.4, 9.8, 14.2, 11.1, 8.7, 13.5, 10.3],
+                            tooltip: {valueFormatter: (value: unknown) => `${value}s`},
                         },
                     ],
                 },
@@ -125,7 +126,8 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
             description: {
                 story:
                     "Bar series (left y-axis for count) and an area-line series (right y-axis for duration). " +
-                    "Pass the full ECharts option directly to KsEchart when you need a mixed chart type.",
+                    "Pass the full ECharts option directly to KsEchart when you need a mixed chart type. " +
+                    "The external tooltip honors the standard per-series `tooltip.valueFormatter` option.",
             },
         },
     },

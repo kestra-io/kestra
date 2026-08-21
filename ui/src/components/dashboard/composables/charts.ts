@@ -1,7 +1,10 @@
 import {ref} from "vue"
 
+import moment from "moment"
+
 import {cssVar} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme"
+import {DateGrouping} from "../../../utils/utils"
 
 export interface RankedStackedBars {
     categories: string[]
@@ -57,6 +60,41 @@ export function rankStackedBars(
     }
 
     return {categories, series, totals, othersCount: rest.length, othersNames: rest.map((r) => r.name)}
+}
+
+export const MAX_FILLED_TIME_BUCKETS = 1000
+
+/**
+ * Returns every bucket label between the earliest and latest raw date at the given granularity, so that time
+ * gaps between sparse buckets stay visible on a category axis instead of collapsing into adjacent bars.
+ * Values that are not valid ISO dates are kept as labels verbatim; the fill stops at
+ * {@link MAX_FILLED_TIME_BUCKETS} labels as a guard against absurd date ranges coming from bad data.
+ */
+export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping): string[] {
+    const labels = new Set<string>()
+    const parsed: moment.Moment[] = []
+
+    for (const raw of rawDates ?? []) {
+        if (raw === null || raw === undefined) continue
+        const date = moment(raw as moment.MomentInput, moment.ISO_8601, true)
+        if (date.isValid()) {
+            labels.add(date.format(grouping.format))
+            parsed.push(date)
+        } else {
+            labels.add(String(raw))
+        }
+    }
+
+    if (parsed.length) {
+        const max = moment.max(parsed)
+        const cursor = moment.min(parsed).clone().startOf(grouping.unit)
+        for (let i = 0; cursor.isSameOrBefore(max) && i < MAX_FILLED_TIME_BUCKETS; i++) {
+            labels.add(cursor.format(grouping.format))
+            cursor.add(1, grouping.unit)
+        }
+    }
+
+    return Array.from(labels).sort()
 }
 
 function hashToHexColor(value: string): string {

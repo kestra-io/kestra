@@ -1120,7 +1120,7 @@
       "contact_sales": "सेल्स से संपर्क करें",
       "secrets": {
         "title": "अपने Secrets Management को अपग्रेड करें",
-        "message": "एंटरप्राइज़ एडिशन (EE) आपको सीधे UI में सीक्रेट्स जोड़ने, संपादित करने या हटाने की सुविधा देता है - किसी इंस्टेंस रीस्टार्ट की आवश्यकता नहीं है। ग्रेन्युलर RBAC परमिशन के साथ namespace द्वारा सीक्रेट्स को व्यवस्थित करें, और उन्हें पैरेंट से चाइल्ड namespaces में इनहेरिट करें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे सीक्रेट्स मैनेजर के साथ इंटीग्रेट होता है। टीमों में सीक्रेट्स को अलग करने के लिए प्रति namespace, tenant, या इंस्टेंस के लिए डेडिकेटेड बैकएंड सेट करें, या बाहरी वॉल्ट में संग्रहीत रीड-ओनली सीक्रेट्स को सक्षम करें। सीक्रेट्स रेस्ट और ट्रांजिट में एन्क्रिप्टेड रहते हैं। वैकल्पिक कैशिंग API कॉल को कम करती है, और ऑडिट ट्रेल सभी एक्सेस को लॉग करते हैं।",
+        "message": "एंटरप्राइज़ एडिशन आपको UI में सीधे सीक्रेट्स जोड़ने, संपादित करने और हटाने, उन्हें RBAC के साथ namespace के अनुसार व्यवस्थित करने, और HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager या Elasticsearch में संग्रहीत करने की सुविधा देता है।",
         "add_env": {
           "intro": "एक नया Secret बनाएँ",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",

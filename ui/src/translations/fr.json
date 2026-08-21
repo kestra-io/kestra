@@ -1113,7 +1113,7 @@
       "contact_sales": "Contactez les ventes",
       "secrets": {
         "title": "Améliorez votre gestion des Secrets",
-        "message": "L'édition Enterprise (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'interface utilisateur, sans nécessiter de redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. L'EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des vaults externes. Les secrets restent chiffrés au repos et en transit. La mise en cache optionnelle réduit les appels d'API, et les pistes d'audit enregistrent tous les accès.",
+        "message": "L'édition Enterprise vous permet d'ajouter, de modifier et de supprimer des secrets directement dans l'interface utilisateur, de les organiser par namespace avec RBAC et de les stocker dans HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager ou Elasticsearch.",
         "add_env": {
           "intro": "Créer un nouveau Secret",
           "first": "Encodez la <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valeur secrète en Base64</a>",

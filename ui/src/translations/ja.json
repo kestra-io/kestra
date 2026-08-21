@@ -1113,7 +1113,7 @@
       "contact_sales": "営業に問い合わせる",
       "secrets": {
         "title": "シークレット管理をアップグレード",
-        "message": "Enterprise Edition (EE) では、UI で直接シークレットを追加、編集、削除できます。インスタンスの再起動は不要です。きめ細かな RBAC 権限で namespace ごとにシークレットを整理し、親 namespace から子 namespace に継承できます。EE は HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearch などのシークレットマネージャーと統合します。namespace、tenant、またはインスタンスごとに専用のバックエンドを設定してチーム間でシークレットを分離したり、外部 vault に保存されている読み取り専用シークレットを有効にしたりできます。シークレットは保存時も転送時も暗号化されたままです。オプションのキャッシュにより API 呼び出しが削減され、監査証跡によりすべてのアクセスがログに記録されます。",
+        "message": "Enterprise Edition では、UI で直接シークレットを追加、編集、削除し、RBAC で namespace ごとに整理し、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearch をバックエンドとして利用できます。",
         "add_env": {
           "intro": "新しいSecretを作成",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",

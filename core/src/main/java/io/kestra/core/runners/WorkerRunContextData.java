@@ -18,9 +18,6 @@ public sealed interface WorkerRunContextData permits WorkerTaskData, WorkerTrigg
     /** The variables map, stripped of worker-reconstructed keys. */
     Map<String, Object> variables();
 
-    /** List of input keys that are secrets (for log masking). */
-    List<String> secretInputs();
-
     /** OpenTelemetry trace parent for distributed tracing. */
     @Nullable
     String traceParent();

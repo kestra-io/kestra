@@ -77,7 +77,6 @@ public class DefaultRunContext extends RunContext {
     private String triggerExecutionId;
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
-    private List<String> secretInputs;
     private List<String> secretOutputs;
     private String traceParent;
 
@@ -162,15 +161,6 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     @JsonInclude
-    public List<String> getSecretInputs() {
-        return secretInputs;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @JsonInclude
     public String getTraceParent() {
         return traceParent;
     }
@@ -232,18 +222,6 @@ public class DefaultRunContext extends RunContext {
     void setLogger(final RunContextLogger logger) {
         this.logger = logger;
 
-        // this is used when a run context is re-hydrated so we need to add again the secrets from the inputs
-        if (!ListUtils.isEmpty(secretInputs) && getVariables().containsKey("inputs")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
-            for (String secretInput : secretInputs) {
-                String secret = findSecret(secretInput, inputs);
-                if (secret != null) {
-                    logger.usedSecret(secret);
-                }
-            }
-        }
-
         // this is used when a run context is re-hydrated so we need to add again the decrypted SECRET flow outputs
         if (!ListUtils.isEmpty(secretOutputs)) {
             secretOutputs.forEach(logger::usedSecret);
@@ -259,18 +237,6 @@ public class DefaultRunContext extends RunContext {
         List<String> updated = new ArrayList<>(ListUtils.emptyOnNull(secretOutputs));
         updated.add(secret);
         secretOutputs = updated;
-    }
-
-    @SuppressWarnings("unchecked")
-    private String findSecret(String secretInput, Map<String, Object> inputs) {
-        if (secretInput.indexOf('.') > 0) {
-            String prefix = secretInput.substring(0, secretInput.indexOf('.'));
-            String suffix = secretInput.substring(secretInput.indexOf('.') + 1);
-            Map<String, Object> subInputs = (Map<String, Object>) inputs.get(prefix);
-            return findSecret(suffix, subInputs);
-        }
-
-        return (String) inputs.get(secretInput);
     }
 
     void setPluginConfiguration(final Map<String, Object> pluginConfiguration) {
@@ -301,7 +267,6 @@ public class DefaultRunContext extends RunContext {
         runContext.logger = this.logger;
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
-        runContext.secretInputs = this.secretInputs;
         runContext.secretOutputs = this.secretOutputs;
         runContext.decryptVariables = this.decryptVariables;
         if (isInitialized.get()) {
@@ -788,7 +753,6 @@ public class DefaultRunContext extends RunContext {
         private RunContextLogger logger;
         private KVStoreService kvStoreService;
         private AssetManagerFactory assetManagerFactory;
-        private List<String> secretInputs;
         private Task task;
         private AbstractTrigger trigger;
 
@@ -812,7 +776,6 @@ public class DefaultRunContext extends RunContext {
             context.triggerExecutionId = triggerExecutionId;
             context.kvStoreService = kvStoreService;
             context.assetManagerFactory = assetManagerFactory;
-            context.secretInputs = secretInputs;
             context.task = task;
             context.trigger = trigger;
             return context;

@@ -88,7 +88,7 @@
                     lang="yaml"
                     :readOnly="true"
                     :navbar="false"
-                    :options="{editor: {padding: {top: 8}}}"
+                    :options="{editor: {padding: {top: 16, bottom: 16}}}"
                     @editorMounted="applyHighlight"
                 />
             </template>

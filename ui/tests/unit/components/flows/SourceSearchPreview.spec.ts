@@ -137,6 +137,7 @@ describe("SourceSearchPreview", () => {
 
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(true)
         expect(mockRevealLineInCenter).toHaveBeenCalledWith(2)
+        expect(wrapper.findComponent({name: "KsEditor"}).props("options")).toEqual({editor: {padding: {top: 16, bottom: 16}}})
     })
 
     test("shows error state when loadFlow rejects", async () => {

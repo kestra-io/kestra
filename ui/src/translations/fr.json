@@ -367,7 +367,7 @@
     "force run": "Forcer l'exécution",
     "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
     "force run confirm": "Voulez-vous vraiment forcer l'exécution <code>{id}</code> ?<br/><br/>AVERTISSEMENT : forcer l'exécution n'est pas garanti et peut créer des exécutions de task en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tasks CREATED passeront à l'état RUNNING.</li><li>Les tasks RUNNING seront soumises à nouveau.</li><li>Les tasks QUEUED seront dé-mises en file d'attente.</li><li>Les tasks PAUSED seront reprises.</li></ul>",
-    "force run done": "L'exécution est forcée",
+    "force run done": "Exécution forcée initiée",
     "metrics": "Mesures",
     "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
     "no outputs available": "Aucune sortie disponible pour cette exécution de task.",
@@ -446,7 +446,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrence",
-      "warning": "Modifier le compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
+      "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
     },
     "flowConcurrency": {
       "loadError": "Impossible de charger la limite de concurrence de ce flow.",
@@ -659,7 +659,7 @@
     "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> exécution(s) ?",
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> exécution(s) ?",
     "cancel": "Annuler",
-    "errorLogs": "Logs des erreurs",
+    "errorLogs": "Logs d'erreur",
     "welcome_page": {
       "guide": "Besoin d'aide pour exécuter votre premier flow ?"
     },
@@ -667,11 +667,11 @@
     "executions replayed": "<code>{executionCount}</code> exécution(s) rejouée(s)",
     "executions state changed": "L'état de <code>{executionCount}</code> exécution(s) a été modifié",
     "executions resumed": "<code>{executionCount}</code> exécution(s) reprise(s)",
-    "executions paused": "<code>{executionCount}</code> exécution(s) en PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> exécution(s) en attente",
-    "executions force run": "<code>{executionCount}</code> exécution(s) forcée(s) en cours d'exécution",
+    "executions paused": "<code>{executionCount}</code> exécution(s) en pause",
+    "executions unqueue": "<code>{executionCount}</code> exécution(s) non mise(s) en file d'attente",
+    "executions force run": "<code>{executionCount}</code> exécution(s) forcée(s)",
     "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
-    "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",
+    "executions killed": "<code>{executionCount}</code> exécution(s) tuée(s)",
     "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
     "invalid bulk replay": "Impossible de rejouer les exécutions",
     "invalid bulk resume": "Impossible de reprendre les exécutions",
@@ -763,7 +763,7 @@
     "join_slack": "Rejoindre Slack",
     "kestra": "Kestra",
     "error detected": "Erreur(s) détectée(s).",
-    "warning detected": "Avertissement(s) détecté(s)",
+    "warning detected": "Avertissement(s) détecté(s).",
     "informative notice": "Note(s)",
     "open": "Afficher",
     "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",

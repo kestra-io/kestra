@@ -219,7 +219,7 @@
     "next_execution": "Próxima execução",
     "datepicker": {
       "invalid duration": "Formato de duração inválido. Use o formato ISO 8601 (ex: PT30M, P1D).",
-      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (ex: 'P1DT1H1M1S')",
+      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (por exemplo, 'P1DT1H1M1S')",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (ex: P1DT1H1M1S)",
       "custom": "Personalizado",
@@ -367,7 +367,7 @@
     "force run": "Forçar execução",
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
     "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
-    "force run done": "A execução foi forçada",
+    "force run done": "Execução forçada iniciada",
     "metrics": "Métricas",
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
     "no outputs available": "Nenhuma saída disponível para esta execução de task.",
@@ -446,7 +446,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
-      "warning": "Alterar o contador em execução pode corromper a concorrência, fazendo com que as execuções excedam o limite permitido."
+      "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -659,7 +659,7 @@
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
-    "errorLogs": "Logs de erros",
+    "errorLogs": "Logs de erro",
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?"
     },
@@ -667,12 +667,12 @@
     "executions replayed": "<code>{executionCount}</code> execução(ões) reproduzida(s)",
     "executions state changed": "O estado de <code>{executionCount}</code> execução(ões) foi alterado",
     "executions resumed": "<code>{executionCount}</code> execução(ões) retomada(s)",
-    "executions paused": "<code>{executionCount}</code> execução(ões) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> execução(ões) na fila",
-    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",
+    "executions paused": "<code>{executionCount}</code> execução(ões) pausada(s)",
+    "executions unqueue": "<code>{executionCount}</code> execução(ões) não enfileirada(s)",
+    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s)",
     "executions restarted": "<code>{executionCount}</code> execução(ões) reiniciada(s)",
-    "executions killed": "<code>{executionCount}</code> execução(ões) morta(s)",
-    "executions deleted": "<code>{executionCount}</code> execução(ões) deletada(s)",
+    "executions killed": "<code>{executionCount}</code> execução(ões) encerrada(s)",
+    "executions deleted": "<code>{executionCount}</code> execução(ões) excluída(s)",
     "invalid bulk replay": "Não foi possível reproduzir execuções",
     "invalid bulk resume": "Não foi possível retomar execuções",
     "invalid bulk pause": "Não foi possível pausar as execuções",
@@ -763,7 +763,7 @@
     "join_slack": "Participar do Slack",
     "kestra": "Kestra",
     "error detected": "Erro(s) detectado(s).",
-    "warning detected": "Aviso(s) detectado(s)",
+    "warning detected": "Aviso(s) detectado(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
     "dependency task": "Task {taskId} é uma dependência de outra task",

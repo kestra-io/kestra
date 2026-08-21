@@ -219,7 +219,7 @@
     "next_execution": "Nächste Execution",
     "datepicker": {
       "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
-      "leave empty for infinite": "Leer lassen für unbegrenzte Dauer oder eine ISO-8601-Dauer eingeben (z. B. 'P1DT1H1M1S')",
+      "leave empty for infinite": "Leer lassen für unendliche Dauer oder eine ISO 8601-Dauer eingeben (z. B. 'P1DT1H1M1S')",
       "duration example": "Beispiel: 'P1DT1H1M1S'",
       "error": "Ungültiges Dauerformat, es muss eine ISO-8601-Dauer sein (z. B. P1DT1H1M1S)",
       "custom": "Benutzerdefiniert",
@@ -367,7 +367,7 @@
     "force run": "Ausführung erzwingen",
     "force run title": "Execution <code>{id}</code> erzwingen.",
     "force run confirm": "Möchtest du die Execution <code>{id}</code> wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
-    "force run done": "Die Execution wurde erzwungen",
+    "force run done": "Execution-Forcerun initiiert",
     "metrics": "Metriken",
     "no metrics available": "Für diesen Task-Run wurden keine Metriken aufgezeichnet.",
     "no outputs available": "Keine Outputs für diesen Task-Run verfügbar.",
@@ -446,7 +446,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency-Limits",
-      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beeinträchtigen, sodass Executions das erlaubte Limit überschreiten können"
+      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können."
     },
     "flowConcurrency": {
       "loadError": "Das Concurrency-Limit dieses Flows konnte nicht geladen werden.",
@@ -668,8 +668,8 @@
     "executions state changed": "Der Status von <code>{executionCount}</code> Execution(s) wurde geändert",
     "executions resumed": "<code>{executionCount}</code> Execution(s) fortgesetzt",
     "executions paused": "<code>{executionCount}</code> Execution(s) pausiert",
-    "executions unqueue": "<code>{executionCount}</code> Execution(s) aus der Warteschlange entfernt",
-    "executions force run": "<code>{executionCount}</code> Execution(s) erzwungen",
+    "executions unqueue": "<code>{executionCount}</code> Execution(s) nicht in der Warteschlange",
+    "executions force run": "<code>{executionCount}</code> erzwungene Execution(s)",
     "executions restarted": "<code>{executionCount}</code> Execution(s) neu gestartet",
     "executions killed": "<code>{executionCount}</code> Execution(s) gekillt",
     "executions deleted": "<code>{executionCount}</code> Execution(s) gelöscht",
@@ -763,7 +763,7 @@
     "join_slack": "Slack beitreten",
     "kestra": "Kestra",
     "error detected": "Fehler erkannt.",
-    "warning detected": "Warnungen erkannt",
+    "warning detected": "Warnung(en) erkannt.",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
     "dependency task": "Task {taskId} ist eine Abhängigkeit eines anderen Tasks",

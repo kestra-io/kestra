@@ -2,47 +2,6 @@
   "es": {
     "loading": "Cargando...",
     "more actions": "Más acciones",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Utilice solo letras, dígitos, puntos, guiones y guiones bajos, comenzando con una letra o un dígito.",
-        "id_label": "Id del flow",
-        "id_placeholder": "mi-flow",
-        "namespace_invalid": "Utilice solo letras minúsculas, dígitos, puntos, guiones y guiones bajos, comenzando con una letra minúscula o un dígito.",
-        "namespace_placeholder": "Seleccionar un namespace",
-        "namespaces_error": "No se pudieron cargar los namespaces. Escriba un namespace manualmente.",
-        "open_editor": "Abrir editor",
-        "subtitle": "Empieza con un \"hello-world\" de inicio y construye desde cero.",
-        "title": "flow en blanco"
-      },
-      "blueprints": {
-        "subtitle": "Elige un flow predefinido del catálogo de la comunidad.",
-        "title": "Explorar blueprints"
-      },
-      "import": {
-        "back": "Atrás",
-        "error": {
-          "empty": "El contenido YAML está vacío.",
-          "invalid_mapping": "YAML de flow no válido: se esperaba un mapeo clave-valor, no una lista o un escalar.",
-          "parse_error": "No se pudo analizar el YAML.",
-          "too_large": "Ese archivo es demasiado grande. En su lugar, pega la definición del flow o sube un archivo de menos de 1 MB."
-        },
-        "paste_label": "Pegar YAML",
-        "read_error": "No se pudo leer el archivo.",
-        "submit": "Importar flow",
-        "subtitle": "Pega o sube una definición de flow existente.",
-        "title": "Importar YAML",
-        "upload_button": "Subir .yml / .yaml",
-        "upload_label": "O subir un archivo",
-        "upload_tip": "Acepta archivos .yml y .yaml."
-      },
-      "subtitle": "Comienza desde un lienzo en blanco, explora blueprints o importa un YAML existente.",
-      "system": {
-        "badge": "SISTEMA",
-        "subtitle": "Crea un flow de alerta o automatización para tu plataforma.",
-        "title": "Crear un system flow"
-      },
-      "title": "Crear un nuevo flow"
-    },
     "recipe": {
       "create_flow": "Crear flow",
       "email": "Correo electrónico",
@@ -311,8 +270,6 @@
         "1d": "1d",
         "7d": "7d"
       },
-      "last14days": "Últimos 14 días",
-      "last28days": "Últimos 28 días",
       "14days": "14 días",
       "28days": "28 días"
     },
@@ -478,6 +435,7 @@
     },
     "file_preview": {
       "big_file_warning": "Este archivo tiene un tamaño de {size}. Puede tardar un tiempo en cargarse, bloqueando su navegador. ¿Desea cargarlo de todos modos?",
+      "big_file_download_only": "Este archivo tiene un tamaño de {size}. Es demasiado grande para abrirlo en el editor, descárguelo en su lugar.",
       "load_anyway": "Cargar de todos modos",
       "load_error": "No se pudo cargar la vista previa del archivo. Puede tratarse de un problema temporal o de permisos.",
       "retry": "Reintentar",
@@ -1020,7 +978,8 @@
             "triggers_default_tab": "Pestaña de Triggers Predeterminados",
             "playground": "Área de pruebas",
             "auto_refresh_interval": "Intervalo de Auto Refresh",
-            "task_edit_default_mode": "Modo de edición de Task predeterminado"
+            "task_edit_default_mode": "Modo de edición de Task predeterminado",
+            "flow_template": "Plantilla de flow predeterminada"
           },
           "descriptions": {
             "default_namespace": "Se utiliza al crear nuevos flows sin un namespace.",
@@ -1033,11 +992,17 @@
             "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers.",
             "auto_refresh_interval": "Segundos entre actualizaciones automáticas de datos en las páginas de lista.",
             "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
-            "task_edit_default_mode": "Cómo se abre una task por defecto desde el editor no-code."
+            "task_edit_default_mode": "Cómo se abre una task por defecto desde el editor no-code.",
+            "flow_template": "YAML se abre en el editor cuando creas un nuevo flow. El id y el namespace pueden omitirse, ya que se generan automáticamente. Cuando está vacío, se utiliza la plantilla configurada para la instancia."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Pestaña"
+          },
+          "flow_template_reset": "Restablecer a valores predeterminados",
+          "flow_template_error": {
+            "invalid_mapping": "Plantilla de flow no válida: se esperaba un mapeo de clave-valor, no una lista o un escalar.",
+            "parse_error": "No se pudo analizar el YAML. La plantilla se guardó, por lo que el editor puede mostrar el mismo error al crear un flow."
           }
         },
         "theme": {
@@ -1114,7 +1079,7 @@
       "contact_sales": "Contactar Ventas",
       "secrets": {
         "title": "Mejora tu Gestión de Secrets",
-        "message": "La Enterprise Edition (EE) le permite añadir, editar o eliminar secrets directamente en la UI, sin necesidad de reiniciar la instancia. Organice los secrets por namespace con permisos RBAC granulares, y herédelos de namespaces padre a hijo. EE se integra con gestores de secrets como HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager y Elasticsearch. Configure backends dedicados por namespace, tenant o instancia para aislar los secrets entre equipos, o habilite secrets de solo lectura almacenados en vaults externos. Los secrets permanecen cifrados en reposo y en tránsito. El caching opcional reduce las llamadas a la API, y las pistas de auditoría registran todo el acceso.",
+        "message": "La Enterprise Edition le permite añadir, editar y eliminar secrets directamente en la UI, organizarlos por namespace con RBAC y respaldarlos con HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager o Elasticsearch.",
         "add_env": {
           "intro": "Crear un nuevo Secret",
           "first": "Codifica el <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a>",
@@ -1194,7 +1159,7 @@
       "namespace": {
         "edit": {
           "title": "Mejora la Gestión de tu Namespace",
-          "message": "En Kestra Enterprise Edition, los namespaces proporcionan aislamiento avanzado y gobernanza de secrets, variables y valores predeterminados de plugins a escala. Los administradores pueden configurar gestores de secrets personalizados, backends de almacenamiento aislados, grupos de worker dedicados y permisos detallados por namespace. Esto garantiza que los secrets, las variables y las configuraciones de plugins permanezcan seguros y fáciles de mantener en diferentes equipos y proyectos."
+          "message": "En Kestra Enterprise Edition, los namespaces proporcionan aislamiento avanzado y control de secretos, variables y políticas de gobernanza a escala. Los administradores pueden configurar gestores de secretos personalizados, backends de almacenamiento aislados, grupos de workers dedicados y permisos detallados por namespace. Esto garantiza que los secretos, las variables y las reglas de gobernanza permanezcan seguros y fáciles de mantener en diferentes equipos y proyectos."
         },
         "secrets": {
           "title": "Gestionar Secretos de Forma Segura",
@@ -1755,10 +1720,6 @@
           "title": "Actualmente no hay dependencias.",
           "content": "Este recurso no tiene dependencias ascendentes o descendentes con flows u otros recursos."
         }
-      },
-      "plugins": {
-        "title": "No se han establecido valores predeterminados de plugin para este Namespace.",
-        "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> en nuestra documentación."
       },
       "triggers": {
         "title": "Tu flow no tiene ningún trigger.",

@@ -267,7 +267,6 @@
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|none": "dc937b598926",
   "../../packages/design-system/src/components/Data/KsEmpty.locale.ts|no_data": "8f9abe6297d0",
   "../../packages/design-system/src/components/Data/KsEmptyState.locale.ts|ks_empty_state|learn_more": "1445799c033a",
-  "../../packages/design-system/src/components/Data/KsEmptyState.locale.ts|ks_empty_state|watch_the_video": "ec7c20b5b09e",
   "../../packages/design-system/src/components/Data/KsNoData.locale.ts|ks_no_data|no_results": "ea292be580ff",
   "../../packages/design-system/src/components/Data/KsNoData.locale.ts|ks_no_data|nothing_here": "5af6f0458838",
   "../../packages/design-system/src/components/Data/KsNoData.locale.ts|ks_no_data|will_appear": "c05b4cb8a2fb",

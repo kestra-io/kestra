@@ -40,7 +40,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
-import {flattenStrings, leafKeys, placeholderProblems, untranslatedKeys} from "./translationRules.mjs"
+import {flattenStrings, leafKeys, placeholderProblems, shadowedOssKeys, untranslatedKeys} from "./translationRules.mjs"
 import {staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -188,6 +188,17 @@ function checkOss() {
 
 // --- EE scope: EE languages must match EE's own en.json, and no EE key ----
 // may shadow one OSS already defines. A failure here is fixed in this repo.
+function shadowMessage(key, ossKey, kind) {
+    switch (kind) {
+    case "nested-under-oss-leaf":
+        return `Translation key "${key}" nests under "${ossKey}", which OSS defines as a message: merging EE over OSS replaces that message with an object, and vue-i18n then renders "${ossKey}" as a raw key instead of a label. Rename the EE namespace`
+    case "replaces-oss-namespace":
+        return `Translation key "${key}" is a message, but OSS uses "${ossKey}" as a namespace for its own keys, which merging EE over OSS would hide. Rename the EE key`
+    default:
+        return `Translation key "${key}" duplicates an existing OSS key - remove it`
+    }
+}
+
 function checkEe() {
     const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}}
     checkPlaceholders(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
@@ -207,12 +218,11 @@ function checkEe() {
     }
 
     if (fs.existsSync(path.join(ossTranslationsDir, "en.json"))) {
-        const ossEnKeys = new Set(leafKeys(readLanguage(ossTranslationsDir, "en")))
-        const duplicates = eeEnKeys.filter(key => ossEnKeys.has(key))
-        if (duplicates.length > 0) {
-            result.duplicates = duplicates
-            for (const key of duplicates) {
-                annotate("error", `[EE] Translation key "${key}" duplicates an existing OSS key - remove it from ui-ee/src/translations/ee_translations/en.json`)
+        const shadowed = shadowedOssKeys(eeEnKeys, leafKeys(readLanguage(ossTranslationsDir, "en")))
+        if (shadowed.length > 0) {
+            result.duplicates = shadowed.map(({key}) => key)
+            for (const {key, ossKey, kind} of shadowed) {
+                annotate("error", `[EE] ${shadowMessage(key, ossKey, kind)} - fix it in ui-ee/src/translations/ee_translations/en.json`)
             }
         }
     } else {

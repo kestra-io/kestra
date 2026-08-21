@@ -5,6 +5,21 @@
             :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
             class="image-preview"
         >
+        <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
+            <KsAlert type="warning" :closable="false">
+                {{ $t("file_preview.big_file_download_only", {size: humanSize}) }}
+            </KsAlert>
+            <KsButton
+                type="primary"
+                tag="a"
+                :href="fileUrl"
+                :download="name"
+                :icon="Download"
+                rel="noopener noreferrer"
+            >
+                {{ $t("download") }}
+            </KsButton>
+        </div>
         <KsEditor
             v-else
             v-bind="editorBindings"
@@ -80,6 +95,8 @@
     import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import {humanFileSize} from "../../utils/utils"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
 
@@ -119,13 +136,32 @@
 
     const previewSource = computed(() => props.flow ? flowStore.previewSource : undefined)
 
+    /** 10MB */
+    const BIG_FILE_THRESHOLD = 10 * 1024 * 1024
+
+    const bigFile = ref(false)
+    const fileSize = ref<number>()
+
     async function loadFile() {
         if (props.dirty || props.flow) return
 
-        const fileNamespace = namespace.value ?? route.params?.namespace
-        if (!fileNamespace) return
+        if (!fileNamespace.value) return
+
+        try {
+            const stats = await namespacesStore.fileMetadata({
+                namespace: fileNamespace.value,
+                path: props.path ?? "",
+            })
+            fileSize.value = stats?.size
+        } catch {
+            /** the size guard must not block the file when stats are unavailable */
+            fileSize.value = undefined
+        }
+        bigFile.value = (fileSize.value ?? 0) >= BIG_FILE_THRESHOLD
+        if (bigFile.value) return
+
         const result = await namespacesStore.readFile({
-            namespace: fileNamespace.toString(),
+            namespace: fileNamespace.value,
             path: props.path ?? "",
         })
 
@@ -207,6 +243,9 @@
     const editorRefElement = ref<InstanceType<typeof KsEditor>>()
 
     const namespace = computed(() => flowStore.flow?.namespace)
+    const fileNamespace = computed(() => (namespace.value ?? route.params?.namespace)?.toString())
+    const humanSize = computed(() => fileSize.value === undefined ? "" : humanFileSize(fileSize.value))
+    const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
     const timeout = ref<any>(null)
@@ -339,6 +378,14 @@
 <style scoped lang="scss">
     .image-preview {
         margin: 2rem;
+    }
+
+    .big-file-warning {
+        display: flex;
+        flex-direction: column;
+        align-items: end;
+        gap: var(--ks-spacing-4);
+        margin: var(--ks-spacing-6);
     }
 
     .save-disabled {

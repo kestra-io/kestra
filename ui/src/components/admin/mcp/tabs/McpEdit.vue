@@ -7,7 +7,7 @@
             @submit.prevent="onSubmit"
         >
             <KsFormItem
-                :label="t('mcp.server_id')"
+                :label="$t('mcp.server_id')"
                 prop="id"
                 required
                 labelPosition="left"
@@ -16,7 +16,7 @@
             >
                 <KsInput
                     v-model="form.id"
-                    :placeholder="t('mcp.id_placeholder')"
+                    :placeholder="$t('mcp.id_placeholder')"
                     :disabled="idDisabled"
                     class="mono id-input"
                     @change="autoSubmit"
@@ -30,23 +30,23 @@
                 </KsInput>
             </KsFormItem>
 
-            <KsFormItem :label="t('description')">
+            <KsFormItem :label="$t('description')">
                 <KsInput
                     v-model="form.description"
                     type="textarea"
                     :rows="2"
-                    :placeholder="t('description')"
+                    :placeholder="$t('description')"
                     :disabled="readOnly"
                     @change="autoSubmit"
                 />
             </KsFormItem>
 
-            <KsFormItem :label="t('mcp.instructions')">
+            <KsFormItem :label="$t('mcp.instructions')">
                 <KsInput
                     v-model="form.instructions"
                     type="textarea"
                     :rows="3"
-                    :placeholder="t('mcp.instructions')"
+                    :placeholder="$t('mcp.instructions')"
                     class="mono"
                     :disabled="readOnly"
                     @change="autoSubmit"
@@ -54,7 +54,7 @@
             </KsFormItem>
 
             <KsFormItem
-                :label="t('mcp.private_server')"
+                :label="$t('mcp.private_server')"
                 labelPosition="left"
                 class="spread-row"
             >
@@ -71,27 +71,27 @@
                 :closable="false"
                 class="type-hint"
             >
-                {{ t("mcp.public_hint") }}
+                {{ $t("mcp.public_hint") }}
             </KsAlert>
 
             <KsFormItem v-if="isPrivate">
                 <KsRadioCardGroup
                     v-model="form.authType"
                     :options="authOptions"
-                    :ariaLabel="t('mcp.auth_type')"
+                    :ariaLabel="$t('mcp.auth_type')"
                     @change="autoSubmit"
                 />
             </KsFormItem>
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.oauth_provider')"
+                :label="$t('mcp.oauth_provider')"
                 prop="oauthProvider"
                 :rules="oauthProviderRules"
             >
                 <KsSelect
                     v-model="form.oauthProvider"
-                    :placeholder="t('mcp.oauth_provider_placeholder')"
+                    :placeholder="$t('mcp.oauth_provider_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
                     @change="autoSubmit"
@@ -107,7 +107,7 @@
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.scopes_supported')"
+                :label="$t('mcp.scopes_supported')"
             >
                 <KsSelect
                     v-model="form.oauthScopesSupported"
@@ -115,18 +115,18 @@
                     filterable
                     allowCreate
                     defaultFirstOption
-                    :placeholder="t('mcp.scopes_supported_placeholder')"
+                    :placeholder="$t('mcp.scopes_supported_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
                     @change="autoSubmit"
                 />
                 <div class="field-hint">
-                    {{ t("mcp.scopes_supported_hint") }}
+                    {{ $t("mcp.scopes_supported_hint") }}
                 </div>
             </KsFormItem>
 
             <KsFormItem
-                :label="t('enabled')"
+                :label="$t('enabled')"
                 labelPosition="left"
                 class="spread-row"
             >

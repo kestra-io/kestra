@@ -10,30 +10,30 @@ describe("useLogDisplay", () => {
         localStorage.clear()
     })
 
-    it("effective logs font size defaults to mode base px", async () => {
+    it("effective logs font size defaults to mono base px", async () => {
         const {logsFontSize, appFontSizeMode} = await import("../../../src/composables/useLogDisplay")
 
         appFontSizeMode.value = "medium"
-        expect(logsFontSize.value).toBe(14)
-
-        appFontSizeMode.value = "small"
         expect(logsFontSize.value).toBe(12)
 
+        appFontSizeMode.value = "small"
+        expect(logsFontSize.value).toBe(11)
+
         appFontSizeMode.value = "large"
-        expect(logsFontSize.value).toBe(16)
+        expect(logsFontSize.value).toBe(14)
     })
 
-    it("effective editor font size defaults to mode base px (same as logs)", async () => {
+    it("effective editor font size defaults to mono base px (same as logs)", async () => {
         const {effectiveEditorFontSize, appFontSizeMode} = await import("../../../src/composables/useLogDisplay")
 
         appFontSizeMode.value = "medium"
-        expect(effectiveEditorFontSize.value).toBe(14)
-
-        appFontSizeMode.value = "small"
         expect(effectiveEditorFontSize.value).toBe(12)
 
+        appFontSizeMode.value = "small"
+        expect(effectiveEditorFontSize.value).toBe(11)
+
         appFontSizeMode.value = "large"
-        expect(effectiveEditorFontSize.value).toBe(16)
+        expect(effectiveEditorFontSize.value).toBe(14)
     })
 
     it("explicit override is preserved and not snapped back on mode switch", async () => {
@@ -114,16 +114,16 @@ describe("useLogDisplay", () => {
             await import("../../../src/composables/useLogDisplay")
 
         appFontSizeMode.value = "medium"
+        expect(logsFontSize.value).toBe(12)
+        expect(effectiveEditorFontSize.value).toBe(12)
+
+        appFontSizeMode.value = "large"
         expect(logsFontSize.value).toBe(14)
         expect(effectiveEditorFontSize.value).toBe(14)
 
-        appFontSizeMode.value = "large"
-        expect(logsFontSize.value).toBe(16)
-        expect(effectiveEditorFontSize.value).toBe(16)
-
         appFontSizeMode.value = "small"
-        expect(logsFontSize.value).toBe(12)
-        expect(effectiveEditorFontSize.value).toBe(12)
+        expect(logsFontSize.value).toBe(11)
+        expect(effectiveEditorFontSize.value).toBe(11)
     })
 
     it("clearing override restores mode-derived default", async () => {
@@ -135,6 +135,6 @@ describe("useLogDisplay", () => {
         expect(logsFontSize.value).toBe(11)
 
         logsFontSizeOverride.value = null
-        expect(logsFontSize.value).toBe(16)
+        expect(logsFontSize.value).toBe(14)
     })
 })

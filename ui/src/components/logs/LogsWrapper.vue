@@ -15,11 +15,7 @@
                 <template #navbar v-if="!embed || showFilters">
                     <KSFilter
                         :configuration="logFilter"
-                        :tableOptions="{
-                            chart: {shown: true, value: showChart, callback: onShowChartChange},
-                            refresh: {shown: true, callback: refresh},
-                            columns: {shown: false}
-                        }"
+                        :tableOptions="logTableOptions"
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
@@ -72,10 +68,20 @@
                         </div>
 
                         <div
-                            v-if="logsStore.isCursorMode && logsStore.hasNextCursor"
+                            v-if="logsStore.isCursorMode && (logsStore.hasPreviousPage || logsStore.hasNextCursor)"
                             class="logs-cursor-nav"
                         >
                             <KsButton
+                                v-if="logsStore.hasPreviousPage"
+                                type="default"
+                                :loading="isLoading"
+                                :aria-label="t('previous')"
+                                @click="loadPrevious"
+                            >
+                                {{ t("previous") }}
+                            </KsButton>
+                            <KsButton
+                                v-if="logsStore.hasNextCursor"
                                 type="default"
                                 :loading="isLoading"
                                 :aria-label="t('next')"
@@ -304,12 +310,22 @@
     }
 
     const loadNext = async () => {
-        if (!logsStore.hasNextCursor) return
         isLoading.value = true
-        await logsStore.findLogs(loadQuery({
+        await logsStore.loadNextPage(loadQuery({
             size: urlSize.value,
             sort: "timestamp:desc",
-        }), logsStore.nextCursor)
+        }))
+            .finally(() => {
+                isLoading.value = false
+            })
+    }
+
+    const loadPrevious = async () => {
+        isLoading.value = true
+        await logsStore.loadPreviousPage(loadQuery({
+            size: urlSize.value,
+            sort: "timestamp:desc",
+        }))
             .finally(() => {
                 isLoading.value = false
             })
@@ -373,6 +389,8 @@
 
     let lastCountedKey = ""
     const refreshLevelCounts = () => {
+        // Cursor stores can't produce per-level counts, so the quick-filter chips (which key off a
+        // non-zero count) are hidden in cursor mode; level filtering stays available from the filter bar.
         if (!loadInit.value || !isLevelRouteSettled.value || logsStore.isCursorMode || lastCountedKey === filterQueryKey.value) return
         const key = filterQueryKey.value
         lastCountedKey = key
@@ -472,6 +490,14 @@
         dataTable.value?.reload()
     }
 
+    // The chart toggle is hidden (not just inert) in cursor mode: cursor stores don't aggregate, so
+    // the timeseries chart it controls can't be built — see `showStatChart` above.
+    const logTableOptions = computed(() => ({
+        chart: {shown: !logsStore.isCursorMode, value: showChart.value, callback: onShowChartChange},
+        refresh: {shown: true, callback: refresh},
+        columns: {shown: false},
+    }))
+
     watch(() => props.reloadLogs, (newValue) => {
         if (newValue) refresh()
     })
@@ -491,6 +517,7 @@
     .logs-cursor-nav {
         display: flex;
         justify-content: center;
+        gap: var(--ks-spacing-2);
         margin: 0 var(--ks-spacing-6) var(--ks-spacing-4);
     }
 

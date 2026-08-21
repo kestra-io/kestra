@@ -83,9 +83,10 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset.getCreated())).orElseGet(Instant::now);
         this.updated = Instant.now();
 
+        String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);
         this.type = allowTypeChange
-            ? Optional.ofNullable(this.type).or(() -> Optional.ofNullable(previousAsset).map(Asset::getType)).orElse(null)
-            : Optional.ofNullable(previousAsset).map(Asset::getType).orElse(this.type);
+            ? Optional.ofNullable(this.type).orElse(previousType)
+            : Optional.ofNullable(previousType).orElse(this.type);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null

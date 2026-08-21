@@ -3,6 +3,8 @@ package io.kestra.core.models.assets;
 import java.time.Instant;
 import java.util.*;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 import io.kestra.core.models.HasUID;
@@ -85,8 +87,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
         String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);
         this.type = allowTypeChange
-            ? Optional.ofNullable(this.type).orElse(previousType)
-            : Optional.ofNullable(previousType).orElse(this.type);
+            ? ObjectUtils.firstNonNull(this.type, previousType)
+            : ObjectUtils.firstNonNull(previousType, this.type);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null

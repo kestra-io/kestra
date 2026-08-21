@@ -1,5 +1,5 @@
-id: flow-trigger-fire-once-true-flow-a
-namespace: io.kestra.tests.trigger.fire.once.true
+id: flow-trigger-reset-after-fire-flow-unrelated
+namespace: io.kestra.tests.trigger.reset.after.fire
 
 tasks:
   - id: only

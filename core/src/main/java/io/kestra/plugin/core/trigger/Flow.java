@@ -470,11 +470,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         }
 
         @Override
-        public Boolean getResetOnSuccess() {
-            return window == null ? Boolean.TRUE : window.isFireOnce();
-        }
-
-        @Override
         public Map<String, Condition> getConditions() {
             return ListUtils.emptyOnNull(dependencies).stream()
                 .map(

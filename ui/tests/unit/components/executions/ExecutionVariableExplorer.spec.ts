@@ -184,4 +184,27 @@ describe("ExecutionVariableExplorer", () => {
         expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
             .toBe("{{ vars.bundle.values.a.b }}")
     })
+
+    test("distinguishes expression variables and offers render() expression for debugging", async () => {
+        const wrapper = mountExplorer({
+            literalVar: "Hello world",
+            exprVar: "Hello {{ inputs.name }}",
+        })
+        await flushPromises()
+
+        const sidebar = wrapper.findComponent({name: "SidebarList"})
+        const variablesSection = (sidebar.props("sections") as any[])
+            .find((section) => section.key === "variables")
+
+        const literalItem = variablesSection.items.find((item: {label: string}) => item.label === "literalVar")
+        const exprItem = variablesSection.items.find((item: {label: string}) => item.label === "exprVar")
+
+        expect(literalItem.type).toBe("string")
+        expect(exprItem.type).toBe("expression")
+
+        await selectVariable(wrapper, "exprVar")
+
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
+            .toBe("{{ render(vars.exprVar) }}")
+    })
 })

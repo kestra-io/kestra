@@ -136,9 +136,14 @@
         return isValidVariable(key) ? `.${key}` : `["${key}"]`
     }
 
+    function isExpression(value: unknown): boolean {
+        return typeof value === "string" && (value.includes("{{") || value.includes("{%"))
+    }
+
     function valueType(value: unknown): string {
         if (value === null) return "null"
         if (Array.isArray(value)) return "array"
+        if (isExpression(value)) return "expression"
         return typeof value
     }
 
@@ -422,17 +427,23 @@
             const onlyKey = Object.keys(selectedValue.value)[0]
             const treePath = `${item.expression}${formatStep(onlyKey)}`
             const debugPath = `${baseExpressionPath}${formatStep(onlyKey)}`
+            const val = (selectedValue.value as Record<string, unknown>)[onlyKey]
             expressionPath.value = treePath
-            previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
-            expression.value = `{{ ${debugPath} }}`
+            previewedValue.value = val
+            expression.value = isExpression(val) ? `{{ render(${debugPath}) }}` : `{{ ${debugPath} }}`
         }else {
-            expression.value = `{{ ${baseExpressionPath} }}`
+            expression.value = isExpression(selectedValue.value)
+                ? `{{ render(${baseExpressionPath}) }}`
+                : `{{ ${baseExpressionPath} }}`
         }
     }
 
     function onSelectPath(path: string, value: unknown) {
         expressionPath.value = path
-        expression.value = `{{ ${path} }}`
+        const isFlowOutput = sections.value.find((section) =>
+            section.items.some(i => i.expression === selectedBase.value))?.key === "flowOutputs"
+        const debugPath = isFlowOutput && !path.startsWith("execution.") ? `execution.${path}` : path
+        expression.value = isExpression(value) ? `{{ render(${debugPath}) }}` : `{{ ${debugPath} }}`
         previewedValue.value = value
     }
 

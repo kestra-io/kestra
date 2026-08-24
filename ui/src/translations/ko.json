@@ -900,6 +900,7 @@
       },
       "export": "namespace 파일 내보내기",
       "export_single": "파일 내보내기",
+      "export_error": "\"{name}\"을(를) 내보낼 수 없습니다. 경로를 확인할 수 없습니다.",
       "dialog": {
         "name": {
           "file": "확장자를 포함한 이름:",

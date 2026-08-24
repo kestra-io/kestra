@@ -900,6 +900,7 @@
       },
       "export": "导出命名空间文件",
       "export_single": "导出文件",
+      "export_error": "无法导出 \"{name}\"。无法解析其路径。",
       "dialog": {
         "name": {
           "file": "文件名（带扩展名）：",

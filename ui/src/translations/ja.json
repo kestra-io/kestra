@@ -900,6 +900,7 @@
       },
       "export": "namespaceファイルをエクスポート",
       "export_single": "ファイルをエクスポート",
+      "export_error": "\"{name}\" をエクスポートできませんでした。パスを解決できませんでした。",
       "dialog": {
         "name": {
           "file": "拡張子付きの名前:",

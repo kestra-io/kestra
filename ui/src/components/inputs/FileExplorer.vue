@@ -167,7 +167,7 @@
                             <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(data)">
                                 {{ $t("namespace files.export_single") }}
                             </KsDropdownItem>
                             <KsDropdownItem
@@ -1063,9 +1063,17 @@
         }
     }
 
-    function exportFile(node: TreeNode, data: {fileName: string}) {
-        const path = filesStore.getPath(node.id) ?? ""
-        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=${encodeURI(`/${path}`)}`, data.fileName)
+    function exportFile(file: TreeNode) {
+        // `getPath` resolves the tree's own uid; it used to be handed Element Plus's numeric
+        // internal node id, which never matched, so the request asked for the namespace root
+        // and silently downloaded nothing.
+        const path = filesStore.getPath(file.id)
+        if (!path) {
+            toast.error(t("namespace files.export_error", {name: file.fileName}))
+            return
+        }
+
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=${encodeURI(`/${path}`)}`, file.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {

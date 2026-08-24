@@ -122,6 +122,7 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
+    import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
@@ -129,7 +130,7 @@
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
-    import {executeTask} from "../../utils/submitTask"
+    import {executeTask, normalizeInputValues} from "../../utils/submitTask"
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
@@ -199,6 +200,7 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
+    const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
 
@@ -417,20 +419,25 @@
                         })
                     } else {
                         if (flow.value) {
-                            await executeTask(submitor, flow.value, mergedInputs, {
-                                redirect: props.redirect,
-                                newTab: newTab.value,
-                                id: flow.value.id,
-                                namespace: flow.value.namespace,
-                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
-                                revision: flow.value.draft ? undefined : flow.value.revision,
-                                labels: labelStrings,
-                                scheduleDate: moment(scheduleDate.value)
-                                    .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-                                    .toISOString(true),
-                                nextStep: true,
-                                breakpoints: breakpoints.value,
-                            })
+                            if (playgroundStore.enabled) {
+                                const formData = normalizeInputValues(submitor, flattenInputs(flow.value.inputs), mergedInputs)
+                                await playgroundStore.runUntilTask(undefined, false, formData)
+                            } else {
+                                await executeTask(submitor, flow.value, mergedInputs, {
+                                    redirect: props.redirect,
+                                    newTab: newTab.value,
+                                    id: flow.value.id,
+                                    namespace: flow.value.namespace,
+                                    // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                    revision: flow.value.draft ? undefined : flow.value.revision,
+                                    labels: labelStrings,
+                                    scheduleDate: moment(scheduleDate.value)
+                                        .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
+                                        .toISOString(true),
+                                    nextStep: true,
+                                    breakpoints: breakpoints.value,
+                                })
+                            }
                         }
                     }
                     executeClicked.value = true

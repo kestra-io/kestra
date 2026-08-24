@@ -67,25 +67,28 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const taskIdToTaskRunIdMap: Map<string, string>  = new Map()
 
-    async function triggerExecution(flow: Flow, breakpoints?: string[]) {
-        const defaultInputValues: Record<string, any> = {}
-        for (const input of (flow.inputs || [])) {
-            const {type, defaults} = input
-            // for dates, no need to normalize the value
-            // https://github.com/kestra-io/kestra/issues/10576
-            const safeDef = type === "DATE"
-                ? defaults
-                : normalize(type, defaults)
+    async function triggerExecution(flow: Flow, breakpoints?: string[], customFormData?: Record<string, any>) {
+        let formData = customFormData
+        if (!formData) {
+            formData = {}
+            for (const input of (flow.inputs || [])) {
+                const {type, defaults} = input
+                // for dates and times, no need to normalize the value
+                // https://github.com/kestra-io/kestra/issues/10576
+                const safeDef = (type === "DATE" || type === "TIME")
+                    ? defaults
+                    : normalize(type, defaults)
 
-            if(safeDef !== undefined) {
-                defaultInputValues[input.id] = safeDef
+                if(safeDef !== undefined) {
+                    formData[input.id] = safeDef
+                }
             }
         }
 
         return executionsStore.triggerExecution({
             id: flow.id,
             namespace: flow.namespace,
-            formData: defaultInputValues,
+            formData,
             kind: "PLAYGROUND",
             breakpoints,
             // Explicit revision so drafts run too - the backend otherwise resolves the latest published one.
@@ -93,7 +96,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         })
     }
 
-    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
+    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any, customFormData?: Record<string, any>) {
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
         // check that the inputs and labels have not changed between the last execution and the current flow
@@ -109,7 +112,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
             if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
                 || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
-                return await triggerExecution(flowStore.flow, breakpoints)
+                return await triggerExecution(flowStore.flow, breakpoints, customFormData)
             };
         }
 
@@ -133,7 +136,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return
         }
 
-        return await triggerExecution(flowStore.flow, breakpoints)
+        return await triggerExecution(flowStore.flow, breakpoints, customFormData)
     }
 
     async function getNextTaskIds(taskId?: string) {
@@ -226,7 +229,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const {t} = useI18n()
 
-    async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
+    async function runUntilTask(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, any>) {
         if(readyToStart.value === false) {
             console.warn("Playground is not ready to start, latest execution is still in progress")
             return
@@ -254,7 +257,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         let execution: Execution | undefined = undefined
         try {
-            execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph)
+            execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
         } catch (error: any) {
             if (error?.response?.status === 422) {
                 // Invalid entity, most likely due to invalid inputs - allow triggering the task again

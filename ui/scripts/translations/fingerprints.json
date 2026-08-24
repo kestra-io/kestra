@@ -587,6 +587,7 @@
   "editor_shortcuts|toggle_ai_agent": "84229871f00b",
   "editor_shortcuts|trigger_autocompletion": "ea127da4546d",
   "editor_shortcuts|uncomment": "1e8b06519915",
+  "ee-tooltip|features-blocked": "90e7240e55c8",
   "email": "969ccbd3cf63",
   "empty|announcements|content": "267f6103ea68",
   "empty|announcements|title": "fb4d1e64549f",
@@ -1896,6 +1897,5 @@
   "worker information": "d9690f106922",
   "workerId": "283c035a5126",
   "wrong labels": "f62b1e53b73f",
-  "yes": "85a39ab345d6",
-  "ee-tooltip|features-blocked": "90e7240e55c8"
+  "yes": "85a39ab345d6"
 }

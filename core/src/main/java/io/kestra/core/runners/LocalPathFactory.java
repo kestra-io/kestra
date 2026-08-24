@@ -67,6 +67,15 @@ public class LocalPathFactory {
         }
 
         @Override
+        public Path authorizedPath(URI uri) throws IOException {
+            if (!LocalPath.FILE_SCHEME.equals(uri.getScheme())) {
+                throw new IllegalArgumentException("The uri '" + uri + "' is not a valid file URI.");
+            }
+
+            return checkPath(uri);
+        }
+
+        @Override
         public boolean exists(URI uri) throws IOException {
             if (!LocalPath.FILE_SCHEME.equals(uri.getScheme())) {
                 throw new IllegalArgumentException("The uri '" + uri + "' is not a valid file URI.");

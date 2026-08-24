@@ -525,9 +525,9 @@
 
     /* Page layout: the host surface is full-width so the transcript scroller catches the wheel
        anywhere on the page; each section re-centers its content into the same bounded column the
-       page used to be (kestra-io/kestra#18386). */
+       page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
+       stay pinned to the left edge of the page instead of floating with the centered column. */
     .copilot-chat--page .copilot-transcript,
-    .copilot-chat--page .copilot-topbar,
     .copilot-chat--page .copilot-banner,
     .copilot-chat--page .copilot-footer {
         width: 100%;

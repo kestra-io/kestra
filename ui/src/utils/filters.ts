@@ -10,7 +10,7 @@ export function humanizeDuration (value:string, options?:any) {
     return Utils.humanDuration(value, options);
 }
 export function humanizeNumber (value:string) {
-    return parseInt(value).toLocaleString(Utils.getLang());
+    return parseInt(value).toLocaleString(Utils.getLanguageTag());
 }
 export function cap (value:string) {
     return value ? value.toString().capitalize() : "";

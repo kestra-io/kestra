@@ -2430,9 +2430,6 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
-    },
-    "ee-tooltip": {
-      "features-blocked": "Enterprise edition"
     }
   }
 }

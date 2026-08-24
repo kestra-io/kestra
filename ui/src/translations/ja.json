@@ -2430,9 +2430,6 @@
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
       "install": "インストール",
       "dismiss": "後で"
-    },
-    "ee-tooltip": {
-      "features-blocked": "エンタープライズ版"
     }
   }
 }

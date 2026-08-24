@@ -43,6 +43,7 @@ import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
@@ -102,7 +103,7 @@ public class FlowService {
     private PluginRegistry pluginRegistry;
 
     @Inject
-    private io.kestra.core.runners.pebble.PebbleExpressionService pebbleExpressionService;
+    private PebbleExpressionService pebbleExpressionService;
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
@@ -611,10 +612,9 @@ public class FlowService {
                         String fnName = matcher.group(1);
                         PebbleFunction pf = deprecatedFunctions.get(fnName);
                         if (pf != null) {
-                            String msg = "Pebble function '" + fnName + "' is deprecated.";
-                            if (pf.replacement() != null && !pf.replacement().isBlank()) {
-                                msg += " Use '" + pf.replacement() + "' instead.";
-                            }
+                            String msg = pf.replacement() != null && !pf.replacement().isBlank()
+                                ? "Pebble function '%s' is deprecated. Use '%s' instead.".formatted(fnName, pf.replacement())
+                                : "Pebble function '%s' is deprecated.".formatted(fnName);
                             if (!warnings.contains(msg)) {
                                 warnings.add(msg);
                             }

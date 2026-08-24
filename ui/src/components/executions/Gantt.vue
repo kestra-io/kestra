@@ -191,7 +191,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
-    import moment from "moment"
+    import {date as dateFilter} from "../../utils/filters"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -230,6 +230,9 @@
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
+
+    // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
+    const TICK_FORMAT = "HH:mm:ss"
 
     interface TaskRun {
         id: string;
@@ -432,7 +435,7 @@
 
     const startTime = computed<string>(() => {
         if (!execution.value?.state?.histories?.[0]) return ""
-        return moment(execution.value.state.histories[0].date).format("HH:mm:ss")
+        return dateFilter(execution.value.state.histories[0].date, TICK_FORMAT)
     })
 
     const endTime = computed<string>(() => {
@@ -440,7 +443,7 @@
         const endDate = State.isRunning(execution.value.state.current)
             ? new Date()
             : new Date(stop())
-        return moment(endDate).format("HH:mm:ss")
+        return dateFilter(endDate.toISOString(), TICK_FORMAT)
     })
 
     function delta(): number {
@@ -544,7 +547,7 @@
 
     function computeDates(): void {
         const ticks = 5
-        const formatDate = (timestamp: number): string => moment(timestamp).format("h:mm:ss")
+        const formatDate = (timestamp: number): string => dateFilter(new Date(timestamp).toISOString(), TICK_FORMAT)
         const startVal = start.value
         const deltaVal = delta() / ticks
         const newDates: string[] = []

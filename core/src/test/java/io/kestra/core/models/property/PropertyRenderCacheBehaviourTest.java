@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * <caption>Rendering cached, or not</caption>
  * <tr><th>Behaviour</th><th>Cached (default)</th><th>Not cached</th></tr>
  * <tr><td>A non-deterministic expression, rendered twice</td><td>one value</td><td>two values</td></tr>
+ * <tr><td>Two occurrences of a function within one expression</td><td colspan="2">evaluated separately: the render is cached, not the calls in it</td></tr>
  * <tr><td>Number of evaluations of one expression</td><td>one per context</td><td>one per call</td></tr>
  * <tr><td>Runtime validation of the rendered value</td><td>applied</td><td>silently skipped</td></tr>
  * <tr><td>Two executions rendering the same instance</td><td colspan="2">a value each: the cache is per context</td></tr>
@@ -66,6 +67,20 @@ class PropertyRenderCacheBehaviourTest {
 
         // the two names differ, and so would a randomPort(), an encrypt() or the result of an http() call
         assertThat(second).isNotEqualTo(first);
+    }
+
+    @Test
+    void shouldEvaluateEachOccurrenceSeparatelyWithinOneRender() throws Exception {
+        // what is cached is the result of a render, not the calls inside it: an expression using uuid()
+        // twice gives two values in one render, and a second render of the same property repeats them
+        Property<String> property = Property.<String> builder().expression("{{ uuid() }} and {{ uuid() }}").build();
+        var runContext = runContextFactory.of(Map.of());
+
+        String rendered = Property.as(property, runContext, String.class);
+        String[] occurrences = rendered.split(" and ");
+
+        assertThat(occurrences[0]).isNotEqualTo(occurrences[1]);
+        assertThat(Property.as(property, runContext, String.class)).isEqualTo(rendered);
     }
 
     @Test

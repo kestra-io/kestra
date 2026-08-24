@@ -1,11 +1,15 @@
 package io.kestra.core.runners.pebble;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.runners.pebble.functions.DeprecatedTestFunction;
 
+import io.pebbletemplates.pebble.extension.AbstractExtension;
+import io.pebbletemplates.pebble.extension.Function;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,7 +128,18 @@ class PebbleExpressionServiceTest {
 
     @Test
     void deprecatedFunctionShouldExposeMetadata() {
-        PebbleFunction fn = findFunction("deprecatedFunction");
+        PebbleExpressionService customService = new PebbleExpressionService(List.of(new AbstractExtension() {
+            @Override
+            public Map<String, Function> getFunctions() {
+                return Map.of(DeprecatedTestFunction.NAME, new DeprecatedTestFunction());
+            }
+        }));
+
+        PebbleFunction fn = customService.functions().stream()
+            .filter(f -> f.name().equals(DeprecatedTestFunction.NAME))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Function not found: " + DeprecatedTestFunction.NAME));
+
         assertThat(fn.deprecated()).isTrue();
         assertThat(fn.replacement()).isEqualTo("replacementFunction");
     }

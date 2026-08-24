@@ -2026,7 +2026,11 @@
           "last_run": "ostatnie uruchomienie {ago}",
           "unknown": "{n} nieśledzonych"
         },
-        "recent_runs": "Ostatnie uruchomienia"
+        "recent_runs": "Ostatnie uruchomienia",
+        "group_by": "Grupuj według",
+        "group_none": "Bez grupowania",
+        "group_dataset": "Zbiór danych",
+        "ungrouped": "Bez grupy"
       },
       "search": {
         "placeholders": {

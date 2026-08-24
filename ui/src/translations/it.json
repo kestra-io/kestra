@@ -2026,7 +2026,11 @@
           "last_run": "ultima esecuzione {ago}",
           "unknown": "{n} non tracciato"
         },
-        "recent_runs": "Esecuzioni recenti"
+        "recent_runs": "Esecuzioni recenti",
+        "group_by": "Raggruppa per",
+        "group_none": "Nessun raggruppamento",
+        "group_dataset": "Dataset",
+        "ungrouped": "Non raggruppato"
       },
       "search": {
         "placeholders": {

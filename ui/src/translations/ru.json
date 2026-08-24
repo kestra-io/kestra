@@ -2026,7 +2026,11 @@
           "last_run": "последний запуск {ago}",
           "unknown": "{n} не отслеживается"
         },
-        "recent_runs": "Последние запуски"
+        "recent_runs": "Последние запуски",
+        "group_by": "Группировать по",
+        "group_none": "Без группировки",
+        "group_dataset": "Набор данных",
+        "ungrouped": "Без группы"
       },
       "search": {
         "placeholders": {

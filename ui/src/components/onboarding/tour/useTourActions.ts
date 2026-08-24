@@ -193,8 +193,8 @@ export function useTourActions() {
         await router.push({
             name: "executions/list",
             params: {tenant: tenant()},
-            // Bracket format: the flat `namespace=`/`scope=` params are not read by the API and are now rejected
-            // outright (kestra-io/kestra-ee#10326), so the tour never actually scoped this list.
+            // Bracket format: flat filter params are dropped on their way to the API (and rejected by it now -
+            // kestra-io/kestra-ee#10326), so the tour never actually scoped this list to its own namespace.
             query: {
                 "filters[namespace][EQUALS]": TOUR_NAMESPACE,
                 "filters[scope][EQUALS]": "USER",

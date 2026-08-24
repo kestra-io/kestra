@@ -71,6 +71,10 @@ main {
         transition: padding 0.3s ease;
         padding: 0 2rem;
 
+        &:has(section.empty) {
+            transition: none;
+        }
+
         &.full-height {
             flex: 1;
             display: flex;

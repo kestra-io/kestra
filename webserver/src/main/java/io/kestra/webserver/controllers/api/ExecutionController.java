@@ -493,7 +493,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete a list of executions")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> deleteExecutionsByIds(
         @RequestBody(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
@@ -510,7 +510,7 @@ public class ExecutionController {
             } else {
                 invalids.add(
                     ManualConstraintViolation.of(
-                        "execution not found",
+                        execution.isEmpty() ? "execution not found" : "execution not in a deletable state",
                         executionId,
                         String.class,
                         "execution",

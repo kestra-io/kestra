@@ -49,3 +49,41 @@ describe("useTableColumns reorder", () => {
         expect(localStorage.getItem("columns_set-order-hidden")).toBe("c,a")
     })
 })
+
+describe("useTableColumns persistence", () => {
+    beforeEach(() => localStorage.clear())
+
+    test("should keep every column hidden when the stored selection is empty", () => {
+        localStorage.setItem("columns_all-hidden", "")
+
+        const table = setup("all-hidden")
+
+        expect(table.visibleColumns.value).toEqual([])
+        expect(table.visibleCount.value).toBe(0)
+    })
+
+    test("should keep every column hidden after re-initializing a deselect-all", () => {
+        const table = setup("deselect-all")
+
+        COLUMNS.forEach(column => table.toggleColumn(column))
+        expect(localStorage.getItem("columns_deselect-all")).toBe("")
+
+        table.initializeVisibleColumns()
+
+        expect(table.visibleColumns.value).toEqual([])
+    })
+
+    test("should fall back to the defaults when no selection was ever stored", () => {
+        const table = setup("never-stored")
+
+        expect(table.visibleColumns.value).toEqual(["a", "b", "c"])
+    })
+
+    test("should fall back to the defaults when the stored columns no longer exist", () => {
+        localStorage.setItem("columns_stale", "gone,removed")
+
+        const table = setup("stale")
+
+        expect(table.visibleColumns.value).toEqual(["a", "b", "c"])
+    })
+})

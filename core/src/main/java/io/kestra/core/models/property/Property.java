@@ -224,8 +224,8 @@ public class Property<T> {
                         Object rendered = null;
                         if (item instanceof String str) {
                             rendered = context.render(str, variables);
-                        } else if (item instanceof Map map) {
-                            rendered = context.render(map, variables);
+                        } else if (item instanceof Map<?, ?> map) {
+                            rendered = context.render((Map<String, Object>) map, variables);
                         }
 
                         if (rendered != null) {

@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubAiProviderConfigured, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * End-to-end coverage for the AI Copilot chat drawer.
@@ -31,6 +31,8 @@ const FLOW_YAML = "id: applied\nnamespace: company.team\ntasks:\n  - id: log\n  
 
 test.describe("AI Copilot", () => {
     test.beforeEach(async ({page}) => {
+        // The turn is stubbed, so the surface has to behave as it does on a configured instance.
+        await stubAiProviderConfigured(page, true)
         // Thread creation is always the same stubbed thread.
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
@@ -387,6 +389,7 @@ test.describe("AI Copilot", () => {
  */
 test.describe("AI Copilot — full-page /ai surface", () => {
     test("hosts the copilot full-page at /ai with the page-only Need Help section", async ({page}) => {
+        await stubAiProviderConfigured(page, true)
         await disableProductTour(page)
         await page.goto("/ui")
         const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
@@ -403,5 +406,21 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         await expect(help).toBeVisible()
         await expect(help).toContainText("Blueprints")
         await expect(help).toContainText("Slack")
+    })
+
+    // kestra-io/kestra#18322: an instance with no provider used to render a working-looking chat and
+    // only owned up after the first turn failed.
+    test("says the copilot is unavailable on load when no provider is configured", async ({page}) => {
+        await stubAiProviderConfigured(page, false)
+        await disableProductTour(page)
+        await page.goto("/ui")
+        const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
+        await page.goto(`/ui/${tenant}/ai`, {waitUntil: "domcontentloaded"})
+
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible({timeout: 15000})
+        // Nothing invites a prompt: the composer is gone, and so is the empty state that hosts it
+        // together with the quick-action chips (Need Help is the page-layout marker for that block).
+        await expect(page.locator(D.input)).toBeHidden()
+        await expect(page.locator("[data-test=\"copilot-help\"]")).toBeHidden()
     })
 })

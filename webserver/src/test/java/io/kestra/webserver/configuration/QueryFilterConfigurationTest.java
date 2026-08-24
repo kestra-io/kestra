@@ -13,7 +13,7 @@ class QueryFilterConfigurationTest {
     @Test
     void shouldClampGlobalsBelowFloor() {
         // GIVEN / WHEN — clamping happens in the canonical constructor
-        QueryFilterConfiguration config = new QueryFilterConfiguration(1, 5, null);
+        QueryFilterConfiguration config = new QueryFilterConfiguration(1, 5, true, null);
 
         // THEN — clamped up to the floor
         assertEquals(QueryFilterConfiguration.FLOOR_DEPTH, config.maxDepth());
@@ -23,7 +23,7 @@ class QueryFilterConfigurationTest {
     @Test
     void shouldNotClampGlobalsAtOrAboveFloor() {
         // GIVEN / WHEN
-        QueryFilterConfiguration config = new QueryFilterConfiguration(10, 100, null);
+        QueryFilterConfiguration config = new QueryFilterConfiguration(10, 100, true, null);
 
         // THEN — unchanged
         assertEquals(10, config.maxDepth());
@@ -39,6 +39,7 @@ class QueryFilterConfigurationTest {
         QueryFilterConfiguration config = new QueryFilterConfiguration(
             QueryFilterConfiguration.FLOOR_DEPTH,
             QueryFilterConfiguration.FLOOR_WIDTH,
+            true,
             Map.of("EXECUTION", limits)
         );
 
@@ -53,7 +54,7 @@ class QueryFilterConfigurationTest {
         // GIVEN — EXECUTION overrides depth only; width unset
         QueryFilterConfiguration.ResourceLimits limits = new QueryFilterConfiguration.ResourceLimits(8, null);
 
-        QueryFilterConfiguration config = new QueryFilterConfiguration(3, 20, Map.of("EXECUTION", limits));
+        QueryFilterConfiguration config = new QueryFilterConfiguration(3, 20, true, Map.of("EXECUTION", limits));
 
         // WHEN / THEN
         assertEquals(8, config.maxDepthFor(QueryFilter.Resource.EXECUTION));
@@ -70,7 +71,7 @@ class QueryFilterConfigurationTest {
 
     @Test
     void shouldFallBackToGlobalWhenResourceIsNull() {
-        QueryFilterConfiguration config = new QueryFilterConfiguration(5, 50, null);
+        QueryFilterConfiguration config = new QueryFilterConfiguration(5, 50, true, null);
 
         assertEquals(5, config.maxDepthFor(null));
         assertEquals(50, config.maxWidthFor(null));

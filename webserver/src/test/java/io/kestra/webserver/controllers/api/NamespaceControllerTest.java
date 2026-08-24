@@ -62,6 +62,23 @@ public class NamespaceControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldKeepRouteDeclaredParamsWorkingAlongsideFilters() {
+        // GIVEN — `existingOnly` is both a filter field name and a real argument of this route (bound as `existing`),
+        // so the legacy-flat-param safeguard must not reject it. See kestra-io/kestra-ee#10326.
+        flow("my.ns");
+
+        // WHEN
+        PagedResults<Namespace> list = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/namespaces/search?existing=true"),
+            Argument.of(PagedResults.class, Namespace.class)
+        );
+
+        // THEN
+        assertThat(list.getTotal()).isNotNull();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void list() {
         flow("my.ns");
         flow("my.ns.flow");

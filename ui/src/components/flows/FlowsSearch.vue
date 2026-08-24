@@ -115,7 +115,7 @@
                         <span v-if="query && crossResourceSearchStore.statusFor(type) !== 'idle'" class="source-search__pill-count">{{ crossResourceSearchStore.countFor(type) }}</span>
                         <Loading v-if="crossResourceSearchStore.statusFor(type) === 'counting'" class="source-search__pill-spin" />
                         <AlertCircleOutline v-else-if="query && crossResourceSearchStore.statusFor(type) === 'failed'" :title="crossResourceSearchStore.errorMessageFor(type)" />
-                        <Lock v-else-if="type !== 'flows'" />
+                        <PencilLockOutline v-else-if="type !== 'flows'" />
                     </KsCheckTag>
                     <KsButton class="source-search__pill-outline" size="small" @click="selectAllTypes">
                         {{ $t('source_search.select_all_types') }}
@@ -340,7 +340,7 @@
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
-    import Lock from "vue-material-design-icons/Lock.vue"
+    import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"

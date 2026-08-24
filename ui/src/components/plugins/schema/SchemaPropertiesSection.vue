@@ -85,8 +85,14 @@
                                 class="compact-prop-desc"
                             >
                                 <slot
+                                    v-if="property.title"
                                     name="markdown"
-                                    :content="property.title || property.description || ''"
+                                    :content="sanitizeForMarkdown(property.title)"
+                                />
+                                <slot
+                                    v-if="property.description"
+                                    name="markdown"
+                                    :content="sanitizeForMarkdown(property.description)"
                                 />
                             </div>
                         </div>
@@ -184,6 +190,7 @@
         extractTypeInfo,
         isDeprecated,
         isDynamic,
+        sanitizeForMarkdown,
         type JSONProperty,
         type JSONSchema,
         type SchemaExample,

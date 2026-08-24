@@ -2,47 +2,6 @@
   "de": {
     "loading": "Wird geladen...",
     "more actions": "Weitere Aktionen",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Verwende nur Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche, beginnend mit einem Buchstaben oder einer Ziffer.",
-        "id_label": "Flow-ID",
-        "id_placeholder": "mein-flow",
-        "namespace_invalid": "Verwende nur Kleinbuchstaben, Ziffern, Punkte, Bindestriche und Unterstriche, beginnend mit einem Kleinbuchstaben oder einer Ziffer.",
-        "namespace_placeholder": "Namespace auswählen",
-        "namespaces_error": "Namespaces konnten nicht geladen werden. Gib einen Namespace manuell ein.",
-        "open_editor": "Editor öffnen",
-        "subtitle": "Mit einem Hello-World-Starter beginnen und von Grund auf aufbauen.",
-        "title": "Leerer Flow"
-      },
-      "blueprints": {
-        "subtitle": "Einen fertigen Flow aus dem Community-Katalog auswählen.",
-        "title": "Blueprints durchsuchen"
-      },
-      "import": {
-        "back": "Zurück",
-        "error": {
-          "empty": "YAML-Inhalt ist leer.",
-          "invalid_mapping": "Ungültiges Flow-YAML: erwartet wurde eine Zuordnung aus Key und Value, keine Liste und kein Skalar.",
-          "parse_error": "YAML konnte nicht geparst werden.",
-          "too_large": "Die Datei ist zu groß. Füge stattdessen die Flow-Definition ein oder lade eine Datei unter 1 MB hoch."
-        },
-        "paste_label": "YAML einfügen",
-        "read_error": "Die Datei konnte nicht gelesen werden.",
-        "submit": "Flow importieren",
-        "subtitle": "Eine vorhandene Flow-Definition einfügen oder hochladen.",
-        "title": "YAML importieren",
-        "upload_button": ".yml / .yaml hochladen",
-        "upload_label": "Oder eine Datei hochladen",
-        "upload_tip": "Akzeptiert .yml- und .yaml-Dateien."
-      },
-      "subtitle": "Mit einer leeren Arbeitsfläche beginnen, Blueprints erkunden oder eine vorhandene YAML-Datei importieren.",
-      "system": {
-        "badge": "SYSTEM",
-        "subtitle": "Einen Alert- oder Automatisierungs-Flow für deine Plattform erstellen.",
-        "title": "System-Flow erstellen"
-      },
-      "title": "Neuen Flow erstellen"
-    },
     "recipe": {
       "create_flow": "Flow erstellen",
       "email": "E-Mail",
@@ -227,6 +186,7 @@
     "edit": "Bearbeiten",
     "back": "Zurück",
     "next": "Weiter",
+    "previous": "Zurück",
     "done": "Fertig",
     "review your inputs": "Überprüfe deine Inputs",
     "edit flow": "Flow bearbeiten",
@@ -1019,7 +979,8 @@
             "triggers_default_tab": "Standard-Tab für Trigger",
             "playground": "Playground",
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
-            "task_edit_default_mode": "Standard-Bearbeitungsmodus für Tasks"
+            "task_edit_default_mode": "Standard-Bearbeitungsmodus für Tasks",
+            "flow_template": "Standard-Flow-Vorlage"
           },
           "descriptions": {
             "default_namespace": "Wird verwendet, wenn neue Flows ohne Namespace erstellt werden.",
@@ -1032,11 +993,17 @@
             "triggers_default_tab": "Tab, der beim Navigieren zur Trigger-Seite ausgewählt wird.",
             "auto_refresh_interval": "Sekunden zwischen automatischen Datenaktualisierungen auf Listenseiten.",
             "playground": "Tasks einzeln im Editor-Playground ausführen.",
-            "task_edit_default_mode": "Wie ein Task standardmäßig aus dem No-Code-Editor geöffnet wird."
+            "task_edit_default_mode": "Wie ein Task standardmäßig aus dem No-Code-Editor geöffnet wird.",
+            "flow_template": "YAML, das im Editor geöffnet wird, wenn du einen neuen Flow erstellst. Die ID und der Namespace können weggelassen werden, da sie für dich generiert werden. Wenn das Feld leer ist, wird die für die Instanz konfigurierte Vorlage verwendet."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Tab"
+          },
+          "flow_template_reset": "Zurücksetzen auf Standard",
+          "flow_template_error": {
+            "invalid_mapping": "Ungültige Flow-Vorlage: erwartet wurde eine Zuordnung aus Key und Value, keine Liste und kein Skalar.",
+            "parse_error": "YAML konnte nicht geparst werden. Die Vorlage wurde gespeichert, daher kann der Editor denselben Fehler anzeigen, wenn du einen Flow erstellst."
           }
         },
         "theme": {
@@ -1113,7 +1080,7 @@
       "contact_sales": "Vertrieb kontaktieren",
       "secrets": {
         "title": "Secrets Management verbessern",
-        "message": "Mit der Enterprise Edition (EE) kannst du Secrets direkt in der UI hinzufügen, bearbeiten oder löschen, ganz ohne Neustart der Instanz. Organisiere Secrets nach Namespace mit granularen RBAC-Berechtigungen und vererbe sie von übergeordneten an untergeordnete Namespaces. Die EE lässt sich mit Secrets Managern wie HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager und Elasticsearch verbinden. Richte dedizierte Backends pro Namespace, Tenant oder Instanz ein, um Secrets zwischen Teams zu isolieren, oder aktiviere schreibgeschützte Secrets aus externen Vaults. Secrets bleiben im Ruhezustand und bei der Übertragung verschlüsselt. Optionales Caching reduziert API-Aufrufe, und Audit-Trails protokollieren jeden Zugriff.",
+        "message": "Mit der Enterprise Edition kannst du Secrets direkt in der UI hinzufügen, bearbeiten und löschen, sie nach Namespace mit RBAC organisieren und als Backend HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager oder Elasticsearch verwenden.",
         "add_env": {
           "intro": "Neues Secret erstellen",
           "first": "Kodiere den <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">Secret-Wert in Base64</a>",

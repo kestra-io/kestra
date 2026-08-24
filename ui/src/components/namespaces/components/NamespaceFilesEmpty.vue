@@ -3,8 +3,7 @@
         <KsEmptyState
             :title="$t('empty.namespaceFiles.title')"
             :image="artwork"
-            :video="namespaceFilesLinks?.video"
-            :learnMore="namespaceFilesLinks?.learnMore"
+            :learnMore="links.namespaceFiles"
         >
             <template #description>
                 {{ $t("empty.namespaceFiles.content") }}
@@ -25,9 +24,6 @@
 
     import artwork from "../../../assets/empty_visuals/generic.svg"
     import {links} from "../../layout/empty/links"
-
-
-    const namespaceFilesLinks = links.namespaceFiles
 
     const emit = defineEmits<{
         newFile: [];

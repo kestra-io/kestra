@@ -61,7 +61,7 @@
                 </template>
             </KsDropdown>
             <NavBarAction
-                v-else-if="canEdit && !deleted"
+                v-else-if="flow && canEdit && !deleted && !flowStore.isCreating"
                 :icon="Pencil"
                 :label="$t('edit flow')"
                 @click="editFlow"

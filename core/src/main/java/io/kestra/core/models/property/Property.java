@@ -2,6 +2,7 @@ package io.kestra.core.models.property;
 
 import java.io.IOException;
 import java.io.Serial;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +56,12 @@ public class Property<T> {
     private final boolean skipCache;
     private String expression;
     private T value;
+
+    // a value set at build time is never rendered, whereas a rendered one is only valid for the
+    // context it has been rendered with: the same property instance can be shared by multiple
+    // executions as the executor renders the tasks of the flow it keeps in its cache
+    private boolean literal;
+    private WeakReference<PropertyContext> renderedWith;
 
     private Property(String expression) {
         this(expression, false);
@@ -110,6 +117,7 @@ public class Property<T> {
 
         Property<V> p = new Property<>(expression);
         p.value = value;
+        p.literal = true;
         return p;
     }
 
@@ -147,12 +155,33 @@ public class Property<T> {
      * @see RunContextProperty#as(Class, Map)
      */
     public static <T> T as(Property<T> property, PropertyContext context, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (property.skipCache || property.value == null) {
+        if (property.shouldRender(context)) {
             String rendered = context.render(property.expression, variables);
-            property.value = deserialize(rendered, clazz);
+            property.cacheRendered(deserialize(rendered, clazz), context);
         }
 
         return property.value;
+    }
+
+    /**
+     * Whether the property must be rendered, which is the case unless its value is a literal set at
+     * build time or a rendering already done for the same context.
+     */
+    private boolean shouldRender(PropertyContext context) {
+        if (this.literal) {
+            return false;
+        }
+
+        if (this.skipCache || this.value == null) {
+            return true;
+        }
+
+        return this.renderedWith == null || this.renderedWith.get() != context;
+    }
+
+    private void cacheRendered(T rendered, PropertyContext context) {
+        this.value = rendered;
+        this.renderedWith = new WeakReference<>(context);
     }
 
     private static <T> T deserialize(Object rendered, Class<T> clazz) throws IllegalVariableEvaluationException {
@@ -207,18 +236,19 @@ public class Property<T> {
      */
     @SuppressWarnings("unchecked")
     public static <T, I> T asList(Property<T> property, PropertyContext context, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (property.skipCache || property.value == null) {
+        if (property.shouldRender(context)) {
             JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
             String trimmedExpression = property.expression.trim();
+            T renderedList;
             // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
             // Doing that allows us to, if it's an expression, first render then read it as a list.
             if (PebbleUtil.startsWithOpeningBlockDelimiter(trimmedExpression) && PebbleUtil.endsWithClosingBlockDelimiter(trimmedExpression)) {
-                property.value = deserialize(context.render(property.expression, variables), type);
+                renderedList = deserialize(context.render(property.expression, variables), type);
             }
             // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
             else {
                 List<?> asRawList = deserialize(property.expression, List.class);
-                property.value = (T) asRawList.stream()
+                renderedList = (T) asRawList.stream()
                     .map(throwFunction(item ->
                     {
                         Object rendered = null;
@@ -236,6 +266,8 @@ public class Property<T> {
                     }))
                     .toList();
             }
+
+            property.cacheRendered(renderedList, context);
         }
 
         return property.value;
@@ -263,21 +295,24 @@ public class Property<T> {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables)
         throws IllegalVariableEvaluationException {
-        if (property.skipCache || property.value == null) {
+        if (property.shouldRender(runContext)) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
 
             try {
                 String trimmedExpression = property.expression.trim();
+                T renderedMap;
                 // We need to detect if the expression is already a map or if it's a pebble expression (for eg. referencing a variable containing a map).
                 // Doing that allows us to, if it's an expression, first render then read it as a map.
                 if (PebbleUtil.startsWithOpeningBlockDelimiter(trimmedExpression) && PebbleUtil.endsWithClosingBlockDelimiter(trimmedExpression)) {
-                    property.value = deserialize(runContext.render(property.expression, variables), targetMapType);
+                    renderedMap = deserialize(runContext.render(property.expression, variables), targetMapType);
                 }
                 // Otherwise if it's already a map we read it as a map first then render it from run context which handle map rendering by rendering each entry of the map (otherwise it will fail with nested expressions in values for eg.)
                 else {
                     Map asRawMap = MAPPER.readValue(property.expression, Map.class);
-                    property.value = deserialize(runContext.render(asRawMap, variables), targetMapType);
+                    renderedMap = deserialize(runContext.render(asRawMap, variables), targetMapType);
                 }
+
+                property.cacheRendered(renderedMap, runContext);
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }

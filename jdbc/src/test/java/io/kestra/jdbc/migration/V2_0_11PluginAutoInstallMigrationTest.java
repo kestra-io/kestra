@@ -26,10 +26,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link V2_0_25PluginAutoInstallMigration} against an in-memory H2 database.
+ * Unit tests for {@link V2_0_11PluginAutoInstallMigration} against an in-memory H2 database.
  * The crawl query is plain jOOQ, so a single backend is enough — no per-DB subclasses.
  */
-class V2_0_25PluginAutoInstallMigrationTest {
+class V2_0_11PluginAutoInstallMigrationTest {
 
     private static final Field<String> KEY_FIELD = DSL.field(DSL.quotedName("key"), String.class);
     private static final Field<String> TENANT_FIELD = DSL.field(DSL.quotedName("tenant_id"), String.class);
@@ -44,7 +44,7 @@ class V2_0_25PluginAutoInstallMigrationTest {
     private JooqDSLContextWrapper dslContextWrapper;
     private DSLContext dsl;
     private PluginAutoInstallService autoInstallService;
-    private V2_0_25PluginAutoInstallMigration migration;
+    private V2_0_11PluginAutoInstallMigration migration;
 
     @BeforeEach
     void setUp() {
@@ -70,7 +70,7 @@ class V2_0_25PluginAutoInstallMigrationTest {
 
         dslContextWrapper = new JooqDSLContextWrapper(dsl, (DataSource) ds);
         autoInstallService = mock(PluginAutoInstallService.class);
-        migration = new V2_0_25PluginAutoInstallMigration(
+        migration = new V2_0_11PluginAutoInstallMigration(
             dslContextWrapper,
             () -> autoInstallService,
             () -> mock(PluginRegistry.class)

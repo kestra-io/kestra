@@ -7,11 +7,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.docs.JsonSchemaCache;
 import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.utils.ExecutorsUtils;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -53,6 +56,8 @@ public class PluginInstallJobRegistry {
     private final int concurrency;
     private final PluginManager pluginManager;
     private final JsonSchemaCache jsonSchemaCache;
+    private final ExecutorsUtils executorsUtils;
+    private final List<ScheduledFuture<?>> maintenanceTasks = new CopyOnWriteArrayList<>();
 
     private volatile ExecutorService installExecutor;
     private volatile ScheduledExecutorService maintenanceExecutor;
@@ -61,17 +66,20 @@ public class PluginInstallJobRegistry {
     public PluginInstallJobRegistry(
         final PluginManager pluginManager,
         final JsonSchemaCache jsonSchemaCache,
-        final PluginAutoInstallConfig config) {
-        this(pluginManager, jsonSchemaCache, config.concurrency());
+        final PluginAutoInstallConfig config,
+        final ExecutorsUtils executorsUtils) {
+        this(pluginManager, jsonSchemaCache, config.concurrency(), executorsUtils);
     }
 
     PluginInstallJobRegistry(
         final PluginManager pluginManager,
         final JsonSchemaCache jsonSchemaCache,
-        final int concurrency) {
+        final int concurrency,
+        final ExecutorsUtils executorsUtils) {
         this.pluginManager = Objects.requireNonNull(pluginManager);
         this.jsonSchemaCache = Objects.requireNonNull(jsonSchemaCache);
         this.concurrency = concurrency;
+        this.executorsUtils = Objects.requireNonNull(executorsUtils);
     }
 
     /**
@@ -154,14 +162,18 @@ public class PluginInstallJobRegistry {
         }
         synchronized (this) {
             if (installExecutor == null) {
+                // ExecutorsUtils has no ScheduledExecutorService-returning factory to wrap this in the
+                // same metrics layer as the install pool, so this stays a plain JDK executor.
                 maintenanceExecutor = Executors.newSingleThreadScheduledExecutor();
-                maintenanceExecutor.scheduleAtFixedRate(this::evictTerminalJobs, 60, 60, TimeUnit.SECONDS);
-                maintenanceExecutor.scheduleAtFixedRate(this::cancelStuckJobs, 60, 60, TimeUnit.SECONDS);
-                // Installs are download-bound, so size from the allocated CPUs with a floor of 8.
+                maintenanceTasks.add(maintenanceExecutor.scheduleAtFixedRate(this::evictTerminalJobs, 60, 60, TimeUnit.SECONDS));
+                maintenanceTasks.add(maintenanceExecutor.scheduleAtFixedRate(this::cancelStuckJobs, 60, 60, TimeUnit.SECONDS));
+                // Installs are download-bound, so size from the allocated CPUs with a floor of 8. Elastic
+                // (not fixed): idle install threads time out and die instead of sitting around forever on
+                // an instance that briefly needed a burst of installs.
                 int poolSize = concurrency > 0
                     ? concurrency
                     : Math.max(8, 4 * KestraContext.getContext().getAllocatedCpuCores());
-                installExecutor = Executors.newFixedThreadPool(poolSize);
+                installExecutor = executorsUtils.maxCachedThreadPool(poolSize, "plugin-install");
             }
         }
     }
@@ -195,8 +207,7 @@ public class PluginInstallJobRegistry {
         {
             if (PluginInstallJob.Status.RUNNING == job.status() && job.startedAt() != null && job.startedAt().isBefore(cutoff)) {
                 Optional.ofNullable(futures.get(jobId)).ifPresent(future -> future.cancel(true));
-                jobs.compute(jobId, (id, current) ->
-                    current.failed(Instant.now(), "Plugin install job was cancelled after exceeding the %s hard timeout.".formatted(JOB_HARD_TIMEOUT)));
+                jobs.compute(jobId, (id, current) -> current.failed(Instant.now(), "Plugin install job was cancelled after exceeding the %s hard timeout.".formatted(JOB_HARD_TIMEOUT)));
                 activeJobsByArtifacts.remove(artifactsKey(job.artifacts()), jobId);
                 log.warn("Cancelled plugin install job {} stuck in RUNNING for more than {} (artifacts: {}).", jobId, JOB_HARD_TIMEOUT, job.artifacts());
             }
@@ -218,22 +229,11 @@ public class PluginInstallJobRegistry {
     @PreDestroy
     public void shutdown() {
         // Two-step shutdown: let in-flight installs finish within a grace period before interrupting.
-        shutdownGracefully(installExecutor);
-        shutdownGracefully(maintenanceExecutor);
-    }
-
-    private static void shutdownGracefully(final ExecutorService executor) {
-        if (executor == null) {
-            return;
+        if (installExecutor != null) {
+            ExecutorsUtils.closeExecutorService("plugin-install", installExecutor, SHUTDOWN_GRACE);
         }
-        executor.shutdown();
-        try {
-            if (!executor.awaitTermination(SHUTDOWN_GRACE.toMillis(), TimeUnit.MILLISECONDS)) {
-                executor.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            executor.shutdownNow();
+        if (maintenanceExecutor != null) {
+            ExecutorsUtils.closeScheduledThreadPool(maintenanceExecutor, SHUTDOWN_GRACE, maintenanceTasks);
         }
     }
 }

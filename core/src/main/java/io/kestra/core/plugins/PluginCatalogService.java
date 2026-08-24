@@ -13,10 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import com.google.common.base.Suppliers;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -52,8 +49,6 @@ public class PluginCatalogService {
     private final boolean icons;
     private final boolean oss;
 
-    private final Supplier<Version> currentStableVersion;
-
     /**
      * Creates a new {@link PluginCatalogService} instance.
      *
@@ -69,15 +64,14 @@ public class PluginCatalogService {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
-
-        // Lazily resolved: this bean can be instantiated during database migrations, before the
-        // KestraContext static holder is initialized.
-        this.currentStableVersion = Suppliers.memoize(() ->
-        {
-            Version version = Version.of(KestraContext.getContext().getVersion());
-            return new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
-        });
         // Loading is deferred to the first get() call to avoid blocking HTTP calls at startup.
+    }
+
+    // Resolved on each call, not at construction time: this bean can be instantiated during
+    // database migrations, before the KestraContext static holder is initialized.
+    private static Version currentStableVersion() {
+        Version version = Version.of(KestraContext.getContext().getVersion());
+        return new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
     }
 
     /**
@@ -245,7 +239,7 @@ public class PluginCatalogService {
 
         MutableHttpRequest<Object> request = HttpRequest.create(
             HttpMethod.GET,
-            "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion.get()
+            "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion()
         );
         if (oss) {
             request.getParameters().add("license", "OPENSOURCE");

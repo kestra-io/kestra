@@ -26,7 +26,6 @@ import io.kestra.core.docs.SchemaType;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Version;
 
-import io.micronaut.context.annotation.Value;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -63,12 +62,10 @@ public class PluginSchemaBundleService {
     private volatile Bundle bundle;
     private volatile Instant lastFailureAt;
 
-    public PluginSchemaBundleService(
-        @Nullable @Value("${kestra.plugins.schema-bundle-path:}") String bundlePath,
-        @Nullable @Value("${kestra.plugins.schema-bundle-url-template:}") String bundleUrlTemplate) {
+    public PluginSchemaBundleService(final PluginSchemaBundleConfig config) {
         this.resolvedBundleUrl = resolveBundleSource(
-            bundlePath,
-            bundleUrlTemplate,
+            config.schemaBundlePath().orElse(null),
+            config.schemaBundleUrlTemplate().orElse(null),
             PluginSchemaBundleService.class.getResource(CLASSPATH_BUNDLE),
             () -> KestraContext.getContext().getVersion()
         );

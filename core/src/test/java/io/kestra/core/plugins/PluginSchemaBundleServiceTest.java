@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,10 +39,14 @@ class PluginSchemaBundleServiceTest {
         KestraContext.setContext(null);
     }
 
+    private static PluginSchemaBundleConfig config(String path, String urlTemplate) {
+        return new PluginSchemaBundleConfig(Optional.ofNullable(path), Optional.ofNullable(urlTemplate));
+    }
+
     @Test
     void shouldReturnLocalSchemaUnchangedWhenDisabled() {
         // Given
-        PluginSchemaBundleService service = new PluginSchemaBundleService(null, null);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(null, null));
         Map<String, Object> localSchema = Map.of("$ref", "#/definitions/io.kestra.core.models.tasks.Task");
 
         // When
@@ -90,7 +95,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toString(), null);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null));
 
         Map<String, Object> localSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -181,7 +186,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toString(), null);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null));
 
         Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -248,7 +253,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toString(), null);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null));
 
         Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
             {

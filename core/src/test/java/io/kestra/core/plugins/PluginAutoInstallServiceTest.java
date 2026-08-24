@@ -436,6 +436,25 @@ class PluginAutoInstallServiceTest {
         assertThat(service.isEnabled()).isTrue();
     }
 
+    @Test
+    void shouldForceDisableOutsideOssEvenWithExplicitEnabledProperty() {
+        // Given / When — EE manages plugins through Plugin Versioning, so the shared property must
+        // never be able to turn this on there
+        EditionProvider eeEdition = new EditionProvider() {
+            @Override
+            public Edition get() {
+                return Edition.EE;
+            }
+        };
+        PluginAutoInstallService service = new PluginAutoInstallService(
+            catalogService, pluginRegistry, () -> installJobRegistry, eeEdition,
+            Optional.of("local"), config(Optional.of(true))
+        );
+
+        // Then
+        assertThat(service.isEnabled()).isFalse();
+    }
+
     // ─── installMissingTypes ──────────────────────────────────────────────────
 
     @Test

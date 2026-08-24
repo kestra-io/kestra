@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 @JdbcRepositoryEnabled
-public class V2_0_25PluginAutoInstallMigration implements MigrationScript {
+public class V2_0_11PluginAutoInstallMigration implements MigrationScript {
 
     private static final Field<String> TENANT_FIELD = DSL.field(DSL.quotedName("tenant_id"), String.class);
     private static final Field<String> NAMESPACE_FIELD = DSL.field(DSL.quotedName("namespace"), String.class);
@@ -44,7 +44,7 @@ public class V2_0_25PluginAutoInstallMigration implements MigrationScript {
     private final Provider<PluginRegistry> pluginRegistry;
 
     @Inject
-    public V2_0_25PluginAutoInstallMigration(
+    public V2_0_11PluginAutoInstallMigration(
         final JooqDSLContextWrapper dslContextWrapper,
         final Provider<PluginAutoInstallService> autoInstallService,
         final Provider<PluginRegistry> pluginRegistry) {
@@ -55,7 +55,7 @@ public class V2_0_25PluginAutoInstallMigration implements MigrationScript {
 
     @Override
     public String scriptId() {
-        return "2.0.25-plugin-auto-install";
+        return "2.0.11-plugin-auto-install";
     }
 
     @Override

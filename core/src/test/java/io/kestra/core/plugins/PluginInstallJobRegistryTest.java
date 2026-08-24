@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.aether.transfer.TransferListener;
@@ -15,12 +16,15 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.docs.JsonSchemaCache;
 import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.utils.ExecutorsUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
@@ -34,7 +38,10 @@ class PluginInstallJobRegistryTest {
     void setUp() {
         pluginManager = mock(PluginManager.class);
         jsonSchemaCache = mock(JsonSchemaCache.class);
-        registry = new PluginInstallJobRegistry(pluginManager, jsonSchemaCache, 2);
+        ExecutorsUtils executorsUtils = mock(ExecutorsUtils.class);
+        when(executorsUtils.maxCachedThreadPool(anyInt(), anyString()))
+            .thenAnswer(invocation -> Executors.newFixedThreadPool(invocation.getArgument(0)));
+        registry = new PluginInstallJobRegistry(pluginManager, jsonSchemaCache, 2, executorsUtils);
     }
 
     @AfterEach

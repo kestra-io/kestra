@@ -33,7 +33,10 @@ import lombok.extern.slf4j.Slf4j;
  * a save into a hard error beyond the pre-existing validation failure.
  * <p>
  * On by default only for OSS + local-filesystem storage (the {@code server local} persona); an
- * explicit {@code kestra.plugins.auto-install.enabled} always wins over that computed default.
+ * explicit {@code kestra.plugins.auto-install.enabled} always wins over that computed default,
+ * except outside OSS, where the feature is unconditionally forced off — EE manages plugins through
+ * Plugin Versioning instead, and this feature must not run there regardless of how the shared
+ * property is set.
  */
 @Singleton
 @Slf4j
@@ -63,20 +66,33 @@ public class PluginAutoInstallService {
         final PluginAutoInstallConfig config) {
         // Default on only for OSS + local-filesystem storage (the "local" persona): the storage type
         // is the signal that distinguishes `server local` from a generic standalone deployment on
-        // S3/GCS, which must stay inert. An explicit property value always wins, so an operator who
-        // opts in on a distributed/EE deployment keeps the previous behaviour.
+        // S3/GCS, which must stay inert. An explicit property value always wins on OSS; outside OSS
+        // it is force-disabled below regardless, since EE manages plugins through Plugin Versioning.
         this(
             catalogService,
             pluginRegistry,
             installJobRegistry,
-            config.enabled().orElseGet(
-                () -> editionProvider.get() == EditionProvider.Edition.OSS
-                    && storageType.map("local"::equalsIgnoreCase).orElse(false)
-            ),
+            computeEnabled(editionProvider, storageType, config),
             config.installTimeout(),
             config.saveTimeout(),
             storageType
         );
+    }
+
+    private static boolean computeEnabled(
+        final EditionProvider editionProvider,
+        final Optional<String> storageType,
+        final PluginAutoInstallConfig config) {
+        if (editionProvider.get() != EditionProvider.Edition.OSS) {
+            if (config.enabled().orElse(false)) {
+                log.warn(
+                    "kestra.plugins.auto-install.enabled is set but plugin auto-install is not supported " +
+                        "outside OSS; forcing it off. Manage plugins through Plugin Versioning instead."
+                );
+            }
+            return false;
+        }
+        return config.enabled().orElseGet(() -> storageType.map("local"::equalsIgnoreCase).orElse(false));
     }
 
     PluginAutoInstallService(

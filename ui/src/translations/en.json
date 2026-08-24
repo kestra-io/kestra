@@ -2,47 +2,6 @@
   "en": {
     "loading": "Loading...",
     "more actions": "More actions",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Use letters, digits, dots, dashes and underscores only, starting with a letter or a digit.",
-        "id_label": "Flow id",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Use lowercase letters, digits, dots, dashes and underscores only, starting with a lowercase letter or a digit.",
-        "namespace_placeholder": "Select a namespace",
-        "namespaces_error": "Could not load namespaces. Type a namespace manually.",
-        "open_editor": "Open editor",
-        "subtitle": "Start with a hello-world starter and build from scratch.",
-        "title": "Blank flow"
-      },
-      "blueprints": {
-        "subtitle": "Pick a ready-made flow from the community catalog.",
-        "title": "Browse blueprints"
-      },
-      "import": {
-        "back": "Back",
-        "error": {
-          "empty": "YAML content is empty.",
-          "invalid_mapping": "Invalid flow YAML: expected a key-value mapping, not a list or scalar.",
-          "parse_error": "Could not parse YAML.",
-          "too_large": "That file is too large. Paste the flow definition instead, or upload a file under 1 MB."
-        },
-        "paste_label": "Paste YAML",
-        "read_error": "Could not read the file.",
-        "submit": "Import flow",
-        "subtitle": "Paste or upload an existing flow definition.",
-        "title": "Import YAML",
-        "upload_button": "Upload .yml / .yaml",
-        "upload_label": "Or upload a file",
-        "upload_tip": "Accepts .yml and .yaml files."
-      },
-      "subtitle": "Start from a blank canvas, explore blueprints, or import an existing YAML.",
-      "system": {
-        "badge": "SYSTEM",
-        "subtitle": "Build an alert or automation flow for your platform.",
-        "title": "Create a system flow"
-      },
-      "title": "Create a new flow"
-    },
     "recipe": {
       "create_flow": "Create flow",
       "email": "Email",
@@ -227,6 +186,7 @@
     "edit": "Edit",
     "back": "Back",
     "next": "Next",
+    "previous": "Previous",
     "done": "Done",
     "review your inputs": "Review your inputs",
     "edit flow": "Edit flow",
@@ -311,8 +271,6 @@
         "1d": "1d",
         "7d": "7d"
       },
-      "last14days": "Last 14 days",
-      "last28days": "Last 28 days",
       "14days": "14 days",
       "28days": "28 days"
     },
@@ -478,6 +436,7 @@
     },
     "file_preview": {
       "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "big_file_download_only": "This file is {size}. It is too large to open in the editor, download it instead.",
       "load_anyway": "Load anyway",
       "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
       "retry": "Retry",
@@ -521,12 +480,15 @@
       "detail": {
         "category": "Category type",
         "links": "Link & Resources",
-        "openInEditor": "Open in Edit Flow"
+        "openInEditor": "Open in Edit Flow",
+        "openInAppsEditor": "Open in Apps Editor",
+        "openInDashboardEditor": "Open in Dashboard Editor"
       },
       "missingPlugins": {
-        "title": "Missing plugins",
-        "description": "This blueprint uses tasks from plugin(s) that aren't installed on this instance: {plugins}. Install them to use this blueprint.",
-        "card": "Requires plugin(s) not installed on this instance: {plugins}",
+        "title": "Unavailable tasks",
+        "description": "This blueprint uses task types that aren't available on this instance:",
+        "installHint": "Install the missing plugin(s) to use this blueprint: {plugins}.",
+        "card": "Uses task types that aren't available on this instance: {tasks}",
         "install": "Install plugins"
       }
     },
@@ -886,6 +848,10 @@
         "files": "Delete {count} selected files",
         "folders": "Delete {count} selected folders"
       },
+      "move": {
+        "bulk_success": "Selected files moved successfully.",
+        "bulk_error": "Failed to move {count} of the selected item(s)."
+      },
       "import": {
         "files": "Import files",
         "folder": "Import folder",
@@ -1013,7 +979,8 @@
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval",
-            "task_edit_default_mode": "Default Task Edit Mode"
+            "task_edit_default_mode": "Default Task Edit Mode",
+            "flow_template": "Default Flow Template"
           },
           "descriptions": {
             "default_namespace": "Used when creating new flows without a namespace.",
@@ -1026,11 +993,17 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
-            "task_edit_default_mode": "How a task opens by default from the no-code editor."
+            "task_edit_default_mode": "How a task opens by default from the no-code editor.",
+            "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Tab"
+          },
+          "flow_template_reset": "Reset to default",
+          "flow_template_error": {
+            "invalid_mapping": "Invalid flow template: expected a key-value mapping, not a list or scalar.",
+            "parse_error": "Could not parse YAML. The template was saved, so the editor may show the same error when you create a flow."
           }
         },
         "theme": {
@@ -1107,7 +1080,7 @@
       "contact_sales": "Contact Sales",
       "secrets": {
         "title": "Upgrade your Secrets Management",
-        "message": "The Enterprise Edition (EE) lets you add, edit, or delete secrets directly in the UI—no instance restarts needed. Organize secrets by namespace with granular RBAC permissions, and inherit them from parent to child namespaces. EE integrates with secrets managers like HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, and Elasticsearch. Set up dedicated backends per namespace, tenant, or instance to isolate secrets across teams, or enable read-only secrets stored in external vaults. Secrets stay encrypted at rest and in transit. Optional caching reduces API calls, and audit trails log all access.",
+        "message": "The Enterprise Edition lets you add, edit, and delete secrets straight from the UI, organize them by namespace with RBAC, and back them with HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, or Elasticsearch.",
         "add_env": {
           "intro": "Create a New Secret",
           "first": "Encode the <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a>",
@@ -1117,7 +1090,11 @@
       },
       "apps": {
         "title": "Build custom Apps with Kestra",
-        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval."
+        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval.",
+        "blueprints": {
+          "title": "Start from an app blueprint.",
+          "message": "App blueprints are ready-made apps for common use cases such as forms, approvals and data submission. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt it to build custom UIs on top of your workflows."
+        }
       },
       "tests": {
         "label": "Tests",
@@ -1140,6 +1117,15 @@
       "promote": {
         "title": "Promote Flows Across Environments",
         "message": "Kestra Enterprise Edition lets you promote flows from one environment to another — such as dev to staging to production — directly from the UI, no Git or CI/CD pipelines required. Review a diff of exactly what will change before promoting, protect sensitive targets with a confirmation gate, spot drift at a glance, and keep a full history of who promoted what, where, and when."
+      },
+      "dashboards": {
+        "header": "Custom Dashboards",
+        "title": "Build custom dashboards tailored to your team.",
+        "message": "Custom dashboards in Kestra Enterprise Edition let you create and share your own views on top of executions, logs and metrics, combining time series, KPIs, tables and Markdown charts, with a code and no-code editor, live preview, and per-tenant default dashboards.",
+        "blueprints": {
+          "title": "Start from a dashboard blueprint.",
+          "message": "Dashboard blueprints are ready-made custom dashboards for common monitoring needs. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt its charts, KPIs and tables to your team in the dashboard editor."
+        }
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
@@ -1174,7 +1160,7 @@
       "namespace": {
         "edit": {
           "title": "Upgrade Your Namespace Management",
-          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables, and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
+          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and control of secrets, variables, and governance Policies at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and governance rules remain secure and easy to maintain across different teams and projects."
         },
         "secrets": {
           "title": "Manage Secrets in a Secure Way",
@@ -1199,8 +1185,7 @@
         "audit-logs": {
           "title": "Track All Changes in One Place",
           "message": "In Kestra Enterprise Edition, you can view namespace-level audit logs with detailed diffs, giving you a clear history of who changed what and when across all resources."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1737,10 +1722,6 @@
           "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
-      "plugins": {
-        "title": "No plugin defaults are set for this for this Namespace.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-      },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in our documentation."
@@ -1756,8 +1737,7 @@
       "panels": {
         "title": "No panel open",
         "content": "You've closed all panels.\nPick a tab above to continue."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
     "copied_logs_to_clipboard": "Copied logs to clipboard.",
@@ -1785,31 +1765,18 @@
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Default Dashboard",
-      "switch": "Switch Dashboard",
-      "preview": "Preview Dashboard",
       "empty": "There are no results to be shown.",
-      "creation": {
-        "label": "Create Dashboard",
-        "confirmation": "Dashboard <code>{title}</code> is created."
-      },
       "edition": {
         "label": "Edit Dashboard",
-        "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
-        "chart": "Edit this chart",
-        "id readonly": "The property `id` cannot be changed — it's now set to its initial values. If you want to change it, you can create a new dashboard and remove the old one."
-      },
-      "deletion": {
-        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
+        "chart": "Edit this chart"
       },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
       "viewAll": "View all",
-      "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export",
       "exportTo": {
         "csv": "Export to CSV",
@@ -2455,7 +2422,6 @@
     "blocks": "Blocks",
     "flow_description": "Flow Description",
     "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
-    "pluginDefaults": {},
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {

@@ -104,7 +104,7 @@
                                             <ChevronDown />
                                         </KsIcon>
                                         <span class="log-group-count">×{{ item.members.length }}</span>
-                                        <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? t("collapse") : t("similar lines") }}</span>
+                                        <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? $t("collapse") : $t("similar lines") }}</span>
                                     </button>
                                 </template>
                                 <template v-else>
@@ -119,7 +119,7 @@
                                                 :icon="Download"
                                                 rel="noopener noreferrer"
                                             >
-                                                {{ t("download") }}
+                                                {{ $t("download") }}
                                             </KsButton>
                                             <FilePreview
                                                 :value="item.logFile"
@@ -247,7 +247,7 @@
                         }"
                         size="small"
                     >
-                        {{ t("iterations") }}
+                        {{ $t("iterations") }}
                     </KsButton>
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"

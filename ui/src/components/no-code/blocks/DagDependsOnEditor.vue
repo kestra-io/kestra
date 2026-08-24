@@ -1,15 +1,15 @@
 <template>
     <div class="dag-depends-on" data-test="dag-depends-on">
         <SourceBranch class="dag-depends-on-icon" aria-hidden="true" />
-        <span class="dag-depends-on-label">{{ t("block_editor.depends_on_label") }}</span>
+        <span class="dag-depends-on-label">{{ $t("block_editor.depends_on_label") }}</span>
         <KsSelect
             :modelValue="dependsOn ?? []"
             multiple
             filterable
             size="small"
             class="dag-depends-on-select"
-            :placeholder="t('block_editor.depends_on_placeholder')"
-            :aria-label="t('block_editor.depends_on_label')"
+            :placeholder="$t('block_editor.depends_on_placeholder')"
+            :aria-label="$t('block_editor.depends_on_label')"
             data-test="dag-depends-on-select"
             @click.stop
             @update:modelValue="onUpdate"
@@ -25,11 +25,9 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import SourceBranch from "vue-material-design-icons/SourceBranch.vue"
     import {KsSelect, KsOption} from "@kestra-io/design-system"
 
-    const {t} = useI18n()
 
     defineProps<{
         dependsOn?: string[]

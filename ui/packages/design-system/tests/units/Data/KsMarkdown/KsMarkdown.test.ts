@@ -122,6 +122,25 @@ describe("KsMarkdown", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const x = 42")
     })
 
+    test("copy button falls back to execCommand when the Clipboard API is unavailable", async () => {
+        // navigator.clipboard is undefined in non-secure contexts (plain HTTP)
+        Object.defineProperty(navigator, "clipboard", {
+            value: undefined,
+            configurable: true,
+        })
+        const execCommand = vi.fn().mockReturnValue(true)
+        document.execCommand = execCommand
+
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```\nconst x = 42\n```"},
+            global: globalConfig,
+            attachTo: document.body,
+        })
+        await wrapper.find(".ks-markdown__copy-btn").trigger("click")
+        expect(execCommand).toHaveBeenCalledWith("copy")
+        wrapper.unmount()
+    })
+
     test("renders mermaid code block as mermaid div", () => {
         const wrapper = mount(KsMarkdown, {
             props: {content: "```mermaid\ngraph TD\n  A --> B\n```"},

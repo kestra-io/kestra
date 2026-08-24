@@ -116,7 +116,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM Paris time.
 
                 ```yaml
                 id: bronze_layer
@@ -141,6 +141,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     type: io.kestra.plugin.core.trigger.Flow
                     window:
                       deadline: "09:00:00"
+                      timezone: Europe/Paris
                     dependsOn:
                       - namespace: company.team
                         flowId: bronze_layer
@@ -298,11 +299,19 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Positive
     private Integer minSatisfied;
 
-    public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
+    /**
+     * Evaluates this trigger against a terminated execution.
+     *
+     * @param executionOutputs the flow-level outputs of the terminated execution, they are stored outside of the
+     *                         execution so they must be loaded by the caller via the
+     *                         {@link io.kestra.core.services.ExecutionOutputService}.
+     */
+    public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current,
+        Map<String, Object> executionOutputs) {
         Logger logger = runContext.logger();
 
-        // merge outputs from all the matched executions
-        Map<String, Object> outputs = current.getOutputs();
+        // merge outputs from all the matched executions, keeping them null when there is none so 'trigger.outputs' stays undefined
+        Map<String, Object> outputs = MapUtils.isEmpty(executionOutputs) ? null : executionOutputs;
         if (multipleConditionWindow.isPresent()) {
             outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
         }
@@ -458,11 +467,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Override
         public TimeWindow getTimeWindow() {
             return window == null ? TimeWindow.builder().build() : window.toTimeWindow();
-        }
-
-        @Override
-        public Boolean getResetOnSuccess() {
-            return window == null ? Boolean.TRUE : window.isFireOnce();
         }
 
         @Override

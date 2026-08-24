@@ -2008,6 +2008,26 @@
         "clear_selection": "Wyczyść zaznaczenie",
         "fit_view": "Dopasuj do ekranu"
       },
+      "dag": {
+        "force": "Drzewo",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Ostatnia aktualizacja",
+        "status": {
+          "fresh": "Świeże",
+          "stale": "Stale",
+          "failed": "Niepowodzenie",
+          "unknown": "Nieśledzone"
+        },
+        "summary": {
+          "fresh": "Wszystkie {n} Assety są aktualne",
+          "issues": "{n} stałych",
+          "failed": "{n} niepowodzenie",
+          "last_run": "ostatnie uruchomienie {ago}",
+          "unknown": "{n} nieśledzonych"
+        },
+        "recent_runs": "Ostatnie uruchomienia"
+      },
       "search": {
         "placeholders": {
           "default": "Szukaj według Flow lub namespace'u…",

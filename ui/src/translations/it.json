@@ -2008,6 +2008,26 @@
         "clear_selection": "Cancella selezione",
         "fit_view": "Adatta allo schermo"
       },
+      "dag": {
+        "force": "Albero",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Ultimo aggiornamento",
+        "status": {
+          "fresh": "Nuovo",
+          "stale": "Stale",
+          "failed": "Fallito",
+          "unknown": "Non tracciato"
+        },
+        "summary": {
+          "fresh": "Tutti i {n} Asset freschi",
+          "issues": "{n} obsoleto",
+          "failed": "{n} fallito",
+          "last_run": "ultima esecuzione {ago}",
+          "unknown": "{n} non tracciato"
+        },
+        "recent_runs": "Esecuzioni recenti"
+      },
       "search": {
         "placeholders": {
           "default": "Cerca per flow o namespace...",

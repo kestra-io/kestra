@@ -1391,6 +1391,7 @@
       "key": "이름",
       "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
       "name": "비밀 value",
+      "valuePlaceholder": "비밀 value 입력",
       "description": "설명",
       "descriptionPlaceholder": "이 비밀을 설명하세요",
       "tags": "태그",

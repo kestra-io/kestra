@@ -32,10 +32,14 @@ export const sse = (events: [string, unknown][]) =>
  * specs independent of whatever the instance under test happens to be configured with.
  */
 export async function stubAiProviderConfigured(page: Page, configured: boolean) {
-    await page.route("**/api/v1/configs", async (route) => {
-        const response = await route.fetch()
-        await route.fulfill({json: {...(await response.json()), isAiApiKeyConfigured: configured}})
-    })
+    // The real configs are read once, up front, rather than with `route.fetch()` inside the handler:
+    // a round trip started in the handler is cancelled by the next hard navigation, and the request
+    // then continues unmodified. Fulfilling from a cached copy leaves nothing to cancel, so the stub
+    // survives every `page.goto` in a spec.
+    const configs = await page.request.get("/api/v1/configs").then((r) => r.json()).catch(() => ({}))
+    const patched = {...configs, isAiApiKeyConfigured: configured}
+
+    await page.route("**/api/v1/configs", (route) => route.fulfill({json: patched}))
 }
 
 /** Answers thread creation with a fixed thread, leaving every other verb alone. */

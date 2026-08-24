@@ -1391,6 +1391,7 @@
       "key": "Nome",
       "keyPlaceholder": "Nome usado para referenciar este segredo, por exemplo, MY_API_TOKEN",
       "name": "Valor secreto",
+      "valuePlaceholder": "Insira o valor secreto",
       "description": "Descrição",
       "descriptionPlaceholder": "Descreva este segredo",
       "tags": "Tags",

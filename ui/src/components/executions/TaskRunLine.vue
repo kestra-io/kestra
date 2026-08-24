@@ -16,7 +16,7 @@
                 <ChevronRight v-else />
             </KsIcon>
         </div>
-        <div class="task-icon d-none d-md-inline-block me-1">
+        <div class="task-icon d-none d-md-inline-block">
             <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
@@ -243,6 +243,7 @@
         .task-duration small {
             white-space: nowrap;
             color: var(--ks-text-secondary);
+            line-height: 1;
         }
 
     }
@@ -256,7 +257,6 @@
             width: var(--ks-spacing-6);
             height: var(--ks-spacing-6);
             border-radius: var(--ks-radius-base);
-            margin-left: calc(-1 * var(--ks-spacing-2));
         }
 
         .task-id {

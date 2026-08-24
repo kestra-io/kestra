@@ -16,8 +16,6 @@ public interface MultipleCondition {
 
     TimeWindow getTimeWindow();
 
-    Boolean getResetOnSuccess();
-
     Map<String, Condition> getConditions();
 
     Logger logger();

@@ -4,7 +4,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import io.kestra.cli.AbstractApiCommand;
-import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 
 import io.micronaut.http.HttpRequest;
@@ -29,7 +28,7 @@ public class FlowExportCommand extends AbstractApiCommand {
     @Inject
     private TenantIdSelectorService tenantService;
 
-    @CommandLine.Option(names = { "--namespace" }, description = "The namespace of flows to export")
+    @CommandLine.Option(names = { "--namespace" }, description = "The namespace of flows to export", required = true)
     public String namespace;
 
     @CommandLine.Parameters(index = "0", description = "The directory to export the ZIP file to")
@@ -51,7 +50,11 @@ public class FlowExportCommand extends AbstractApiCommand {
 
             stdOut("Exporting flow(s) for namespace '" + namespace + "' successfully done !");
         } catch (HttpClientResponseException e) {
-            AbstractValidateCommand.handleHttpException(e, "flow");
+            stdErr("\t@|fg(red) Unable to parse flows due to the following error:|@");
+            stdErr(
+                "\t- @|bold,yellow {0}|@",
+                e.getMessage()
+            );
             return 1;
         }
 

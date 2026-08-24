@@ -1,5 +1,6 @@
 import {computed} from "vue"
 import moment from "moment"
+import {copyToClipboard} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -229,6 +230,14 @@ export function getLang() {
     return localStorage.getItem("lang") || "en"
 }
 
+/**
+ * The stored language as a valid BCP 47 tag ("pt_BR" -> "pt-BR") for Intl APIs and the html lang
+ * attribute, which reject the underscore form getLang() returns.
+ */
+export function getLanguageTag() {
+    return getLang().replace(/_/g, "-")
+}
+
 export function splitFirst(str: string, separator: string) {
     return str.split(separator).slice(1).join(separator)
 }
@@ -242,21 +251,7 @@ export function asArray(objOrArray: any | any[]) {
 }
 
 export async function copy(text: string) {
-    if (navigator.clipboard) {
-        await navigator.clipboard.writeText(text)
-        return
-    }
-
-    const node = document.createElement("textarea")
-    node.style.position = "absolute"
-    node.style.left = "-9999px"
-    node.textContent = text
-    document.body.appendChild(node).value = text
-    node.select()
-
-    document.execCommand("copy")
-
-    document.body.removeChild(node)
+    await copyToClipboard(text)
 }
 
 export function toFormData(obj: FormData | Record<string, any>) {
@@ -286,9 +281,9 @@ export function getDateFormat(startDate: moment.MomentInput, endDate: moment.Mom
     } else if (duration.asDays() > 1) {
         return "yyyy-MM-DD"
     } else if (duration.asHours() > 1) {
-        return "yyyy-MM-DD:HH:00"
+        return "yyyy-MM-DD HH:00"
     } else {
-        return "yyyy-MM-DD:HH:mm"
+        return "yyyy-MM-DD HH:mm"
     }
 }
 

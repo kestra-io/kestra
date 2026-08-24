@@ -10,6 +10,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import io.kestra.cli.Kestra;
 import io.kestra.core.migration.MigrationStartupRunner;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.repository.h2.H2Repository;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -55,6 +57,18 @@ class WorkerServerContextTest {
 
             // Then no pool was built from it.
             assertThat(ctx.containsBean(DataSource.class)).isFalse();
+        }
+    }
+
+    @Test
+    void shouldNotRegisterARepositoryOnWorker() {
+        // Given the test configuration declares `kestra.repository.type: h2`, as a shared configuration would.
+        try (ApplicationContext ctx = workerContext("server", "worker")) {
+            assertThat(ctx.getEnvironment().getProperty("kestra.repository.type", String.class)).contains("h2");
+
+            // Then neither the repositories nor the dialect beans backing them were registered.
+            assertThat(ctx.containsBean(FlowRepositoryInterface.class)).isFalse();
+            assertThat(ctx.containsBean(H2Repository.class)).isFalse();
         }
     }
 

@@ -22,7 +22,7 @@
             large
         >
             <template #header>
-                <span v-html="t('execute the flow', {id: flowId})" />
+                <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <FlowRun ref="flowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
@@ -41,7 +41,7 @@
             <KsForm
                 labelPosition="top"
             >
-                <KsFormItem :label="t('namespace')">
+                <KsFormItem :label="$t('namespace')">
                     <KsSelect
                         v-model="localNamespace"
                     >
@@ -55,7 +55,7 @@
                 </KsFormItem>
                 <KsFormItem
                     v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
-                    :label="t('flow')"
+                    :label="$t('flow')"
                 >
                     <KsSelect
                         v-model="localFlow"
@@ -69,7 +69,7 @@
                         />
                     </KsSelect>
                 </KsFormItem>
-                <KsFormItem v-if="localFlow" :label="t('inputs')">
+                <KsFormItem v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
                         <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>

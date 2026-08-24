@@ -269,11 +269,12 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (installedPluginTypesPending) return installedPluginTypesPending
         installedPluginTypesPending = (PluginsAPI.listPlugins() as Promise<{results: Plugin[]; total: number}>)
             .then(response => {
-                installedPluginTypes.value = response.results.flatMap(p =>
-                    Object.entries(p)
+                installedPluginTypes.value = response.results.flatMap(p => [
+                    ...Object.entries(p)
                         .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
                         .flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)),
-                )
+                    ...(p.aliases ?? []),
+                ])
                 return installedPluginTypes.value
             })
             .finally(() => {

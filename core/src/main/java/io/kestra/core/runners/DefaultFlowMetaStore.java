@@ -124,22 +124,22 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
                 FlowId.uid(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()))
             );
             if (fromCache.isPresent()) {
-                return fromCache;
+                return fromCache.map(ProcessedFlow::flow);
             }
         }
 
-        return findByExecution(execution).map(it -> injectDefaults(it, execution));
+        return findByExecution(execution).map(it -> injectDefaults(it, execution).flow());
     }
 
     @Override
-    public Optional<FlowWithSource> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+    public Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
         return findById(tenantId, namespace, id, revision).map(it -> injectDefaults(it, null));
     }
 
     @Override
     public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant,
         String fromNamespace, String fromId) {
-        return findByIdFromTask(tenantId, namespace, id, revision, fromTenant, fromNamespace, fromId).map(it -> injectDefaults(it, null));
+        return findByIdFromTask(tenantId, namespace, id, revision, fromTenant, fromNamespace, fromId).map(it -> injectDefaults(it, null).flow());
     }
 
     /**
@@ -147,7 +147,7 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
      * the requested identifier is what makes the cache safe: the UID always carries a revision, and the entry
      * for a revision is expired whenever that flow — or a setting it resolves against — changes.
      */
-    private FlowWithSource injectDefaults(FlowInterface flow, @Nullable Execution execution) {
+    private ProcessedFlow injectDefaults(FlowInterface flow, @Nullable Execution execution) {
         var fromCache = withDefaultCache.getIfPresent(flow.uid());
         if (fromCache.isPresent()) {
             return fromCache.get();
@@ -155,9 +155,9 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
 
         ParsedFlow parsed = parseForRuntimeSafely(flow, execution);
         if (parsed.cacheable()) {
-            withDefaultCache.put(flow.uid(), parsed.flow());
+            withDefaultCache.put(flow.uid(), parsed.processed());
         }
-        return parsed.flow();
+        return parsed.processed();
     }
 
     /**
@@ -179,12 +179,14 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
         } catch (FlowBlockedException e) {
             logBlocked(flow, execution, e);
             // a governance rejection is deterministic, so it is memoized like a successful parse
-            return new ParsedFlow(FlowWithException.from(flow, e), true);
+            return new ParsedFlow(ProcessedFlow.of(FlowWithException.from(flow, e)), true);
         } catch (Exception e) {
             logParseFailure(flow, execution, e);
             // possibly transient, and the cache has no TTL: memoizing it would pin an un-governed flow for
-            // every later execution of this revision until the flow or a setting it resolves against changes
-            return new ParsedFlow(FlowParsingService.toFlowWithSource(flow), false);
+            // every later execution of this revision until the flow or a setting it resolves against changes.
+            // Pins are empty here, so the execution's creator wins: governance fails open rather than
+            // stripping a caller's labels over a transient failure.
+            return new ParsedFlow(ProcessedFlow.of(FlowParsingService.toFlowWithSource(flow)), false);
         }
     }
 
@@ -230,7 +232,7 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     /**
      * A flow parsed for runtime, and whether the outcome is stable enough to memoize.
      */
-    private record ParsedFlow(FlowWithSource flow, boolean cacheable) {
+    private record ParsedFlow(ProcessedFlow processed, boolean cacheable) {
     }
 
 }

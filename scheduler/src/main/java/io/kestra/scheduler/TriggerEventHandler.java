@@ -15,7 +15,6 @@ import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
@@ -196,8 +195,9 @@ public class TriggerEventHandler {
                     .lastEventId(clock, event.eventId())
                     // clear the backfill
                     .backfill(clock, null)
-                    // restore the previous next-evaluation date.
-                    .updateForNextEvaluationDate(clock, nextEvaluationDate);
+                    // restore the previous next-evaluation date, or clear it when the trigger was
+                    // backfilled before its first evaluation so the scheduler computes a new one.
+                    .updateForNextEvaluationDate(clock, nextEvaluationDate != null ? nextEvaluationDate.toInstant() : null);
                 triggerStateStore.save(state);
             }
         });
@@ -411,8 +411,7 @@ public class TriggerEventHandler {
             triggerStateStore.save(newState);
 
             if (event.evaluation() != null) {
-                Execution execution = event.evaluation().toExecution(event.id());
-                triggerExecutionPublisher.send(execution);
+                triggerExecutionPublisher.send(event.id(), event.evaluation());
             }
         });
     }

@@ -28,6 +28,7 @@
                         :key
                         :label="value.displayName || key"
                         :width="value.field === 'STATE' ? 140 : undefined"
+                        :minWidth="ENTITY_LINK_FIELDS.includes(value.field) ? 140 : undefined"
                     >
                         <template #default="scope">
                             <template v-if="resolvedComponent(value.field) === undefined">
@@ -82,6 +83,9 @@
     const route = useRoute()
 
     const containerID = `${props.chart.id}__${Math.random()}`
+
+    // Identifier columns get a larger share of the flexible width so namespace and flow ids stay readable; dates truncate recoverably behind their tooltip.
+    const ENTITY_LINK_FIELDS = ["NAMESPACE", "FLOW_ID"]
 
     const hasIdColumn = computed(() =>
         Object.values(props.chart.data?.columns ?? {}).some((c: any) => c?.field === "ID"),

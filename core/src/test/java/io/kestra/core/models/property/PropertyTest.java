@@ -7,6 +7,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
@@ -450,6 +454,39 @@ class PropertyTest {
         Property<String> property = Property.ofValue("{{ version }}");
 
         assertThat(Property.as(property, runContextFactory.of(Map.of("version", "1.3.9")), String.class)).isEqualTo("{{ version }}");
+        assertThat(Property.as(property.skipCache(), runContextFactory.of(Map.of("version", "1.3.9")), String.class)).isEqualTo("{{ version }}");
+    }
+
+    @Test
+    void shouldNeverRenderAValueSetThroughTheBuilder() throws Exception {
+        Property<String> property = Property.<String> builder().value("a value").build();
+
+        assertThat(Property.as(property, runContextFactory.of(Map.of()), String.class)).isEqualTo("a value");
+    }
+
+    @Test
+    void shouldGiveEachConcurrentRenderItsOwnValue() throws Exception {
+        // the executor renders the same property instance from several execution threads at once,
+        // so a render must never return the value another thread was rendering at the same moment
+        Property<String> property = Property.<String> builder().expression("{{ version }}").build();
+
+        int renders = 500;
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        try {
+            List<Future<Boolean>> results = IntStream.range(0, renders)
+                .mapToObj(i -> executor.submit(() ->
+                {
+                    String version = "1.3." + i;
+                    return version.equals(Property.as(property, runContextFactory.of(Map.of("version", version)), String.class));
+                }))
+                .toList();
+
+            for (Future<Boolean> result : results) {
+                assertThat(result.get()).isTrue();
+            }
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)

@@ -9,6 +9,7 @@ import {useProductTourStore} from "../../stores/productTour"
 import {usePlaygroundStore} from "../../stores/playground"
 import {usePluginsStore} from "../../stores/plugins"
 import {useMiscStore} from "override/stores/misc"
+import {useCoreStore} from "../../stores/core"
 import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
@@ -102,6 +103,15 @@ export function useFlowEditorActions() {
         }
 
         if (!detection.enabled || detection.artifacts.length === 0) return "none"
+
+        // The editor's eager graph regeneration raises a persistent invalid-type error toast for
+        // the very types this install is about to provide — dismiss it only when it names one of
+        // them, so unrelated errors keep showing when auto-install is off or not involved.
+        const coreStore = useCoreStore()
+        const pendingErrorContent = coreStore.message?.content ? JSON.stringify(coreStore.message.content) : ""
+        if (detection.missingTypes.some((type) => pendingErrorContent.includes(type))) {
+            coreStore.message = undefined
+        }
 
         let job
         try {

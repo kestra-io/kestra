@@ -2429,6 +2429,9 @@
       "install_description": "Installez Kestra comme application pour un accès plus rapide et une expérience plein écran.",
       "install": "Installer",
       "dismiss": "Pas maintenant"
+    },
+    "ee-tooltip": {
+      "features-blocked": "Enterprise edition"
     }
   }
 }

@@ -2429,6 +2429,9 @@
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
       "install": "安装",
       "dismiss": "暂不"
+    },
+    "ee-tooltip": {
+      "features-blocked": "企业版"
     }
   }
 }

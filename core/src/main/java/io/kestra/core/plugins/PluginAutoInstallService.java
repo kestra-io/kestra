@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Detects flow task/trigger types missing from the local plugin registry, maps them to their
- * catalog Maven artifact and installs them (KIP-45 "Save &amp; Fetch"). Backs the detect/install
+ * catalog Maven artifact and installs them ("Save &amp; Fetch"). Backs the detect/install
  * endpoints, the server-side flow save hook, the first-sync migration and the boot-time install
  * of config-referenced plugins. All installs are best-effort: a failure is logged and never turns
  * a save into a hard error beyond the pre-existing validation failure.
@@ -41,13 +41,6 @@ public class PluginAutoInstallService {
 
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
-
-    private static final Duration DEFAULT_INSTALL_TIMEOUT = Duration.ofMinutes(2);
-
-    // Shorter bound for the synchronous save-path hook: a flow save runs on an IO thread and a
-    // namespace bulk import serializes behind the small install pool, so it must not wait the
-    // full boot/migration timeout per flow.
-    private static final Duration DEFAULT_SAVE_TIMEOUT = Duration.ofSeconds(30);
 
     /** Maven coordinates template for storage backend plugins, e.g. {@code io.kestra.storage:storage-s3:LATEST}. */
     private static final String STORAGE_ARTIFACT_TEMPLATE = "io.kestra.storage:storage-%s:LATEST";
@@ -67,9 +60,7 @@ public class PluginAutoInstallService {
         final Provider<PluginInstallJobRegistry> installJobRegistry,
         final EditionProvider editionProvider,
         @Value("${kestra.storage.type}") final Optional<String> storageType,
-        @Value("${kestra.plugins.auto-install.enabled}") final Optional<Boolean> enabledProperty,
-        @Value("${kestra.plugins.auto-install.install-timeout}") final Optional<Duration> installTimeoutProperty,
-        @Value("${kestra.plugins.auto-install.save-timeout}") final Optional<Duration> saveTimeoutProperty) {
+        final PluginAutoInstallConfig config) {
         // Default on only for OSS + local-filesystem storage (the "local" persona): the storage type
         // is the signal that distinguishes `server local` from a generic standalone deployment on
         // S3/GCS, which must stay inert. An explicit property value always wins, so an operator who
@@ -78,12 +69,12 @@ public class PluginAutoInstallService {
             catalogService,
             pluginRegistry,
             installJobRegistry,
-            enabledProperty.orElseGet(
+            config.enabled().orElseGet(
                 () -> editionProvider.get() == EditionProvider.Edition.OSS
                     && storageType.map("local"::equalsIgnoreCase).orElse(false)
             ),
-            installTimeoutProperty.orElse(DEFAULT_INSTALL_TIMEOUT),
-            saveTimeoutProperty.orElse(DEFAULT_SAVE_TIMEOUT),
+            config.installTimeout(),
+            config.saveTimeout(),
             storageType
         );
     }

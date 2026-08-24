@@ -405,7 +405,7 @@ class PluginAutoInstallServiceTest {
         // Given / When — no explicit enabled property, OSS edition, local-filesystem storage
         PluginAutoInstallService service = new PluginAutoInstallService(
             catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
-            Optional.of("local"), Optional.empty(), Optional.empty(), Optional.empty()
+            Optional.of("local"), config(Optional.empty())
         );
 
         // Then
@@ -417,7 +417,7 @@ class PluginAutoInstallServiceTest {
         // Given / When — a standalone deployment on S3 must stay inert
         PluginAutoInstallService service = new PluginAutoInstallService(
             catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
-            Optional.of("s3"), Optional.empty(), Optional.empty(), Optional.empty()
+            Optional.of("s3"), config(Optional.empty())
         );
 
         // Then
@@ -429,7 +429,7 @@ class PluginAutoInstallServiceTest {
         // Given / When — an explicit opt-in always wins over the computed default
         PluginAutoInstallService service = new PluginAutoInstallService(
             catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
-            Optional.of("s3"), Optional.of(true), Optional.empty(), Optional.empty()
+            Optional.of("s3"), config(Optional.of(true))
         );
 
         // Then
@@ -543,6 +543,10 @@ class PluginAutoInstallServiceTest {
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
+
+    private static PluginAutoInstallConfig config(Optional<Boolean> enabled) {
+        return new PluginAutoInstallConfig(enabled, INSTALL_TIMEOUT, SAVE_TIMEOUT, 0);
+    }
 
     private PluginAutoInstallService enabledService() {
         return enabledService(Optional.empty());

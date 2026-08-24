@@ -74,7 +74,7 @@ dependencies {
     testImplementation "org.wiremock:wiremock-jetty12"
 }
 /**********************************************************************************************************************\
- * Plugin schema bundle embedded in the JAR (KIP-45)
+ * Plugin schema bundle embedded in the JAR
  *
  * `-PpluginsSchemaBundle=<path>` (relative to the repository root, or absolute) stages a
  * pre-generated bundle as the `/plugins-schema.json` classpath resource. It then travels with

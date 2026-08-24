@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Loads the pre-baked plugin schema bundle (built by {@code PluginsSchemaCommand}) and merges it
  * into locally-generated schemas via {@link PluginSchemaBundleMerger}, so the editor can complete
- * plugin types that are not installed locally (KIP-45). Installed plugins always take precedence.
+ * plugin types that are not installed locally. Installed plugins always take precedence.
  *
  * <p>
  * The bundle source is resolved once at construction, in priority order (see

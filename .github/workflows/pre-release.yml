@@ -24,7 +24,7 @@ jobs:
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
-      # Embed the KIP-45 plugin schema bundle in the jar, so the zip/tar and executable published
+      # Embed the plugin schema bundle in the jar, so the zip/tar and executable published
       # to the GitHub release carry it just like the Docker images do.
       embed-plugins-schema-bundle: true
     secrets:

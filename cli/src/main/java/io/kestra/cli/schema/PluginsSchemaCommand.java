@@ -48,7 +48,7 @@ import picocli.CommandLine;
  * It is intended to be run by release CI against the full plugin catalog and embedded in the Kestra
  * JAR as the {@code /plugins-schema.json} classpath resource (via the {@code -PpluginsSchemaBundle}
  * Gradle property), so that every distribution offers editor autocompletion for plugin types that
- * are not yet locally installed (KIP-45) without any network access. The bundle is not published
+ * are not yet locally installed without any network access. The bundle is not published
  * anywhere; {@code PluginSchemaBundleService} reads it straight off the classpath.
  *
  * <p>

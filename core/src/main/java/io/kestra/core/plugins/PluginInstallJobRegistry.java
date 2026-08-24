@@ -20,7 +20,6 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.docs.JsonSchemaCache;
 import io.kestra.core.exceptions.KestraRuntimeException;
 
-import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -62,7 +61,14 @@ public class PluginInstallJobRegistry {
     public PluginInstallJobRegistry(
         final PluginManager pluginManager,
         final JsonSchemaCache jsonSchemaCache,
-        @Value("${kestra.plugins.auto-install.concurrency:0}") final int concurrency) {
+        final PluginAutoInstallConfig config) {
+        this(pluginManager, jsonSchemaCache, config.concurrency());
+    }
+
+    PluginInstallJobRegistry(
+        final PluginManager pluginManager,
+        final JsonSchemaCache jsonSchemaCache,
+        final int concurrency) {
         this.pluginManager = Objects.requireNonNull(pluginManager);
         this.jsonSchemaCache = Objects.requireNonNull(jsonSchemaCache);
         this.concurrency = concurrency;

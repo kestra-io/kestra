@@ -104,9 +104,8 @@ main {
         }
     }
 
-    // fitHeight pages pin the pagination footer, so override main-container's own top/bottom padding to match plain full-container pages
     section.main-container.full-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
-        padding-top: 1rem;
+        padding-top: 2rem;
         padding-bottom: 0;
     }
 

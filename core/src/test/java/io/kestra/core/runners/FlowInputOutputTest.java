@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
@@ -773,6 +775,74 @@ class FlowInputOutputTest {
         // Then
         assertThat(result.get("upload")).isInstanceOf(URI.class);
         assertThat(result.get("upload").toString()).contains(executionId);
+    }
+
+    @Test
+    void shouldRejectFileInputPointingToUnauthorizedHostPath() throws Exception {
+        // Given
+        Path unauthorizedHostFile = Files.createTempFile("lfi-repro", ".txt");
+        Files.writeString(unauthorizedHostFile, "root:x:0:0:root:/root:/bin/bash");
+
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        try {
+            // When / Then
+            assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", unauthorizedHostFile.toString())))
+                .isInstanceOf(InputOutputValidationException.class)
+                .hasMessageContaining("is not authorized")
+                .hasMessageContaining(LocalPath.ALLOWED_PATHS_CONFIG);
+        } finally {
+            Files.deleteIfExists(unauthorizedHostFile);
+        }
+    }
+
+    @Test
+    void shouldRejectFileInputPointingToASymlinkEscapingAnAllowedPath() throws Exception {
+        // Given
+        Path unauthorizedTarget = Files.createTempFile("lfi-repro-target", ".txt");
+        Files.writeString(unauthorizedTarget, "root:x:0:0:root:/root:/bin/bash");
+        Path linkInsideAllowedPath = Path.of("build/resources/test").toRealPath().resolve("lfi-repro-link.txt");
+        Files.deleteIfExists(linkInsideAllowedPath);
+        Files.createSymbolicLink(linkInsideAllowedPath, unauthorizedTarget);
+
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        try {
+            // When / Then
+            assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", linkInsideAllowedPath.toString())))
+                .isInstanceOf(InputOutputValidationException.class)
+                .hasMessageContaining("is not authorized")
+                .hasMessageContaining(unauthorizedTarget.toRealPath().toString());
+        } finally {
+            Files.deleteIfExists(linkInsideAllowedPath);
+            Files.deleteIfExists(unauthorizedTarget);
+        }
+    }
+
+    @Test
+    void shouldReportMissingHostFileForFileInput() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", "/nonexistent/nope.txt")))
+            .isInstanceOf(InputOutputValidationException.class)
+            .hasMessageContaining("does not exist");
     }
 
     private static Stream<Input<?>> inputsThatDoNotAcceptFileUploads() {

@@ -2,47 +2,6 @@
   "pl": {
     "loading": "Ładowanie...",
     "more actions": "Więcej akcji",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Używaj tylko liter, cyfr, kropek, myślników i podkreśleń, zaczynając od litery lub cyfry.",
-        "id_label": "ID Flow",
-        "id_placeholder": "mój-flow",
-        "namespace_invalid": "Używaj tylko małych liter, cyfr, kropek, myślników i podkreśleń, zaczynając od małej litery lub cyfry.",
-        "namespace_placeholder": "Wybierz namespace",
-        "namespaces_error": "Nie można wczytać namespace'ów. Wpisz namespace ręcznie.",
-        "open_editor": "Otwórz edytor",
-        "subtitle": "Zacznij od szablonu hello-world i zbuduj od podstaw.",
-        "title": "Pusty Flow"
-      },
-      "blueprints": {
-        "subtitle": "Wybierz gotowy Flow z katalogu społeczności.",
-        "title": "Przeglądaj Blueprinty"
-      },
-      "import": {
-        "back": "Wstecz",
-        "error": {
-          "empty": "Zawartość YAML jest pusta.",
-          "invalid_mapping": "Nieprawidłowy YAML Flow: oczekiwano mapowania z Key na Value, a nie listy lub skalara.",
-          "parse_error": "Nie można przeanalizować YAML.",
-          "too_large": "Ten plik jest za duży. Zamiast tego wklej definicję Flow lub prześlij plik mniejszy niż 1 MB."
-        },
-        "paste_label": "Wklej YAML",
-        "read_error": "Nie można odczytać pliku.",
-        "submit": "Importuj Flow",
-        "subtitle": "Wklej lub prześlij istniejącą definicję Flow.",
-        "title": "Importuj YAML",
-        "upload_button": "Prześlij .yml / .yaml",
-        "upload_label": "Lub prześlij plik",
-        "upload_tip": "Akceptuje pliki .yml i .yaml."
-      },
-      "subtitle": "Zacznij od pustego obszaru, przeglądaj Blueprinty lub zaimportuj istniejący YAML.",
-      "system": {
-        "badge": "SYSTEM",
-        "subtitle": "Zbuduj Flow alertów lub automatyzacji dla swojej platformy.",
-        "title": "Utwórz systemowy Flow"
-      },
-      "title": "Utwórz nowy Flow"
-    },
     "recipe": {
       "create_flow": "Utwórz Flow",
       "email": "Email",
@@ -227,6 +186,7 @@
     "edit": "Edytuj",
     "back": "Wstecz",
     "next": "Dalej",
+    "previous": "Poprzedni",
     "done": "Gotowe",
     "review your inputs": "Sprawdź swoje Inputy",
     "edit flow": "Edytuj Flow",
@@ -1019,7 +979,8 @@
             "triggers_default_tab": "Domyślna zakładka Triggerów",
             "playground": "Playground",
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
-            "task_edit_default_mode": "Domyślny tryb edycji Taska"
+            "task_edit_default_mode": "Domyślny tryb edycji Taska",
+            "flow_template": "Domyślny szablon Flow"
           },
           "descriptions": {
             "default_namespace": "Używane podczas tworzenia nowych Flowów bez namespace'u.",
@@ -1032,11 +993,17 @@
             "triggers_default_tab": "Zakładka wybierana przy przejściu do strony Triggerów.",
             "auto_refresh_interval": "Sekundy między automatycznymi odświeżeniami danych na stronach list.",
             "playground": "Uruchamiaj Taski pojedynczo w Playground edytora.",
-            "task_edit_default_mode": "Jak domyślnie otwiera się Task z edytora no-code."
+            "task_edit_default_mode": "Jak domyślnie otwiera się Task z edytora no-code.",
+            "flow_template": "YAML otwierany w edytorze, gdy tworzysz nowy Flow. ID i namespace można pominąć, ponieważ są generowane automatycznie. Gdy pole jest puste, używany jest szablon skonfigurowany dla instancji."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Zakładka"
+          },
+          "flow_template_reset": "Resetuj do domyślnego szablonu",
+          "flow_template_error": {
+            "invalid_mapping": "Nieprawidłowy szablon Flow: oczekiwano mapowania z Key na Value, a nie listy lub skalara.",
+            "parse_error": "Nie można przeanalizować YAML. Szablon został zapisany, więc edytor może pokazać ten sam błąd, gdy utworzysz Flow."
           }
         },
         "theme": {

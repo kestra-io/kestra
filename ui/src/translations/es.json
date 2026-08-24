@@ -2,47 +2,6 @@
   "es": {
     "loading": "Cargando...",
     "more actions": "Más acciones",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Utilice solo letras, dígitos, puntos, guiones y guiones bajos, comenzando con una letra o un dígito.",
-        "id_label": "Id del flow",
-        "id_placeholder": "mi-flow",
-        "namespace_invalid": "Utilice solo letras minúsculas, dígitos, puntos, guiones y guiones bajos, comenzando con una letra minúscula o un dígito.",
-        "namespace_placeholder": "Seleccionar un namespace",
-        "namespaces_error": "No se pudieron cargar los namespaces. Escriba un namespace manualmente.",
-        "open_editor": "Abrir editor",
-        "subtitle": "Empieza con un \"hello-world\" de inicio y construye desde cero.",
-        "title": "flow en blanco"
-      },
-      "blueprints": {
-        "subtitle": "Elige un flow predefinido del catálogo de la comunidad.",
-        "title": "Explorar blueprints"
-      },
-      "import": {
-        "back": "Atrás",
-        "error": {
-          "empty": "El contenido YAML está vacío.",
-          "invalid_mapping": "YAML de flow no válido: se esperaba un mapeo clave-valor, no una lista o un escalar.",
-          "parse_error": "No se pudo analizar el YAML.",
-          "too_large": "Ese archivo es demasiado grande. En su lugar, pega la definición del flow o sube un archivo de menos de 1 MB."
-        },
-        "paste_label": "Pegar YAML",
-        "read_error": "No se pudo leer el archivo.",
-        "submit": "Importar flow",
-        "subtitle": "Pega o sube una definición de flow existente.",
-        "title": "Importar YAML",
-        "upload_button": "Subir .yml / .yaml",
-        "upload_label": "O subir un archivo",
-        "upload_tip": "Acepta archivos .yml y .yaml."
-      },
-      "subtitle": "Comienza desde un lienzo en blanco, explora blueprints o importa un YAML existente.",
-      "system": {
-        "badge": "SISTEMA",
-        "subtitle": "Crea un flow de alerta o automatización para tu plataforma.",
-        "title": "Crear un system flow"
-      },
-      "title": "Crear un nuevo flow"
-    },
     "recipe": {
       "create_flow": "Crear flow",
       "email": "Correo electrónico",
@@ -227,6 +186,7 @@
     "edit": "Editar",
     "back": "Atrás",
     "next": "Siguiente",
+    "previous": "Anterior",
     "done": "Hecho",
     "review your inputs": "Revise sus entradas",
     "edit flow": "Editar flujo",
@@ -1019,7 +979,8 @@
             "triggers_default_tab": "Pestaña de Triggers Predeterminados",
             "playground": "Área de pruebas",
             "auto_refresh_interval": "Intervalo de Auto Refresh",
-            "task_edit_default_mode": "Modo de edición de Task predeterminado"
+            "task_edit_default_mode": "Modo de edición de Task predeterminado",
+            "flow_template": "Plantilla de flow predeterminada"
           },
           "descriptions": {
             "default_namespace": "Se utiliza al crear nuevos flows sin un namespace.",
@@ -1032,11 +993,17 @@
             "triggers_default_tab": "Pestaña seleccionada al navegar a la página de triggers.",
             "auto_refresh_interval": "Segundos entre actualizaciones automáticas de datos en las páginas de lista.",
             "playground": "Ejecutar tasks individualmente en el editor de pruebas.",
-            "task_edit_default_mode": "Cómo se abre una task por defecto desde el editor no-code."
+            "task_edit_default_mode": "Cómo se abre una task por defecto desde el editor no-code.",
+            "flow_template": "YAML se abre en el editor cuando creas un nuevo flow. El id y el namespace pueden omitirse, ya que se generan automáticamente. Cuando está vacío, se utiliza la plantilla configurada para la instancia."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Pestaña"
+          },
+          "flow_template_reset": "Restablecer a valores predeterminados",
+          "flow_template_error": {
+            "invalid_mapping": "Plantilla de flow no válida: se esperaba un mapeo de clave-valor, no una lista o un escalar.",
+            "parse_error": "No se pudo analizar el YAML. La plantilla se guardó, por lo que el editor puede mostrar el mismo error al crear un flow."
           }
         },
         "theme": {

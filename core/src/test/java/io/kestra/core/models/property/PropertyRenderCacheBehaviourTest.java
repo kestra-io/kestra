@@ -35,8 +35,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * </table>
  *
  * <p>
- * Only the last row is purely a cache. The other three are behaviours plugins depend on, which is why the
- * cache cannot be removed without deciding what happens to them first.
+ * Only the last row is purely a cache — the one this class exists to keep honest. Stability, evaluation
+ * count and runtime validation are behaviours plugins depend on, which is why the cache cannot be removed
+ * without deciding what happens to them first. The second row is there because it is the usual surprise:
+ * an expression calling a function twice returns two values in a single render, which reads as the cache
+ * not working.
  * </p>
  */
 @MicronautTest

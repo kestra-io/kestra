@@ -31,7 +31,7 @@
             :defaultSort="{prop: 'id', order: 'ascending'}"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
-            @row-dblclick="onRowDoubleClick"
+            @row-click="onRowClick"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
             :selectable="canCheck"
@@ -150,6 +150,7 @@
                             entity="namespace"
                             :value="scope.row.namespace"
                             :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                            @click.stop
                         />
                     </template>
                 </KsTableColumn>
@@ -212,14 +213,18 @@
                     className="row-graph"
                 >
                     <template #default="scope">
-                        <TimeSeries
-                            :chart="mappedChart(scope.row.id, scope.row.namespace)"
-                            :filters="chartFilters()"
-                            showDefault
-                            short
-                            :flow="scope.row.id"
-                            :namespace="scope.row.namespace"
-                        />
+                        <!-- Only stop the click from reaching the row when a chart is actually rendered (drill-down owns the click then);
+                             an empty/no-history cell has nothing to intercept it, so it should fall through to the row's own navigation. -->
+                        <div @click="lastExecutionByFlowReady && getLastExecution(scope.row) ? $event.stopPropagation() : undefined">
+                            <TimeSeries
+                                :chart="mappedChart(scope.row.id, scope.row.namespace)"
+                                :filters="chartFilters()"
+                                showDefault
+                                short
+                                :flow="scope.row.id"
+                                :namespace="scope.row.namespace"
+                            />
+                        </div>
                     </template>
                 </KsTableColumn>
 
@@ -266,7 +271,7 @@
                         <KsIconButton
                             v-if="canExecute(scope.row)"
                             :tooltip="$t('execute')"
-                            @click="openExecuteModal(scope.row)"
+                            @click.stop="openExecuteModal(scope.row)"
                         >
                             <Play />
                         </KsIconButton>
@@ -502,10 +507,15 @@
             })
     }
 
-    const onRowDoubleClick = (item: any) => router.push({
-        name: route.name?.toString().replace("/list", "/update"),
-        params: {...item, tenant: route.params.tenant},
-    })
+    const onRowClick = (item: any, column: any) => {
+        // The selection checkbox cell also fires row-click; clicking it must select the row, not navigate away.
+        if (column?.type === "selection") return
+
+        router.push({
+            name: route.name?.toString().replace("/list", "/update"),
+            params: {...item, tenant: route.params.tenant},
+        })
+    }
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query

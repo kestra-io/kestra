@@ -37,6 +37,21 @@ describe("KsDataTable", () => {
         expect(wrapper.find(".kel-table").exists()).toBe(true)
     })
 
+    test("emits row-click when a table row is clicked", async () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3},
+            slots: {
+                default: "<ks-table-column prop=\"id\" label=\"ID\" />",
+            },
+            global: {...globalConfig, components: {KsTableColumn}},
+        })
+
+        await wrapper.find(".kel-table__row").trigger("click")
+
+        expect(wrapper.emitted("row-click")).toBeTruthy()
+        expect(wrapper.emitted("row-click")?.[0]?.[0]).toMatchObject({id: "flow-001"})
+    })
+
     test("does not render pagination when total is 0", () => {
         const wrapper = mount(KsDataTable, {
             props: {data: [], total: 0},

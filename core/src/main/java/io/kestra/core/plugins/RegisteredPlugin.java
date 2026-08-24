@@ -111,17 +111,26 @@ public class RegisteredPlugin {
             .anyMatch(r -> r.getName().equals(cls)) || aliases.containsKey(cls.toLowerCase());
     }
 
-    @SuppressWarnings("rawtypes")
-    public Optional<Class> findClass(String cls) {
-        return allClass()
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Optional<Class<?>> findClass(String cls) {
+        Optional<Class<?>> found = allClass()
             .stream()
             .filter(r -> r.getName().equals(cls))
-            .findFirst()
-            .or(() -> Optional.ofNullable(aliases.get(cls.toLowerCase()).getValue()));
+            .findFirst();
+
+        if (found.isPresent()) {
+            return found;
+        }
+
+        if (aliases.containsKey(cls.toLowerCase())) {
+            return Optional.ofNullable((Class<?>) aliases.get(cls.toLowerCase()).getValue());
+        }
+
+        return Optional.empty();
     }
 
-    @SuppressWarnings("rawtypes")
-    public Class baseClass(String cls) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Class<?> baseClass(String cls) {
         if (this.getTasks().stream().anyMatch(r -> r.getName().equals(cls))) {
             return Task.class;
         }
@@ -198,8 +207,8 @@ public class RegisteredPlugin {
         throw new IllegalArgumentException("Unable to find base class from '" + cls + "'");
     }
 
-    @SuppressWarnings("rawtypes")
-    public List<Class> allClass() {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public List<Class<?>> allClass() {
         return allClassGrouped()
             .entrySet()
             .stream()
@@ -207,9 +216,9 @@ public class RegisteredPlugin {
             .toList();
     }
 
-    @SuppressWarnings("rawtypes")
-    public Map<String, List<Class>> allClassGrouped() {
-        Map<String, List<Class>> result = new HashMap<>();
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Map<String, List<Class<?>>> allClassGrouped() {
+        Map<String, List<Class<?>>> result = new HashMap<>();
 
         result.put(TASKS_GROUP_NAME, Arrays.asList(this.getTasks().toArray(Class[]::new)));
         result.put(TRIGGERS_GROUP_NAME, Arrays.asList(this.getTriggers().toArray(Class[]::new)));

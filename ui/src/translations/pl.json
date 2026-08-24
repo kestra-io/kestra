@@ -835,6 +835,7 @@
         "folder_error": "Wystąpił błąd podczas tworzenia folderu"
       },
       "rename": {
+        "error": "Nie udało się zmienić nazwy na \"{name}\". Plik lub folder o tej nazwie może już istnieć.",
         "label": "Zmień nazwę",
         "file": "Zmień nazwę pliku",
         "folder": "Zmień nazwę folderu",

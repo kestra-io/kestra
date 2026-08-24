@@ -365,7 +365,8 @@
     import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
-    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>
+    /** Returns whether a tab was actually open for that path, so callers can reopen it elsewhere. */
+    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => boolean>
 </script>
 
 <script lang="ts" setup>
@@ -419,6 +420,7 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
     const refreshTabContent = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined)
 
     // exposed so parents (e.g. the dedicated empty state) can reuse the
@@ -797,17 +799,45 @@
         }
     }
 
-    function renameItem() {
+    async function renameItem() {
         if (!canManageFiles.value) return
-        const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : ""
+
+        const {node, old: oldName, name: newName, type} = renameDialog.value
+        if (!newName) return
+
+        const path = node?.data.id ? filesStore.getPath(node.data.id) ?? "" : ""
         const start = path.substring(0, path.lastIndexOf("/") + 1)
-        namespacesStore.renameFileDirectory({
-            namespace: namespaceId.value,
-            old: `${start}${renameDialog.value.old}`,
-            new: `${start}${renameDialog.value.name}`,
-        })
-        tree.value.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name
+        const oldPath = `${start}${oldName}`
+        const newPath = `${start}${newName}`
+
+        try {
+            await namespacesStore.renameFileDirectory({
+                namespace: namespaceId.value,
+                old: oldPath,
+                new: newPath,
+            })
+        } catch (error) {
+            // The tree is left untouched on purpose: it used to be renamed before the response
+            // arrived, so a refused rename (an existing name answers 500) still looked applied.
+            console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
+            toast.error(t("namespace files.rename.error", {name: newName}))
+            return
+        }
+
+        tree.value.getNode(node).data.fileName = newName
         renameDialog.value = {...RENAME_DEFAULTS}
+
+        // Tabs are keyed by path, so a renamed file left one pointing at a path that no longer
+        // exists — clicking it navigated to a full-page 404. Move it across instead.
+        if (type === "file" && closeTab?.({path: oldPath})) {
+            openTab?.({
+                name: newName,
+                path: newPath,
+                extension: newName.split(".").pop()!,
+                flow: false,
+                dirty: false,
+            })
+        }
     }
 
     function onNodeDragStart(draggingNode: FileExplorerNode) {
@@ -956,8 +986,6 @@
             nodes: Array.isArray(nodes) ? nodes : [nodes],
         }
     }
-
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return

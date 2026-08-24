@@ -835,6 +835,7 @@
         "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten"
       },
       "rename": {
+        "error": "Umbenennen in \"{name}\" nicht möglich. Möglicherweise existiert bereits eine Datei oder ein Ordner mit diesem Namen.",
         "label": "Umbenennen",
         "file": "Datei umbenennen",
         "folder": "Ordner umbenennen",

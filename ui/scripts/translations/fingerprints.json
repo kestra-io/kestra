@@ -972,6 +972,7 @@
   "namespace files|path|error": "947380c2570e",
   "namespace files|path|success": "984942ef4683",
   "namespace files|read_only": "ecf6c0aacd71",
+  "namespace files|rename|error": "3da7d4e9ce4f",
   "namespace files|rename|file": "e3526ab6a67a",
   "namespace files|rename|folder": "7249f19c9e4f",
   "namespace files|rename|label": "3064d79a295c",

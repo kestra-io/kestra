@@ -32,6 +32,7 @@ export const storageKeys = {
     SHOW_FLOWS_CHART: "showFlowsChart",
     SHOW_LOGS_CHART: "showLogsChart",
     DEFAULT_NAMESPACE: "defaultNamespace",
+    FLOW_TEMPLATE: "flowTemplate",
     LATEST_NAMESPACE: "latestNamespace",
     PAGINATION_SIZE: "paginationSize",
     IMPERSONATE: "impersonate",

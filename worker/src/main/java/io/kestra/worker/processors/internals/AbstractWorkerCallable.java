@@ -25,7 +25,8 @@ import static io.kestra.core.models.flows.State.Type.*;
 
 @SuppressWarnings("this-escape")
 public abstract class AbstractWorkerCallable implements Callable<State.Type> {
-    volatile boolean killed = false;
+    /** The state to report once interrupted, or {@code null} if not interrupted (or interrupted without marking, e.g. on timeout). */
+    volatile State.Type killedState = null;
 
     Logger logger;
 
@@ -58,7 +59,7 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
     @Synchronized
     public void kill() {
-        this.kill(true);
+        this.kill(KILLED);
     }
 
     /** {@inheritDoc} **/
@@ -69,9 +70,9 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
         try {
             // Guard against a kill received before currentThread was recorded:
-            // interrupt() was a no-op, so honor the killed flag here.
-            if (this.killed) {
-                return KILLED;
+            // interrupt() was a no-op, so honor the killedState flag here.
+            if (this.killedState != null) {
+                return this.killedState;
             }
             return doCall();
         } catch (Throwable e) {
@@ -109,8 +110,13 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
         }
     }
 
-    protected void kill(boolean markAsKilled) {
-        this.killed = markAsKilled;
+    /**
+     * Interrupts the running job.
+     * If {@code state} is non-null, the job is marked to eventually report that state as its outcome
+     * instead of the one {@link #doCall()} would otherwise produce.
+     */
+    public void kill(State.Type state) {
+        this.killedState = state;
 
         // When we arrive here, the thread run() method may be ended but the thread "in the stopping process".
         // So we don't interrupt if the shutdownLatch is 0 as this means the run() method is done or if the thread is no more alive.
@@ -123,8 +129,8 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
         this.exception = e;
         Span.current().recordException(e).setStatus(StatusCode.ERROR);
 
-        if (this.killed) {
-            return KILLED;
+        if (this.killedState != null) {
+            return this.killedState;
         } else {
             logger.error(e.getMessage(), e);
             return FAILED;
@@ -167,7 +173,7 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
             if (onTimeout != null) {
                 onTimeout.run();
             }
-            kill(false);
+            kill(null);
             // Clear the interrupt flag set by Failsafe's withInterrupt() so it doesn't leak to the caller.
             Thread.interrupted();
             return this.exceptionHandler(new TimeoutExceededException(timeout));

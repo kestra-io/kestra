@@ -1,8 +1,7 @@
 <template>
-    <KsTooltip v-if="props.relative && date" :content="absolute">
-        <span>{{ date }}</span>
+    <KsTooltip v-if="date" :content="absolute">
+        <span class="date">{{ date }}</span>
     </KsTooltip>
-    <span v-else>{{ date }}</span>
 </template>
 
 <script setup lang="ts">
@@ -37,3 +36,14 @@
         props.field ? moment(props.field).format(format) : undefined,
     )
 </script>
+
+<style scoped lang="scss">
+    .date {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: bottom;
+    }
+</style>

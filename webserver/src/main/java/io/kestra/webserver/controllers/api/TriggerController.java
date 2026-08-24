@@ -223,8 +223,15 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Create a backfill")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = ApiTriggerState.class)) })
     @ApiResponse(responseCode = "409", description = "If the backfill cannot be created")
+    @ApiResponse(responseCode = "422", description = "If the backfill field is missing or invalid")
     public HttpResponse<ApiTriggerState> createBackfill(
         @Parameter(description = "The trigger that need the backfill to be created") @Body ApiCreateBackfillRequest request) {
+        if (request == null || request.backfill() == null) {
+            throw new IllegalArgumentException("The 'backfill' field is required");
+        }
+        if (request.backfill().start() == null) {
+            throw new IllegalArgumentException("The 'backfill.start' field is required");
+        }
         TriggerId triggerId = TriggerId.of(tenantService.resolveTenant(), request.namespace(), request.flowId(), request.triggerId());
         CreateBackfillTrigger.Backfill backfill = new CreateBackfillTrigger.Backfill(
             request.backfill().start(), request.backfill().end(), request.backfill().inputs(), request.backfill().labels()

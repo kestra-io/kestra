@@ -2431,8 +2431,7 @@
       "dismiss": "Not now"
     },
     "ee-tooltip": {
-      "features-blocked": "This feature is only available in the Enterprise Edition.",
-      "upgrade": "Upgrade"
+      "features-blocked": "Enterprise edition"
     }
   }
 }

@@ -38,13 +38,15 @@ const editorElements = [
     },
 ]
 
-function mountEditor() {
+function mountEditor({withBottomPanel = true} = {}) {
     return mount(MultiPanelGenericEditorView, {
         global: globalConfig,
         props: {
             editorElements,
             defaultActiveTabs: ["code"],
+            bottomVisible: withBottomPanel,
         },
+        slots: withBottomPanel ? {"bottom-panel": "<div />"} : {},
     })
 }
 
@@ -65,6 +67,14 @@ describe("MultiPanelGenericEditorView split orientation", () => {
 
         // Then: splitOrientation is "vertical"
         expect((wrapper.vm as any).splitOrientation).toBe("vertical")
+    })
+
+    test("hides the toggle button when there is no bottom panel", () => {
+        // Given: the component is mounted without a bottom panel
+        const wrapper = mountEditor({withBottomPanel: false})
+
+        // Then: the orientation toggle is not rendered
+        expect(wrapper.find(".orientation-toggle").exists()).toBe(false)
     })
 
     test("toggle button exists with accessible aria-label", () => {

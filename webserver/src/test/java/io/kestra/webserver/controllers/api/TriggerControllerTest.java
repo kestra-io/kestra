@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
@@ -706,6 +707,25 @@ class TriggerControllerTest {
         } catch (TimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be enabled");
         }
+    }
+
+    @Test
+    void shouldReturnUnprocessableWhenBackfillCreateOmitsBackfill() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.PUT(
+                    TRIGGER_PATH + "/backfill/create",
+                    Map.of(
+                        "namespace", "ns",
+                        "flowId", "flow",
+                        "triggerId", "trig"
+                    )
+                ),
+                ApiTriggerState.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @Test

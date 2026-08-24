@@ -2801,14 +2801,10 @@ public class ExecutionController {
         //  But as we need the correlationId to unsubscribe, we have no choice but to do it eagerly.
         //  This should not be an issue as long as it executes on an IO thread.
 
-        // Check if execution exists
-        Execution current = Await.await()
-            .atMost(Duration.ofSeconds(10))
-            .pollInterval(Duration.ofMillis(500))
-            .until(
-                () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                Objects::nonNull
-            );
+        // Check if execution exists; a missing id must fail fast instead of pinning this IO thread
+        Execution current = executionRepository
+            .findById(tenantService.resolveTenant(), executionId)
+            .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionId + "'"));
 
         String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
 

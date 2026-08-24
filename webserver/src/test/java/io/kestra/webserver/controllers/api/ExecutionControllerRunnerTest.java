@@ -3127,6 +3127,25 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    void followDependenciesOnUnknownExecutionReturnsNotFoundImmediately() {
+        long start = System.nanoTime();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/does-not-exist/follow-dependencies")
+            )
+        );
+
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+        assertThat(e.getStatus().getCode())
+            .as("an unknown execution id is a 404, not an unhandled 500")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(elapsedMs)
+            .as("must fail fast instead of pinning the IO thread on a 10s busy-wait")
+            .isLessThan(5000);
+    }
+
+    @Test
     @LoadFlows(
         value = { "flows/valids/follow-dependencies-partial-parent.yaml",
             "flows/valids/follow-dependencies-partial-child.yaml" },

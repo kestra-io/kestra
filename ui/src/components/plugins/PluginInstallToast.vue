@@ -162,7 +162,7 @@
     .status-line {
         display: flex;
         align-items: center;
-        gap: var(--ks-spacing-1);
+        gap: var(--ks-spacing-2);
     }
 
     .status-line-success {

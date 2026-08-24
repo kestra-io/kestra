@@ -512,14 +512,14 @@
 
     .compact-prop-desc {
         margin-top: var(--ks-spacing-2);
-        font-size: var(--ks-font-size-base);
-        line-height: 1.65;
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.5;
         color: var(--ks-text-secondary);
 
         :deep(p) {
             margin: 0;
-            font-size: var(--ks-font-size-base);
-            line-height: 1.65;
+            font-size: var(--ks-font-size-sm);
+            line-height: 1.5;
             color: var(--ks-text-secondary);
         }
 

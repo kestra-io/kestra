@@ -85,7 +85,7 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
     private T fromObjectNode(JsonParser jp,
         JsonNode node,
         DeserializationContext context) throws IOException {
-        Class<? extends Plugin> pluginType = null;
+        Class<? extends Plugin> pluginType;
 
         final String identifier = extractPluginRawIdentifier(node, pluginRegistry.isVersioningSupported());
         if (identifier == null) {

@@ -51,7 +51,7 @@ class AssetTest {
     }
 
     @Test
-    void shouldOverrideNamespaceWhenDeclared() {
+    void shouldKeepPreviousNamespaceWhenAnotherOneIsDeclared() {
         Asset previous = Custom.builder()
             .namespace("io.kestra")
             .id("my-asset")
@@ -65,6 +65,6 @@ class AssetTest {
             .build()
             .toUpdated(previous);
 
-        assertThat(updated.getNamespace()).isEqualTo("io.kestra.other");
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra");
     }
 }

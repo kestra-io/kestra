@@ -10,6 +10,10 @@ public record AssetIdentifier(@Hidden String tenantId, @Hidden String namespace,
         return new AssetIdentifier(tenantId, this.namespace, this.id, this.type);
     }
 
+    public AssetIdentifier withNamespace(String namespace) {
+        return new AssetIdentifier(this.tenantId, namespace, this.id, this.type);
+    }
+
     public String uid() {
         return IdUtils.fromParts(tenantId, id);
     }

@@ -485,7 +485,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
 
                 if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(bundles);
+                    taskRun = taskRun.withAssetEmits(withDefaultNamespace(bundles, taskRun.getNamespace()));
                 }
             }
         } catch (Exception e) {
@@ -494,6 +494,23 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         }
 
         return new TaskRunWithOutput(taskRun, outputs, assetEmissionFailed);
+    }
+
+    /**
+     * An asset emitted without a namespace belongs to the flow emitting it, and left null it is filtered
+     * out of the view of every user whose asset permission is scoped to namespaces rather than global.
+     */
+    private static List<AssetsInOut> withDefaultNamespace(List<AssetsInOut> bundles, String namespace) {
+        return bundles.stream()
+            .map(bundle -> new AssetsInOut(
+                bundle.getInputs().stream()
+                    .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
+                    .toList(),
+                bundle.getOutputs().stream()
+                    .map(output -> output.getNamespace() == null ? output.withNamespace(namespace) : output)
+                    .toList()
+            ))
+            .toList();
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

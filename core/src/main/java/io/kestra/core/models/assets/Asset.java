@@ -83,9 +83,9 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset.getCreated())).orElseGet(Instant::now);
         this.updated = Instant.now();
 
-        // Type is immutable, if it was set before we keep it
+        // Type and namespace are immutable, if they were set before we keep them
         this.type = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(this.type);
-        this.namespace = Optional.ofNullable(this.namespace).or(() -> Optional.ofNullable(previousAsset).map(Asset::getNamespace)).orElse(null);
+        this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null
@@ -123,6 +123,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withTenantId(String tenantId) {
         this.tenantId = tenantId;
+        return this;
+    }
+
+    public Asset withNamespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 }

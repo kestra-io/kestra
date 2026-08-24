@@ -146,6 +146,7 @@ export function transformResponse(
  * @param params      - Vue Router params (id, namespace, flowId).
  * @param isTesting   - When true, uses generated fixture data instead of the API.
  * @param fetchAssetDependencies - Custom async fetcher for ASSET subtypes.
+ * @param groupOf     - Field the graph is grouped by, used to isolate one group.
  * @param dagView     - True only for the asset view; gates its canvas click/dblclick behaviour.
  */
 export function useDependencies(
@@ -154,6 +155,8 @@ export function useDependencies(
     initialNodeID: string,
     params: RouteParams,
     fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
+    /** Field the graph is grouped by; returns undefined for nodes it says nothing about. */
+    groupOf: Ref<((node: Node) => string | undefined) | undefined> = ref(undefined),
     /** True only for the asset view: click-to-clear and dblclick-to-open are asset-only. */
     dagView = false,
 ) {
@@ -187,12 +190,66 @@ export function useDependencies(
     /** Set when a node is double-clicked, so the view can open that node's own page. */
     const openedNodeID = ref<Node["id"] | undefined>(undefined)
 
-    /** IDs matching the side table's filters; dims everything outside them. */
-    const shownNodeIDs = ref<Set<string> | null>(null)
+    /** IDs matching the side table's filters, and IDs matching an isolated group. */
+    const tableFilterIDs = ref<Set<string> | null>(null)
+    const isolatedIDs = ref<Set<string> | null>(null)
+
+    /**
+     * The group the chip row is pinned to. It lives here rather than in the view so a canvas
+     * click can clear the isolation and the chip's active state together.
+     */
+    const activeGroup = ref<string | undefined>(undefined)
+
+    /** Restricts the graph to one group; undefined shows all of them. */
+    const isolateGroup = (key?: string): void => {
+        // Only undefined means "no group": the ungrouped bucket is a real, selectable group
+        // whose key is the empty string, so a falsy check isolated it into a no-op.
+        if (key === undefined) { isolatedIDs.value = null; return }
+        const match = elements.value.data
+            .filter((el): el is {data: Node} => el.data.type === NODE)
+            .filter(({data}) => (laneOf.value?.(data.id) ?? "") === key)
+            .map(({data}) => data.id)
+        isolatedIDs.value = match.length ? new Set(match) : null
+    }
+
+    const toggleGroup = (key: string): void => {
+        activeGroup.value = activeGroup.value === key ? undefined : key
+        isolateGroup(activeGroup.value)
+    }
+
+    const clearGroup = (): void => {
+        activeGroup.value = undefined
+        isolateGroup(undefined)
+    }
+
+    /**
+     * Both filters narrow the graph independently, so they intersect. They are kept apart
+     * because the table rewrites its own set on every keystroke, which would otherwise
+     * silently clear a group the user had isolated.
+     */
+    const shownNodeIDs = computed<Set<string> | null>(() => {
+        const [table, isolated] = [tableFilterIDs.value, isolatedIDs.value]
+        if (!table) return isolated
+        if (!isolated) return table
+        return new Set([...table].filter((id) => isolated.has(id)))
+    })
 
     const elements = ref<{data: Element[]; count: number}>({data: [], count: 0})
 
-    /** Node coordinates, read back from the force simulation once it has settled. */
+    /** Node ids to their group, when a grouping field is selected. */
+    const laneOf = computed(() => {
+        const accessor = groupOf.value
+        if (!accessor) return undefined
+
+        const byID = new Map(
+            elements.value.data
+                .filter((el): el is {data: Node} => el.data.type === NODE)
+                .map(({data}) => [data.id, accessor(data)]),
+        )
+
+        return (id: string) => byID.get(id)
+    })
+
 
     // ─── Derived graph topology ───────────────────────────────────────────────
 
@@ -439,9 +496,18 @@ export function useDependencies(
      * use layout:"none" and avoid re-running the force simulation.
      */
     /** Also re-frames: the initial auto-selection zooms in, so clearing must undo that. */
+    /**
+     * Both lenses: clearing only the isolation leaves a table filter dimming the graph, and
+     * clearing isolatedIDs without activeGroup desyncs the chip row from what is isolated.
+     */
+    const clearFilters = (): void => {
+        tableFilterIDs.value = null
+        clearGroup()
+    }
+
     const clearSelection = (): void => {
         selectedNodeID.value = undefined
-        shownNodeIDs.value = null
+        clearFilters()
         fitGraph()
     }
 
@@ -460,7 +526,10 @@ export function useDependencies(
             // Bare-canvas click drops the selection, leaving the viewport untouched; double click
             // opens, the same contract as the side table.
             zr.on("click", (event: {target?: unknown}) => {
-                if (!event.target) selectedNodeID.value = undefined
+                if (!event.target) {
+                    selectedNodeID.value = undefined
+                    clearGroup()
+                }
             })
             chart?.on?.("dblclick", (event: Record<string, any>) => {
                 if (event?.dataType === "node") openedNodeID.value = event.data?.id as string
@@ -722,8 +791,16 @@ export function useDependencies(
         chartNodes,
         /** Frozen snapshot for KsGraph :edges — set once after initial render. */
         chartEdges,
-        /** Node ids the table filter left visible; dims everything outside them. */
+        /** Intersection of the table filter and any isolated group; dims everything outside it. */
         shownNodeIDs,
+        /** Drops the table filter and any pinned group together. */
+        clearFilters,
+        /** Fades every node outside one group, without pinning it. */
+        isolateGroup,
+        /** Pins or unpins a group; the chip row reads activeGroup for its active state. */
+        toggleGroup,
+        clearGroup,
+        activeGroup,
         isLoading,
         isRendering,
         selectedNodeID,
@@ -743,7 +820,7 @@ export function useDependencies(
             fit: fitGraph,
             highlightShown: (nodeIDs: string[]) => {
                 const allNodeCount = elements.value.data.filter((el) => el.data.type === NODE).length
-                shownNodeIDs.value = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs)
+                tableFilterIDs.value = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs)
             },
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
                 const ts       = new Date().toISOString().slice(0, 19).replace(/:/g, "-")

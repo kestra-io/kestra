@@ -7,6 +7,34 @@
                 size="small"
                 :options="layoutOptions"
             />
+            <!-- An empty-canvas click clears the selection and the pinned group but deliberately
+                 not the field: the canvas is mostly empty space, so a stray click would
+                 otherwise throw the whole arrangement away. -->
+            <KsSelect
+                v-model="groupField"
+                class="group-select"
+                size="small"
+                clearable
+                :placeholder="$t('dependency.dag.group_by')"
+            >
+                <KsOption :label="$t('dependency.dag.group_none')" value="" />
+                <KsOption
+                    v-for="field in groupFields"
+                    :key="field.key"
+                    :label="`${field.label} (${field.groups})`"
+                    :value="field.key"
+                    :disabled="!field.usable"
+                />
+            </KsSelect>
+
+            <GroupPicker
+                v-if="groupChips.length"
+                :groups="groupChips"
+                :activeGroup="activeGroup"
+                @preview="isolateGroup"
+                @toggle="toggleGroup"
+            />
+
             <KsText v-if="summary" size="small" class="layout-summary">
                 {{ summary }}
             </KsText>
@@ -43,7 +71,8 @@
                             @select="selectNode"
                             @hover="(id) => (hoveredNodeID = id)"
                             @open="(id) => (openedNodeID = id)"
-                            @pane-click="() => (selectedNodeID = undefined)"
+                            :priorityOf="dagPriority"
+                            @pane-click="() => {selectedNodeID = undefined; clearGroup()}"
                         />
                     </div>
 
@@ -127,9 +156,10 @@
     import Table from "./components/Table.vue"
     import NodeDetails from "./components/NodeDetails.vue"
     import DagCanvas from "./components/dag/DagCanvas.vue"
+    import GroupPicker from "./components/dag/GroupPicker.vue"
     import Empty from "../layout/empty/Empty.vue"
 
-    import {KsGraph} from "@kestra-io/design-system"
+    import {KsGraph, stringUtils} from "@kestra-io/design-system"
 
     import {useI18n} from "vue-i18n"
 
@@ -165,6 +195,113 @@
     }>()
 
     const layoutMode = ref<LayoutMode>("force")
+
+    const groupField = ref("")
+
+    /**
+     * Bucket for nodes the field cannot apply to, kept distinct from Ungrouped: "this flow has
+     * no asset type" and "this asset is missing its type" are different facts. Leading space so
+     * the key cannot collide with a real value.
+     */
+    const NOT_APPLICABLE = " not-applicable"
+
+    /**
+     * Read off each node so only fields with data are offered. `assetOnly` marks fields a flow
+     * cannot have; `namespace` is not one, since grouping flows by namespace is meaningful.
+     */
+    const GROUP_FIELDS = [
+        // The structured `schema` field every plugin emitting a Table sets, so this is
+        // plugin-agnostic; the id slice is the fallback when a producer emitted neither.
+        {key: "dataset", label: () => t("dependency.dag.group_dataset"), assetOnly: true, of: (node: Node) => (node.metadata as {schema?: string}).schema ?? schemaOf(node.flow)},
+        {key: "type", label: () => t("type"), assetOnly: true, of: (node: Node) => typeNameOf((node.metadata as {assetType?: string}).assetType)},
+        // Labelled "Plugins" because the keys ARE plugins (dbt, jdbc, scripts).
+        {key: "producer", label: () => t("plugins.names"), assetOnly: true, of: (node: Node) => pluginOf((node.metadata as {producer?: string}).producer)},
+        {key: "system", label: () => t("dependency.dag.system"), assetOnly: true, of: (node: Node) => (node.metadata as {system?: string}).system},
+        // Not assetOnly: a flow has a namespace, so grouping flows by it is meaningful.
+        {key: "namespace", label: () => t("namespace"), assetOnly: false, of: (node: Node) => node.namespace},
+    ] as const
+
+    const typeNameOf = (type?: string): string | undefined => (type ? stringUtils.afterLastDot(type) : undefined)
+
+    /**
+     * Plugin an FQCN belongs to: `io.kestra.plugin.jdbc.duckdb.Query` gives `jdbc`, the artifact
+     * rather than the technology. The fourth segment only means anything under
+     * `io.kestra.plugin.`, so a third-party FQCN falls back to the package holding the class.
+     */
+    const pluginOf = (type?: string): string | undefined => {
+        if (!type) return undefined
+        const segments = type.split(".")
+        if (type.startsWith("io.kestra.plugin.")) return segments.length >= 4 ? segments[3] : undefined
+        return segments.length >= 2 ? segments[segments.length - 2] : undefined
+    }
+
+    const schemaOf = (id: string): string | undefined => {
+        const segments = id.split(".")
+        return segments.length >= 3 ? segments[segments.length - 2] : undefined
+    }
+
+    const graphNodesList = computed(() => getElements()
+        .filter((el): el is {data: Node} => el.data.type === "NODE")
+        .map(({data}) => data))
+
+    /** The accessor a field groups by, including the flows bucket the chips also count. */
+    const accessorFor = (field: typeof GROUP_FIELDS[number]) => (node: Node) =>
+        (field.assetOnly && node.metadata.subtype !== ASSET ? NOT_APPLICABLE : field.of(node))
+
+    const groupFields = computed(() => GROUP_FIELDS.map((field) => {
+        const accessor = accessorFor(field)
+        const groups = new Set(graphNodesList.value.map((node) => accessor(node)).filter(Boolean)).size
+
+        return {
+            key:    field.key,
+            label:  field.label(),
+            groups,
+            // One group says nothing, and a lane per node is a diagonal rather than a grouping.
+            usable: groups > 1 && groups < graphNodesList.value.length,
+        }
+    }).filter((field) => field.groups > 0))
+
+    /** One chip per group in the current graph; the two catch-all buckets sort last. */
+    const groupChips = computed(() => {
+        const accessor = groupOf.value
+        if (!accessor) return []
+
+        const counts = new Map<string, number>()
+        graphNodesList.value.forEach((node) => {
+            const key = accessor(node) ?? ""
+            counts.set(key, (counts.get(key) ?? 0) + 1)
+        })
+
+        const rank = (key: string): number => (key === "" ? 2 : key === NOT_APPLICABLE ? 1 : 0)
+        const labelOf = (key: string): string =>
+            (key === NOT_APPLICABLE ? t("flows") : key || t("dependency.dag.ungrouped"))
+
+        return [...counts.entries()]
+            .sort(([a], [b]) => (rank(a) - rank(b)) || (a < b ? -1 : 1))
+            .map(([key, count]) => ({key, count, label: labelOf(key)}))
+    })
+
+    // Switching the grouping field invalidates whichever group was pinned.
+    // Wrapped, not passed by reference: clearGroup is destructured from the composable below.
+    watch(groupField, () => clearGroup())
+
+    const groupOf = computed(() => {
+        const field = GROUP_FIELDS.find((candidate) => candidate.key === groupField.value)
+        return field ? accessorFor(field) : undefined
+    })
+
+    /**
+     * Group index per node, so members sit adjacent within their rank. Chip order is the source
+     * of truth, so the canvas and the chip row agree on which group comes first.
+     */
+    const dagPriority = computed(() => {
+        const accessor = groupOf.value
+        if (!accessor) return undefined
+
+        const rank = new Map(groupChips.value.map((chip, index) => [chip.key, index]))
+        const byNode = new Map(graphNodesList.value.map((node) => [node.id, rank.get(accessor(node) ?? "") ?? 0]))
+        return (id: string) => byNode.get(id) ?? 0
+    })
 
     // Pinned to the force arm: the chart only ever renders Tree now, and letting the view
     // toggle reach these options would strip preserveAspect and roamTrigger from a live Tree
@@ -219,7 +356,12 @@
         handleNodeClick,
         handlers,
         shownNodeIDs,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, Boolean(props.dagView))
+        clearFilters,
+        isolateGroup,
+        toggleGroup,
+        clearGroup,
+        activeGroup,
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, groupOf, Boolean(props.dagView))
 
     const dagCanvasRef = ref<{zoomIn: () => void; zoomOut: () => void; fit: () => void} | null>(null)
     const hoveredNodeID = ref<string | undefined>(undefined)
@@ -238,7 +380,7 @@
             fit:     () => dagCanvasRef.value?.fit(),
             clearSelection: () => {
                 selectedNodeID.value = undefined
-                shownNodeIDs.value = null
+                clearFilters()
                 dagCanvasRef.value?.fit()
             },
         }
@@ -346,6 +488,13 @@
 
 .layout-toggle {
     flex: 0 0 auto;
+}
+
+// The summary answers "is anything wrong here" and is the highest-priority text on the row, so
+// it never shrinks; the group select absorbs the loss instead.
+.group-select {
+    flex: 0 1 11rem;
+    min-width: 0;
 }
 
 .layout-summary {

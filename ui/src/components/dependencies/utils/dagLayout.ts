@@ -25,12 +25,15 @@ export function computeDagLayout(
     options: {
         columnGap?: number;
         rowGap?: number;
+        /** Group index per node, so members of one group sit adjacent within their rank. */
+        priority?: (id: string) => number;
         /** Nodes placed in their own leading column, ahead of the ranked ones. */
         ownColumn?: (id: string) => boolean;
     } = {},
 ): DagLayout {
     const columnGap = options.columnGap ?? COLUMN_GAP
     const rowGap = options.rowGap ?? ROW_GAP
+    const priority = options.priority ?? (() => 0)
 
     const ids = [...new Set(nodeIDs)].sort()
     const known = new Set(ids)
@@ -85,8 +88,8 @@ export function computeDagLayout(
 
     columns.forEach((column, index) => {
         const sorted = index === 0
-            ? [...column].sort()
-            : [...column].sort((a, b) => barycenter(a) - barycenter(b) || (a < b ? -1 : 1))
+            ? [...column].sort((a, b) => priority(a) - priority(b) || (a < b ? -1 : 1))
+            : [...column].sort((a, b) => priority(a) - priority(b) || barycenter(a) - barycenter(b) || (a < b ? -1 : 1))
         sorted.forEach((id, position) => order.set(id, position))
         columns[index] = sorted
     })
@@ -100,7 +103,7 @@ export function computeDagLayout(
             .map((column) => column.filter((id) => !pinnedSet.has(id)))
             .filter((column) => column.length)
         columns.length = 0
-        columns.push([...pinned].sort(), ...remaining)
+        columns.push([...pinned].sort((a, b) => priority(a) - priority(b) || (a < b ? -1 : 1)), ...remaining)
     }
 
     const positions = new Map<string, DagPosition>()

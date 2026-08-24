@@ -65,6 +65,8 @@
         elements: Element[];
         selected?: string;
         hovered?: string;
+        /** Group index per node, so members of one group sit adjacent within their rank. */
+        priorityOf?: (id: string) => number;
         /** Nodes still shown by the table filter; null means no filter. */
         dimmed?: Set<string> | null;
     }>()
@@ -116,6 +118,7 @@
         {
             columnGap: DAG_CARD.width + 120,
             rowGap:    DAG_CARD.height + 32,
+            priority:  props.priorityOf,
             ownColumn: (id) => producingFlowIDs.value.has(id),
         },
     ))

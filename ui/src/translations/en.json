@@ -2429,6 +2429,10 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
+    },
+    "ee-tooltip": {
+      "features-blocked": "This feature is only available in the Enterprise Edition.",
+      "upgrade": "Upgrade"
     }
   }
 }

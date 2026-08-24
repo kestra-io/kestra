@@ -16,5 +16,8 @@ dependencies {
     testImplementation project(':jdbc')
     testImplementation project(':jdbc-h2')
     testImplementation project(':indexer')
+    testImplementation project(':worker-controller')
+    testImplementation("io.micronaut.grpc:micronaut-grpc-server-runtime")
+    testImplementation("io.micronaut.grpc:micronaut-grpc-client-runtime")
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }

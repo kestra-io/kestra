@@ -1391,6 +1391,7 @@
       "key": "Имя",
       "keyPlaceholder": "Имя, используемое для ссылки на этот секрет, например, MY_API_TOKEN",
       "name": "Секретное значение",
+      "valuePlaceholder": "Введите секретное значение",
       "description": "Описание",
       "descriptionPlaceholder": "Опишите этот секрет",
       "tags": "Теги",

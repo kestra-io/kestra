@@ -9,7 +9,7 @@
                 :nodes="chartNodes"
                 :edges="chartEdges"
                 :loading="isRendering"
-                :options="{series: [{emphasis: {focus: 'none'}}]}"
+                :options="graphOptions"
                 @node-click="handleNodeClick"
             />
 
@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {computed, ref} from "vue"
 
     import Table from "./components/Table.vue"
     import Empty from "../layout/empty/Empty.vue"
@@ -113,6 +113,24 @@
         default: return EXECUTION
         }
     })()
+
+    // The chart only ever renders the force layout. preserveAspect and roamTrigger are what
+    // stop it rendering nodes as ellipses: capturing positions and switching to layout:"none"
+    // otherwise lets ECharts stretch-fit the bounding rect with independent scaleX/scaleY.
+    const graphOptions = computed(() => ({
+        series: [{
+            // Pinned to the whole canvas: ECharts binds roam to the series box and would
+            // otherwise size it to the content, leaving a dead border where dragging does
+            // nothing.
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            preserveAspect: true,
+            roamTrigger: "global",
+            emphasis: {focus: "none"},
+        }],
+    }))
 
     const graphRef = ref(null)
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId)

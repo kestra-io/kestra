@@ -70,6 +70,10 @@ function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string
     return `image://data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
 
+
+/** Which canvas the asset view shows. The chart only ever renders "force"; DagCanvas owns "dag". */
+export type LayoutMode = "force" | "dag"
+
 // ─── KsGraph instance contract ────────────────────────────────────────────────
 
 interface KsGraphRef {
@@ -142,6 +146,7 @@ export function transformResponse(
  * @param params      - Vue Router params (id, namespace, flowId).
  * @param isTesting   - When true, uses generated fixture data instead of the API.
  * @param fetchAssetDependencies - Custom async fetcher for ASSET subtypes.
+ * @param dagView     - True only for the asset view; gates its canvas click/dblclick behaviour.
  */
 export function useDependencies(
     graphRef: Ref<KsGraphRef | null>,
@@ -149,6 +154,8 @@ export function useDependencies(
     initialNodeID: string,
     params: RouteParams,
     fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
+    /** True only for the asset view: click-to-clear and dblclick-to-open are asset-only. */
+    dagView = false,
 ) {
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -169,12 +176,23 @@ export function useDependencies(
     // ECharts never re-runs the force simulation.
     const chartNodes = ref<KsGraphNode[] | null>(null)
     const chartEdges = ref<KsGraphEdge[] | null>(null)
-    const storedPositions = ref(new Map<string, {x: number; y: number}>())
+    /** Positions read back from ECharts once the force simulation has settled. */
+    const capturedPositions = ref(new Map<string, {x: number; y: number}>())
+    /**
+     * Kept in step with the user's own panning through graphRoam. Only focusNode and fitGraph
+     * write it; anything else re-asserting it would yank the viewport back.
+     */
+    const viewState = ref<{zoom: number; center?: [number, number]}>({zoom: 1})
 
-    /** IDs of nodes that belong to the current table-filter result (null = no filter). */
+    /** Set when a node is double-clicked, so the view can open that node's own page. */
+    const openedNodeID = ref<Node["id"] | undefined>(undefined)
+
+    /** IDs matching the side table's filters; dims everything outside them. */
     const shownNodeIDs = ref<Set<string> | null>(null)
 
     const elements = ref<{data: Element[]; count: number}>({data: [], count: 0})
+
+    /** Node coordinates, read back from the force simulation once it has settled. */
 
     // ─── Derived graph topology ───────────────────────────────────────────────
 
@@ -226,7 +244,7 @@ export function useDependencies(
         // asset background in both light and dark themes.
         const assetIconColor = cssVar("--ks-text-primary")
 
-        return elements.value.data
+        const nodes = elements.value.data
             .filter((el): el is {data: Node} => el.data.type === NODE)
             .map(({data: node}) => {
                 const isSelected = node.id === selectedNodeID.value
@@ -253,8 +271,15 @@ export function useDependencies(
                     bgColor     = execColor ?? cssVar(NODE_BG.selected)
                     borderColor = execColor ?? cssVar(NODE_BORDER.selected)
                 } else if (isFaded) {
-                    bgColor     = cssVar(NODE_BG.faded)
-                    borderColor = cssVar(NODE_BORDER.faded)
+                    // A filter is a scope the user set; selecting a node is a focus inside it.
+                    // Focus must not erase scope, so a node that is merely not adjacent to the
+                    // selection keeps its colour and only softens.
+                    const inScope = hasFilter && shownNodeIDs.value!.has(node.id)
+                    const scopeBG = isAsset ? NODE_BG.assets : NODE_BG.default
+                    const scopeBorder = isAsset ? NODE_BORDER.assets : NODE_BORDER.default
+
+                    bgColor     = inScope ? (execColor ?? cssVar(scopeBG)) : cssVar(NODE_BG.faded)
+                    borderColor = inScope ? (execColor ?? cssVar(scopeBorder)) : cssVar(NODE_BORDER.faded)
                     opacity     = 0.75
                 } else if (isAsset) {
                     bgColor     = execColor ?? cssVar(NODE_BG.assets)
@@ -283,7 +308,7 @@ export function useDependencies(
                             borderWidth: 2,
                             opacity:     1,
                         },
-                        label: {color: cssVar("--ks-text-primary")},
+                        label: {show: true, color: cssVar("--ks-text-primary")},
                     },
                     // Blur = same as base so selection colours survive when another node is hovered.
                     // Label uses full opacity so text doesn't dim when a neighbour is hovered.
@@ -291,8 +316,10 @@ export function useDependencies(
                         itemStyle: baseItemStyle,
                         label:     {color: cssVar("--ks-text-primary")},
                     },
+                    // Asset ids are long enough that a few dozen printed at once is a pile, so
+                    // the asset graph reveals them on hover.
                     label: {
-                        show:            true,
+                        show:            subtype !== ASSET,
                         formatter:       node.flow,
                         position:        "bottom",
                         color:           labelColor,
@@ -301,6 +328,8 @@ export function useDependencies(
                     },
                 }
             })
+
+        return nodes
     })
 
     const graphEdges: ComputedRef<KsGraphEdge[]> = computed(() => {
@@ -362,9 +391,17 @@ export function useDependencies(
 
     // ─── Selection ────────────────────────────────────────────────────────────
 
+    /** Mirrors a hover in the side table onto the canvas, and clears it when it leaves. */
+    const highlightNode = (id?: Node["id"]): void => {
+        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+        if (!chart) return
+        chart.dispatchAction({type: "downplay", seriesIndex: 0})
+        if (id) chart.dispatchAction({type: "highlight", seriesIndex: 0, name: id})
+    }
+
     const focusNode = (id: Node["id"]): void => {
         if (!id) return
-        const pos = storedPositions.value.get(id)
+        const pos = capturedPositions.value.get(id)
         if (!pos) return
         const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
         if (!chart) return
@@ -373,15 +410,15 @@ export function useDependencies(
         chart.dispatchAction({type: "downplay", seriesIndex: 0})
         // For ECharts graph series, `center` is in data coordinates.
         // Setting center=[pos.x, pos.y] places the selected node at canvas centre.
-        chart.setOption({series: [{zoom: 1.8, center: [pos.x, pos.y]}]}, false)
+        // DAG cards are sized in pixels, so zooming past 1:1 only pushes them apart.
+        viewState.value = {zoom: 1.8, center: [pos.x, pos.y]}
+        applyView(chart)
     }
 
     // Trigger focus after all reactive updates (applyStylesToChart) have flushed.
-    // Only fires after initial capture (storedPositions populated), so the initial
+    // Only fires after initial capture (capturedPositions populated), so the initial
     // auto-selection on mount is handled by captureAndFocusWhenReady instead.
-    watch(selectedNodeID, (id) => {
-        if (id && storedPositions.value.size > 0) focusNode(id)
-    }, {flush: "post"})
+    // Selecting never moves the viewport; only the initial auto-selection centres the graph.
 
     /**
      * Selects a node by ID, updating the visual selection state reactively.
@@ -398,9 +435,39 @@ export function useDependencies(
 
     /**
      * Reads post-simulation node positions from ECharts' internal data store
-     * and caches them in storedPositions so subsequent style-only updates can
+     * and caches them in capturedPositions so subsequent style-only updates can
      * use layout:"none" and avoid re-running the force simulation.
      */
+    /** Also re-frames: the initial auto-selection zooms in, so clearing must undo that. */
+    const clearSelection = (): void => {
+        selectedNodeID.value = undefined
+        shownNodeIDs.value = null
+        fitGraph()
+    }
+
+    /** Camera sync for every view; only the asset view also gets bare-canvas click-to-clear. */
+    const bindCanvasClicks = (): void => {
+        requestAnimationFrame(() => {
+            const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+            const zr = chart?.getZr?.()
+            if (!zr || zr.ksDependenciesBound) return
+            zr.ksDependenciesBound = true
+            chart?.on?.("graphRoam", () => {
+                const series = (chart.getOption?.() as Record<string, any> | undefined)?.series?.[0]
+                if (series?.zoom !== undefined) viewState.value = {zoom: series.zoom, center: series.center}
+            })
+            if (!dagView) return
+            // Bare-canvas click drops the selection, leaving the viewport untouched; double click
+            // opens, the same contract as the side table.
+            zr.on("click", (event: {target?: unknown}) => {
+                if (!event.target) selectedNodeID.value = undefined
+            })
+            chart?.on?.("dblclick", (event: Record<string, any>) => {
+                if (event?.dataType === "node") openedNodeID.value = event.data?.id as string
+            })
+        })
+    }
+
     const capturePositions = (): void => {
         const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
         if (!chart) return
@@ -420,7 +487,7 @@ export function useDependencies(
                     positions.set(String(name), {x, y})
                 }
             }
-            if (positions.size > 0) storedPositions.value = positions
+            if (positions.size > 0) capturedPositions.value = positions
         } catch {
             // Internal ECharts API unavailable — style updates will skip layout:none.
         }
@@ -431,16 +498,25 @@ export function useDependencies(
      * instance, bypassing the frozen reactive props. Uses layout:"none" with
      * stored positions so the force simulation never re-runs.
      */
+    const applyView = (chart: Record<string, any>): void => {
+        chart.setOption({series: [{
+            type: "graph",
+            zoom: viewState.value.zoom,
+            ...(viewState.value.center ? {center: viewState.value.center} : {}),
+        }]}, false)
+    }
+
     const applyStylesToChart = (): void => {
         const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
         if (!chart) return
-        const positions    = storedPositions.value
+        bindCanvasClicks()
+        const positions    = capturedPositions.value
         const nodesWithPos = graphNodes.value.map((n) => {
             const pos = positions.get(n.id)
             return pos ? {...n, x: pos.x, y: pos.y} : n
         })
         const layout = positions.size > 0 ? "none" : "force"
-        chart.setOption({series: [{data: nodesWithPos, links: graphEdges.value, layout}]}, false)
+        chart.setOption({series: [{type: "graph", data: nodesWithPos, links: graphEdges.value, layout}]}, false)
     }
 
     watch([graphNodes, graphEdges], () => {
@@ -475,9 +551,13 @@ export function useDependencies(
                 requestAnimationFrame(poll)
                 return
             }
+            bindCanvasClicks()
             capturePositions()
-            if (storedPositions.value.size > 0) {
+            if (capturedPositions.value.size > 0) {
                 const id = selectedNodeID.value
+                // Switch to layout:"none" now so the one-time refit it triggers happens under
+                // the initial focus below, rather than under the user's first click.
+                applyStylesToChart()
                 requestAnimationFrame(() => {
                     if (id) focusNode(id)
                     else fitGraph()
@@ -600,6 +680,8 @@ export function useDependencies(
         sse.value = undefined
     }
 
+    // No resize handling of our own: KsEchart passes `autoresize`, whose ResizeObserver
+    // already covers window resizes and splitter drags alike.
     onBeforeUnmount(() => {
         if (subtype === EXECUTION) closeSSE()
     })
@@ -608,21 +690,25 @@ export function useDependencies(
 
     const fitGraph = (): void => {
         const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
-        const positions = storedPositions.value
+        const positions = capturedPositions.value
         if (!chart || positions.size === 0) { graphRef.value?.fit(); return }
         const xs = [...positions.values()].map(p => p.x)
         const ys = [...positions.values()].map(p => p.y)
         const padding = 20
         const W = chart.getWidth()  as number
         const H = chart.getHeight() as number
+        const spreadX = Math.max(...xs) - Math.min(...xs)
+        const spreadY = Math.max(...ys) - Math.min(...ys)
+
         const zoom = Math.min(
             1,
-            (W - padding * 2) / (Math.max(...xs) - Math.min(...xs) || 1),
-            (H - padding * 2) / (Math.max(...ys) - Math.min(...ys) || 1),
+            (W - padding * 2) / (spreadX || 1),
+            (H - padding * 2) / (spreadY || 1),
         )
         const cx = (Math.min(...xs) + Math.max(...xs)) / 2
         const cy = (Math.min(...ys) + Math.max(...ys)) / 2
-        chart.setOption({series: [{zoom, center: [cx, cy]}]}, false)
+        viewState.value = {zoom, center: [cx, cy]}
+        applyView(chart)
     }
 
     return {
@@ -636,10 +722,16 @@ export function useDependencies(
         chartNodes,
         /** Frozen snapshot for KsGraph :edges — set once after initial render. */
         chartEdges,
+        /** Node ids the table filter left visible; dims everything outside them. */
+        shownNodeIDs,
         isLoading,
         isRendering,
         selectedNodeID,
         selectNode,
+        /** Highlights a node from outside the canvas, e.g. hovering the side table. */
+        highlightNode,
+        /** Last node double-clicked on the canvas, for the view to navigate to. */
+        openedNodeID,
         /** Called from the KsGraph @node-click event. */
         handleNodeClick: (node: KsGraphNode) => {
             selectNode(node.id as string)
@@ -647,15 +739,11 @@ export function useDependencies(
         handlers: {
             zoomIn:        () => graphRef.value?.zoomIn(),
             zoomOut:       () => graphRef.value?.zoomOut(),
-            clearSelection: () => {
-                selectedNodeID.value = undefined
-                shownNodeIDs.value   = null
-                fitGraph()
-            },
+            clearSelection,
             fit: fitGraph,
             highlightShown: (nodeIDs: string[]) => {
                 const allNodeCount = elements.value.data.filter((el) => el.data.type === NODE).length
-                shownNodeIDs.value  = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs)
+                shownNodeIDs.value = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs)
             },
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
                 const ts       = new Date().toISOString().slice(0, 19).replace(/:/g, "-")

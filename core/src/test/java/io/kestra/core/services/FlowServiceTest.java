@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -1336,7 +1337,7 @@ class FlowServiceTest {
                     message: "{{ oldFunc() }}"
                 """.formatted(flowId, TEST_NAMESPACE);
             FlowWithSource flow = FlowWithSource.of(Flow.builder().id(flowId).namespace(TEST_NAMESPACE).build(), source);
-            List<String> warnings = flowService.warnings(flow.toFlow(), TenantService.MAIN_TENANT);
+            List<String> warnings = flowService.warnings(flow, TenantService.MAIN_TENANT);
             assertThat(warnings).contains("Pebble function 'oldFunc' is deprecated. Use 'newFunc' instead.");
         } finally {
             FieldUtils.writeDeclaredField(

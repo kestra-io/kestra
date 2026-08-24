@@ -312,7 +312,10 @@ test.describe("AI Copilot", () => {
         // `:tenant?` is optional on every route, so a tenant-less path resolves the same whether or
         // not this instance exposes one in the URL (an OSS instance's dashboard is plain "/ui/dashboards",
         // and guessing the tenant from that path previously grabbed "dashboards" itself and 404'd).
-        await page.goto("/ui/flows/edit/company.team/e2e-context-flow", {waitUntil: "domcontentloaded"})
+        // `waitUntil: "load"` (not "domcontentloaded"): this is a second hard navigation on a page
+        // that already booted the app once in `beforeEach` — proceeding before the browser's own
+        // asset/module-federation loading settles has raced the app's chunk loader in CI.
+        await page.goto("/ui/flows/edit/company.team/e2e-context-flow", {waitUntil: "load"})
 
         await openCopilotDock(page)
 
@@ -394,8 +397,8 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         await stubAiProviderConfigured(page, true)
         await disableProductTour(page)
         // `:tenant?` is optional on every route, so a tenant-less path resolves the same regardless
-        // of whether this instance exposes one in the URL.
-        await page.goto("/ui/ai", {waitUntil: "domcontentloaded"})
+        // of whether this instance exposes one in the URL. `waitUntil: "load"`: see the chip test above.
+        await page.goto("/ui/ai", {waitUntil: "load"})
 
         // The copilot mounts as the full-page host (hard navigation → fresh document; a thread uid
         // remembered by an earlier test 404s server-side and is forgotten → empty state, no dock).
@@ -415,7 +418,7 @@ test.describe("AI Copilot — full-page /ai surface", () => {
     test("says the copilot is unavailable on load when no provider is configured", async ({page}) => {
         await stubAiProviderConfigured(page, false)
         await disableProductTour(page)
-        await page.goto("/ui/ai", {waitUntil: "domcontentloaded"})
+        await page.goto("/ui/ai", {waitUntil: "load"})
 
         await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible({timeout: 15000})
         // Nothing invites a prompt: the composer is gone, and so is the empty state that hosts it

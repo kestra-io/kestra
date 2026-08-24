@@ -382,10 +382,12 @@
             .then((result) => {
                 downloadOpen.value = false
                 if (result.truncated) {
-                    toast.warning(t("logs_download_truncated", {
-                        downloaded: result.downloaded,
-                        skipped: result.total - result.downloaded,
-                    }))
+                    toast.warning(result.total !== undefined
+                        ? t("logs_download_truncated", {
+                            downloaded: result.downloaded,
+                            skipped: result.total - result.downloaded,
+                        })
+                        : t("logs_download_capped", {downloaded: result.downloaded}))
                 }
             })
             .finally(() => (downloading.value = false))

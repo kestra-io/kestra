@@ -30,9 +30,9 @@ const DOWNLOAD_MAX_LINES = 50000
 export interface LogsDownloadResult {
     /** Lines actually written to the file. */
     downloaded: number;
-    /** Lines the filters match, as reported by the backend. */
-    total: number;
-    /** True when {@link DOWNLOAD_MAX_LINES} cut the export short. */
+    /** Lines the filters match. Undefined under cursor pagination, which reports no total. */
+    total?: number;
+    /** True when the export stopped short of everything the filters match. */
     truncated: boolean;
 }
 
@@ -139,7 +139,8 @@ export const useLogsStore = defineStore("logs", () => {
     async function downloadLogs(options: Record<string, any>): Promise<LogsDownloadResult> {
         const size = options.size ?? DOWNLOAD_PAGE_SIZE
         const collected: Log[] = []
-        let reportedTotal = 0
+        let reportedTotal: number | undefined = undefined
+        let cappedOut = false
         let page = 1
         let cursor: string | undefined = undefined
 
@@ -149,7 +150,12 @@ export const useLogsStore = defineStore("logs", () => {
             reportedTotal = response.total ?? reportedTotal
             collected.push(...results)
 
-            if (results.length < size || collected.length >= DOWNLOAD_MAX_LINES) break
+            if (collected.length >= DOWNLOAD_MAX_LINES) {
+                cappedOut = true
+                break
+            }
+            // A short page is the last one, whichever pagination mode the backend picked.
+            if (results.length < size) break
 
             if (response.type === "CURSOR") {
                 if (!response.nextCursor) break
@@ -166,8 +172,14 @@ export const useLogsStore = defineStore("logs", () => {
             logsDownloadFilename(new Date()),
         )
 
-        const total = Math.max(reportedTotal, lines.length)
-        return {downloaded: lines.length, total, truncated: lines.length < total}
+        // `cappedOut` stands on its own: cursor pagination reports no total, so comparing against
+        // it would report a capped export as complete — the very silence this fix removes.
+        const matchedTotal = reportedTotal === undefined ? undefined : Math.max(reportedTotal, collected.length)
+        return {
+            downloaded: lines.length,
+            total: matchedTotal,
+            truncated: cappedOut || (matchedTotal !== undefined && lines.length < matchedTotal),
+        }
     }
 
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]

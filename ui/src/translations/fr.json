@@ -753,6 +753,7 @@
     "similar lines": "lignes similaires",
     "download_logs_description": "Choisissez les logs à exporter. Les filtres sont définis par défaut sur votre vue actuelle.",
     "logs_download_truncated": "Les {downloaded} premières lignes de log ont été exportées. {skipped} autres correspondaient à vos filtres et ont été omises.",
+    "logs_download_capped": "Les {downloaded} premières lignes de log ont été exportées, le maximum pour un export. D'autres correspondaient peut-être à vos filtres.",
     "display_settings": "Paramètres d'affichage",
     "density": "Densité",
     "density_compact": "Compact",

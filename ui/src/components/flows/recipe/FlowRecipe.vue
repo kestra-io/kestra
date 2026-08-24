@@ -34,7 +34,7 @@
                                 <KsText class="trigger-card-title">{{ card.title }}</KsText>
                                 <span class="trigger-card-sub">{{ card.sub }}</span>
                             </div>
-                            <KsTooltip v-if="card.disabled" :content="$t('triggers_add_ee_tooltip')">
+                            <KsTooltip v-if="card.disabled" :content="$t('feature_ee_tooltip')">
                                 <KsTag size="small" class="ee-badge">EE</KsTag>
                             </KsTooltip>
                         </SelectableTile>

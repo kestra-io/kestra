@@ -570,6 +570,7 @@
     "triggers_add_filter_app": "アプリケーション",
     "triggers_add_empty_title": "トリガーが見つかりません",
     "triggers_add_ee_tooltip": "このtriggerはEnterprise Editionが必要です。",
+    "feature_ee_tooltip": "この機能にはEnterprise Editionが必要です。",
     "triggers_add_card_add": "追加",
     "triggers_add_modal_tab_form": "フォーム",
     "triggers_add_modal_tab_source": "ソース",

@@ -752,6 +752,7 @@
     "expand_by_default": "默认展开结构化 log",
     "similar lines": "相似行",
     "download_logs_description": "选择要导出的 log。过滤器默认为当前视图。",
+    "logs_download_truncated": "已导出前 {downloaded} 行 log。另有 {skipped} 行符合筛选条件但未包含。",
     "display_settings": "显示设置",
     "density": "密度",
     "density_compact": "紧凑",
@@ -1778,6 +1779,7 @@
       "others": "其他",
       "viewAll": "查看全部",
       "export": "导出",
+      "exportEmpty": "此图表没有可导出的数据。",
       "exportTo": {
         "csv": "导出为 CSV",
         "ion": "导出到 ION"

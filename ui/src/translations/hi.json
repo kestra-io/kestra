@@ -752,6 +752,7 @@
     "expand_by_default": "संरचित logs को डिफ़ॉल्ट रूप से विस्तृत करें",
     "similar lines": "समान लाइनें",
     "download_logs_description": "निर्यात करने के लिए logs चुनें। फ़िल्टर आपकी वर्तमान दृश्य के अनुसार डिफ़ॉल्ट होते हैं।",
+    "logs_download_truncated": "पहली {downloaded} log पंक्तियाँ निर्यात की गईं। {skipped} और आपके फ़िल्टर से मेल खाती थीं और छोड़ दी गईं।",
     "display_settings": "सेटिंग्स दिखाएँ",
     "density": "घनत्व",
     "density_compact": "कॉम्पैक्ट",
@@ -1778,6 +1779,7 @@
       "others": "अन्य",
       "viewAll": "सभी देखें",
       "export": "एक्सपोर्ट करें",
+      "exportEmpty": "इस चार्ट में निर्यात करने के लिए कोई डेटा नहीं है।",
       "exportTo": {
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"

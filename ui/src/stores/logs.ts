@@ -20,6 +20,22 @@ function toSearchParams(options: Record<string, any>, cursor?: string) {
     }
 }
 
+/** One request per page; the export walks every page instead of keeping only the first. */
+const DOWNLOAD_PAGE_SIZE = 1000
+
+/** Safety ceiling: the file is assembled in memory, so an unbounded filter must not take the
+ *  tab down with it. The caller is told when an export stops here. */
+const DOWNLOAD_MAX_LINES = 50000
+
+export interface LogsDownloadResult {
+    /** Lines actually written to the file. */
+    downloaded: number;
+    /** Lines the filters match, as reported by the backend. */
+    total: number;
+    /** True when {@link DOWNLOAD_MAX_LINES} cut the export short. */
+    truncated: boolean;
+}
+
 export interface Log{
     level: LevelKey;
     namespace: string;
@@ -118,17 +134,40 @@ export const useLogsStore = defineStore("logs", () => {
             .then(() => (logs.value = undefined))
     }
 
-    function downloadLogs(options: Record<string, any>) {
-        const params = toSearchParams({...options, page: 1, size: options.size ?? 1000})
-        return LogsAPI.searchLogs(params)
-            .then(response => {
-                const results = (response.results ?? []) as unknown as Log[]
-                const text = formatLogsAsText(results.slice().reverse())
-                Utils.downloadUrl(
-                    window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
-                    logsDownloadFilename(new Date()),
-                )
-            })
+    /** Pages through the whole matching result set, so an export is no longer silently cut to
+     *  the first page. `truncated` lets the caller warn when the safety ceiling kicked in. */
+    async function downloadLogs(options: Record<string, any>): Promise<LogsDownloadResult> {
+        const size = options.size ?? DOWNLOAD_PAGE_SIZE
+        const collected: Log[] = []
+        let reportedTotal = 0
+        let page = 1
+        let cursor: string | undefined = undefined
+
+        for (;;) {
+            const response = await LogsAPI.searchLogs(toSearchParams({...options, page, size}, cursor))
+            const results = (response.results ?? []) as unknown as Log[]
+            reportedTotal = response.total ?? reportedTotal
+            collected.push(...results)
+
+            if (results.length < size || collected.length >= DOWNLOAD_MAX_LINES) break
+
+            if (response.type === "CURSOR") {
+                if (!response.nextCursor) break
+                cursor = response.nextCursor
+            } else {
+                page += 1
+            }
+        }
+
+        const lines = collected.slice(0, DOWNLOAD_MAX_LINES)
+        const text = formatLogsAsText(lines.slice().reverse())
+        Utils.downloadUrl(
+            window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
+            logsDownloadFilename(new Date()),
+        )
+
+        const total = Math.max(reportedTotal, lines.length)
+        return {downloaded: lines.length, total, truncated: lines.length < total}
     }
 
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]

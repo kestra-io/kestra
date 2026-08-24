@@ -379,7 +379,15 @@
 
         downloading.value = true
         logsStore.downloadLogs(params)
-            .then(() => (downloadOpen.value = false))
+            .then((result) => {
+                downloadOpen.value = false
+                if (result.truncated) {
+                    toast.warning(t("logs_download_truncated", {
+                        downloaded: result.downloaded,
+                        skipped: result.total - result.downloaded,
+                    }))
+                }
+            })
             .finally(() => (downloading.value = false))
     }
 

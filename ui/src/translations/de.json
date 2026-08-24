@@ -752,6 +752,7 @@
     "expand_by_default": "Strukturierte Logs standardmäßig ausklappen",
     "similar lines": "ähnliche Zeilen",
     "download_logs_description": "Wähle aus, welche Logs exportiert werden sollen. Die Filter entsprechen standardmäßig deiner aktuellen Ansicht.",
+    "logs_download_truncated": "Die ersten {downloaded} Log-Zeilen wurden exportiert. {skipped} weitere entsprachen Ihren Filtern und wurden ausgelassen.",
     "display_settings": "Anzeigeeinstellungen",
     "density": "Dichte",
     "density_compact": "Kompakt",
@@ -1778,6 +1779,7 @@
       "others": "Andere",
       "viewAll": "Alle anzeigen",
       "export": "Exportieren",
+      "exportEmpty": "Dieses Diagramm hat keine Daten zum Exportieren.",
       "exportTo": {
         "csv": "Als CSV exportieren",
         "ion": "Als ION exportieren"

@@ -752,6 +752,7 @@
     "expand_by_default": "Expandir logs estructurados por defecto",
     "similar lines": "líneas similares",
     "download_logs_description": "Elige qué logs exportar. Los filtros se ajustan a tu vista actual.",
+    "logs_download_truncated": "Se exportaron las primeras {downloaded} líneas de log. {skipped} más coincidían con tus filtros y se omitieron.",
     "display_settings": "Configuración de visualización",
     "density": "Densidad",
     "density_compact": "Compacto",
@@ -1778,6 +1779,7 @@
       "others": "Otros",
       "viewAll": "Ver todo",
       "export": "Exportar",
+      "exportEmpty": "Este gráfico no tiene datos para exportar.",
       "exportTo": {
         "csv": "Exportar a CSV",
         "ion": "Exportar a ION"

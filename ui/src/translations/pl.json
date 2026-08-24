@@ -752,6 +752,7 @@
     "expand_by_default": "Domyślnie rozwiń ustrukturyzowane logi",
     "similar lines": "podobne wiersze",
     "download_logs_description": "Wybierz, które logi wyeksportować. Filtry domyślnie odpowiadają Twojemu bieżącemu widokowi.",
+    "logs_download_truncated": "Wyeksportowano pierwsze {downloaded} wierszy log. Kolejne {skipped} pasowały do filtrów i zostały pominięte.",
     "display_settings": "Ustawienia wyświetlania",
     "density": "Gęstość",
     "density_compact": "Kompaktowy",
@@ -1778,6 +1779,7 @@
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
       "export": "Eksportuj",
+      "exportEmpty": "Ten wykres nie ma danych do wyeksportowania.",
       "exportTo": {
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"

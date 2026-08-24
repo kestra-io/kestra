@@ -455,6 +455,10 @@
         margin-bottom: 0;
     }
 
+    .spread-row :deep(.kel-form-item__label) {
+        cursor: pointer;
+    }
+
     .id-input {
         width: 170px;
         min-height: 30px;

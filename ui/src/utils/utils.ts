@@ -248,6 +248,14 @@ export default class Utils {
         return localStorage.getItem("lang") || "en";
     }
 
+    /**
+     * The stored language as a valid BCP 47 tag ("pt_BR" -> "pt-BR") for Intl APIs and the html lang
+     * attribute, which reject the underscore form getLang() returns.
+     */
+    static getLanguageTag() {
+        return Utils.getLang().replace(/_/g, "-");
+    }
+
     static splitFirst(str: string, separator: string) {
         return str.split(separator).slice(1).join(separator);
     }

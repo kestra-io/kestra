@@ -29,7 +29,8 @@ export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[num
    *
    * axios.defaults.headers.common['Accept-Language'] = locale
    */
-  document.querySelector("html")?.setAttribute("lang", locale)
+  // The html lang attribute must be a BCP 47 tag, so the underscore codes ("pt_BR") get their hyphen form.
+  document.querySelector("html")?.setAttribute("lang", locale.replace(/_/g, "-"))
 }
 
 export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number], additionalTranslationsProvider: Record<string, () => Promise<any>>) {

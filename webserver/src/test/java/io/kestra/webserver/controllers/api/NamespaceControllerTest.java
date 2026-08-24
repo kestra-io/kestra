@@ -24,11 +24,14 @@ import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -75,6 +78,18 @@ public class NamespaceControllerTest {
 
         // THEN
         assertThat(list.getTotal()).isNotNull();
+
+        // AND — the argument name is NOT a second way in: `existingOnly` is never read by Micronaut, so it must be
+        // rejected like any other silently-ignored flat param rather than spared as "route-declared"
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/namespaces/search?existingOnly=true"),
+                Argument.of(PagedResults.class, Namespace.class)
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("[existingOnly]");
     }
 
     @SuppressWarnings("unchecked")

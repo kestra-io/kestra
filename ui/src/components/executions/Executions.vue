@@ -450,7 +450,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
+    import {filterValidLabels, keepSupportedFilters, onlyBracketFilters, FILTER_FIELD_PATTERN} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import * as Utils from "../../utils/utils"
@@ -1130,8 +1130,10 @@
     })
 
     async function exportExecutionsAsStream() {
+        // The export endpoint takes filters and nothing else, and now 422s on flat legacy params, so send only the
+        // bracket-format keys rather than the raw route query.
         await executionsStore.exportExecutionsAsCSV(
-            dropUnsupportedFilters(route.query),
+            onlyBracketFilters(dropUnsupportedFilters(route.query)),
         )
     }
 </script>

@@ -16,6 +16,7 @@ import io.kestra.webserver.configuration.QueryFilterConfiguration;
 import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
@@ -153,9 +154,11 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
         List<String> legacy = legacyParams(source.getParameters().asMap().keySet(), declared.get());
         if (!legacy.isEmpty()) {
+            String example = legacy.getFirst();
             throw new IllegalArgumentException(
                 "Legacy filter parameter(s) " + legacy + " are no longer supported and would have been silently "
-                    + "ignored. Use the bracket format instead, e.g. filters[" + legacy.getFirst() + "][EQUALS]=value."
+                    + "ignored. Use the bracket format instead, e.g. filters[" + example + "]["
+                    + QueryFilter.Field.fromString(example).supportedOp().getFirst() + "]=value."
             );
         }
     }
@@ -171,7 +174,9 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
     }
 
     /**
-     * The query parameter names the matched route actually binds - argument names plus any {@code @QueryValue} alias.
+     * The query parameter names the matched route can actually bind. Arguments already satisfied by a URI variable are
+     * excluded by Micronaut, which only makes the check stricter: those names arrive in the path, not the query string.
+     * <p>
      * Empty when the route arguments cannot be read, in which case the legacy check is skipped entirely: an unknown
      * route surface must not turn into a wave of false rejections.
      */
@@ -179,11 +184,21 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         return RouteAttributes.getRouteMatch(source)
             .filter(MethodBasedRouteMatch.class::isInstance)
             .map(routeMatch -> ((MethodBasedRouteMatch<?, ?>) routeMatch).getRequiredArguments().stream()
-                .flatMap(argument -> Stream.concat(
-                    Stream.of(argument.getName()),
-                    argument.getAnnotationMetadata().stringValue(QueryValue.class).stream()
-                ))
+                .flatMap(QueryFilterFormatBinder::boundNames)
                 .collect(Collectors.toSet()));
+    }
+
+    /**
+     * The name(s) an argument can be bound from. An explicit {@code @QueryValue("alias")} <em>replaces</em> the
+     * argument name rather than adding to it: {@code @QueryValue(value = "existing") Boolean existingOnly} is only
+     * ever read from {@code existing}, so sparing {@code existingOnly} would spare a parameter that is silently
+     * ignored - and {@code existingOnly} happens to be a filter field name too.
+     */
+    private static Stream<String> boundNames(Argument<?> argument) {
+        return argument.getAnnotationMetadata().stringValue(QueryValue.class)
+            .filter(alias -> !alias.isBlank())
+            .map(Stream::of)
+            .orElseGet(() -> Stream.of(argument.getName()));
     }
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {

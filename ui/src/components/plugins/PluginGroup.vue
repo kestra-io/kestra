@@ -205,7 +205,7 @@
         return crumbs
     })
 
-    const title = computed(() => groupPlugin.value?.title ?? t("plugins.names"))
+    const title = computed(() => groupPlugin.value?.title ?? (route.params.name as string))
 
     const routeInfo = computed(() => ({title: title.value, breadcrumb: breadcrumb.value}))
     useRouteContext(routeInfo)

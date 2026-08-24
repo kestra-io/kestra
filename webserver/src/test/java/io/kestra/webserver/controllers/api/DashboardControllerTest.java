@@ -877,6 +877,18 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldTreatNullFiltersAsNoFiltersOnChartData() {
+        // Raw JSON body with an explicit "filters":null, matching the reported repro exactly -
+        // going through ChartFiltersOverrides' builder would drop the null key (NON_NULL inclusion)
+        // and never exercise the bug.
+        List<Map> chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/_default/charts/total_executions_timeseries", "{\"filters\":null}").contentType(MediaType.APPLICATION_JSON),
+            Argument.listOf(Map.class)
+        );
+        assertThat(chartData).isNotNull();
+    }
+
+    @Test
     void shouldReturnBuiltinDefaultDashboardDefinitions() {
         Map definitions = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/defaults/definitions"),

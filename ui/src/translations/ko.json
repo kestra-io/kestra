@@ -570,7 +570,7 @@
     "triggers_add_filter_app": "앱",
     "triggers_add_empty_title": "트리거를 찾을 수 없음",
     "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
-    "feature_ee_tooltip": "이 기능은 Enterprise Edition이 필요합니다.",
+    "ee_feature_tooltip": "이 기능은 Enterprise Edition이 필요합니다.",
     "triggers_add_card_add": "추가",
     "triggers_add_modal_tab_form": "폼",
     "triggers_add_modal_tab_source": "출처",

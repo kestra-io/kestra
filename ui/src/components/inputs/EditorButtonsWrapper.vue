@@ -13,7 +13,7 @@
         <EditorButtons
             :isCreating="flowStore.isCreating"
             :isReadOnly="flowStore.isReadOnly"
-            :canDelete="true"
+            :canDelete="flowStore.isAllowedDelete"
             :isAllowedEdit="flowStore.isAllowedEdit"
             :haveChange="haveChange"
             :flowHaveTasks="Boolean(flowStore.flowHaveTasks)"

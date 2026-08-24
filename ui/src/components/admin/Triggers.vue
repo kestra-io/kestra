@@ -206,7 +206,7 @@
                             <template #default="scope">
                                 <div class="action-container">
                                     <IconButton
-                                        v-if="scope.row.executionId || scope.row.evaluateRunningDate"
+                                        v-if="(scope.row.executionId || scope.row.evaluateRunningDate) && authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, scope.row.namespace)"
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
                                         placement="left"
                                         @click="triggerToUnlock = scope.row"
@@ -214,6 +214,7 @@
                                         <LockOff />
                                     </IconButton>
                                     <IconButton
+                                        v-if="authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, scope.row.namespace)"
                                         :tooltip="$t('delete trigger')"
                                         placement="left"
                                         @click="confirmDeleteTrigger(scope.row)"
@@ -241,7 +242,7 @@
 
                                     <el-button
                                         :icon="CalendarCollapseHorizontalOutline"
-                                        v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                        v-if="authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, scope.row.namespace)"
                                         @click="setBackfillModal(scope.row, true)"
                                         size="small"
                                         type="primary"
@@ -267,7 +268,7 @@
                                         @change="setDisabled(scope.row, $event)"
                                         inlinePrompt
                                         class="switch-text"
-                                        :disabled="scope.row.codeDisabled"
+                                        :disabled="scope.row.codeDisabled || !authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, scope.row.namespace)"
                                     />
                                 </el-tooltip>
                                 <el-tooltip v-else :content="$t('flow source not found')" effect="light">

@@ -1224,6 +1224,7 @@
         "error": "Si sono verificati errori durante la copia del percorso negli appunti",
         "success": "Percorso copiato negli appunti"
       },
+      "read_only": "Non hai il permesso di gestire i file in questo namespace",
       "rename": {
         "file": "Rinomina file",
         "folder": "Rinomina cartella",

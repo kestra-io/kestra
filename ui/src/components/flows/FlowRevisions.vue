@@ -4,6 +4,8 @@
         lang="yaml"
         :revisions="flowRevisions"
         :revisionSource="loadRevisionContent"
+        :canRestore="flowStore.isAllowedEdit"
+        :canDelete="flowStore.isAllowedDelete"
         @restore="restoreRevision"
         @deleted="onRevisionDeleted"
         class="flow-revisions"

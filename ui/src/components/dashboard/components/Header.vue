@@ -4,10 +4,10 @@
         :breadcrumb="[{label: $t('dashboards.labels.singular'), link: undefined}]"
         :description="props.dashboard?.description"
     >
-        <template v-if="isAllowedDashboard || isAllowedFlow" #additional-right>
+        <template v-if="isAllowedDashboardRead || isAllowedDashboardUpdate || isAllowedFlow" #additional-right>
             <ul>
                 <li
-                    v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard"
+                    v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboardRead"
                 >
                     <Dashboards
                         @dashboard="(value: any) => props.load?.(value)"
@@ -15,7 +15,7 @@
                     />
                 </li>
                 <li
-                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
+                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboardUpdate"
                 >
                     <router-link
                         :to="{name: 'dashboards/update', params: {id: props.dashboard?.id}}"
@@ -66,7 +66,9 @@
 
     const isAllowedFlow = computed(() => authStore.user?.isAllowed(permission.FLOW, action.CREATE, "*"));
 
-    const isAllowedDashboard = computed(() => authStore.user?.isAllowed(permission.DASHBOARD, action.CREATE, "*"));
+    const isAllowedDashboardRead = computed(() => authStore.user?.isAllowed(permission.DASHBOARD, action.READ, "*"));
+
+    const isAllowedDashboardUpdate = computed(() => authStore.user?.isAllowed(permission.DASHBOARD, action.UPDATE, "*"));
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 

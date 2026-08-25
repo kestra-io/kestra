@@ -27,11 +27,17 @@ import io.micronaut.core.bind.annotation.Bindable;
  * <p>
  * Per-Resource overrides are independent of the global value — they may be tighter or looser than the global cap,
  * but still subject to the same floor.
+ * <p>
+ * A third, unrelated safeguard is exposed here: {@code reject-legacy-params}. When enabled (the default), the binder
+ * rejects pre-2.0 flat filter parameters ({@code state=RUNNING}) instead of silently ignoring them. It exists as a
+ * configuration switch only so that an operator with a stuck integration can buy time on upgrade; it is expected to
+ * stay enabled.
  */
 @ConfigurationProperties("kestra.webserver.query-filter")
 public record QueryFilterConfiguration(
     @Bindable(defaultValue = "3") int maxDepth,
     @Bindable(defaultValue = "20") int maxWidth,
+    @Bindable(defaultValue = "true") boolean rejectLegacyParams,
     @Nullable Map<String, ResourceLimits> resources) {
 
     public static final int FLOOR_DEPTH = 3;

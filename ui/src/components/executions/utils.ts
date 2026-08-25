@@ -26,3 +26,16 @@ export const keepSupportedFilters = (
         }),
     )
 }
+
+/**
+ * Keeps only bracket-format filter params. The API rejects pre-2.0 flat params such as `state=RUNNING` outright
+ * (kestra-io/kestra-ee#10326), so a route query carrying one - a bookmarked pre-2.0 URL, a flat programmatic
+ * navigation - must not be forwarded verbatim to an endpoint that takes nothing but filters.
+ */
+export const onlyBracketFilters = (
+    query: Record<string, unknown>,
+): Record<string, unknown> => {
+    return Object.fromEntries(
+        Object.entries(query).filter(([key]) => FILTER_FIELD_PATTERN.test(key)),
+    )
+}

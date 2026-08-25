@@ -1,5 +1,6 @@
 package io.kestra.webserver.converters;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -338,6 +339,54 @@ class QueryFilterFormatBinderTest {
             List.of("after-execution-error", "after-execution-finally", "avoidinfiniteexecutionloop"),
             flowId.value()
         );
+    }
+
+    @Test
+    void shouldFlagLegacyFlatFilterParams() {
+        // GIVEN — a pre-2.0 URL that scopes a bulk action the flat way
+        List<String> legacy = QueryFilterFormatBinder.legacyParams(
+            Set.of("state", "namespace", "size"),
+            Set.of("size")
+        );
+
+        // THEN — both filter-shaped params are reported, the route's own `size` is not
+        assertEquals(List.of("namespace", "state"), legacy);
+    }
+
+    @Test
+    void shouldNotFlagParamsTheRouteActuallyDeclares() {
+        // GIVEN — `namespace` is a real query value on several endpoints (e.g. IAM binding search)
+        List<String> legacy = QueryFilterFormatBinder.legacyParams(
+            Set.of("namespace", "type", "id"),
+            Set.of("namespace", "type", "id")
+        );
+
+        // THEN — declared params must keep working
+        assertTrue(legacy.isEmpty(), "Route-declared params must not be treated as legacy");
+    }
+
+    @Test
+    void shouldNotFlagBracketFormatOrUnknownParams() {
+        // GIVEN — the supported format, plus a param that is not a filter field at all
+        List<String> legacy = QueryFilterFormatBinder.legacyParams(
+            Set.of("filters[state][EQUALS]", "filters[namespace][EQUALS]", "utm_source"),
+            Set.of()
+        );
+
+        // THEN — nothing rejected: only known flat filter names are
+        assertTrue(legacy.isEmpty());
+    }
+
+    @Test
+    void shouldDeriveLegacyParamNamesFromFilterFields() {
+        // GIVEN/WHEN — a field added to QueryFilter.Field is covered without touching this binder
+        List<String> legacy = QueryFilterFormatBinder.legacyParams(
+            Arrays.stream(QueryFilter.Field.values()).map(QueryFilter.Field::value).toList(),
+            Set.of()
+        );
+
+        // THEN — every field value is a rejectable flat param
+        assertEquals(QueryFilter.Field.values().length, legacy.size());
     }
 
     @Test

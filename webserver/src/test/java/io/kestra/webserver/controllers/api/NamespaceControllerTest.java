@@ -24,11 +24,14 @@ import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -58,6 +61,35 @@ public class NamespaceControllerTest {
         );
 
         assertThat(namespace.getId()).isEqualTo("my.ns");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldKeepRouteDeclaredParamsWorkingAlongsideFilters() {
+        // GIVEN — `existingOnly` is both a filter field name and a real argument of this route (bound as `existing`),
+        // so the legacy-flat-param safeguard must not reject it. See kestra-io/kestra-ee#10326.
+        flow("my.ns");
+
+        // WHEN
+        PagedResults<Namespace> list = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/namespaces/search?existing=true"),
+            Argument.of(PagedResults.class, Namespace.class)
+        );
+
+        // THEN
+        assertThat(list.getTotal()).isNotNull();
+
+        // AND — the argument name is NOT a second way in: `existingOnly` is never read by Micronaut, so it must be
+        // rejected like any other silently-ignored flat param rather than spared as "route-declared"
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/namespaces/search?existingOnly=true"),
+                Argument.of(PagedResults.class, Namespace.class)
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("[existingOnly]");
     }
 
     @SuppressWarnings("unchecked")

@@ -185,8 +185,15 @@ class FlowControllerTest {
         PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[q][EQUALS]=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
 
-        PagedResults<Flow> flows_oldParameters = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
-        assertThat(flows_oldParameters.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
+        // The pre-2.0 flat `q` parameter is not read by the filter binder. It used to be dropped silently, which made
+        // the search match everything - this assertion previously passed for that reason, not because `q` was honoured.
+        // It is now rejected instead (kestra-io/kestra-ee#10326).
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class))
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("[q]");
     }
 
     @SuppressWarnings("unchecked")

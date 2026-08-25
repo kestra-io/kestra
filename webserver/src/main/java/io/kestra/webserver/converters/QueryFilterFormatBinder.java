@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -14,8 +16,12 @@ import io.kestra.webserver.configuration.QueryFilterConfiguration;
 import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
+import io.micronaut.web.router.MethodBasedRouteMatch;
+import io.micronaut.web.router.RouteAttributes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -29,6 +35,15 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
     private static final Pattern PREFIX_SEG = Pattern.compile(
         "\\[(?i:(and|or))]\\[(\\d+)]"
     );
+
+    /**
+     * The pre-2.0 flat filter parameter names ({@code state}, {@code namespace}, {@code q}, ...), derived from the
+     * filter fields themselves so the set cannot drift as fields are added or removed. A request carrying one of
+     * these is rejected rather than silently widened - see {@link #rejectLegacyParams(HttpRequest)}.
+     */
+    private static final Set<String> LEGACY_FILTER_PARAMS = Arrays.stream(QueryFilter.Field.values())
+        .map(QueryFilter.Field::value)
+        .collect(Collectors.toUnmodifiableSet());
 
     private final QueryFilterConfiguration configuration;
 
@@ -109,6 +124,10 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
                 )
             );
 
+        if (configuration.rejectLegacyParams()) {
+            rejectLegacyParams(source);
+        }
+
         int maxDepth = configuration.maxDepthFor(resource);
         int maxWidth = configuration.maxWidthFor(resource);
 
@@ -116,6 +135,70 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         List<QueryFilter> filters = getQueryFilters(queryParams, maxDepth, maxWidth);
 
         return () -> Optional.of(filters);
+    }
+
+    /**
+     * Rejects pre-2.0 flat filter parameters, which this binder does not read: only {@code filters[field][OP]=value}
+     * is honoured, so a request scoped with {@code state=RUNNING} used to degrade to "match everything" - dangerous
+     * on the by-query bulk endpoints, where it widens a delete or a kill to the whole tenant.
+     * <p>
+     * A parameter is only legacy when the matched route does not declare it as a real argument: names such as
+     * {@code namespace} or {@code flowId} are legitimate query values on several endpoints, and those must keep
+     * working.
+     */
+    private static void rejectLegacyParams(HttpRequest<?> source) {
+        Optional<Set<String>> declared = declaredParamNames(source);
+        if (declared.isEmpty()) {
+            return;
+        }
+
+        List<String> legacy = legacyParams(source.getParameters().asMap().keySet(), declared.get());
+        if (!legacy.isEmpty()) {
+            String example = legacy.getFirst();
+            throw new IllegalArgumentException(
+                "Legacy filter parameter(s) " + legacy + " are no longer supported and would have been silently "
+                    + "ignored. Use the bracket format instead, e.g. filters[" + example + "]["
+                    + QueryFilter.Field.fromString(example).supportedOp().getFirst() + "]=value."
+            );
+        }
+    }
+
+    @VisibleForTesting
+    static List<String> legacyParams(Collection<String> paramNames, Set<String> declaredNames) {
+        return paramNames.stream()
+            .filter(name -> !name.startsWith("filters["))
+            .filter(LEGACY_FILTER_PARAMS::contains)
+            .filter(name -> !declaredNames.contains(name))
+            .sorted()
+            .toList();
+    }
+
+    /**
+     * The query parameter names the matched route can actually bind. Arguments already satisfied by a URI variable are
+     * excluded by Micronaut, which only makes the check stricter: those names arrive in the path, not the query string.
+     * <p>
+     * Empty when the route arguments cannot be read, in which case the legacy check is skipped entirely: an unknown
+     * route surface must not turn into a wave of false rejections.
+     */
+    private static Optional<Set<String>> declaredParamNames(HttpRequest<?> source) {
+        return RouteAttributes.getRouteMatch(source)
+            .filter(MethodBasedRouteMatch.class::isInstance)
+            .map(routeMatch -> ((MethodBasedRouteMatch<?, ?>) routeMatch).getRequiredArguments().stream()
+                .flatMap(QueryFilterFormatBinder::boundNames)
+                .collect(Collectors.toSet()));
+    }
+
+    /**
+     * The name(s) an argument can be bound from. An explicit {@code @QueryValue("alias")} <em>replaces</em> the
+     * argument name rather than adding to it: {@code @QueryValue(value = "existing") Boolean existingOnly} is only
+     * ever read from {@code existing}, so sparing {@code existingOnly} would spare a parameter that is silently
+     * ignored - and {@code existingOnly} happens to be a filter field name too.
+     */
+    private static Stream<String> boundNames(Argument<?> argument) {
+        return argument.getAnnotationMetadata().stringValue(QueryValue.class)
+            .filter(alias -> !alias.isBlank())
+            .map(Stream::of)
+            .orElseGet(() -> Stream.of(argument.getName()));
     }
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {

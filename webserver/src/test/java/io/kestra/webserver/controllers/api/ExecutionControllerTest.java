@@ -388,6 +388,28 @@ class ExecutionControllerTest {
     }
 
     @Test
+    void shouldRejectLegacyFlatFilterParams() {
+        // GIVEN — a pre-2.0 client scoping the search the flat way. Only filters[field][OP]=value is read, so this
+        // used to degrade to "match everything" (kestra-io/kestra-ee#10326): on the by-query bulk endpoints that
+        // turned a scoped delete or kill into a tenant-wide one.
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/search?state=RUNNING&namespace=" + TESTS_FLOW_NS), PagedResults.class
+            )
+        );
+
+        // THEN — rejected, naming both offending params
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception.getMessage()).contains("[namespace, state]");
+
+        // AND — the supported bracket format is untouched
+        PagedResults<?> results = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/search?filters[state][EQUALS]=RUNNING"), PagedResults.class
+        );
+        assertThat(results.getTotal()).isNotNull();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" })
     void shouldValidateInputsForCreateExecutionGivenSimpleInputs() {
         // given

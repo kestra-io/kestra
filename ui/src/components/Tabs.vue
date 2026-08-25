@@ -66,13 +66,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, nextTick, h, defineComponent, toHandlers, type Component} from "vue"
+    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, nextTick, h, defineAsyncComponent, defineComponent, toHandlers, type Component} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import EnterpriseBadge from "./EnterpriseBadge.vue"
-    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import {useRouteTabsStore, type RouteTab} from "../stores/routeTabs"
     import {useActiveTab} from "../composables/useActiveTab"
     import {routeFamily} from "../utils/routeFamily"
+
+    // Async: it reaches the editor bindings, which statically put Monaco on the
+    // graph of every page that renders tabs.
+    const BlueprintDetail = defineAsyncComponent(() => import("override/components/flows/blueprints/BlueprintDetail.vue"))
 
     export interface Tab extends RouteTab {
         "v-on"?: Record<string, unknown>;

@@ -11,8 +11,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -23,6 +28,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.docs.SchemaType;
+import io.kestra.core.plugins.PluginCatalogService.PluginManifest;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Version;
 
@@ -139,6 +145,33 @@ public class PluginSchemaBundleService {
     }
 
     /**
+     * Returns the catalog entries carried by the bundle: one per plugin jar the bundle was built
+     * from, with its Maven coordinates and Java package group. Merged into the hosted catalog by
+     * {@link PluginCatalogService#get()}, which is what makes a plugin absent from the hosted
+     * catalog (a private or in-house one) resolvable and installable.
+     *
+     * @return the bundle's catalog entries, empty when no bundle is loaded.
+     */
+    public List<PluginManifest> catalogEntries() {
+        return isEnabled() ? getBundle().plugins() : List.of();
+    }
+
+    /**
+     * Returns the artifact declaring a {@link io.kestra.core.preview.FileRenderer} for the given
+     * file extension, as advertised by the bundle.
+     *
+     * @param extension the file extension, without a leading dot; case-insensitive.
+     * @return the artifact to install to render that extension, or empty when the bundle declares none.
+     */
+    public Optional<PluginArtifact> fileRendererArtifact(final String extension) {
+        if (!isEnabled() || extension == null || extension.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(getBundle().fileRenderers().get(extension.toLowerCase(Locale.ROOT)))
+            .map(coordinates -> PluginArtifact.fromCoordinates(coordinates + ":LATEST"));
+    }
+
+    /**
      * Returns a copy of {@code localSchema} enriched with a lightweight definition and a
      * {@code $ref} branch for every catalog subtype not installed locally — see
      * {@link PluginSchemaBundleMerger}. When the service is disabled or no bundle could be loaded,
@@ -205,8 +238,36 @@ public class PluginSchemaBundleService {
                 });
             }
 
-            log.debug("Plugin schema bundle loaded from '{}' ({} shared definitions, {} root types)", resolvedBundleUrl, definitions.size(), roots.size());
-            return new Bundle(definitions, roots);
+            List<PluginManifest> plugins = new ArrayList<>();
+            if (root.get("plugins") instanceof JsonNode pluginsNode && pluginsNode.isArray()) {
+                pluginsNode.forEach(
+                    entry -> plugins.add(
+                        new PluginManifest(
+                            entry.path("title").asText(null),
+                            entry.path("groupId").asText(null),
+                            entry.path("artifactId").asText(null),
+                            entry.path("group").asText(null)
+                        )
+                    )
+                );
+            }
+
+            Map<String, String> fileRenderers = new TreeMap<>();
+            if (root.get("fileRenderers") instanceof ObjectNode renderersNode) {
+                renderersNode.properties().forEach(
+                    entry -> fileRenderers.put(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue().asText())
+                );
+            }
+
+            log.debug(
+                "Plugin schema bundle loaded from '{}' ({} shared definitions, {} root types, {} catalog entries, {} renderer extensions)",
+                resolvedBundleUrl,
+                definitions.size(),
+                roots.size(),
+                plugins.size(),
+                fileRenderers.size()
+            );
+            return new Bundle(definitions, roots, List.copyOf(plugins), Map.copyOf(fileRenderers));
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -233,9 +294,18 @@ public class PluginSchemaBundleService {
         return uri.toURL().openStream();
     }
 
-    /** The bundle's shared {@code definitions} pool plus each {@link SchemaType}'s root {@code $ref} into it. */
-    private record Bundle(ObjectNode definitions, Map<SchemaType, String> roots) {
-        static final Bundle EMPTY = new Bundle(JsonNodeFactory.instance.objectNode(), Map.of());
+    /**
+     * The bundle's shared {@code definitions} pool, each {@link SchemaType}'s root {@code $ref}
+     * into it, the catalog entries of the plugins it was built from, and the extension →
+     * {@code groupId:artifactId} map of their file renderers.
+     */
+    private record Bundle(
+        ObjectNode definitions,
+        Map<SchemaType, String> roots,
+        List<PluginManifest> plugins,
+        Map<String, String> fileRenderers) {
+
+        static final Bundle EMPTY = new Bundle(JsonNodeFactory.instance.objectNode(), Map.of(), List.of(), Map.of());
 
         boolean isEmpty() {
             return roots.isEmpty();

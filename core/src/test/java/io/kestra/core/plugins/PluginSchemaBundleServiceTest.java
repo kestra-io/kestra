@@ -389,4 +389,74 @@ class PluginSchemaBundleServiceTest {
         Map<String, Object> type = (Map<String, Object>) properties.get("type");
         return (String) type.get("const");
     }
+
+    @Test
+    void shouldExposeCatalogEntriesAndRendererExtensionsFromBundle() throws IOException {
+        // Given — a bundle carrying a private plugin the hosted catalog does not know, whose
+        // renderer declares the avro extension
+        Files.writeString(tempDir.resolve("plugins-schema.json"), """
+            {
+              "definitions": {"io.kestra.core.models.tasks.Task": {"anyOf": []}},
+              "roots": {"task": "#/definitions/io.kestra.core.models.tasks.Task"},
+              "plugins": [
+                {"title": "In-house", "groupId": "com.acme.plugin", "artifactId": "plugin-acme", "group": "com.acme.plugin.acme"}
+              ],
+              "fileRenderers": {"avro": "com.acme.plugin:plugin-acme"}
+            }
+            """);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(
+            config(tempDir.resolve("plugins-schema.json").toString(), null)
+        );
+
+        // When / Then — catalog entries are exposed as manifests
+        assertThat(service.catalogEntries())
+            .singleElement()
+            .satisfies(manifest ->
+            {
+                assertThat(manifest.groupId()).isEqualTo("com.acme.plugin");
+                assertThat(manifest.artifactId()).isEqualTo("plugin-acme");
+                assertThat(manifest.group()).isEqualTo("com.acme.plugin.acme");
+            });
+
+        // And the renderer lookup resolves the artifact, case-insensitively
+        assertThat(service.fileRendererArtifact("AVRO"))
+            .get()
+            .satisfies(artifact ->
+            {
+                assertThat(artifact.groupId()).isEqualTo("com.acme.plugin");
+                assertThat(artifact.artifactId()).isEqualTo("plugin-acme");
+                assertThat(artifact.version()).isEqualTo("LATEST");
+            });
+
+        // And an extension nothing declares resolves to nothing
+        assertThat(service.fileRendererArtifact("parquet")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnNoCatalogEntriesWhenBundleIsMissingTheSections() throws IOException {
+        // Given — a bundle predating the catalog/renderer sections
+        Files.writeString(tempDir.resolve("plugins-schema.json"), """
+            {
+              "definitions": {"io.kestra.core.models.tasks.Task": {"anyOf": []}},
+              "roots": {"task": "#/definitions/io.kestra.core.models.tasks.Task"}
+            }
+            """);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(
+            config(tempDir.resolve("plugins-schema.json").toString(), null)
+        );
+
+        // When / Then
+        assertThat(service.catalogEntries()).isEmpty();
+        assertThat(service.fileRendererArtifact("avro")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnNoCatalogEntriesWhenDisabled() {
+        // Given
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(null, null));
+
+        // When / Then
+        assertThat(service.catalogEntries()).isEmpty();
+        assertThat(service.fileRendererArtifact("avro")).isEmpty();
+    }
 }

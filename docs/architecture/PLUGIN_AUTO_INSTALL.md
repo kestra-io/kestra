@@ -111,9 +111,31 @@ A new CLI command `plugins-schema` (`PluginsSchemaCommand`) runs on the CI runne
     "task":    "#/definitions/io.kestra.core.models.tasks.Task",
     "trigger": "#/definitions/io.kestra.core.models.triggers.AbstractTrigger",
     ...
-  }
+  },
+  "plugins": [
+    { "title": "Serialization", "groupId": "io.kestra.plugin",
+      "artifactId": "plugin-serdes", "group": "io.kestra.plugin.serdes" }
+  ],
+  "fileRenderers": { "avro": "io.kestra.plugin:plugin-serdes" }
 }
 ```
+
+Alongside the schema, the bundle carries two small indexes of the very plugins it was built from —
+both derived from the scanned JARs, so they cost nothing extra to produce:
+
+- **`plugins`** — one catalog entry per JAR (Maven coordinates from the file name, Java package
+  group and title from the JAR manifest). `PluginCatalogService` merges these into the hosted
+  catalog, so a plugin the hosted catalog does not list — a **private or in-house one** — resolves
+  and installs exactly like a community plugin. Hosted entries win on conflict: the API is
+  authoritative for license and versions. This also closes an asymmetry: the bundle advertises a
+  type in the editor, so the same bundle must be able to say where that type comes from.
+- **`fileRenderers`** — the extension → `groupId:artifactId` map of every `FileRenderer` declared
+  through `FileRenderer.extensions()`. A renderer is needed at **preview** time and its type never
+  appears in a flow, so save-time detection cannot see it; this index is what lets the preview fetch
+  it (see [Feature 3](#feature-3--file-preview-renderers-on-demand)).
+
+Both sections are optional: a bundle produced before they existed still loads, with no local catalog
+entries and no renderer index.
 
 The output, `plugins-schema.json`, is a few MB of JSON, and it is **embedded in the Kestra JAR** —
 there is no hosted copy and nothing to fetch. Release CI generates the bundle from the full plugin
@@ -320,6 +342,26 @@ registry's active-job limit.
 
 ---
 
+## Feature 3 — File preview renderers, on demand
+
+A file preview is rendered by a `FileRenderer`, which is a plugin extension point: the renderers
+available to an instance are those of the installed plugins, plus the four in core (text, ION, image,
+PDF). Nothing in a flow names a renderer, so `findMissingTypes` can never bring one — a lean instance
+previewing an `.avro` file used to fall through to `TextFileRenderer` and show the raw container
+bytes.
+
+`FileRendererService` (webserver) resolves it in three steps:
+
+1. Ask the `PluginRegistry` for a registered renderer supporting the extension.
+2. On a miss, `PluginAutoInstallService.installRendererForExtension()` installs the artifact the
+   bundle declares for that extension — same gating (`auto-install.enabled`), same catalog allowlist,
+   same bounded wait as the save path — and resolution is retried.
+3. Still nothing: `TextFileRenderer` as before, so behaviour never regresses for an unknown format.
+
+A renderer advertises itself by overriding `FileRenderer.extensions()` (lowercase, no leading dot);
+`supports()` stays the runtime check. A renderer that declares nothing keeps working locally but
+cannot be fetched on demand — there is no way to know what it renders.
+
 ## Key files
 
 | Area | File |
@@ -329,7 +371,9 @@ registry's active-job limit.
 | Schema generation | `core/.../docs/JsonSchemaGenerator.java` |
 | Serve schema (`includeCatalog`) | `webserver/.../api/PluginController.java` |
 | Auto-install logic | `core/.../plugins/PluginAutoInstallService.java` |
-| Catalog (FQCN → artifact) | `core/.../plugins/PluginCatalogService.java` |
+| Catalog (FQCN → artifact) + bundle merge | `core/.../plugins/PluginCatalogService.java` |
+| Preview renderer resolution | `webserver/.../services/FileRendererService.java` |
+| Renderer contract (`extensions()`) | `core/.../preview/FileRenderer.java` |
 | Async install job | `core/.../plugins/PluginInstallJob{,Registry}.java`, `PluginInstallTransferListener.java` |
 | Detect result DTO | `core/.../plugins/PluginAutoInstallDetectResult.java` |
 | Editor schema wiring | `ui/src/override/utils/yamlSchemas.ts` |
@@ -357,3 +401,4 @@ registry's active-job limit.
 | Kestra instance (runtime) | nothing — `plugins-schema.json` is read from the jar | a few MB of JSON, already on disk |
 | Browser (editor) | merged schema via `?includeCatalog=true` | a few MB of JSON |
 | Kestra instance (on save) | JARs of the **missing referenced** plugins only | as needed |
+| Kestra instance (on preview) | JAR of the plugin declaring a renderer for the previewed extension | as needed, once |

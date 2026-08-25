@@ -31,12 +31,14 @@ class PluginAutoInstallServiceTest {
     private static final Duration SAVE_TIMEOUT = Duration.ofSeconds(2);
 
     private PluginCatalogService catalogService;
+    private PluginSchemaBundleService schemaBundleService;
     private PluginRegistry pluginRegistry;
     private PluginInstallJobRegistry installJobRegistry;
 
     @BeforeEach
     void setUp() {
         catalogService = mock(PluginCatalogService.class);
+        schemaBundleService = mock(PluginSchemaBundleService.class);
         pluginRegistry = mock(PluginRegistry.class);
         installJobRegistry = mock(PluginInstallJobRegistry.class);
     }
@@ -404,7 +406,7 @@ class PluginAutoInstallServiceTest {
     void shouldBeEnabledByDefaultForOssWithLocalStorage() {
         // Given / When — no explicit enabled property, OSS edition, local-filesystem storage
         PluginAutoInstallService service = new PluginAutoInstallService(
-            catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
+            catalogService, schemaBundleService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
             Optional.of("local"), config(Optional.empty())
         );
 
@@ -416,7 +418,7 @@ class PluginAutoInstallServiceTest {
     void shouldBeDisabledByDefaultForNonLocalStorage() {
         // Given / When — a standalone deployment on S3 must stay inert
         PluginAutoInstallService service = new PluginAutoInstallService(
-            catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
+            catalogService, schemaBundleService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
             Optional.of("s3"), config(Optional.empty())
         );
 
@@ -428,7 +430,7 @@ class PluginAutoInstallServiceTest {
     void shouldHonorExplicitEnabledPropertyOnNonLocalStorage() {
         // Given / When — an explicit opt-in always wins over the computed default
         PluginAutoInstallService service = new PluginAutoInstallService(
-            catalogService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
+            catalogService, schemaBundleService, pluginRegistry, () -> installJobRegistry, new EditionProvider(),
             Optional.of("s3"), config(Optional.of(true))
         );
 
@@ -447,7 +449,7 @@ class PluginAutoInstallServiceTest {
             }
         };
         PluginAutoInstallService service = new PluginAutoInstallService(
-            catalogService, pluginRegistry, () -> installJobRegistry, eeEdition,
+            catalogService, schemaBundleService, pluginRegistry, () -> installJobRegistry, eeEdition,
             Optional.of("local"), config(Optional.of(true))
         );
 
@@ -561,6 +563,51 @@ class PluginAutoInstallServiceTest {
         verify(installJobRegistry, never()).submit(anyList());
     }
 
+    // ─── installRendererForExtension ─────────────────────────────────────────
+
+    @Test
+    void shouldInstallRendererArtifactDeclaredForExtension() throws Exception {
+        // Given — the bundle declares a renderer for .avro and nothing provides it locally
+        when(schemaBundleService.fileRendererArtifact("avro"))
+            .thenReturn(Optional.of(PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-serdes:LATEST")));
+        when(pluginRegistry.plugins()).thenReturn(List.of());
+        UUID jobId = UUID.randomUUID();
+        when(installJobRegistry.submit(anyList())).thenReturn(jobId);
+        when(installJobRegistry.awaitTerminal(jobId, SAVE_TIMEOUT)).thenAnswer(invocation -> Optional.of(succeededJob()));
+
+        // When
+        boolean installed = enabledService().installRendererForExtension("avro");
+
+        // Then
+        assertThat(installed).isTrue();
+        ArgumentCaptor<List<PluginArtifact>> captor = ArgumentCaptor.captor();
+        verify(installJobRegistry).submit(captor.capture());
+        assertThat(captor.getValue()).extracting(PluginArtifact::artifactId).containsExactly("plugin-serdes");
+    }
+
+    @Test
+    void shouldNotInstallRendererWhenNoArtifactDeclaresTheExtension() {
+        // Given
+        when(schemaBundleService.fileRendererArtifact("avro")).thenReturn(Optional.empty());
+
+        // When
+        boolean installed = enabledService().installRendererForExtension("avro");
+
+        // Then
+        assertThat(installed).isFalse();
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
+    @Test
+    void shouldNotInstallRendererWhenFeatureIsDisabled() {
+        // When
+        boolean installed = disabledService().installRendererForExtension("avro");
+
+        // Then
+        assertThat(installed).isFalse();
+        verify(installJobRegistry, never()).submit(anyList());
+    }
+
     // ─── helpers ─────────────────────────────────────────────────────────────
 
     private static PluginAutoInstallConfig config(Optional<Boolean> enabled) {
@@ -572,11 +619,11 @@ class PluginAutoInstallServiceTest {
     }
 
     private PluginAutoInstallService enabledService(Optional<String> storageType) {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, true, INSTALL_TIMEOUT, SAVE_TIMEOUT, storageType);
+        return new PluginAutoInstallService(catalogService, schemaBundleService, pluginRegistry, () -> installJobRegistry, true, INSTALL_TIMEOUT, SAVE_TIMEOUT, storageType);
     }
 
     private PluginAutoInstallService disabledService() {
-        return new PluginAutoInstallService(catalogService, pluginRegistry, () -> installJobRegistry, false, INSTALL_TIMEOUT, SAVE_TIMEOUT, Optional.of("s3"));
+        return new PluginAutoInstallService(catalogService, schemaBundleService, pluginRegistry, () -> installJobRegistry, false, INSTALL_TIMEOUT, SAVE_TIMEOUT, Optional.of("s3"));
     }
 
     private PluginInstallJob succeededJob() {

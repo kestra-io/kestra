@@ -3,11 +3,13 @@ package io.kestra.core.plugins;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -25,6 +27,7 @@ import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.HttpClient;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -48,9 +51,11 @@ public class PluginCatalogService {
 
     private final boolean icons;
     private final boolean oss;
+    private final PluginSchemaBundleService schemaBundleService;
 
     /**
-     * Creates a new {@link PluginCatalogService} instance.
+     * Creates a new {@link PluginCatalogService} instance backed by the hosted catalog only, with
+     * no local entries from the plugin schema bundle.
      *
      * @param httpClient the HTTP Client to connect to Kestra API.
      * @param icons specifies whether icons must be loaded for plugins.
@@ -61,9 +66,28 @@ public class PluginCatalogService {
         final boolean icons,
         final boolean communityOnly,
         final ExecutorsUtils executorsUtils) {
+        this(httpClient, icons, communityOnly, executorsUtils, null);
+    }
+
+    /**
+     * Creates a new {@link PluginCatalogService} instance.
+     *
+     * @param httpClient the HTTP Client to connect to Kestra API.
+     * @param icons specifies whether icons must be loaded for plugins.
+     * @param communityOnly specifies whether only OSS plugins must be returned.
+     * @param executorsUtils the {@link ExecutorsUtils} for creating thread pools.
+     * @param schemaBundleService the plugin schema bundle, whose entries extend the hosted catalog
+     *        with the plugins the bundle was built from; may be {@code null}.
+     */
+    public PluginCatalogService(final HttpClient httpClient,
+        final boolean icons,
+        final boolean communityOnly,
+        final ExecutorsUtils executorsUtils,
+        @Nullable final PluginSchemaBundleService schemaBundleService) {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
+        this.schemaBundleService = schemaBundleService;
         // Loading is deferred to the first get() call to avoid blocking HTTP calls at startup.
     }
 
@@ -141,7 +165,39 @@ public class PluginCatalogService {
                 log.warn("Failed to retrieve available plugins from Kestra API. Cause: {}", cause.getMessage());
             }
         }
-        return loaded;
+        return withBundleEntries(loaded);
+    }
+
+    /**
+     * Extends the hosted catalog with the entries carried by the plugin schema bundle, so a plugin
+     * the hosted catalog does not list — a private or in-house one, built into the bundle from a
+     * local plugin folder — resolves and installs like any other. Hosted entries win on conflict:
+     * they carry the license and version metadata the API is authoritative for.
+     *
+     * @param hosted the manifests retrieved from the Kestra API.
+     * @return the merged manifests.
+     */
+    private List<PluginManifest> withBundleEntries(final List<PluginManifest> hosted) {
+        if (schemaBundleService == null) {
+            return hosted;
+        }
+
+        List<PluginManifest> fromBundle = schemaBundleService.catalogEntries();
+        if (fromBundle.isEmpty()) {
+            return hosted;
+        }
+
+        Set<String> known = hosted.stream()
+            .map(manifest -> manifest.groupId() + ":" + manifest.artifactId())
+            .collect(Collectors.toSet());
+
+        List<PluginManifest> merged = new ArrayList<>(hosted);
+        fromBundle.stream()
+            .filter(manifest -> manifest.groupId() != null && manifest.artifactId() != null && manifest.group() != null)
+            .filter(manifest -> !known.contains(manifest.groupId() + ":" + manifest.artifactId()))
+            .forEach(merged::add);
+
+        return List.copyOf(merged);
     }
 
     private List<PluginManifest> load() {

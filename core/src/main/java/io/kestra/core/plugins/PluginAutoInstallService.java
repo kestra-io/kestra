@@ -49,6 +49,7 @@ public class PluginAutoInstallService {
     private static final String STORAGE_ARTIFACT_TEMPLATE = "io.kestra.storage:storage-%s:LATEST";
 
     private final PluginCatalogService catalogService;
+    private final PluginSchemaBundleService schemaBundleService;
     private final PluginRegistry pluginRegistry;
     private final Provider<PluginInstallJobRegistry> installJobRegistry;
     private final boolean enabled;
@@ -59,6 +60,7 @@ public class PluginAutoInstallService {
     @Inject
     public PluginAutoInstallService(
         final PluginCatalogService catalogService,
+        final PluginSchemaBundleService schemaBundleService,
         final PluginRegistry pluginRegistry,
         final Provider<PluginInstallJobRegistry> installJobRegistry,
         final EditionProvider editionProvider,
@@ -70,6 +72,7 @@ public class PluginAutoInstallService {
         // it is force-disabled below regardless, since EE manages plugins through Plugin Versioning.
         this(
             catalogService,
+            schemaBundleService,
             pluginRegistry,
             installJobRegistry,
             computeEnabled(editionProvider, storageType, config),
@@ -97,6 +100,7 @@ public class PluginAutoInstallService {
 
     PluginAutoInstallService(
         final PluginCatalogService catalogService,
+        final PluginSchemaBundleService schemaBundleService,
         final PluginRegistry pluginRegistry,
         final Provider<PluginInstallJobRegistry> installJobRegistry,
         final boolean enabled,
@@ -104,6 +108,7 @@ public class PluginAutoInstallService {
         final Duration saveTimeout,
         final Optional<String> configuredStorageType) {
         this.catalogService = Objects.requireNonNull(catalogService);
+        this.schemaBundleService = Objects.requireNonNull(schemaBundleService);
         this.pluginRegistry = Objects.requireNonNull(pluginRegistry);
         this.installJobRegistry = Objects.requireNonNull(installJobRegistry);
         this.enabled = enabled;
@@ -255,6 +260,39 @@ public class PluginAutoInstallService {
         }
 
         installArtifacts(artifacts, missingTypes, timeout);
+    }
+
+    /**
+     * Installs the plugin providing a {@link io.kestra.core.preview.FileRenderer} for the given
+     * file extension, as declared by the plugin schema bundle. Called by the file preview when no
+     * installed renderer supports the extension: a renderer is needed at preview time and its type
+     * never appears in a flow, so the save-time detection cannot see it.
+     *
+     * @param extension the file extension being previewed, without a leading dot.
+     * @return {@code true} when an artifact was installed and the registry may now hold a renderer.
+     */
+    public boolean installRendererForExtension(final String extension) {
+        if (!enabled) {
+            return false;
+        }
+
+        Optional<PluginArtifact> artifact = schemaBundleService.fileRendererArtifact(extension);
+        if (artifact.isEmpty()) {
+            log.debug("No plugin declares a file renderer for extension '{}'.", extension);
+            return false;
+        }
+
+        if (isArtifactInstalled(artifact.get())) {
+            return false;
+        }
+
+        installArtifacts(List.of(artifact.get()), Set.of("renderer:" + extension), saveTimeout);
+        return true;
+    }
+
+    private boolean isArtifactInstalled(final PluginArtifact artifact) {
+        return pluginRegistry.plugins().stream()
+            .anyMatch(plugin -> artifact.artifactId().equals(plugin.name()));
     }
 
     /**

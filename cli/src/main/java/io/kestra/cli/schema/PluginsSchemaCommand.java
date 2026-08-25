@@ -3,7 +3,11 @@ package io.kestra.cli.schema;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -16,7 +20,10 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.DefaultPluginRegistry;
+import io.kestra.core.plugins.PluginArtifact;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.preview.FileRenderer;
 
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -115,9 +122,14 @@ public class PluginsSchemaCommand extends AbstractCommand {
             }
         }
 
+        List<Map<String, Object>> plugins = catalogEntries(registry);
+        Map<String, String> fileRenderers = fileRendererArtifacts(registry);
+
         Map<String, Object> bundle = new LinkedHashMap<>();
         bundle.put("definitions", definitions);
         bundle.put("roots", roots);
+        bundle.put("plugins", plugins);
+        bundle.put("fileRenderers", fileRenderers);
 
         if (
             output.getParentFile() != null && !output.getParentFile().mkdirs()
@@ -127,8 +139,91 @@ public class PluginsSchemaCommand extends AbstractCommand {
         }
 
         MAPPER.writeValue(output, bundle);
-        stdOut("Plugin schema bundle written to {0} ({1} types, {2} shared definitions)", output.getAbsolutePath(), roots.size(), definitions.size());
+        stdOut(
+            "Plugin schema bundle written to {0} ({1} types, {2} shared definitions, {3} catalog entries, {4} renderer extensions)",
+            output.getAbsolutePath(),
+            roots.size(),
+            definitions.size(),
+            plugins.size(),
+            fileRenderers.size()
+        );
         return 0;
+    }
+
+    /**
+     * Builds the bundle's local catalog: one entry per scanned plugin jar, carrying its Maven
+     * coordinates and its Java package group, so an instance can resolve a type FQCN to an
+     * artifact for plugins the hosted catalog does not list (private or in-house ones).
+     * Plugins whose coordinates cannot be read from the jar file name are skipped.
+     */
+    private static List<Map<String, Object>> catalogEntries(final PluginRegistry registry) {
+        if (registry == null) {
+            return List.of();
+        }
+
+        return registry.plugins().stream()
+            .filter(plugin -> plugin.group() != null)
+            .map(plugin -> artifactOf(plugin).map(artifact ->
+            {
+                Map<String, Object> entry = new LinkedHashMap<String, Object>();
+                entry.put("title", plugin.title());
+                entry.put("groupId", artifact.groupId());
+                entry.put("artifactId", artifact.artifactId());
+                entry.put("group", plugin.group());
+                return entry;
+            }))
+            .flatMap(Optional::stream)
+            .toList();
+    }
+
+    /**
+     * Builds the extension → {@code groupId:artifactId} map of every {@link FileRenderer} declared
+     * by a scanned plugin, so the file preview can fetch the plugin that renders an extension no
+     * installed renderer supports.
+     */
+    private static Map<String, String> fileRendererArtifacts(final PluginRegistry registry) {
+        if (registry == null) {
+            return Map.of();
+        }
+
+        Map<String, String> byExtension = new TreeMap<>();
+        for (RegisteredPlugin plugin : registry.plugins()) {
+            Optional<PluginArtifact> artifact = artifactOf(plugin);
+            if (artifact.isEmpty()) {
+                continue;
+            }
+            String coordinates = artifact.get().groupId() + ":" + artifact.get().artifactId();
+            for (Class<? extends FileRenderer> renderer : plugin.getFileRenderers()) {
+                declaredExtensions(renderer).forEach(
+                    extension -> byExtension.putIfAbsent(extension.toLowerCase(Locale.ROOT), coordinates)
+                );
+            }
+        }
+        return byExtension;
+    }
+
+    // Core renderers ship with the distribution, so only external plugins carry installable coordinates.
+    private static Optional<PluginArtifact> artifactOf(final RegisteredPlugin plugin) {
+        if (plugin.getExternalPlugin() == null || plugin.getExternalPlugin().getLocation() == null) {
+            return Optional.empty();
+        }
+
+        String fileName = new File(plugin.getExternalPlugin().getLocation().getPath()).getName();
+        try {
+            return Optional.of(PluginArtifact.fromFileName(fileName));
+        } catch (IllegalArgumentException e) {
+            log.debug("Skipping plugin '{}': cannot read Maven coordinates from file name '{}'.", plugin.group(), fileName);
+            return Optional.empty();
+        }
+    }
+
+    private static java.util.Set<String> declaredExtensions(final Class<? extends FileRenderer> renderer) {
+        try {
+            return renderer.getDeclaredConstructor().newInstance().extensions();
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            log.debug("Could not read declared extensions of renderer '{}'", renderer.getName(), e);
+            return java.util.Set.of();
+        }
     }
 
     /** Copies {@code schema}'s {@code definitions} into the shared pool, keeping the first (identical) copy of any class already hoisted from another root. */

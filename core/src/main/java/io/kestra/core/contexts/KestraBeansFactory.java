@@ -9,6 +9,7 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.log.LogDataStoreInterfaceFactory;
 import io.kestra.core.repositories.log.LogsConfig;
@@ -56,8 +57,11 @@ public class KestraBeansFactory {
     // icon-less catalog rather than the webserver's @Named("withIcons") variant.
     @Primary
     @Singleton
-    public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient, ExecutorsUtils executorsUtils) {
-        return new PluginCatalogService(httpClient, false, true, executorsUtils);
+    public PluginCatalogService pluginCatalogService(
+        @Client("api") HttpClient httpClient,
+        ExecutorsUtils executorsUtils,
+        PluginSchemaBundleService schemaBundleService) {
+        return new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
     }
 
     @Requires(missingBeans = PluginRegistry.class)

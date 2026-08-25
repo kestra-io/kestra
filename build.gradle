@@ -212,9 +212,8 @@ subprojects {subProj ->
         }
 
         artifacts {
-            sourceSets.test.output.files.each { dir ->
-                testArtifacts(dir) { builtBy tasks.named('testClasses') }
-            }
+            testArtifacts(project.layout.buildDirectory.dir("classes/java/test")) { builtBy tasks.named('testClasses') }
+            testArtifacts(project.layout.buildDirectory.dir("resources/test")) { builtBy tasks.named('processTestResources') }
         }
 
         dependencies {

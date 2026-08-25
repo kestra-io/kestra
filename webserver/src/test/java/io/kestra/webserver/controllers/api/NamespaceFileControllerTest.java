@@ -249,6 +249,26 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void moveFileDirectoryWithOpaqueUriFromReturns422() {
+        String namespace = TestsUtils.randomNamespace();
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client
+                .toBlocking()
+                .exchange(
+                    HttpRequest.PUT(
+                        "/api/v1/main/namespaces/" + namespace + "/files?from=a:b&to=/x.txt",
+                        null
+                    )
+                )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("a non-hierarchical 'from' is a validation error, not an unhandled 500")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
     void createGetFileContent() throws IOException {
         String namespace = TestsUtils.randomNamespace();
         MultipartBody body = MultipartBody.builder()

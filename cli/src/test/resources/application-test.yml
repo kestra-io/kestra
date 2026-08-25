@@ -41,8 +41,6 @@ grpc:
     health:
       enabled: false
 micronaut:
-  server:
-    port: -1
   http:
     services:
       remote-api:

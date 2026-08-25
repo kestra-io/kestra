@@ -147,7 +147,7 @@ class DocumentationGeneratorTest {
     void deprecated() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class<DeprecatedTask> set = scan.findClass(DeprecatedTask.class.getName()).orElseThrow();
+        Class<DeprecatedTask> set = (Class<DeprecatedTask>) scan.findClass(DeprecatedTask.class.getName()).orElseThrow();
 
         PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, set, Task.class, null);
         ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), false);
@@ -186,7 +186,7 @@ class DocumentationGeneratorTest {
     void taskRunner() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
-        Class<Process> processTaskRunner = scan.findClass(Process.class.getName()).orElseThrow();
+        Class<Process> processTaskRunner = (Class<Process>) scan.findClass(Process.class.getName()).orElseThrow();
 
         PluginClassAndMetadata<Process> metadata = PluginClassAndMetadata.create(scan, processTaskRunner, Process.class, null);
         ClassPluginDocumentation<Process> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), false);

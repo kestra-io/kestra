@@ -54,7 +54,7 @@ public class SearchPluginsTool implements AiPlatformTool {
         // LinkedHashMap keyed by type deduplicates classes registered under several groups while keeping order.
         Map<String, String> matches = new LinkedHashMap<>();
         for (RegisteredPlugin plugin : pluginRegistry.plugins()) {
-            for (List<Class> classes : plugin.allClassGrouped().values()) {
+            for (List<Class<?>> classes : plugin.allClassGrouped().values()) {
                 for (Class<?> pluginClass : classes) {
                     if (matches.size() >= MAX_RESULTS) {
                         return toResult(matches);

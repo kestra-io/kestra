@@ -17,6 +17,7 @@ import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
@@ -217,6 +218,42 @@ public class PauseTest {
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList()).hasSize(2);
+        }
+
+        /**
+         * A Pause with a pauseDuration that is resumed manually must not be resumed a second time when
+         * its pauseDuration elapses while the execution is still running: the second resume carries no
+         * onResume inputs and would wipe those of the manual resume.
+         */
+        @SuppressWarnings("unchecked")
+        public void runDurationManuallyResumed(String tenantId, TestRunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(tenantId, "io.kestra.tests", "pause-duration-manual-resume", null, null, Duration.ofSeconds(30));
+            String executionId = execution.getId();
+            Flow flow = flowRepository.findByExecution(execution);
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+            assertThat(execution.getTaskRunList()).hasSize(1);
+
+            Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, Map.of("reason", "approved"), Pause.Resumed.now());
+
+            // the 'sleep' task outlives the PT1S pauseDuration, so the leftover delay expires while running
+            execution = runnerUtils.emitAndAwaitExecution(
+                e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
+                resumed,
+                Duration.ofSeconds(60)
+            );
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(execution.getTaskRunList()).hasSize(3);
+
+            // the Pause must have been resumed exactly once
+            TaskRun pause = execution.findTaskRunsByTaskId("pause").getFirst();
+            assertThat(pause.getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
+            assertThat(pause.getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
+
+            // and the onResume inputs of the manual resume must survive it
+            Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("last").getFirst()).get("values");
+            assertThat(outputs.get("reason")).isEqualTo("approved");
         }
 
         public void runParallelDelay(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {

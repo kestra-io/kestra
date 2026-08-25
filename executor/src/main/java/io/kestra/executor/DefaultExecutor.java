@@ -546,6 +546,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
                                 executor = executor.withExecution(markAsExecution, "pausedRestart");
                             } else {
                                 // if there is a taskRun it means we restart a paused task
+                                // The delay is only removed when it expires, so a Pause that was already resumed
+                                // (manually via the API, or by a kill) still has a pending delay. Resuming it a
+                                // second time would re-generate the Pause outputs without the onResume inputs and
+                                // wipe them, so we skip the delay unless the task run is still paused.
+                                Optional<TaskRun> pausedTaskRun = execution.findTaskRunByTaskRunIdIfPresent(executionDelay.getTaskRunId());
+                                if (pausedTaskRun.isEmpty() || pausedTaskRun.get().getState().getCurrent() != State.Type.PAUSED) {
+                                    log.debug(
+                                        "Skipping the expired pause delay of the task run '{}' of the execution '{}': it is no longer paused.",
+                                        executionDelay.getTaskRunId(),
+                                        execution.getId()
+                                    );
+                                    return null;
+                                }
+
                                 FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
                                 Execution markAsExecution = executionService.markAs(
                                     execution,

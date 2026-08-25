@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.jar.JarEntry;
 
+import io.kestra.core.utils.FileUtils;
 import io.kestra.webserver.services.UiIndexService;
 import io.kestra.webserver.utils.HttpCacheUtils;
 
@@ -67,7 +68,9 @@ public class UiController {
     @ExecuteOn(TaskExecutors.IO)
     public HttpResponse<?> serve(HttpRequest<?> request, @PathVariable String path) {
         String normalized = path == null ? "" : path;
-        if (normalized.contains("..") || normalized.contains("\\") || normalized.contains("\0")) {
+        // A directory-based classpath entry resolves '..' against the real filesystem, so a traversal
+        // segment would read outside the UI tree.
+        if (!FileUtils.isSafeRelativePath(normalized)) {
             return HttpResponse.notFound();
         }
 

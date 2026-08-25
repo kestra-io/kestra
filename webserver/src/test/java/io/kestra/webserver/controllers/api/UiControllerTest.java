@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.junit.annotations.KestraTest;
 
@@ -160,12 +162,21 @@ class UiControllerTest {
         assertThat(second.body()).isEmpty();
     }
 
-    @Test
-    void shouldRejectPathTraversal() {
-        // When - the encoded dots decode to a traversal attempt
-        HttpResponse<byte[]> response = send(request("/ui/assets/%2e%2e/%2e%2e/application-test.yml").build());
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+            // encoded dots decode to a traversal attempt
+            "/ui/assets/%2e%2e/%2e%2e/application-test.yml",
+            "/ui/assets/../../application-test.yml",
+            // Windows-style separators must not slip past the guard either
+            "/ui/assets/..%5C..%5Capplication-test.yml",
+        }
+    )
+    void shouldRejectPathTraversal(String uri) {
+        // When
+        HttpResponse<byte[]> response = send(request(uri).build());
 
-        // Then
+        // Then - never the traversed file, and never the SPA fallback
         assertThat(response.statusCode()).isEqualTo(404);
     }
 }

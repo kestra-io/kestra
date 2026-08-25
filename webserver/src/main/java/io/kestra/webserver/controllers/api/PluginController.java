@@ -23,6 +23,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.EditionProvider;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -543,7 +544,7 @@ public class PluginController {
         HttpRequest<?> request,
         @Parameter(description = "The plugin group") @PathVariable String group,
         @Parameter(description = "The file path") @PathVariable String path) throws IOException {
-        if (path.contains("..") || path.startsWith("/") || path.startsWith("\\") || path.contains("\0")) {
+        if (!FileUtils.isSafeRelativePath(path)) {
             return HttpResponse.badRequest();
         }
 

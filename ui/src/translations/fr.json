@@ -570,7 +570,6 @@
     "triggers_add_filter_app": "Application",
     "triggers_add_empty_title": "Aucun trigger trouvé",
     "triggers_add_ee_tooltip": "Ce trigger nécessite l'édition Enterprise.",
-    "ee_feature_tooltip": "Cette fonctionnalité nécessite l'édition Enterprise.",
     "triggers_add_card_add": "Ajouter",
     "triggers_add_modal_tab_form": "Formulaire",
     "triggers_add_modal_tab_source": "Source",

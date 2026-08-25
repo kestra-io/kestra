@@ -47,28 +47,36 @@ public class KVController {
     protected TenantService tenantService;
 
     /**
-     * Maps a {@link KVEntry} field name to the matching {@link PersistedKvMetadata} property, which
-     * is what the repositories sort on: JDBC turns the value into a column by camel-to-snake
-     * conversion, Elasticsearch uses it verbatim as the document field. Four names differ between
-     * the two records, so an unmapped sort resolved to nothing and failed the query with a 500 —
-     * {@code updateDate} being the one the UI exposes.
+     * Maps a sortable name to the {@link PersistedKvMetadata} property the repositories sort on:
+     * JDBC turns the value into a column by camel-to-snake conversion, Elasticsearch uses it
+     * verbatim as the document field. Four {@link KVEntry} field names differ from their property,
+     * so an unmapped sort resolved to nothing and failed the query with a 500 — {@code updateDate}
+     * being the one the UI exposes.
      *
      * <p>{@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
      * holding the uid, so that mapping prevents an ordering on the wrong data rather than a failure.
      *
-     * <p>{@link KVEntry} is a closed record, so this is the exhaustive whitelist of sortable fields:
-     * anything else yields {@code null}, which {@link PageableUtils} answers with a 422 instead of
-     * letting an unknown column reach the query. That also rejects sorts on internal columns such
-     * as {@code last} or {@code deleted}, which were never part of the API contract.
+     * <p>Both spellings are accepted. {@link KVEntry} field names are the documented contract, but
+     * the KV table has always sorted on the properties directly — its default sort is
+     * {@code name:asc} — so rejecting those would break every existing client. Anything outside
+     * both sets yields {@code null}, which {@link PageableUtils} answers with a 422 rather than
+     * letting an unknown column reach the query; that still rules out internal columns such as
+     * {@code last} and {@code deleted}.
      */
-    private static final Map<String, String> SORT_FIELDS = Map.of(
-        "namespace", "namespace",
-        "key", "name",
-        "revision", "version",
-        "description", "description",
-        "creationDate", "created",
-        "updateDate", "updated",
-        "expirationDate", "expirationDate"
+    private static final Map<String, String> SORT_FIELDS = Map.ofEntries(
+        // KVEntry field -> PersistedKvMetadata property
+        Map.entry("namespace", "namespace"),
+        Map.entry("key", "name"),
+        Map.entry("revision", "version"),
+        Map.entry("description", "description"),
+        Map.entry("creationDate", "created"),
+        Map.entry("updateDate", "updated"),
+        Map.entry("expirationDate", "expirationDate"),
+        // the four properties whose name differs, accepted under their own name too
+        Map.entry("name", "name"),
+        Map.entry("version", "version"),
+        Map.entry("created", "created"),
+        Map.entry("updated", "updated")
     );
 
     private String sortMapper(String key) {

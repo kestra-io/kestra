@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -112,6 +113,23 @@ class KVControllerTest {
         // And: `revision` orders on `version`, which no name conversion would have reached
         assertThat(sortedEntries("revision", "asc").getFirst().key()).isEqualTo("b-key");
         assertThat(sortedEntries("revision", "desc").getFirst().key()).isEqualTo("a-key");
+    }
+
+    /**
+     * The KV table's default sort is {@code name:asc} — the property, not the {@link KVEntry} field
+     * — so a whitelist of entry fields alone broke every list request the UI made. Caught by the
+     * E2E suite, pinned here because it is a millisecond to check.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"name", "version", "created", "updated"})
+    void shouldSortAllKeysByAPropertyName(String property) throws IOException {
+        // Given: two keys in one namespace
+        givenTwoKeys();
+
+        // When / Then: the property spelling existing clients send is accepted too
+        assertThat(sortedEntries(property, "asc"))
+            .as("sorting by %s should not be rejected", property)
+            .hasSize(2);
     }
 
     @Test

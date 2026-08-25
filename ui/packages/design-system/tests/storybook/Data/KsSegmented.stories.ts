@@ -1,5 +1,8 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
+import Account from "vue-material-design-icons/Account.vue"
+import AccountGroup from "vue-material-design-icons/AccountGroup.vue"
+import Cog from "vue-material-design-icons/Cog.vue"
 import KsSegmented from "../../../src/components/Data/KsSegmented.vue"
 
 const meta: Meta<typeof KsSegmented> = {
@@ -44,6 +47,28 @@ export const WithObjectOptions: Story = {
                 {label: "List View", value: "list"},
                 {label: "Grid View", value: "grid"},
                 {label: "Table View", value: "table", disabled: true},
+            ]
+            return {value, options}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-segmented v-model="value" :options="options" />
+                <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">Value: {{ value }}</span>
+            </div>
+        `,
+    }),
+}
+
+/** Options may carry an icon, rendered before the label. */
+export const WithIcons: Story = {
+    render: () => ({
+        components: {KsSegmented},
+        setup() {
+            const value = ref("group")
+            const options = [
+                {label: "User", value: "user", icon: Account},
+                {label: "Group", value: "group", icon: AccountGroup},
+                {label: "Service Account", value: "service-account", icon: Cog},
             ]
             return {value, options}
         },

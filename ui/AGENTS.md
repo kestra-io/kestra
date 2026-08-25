@@ -340,7 +340,7 @@ If your `<style>` block needs to exist:
 | `KsSkeleton` | Skeleton loader |
 | `KsId` | Copyable ID display |
 | `KsDateAgo` | Relative time display ("2 hours ago") |
-| `KsSegmented` | Segmented control |
+| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
 | `KsTree` | Hierarchical tree view |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |

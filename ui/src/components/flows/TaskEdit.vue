@@ -596,8 +596,8 @@
     .task-edit-col {
         min-width: 0;
         min-height: 0;
-        display: flex;
-        flex-direction: column;
+        display: flex ;
+        flex-direction: column ;
     }
 
     .task-edit-col-inputs {

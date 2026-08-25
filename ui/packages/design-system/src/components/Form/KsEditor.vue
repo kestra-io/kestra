@@ -377,7 +377,7 @@
                 }
             }
 
-            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+            .monaco-list-row[aria-label^="_DATE_PICKER_"] {
                 display: none;
             }
         }

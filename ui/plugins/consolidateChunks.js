@@ -493,19 +493,19 @@ export function consolidateChunks({pages = {}} = {}) {
             // A cycle among the planned chunks is what mergeCycles exists to
             // prevent; one left standing throws at run time, not at build time.
             const planned = new Set(asyncChunk.values())
-            const name = (file) => bundle[file]?.name ?? ""
+            const nameOf = (file) => bundle[file]?.name ?? ""
             const deps = (file) => (bundle[file]?.type === "chunk" ? bundle[file].imports ?? [] : [])
             for (const file of Object.keys(bundle)) {
-                if (!planned.has(name(file))) continue
+                if (!planned.has(nameOf(file))) continue
                 const stack = [[file]]
                 const seen = new Set([file])
                 while (stack.length) {
                     const path = /** @type {string[]} */ (stack.pop())
                     for (const dep of deps(path[path.length - 1])) {
                         if (dep === file) {
-                            this.error(`Chunks import each other: ${[...path, dep].map(name).join(" -> ")}. Either mergeCycles missed this cycle or a group outside the plan is part of it.`)
+                            this.error(`Chunks import each other: ${[...path, dep].map(nameOf).join(" -> ")}. Either mergeCycles missed this cycle or a group outside the plan is part of it.`)
                         }
-                        if (seen.has(dep) || !planned.has(name(dep))) continue
+                        if (seen.has(dep) || !planned.has(nameOf(dep))) continue
                         seen.add(dep)
                         stack.push([...path, dep])
                     }

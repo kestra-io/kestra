@@ -173,9 +173,6 @@ const PAGE_GROUPS = [
 /** {@link PAGE_GROUPS} widened with the patterns the build passed in. */
 let pageGroups = PAGE_GROUPS
 
-/** Chunk for what no hot page reaches: application plumbing and its dependencies. */
-const REST = "rest"
-
 /** Chunk for what a lazy toolchain shares with the application. */
 const TOOLCHAIN_SHARED = "toolchain-shared"
 
@@ -217,9 +214,6 @@ function collectLazyReach(ctx, ids) {
     return new Map([...reach].map(([id, names]) => [id, [...names].sort().join("-")]))
 }
 
-/** The feature directory a module lives in, chunk enough for a page nobody profiled. */
-const FEATURE = /src[\\/](?:override[\\/])?(?:components|dashboard)[\\/]([^\\/]+)[\\/]/
-
 /** `pages` is the set of hot pages reaching the module, `lazy` the toolchains it reaches. */
 const chunkName = (pages, lazy) => [pages.length > 1 ? `common-${pages.join("-")}` : pages[0], lazy].filter(Boolean).join("-")
 
@@ -244,8 +238,8 @@ function planAsyncChunks(ctx) {
     }
 
     const reach = collectLazyReach(ctx, ids)
-    // What a toolchain imports may not sit in the catch-all: opening the editor
-    // would then fetch every unprofiled page along with Monaco.
+    // A module a toolchain imports gets a chunk of its own, so the toolchain
+    // never has to reach into a chunk holding unrelated pages.
     const toolchain = new Set(LAZY_GROUPS.flatMap(({name, pattern}) =>
         [...(lazySubtrees.get(name) ?? []), ...ids.filter((id) => pattern.test(id))]))
     const usedByToolchain = new Set([...toolchain].flatMap((id) => ctx.getModuleInfo(id)?.importedIds ?? [])
@@ -256,8 +250,14 @@ function planAsyncChunks(ctx) {
     for (const id of ids) {
         const owners = pages.get(id)?.sort() ?? []
         const lazy = reach.get(id) ?? ""
-        const fallback = usedByToolchain.has(id) ? TOOLCHAIN_SHARED : FEATURE.exec(id)?.[1] ?? REST
-        const name = owners.length ? chunkName(owners, lazy) : chunkName([fallback], lazy)
+        // Only hot pages and the toolchains' shared modules are planned. Putting
+        // what is left in one catch-all chunk was tried and doubled what a cold
+        // page downloads (cases: 2.0 -> 4.7 MB gzip); automatic chunking splits
+        // it finely, and a page nobody profiled fetches around a dozen files.
+        const name = owners.length ? chunkName(owners, lazy)
+            : usedByToolchain.has(id) ? chunkName([TOOLCHAIN_SHARED], lazy)
+                : undefined
+        if (!name) continue
         asyncChunk.set(id, name)
         const chunk = chunks.get(name) ?? {size: 0, pages: owners, lazy}
         chunk.size += ctx.getModuleInfo(id)?.code?.length ?? 0
@@ -269,19 +269,12 @@ function planAsyncChunks(ctx) {
     /** @type {Map<string, string>} */
     const folded = new Map()
     for (const [name, chunk] of [...chunks].sort((a, b) => a[1].pages.length - b[1].pages.length)) {
-        if (chunk.size >= MIN_CHUNK_SIZE) continue
-        if (!chunk.pages.length) {
-            const rest = chunkName([REST], chunk.lazy)
-            if (name !== rest && !name.startsWith(TOOLCHAIN_SHARED)) folded.set(name, rest)
-            continue
-        }
+        if (chunk.size >= MIN_CHUNK_SIZE || !chunk.pages.length) continue
         const superset = [...chunks]
             .filter(([other, candidate]) => other !== name && candidate.lazy === chunk.lazy &&
                 candidate.pages.length > chunk.pages.length &&
                 chunk.pages.every((page) => candidate.pages.includes(page)))
             .sort((a, b) => a[1].pages.length - b[1].pages.length)[0]
-        // Without a superset the chunk stays: dropping page code into the
-        // catch-all would make that page pull in every other page's code.
         if (superset) folded.set(name, superset[0])
     }
     const resolve = (name) => {
@@ -343,9 +336,7 @@ function mergeCycles(ctx) {
             component.push(popped)
         } while (popped !== name)
         if (component.length === 1) return
-        // The catch-all's name wins, so the merged chunk still reads as what it
-        // is — and so the guards below keep recognising it.
-        const target = component.sort().find((member) => member.startsWith(REST)) ?? component.sort()[0]
+        const target = component.sort()[0]
         for (const member of component) merged.set(member, target)
     }
     for (const name of edges.keys()) if (!order.has(name)) visit(name)
@@ -467,25 +458,12 @@ export function consolidateChunks({pages = {}} = {}) {
             // Static edges that undo the split: a page chunk reaching the
             // catch-all, or an untainted chunk reaching a lazy toolchain.
             const lazyNames = LAZY_GROUPS.map((group) => group.name)
-            const isRest = (name) => /^rest($|-)/.test(name)
-            // A feature chunk may reach the catch-all; a hot page's may not.
-            const isPageChunk = (name) => name.startsWith("common-") ||
-                pageGroups.some(({name: page}) => name === page || name.startsWith(`${page}-`))
             for (const chunk of Object.values(bundle)) {
                 // shiki-langs belongs to the markdown toolchain and may reach it.
-                if (chunk.type !== "chunk" || chunk.name === "shiki-langs") continue
+                if (chunk.type !== "chunk" || chunk.name === "shiki-langs" || lazyNames.includes(chunk.name)) continue
                 for (const dependency of (chunk.imports ?? []).map((file) => bundle[file]?.name ?? "")) {
-                    if (lazyNames.includes(chunk.name)) {
-                        if (isRest(dependency)) {
-                            this.error(`Lazy chunk '${chunk.name}' statically imports the catch-all '${dependency}' chunk, so loading it fetches every unprofiled page. Its shared modules belong in '${TOOLCHAIN_SHARED}'.`)
-                        }
-                        continue
-                    }
                     if (lazyNames.includes(dependency) && !chunk.name.includes(dependency)) {
                         this.error(`Chunk '${chunk.name}' statically imports the lazy '${dependency}' chunk, so every page reaching '${chunk.name}' now downloads it. Its modules should be reported as reaching '${dependency}' by collectLazyReach.`)
-                    }
-                    if (isRest(dependency) && isPageChunk(chunk.name)) {
-                        this.error(`Chunk '${chunk.name}' statically imports the catch-all '${dependency}' chunk, which drags every unprofiled page along. A hot page's modules should all be owned by planAsyncChunks.`)
                     }
                 }
             }

@@ -293,7 +293,8 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!renameDialog.name"
+                        :disabled="!renameDialog.name || isRenaming"
+                        :loading="isRenaming"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
@@ -466,6 +467,7 @@
     const filter = ref<string>("")
     const dialog = ref<Dialog>({...DIALOG_DEFAULTS})
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
+    const isRenaming = ref(false)
     const tree = ref<any>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
@@ -800,7 +802,9 @@
     }
 
     async function renameItem() {
-        if (!canManageFiles.value) return
+        // The Enter handler on the dialog is not gated by the button's disabled state, so
+        // without this a second Enter fires a duplicate rename whose `old` path is already gone.
+        if (!canManageFiles.value || isRenaming.value) return
 
         const {node, old: oldName, name: newName, type} = renameDialog.value
         if (!newName) return
@@ -810,6 +814,7 @@
         const oldPath = `${start}${oldName}`
         const newPath = `${start}${newName}`
 
+        isRenaming.value = true
         try {
             await namespacesStore.renameFileDirectory({
                 namespace: namespaceId.value,
@@ -822,6 +827,8 @@
             console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
             toast.error(t("namespace files.rename.error", {name: newName}))
             return
+        } finally {
+            isRenaming.value = false
         }
 
         tree.value.getNode(node).data.fileName = newName

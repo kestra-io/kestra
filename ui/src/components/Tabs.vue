@@ -33,7 +33,7 @@
                         <EnterpriseBadge :enable="(tab as Tab).locked">
                             <span class="tab-label-wrapper">
                                 {{ tab.title }}
-                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
+                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" inline />
                             </span>
                         </EnterpriseBadge>
                     </component>
@@ -346,16 +346,6 @@
         align-items: center;
         gap: 8px;
         font-weight: var(--ks-font-weight-regular);
-    }
-
-    .inline-badge {
-        :deep(.kel-badge__content) {
-            transform: translateY(-1px);
-            position: static;
-            border: none;
-            margin-top: 0;
-            vertical-align: middle;
-        }
     }
 
     .ks-tabs-bar {

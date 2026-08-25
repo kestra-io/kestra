@@ -15,6 +15,10 @@
             :fitHeight="!paneView && !keyOnly"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
         >
+            <template v-if="$slots.empty && showEmptyState" #empty>
+                <slot name="empty" />
+            </template>
+
             <template #top v-if="!paneView">
                 <KSFilter
                     :configuration="secretsFilter"
@@ -161,13 +165,13 @@
                     <KsInput v-model="secret.key" :disabled="secret.update" :placeholder="$t('secret.keyPlaceholder')" required />
                 </KsFormItem>
                 <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required inline class="field-item">
-                    <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
+                    <KsPassword v-model="secret.value" :placeholder="$t('secret.valuePlaceholder')" />
                 </KsFormItem>
                 <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value" inline class="field-item">
                     <div class="secret-value-control">
                         <KsPassword
                             v-model="secret.value"
-                            :placeholder="secretModalTitle"
+                            :placeholder="$t('secret.valuePlaceholder')"
                             :disabled="!secret.updateValue"
                         />
                         <KsSwitch
@@ -494,6 +498,7 @@
         areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
         secrets.value = allSecrets
         total.value = secretsResponse.total ?? 0
+        loadedFilterKey.value = filterQueryKey.value
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
@@ -503,6 +508,20 @@
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
         return JSON.stringify(filters)
     })
+
+    const hasActiveFilters = computed(() => routeQueryToQueryFilters(route.query).length > 0)
+
+    // The filter query the rows on screen were loaded for; until it catches up, `total` still answers
+    // for the previous one.
+    const loadedFilterKey = ref<string>()
+
+    // Judged on the total rather than the loaded page: a page past the end of a shrunken list is
+    // empty without the list being empty.
+    const showEmptyState = computed(() =>
+        loadedFilterKey.value === filterQueryKey.value &&
+        total.value === 0 &&
+        !hasActiveFilters.value,
+    )
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()

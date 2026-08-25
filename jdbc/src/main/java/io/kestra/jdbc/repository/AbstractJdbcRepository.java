@@ -351,8 +351,8 @@ public abstract class AbstractJdbcRepository {
             return getEnabledCondition(value, operation);
         }
 
-        if (field == QueryFilter.Field.SUPER_ADMIN) {
-            return getSuperAdminCondition(value, operation);
+        if (field == QueryFilter.Field.INSTANCE_OWNER) {
+            return getInstanceOwnerCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.STATUS) {
@@ -556,8 +556,8 @@ public abstract class AbstractJdbcRepository {
         return defaultHandlers(QueryFilter.Field.ENABLED, value, operation);
     }
 
-    protected Condition getSuperAdminCondition(Object value, Op operation) {
-        throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
+    protected Condition getInstanceOwnerCondition(Object value, Op operation) {
+        throw new InvalidQueryFiltersException("getInstanceOwnerCondition must be overridden for JSONB-backed instanceOwner field");
     }
 
     protected Condition tagsCondition(Object value, QueryFilter.Op operation) {

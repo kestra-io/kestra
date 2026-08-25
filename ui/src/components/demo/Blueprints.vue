@@ -3,7 +3,7 @@
     <Empty
         type="blueprints"
         demoCta
-        :title="t(`demos.blueprints.title`)"
+        :title="$t(`demos.blueprints.title`)"
     >
         <template #description>
             {{ $t(`demos.blueprints.message`) }}

@@ -7,9 +7,11 @@ import org.slf4j.LoggerFactory;
 import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.FlowParsingService;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -23,33 +25,35 @@ class TriggerFlowParserTest {
         .build();
 
     @Test
-    void shouldSkipFlowWhenBlockedByGovernance() throws FlowProcessingException {
+    void shouldThrowWithTheReasonWhenBlockedByGovernance() throws FlowProcessingException {
         // Given
         FlowParsingService flowParsingService = mock(FlowParsingService.class);
-        when(flowParsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException("Blocked by governance policy"));
+        when(flowParsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException("Blocked by governance policy: policy=deny-log"));
 
-        // When / Then a blocked flow is skipped: its triggers must not run
-        assertThat(TriggerFlowParser.parseOrSkip(flowParsingService, flow, LOGGER)).isNull();
+        // When / Then the block reaches the caller with its reason, so it can report it against the trigger
+        assertThatThrownBy(() -> TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOGGER))
+            .isInstanceOf(FlowBlockedException.class)
+            .hasMessage("Blocked by governance policy: policy=deny-log");
     }
 
     @Test
-    void shouldDegradeToStoredFlowWhenParsingFails() throws FlowProcessingException {
+    void shouldDegradeToStoredFlowWhenParsingFails() throws Exception {
         // Given
         FlowParsingService flowParsingService = mock(FlowParsingService.class);
         when(flowParsingService.parseForRuntime(flow)).thenThrow(new FlowProcessingException("invalid"));
 
         // When / Then a non-governance failure keeps the flow as stored so existing triggers keep evaluating
-        assertThat(TriggerFlowParser.parseOrSkip(flowParsingService, flow, LOGGER)).isSameAs(flow);
+        assertThat(TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOGGER)).isSameAs(flow);
     }
 
     @Test
-    void shouldReturnParsedFlowWhenParsingSucceeds() throws FlowProcessingException {
+    void shouldReturnParsedFlowWhenParsingSucceeds() throws Exception {
         // Given
         FlowParsingService flowParsingService = mock(FlowParsingService.class);
         FlowWithSource parsed = flow.toBuilder().revision(2).build();
-        when(flowParsingService.parseForRuntime(flow)).thenReturn(parsed);
+        when(flowParsingService.parseForRuntime(flow)).thenReturn(ProcessedFlow.of(parsed));
 
         // When / Then
-        assertThat(TriggerFlowParser.parseOrSkip(flowParsingService, flow, LOGGER)).isSameAs(parsed);
+        assertThat(TriggerFlowParser.parseForTrigger(flowParsingService, flow, LOGGER)).isSameAs(parsed);
     }
 }

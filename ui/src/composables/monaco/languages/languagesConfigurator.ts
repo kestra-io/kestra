@@ -1,7 +1,7 @@
 import {computed} from "vue"
 import {useI18n} from "vue-i18n"
 import type {Router} from "vue-router"
-import {editor} from "monaco-editor/esm/vs/editor/editor.api"
+import {editor} from "monaco-editor/editor/editor.api"
 import {YamlLanguageConfigurator} from "override/composables/monaco/languages/yamlLanguageConfigurator"
 import {PebbleLanguageConfigurator} from "./pebbleLanguageConfigurator"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"

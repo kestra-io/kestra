@@ -28,8 +28,8 @@
         "test:storybook": "vitest run --project=storybook",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
-        "translations:check": "npx --yes tsx ./src/translations/check.ts",
-        "translations:generate": "node --experimental-strip-types ./scripts/generate_translations.ts",
+        "translations:check": "npx --yes tsx ./scripts/translations/check.ts",
+        "translations:generate": "node --experimental-strip-types ./scripts/translations/generate.ts",
         "lint": "oxlint --fix src packages tests && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
@@ -93,7 +93,7 @@
         "moment": "^2.30.1",
         "moment-range": "^4.0.2",
         "moment-timezone": "^0.6.2",
-        "monaco-editor": "^0.52.2",
+        "monaco-editor": "^0.56.0",
         "monaco-yaml": "5.5.1",
         "motion-v": "^2.3.0",
         "nprogress": "^0.2.0",
@@ -152,7 +152,8 @@
         "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "@codecov/vite-plugin": {
             "vite": "$vite"
-        }
+        },
+        "dompurify": "^3.4.13"
     },
     "lint-staged": {
         "**/*.{js,mjs,cjs,ts,vue}": [

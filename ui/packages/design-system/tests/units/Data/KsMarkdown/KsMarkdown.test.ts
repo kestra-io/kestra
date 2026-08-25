@@ -122,6 +122,25 @@ describe("KsMarkdown", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const x = 42")
     })
 
+    test("copy button falls back to execCommand when the Clipboard API is unavailable", async () => {
+        // navigator.clipboard is undefined in non-secure contexts (plain HTTP)
+        Object.defineProperty(navigator, "clipboard", {
+            value: undefined,
+            configurable: true,
+        })
+        const execCommand = vi.fn().mockReturnValue(true)
+        document.execCommand = execCommand
+
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```\nconst x = 42\n```"},
+            global: globalConfig,
+            attachTo: document.body,
+        })
+        await wrapper.find(".ks-markdown__copy-btn").trigger("click")
+        expect(execCommand).toHaveBeenCalledWith("copy")
+        wrapper.unmount()
+    })
+
     test("renders mermaid code block as mermaid div", () => {
         const wrapper = mount(KsMarkdown, {
             props: {content: "```mermaid\ngraph TD\n  A --> B\n```"},
@@ -392,6 +411,32 @@ describe("KsMarkdown", () => {
         expect(wrapper.find(".ks-markdown__code-plain").exists()).toBe(false)
     })
 
+
+    test("highlights a language that is not pre-registered, from Shiki's on-demand bundle", async () => {
+        // Elixir is deliberately absent from shikiHighlighter's static grammars.
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```elixir\ndefmodule Greeter do\nend\n```"},
+            global: globalConfig,
+        })
+
+        await vi.waitFor(
+            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            {timeout: 10000, interval: 50},
+        )
+
+        expect(wrapper.find(".ks-markdown__code-shiki pre.shiki").exists()).toBe(true)
+        expect(wrapper.find(".ks-markdown__code-shiki").text()).toContain("defmodule")
+    }, 15000)
+
+    test("falls back to plain text for a language Shiki does not know", async () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```notarealilanguage\nsome code\n```"},
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("some code")
+    })
 
     test("Shiki-highlighted code contains the original source text", async () => {
         const wrapper = mount(KsMarkdown, {

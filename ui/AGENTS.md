@@ -46,6 +46,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### While you write code
 
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
+- Keep the style **inside** the SFC. `<style scoped src="./x.scss">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
 - Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
@@ -146,6 +147,10 @@ const pageSize = ref(25)
 ```
 
 **Never** maintain a separate `internalPage` / `pageNumber` ref *and* bind the prop to a different value — that re-introduces the drift bug (URL says page 2, UI shows page 1) that this contract exists to prevent.
+
+**Defaults that land in the URL after mount** — a page whose filter defaults are written by a `router.replace` (e.g. the Logs page's default level, via `useRouteFilterPolicy`) must gate its first `loadData` on `isRouteSettled`. `KsDataTable` loads on mount, so without the gate the page fires a request for the bare query, throws that result away when the defaults arrive, and leaves the two responses racing each other. Gating means the query change is what triggers the first load, so also handle the navigation never landing: `isRouteSettled` gives up after a timeout, and the page must reload when it does — otherwise the list stays empty for good, with no request in flight and nothing to retry it.
+
+**Stores that back a filterable list** must ignore superseded responses: keep a sequence number per search and drop a response whose sequence is no longer the newest (see `stores/logs.ts`). Otherwise the response that happens to land last wins and the list can show results for filters the user already left — or nothing at all, when the stale search matched nothing.
 
 ### The deep-watch / computed-spread trap
 
@@ -308,6 +313,7 @@ If your `<style>` block needs to exist:
 | `KsAutocomplete` | Autocomplete input with suggestions |
 | `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
+| `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
 | `KsColorPicker` | Color picker |
@@ -324,7 +330,7 @@ If your `<style>` block needs to exist:
 | `KsTable` / `KsTableColumn` | Basic table |
 | `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover |
-| `KsBadge` | Small indicator badge |
+| `KsBadge` | Small indicator badge. Overlays a wrapped child by default; pass `inline` for a standalone counter in the normal flow, next to a tab or menu label |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
 | `KsAvatar` | Avatar with fallback |

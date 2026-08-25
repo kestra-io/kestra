@@ -1,8 +1,5 @@
 <template>
     <template v-if="initialInputs">
-        <!-- Active FORM header: its displayName (only when set), with the optional description beneath.
-             A FORM without a displayName, or an ungrouped inputs run, shows no header. The step
-             progress now lives in the bottom bar (see .wizard-progress below). -->
         <div v-if="isWizard && current?.kind === 'form' && (current.displayName || current.description)" class="wizard-step-header">
             <h5 v-if="current.displayName" class="wizard-step-title">{{ current.displayName }}</h5>
             <KsMarkdown v-if="current.description" :content="current.description" class="text-description" />
@@ -17,7 +14,20 @@
                 :inlineMessage="true"
             >
                 <template #label>
-                    <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                    <span
+                        class="input-label-row"
+                        draggable="true"
+                        @dragstart="onInputDragStart($event, input.id)"
+                    >
+                        <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                        <KsButton
+                            type="text"
+                            :icon="ContentCopyIcon"
+                            :tooltip="$t('copy_to_clipboard')"
+                            class="input-copy-btn"
+                            @click.prevent="copyInputRef(input.id)"
+                        />
+                    </span>
                 </template>
                 <KsEditor
                     v-bind="editorBindings"
@@ -40,7 +50,7 @@
                     @update:model-value="onChange(input)"
                     :allowCreate="input.allowCustomValue"
                     :disabled="isComputingInput(input.id)"
-                    :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                    :placeholder="isComputingInput(input.id) ? $t('loading') : undefined"
                     :loading="isLoadingInput(input.id)"
                     filterable
                     clearable
@@ -82,7 +92,7 @@
                     selectAll
                     :allowCreate="input.allowCustomValue"
                     :disabled="isComputingInput(input.id)"
-                    :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
+                    :placeholder="isComputingInput(input.id) ? $t('loading') : undefined"
                     :loading="isLoadingInput(input.id)"
                 >
                     <KsOption
@@ -226,7 +236,7 @@
                     :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
                     :inline="true"
                     :navbar="false"
-                    v-if="input.type === 'JSON'"
+                    v-if="input.type === 'JSON' || input.type === 'ION'"
                     :data-testid="`input-form-${input.id}`"
                     lang="json"
                     v-model="inputsValues[input.id]"
@@ -288,8 +298,6 @@
             </KsButton>
         </div>
 
-        <!-- Label-less progress bar pinned to the bottom of the pane; hidden on the recap, returns on Edit.
-             One segment per fillable step; fills only once the step is passed via Next (stepStatus). -->
         <div v-if="isWizard && !isOnRecap" class="wizard-progress">
             <KsSteps variant="bar" :active="currentStep" data-testid="wizard-progress">
                 <KsStep
@@ -320,10 +328,12 @@
     import {useInputsWizard} from "../../composables/useInputsWizard"
     import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
+    import * as Utils from "../../utils/utils"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
     import PencilIcon from "vue-material-design-icons/Pencil.vue"
     import PlusIcon from "vue-material-design-icons/Plus.vue"
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue"
+    import ContentCopyIcon from "vue-material-design-icons/ContentCopy.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue"
@@ -344,7 +354,6 @@
 
     const modelValue = defineModel<Record<string, unknown>>()
 
-    // Props
     const props = withDefaults(defineProps<{
         executeClicked?: boolean;
         initialInputs?: InputMetaData[];
@@ -363,7 +372,6 @@
         formGroups: undefined,
     })
 
-    // Emits
     const emit = defineEmits<{
         "update:modelValueNoDefault": [value: Record<string, unknown>];
         "update:checks": [checks: Check[]];
@@ -373,14 +381,11 @@
         "ready": [];
     }>()
 
-    // Stores and composables
     const executionsStore = useExecutionsStore()
     const {t} = useI18n()
     const instance = getCurrentInstance()
     const editorBindings = useEditorBindings()
 
-    // Reactive state
-    // Using 'any' type for v-model compatibility with various Element Plus components
     const inputsValues = reactive<Record<string, any>>({...modelValue.value})
     const previousInputsValues = ref<Record<string, any>>({})
     const inputsMetaData = ref<InputMetaData[]>([])
@@ -388,14 +393,9 @@
     const inputsValidated = ref<Set<string>>(new Set())
     const editingArrayId = ref<string | null>(null)
     const editableItems = reactive<Record<string, string[]>>({})
-    // true while an input-rendering call (which may run a subflow() function) is in flight
     const isComputingValues = ref(false)
-    // bumped on every user input change; a validate response built before the latest change is stale
-    // and must be discarded, otherwise it would reset a value the user just picked (e.g. while a slow
-    // subflow() render is still in flight)
     let inputGeneration = 0
 
-    // Icons exposed to template (markRaw to avoid reactivity overhead)
     const DeleteOutline = markRaw(DeleteOutlineIcon) as Component
     const Pencil = markRaw(PencilIcon) as Component
     const Plus = markRaw(PlusIcon) as Component
@@ -404,9 +404,7 @@
     const ChevronRight = markRaw(ChevronRightIcon) as Component
     const Check = markRaw(CheckIcon) as Component
 
-    // Computed
     const inputErrors = computed<string[] | null>(() => {
-        // we only keep errors that don't target an input directly
         const keepErrors = inputsMetaData.value.filter(it => it.id === undefined)
         const errorsExist = keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0
 
@@ -417,11 +415,6 @@
             : null
     })
 
-    // ---- FORM wizard ----
-    // A flow whose inputs contain a FORM renders as a multi-step Next/Back wizard; otherwise this
-    // degrades to flat mode. The composable owns the nav/recap/persistence as well as
-    // visibleInputs/inputLabel (which also drive the flat form). Destructured with identical names so
-    // the template needs no changes; the refs/computeds keep their reactivity through the destructure.
     const {
         isWizard,
         current,
@@ -450,24 +443,14 @@
         onRecapChange: (val) => emit("update:onRecap", val),
     })
 
-    // Inputs whose `values` are rendered dynamically (e.g. via the subflow() function).
-    // Derived from the raw flow inputs because the validate response strips `expression`.
-    // FORM groups are expanded to dotted leaves so a dynamic input nested in a FORM (wizard mode)
-    // is matched by its dotted id (e.g. `setup.region`), same as inputsMetaData/template ids.
     const dynamicInputIds = computed(() =>
         new Set(flattenInputs(props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
     )
 
-    // True while a dynamic input's values are being (re)computed. Drives the loading spinner so the
-    // user knows the available values may change — on the initial fetch AND on later recomputations.
     function isLoadingInput(id: string): boolean {
         return isComputingValues.value && dynamicInputIds.value.has(id)
     }
 
-    // True while a dynamic input's values are being (re)computed and it still has no value. Drives the
-    // disabled state + "computing" placeholder, on the initial fetch and on any later recomputation
-    // (e.g. a dependsOn change). Once a value is present the input stays usable and keeps it (spinner
-    // only), so a user's pick is never disrupted.
     function isComputingInput(id: string): boolean {
         if (!isLoadingInput(id)) {
             return false
@@ -477,16 +460,12 @@
             || (Array.isArray(value) && value.length === 0)
     }
 
-    // Methods
     function normalizeJSON(value: string): unknown {
         try {
-            // Step 1: Remove trailing commas in objects and arrays
             let cleaned = value.replace(/,\s*([}\]])/g, "$1")
 
-            // Step 2: Quote unquoted keys (simple case: keys with letters, numbers, or _)
             cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, "$1\"$2\":")
 
-            // Step 3: Parse into JS object
             return JSON.parse(cleaned)
         } catch (e) {
             console.error("Failed to normalize JSON:", (e as Error).message)
@@ -495,10 +474,6 @@
     }
 
     function inputError(id: string): string | undefined {
-        // While a dynamic input's values are being (re)computed its metadata is stale — an error from
-        // an earlier validate (e.g. "Missing required" computed when it was still empty) would otherwise
-        // flash even though the field is now filled, until the in-flight validate's clean response lands.
-        // Suppress it until the recompute settles.
         if (isLoadingInput(id)) {
             return undefined
         }
@@ -508,14 +483,8 @@
         }
         const message = meta.errors!.map(err => err.message).join("\n")
 
-        // A render/resolution failure (a SELECT whose expression/subflow() can't resolve, or an input
-        // whose `defaults` Pebble expression throws) means the field itself is broken — the backend flags
-        // these with `renderError`. Surface them as soon as the input is shown (initial load / wizard step
-        // arrival), without waiting for an edit or a Next click. Plain value errors (e.g. a required input
-        // left empty) are not flagged and stay gated until interaction.
         const isRenderError = meta.errors!.some(err => err.renderError)
 
-        // if this input has not been edited yet showing a value error is annoying
         if (!isRenderError && !inputsValidated.value.has(id)) {
             return undefined
         }
@@ -526,10 +495,6 @@
     function updateDefaults(): void {
         for (const input of inputsMetaData.value) {
             const {type, id, value, defaults} = input
-            // An unrendered Pebble-expression default must be rendered server-side, not pre-filled as a
-            // raw template string. Until there's a concrete rendered `value`, leave the field empty: a
-            // successful render returns a value (filled on the next validate); a failed render then
-            // surfaces its renderError instead of being masked by re-submitting the raw `{{ ... }}`.
             if (value == null && typeof defaults === "string" && defaults.includes("{{")) {
                 continue
             }
@@ -547,10 +512,6 @@
                     multiSelectInputs[id] = values
                     inputsValues[id] = normalize(type as InputType, values)
                 } else if (type === "JSON" && value == undefined && input.isDefault) {
-                    /*
-                    * Handle multiline JSON default values
-                    * See https://github.com/kestra-io/kestra/issues/11449
-                    */
                     inputsValues[id] = normalize(type as InputType, normalizeJSON(input.defaults as string))
                 } else {
                     inputsValues[id] = normalize(type as InputType, valueOrDefault)
@@ -564,10 +525,7 @@
     }
 
     function onChange(input: InputMetaData): void {
-        // mark inputs as changed so any in-flight (older) validate response is discarded as stale
         inputGeneration++
-        // give 2 seconds for the user to finish their edit
-        // and for the server to return with validated content
         setTimeout(() => {
             inputsValidated.value.add(input.id)
         }, 2000)
@@ -577,7 +535,6 @@
     }
 
     function onSubmit(): void {
-        // In the wizard, Enter / Ctrl+Enter advances steps until the recap, then confirms.
         if (isWizard.value && current.value && current.value.kind !== "recap") {
             goNext()
             return
@@ -641,12 +598,10 @@
 
         const file = files[0]
 
-        // Sanitize the filename: remove spaces and special characters
         const sanitizedName = file.name
             .replace(/[^a-zA-Z0-9.-]/g, "_") // Replace special chars with underscore
             .replace(/\s+/g, "_")           // Replace spaces with underscore
 
-        // Create a new File object with the sanitized name
         const sanitizedFile = new File([file], sanitizedName, {
             type: file.type,
             lastModified: file.lastModified,
@@ -705,14 +660,9 @@
         return false
     }
 
-    // Signature of the last completed validate payload, and the one currently in flight. Used to skip
-    // redundant round-trips: clicking Next without editing anything would otherwise re-validate the
-    // identical form data on every step.
     let lastValidatedSignature: string | undefined
     let pendingValidation: {signature: string, promise: Promise<void>} | undefined
 
-    // Stable signature of a validate payload. Sorted so FormData iteration order can't change it;
-    // files are keyed by name/size/lastModified since their contents aren't cheaply hashable.
     function formDataSignature(formData: FormData): string {
         const parts: string[] = []
         for (const [key, value] of formData.entries()) {
@@ -730,22 +680,15 @@
 
         const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
 
-        // inputsToFormData returns undefined when no value is set; treat that as a stable empty
-        // signature so an all-defaults form still dedups (and we never deref undefined).
         const signature = formData ? formDataSignature(formData) : ""
 
-        // Nothing changed since the last validate — the current metadata already reflects this exact
-        // payload, so the round-trip would be redundant. Mirrors the change-watcher's same-values skip.
         if (signature === lastValidatedSignature) {
             return
         }
-        // An identical validate is already in flight — await it instead of firing a second one.
         if (pendingValidation?.signature === signature) {
             return pendingValidation.promise
         }
 
-        // generation this request was built at; if the user changes an input before the response
-        // lands, the response is stale and applying it would clobber the user's new value
         const requestGeneration = inputGeneration
 
         const metadataCallback = async (response: ValidationResponse): Promise<void> => {
@@ -765,7 +708,6 @@
                 return acc
             }, [])
             await nextTick() // wait for the DOM to update validations before updating defaults
-            // NOTE: validations happen mostly using an object updated in the parent form.
             updateDefaults()
         }
 
@@ -781,9 +723,6 @@
 
                 metadataCallback(data)
             } else {
-                // Apps-only branch: the validate round-trip is owned by the parent (BlockForm). Await it
-                // so the wizard's per-step gating reads fresh metadata — the parent MUST invoke the
-                // callback on every path or this never resolves and goNext hangs (see BlockForm.validation).
                 await new Promise<void>((resolve) => {
                     emit("validation", {
                         formData: formData,
@@ -797,8 +736,6 @@
             }
         }
 
-        // Dynamic inputs (e.g. values rendered via the subflow() function) are disabled and show a
-        // "computing" placeholder while this render call is in flight — regardless of its duration.
         isComputingValues.value = true
 
         const promise = run()
@@ -806,7 +743,6 @@
         let validated = false
         try {
             await promise
-            // record only after success, so a thrown validate retries on the next call
             lastValidatedSignature = signature
             validated = true
         } finally {
@@ -816,12 +752,6 @@
             }
         }
 
-        // A change made while this validate was in flight leaves the response stale. Re-validate so a
-        // change during ANY in-flight round-trip is never swallowed — including changes made during the
-        // initial validate, before the change-watcher below is attached. This matters now that a
-        // subflow()-backed input can make a single validate take seconds. Bounded: it stops as soon as
-        // the payload signature stops changing (inputsValuesWithNoDefault excludes defaults, so a
-        // settled form re-computes the same signature and this no-ops).
         if (validated) {
             const latest = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
             const latestSignature = latest ? formDataSignature(latest) : ""
@@ -938,6 +868,21 @@
         return t("no_file_choosen")
     }
 
+    function inputRefExpression(id: string): string {
+        return `{{ inputs.${id} }}`
+    }
+
+    function copyInputRef(id: string): void {
+        Utils.copy(inputRefExpression(id))
+        KsMessage.success(t("copied"))
+    }
+
+    function onInputDragStart(event: DragEvent, id: string): void {
+        if (!event.dataTransfer) return
+        event.dataTransfer.effectAllowed = "move"
+        event.dataTransfer.setData("text/plain", inputRefExpression(id))
+    }
+
     function getAcceptedFileTypes(input: Pick<InputMetaData, "allowedFileExtensions" | "accept">): string {
         if (input.allowedFileExtensions && input.allowedFileExtensions.length > 0) {
             return input.allowedFileExtensions.join(",")
@@ -945,16 +890,10 @@
         return input.accept || ""
     }
 
-    // Debounced validation
     const debouncedValidation = debounce(validateInputs, 500)
 
-    // Keyboard event listener
     let keyListener: ((e: KeyboardEvent) => void) | null = null
 
-    // Initialization
-    // A REUSABLE_INPUTS reference is resolved server-side (the execute-form endpoint inlines it into the referenced
-    // block's inputs), so the form normally never sees the raw node. Filter it out defensively anyway, so a caller
-    // that passes un-inlined inputs renders nothing for it rather than a broken field.
     inputsMetaData.value = JSON.parse(JSON.stringify(flattenInputs(props.initialInputs)))
         .filter((input: InputMetaData) => (input.type as string) !== "REUSABLE_INPUTS")
 
@@ -966,13 +905,8 @@
         }
     }
 
-    // Wizard: restore in-progress values (e.g. after a page reload) before the first validate.
     restorePersistedValues()
 
-    // Apply defaults from the raw inputs immediately so static inputs show their default value
-    // without waiting for the initial validate call (which may be slow, e.g. a subflow() render).
-    // Mark not-yet-provided inputs as default first so they stay excluded from the validate request,
-    // matching the post-validate path (inputsValuesWithNoDefault keys off isDefault).
     inputsMetaData.value.forEach((input) => {
         if (inputsValues[input.id] === undefined) {
             input.isDefault = true
@@ -980,15 +914,11 @@
     })
     updateDefaults()
 
-    // Run initial validation and setup watcher
     validateInputs().then(() => {
         watch(
             () => ({...inputsValues}),
             (val) => {
-                // only revalidate if values have changed
                 if (JSON.stringify(val) !== JSON.stringify(previousInputsValues.value)) {
-                    // only revalidate if values are stable for more than 500ms
-                    // to avoid too many calls to the server
                     debouncedValidation()
                     modelValue.value = {...inputsValues}
                     emit("update:modelValueNoDefault", inputsValuesWithNoDefault.value)
@@ -999,14 +929,11 @@
             {deep: true},
         )
 
-        // on first load default values need to be sent to the parent
-        // since they are part of the actual value
         modelValue.value = {...inputsValues}
 
         emit("ready")
     })
 
-    // Lifecycle hooks
     onMounted(() => {
         setTimeout(() => {
             const el = instance?.proxy?.$el as HTMLElement | undefined
@@ -1017,7 +944,6 @@
         }, 500)
 
         keyListener = (e: KeyboardEvent) => {
-            // Ctrl/Control + Enter
             if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault()
                 onSubmit()
@@ -1033,15 +959,11 @@
         }
     })
 
-    // A different flow/execution invalidates the dedup cache: the same InputsForm instance can be
-    // reused for another flow (no :key remount), so force a fresh validate even when the new payload
-    // signature collides with the previous one (e.g. both empty).
     function invalidateValidationCache(): void {
         lastValidatedSignature = undefined
         pendingValidation = undefined
     }
 
-    // Watchers
     watch(() => props.flow, () => {
         invalidateValidationCache()
         validateInputs()
@@ -1052,7 +974,6 @@
         validateInputs()
     })
 
-    // Expose to template (for icons and methods used in template)
     defineExpose({
         validateInputs,
         inputsValues,
@@ -1064,6 +985,8 @@
         isLoadingInput,
         inputError,
         onChange,
+        copyInputRef,
+        onInputDragStart,
         prefillInputValue,
     })
 </script>
@@ -1071,6 +994,22 @@
 <style scoped lang="scss">
 .md-label {
     height: var(--ks-font-size-lg);
+}
+
+.input-label-row {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+
+    .input-copy-btn {
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    &:hover .input-copy-btn,
+    &[draggable="true"]:focus-within .input-copy-btn {
+        opacity: 1;
+    }
 }
 
 .wizard-progress {

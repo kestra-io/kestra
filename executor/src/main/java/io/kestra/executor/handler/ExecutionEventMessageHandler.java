@@ -127,7 +127,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                 () ->
                 {
                     try {
-                        final FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                        final FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
 
                         // A flow that resolves to a FlowWithException (unparsable, or blocked at execution
                         // pre-flight) cannot be processed: fail the execution fast instead of leaving it stuck.
@@ -249,10 +249,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         }
                         executor = executorService.process(executor);
 
-                        if (!executor.getNexts().isEmpty()) {
+                        if (executor.getNextCount() > 0) {
                             executor.withExecution(
-                                executorService.onNexts(executor.getExecution(), executor.getNexts()),
-                                "onNexts"
+                                executorService.onNext(executor.getExecution(), executor.getNextCount()),
+                                "onNext"
                             );
                         }
 

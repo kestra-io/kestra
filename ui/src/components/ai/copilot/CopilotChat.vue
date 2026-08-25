@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" :disabled="isFreshChat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -66,26 +66,30 @@
                 aria-live="polite"
                 :aria-busy="streaming ? 'true' : 'false'"
             >
-                <CopilotMessage
-                    v-for="message in messages"
-                    :key="message.id"
-                    :message="message"
-                    :isPending="message.id === pendingProposalMessageId"
-                    :isRunning="message.id === runningToolCallId"
-                />
+                <!-- Inner column so the page layout can span the scroller full-width (wheel works
+                     from anywhere on the page) while the transcript stays a bounded, centered column. -->
+                <div class="copilot-transcript">
+                    <CopilotMessage
+                        v-for="message in messages"
+                        :key="message.id"
+                        :message="message"
+                        :isPending="message.id === pendingProposalMessageId"
+                        :isRunning="message.id === runningToolCallId"
+                    />
 
-                <CopilotThinking v-if="working" :phase="workPhase" />
+                    <CopilotThinking v-if="working" :phase="workPhase" />
 
-                <ProposedActionCard
-                    v-if="pendingConfirmation"
-                    :action="pendingConfirmation"
-                    :disabled="streaming"
-                    @approve="confirm('APPROVE', undefined, selectedProvider)"
-                    @reject="onReject"
-                />
+                    <ProposedActionCard
+                        v-if="pendingConfirmation"
+                        :action="pendingConfirmation"
+                        :disabled="streaming"
+                        @approve="confirm('APPROVE', undefined, selectedProvider)"
+                        @reject="onReject"
+                    />
 
-                <!-- Anchor the auto-scroll follows as new content streams in. -->
-                <div ref="bottomAnchor" class="copilot-scroll-anchor" />
+                    <!-- Anchor the auto-scroll follows as new content streams in. -->
+                    <div ref="bottomAnchor" class="copilot-scroll-anchor" />
+                </div>
             </KsScrollbar>
 
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
@@ -253,8 +257,8 @@
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
     )
 
-    // "New chat" resets the conversation — so it's a no-op (and disabled) when we're already on a
-    // fresh, empty chat with no thread to clear.
+    // "New chat" resets the conversation - so it's hidden when we're already on a fresh, empty
+    // chat with no thread to clear.
     const isFreshChat = computed(() => isEmpty.value && !thread.value)
 
     // The pending proposal is always the last PROPOSED_ACTION message; the interactive card below the
@@ -390,20 +394,12 @@
         transition: background 0.15s ease, box-shadow 0.15s ease;
     }
 
-    /* Hover feedback so the pills read as interactive (the disabled New-chat pill excepted). The
-       bg interaction tokens are all near-identical dark greys, so a fill change alone is barely
-       visible — pair it with a lighter inset ring (border-strong) so the hover clearly reads. */
-    .copilot-topbar-pill:not(.is-disabled):hover {
+    /* Hover feedback so the pills read as interactive. The bg interaction tokens are all
+       near-identical dark greys, so a fill change alone is barely visible - pair it with a
+       lighter inset ring (border-strong) so the hover clearly reads. */
+    .copilot-topbar-pill:hover {
         background: var(--ks-bg-hover-elevated);
         box-shadow: inset 0 0 0 1px var(--ks-border-strong);
-    }
-
-    /* Disabled New-chat — already on a fresh, empty chat with nothing to reset. Dim the whole
-       pill (opacity) so it clearly reads as non-interactive, not just muted text. */
-    .copilot-topbar-pill.is-disabled {
-        color: var(--ks-text-inactive);
-        cursor: not-allowed;
-        opacity: 0.5;
     }
 
     .copilot-empty {
@@ -525,5 +521,17 @@
     .copilot-footer {
         padding: var(--ks-spacing-3) var(--ks-spacing-5);
         border-top: 1px solid var(--ks-border-subtle);
+    }
+
+    /* Page layout: the host surface is full-width so the transcript scroller catches the wheel
+       anywhere on the page; each section re-centers its content into the same bounded column the
+       page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
+       stay pinned to the left edge of the page instead of floating with the centered column. */
+    .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-banner,
+    .copilot-chat--page .copilot-footer {
+        width: 100%;
+        max-width: 56rem;
+        margin: 0 auto;
     }
 </style>

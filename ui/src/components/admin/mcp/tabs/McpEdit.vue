@@ -7,17 +7,16 @@
             @submit.prevent="onSubmit"
         >
             <KsFormItem
-                :label="t('mcp.server_id')"
+                :label="$t('mcp.server_id')"
                 prop="id"
                 required
                 labelPosition="left"
-                labelWidth="auto"
                 class="id-row"
                 :rules="idRules"
             >
                 <KsInput
                     v-model="form.id"
-                    :placeholder="t('mcp.id_placeholder')"
+                    :placeholder="$t('mcp.id_placeholder')"
                     :disabled="idDisabled"
                     class="mono id-input"
                     @change="autoSubmit"
@@ -31,23 +30,23 @@
                 </KsInput>
             </KsFormItem>
 
-            <KsFormItem :label="t('description')">
+            <KsFormItem :label="$t('description')">
                 <KsInput
                     v-model="form.description"
                     type="textarea"
                     :rows="2"
-                    :placeholder="t('description')"
+                    :placeholder="$t('description')"
                     :disabled="readOnly"
                     @change="autoSubmit"
                 />
             </KsFormItem>
 
-            <KsFormItem :label="t('mcp.instructions')">
+            <KsFormItem :label="$t('mcp.instructions')">
                 <KsInput
                     v-model="form.instructions"
                     type="textarea"
                     :rows="3"
-                    :placeholder="t('mcp.instructions')"
+                    :placeholder="$t('mcp.instructions')"
                     class="mono"
                     :disabled="readOnly"
                     @change="autoSubmit"
@@ -55,7 +54,7 @@
             </KsFormItem>
 
             <KsFormItem
-                :label="t('mcp.private_server')"
+                :label="$t('mcp.private_server')"
                 labelPosition="left"
                 class="spread-row"
             >
@@ -72,46 +71,27 @@
                 :closable="false"
                 class="type-hint"
             >
-                {{ t("mcp.public_hint") }}
+                {{ $t("mcp.public_hint") }}
             </KsAlert>
 
             <KsFormItem v-if="isPrivate">
-                <div class="auth-list">
-                    <label
-                        v-for="opt in AUTH_OPTIONS"
-                        :key="opt.value"
-                        class="auth-option"
-                        :class="{
-                            'is-selected': form.authType === opt.value,
-                            'is-disabled': isOptionDisabled(opt),
-                        }"
-                    >
-                        <input
-                            v-model="form.authType"
-                            type="radio"
-                            :value="opt.value"
-                            :disabled="isOptionDisabled(opt)"
-                            @change="autoSubmit"
-                        >
-                        <span class="auth-name">{{ t(opt.labelKey) }}</span>
-                        <LockOutline
-                            v-if="opt.ee && isOss"
-                            :size="14"
-                        />
-                        <span class="auth-hint">{{ authHint(opt) }}</span>
-                    </label>
-                </div>
+                <KsRadioCardGroup
+                    v-model="form.authType"
+                    :options="authOptions"
+                    :ariaLabel="$t('mcp.auth_type')"
+                    @change="autoSubmit"
+                />
             </KsFormItem>
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.oauth_provider')"
+                :label="$t('mcp.oauth_provider')"
                 prop="oauthProvider"
                 :rules="oauthProviderRules"
             >
                 <KsSelect
                     v-model="form.oauthProvider"
-                    :placeholder="t('mcp.oauth_provider_placeholder')"
+                    :placeholder="$t('mcp.oauth_provider_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
                     @change="autoSubmit"
@@ -127,7 +107,7 @@
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.scopes_supported')"
+                :label="$t('mcp.scopes_supported')"
             >
                 <KsSelect
                     v-model="form.oauthScopesSupported"
@@ -135,18 +115,18 @@
                     filterable
                     allowCreate
                     defaultFirstOption
-                    :placeholder="t('mcp.scopes_supported_placeholder')"
+                    :placeholder="$t('mcp.scopes_supported_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
                     @change="autoSubmit"
                 />
                 <div class="field-hint">
-                    {{ t("mcp.scopes_supported_hint") }}
+                    {{ $t("mcp.scopes_supported_hint") }}
                 </div>
             </KsFormItem>
 
             <KsFormItem
-                :label="t('enabled')"
+                :label="$t('enabled')"
                 labelPosition="left"
                 class="spread-row"
             >
@@ -238,7 +218,7 @@
     const idDisabled = computed(() => isUpdate.value || readOnly.value)
 
     const idRules = computed(() => [
-        {required: true, message: `${t("id")} ${t("required")}`, trigger: "blur"},
+        {required: true, message: t("is required", {field: t("id")}), trigger: "blur"},
         {pattern: /^[a-z0-9][a-z0-9_-]*$/, message: t("mcp.id_invalid"), trigger: "blur"},
     ])
 
@@ -272,6 +252,16 @@
         }
         return t(opt.hintKey)
     }
+
+    const authOptions = computed(() =>
+        AUTH_OPTIONS.map((opt) => ({
+            value: opt.value,
+            label: t(opt.labelKey),
+            hint: authHint(opt),
+            disabled: isOptionDisabled(opt),
+            icon: opt.ee && isOss.value ? LockOutline : undefined,
+        })),
+    )
 
     const buildPayload = (): McpServerPayload => {
         const isOauth = form.value.authType === "OAUTH"
@@ -313,7 +303,7 @@
                 toast.saved(created.id)
                 router.push({
                     name: "admin/mcp-servers/update",
-                    params: {id: created.id, tab: "edit"},
+                    params: {id: created.id, tab: "edit", tenant: route.params.tenant},
                 })
             } catch (e) {
                 submitting.value = false
@@ -462,90 +452,6 @@
     .id-input {
         width: 170px;
         min-height: 30px;
-    }
-
-    .auth-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-        width: 100%;
-    }
-
-    .auth-option {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-4);
-        padding: var(--ks-spacing-2) var(--ks-spacing-4);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
-        background: var(--ks-bg-inactive);
-        color: var(--ks-text-primary);
-        cursor: pointer;
-        transition: all 0.15s;
-    }
-
-    .auth-option input[type="radio"] {
-        appearance: none;
-        -webkit-appearance: none;
-        flex-shrink: 0;
-        display: grid;
-        place-content: center;
-        width: 1.25rem;
-        height: 1.25rem;
-        margin: 0;
-        border: 2px solid var(--ks-border-strong);
-        border-radius: 50%;
-        background: transparent;
-        cursor: pointer;
-        transition: border-color 0.15s ease;
-    }
-
-    .auth-option input[type="radio"]::after {
-        content: "";
-        width: 0.625rem;
-        height: 0.625rem;
-        border-radius: 50%;
-        background: var(--ks-toggle-active);
-        transform: scale(0);
-        transition: transform 0.15s ease;
-    }
-
-    .auth-option input[type="radio"]:checked {
-        border-color: var(--ks-toggle-active);
-    }
-
-    .auth-option input[type="radio"]:checked::after {
-        transform: scale(1);
-    }
-
-    .auth-option input[type="radio"]:disabled {
-        cursor: not-allowed;
-    }
-
-    .auth-option.is-selected {
-        border-color: var(--ks-border-strong);
-        background: var(--ks-bg-active);
-    }
-
-    .auth-option.is-disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    .auth-option:hover:not(.is-selected):not(.is-disabled) {
-        border-color: var(--ks-border-strong);
-    }
-
-    .auth-name {
-        font-size: var(--ks-font-size-sm);
-        font-weight: var(--ks-font-weight-regular);
-        color: var(--ks-text-primary);
-    }
-
-    .auth-hint {
-        margin-left: auto;
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-secondary);
     }
 
     .field-hint {

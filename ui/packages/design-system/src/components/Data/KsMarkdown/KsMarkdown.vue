@@ -18,7 +18,8 @@
     import KsAlert from "../../Feedback/KsAlert.vue"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
-    import {getShiki} from "./shikiHighlighter"
+    import {getShiki, loadLanguageOnDemand} from "./shikiHighlighter"
+    import {copyToClipboard} from "../../../utils/clipboard"
 
     const props = withDefaults(
         defineProps<{
@@ -221,7 +222,7 @@
                         title: "Copy to clipboard",
                         onClick: (e: MouseEvent) => {
                             const btn = e.currentTarget as HTMLButtonElement
-                            navigator.clipboard.writeText(value).then(() => {
+                            copyToClipboard(value).then(() => {
                                 // Swap the copy glyph for the check (not overlay it) for the confirm window.
                                 btn.classList.add("is-copied")
                                 setTimeout(() => btn.classList.remove("is-copied"), 2000)
@@ -409,9 +410,8 @@
 
             let lang = block.lang
             if (lang && !(hl.getLoadedLanguages() as string[]).includes(lang)) {
-                try {
-                    await hl.loadLanguage(lang as any)
-                } catch {
+                // Not pre-registered: fetch it from Shiki's full bundle, or render as plain text.
+                if (!await loadLanguageOnDemand(hl, lang)) {
                     lang = ""
                 }
             }

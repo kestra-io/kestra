@@ -11,28 +11,53 @@ permissions: {}
 
 jobs:
   welcome:
-    # GitHub already resolves the author's relationship to the repository, so internal contributors are filtered out without an API lookup.
+    # author_association misses organization members with private membership, so the membership lookup below is the authoritative check.
     if: ${{ github.event.pull_request.user.type != 'Bot' && !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) && (github.event.action == 'opened' || github.event.pull_request.merged) }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read # reading the author's commit history
-      issues: read # reading the author's issues and pull requests
-      pull-requests: write # commenting and reacting on the pull request
     steps:
+      - name: Generate a bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
+
+      - name: Check organization membership
+        id: membership
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ steps.bot-token.outputs.token }}
+          script: |
+            const username = context.payload.pull_request.user.login;
+            try {
+              await github.rest.orgs.checkMembershipForUser({org: context.repo.owner, username});
+              core.info(`@${username} is a member of the ${context.repo.owner} organization. Exiting..`);
+              core.setOutput('is-member', 'true');
+            } catch (error) {
+              // 404 means the author is not an organization member.
+              if (error.status !== 404) {
+                throw error;
+              }
+              core.setOutput('is-member', 'false');
+            }
+
       - name: Welcome a first pull request
-        if: github.event.action == 'opened'
+        if: github.event.action == 'opened' && steps.membership.outputs.is-member == 'false'
         uses: actions/github-script@v9
         env:
           # Kept out of the script itself: interpolated there, a backtick or ${ would break out and run as JS.
           OPENED_MESSAGE: |
-            ### Hey @{author} :wave:
+            ### Welcome to Kestra 👋
 
-            Thanks for raising your first pull request - we really appreciate it! :heart:
+            Hey @{author}, thanks for opening your first pull request in this repository - we really appreciate it! ❤️
 
-            Make sure you've checked our [contribution guide](https://kestra.io/docs/contribute-to-kestra/contributing), and don't forget to give us a star! :star:
+            Questions along the way? Ask us on [Slack](https://kestra.io/slack).
 
-            If you're looking for more issues to contribute to, we'd suggest checking our [curated list of good first issues](https://go.kestra.io/contributing) to see if there's something you find interesting and feel comfortable tackling independently. You can further filter the list by labels to narrow down the results (we recommend `area/backend`, `area/frontend`, or `area/plugin`, depending on your preferences).
+            Thanks for all the efforts so far! 🍀
         with:
+          github-token: ${{ steps.bot-token.outputs.token }}
           script: |
             const author = context.payload.pull_request.user.login;
             const issue_number = context.payload.pull_request.number;
@@ -67,16 +92,20 @@ jobs:
             });
 
       - name: Congratulate on a first merged pull request
-        if: github.event.action == 'closed'
+        if: github.event.action == 'closed' && steps.membership.outputs.is-member == 'false'
         uses: actions/github-script@v9
         env:
+          # Kept out of the script itself for the same reason as above: a backtick or ${ interpolated there would break out and run as JS.
           MERGED_MESSAGE: |
-            ### 🎉 Congrats @{author}!
+            ### First PR merged 🎉
 
-            Your first pull request has been merged - thanks a lot for your contribution, we really appreciate it! :heart:
+            Great work @{author}! Your change is now part of Kestra. ❤️
 
-            If you'd like to keep contributing, feel free to check out our [good first issues](https://go.kestra.io/contributing). And don't forget to give us a star! :star:
+            Up for another? Our [curated list of good first issues](https://go.kestra.io/contributing) is the best place to look, and you can filter it by `area/backend`, `area/frontend` or `area/plugin` depending on what you enjoy. Just comment on the one you pick and wait until we assign it to you before starting.
+
+            Thanks again for making Kestra better - and don't forget to ⭐ the repo!
         with:
+          github-token: ${{ steps.bot-token.outputs.token }}
           script: |
             const author = context.payload.pull_request.user.login;
 

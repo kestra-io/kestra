@@ -2,6 +2,116 @@
   "hi": {
     "loading": "लोड हो रहा है...",
     "more actions": "अधिक क्रियाएँ",
+    "recipe": {
+      "create_flow": "flow बनाएँ",
+      "email": "ईमेल",
+      "execution": {
+        "include_sub": "उप-namespace शामिल करें",
+        "include_sub_hint_off": "केवल सटीक namespace में मौजूद flow ही इस अलर्ट को ट्रिगर करेंगे।",
+        "include_sub_hint_on": "चाइल्ड namespace में flow भी इस अलर्ट को ट्रिगर करेंगे।",
+        "namespace_placeholder": "एक namespace चुनें",
+        "namespaces_error": "Namespaces लोड नहीं किए जा सके। देखने के लिए एक namespace टाइप करें, या बाद में पुनः प्रयास करें।",
+        "states": "इन states पर",
+        "states_recommended": "FAILED अलर्टिंग के लिए अनुशंसित डिफ़ॉल्ट है।",
+        "states_required": "कम से कम एक state चुनें।",
+        "watch_namespace": "namespace देखें"
+      },
+      "notify": {
+        "email_label": "ईमेल",
+        "email_sub": "एक ईमेल सूचना भेजें",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "कस्टम",
+        "custom_note": "एक प्लेसहोल्डर task जोड़ा गया है — इसे एडिटर में किसी भी नोटिफिकेशन प्लगइन से बदलें।",
+        "custom_sub": "अपना स्वयं का नोटिफिकेशन task जोड़ें",
+        "plugin_unavailable": "प्लगइन इंस्टॉल नहीं है",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "एक Slack चैनल पर एक संदेश पोस्ट करें",
+        "teams_sub": "Teams चैनल पर एक कार्ड भेजें",
+        "teams_webhook_placeholder": "Teams इनकमिंग webhook URL"
+      },
+      "other": {
+        "load_error": "Triggers लोड नहीं किए जा सके। बाद में पुनः प्रयास करें।",
+        "no_results": "कोई trigger नहीं मिला।",
+        "search_label": "ट्रिगर खोजें",
+        "search_placeholder": "नाम या प्रकार से फ़िल्टर करें"
+      },
+      "schedule": {
+        "cron": "Cron एक्सप्रेशन",
+        "custom": "कस्टम",
+        "daily": "दैनिक",
+        "daily_hint": "हर दिन सुबह 9:00 बजे चलता है।",
+        "frequency": "फ़्रीक्वेंसी",
+        "hourly": "प्रति घंटा",
+        "hourly_hint": "हर घंटे 0वें मिनट पर चलता है।",
+        "timezone": "टाइमज़ोन",
+        "timezone_placeholder": "एक टाइमज़ोन चुनें (डिफ़ॉल्ट UTC)",
+        "weekly": "साप्ताहिक",
+        "weekly_hint": "हर सोमवार सुबह 9:00 बजे चलता है।"
+      },
+      "section_subtitle": "एक flow बनाएं जो आपके प्लेटफ़ॉर्म की निगरानी करता है और आपकी टीम को स्वचालित रूप से सूचित करता है।",
+      "section_title": "एक सिस्टम flow बनाएँ",
+      "summary": {
+        "any_namespace": "कोई भी namespace",
+        "empty": "अपने flow का पूर्वावलोकन करने के लिए ट्रिगर और कम से कम एक सूचना चैनल कॉन्फ़िगर करें।",
+        "exact_match": "सटीक मिलान",
+        "execution": "जब {ns} ({scope}) में कोई flow {states} स्थिति पर पहुँचता है, तो {channels} के माध्यम से सूचित करें।",
+        "including_sub": "और sub-namespaces",
+        "invalid_hint": "कम से कम एक नोटिफिकेशन चैनल जोड़ें और trigger कॉन्फ़िगरेशन पूरा करें।",
+        "invalid_hint_trigger": "ट्रिगर कॉन्फ़िगरेशन पूरा करें।",
+        "no_channel": "आपके द्वारा चुने गए चैनल",
+        "other": "जब {trigger} ट्रिगर सक्रिय होता है, तो {channels} के माध्यम से सूचित करें।",
+        "schedule": "शेड्यूल \"{cron}\" पर, {channels} के माध्यम से सूचित करें।",
+        "selected_trigger": "चयनित",
+        "title": "सारांश",
+        "webhook": "जब एक वेबहुक प्राप्त होता है, तो {channels} के माध्यम से सूचित करें।",
+        "preview_title": "पूर्वावलोकन",
+        "live": "लाइव"
+      },
+      "then": {
+        "no_channel_warning": "कम से कम एक नोटिफिकेशन चैनल चुनें।",
+        "subtitle": "अपनी टीम को कैसे सूचित करें, यह चुनें।",
+        "title": "फिर सूचित करें",
+        "unavailable_channels_warning": "{channels}: इस trigger प्रकार के लिए प्लगइन स्थापित नहीं है, कोई सूचना नहीं भेजी जाएगी।"
+      },
+      "trigger": {
+        "case_sub": "EE-मात्र सुविधा",
+        "case_title": "केस स्थिति",
+        "execution_sub": "flow स्थिति परिवर्तनों पर प्रतिक्रिया करता है",
+        "execution_title": "एक्सेक्यूशन स्थिति",
+        "other_sub": "कोई भी उपलब्ध trigger प्लगइन",
+        "other_title": "अन्य trigger",
+        "schedule_sub": "समय-निर्धारण पर चलता है",
+        "schedule_title": "शेड्यूल",
+        "webhook_sub": "एक HTTP अनुरोध द्वारा ट्रिगर किया गया",
+        "webhook_title": "वेबहुक"
+      },
+      "webhook": {
+        "endpoint_hint": "flow को ट्रिगर करने के लिए इस URL पर एक POST अनुरोध भेजें।",
+        "endpoint_url": "एंडपॉइंट URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "इस वेबहुक के लिए एक अद्वितीय key दर्ज करें"
+      },
+      "when": {
+        "subtitle": "चुनें कि इस सिस्टम flow को क्या trigger करता है।",
+        "title": "जब ऐसा होता है",
+        "trigger_type": "ट्रिगर प्रकार"
+      },
+      "hero_eyebrow": "आपका सिस्टम flow",
+      "hero_empty": "अपने flow का पूर्वावलोकन करने के लिए एक trigger और एक channel चुनें।",
+      "browse_blueprints": "क्या आप किसी टेम्पलेट से शुरू करना पसंद करेंगे? कम्युनिटी सिस्टम blueprints ब्राउज़ करें",
+      "start_blank": "इसे स्वयं लिखना पसंद करते हैं? चरणों को छोड़ें और एक खाली flow खोलें",
+      "steps": {
+        "trigger_title": "ट्रिगर",
+        "trigger_desc": "जब यह चलता है",
+        "trigger_heading": "यह flow कब चलना चाहिए?",
+        "notify_title": "सूचित करें",
+        "notify_desc": "कौन इसके बारे में सुनता है",
+        "notify_heading": "हम आपकी टीम को कैसे सूचित करें?",
+        "review_title": "समीक्षा करें",
+        "review_desc": "जाँचें और बनाएँ",
+        "review_heading": "अपने सिस्टम flow की समीक्षा करें"
+      }
+    },
     "toggle menu": "मेनू टॉगल करें",
     "panel actions": "पैनल क्रियाएँ",
     "playground actions": "प्लेग्राउंड क्रियाएँ",
@@ -76,6 +186,7 @@
     "edit": "संपादित करें",
     "back": "वापस",
     "next": "अगला",
+    "previous": "पिछला",
     "done": "पूर्ण",
     "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "edit flow": "Flow संपादित करें",
@@ -109,9 +220,9 @@
     "next_execution": "अगली निष्पादन",
     "datepicker": {
       "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
-      "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या एक ISO 8601 अवधि टाइप करें (उदाहरण: 'P1DT1H1M1S)'",
+      "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या ISO 8601 अवधि टाइप करें (उदाहरण के लिए, 'P1DT1H1M1S')",
       "duration example": "उदाहरण: 'P1DT1H1M1S'",
-      "error": "अमान्य अवधि प्रारूप, एक ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए P1DT1H1M1S)",
+      "error": "अमान्य अवधि प्रारूप, ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए, P1DT1H1M1S)",
       "custom": "कस्टम",
       "last5minutes": "पिछले 5 मिनट",
       "last15minutes": "पिछले 15 मिनट",
@@ -120,8 +231,6 @@
       "last24hours": "पिछले 24 घंटे",
       "last48hours": "पिछले 48 घंटे",
       "last7days": "पिछले 7 दिन",
-      "last14days": "पिछले 14 दिन",
-      "last28days": "पिछले 28 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
       "next5minutes": "अगले 5 मिनट",
@@ -140,8 +249,6 @@
       "24hours": "24 घंटे",
       "48hours": "48 घंटे",
       "7days": "7 दिन",
-      "14days": "14 दिन",
-      "28days": "28 दिन",
       "30days": "30 दिन",
       "365days": "365 दिन",
       "never": "कभी नहीं",
@@ -163,12 +270,14 @@
         "12h": "12घं",
         "1d": "1दिन",
         "7d": "7दिन"
-      }
+      },
+      "14days": "14 दिन",
+      "28days": "28 दिन"
     },
     "created date": "निर्माण तिथि",
     "latest_update": "नवीनतम अपडेट",
     "expiration date": "समाप्ति तिथि",
-    "healthcheck date": "HealthCheck तिथि",
+    "healthcheck date": "HealthCheck दिनांक",
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to...": "कूदें...",
     "contextBar": {
@@ -203,13 +312,13 @@
     "restart": "पुनः प्रारंभ करें",
     "restart latest revision": "नवीनतम पुनरीक्षण पुनः प्रारंभ करें",
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
-    "restarted": "निष्पादन पुनः आरंभ किया गया है",
-    "restart confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः प्रारंभ करना चाहते हैं?",
+    "restarted": "Execution पुनः आरंभ हो गया है",
+    "restart confirm": "क्या आप वाकई execution <code>{id}</code> को पुनरारंभ करना चाहते हैं?",
     "replay": "पुनः चलाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
-    "replayed": "निष्पादन को पुनः चलाया गया है",
+    "replayed": "Execution को Replay किया गया है",
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
     "prefill inputs": "पूर्व-भरण",
     "current": "वर्तमान",
@@ -219,7 +328,7 @@
     "are you sure change state": "क्या आप वाकई स्थिति बदलना चाहते हैं?",
     "yes": "हाँ",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
-    "change state confirm": "क्या आप सुनिश्चित हैं कि आप execution <code>{id}</code> में <code>{task}</code> task का run state बदलना चाहते हैं?",
+    "change state confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run state बदलना चाहते हैं?<br/>यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
     "change state current state": "वर्तमान स्थिति है:",
     "replay execution title": "प्रदर्शन पुनः चलाएं",
     "restart execution title": "निष्पादन पुनः प्रारंभ करें",
@@ -239,27 +348,27 @@
     "kill": "समाप्त करें",
     "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "kill only parents": "केवल वर्तमान को समाप्त करें",
-    "killed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को समाप्त करना चाहते हैं?",
+    "killed confirm": "क्या आप वाकई execution <code>{id}</code> को बंद करना चाहते हैं?",
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "resume": "पुनः आरंभ करें",
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
-    "resumed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः आरंभ करना चाहते हैं?",
+    "resumed confirm": "क्या आप वाकई execution <code>{id}</code> को फिर से शुरू करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
     "resume from breakpoint title": "ब्रेकपॉइंट से निष्पादन `<code>{id}</code>` को पुनः शुरू करें",
     "resume from breakpoint done": "निष्पादन विराम बिंदु से फिर से शुरू किया गया है",
     "breakpoints": "ब्रेकपॉइंट्स",
     "pause": "रोकें",
-    "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
-    "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
+    "pause title": "एक्सेक्यूशन <code>{id}</code> को रोकें।<br/>ध्यान दें कि वर्तमान में चल रहे task अभी भी प्रोसेस किए जाएंगे, और एक्सेक्यूशन को मैन्युअल रूप से फिर से शुरू करना होगा।",
+    "pause confirm": "क्या आप वाकई execution <code>{id}</code> को रोकना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "unqueue": "अनक्यू करें",
-    "unqueue title": "प्रक्रिया <code>{id}</code> को कतार से बाहर करें।<br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक प्रक्रियाएँ चल रही हो सकती हैं।",
+    "unqueue title": "क्या आप वाकई execution <code>{id}</code> को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency limit का पालन नहीं करेगा, इसलिए allowed limit से अधिक executions चल सकते हैं।",
     "unqueue title multiple": "क्या आप वाकई <code>{count}</code> executions को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक executions चल सकती हैं।",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "force run": "फोर्स रन",
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
-    "force run confirm": "क्या आप सुनिश्चित हैं कि आप निष्पादन <code>{id}</code> को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: निष्पादन को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task निष्पादन बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को पुनः शुरू किया जाएगा।</li></ul>",
-    "force run done": "निष्पादन को मजबूरन चलाया गया है",
+    "force run confirm": "क्या आप वाकई execution <code>{id}</code> को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task runs बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queue किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "force run done": "Execution को जबरन चलाया गया",
     "metrics": "मेट्रिक्स",
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
     "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
@@ -316,7 +425,7 @@
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
       "tree": "ट्री",
-      "raw_json": "Raw JSON",
+      "raw_json": "रॉ JSON",
       "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
       "select_hint": "वेरिएबल्स, trigger, और task outputs बाईं ओर सूचीबद्ध हैं।",
       "empty": "इस निष्पादन के लिए कोई वेरिएबल उपलब्ध नहीं है।",
@@ -327,6 +436,7 @@
     },
     "file_preview": {
       "big_file_warning": "यह फ़ाइल {size} है। इसे लोड करने में कुछ समय लग सकता है जिससे आपका ब्राउज़र ब्लॉक हो सकता है। क्या आप इसे फिर भी लोड करना चाहते हैं?",
+      "big_file_download_only": "यह फ़ाइल {size} है। यह एडिटर में खोलने के लिए बहुत बड़ी है, इसके बजाय इसे डाउनलोड करें।",
       "load_anyway": "फिर भी लोड करें",
       "load_error": "फ़ाइल पूर्वावलोकन लोड करने में विफल। यह एक अस्थायी समस्या या अनुमति संबंधी समस्या हो सकती है।",
       "retry": "पुनः प्रयास करें",
@@ -363,25 +473,30 @@
         },
         "alt": "ब्लूप्रिंट्स आइकन"
       },
-      "custom": "कस्टम blueprints",
+      "custom": "कस्टम Blueprints",
       "flows": "फ्लो Blueprints",
       "apps": "ऐप Blueprints",
       "dashboards": "डैशबोर्ड Blueprints",
       "detail": {
         "category": "श्रेणी प्रकार",
         "links": "लिंक और संसाधन",
-        "openInEditor": "एडिट Flow में खोलें"
+        "openInEditor": "एडिट Flow में खोलें",
+        "openInAppsEditor": "Apps एडिटर में खोलें",
+        "openInDashboardEditor": "डैशबोर्ड एडिटर में खोलें"
       },
       "missingPlugins": {
-        "title": "अनुपलब्ध plugins",
-        "description": "यह blueprint ऐसे plugin(s) के tasks का उपयोग करता है जो इस instance पर इंस्टॉल नहीं हैं: {plugins}। इस blueprint का उपयोग करने के लिए उन्हें इंस्टॉल करें।",
-        "card": "इस instance पर इंस्टॉल न किए गए plugin(s) की आवश्यकता है: {plugins}",
+        "title": "अनुपलब्ध tasks",
+        "description": "यह blueprint ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं:",
+        "installHint": "इस blueprint का उपयोग करने के लिए अनुपलब्ध plugin(s) इंस्टॉल करें: {plugins}।",
+        "card": "ऐसे task प्रकारों का उपयोग करता है जो इस instance पर उपलब्ध नहीं हैं: {tasks}",
         "install": "Plugins इंस्टॉल करें"
       }
     },
     "use": "उपयोग करें",
     "plugins": {
-      "beta": "Beta",
+      "names": "plugins",
+      "release": "रिलीज़ नोट्स",
+      "beta": "बीटा",
       "copy_type": "प्रकार कॉपी करें",
       "deprecated": "पुराना",
       "dynamic": "गतिशील",
@@ -411,20 +526,18 @@
       "intro_step3_desc_suffix": " और Pebble expressions।",
       "intro_step3_title": "इसे गतिशील बनाएं",
       "intro_sub": "YAML में flow बनाने के लिए सब कुछ: प्रॉपर्टीज़, inputs और Pebble templating, एक ही जगह।",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "उदाहरण",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "अवलोकन",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
-      "names": "plugins",
-      "nav_examples": "Examples",
+      "nav_examples": "उदाहरण",
       "nav_outputs": "Outputs",
       "nav_overview": "अवलोकन",
-      "nav_properties": "Properties",
+      "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
-      "release": "रिलीज़ नोट्स",
       "required": "आवश्यक"
     },
     "last execution date": "अंतिम निष्पादन तिथि",
@@ -457,6 +570,7 @@
     "triggers_add_filter_app": "ऐप",
     "triggers_add_empty_title": "कोई triggers नहीं मिले",
     "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
+    "ee_feature_tooltip": "इस सुविधा के लिए एंटरप्राइज़ एडिशन की आवश्यकता है।",
     "triggers_add_card_add": "जोड़ें",
     "triggers_add_modal_tab_form": "फॉर्म",
     "triggers_add_modal_tab_source": "स्रोत",
@@ -476,11 +590,11 @@
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
     "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
     "context updated date tooltip": "ट्रिगर के संदर्भ को आखिरी बार कब अपडेट किया गया था। यह तब होता है जब execution ट्रिगर होता है, समाप्त होता है (लॉक रिलीज़ होता है), या एक मूल्यांकन के बाद (भले ही कोई execution न हो)।",
-    "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "next evaluation date tooltip": "जब शेड्यूलर इस trigger का अगली बार मूल्यांकन करेगा, उसके interval के आधार पर। एक मूल्यांकन केवल तभी एक execution उत्पन्न करता है जब trigger की शर्तें पूरी होती हैं।",
+    "last evaluation date tooltip": "जब ट्रिगर को शेड्यूलर द्वारा अंतिम बार मूल्यांकित किया गया था, भले ही उसने कोई execution उत्पन्न किया हो या नहीं।",
     "conditions": "शर्तें",
     "triggerId": "ट्रिगर ID",
-    "tenantId": "टेनेंट ID",
+    "tenantId": "tenant ID",
     "paused": "PAUSED",
     "running": "RUNNING",
     "Fold content lines": "मल्टीलाइन स्ट्रिंग्स फोल्ड करें",
@@ -537,13 +651,13 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
     "restore": "पुनर्स्थापित करें",
-    "restore confirm": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
+    "restore confirm": "क्या आप वाकई रिविज़न <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
     "bulk replay": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः चलाना चाहते हैं?",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
-    "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: किसी execution को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task executions बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task executions बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queued किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
     "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
@@ -613,7 +727,7 @@
     "flow must not be empty": "Flow खाली नहीं होना चाहिए",
     "flow creation denied in namespace": "आपके पास namespace `{namespace}` में flows बनाने की अनुमति नहीं है।",
     "readonly property": "केवल-पढ़ने की संपत्ति",
-    "namespace and id readonly": "गुण `namespace` और `id` को बदला नहीं जा सकता — वे अब अपनी प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
+    "namespace and id readonly": "`namespace` और `id` प्रॉपर्टीज़ को बदला नहीं जा सकता — वे अब अपने प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
     "avg": "औसत",
     "sum": "योग",
     "min": "न्यूनतम",
@@ -631,22 +745,22 @@
     "collapse all": "सभी संक्षिप्त करें",
     "expand": "विस्तारित करें",
     "collapse": "संक्षिप्त करें",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "इसके लिए फ़िल्टर करें",
+    "filter_out": "फ़िल्टर करें",
+    "copy_value": "मान कॉपी करें",
+    "open_page": "पेज खोलें",
+    "logs_copied": "लॉग आपके क्लिपबोर्ड पर कॉपी हो गए हैं",
+    "expand_by_default": "संरचित logs को डिफ़ॉल्ट रूप से विस्तृत करें",
+    "similar lines": "समान लाइनें",
+    "download_logs_description": "निर्यात करने के लिए logs चुनें। फ़िल्टर आपकी वर्तमान दृश्य के अनुसार डिफ़ॉल्ट होते हैं।",
+    "display_settings": "सेटिंग्स दिखाएँ",
+    "density": "घनत्व",
+    "density_compact": "कॉम्पैक्ट",
+    "density_normal": "सामान्य",
+    "density_expanded": "विस्तारित",
+    "pretty_json": "सुंदर JSON",
+    "body_line_clamp": "लाइन की ऊंचाई सीमित करें",
+    "font size": "फ़ॉन्ट आकार",
     "environment": "पर्यावरण",
     "join_slack": "Slack से जुड़ें",
     "kestra": "केस्ट्रा",
@@ -676,7 +790,7 @@
     "flow source not found": "Flow source नहीं मिला",
     "timezone": "समय क्षेत्र",
     "add task": "एक Task जोड़ें",
-    "unable to generate graph": "ग्राफ़ उत्पन्न करते समय एक समस्या उत्पन्न हुई जिससे टोपोलॉजी प्रदर्शित नहीं हो सकी।",
+    "unable to generate graph": "ग्राफ़ जनरेट करते समय कोई समस्या हुई, जो टोपोलॉजी को प्रदर्शित होने से रोकती है।",
     "attempts": "प्रयास",
     "version": "संस्करण",
     "services": "सेवाएँ",
@@ -735,6 +849,10 @@
         "files": "{count} चयनित फ़ाइलें हटाएं",
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
+      "move": {
+        "bulk_success": "चयनित फ़ाइलें सफलतापूर्वक स्थानांतरित हो गईं।",
+        "bulk_error": "चयनित आइटम(आइटमों) में से {count} को स्थानांतरित करने में विफल।"
+      },
       "import": {
         "files": "फ़ाइलें आयात करें",
         "folder": "फ़ोल्डर आयात करें",
@@ -788,7 +906,7 @@
     "manage labels": "labels प्रबंधित करें",
     "Set labels to execution": "निष्पादन <code>{id}</code> के लेबल्स जोड़ें या अपडेट करें",
     "Set labels done": "निष्पादन के लेबल्स सफलतापूर्वक सेट किए गए",
-    "bulk set labels": "क्या आप वाकई <code>{executionCount}</code> निष्पादन के लिए लेबल्स सेट करना चाहते हैं?",
+    "bulk set labels": "क्या आप वाकई <code>{executionCount}</code> execution(s) पर label सेट करना चाहते हैं?",
     "true": "सत्य",
     "false": "असत्य",
     "undefined": "अपरिभाषित",
@@ -843,7 +961,7 @@
       }
     },
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "पसंद",
     "settings": {
       "label": "सेटिंग्स",
       "updated": "{name} अपडेट किया गया",
@@ -861,7 +979,9 @@
             "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब",
             "playground": "प्लेग्राउंड",
-            "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल"
+            "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
+            "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड",
+            "flow_template": "डिफ़ॉल्ट flow टेम्पलेट"
           },
           "descriptions": {
             "default_namespace": "नए flows को बिना namespace के बनाते समय उपयोग किया जाता है।",
@@ -873,15 +993,26 @@
             "flow_default_tab": "फ्लो पर नेविगेट करते समय चयनित टैब।",
             "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।",
             "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
-            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।"
+            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
+            "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।",
+            "flow_template": "जब आप एक नया flow बनाते हैं तो YAML एडिटर में खुलता है। id और namespace को छोड़ा जा सकता है, क्योंकि वे आपके लिए जनरेट किए जाते हैं। जब यह खाली होता है, तो इंस्टेंस के लिए कॉन्फ़िगर किया गया टेम्पलेट उपयोग किया जाता है।"
+          },
+          "task_edit_default_mode_options": {
+            "modal": "मॉडल",
+            "tab": "टैब"
+          },
+          "flow_template_reset": "डिफ़ॉल्ट पर रीसेट करें",
+          "flow_template_error": {
+            "invalid_mapping": "अमान्य flow टेम्पलेट: एक key-value मैपिंग अपेक्षित थी, सूची या स्केलर नहीं।",
+            "parse_error": "YAML पार्स नहीं किया जा सका। टेम्पलेट सहेज लिया गया था, इसलिए जब आप कोई flow बनाते हैं तो एडिटर वही त्रुटि दिखा सकता है।"
           }
         },
         "theme": {
-          "label": "थीम प्राथमिकताएँ",
+          "label": "दिखावट",
           "fields": {
             "app_font_size": "ऐप फ़ॉन्ट आकार",
             "color_mode": "रंग मोड",
-            "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
+            "editor_folding_stratgy": "एडिटर में स्वचालित कोड फोल्डिंग",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
@@ -941,23 +1072,30 @@
       }
     },
     "apps": "ऐप्स",
+    "promote": {
+      "label": "प्रमोट करें"
+    },
     "demos": {
       "enterprise_edition": "एंटरप्राइज एडिशन",
       "get_a_demo_button": "डेमो प्राप्त करें",
       "contact_sales": "सेल्स से संपर्क करें",
       "secrets": {
         "title": "अपने Secrets Management को अपग्रेड करें",
-        "message": "एंटरप्राइज एडिशन (EE) आपको UI में सीधे secrets जोड़ने, संपादित करने या हटाने की अनुमति देता है—कोई instance पुनरारंभ की आवश्यकता नहीं है। secrets को namespace द्वारा संगठित करें, जिसमें सूक्ष्म RBAC अनुमतियाँ हों, और उन्हें parent से child namespaces में विरासत में लें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे secrets प्रबंधकों के साथ एकीकृत होता है। टीमों के बीच secrets को अलग करने के लिए namespace, tenant, या instance के अनुसार समर्पित बैकएंड सेट करें, या बाहरी vaults में संग्रहीत read-only secrets को सक्षम करें। secrets को आराम और ट्रांजिट में एन्क्रिप्टेड रखा जाता है। वैकल्पिक caching API कॉल्स को कम करता है, और audit trails सभी एक्सेस को log करते हैं।",
+        "message": "एंटरप्राइज़ एडिशन आपको UI में सीधे सीक्रेट्स जोड़ने, संपादित करने और हटाने, उन्हें RBAC के साथ namespace के अनुसार व्यवस्थित करने, और HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager या Elasticsearch में संग्रहीत करने की सुविधा देता है।",
         "add_env": {
-          "intro": "नया Secret बनाने के लिए:",
+          "intro": "एक नया Secret बनाएँ",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
-          "second": "'<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' नामक एक environment variable जोड़ें उपरोक्त value के साथ",
-          "third": "अपने Kestra instance को पुनः प्रारंभ करें"
+          "second": "एन्कोडेड मान के साथ <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> नामक एक एनवायरनमेंट variable सेट करें।",
+          "third": "अपने Kestra इंस्टेंस को रीस्टार्ट करें ताकि secret लोड हो जाए।"
         }
       },
       "apps": {
         "title": "Kestra के साथ कस्टम ऐप्स बनाएं",
-        "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।"
+        "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।",
+        "blueprints": {
+          "title": "एक ऐप blueprint से शुरू करें।",
+          "message": "ऐप ब्लूप्रिंट सामान्य उपयोग के मामलों जैसे फ़ॉर्म, अनुमोदन और डेटा सबमिशन के लिए तैयार ऐप हैं। Kestra Enterprise Edition के साथ, आप किसी भी ब्लूप्रिंट को शुरुआती बिंदु के रूप में उपयोग कर सकते हैं और अपने वर्कफ़्लो के शीर्ष पर कस्टम UI बनाने के लिए इसे अनुकूलित कर सकते हैं।"
+        }
       },
       "tests": {
         "label": "टेस्ट्स",
@@ -972,14 +1110,27 @@
         "message": "एसेट्स अवलोकन, वंशावली, और स्वामित्व मेटाडेटा को जोड़ते हैं ताकि प्लेटफ़ॉर्म टीमें तेजी से समस्या निवारण कर सकें और आत्मविश्वास के साथ परिनियोजन कर सकें।"
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "केस",
+        "header": "घटना प्रबंधन",
+        "title": "Kestra छोड़े बिना घटनाओं का निवारण और समाधान करें।",
+        "message": "Kestra Enterprise Edition में केस आपको SLA ट्रैकिंग, गतिविधि टाइमलाइन और रूट-कॉज़ विश्लेषण को तेज़ करने के लिए लिंक किए गए एग्ज़िक्यूशन और एसेट के साथ, सीधे विफल एग्ज़िक्यूशन से घटनाओं को खोलने, असाइन करने और ट्रैक करने की सुविधा देते हैं।"
+      },
+      "promote": {
+        "title": "flow को विभिन्न एनवायरनमेंट में प्रमोट करें",
+        "message": "Kestra Enterprise Edition आपको UI से सीधे एक environment से दूसरे environment में — जैसे dev से staging से production में — flows को बढ़ावा देने देता है, इसके लिए किसी Git या CI/CD pipelines की आवश्यकता नहीं होती है। बढ़ावा देने से पहले ठीक से समीक्षा करें कि क्या बदलेगा, एक पुष्टिकरण गेट के साथ संवेदनशील लक्ष्यों को सुरक्षित रखें, एक नज़र में drift का पता लगाएं, और किसने, कहाँ और कब क्या बढ़ावा दिया, इसका पूरा इतिहास रखें।"
+      },
+      "dashboards": {
+        "header": "कस्टम डैशबोर्ड",
+        "title": "अपनी टीम के अनुरूप कस्टम डैशबोर्ड बनाएं।",
+        "message": "Kestra Enterprise Edition में कस्टम डैशबोर्ड आपको executions, logs और metrics के शीर्ष पर अपने स्वयं के दृश्य बनाने और साझा करने देते हैं, जिसमें टाइम सीरीज़, KPI, टेबल और Markdown चार्ट को कोड और नो-कोड एडिटर, लाइव प्रीव्यू और प्रति-tenant डिफ़ॉल्ट डैशबोर्ड के साथ जोड़ा जाता है।",
+        "blueprints": {
+          "title": "डैशबोर्ड ब्लूप्रिंट से शुरू करें।",
+          "message": "डैशबोर्ड ब्लूप्रिंट सामान्य निगरानी आवश्यकताओं के लिए तैयार कस्टम डैशबोर्ड हैं। Kestra Enterprise Edition के साथ, आप किसी भी ब्लूप्रिंट को शुरुआती बिंदु के रूप में उपयोग कर सकते हैं और डैशबोर्ड एडिटर में इसके चार्ट, KPI और तालिकाओं को अपनी टीम के अनुसार अनुकूलित कर सकते हैं।"
+        }
       },
       "IAM": {
         "title": "IAM के माध्यम से SSO, SCIM और RBAC के साथ उपयोगकर्ताओं का प्रबंधन करें।",
-        "message": "Kestra एंटरप्राइज एडिशन में IAM क्षमताएँ अंतर्निहित हैं, जिसमें सिंगल साइन-ऑन (SSO), SCIM डायरेक्टरी सिंक और रोल-आधारित एक्सेस कंट्रोल (RBAC) शामिल हैं। यह कई पहचान प्रदाताओं के साथ एकीकृत होता है और आपको उपयोगकर्ताओं और सेवा खातों के लिए सूक्ष्म अनुमतियाँ असाइन करने की अनुमति देता है।"
+        "message": "Kestra Enterprise Edition में सिंगल साइन-ऑन (SSO), SCIM डायरेक्टरी सिंक और रोल-बेस्ड एक्सेस कंट्रोल (RBAC) के साथ इन-बिल्ट IAM क्षमताएं हैं, जो कई आइडेंटिटी प्रोवाइडर के साथ इंटीग्रेट होती हैं और आपको यूज़र और सर्विस अकाउंट के लिए फाइन-ग्रेन्ड परमिशन असाइन करने देती हैं।"
       },
       "tenants": {
         "title": "अलग-अलग Tenants में Workflows प्रबंधित करें",
@@ -1004,17 +1155,17 @@
       "policies": {
         "header": "शासन नीतियाँ",
         "label": "नीतियाँ",
-        "message": "नीतियां प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने में सक्षम बनाती हैं — जैसे साझा डिफ़ॉल्ट इंजेक्ट करना, प्लगइन्स को ब्लॉक करना, प्रॉपर्टी मानों को सीमित करना, और अनुपालन labels की आवश्यकता करना। नियम tenant या namespace स्तर पर चरणबद्ध रोलआउट के साथ लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
+        "message": "पॉलिसीज़ प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने देती हैं — साझा डिफ़ॉल्ट इंजेक्ट करें, प्लगइन्स ब्लॉक करें, प्रॉपर्टी वैल्यूज़ को बाउंड करें, और कंप्लायंस labels की आवश्यकता करें। नियम staged rollout के साथ tenant या namespace स्तर पर लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
         "title": "नीतियों के साथ हर flow का नियमन करें"
       },
       "namespace": {
         "edit": {
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें",
-          "message": "Kestra एंटरप्राइज एडिशन में, namespaces बड़े पैमाने पर secrets, variables और plugin डिफ़ॉल्ट्स के उन्नत अलगाव और शासन प्रदान करते हैं। प्रशासक कस्टम secrets प्रबंधकों, अलग storage बैकएंड्स, समर्पित worker समूहों, और प्रति-namespace आधार पर सूक्ष्म अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और plugin कॉन्फ़िगरेशन विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
+          "message": "Kestra Enterprise Edition में, namespace बड़े पैमाने पर secrets, variables और governance Policies का उन्नत अलगाव और नियंत्रण प्रदान करते हैं। प्रशासक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और governance rules विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
         },
         "secrets": {
           "title": "सुरक्षित तरीके से Secrets प्रबंधित करें",
-          "message": "Kestra एंटरप्राइज एडिशन में, आप secrets को namespace स्तर पर संग्रहीत और नियंत्रित कर सकते हैं, जिससे जोखिम कम होता है और प्रत्येक टीम की credentials अलग रहती हैं। nested hierarchy के कारण, आप एक parent namespace में credentials को कॉन्फ़िगर कर सकते हैं और वे सभी child namespaces द्वारा विरासत में प्राप्त हो जाएंगे। समर्पित secrets managers और सूक्ष्म namespace-स्तरीय अनुमति सेटिंग्स के लिए समर्थन सुरक्षा और अनुपालन को और मजबूत करता है।"
+          "message": "Kestra Enterprise Edition में, आप namespace स्तर पर secrets को स्टोर और कंट्रोल कर सकते हैं, जिससे जोखिम कम होता है और यह सुनिश्चित होता है कि प्रत्येक टीम के क्रेडेंशियल अलग-थलग रहें। नेस्टेड पदानुक्रम के कारण, आप पैरेंट namespace में भी क्रेडेंशियल कॉन्फ़िगर कर सकते हैं, और वे सभी चाइल्ड namespaces द्वारा इनहेरिट किए जाएंगे। समर्पित secrets managers और फाइन-ग्रेन्ड namespace-स्तर की अनुमति सेटिंग्स के लिए समर्थन सुरक्षा और अनुपालन को और मजबूत करता है।"
         },
         "assets": {
           "title": "संपत्ति प्रबंधन को केंद्रीकृत करें",
@@ -1205,12 +1356,12 @@
         }
       }
     },
-    "auditlogs": "Audit Logs",
+    "auditlogs": "ऑडिट Logs",
     "quotas": "कोटा",
     "iam": "IAM",
     "tenant": {
-      "name": "मंडल",
-      "names": "मंडल"
+      "name": "Tenant",
+      "names": "Tenants"
     },
     "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk unpause backfills": "{count} backfill को अनपॉज़ करें",
@@ -1237,10 +1388,11 @@
       "add": "बनाएं",
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
-      "names": "Secrets",
+      "names": "सीक्रेट्स",
       "key": "नाम",
       "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
       "name": "गुप्त मान",
+      "valuePlaceholder": "गुप्त मान दर्ज करें",
       "description": "विवरण",
       "descriptionPlaceholder": "इस secret का वर्णन करें",
       "tags": "टैग",
@@ -1266,18 +1418,18 @@
     },
     "curl": {
       "command": "cURL कमांड",
-      "note": "कृपया ध्यान दें कि SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
+      "note": "ध्यान दें कि SECRET और FILE input प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
     },
     "webhook": {
       "curl_command": "Webhook cURL कमांड",
-      "payload": "Webhook Payload (JSON)",
+      "payload": "Webhook पेलोड (JSON)",
       "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
       "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",
       "copy_url": "वेबहुक URL कॉपी करें"
     },
     "logs_view": {
       "raw": "Temporal दृश्य",
-      "raw_details": "कच्चे timestamp-क्रमबद्ध प्रारूप में पूर्ण task logs और flow logs दिखाएं",
+      "raw_details": "सभी task logs और flow logs को कच्चे, टाइमस्टैम्प-क्रमबद्ध फ़ॉर्मैट में दिखाएँ",
       "compact": "पूर्व-निर्धारित दृश्य",
       "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं"
     },
@@ -1303,7 +1455,7 @@
     "behavior": "व्यवहार",
     "concurrency": "समानांतरता",
     "no-executions-view": {
-      "title": "स्वचालन शुरू करें साथ में",
+      "title": "Kestra के साथ ऑटोमेशन शुरू करें",
       "sub_title": "अपने पहले workflow execution को शुरू करने के लिए Execute बटन पर क्लिक करें।",
       "namespace_sub_title": "इस डैशबोर्ड को भरने के लिए इस namespace से एक या अधिक flows निष्पादित करें।",
       "namespace_guidance_desc": "क्या आपको अपने Namespace को प्रबंधित करने के लिए मार्गदर्शन चाहिए?",
@@ -1311,7 +1463,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "शुरू करें ⚡",
+        "title": "शुरू करें",
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।"
       },
       "namespaces": {
@@ -1330,12 +1482,12 @@
     "customize sidebar": "साइडबार को अनुकूलित करें",
     "reset to defaults": "डिफ़ॉल्ट पर रीसेट करें",
     "drop items here": "यहाँ आइटम्स ड्रॉप करें",
-    "files": "फ़ाइलें",
+    "files": "namespace फ़ाइलें",
     "optional": "वैकल्पिक",
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?",
     "showLess": "कम दिखाएं",
-    "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "documentationMenu": "दस्तावेज़ मेनू",
     "item": "आइटम",
     "items": "आइटम्स",
     "iterations": "पुनरावृत्तियाँ",
@@ -1366,7 +1518,8 @@
         "triggers": "ट्रिगर्स",
         "errors": "त्रुटि हैंडलर्स",
         "afterExecution": "Execution के बाद",
-        "finally": "अंत में"
+        "finally": "अंत में",
+        "flow": "flow"
       },
       "fields": {
         "main": {
@@ -1388,7 +1541,8 @@
           "workerGroup": "वर्कर ग्रुप",
           "workerSelector": "वर्कर सेलेक्टर",
           "checks": "जांचें",
-          "updated": "अपडेट किया गया"
+          "updated": "अपडेट किया गया",
+          "quotas": "कोटा"
         }
       },
       "select": {
@@ -1421,6 +1575,25 @@
       "remove": {
         "default": "इस प्रविष्टि को हटाएं",
         "cases": "इस केस को हटाएं"
+      },
+      "adding_to": "+ {what} में जोड़ें",
+      "choose_placeholder": "{field} चुनें",
+      "duration": {
+        "add_unit": "यूनिट जोड़ें",
+        "units": {
+          "day": "दिन",
+          "hour": "घंटे",
+          "minute": "मिनट",
+          "second": "सेकंड",
+          "week": "हफ़्ते"
+        }
+      },
+      "expression_placeholder": "आपका {field} यहाँ...",
+      "nav": {
+        "back": "वापस",
+        "breadcrumb_aria": "फ़ील्ड पाथ",
+        "items": "{count} आइटम",
+        "not_set": "सेट नहीं है"
       }
     },
     "editor_shortcuts": {
@@ -1473,12 +1646,16 @@
     "dataFilters": "डेटा फ़िल्टर",
     "logExporters": "लॉग Exporters",
     "empty": {
+      "secrets": {
+        "title": "आपके पास अभी तक कोई Secrets नहीं है!",
+        "content": "API keys, पासवर्ड और टोकन को आपके flows में हार्डकोड करने के बजाय secrets के रूप में स्टोर किया जा सकता है। प्रत्येक secret एक namespace से संबंधित होता है, उसके child namespaces द्वारा इनहेरिट किया जाता है, और किसी भी task से संदर्भित किया जा सकता है।"
+      },
       "namespaceFiles": {
         "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है",
         "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें"
       },
       "announcements": {
-        "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!",
+        "title": "आपके पास अभी तक कोई घोषणा नहीं है!",
         "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।"
       },
       "kill_switches": {
@@ -1490,16 +1667,16 @@
         "content": "बाहरी दुनिया से Kestra के साथ इंटरैक्ट करने के लिए Apps बनाना शुरू करें।"
       },
       "testSuites": {
-        "title": "आपके पास अभी तक कोई Test suites नहीं हैं!",
-        "content": "अपने Flows का परीक्षण करने के लिए Test suites बनाना शुरू करें।"
+        "title": "आपके पास अभी तक कोई टेस्ट नहीं है!",
+        "content": "अपने flows में गुणवत्ता को मान्य करने और प्रतिगमन से बचने के लिए परीक्षण जोड़ें।"
       },
       "assets": {
         "title": "आपके पास अभी तक कोई Assets नहीं हैं!",
         "content": "अपने डेटा एसेट्स, सेवाओं और इन्फ्रास्ट्रक्चर को ट्रैक और प्रबंधित करने के लिए एसेट्स जोड़ें।"
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "आपके पास अभी तक कोई केस नहीं है!",
+        "content": "किसी घटना को छाँटने और ट्रैक करने के लिए एक केस खोलें, या विफल execution से स्वचालित रूप से एक को लिंक करें।"
       },
       "apiTokens": {
         "title": "अपने API Tokens प्रबंधित करें",
@@ -1527,7 +1704,7 @@
       },
       "groups": {
         "title": "आपके पास अभी तक कोई समूह नहीं है!",
-        "content": "समूह आपको उपयोगकर्ताओं को एक साथ जोड़ने की अनुमति देते हैं ताकि आप अपने tenant में अनुमतियों और भूमिका बाइंडिंग को सामूहिक रूप से प्रबंधित कर सकें।"
+        "content": "ग्रुप आपको उपयोगकर्ताओं को एक साथ बंडल करने देते हैं ताकि आप अपने tenant में अनुमतियों और भूमिका बाइंडिंग को सामूहिक रूप से प्रबंधित कर सकें।"
       },
       "dependencies": {
         "FLOW": {
@@ -1546,10 +1723,6 @@
           "title": "वर्तमान में कोई निर्भरता नहीं है।",
           "content": "इस संपत्ति का flows या अन्य संपत्तियों के साथ कोई upstream या downstream निर्भरता नहीं है।"
         }
-      },
-      "plugins": {
-        "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।",
-        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।"
       },
       "triggers": {
         "title": "आपके flow में कोई Triggers नहीं हैं।",
@@ -1574,7 +1747,9 @@
       "move_right": "दाईं ओर ले जाएँ",
       "move_left": "बाएँ ले जाएँ",
       "close_all_tabs": "सभी टैब बंद करें",
-      "close_all_panels": "सभी पैनल बंद करें"
+      "close_all_panels": "सभी पैनल बंद करें",
+      "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
+      "fullscreen": "पूर्णस्क्रीन"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",
@@ -1592,32 +1767,19 @@
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
       "labels": {
-        "singular": "डैशबोर्ड",
         "plural": "डैशबोर्ड्स"
       },
       "default": "डिफ़ॉल्ट डैशबोर्ड",
-      "switch": "डैशबोर्ड स्विच करें",
-      "preview": "पूर्वावलोकन डैशबोर्ड",
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
-      "creation": {
-        "label": "डैशबोर्ड बनाएं",
-        "confirmation": "डैशबोर्ड <code>{title}</code> बनाया गया है।"
-      },
       "edition": {
         "label": "डैशबोर्ड संपादित करें",
-        "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
-        "chart": "इस चार्ट को संपादित करें",
-        "id readonly": "संपत्ति `id` को बदला नहीं जा सकता — यह अब अपनी प्रारंभिक मानों पर सेट है। यदि आप इसे बदलना चाहते हैं, तो आप एक नया डैशबोर्ड बना सकते हैं और पुराने को हटा सकते हैं।"
-      },
-      "deletion": {
-        "confirmation": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?"
+        "chart": "इस चार्ट को संपादित करें"
       },
       "no_description": "कोई विवरण नहीं",
       "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "others": "अन्य",
       "viewAll": "सभी देखें",
-      "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
-      "export": "CSV में निर्यात करें",
+      "export": "एक्सपोर्ट करें",
       "exportTo": {
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"
@@ -1633,9 +1795,9 @@
     },
     "setup": {
       "login": "लॉगिन",
-      "login_title": "साइन इन करें",
+      "login_title": "Kestra में साइन इन करें",
       "logout": "लॉगआउट",
-      "troubleshooting": "पासवर्ड भूल गए?",
+      "troubleshooting": "साइन इन करने में समस्या आ रही है?",
       "steps": {
         "user": "एडमिन उपयोगकर्ता बनाएं",
         "survey": "हमें और बताएं",
@@ -1674,7 +1836,7 @@
         "company_personal": "अन्य",
         "use_case": "आप इसे किस उद्देश्य के लिए उपयोग करने की योजना बना रहे हैं?",
         "use_case_infrastructure": "इन्फ्रास्ट्रक्चर ऑटोमेशन",
-        "use_case_business": "व्यवसाय वर्कफ़्लोज़",
+        "use_case_business": "बिजनेस workflows",
         "use_case_data": "डेटा वर्कफ्लोज़",
         "use_case_ml": "एमएल पाइपलाइन्स",
         "use_case_scheduling": "शेड्यूलिंग और आवर्ती जॉब्स",
@@ -1690,7 +1852,7 @@
     },
     "ai": {
       "flow": {
-        "title": "एआई एजेंट"
+        "title": "AI Copilot"
       },
       "copilot": {
         "title": "एआई सहपायलट",
@@ -1712,7 +1874,7 @@
           "execution": "निष्पादन: {id}",
           "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
-          "plugin": "Plugin: {plugin}",
+          "plugin": "प्लगइन: {plugin}",
           "test": "परीक्षण: {test}"
         },
         "contextAdded": "{type} {id} को संदर्भ में जोड़ा गया।",
@@ -1822,7 +1984,7 @@
       "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
       "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
       "toggle": "प्लेग्राउंड",
-      "run_task": "टास्क चलाएं",
+      "run_task": "Task चलाएँ",
       "run_this_task": "इस task को चलाएं",
       "run_task_and_downstream": "टास्क चलाएं और डाउनस्ट्रीम",
       "run_all_tasks": "सभी Tasks चलाएं",
@@ -1895,8 +2057,8 @@
             "description": "अन्य उपयोगकर्ताओं के साथ जुड़ें और समुदाय से सहायता प्राप्त करें"
           },
           "videos": {
-            "title": "वीडियो ट्यूटोरियल्स",
-            "description": "उन्नत विशेषताओं के लिए चरण-दर-चरण वीडियो गाइड्स"
+            "title": "वीडियो ट्यूटोरियल",
+            "description": "स्टेप-बाय-स्टेप वीडियो गाइड"
           },
           "demo": {
             "title": "डेमो प्राप्त करें",
@@ -1907,12 +2069,12 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{count} MCP Servers",
+      "servers_count": "{count} MCP सर्वर",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",
       "page_description": "अपने Kestra flows को MCP-संगत AI एजेंट्स के लिए उपकरण के रूप में प्रस्तुत करें",
-      "create": "सर्वर बनाएं",
+      "create": "एक सर्वर बनाएँ",
       "instructions": "निर्देश",
       "auth_type": "प्रमाणीकरण",
       "private": "निजी",
@@ -1948,13 +2110,13 @@
         "trigger_id": "Trigger ID",
         "title": "शीर्षक",
         "description": "विवरण",
-        "annotations": "Annotations",
+        "annotations": "एनोटेशन",
         "flow": "flow",
         "state": "स्थिति",
         "read_only": "केवल पढ़ें",
-        "open_world": "Open world",
+        "open_world": "ओपन वर्ल्ड",
         "destructive": "विनाशकारी",
-        "idempotent": "Idempotent",
+        "idempotent": "अपरिवर्तनीय",
         "return_direct": "सीधा वापसी"
       },
       "connect_tab": {
@@ -1981,7 +2143,7 @@
         "tooltip": "flow संशोधन देखें"
       },
       "dependencies": {
-        "suffix": "निर्भरताएं",
+        "suffix": "डिपेंडेंसी",
         "tooltip": "flow निर्भरता देखें"
       },
       "apps": {
@@ -1997,14 +2159,273 @@
       }
     },
     "source_search": {
+      "cannot_select_read_only": "चयन नहीं किया जा सकता — आपके पास {namespace} / {id} पर संपादन की अनुमति नहीं है",
+      "collapse_all": "सभी को संक्षिप्त करें",
+      "confirm_bar_excluded": "{count} और मिलान नहीं बदला जाएगा। | {count} और मिलान नहीं बदले जाएंगे।",
+      "confirm_bar_message": "{matches} को {flows} संपादन योग्य flows में बदलें। {skipped} केवल-पठन flows को छोड़ दिया जाएगा।",
+      "count_flows": "{count} flow | {count} flows",
+      "count_keys": "{count} key | {count} keys",
+      "count_namespaces": "{count} namespace | {count} namespaces",
+      "count_paths": "{count} पथ | {count} पथ",
+      "count_resources": "{count} संसाधन | {count} संसाधन",
+      "count_types": "{count} प्रकार | {count} प्रकार",
+      "diff_preview_aria": "रिप्लेसमेंट डिफ प्रीव्यू",
+      "diff_preview_label": "diff प्रीव्यू · अभी लागू नहीं किया गया",
+      "empty_description": "flow को उनके स्रोत के भीतर खोजा जाता है। namespace फ़ाइलें उनके पथ से मेल खाती हैं, और KV व secrets उनके key नाम से। ऊपर प्रकार चुनें, फिर एक खोज लिखें।",
+      "empty_title": "flow, फ़ाइलों और key में कोई मान खोजें",
+      "error_title": "अमान्य रेगुलर एक्सप्रेशन",
+      "examples_aria": "उदाहरण क्वेरीज़",
+      "exclusion_flows_readonly": "flow — {count} केवल-पठन मिलान: आपको FLOW · UPDATE अनुमति चाहिए। | flow — {count} केवल-पठन मिलान: आपको FLOW · UPDATE अनुमति चाहिए।",
+      "exclusion_search_only": "{type} — {count} मिलान: केवल खोज, बदला नहीं जा सकता। | {type} — {count} मिलान: केवल खोज, बदले नहीं जा सकते।",
+      "exclusion_title": "{count} मिलान को सभी बदलें से बाहर रखा गया है | {count} मिलानों को सभी बदलें से बाहर रखा गया है",
+      "expand_all": "सभी विस्तृत करें",
+      "file_match_notice": "फ़ाइल पथ मेल खाया। फ़ाइल की सामग्री खोजी नहीं जाती — अंदर खोजने के लिए फ़ाइल खोलें।",
+      "files_progress_banner_failed": "namespace फ़ाइलें एक बार में एक namespace खोजी जाती हैं। {total} में से {done} पूर्ण, {failed} विफल। कुल संख्या अभी बदलती रहेगी।",
+      "files_progress_banner_ok": "namespace फ़ाइलें एक बार में एक namespace खोजी जाती हैं। {total} में से {done} पूर्ण। कुल संख्या अभी बदलती रहेगी।",
+      "flow_only_toggle_hint": "केस मिलान, पूरा शब्द और रेगुलर एक्सप्रेशन केवल flow पर लागू होते हैं। फ़ाइल पथ और key हमेशा सादे टेक्स्ट से मेल खाते हैं।",
+      "flow_section": "Flow अनुभाग",
+      "flow_update_permission": "flow · अपडेट",
+      "hide_replace": "रिप्लेस छिपाएँ",
+      "key_only_hint": "केवल key नामों को खोजता है। बदला नहीं जा सकता।",
+      "kv_match_notice": "केवल key नाम खोजा गया था। मान पढ़ने के लिए KV Store खोलें।",
+      "line_label": "लाइन {line}",
+      "match_case": "केस मिलान करें",
       "match_count": "{count} मिलान | {count} मिलान",
+      "match_nav": "{total} में से {current}",
+      "match_nav_empty": "0 में से 0",
+      "match_whole_word": "पूरे शब्द का मिलान करें",
+      "meta_created": "बनाया गया",
+      "meta_expires": "समाप्ति",
+      "meta_never": "कभी नहीं",
+      "meta_updated": "अपडेट किया गया",
+      "namespace_search_failed": "{namespace} को खोजा नहीं जा सका",
+      "namespace_search_failed_detail": "अनुरोध विफल रहा। अन्य namespace प्रभावित नहीं हैं।",
+      "next_match": "अगला मिलान",
+      "no_results_description": "namespace को विस्तृत करने का प्रयास करें, स्कोप को वापस All source पर स्विच करें, या Match case और Match whole word को बंद करें।",
+      "no_results_hidden_type": "आपके द्वारा न चुने गए {type} में {count} मिलान मिला। | आपके द्वारा न चुने गए {type} में {count} मिलान मिले।",
+      "no_results_in_types": "{types} में “{query}” के लिए कोई मिलान नहीं",
+      "no_results_title": "“{query}” के लिए कोई मिलान नहीं मिला",
       "open_flow": "flow खोलें",
+      "open_in_editor": "एडिटर में खोलें",
+      "open_in_kv": "KV Store में खोलें",
+      "open_in_secrets": "secrets में खोलें",
+      "options_aria": "खोज विकल्प",
+      "path_only_hint": "केवल फ़ाइल पथ खोजता है, सामग्री नहीं। बदला नहीं जा सकता।",
       "preview_empty": "पूर्वावलोकन के लिए एक परिणाम चुनें। स्रोत देखने के लिए परिणाम सूची में किसी flow पर क्लिक करें।",
-      "preview_error": "flow स्रोत लोड करने में विफल"
+      "preview_error": "flow स्रोत लोड करने में विफल",
+      "previous_match": "पिछला मिलान",
+      "rbac_banner": "{count} flows को बदलने से बाहर रखा गया है। आपके पास {namespace} पर पढ़ने की अनुमति है लेकिन संपादित करने की अनुमति नहीं है। उन्हें शामिल करने के लिए {permission} अनुमति के लिए namespace व्यवस्थापक से पूछें।",
+      "read_only": "केवल पढ़ने के लिए",
+      "read_only_tooltip": "आपके पास इस namespace पर पढ़ने की अनुमति है लेकिन संपादित करने की अनुमति नहीं है",
+      "replace_all": "सभी बदलें",
+      "replace_all_in_flow": "flow में सभी बदलें",
+      "replace_all_tooltip": "संपादन योग्य flows में सभी मिलानों को बदलें",
+      "replace_apply_failed": "रिप्लेस लागू करने में विफल रहा",
+      "replace_apply_skipped": "{count} flow छोड़ा गया ({reasons}) | {count} flows छोड़े गए ({reasons})",
+      "replace_apply_success": "{count} flow अपडेट किया गया | {count} flows अपडेट किए गए",
+      "replace_aria": "इससे बदलें",
+      "replace_placeholder": "बदलें…",
+      "replace_preview_failed": "रिप्लेस प्रीव्यू की गणना करने में विफल रहा",
+      "replace_scope_hint": "बदलना केवल flow पर लागू होता है। बाकी तीन प्रकार केवल खोज के लिए हैं।",
+      "replace_skip_reason": {
+        "INVALID_FLOW": "अमान्य हो जाएगा",
+        "NOT_FOUND": "अब मौजूद नहीं है",
+        "NO_CHANGE": "पहले से ही अप टू डेट",
+        "NO_MATCH": "मिलान अब नहीं मिला",
+        "READ_ONLY": "केवल पढ़ने के लिए",
+        "UNKNOWN": "सेव नहीं किया जा सका"
+      },
+      "replace_this": "बदलें",
+      "replace_this_match": "इस मिलान को बदलें",
+      "retry_namespace": "इस namespace को फिर से आज़माएं",
+      "retry_search": "पुनः प्रयास खोजें",
+      "scope": "स्कोप",
+      "scope_all": "सभी स्रोत",
+      "scope_inputs": "इनपुट",
+      "scope_tasks": "Tasks",
+      "scope_triggers": "Triggers",
+      "search_aria": "flow स्रोत खोजें",
+      "search_failed": "खोज विफल रही",
+      "search_in": "खोजें इसमें",
+      "search_placeholder": "flow स्रोत, फ़ाइल पथ, KV और secret key खोजें…",
+      "searching_namespace": "{namespace} खोजा जा रहा है",
+      "secret_match_notice": "secret के मान कभी भी खोज द्वारा नहीं पढ़े जाते। केवल key नामों की तुलना की जाती है।",
+      "select_all_in_flow": "{namespace} / {id} में सभी मिलान चुनें",
+      "select_all_types": "सभी प्रकार चुनें",
+      "select_match": "लाइन {line} पर मिलान चुनें",
+      "show_replace": "बदलें दिखाएँ",
+      "summary": "{flows} flows में {matches} मिलान",
+      "summary_cross": "{types} में {resources} में {matches}",
+      "tag_keys_only_never": "केवल key — मान कभी नहीं दिखाए या खोजे जाते",
+      "tag_keys_only_values": "केवल key — मान खोजे नहीं जाते",
+      "tag_paths_only": "केवल पथ — फ़ाइल सामग्री खोजी नहीं जाती",
+      "tag_search_only": "केवल खोज — बदला नहीं जाता",
+      "tag_source_code": "स्रोत कोड",
+      "truncated_flows": "{total} में से पहले {shown} मिलान दिखाए जा रहे हैं। सभी बदलें केवल दिखाए गए मिलानों पर लागू होता है, पहले क्वेरी सीमित करें।",
+      "truncated_type": "{total} में से पहले {shown}",
+      "turn_off": "{option} बंद करें",
+      "type_files": "Namespace फ़ाइलें",
+      "type_flows": "Flows",
+      "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "{type} को खोजा नहीं जा सका",
+      "type_secrets": "Secrets",
+      "use_regex": "रेगुलर एक्सप्रेशन का उपयोग करें",
+      "value_never_shown": "कभी नहीं दिखाया या खोजा गया",
+      "value_withheld": "नहीं दिखाया गया"
     },
     "open source": "ओपन सोर्स",
     "pricing": "मूल्य निर्धारण",
     "license": "लाइसेंस",
+    "block_editor": {
+      "add_error_task": "त्रुटि task जोड़ें",
+      "add_switch_case": "केस जोड़ें",
+      "adding_to": "{section} में नई एंट्री",
+      "add_task": "Task जोड़ें",
+      "add_to_lane": "{lane} में जोड़ें",
+      "add_trigger": "ट्रिगर जोड़ें",
+      "all_apps": "सभी ऐप्स",
+      "app_actions": "{count} कार्य",
+      "block_deleted": "{name} हटा दिया गया",
+      "card_aria_label": "ब्लॉक {id} प्रकार का {type}",
+      "canvas_aria": "flow ब्लॉक्स कैनवास",
+      "close_all": "सभी टैब बंद करें",
+      "cluster_collapse_aria": "{id} को संक्षिप्त करें",
+      "cluster_expand_aria": "{id} ({count} tasks) का विस्तार करें",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "context: flow",
+        "context_selected": "context: {name}",
+        "delete": "{name} हटाएँ",
+        "duplicate": "{name} की डुप्लिकेट बनाएँ",
+        "goto": "{section} पर जाएं",
+        "group_block": "यह ब्लॉक",
+        "group_flow": "flow",
+        "group_goto": "जाएँ",
+        "group_insert": "डालें",
+        "group_types": "Task प्रकार",
+        "insert_after": "{name} के बाद डालें",
+        "insert_at_end": "Tasks के अंत में डालें",
+        "insert_before": "{name} से पहले डालें",
+        "insert_in_section": "{section} में डालें",
+        "insert_kind": "{kind} डालें",
+        "no_match": "कोई मिलान नहीं",
+        "open": "{name} खोलें",
+        "save": "flow सेव करें",
+        "search_placeholder": "एक कमांड टाइप करें या किसी task को खोजें…",
+        "title": "कमांड मेनू"
+      },
+      "configure": "कॉन्फ़िगर करें",
+      "confirm_delete": {
+        "message": "यह {name} को flow से हटा देता है। आप अभी भी तुरंत बाद में पूर्ववत कर सकते हैं।",
+        "message_group": "यह समूह {name} और उसके अंदर की सभी चीज़ों को हटा देता है। आप तुरंत बाद भी पूर्ववत कर सकते हैं।",
+        "title": "क्या आप {name} को हटाना चाहते हैं?"
+      },
+      "declared_outputs": "घोषित outputs",
+      "delete": "हटाएँ",
+      "depends_on_label": "निर्भर करता है",
+      "depends_on_placeholder": "टास्क चुनें…",
+      "depth_pill": "गहराई {depth}",
+      "drag_reorder": "पुनः क्रमित करने के लिए खींचें",
+      "duplicate": "डुप्लिकेट",
+      "empty": "अभी तक कोई task या trigger नहीं है। शुरू करने के लिए अपना पहला task जोड़ें।",
+      "empty_add_hint": "या tasks खोजने के लिए / दबाएँ",
+      "empty_add_lead": "{label} जोड़ने के लिए क्लिक करें",
+      "error_task_noun": "एक त्रुटि task",
+      "execution_context": "एक्सेक्यूशन कॉन्टेक्स्ट",
+      "filter_data": "उपलब्ध डेटा फ़िल्टर करें…",
+      "flow_inputs": "flow inputs",
+      "flowable_todo": "नेस्टेड task (एडिटिंग जल्द आ रही है)",
+      "footer": {
+        "canvas": "कैनवास",
+        "close_panel": "पैनल बंद करें",
+        "command_menu": "कमांड मेन्यू",
+        "editing": "ब्लॉक संपादित कर रहा है",
+        "inserting": "डाल रहा है",
+        "selected": "चयनित · {name}"
+      },
+      "inline_add": "{label} जोड़ें",
+      "inputs": "इनपुट्स",
+      "inputs_sub": "आप यहां जिस डेटा का उपयोग कर सकते हैं",
+      "inserting_into": "{section} में डाल रहा है",
+      "kbd_add": "जोड़ें",
+      "kbd_close": "बंद करें",
+      "kbd_navigate": "नेविगेट करें",
+      "lane_case": "केस: {key}",
+      "lane_defaults": "डिफ़ॉल्ट",
+      "lane_else": "अन्यथा",
+      "lane_empty": "{lane} में कोई task नहीं",
+      "lane_errors": "त्रुटियाँ",
+      "lane_finally": "अंत में",
+      "lane_tasks": "Tasks",
+      "lane_then": "फिर",
+      "loading_plugins": "प्लगइन्स लोड हो रहे हैं...",
+      "move_down": "नीचे ले जाएँ",
+      "move_up": "ऊपर ले जाएँ",
+      "nav_rail_empty": "अभी तक कोई task या trigger नहीं है।",
+      "nav_rail_title": "रूपरेखा",
+      "nested_count": "{count} नेस्टेड tasks",
+      "no_data_matches": "आपके फ़िल्टर से कुछ भी मेल नहीं खाता",
+      "no_documentation": "इस task के लिए कोई दस्तावेज़ नहीं है",
+      "no_recent": "अभी तक कोई हालिया task प्रकार नहीं हैं",
+      "no_task_results": "कोई मिलान करने वाले task प्रकार नहीं।",
+      "open_details": "विवरण खोलें",
+      "open_in_split": "स्प्लिट में खोलें",
+      "output": "आउटपुट",
+      "output_sub": "यह task क्या उत्पन्न करता है",
+      "pick_task_type": "एक task प्रकार चुनें",
+      "picker_more_results": "{count} और, अपनी खोज को परिष्कृत करें",
+      "plugin_default": "डिफ़ॉल्ट: {value}",
+      "plugin_default_tooltip": "flow के pluginDefaults से डिफ़ॉल्ट मान",
+      "required_missing": "आवश्यक फ़ील्ड सेट नहीं है",
+      "save_blocked": {
+        "message": "सेव करने से पहले त्रुटियों को ठीक करें।",
+        "title": "flow को सहेजा नहीं जा सकता"
+      },
+      "search_task_placeholder": "किसी task को खोजें या उसका वर्णन करें…",
+      "shortcuts": {
+        "add_after": "चयन के बाद एक ब्लॉक डालें",
+        "add_before": "चयन से पहले एक ब्लॉक डालें",
+        "add_task": "कर्सर पर तुरंत डालें",
+        "clear": "चयन बंद करें / साफ़ करें",
+        "collapse_expand": "संकुचित करें / विस्तृत करें",
+        "command_palette": "कमांड मेनू (प्रासंगिक)",
+        "group_edit": "संपादित करें",
+        "group_global": "वैश्विक",
+        "group_insert": "डालें",
+        "group_navigate": "नेविगेट करें",
+        "move_between": "चयन को ले जाएँ",
+        "open": "चयनित ब्लॉक खोलें",
+        "open_split": "चयनित ब्लॉक को स्प्लिट व्यू में खोलें",
+        "or": "या",
+        "reorder": "ऊपर/नीचे पुनर्व्यवस्थित करें",
+        "save": "flow सेव करें",
+        "step_into": "समूह में विस्तार/स्टेप इन करें",
+        "step_out": "कोलैप्स करें / पैरेंट पर स्टेप आउट करें",
+        "title": "कीबोर्ड शॉर्टकट",
+        "toggle": "यह मदद",
+        "undo": "पूर्ववत करें"
+      },
+      "split_into": "{count}-कॉलम दृश्य",
+      "split_view": "स्प्लिट व्यू",
+      "switch_case_key_placeholder": "नया केस key",
+      "switch_case_key_taken": "केस {key} पहले से मौजूद है",
+      "tab_apps": "ऐप द्वारा",
+      "tab_recent": "हाल ही के",
+      "tab_suggested": "सुझाया गया",
+      "task_noun": "एक task",
+      "then_required_warning": "फिर शाखा आवश्यक है",
+      "trigger_noun": "एक trigger",
+      "undo": "पूर्ववत करें",
+      "upstream_outputs": "अपस्ट्रीम आउटपुट",
+      "open_in_tabs": "टैब में खोलें",
+      "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
+    },
+    "blocks": "ब्लॉक",
+    "flow_description": "flow विवरण",
+    "flow_no_description": "कोई विवरण नहीं। अपने flow YAML में एक विवरण जोड़ें ताकि यह दस्तावेज़ित हो सके कि यह क्या करता है।",
+    "split_horizontal": "क्षैतिज रूप से विभाजित करें",
+    "split_vertical": "लंबवत विभाजित करें",
     "pwa": {
       "install_title": "Kestra इंस्टॉल करें",
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",

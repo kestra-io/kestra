@@ -405,6 +405,7 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - **A Gradle build fails with no visible cause:** run `./gradlew clean` and retry once. When it repeats, read the actual error instead of retrying again.
 - **Tests fail on connection errors:** the databases are not running. `docker compose -f docker-compose-ci.yml up -d`.
 - **The frontend build fails on dependency resolution:** check the Node and npm versions against `package.json` engines before touching anything else.
+- **`npm install` fails with `EBADENGINE`:** the UI workspaces require npm >= 11.7 and set `engine-strict=true`. Older npm mislabels the `sass`/`sass-embedded` platform binaries as peer dependencies and rewrites `package-lock.json` on every install. Install the pinned npm (`npm i -g npm@11.16.0`) or use the Node release named in `ui/.nvmrc`.
 - **The UI builds but the app never mounts:** module federation, so the cause is usually workspace resolution rather than the change itself. Verify against a running instance rather than against the dev server.
 - **Debug logging:** `--logging.level.io.kestra=DEBUG`.
 

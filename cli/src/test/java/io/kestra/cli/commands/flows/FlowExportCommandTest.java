@@ -25,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlowExportCommandTest {
     @Test
     void shouldExportOnlyTheRequestedNamespace(@TempDir Path exportDirectory) throws Exception {
-        // holds 3 flows in `io.kestra.cli` plus 1 in `io.kestra.outsider`, which must not be exported
+        // holds 3 flows in `io.kestra.cli`, 1 in the child namespace `io.kestra.cli.sub`, and 1 in the
+        // unrelated `io.kestra.outsider` which must not be exported
         URL directory = FlowExportCommandTest.class.getClassLoader().getResource("flows");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
@@ -53,11 +54,16 @@ class FlowExportCommandTest {
                     .as("the flows of the requested namespace are exported")
                     .contains("io.kestra.cli-first.yml", "io.kestra.cli-second.yml", "io.kestra.cli-third.yml");
 
-                // Other test classes sharing the H2 database may have added more `io.kestra.cli` flows, so
-                // only the namespace of every entry can be asserted, not the exact entry list.
+                assertThat(entries)
+                    .as("the child namespaces are exported too, as in the namespace-scoped flow list of the UI")
+                    .contains("io.kestra.cli.sub-child.yml");
+
+                // Other test classes sharing the H2 database may have added more `io.kestra.cli` flows, so only
+                // the namespace of every entry can be asserted, not the exact entry list. Entries are named
+                // `<namespace>-<id>.yml`, so the trailing `[-.]` keeps a sibling such as `io.kestra.clix` out.
                 assertThat(entries)
                     .as("--namespace filters the export instead of being silently ignored")
-                    .allSatisfy(entry -> assertThat(entry).startsWith("io.kestra.cli"));
+                    .allSatisfy(entry -> assertThat(entry).matches("io\\.kestra\\.cli[-.].*"));
             }
 
             // a namespace holding no flow exports an empty archive rather than the whole tenant

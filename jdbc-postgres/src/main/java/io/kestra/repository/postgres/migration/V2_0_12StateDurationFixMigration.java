@@ -20,14 +20,14 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @PostgresRepositoryEnabled
-public class V2_0_11StateDurationFixMigration extends AbstractSQLMigrationScript {
+public class V2_0_12StateDurationFixMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0.11-fix-state-duration";
+    private static final String SCRIPT_ID = "2.0.12-fix-state-duration";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0_11StateDurationFixMigration(final DataSource dataSource) {
+    public V2_0_12StateDurationFixMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -43,11 +43,11 @@ public class V2_0_11StateDurationFixMigration extends AbstractSQLMigrationScript
 
     @Override
     public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/2.0.11-fix-state-duration-postgres.sql");
+        return MigrationScript.checksumOfResources("/migrations/2.0.12-fix-state-duration-postgres.sql");
     }
 
     @Override
     public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/2.0.11-fix-state-duration-postgres.sql");
+        executeSqlResource(dataSource, "/migrations/2.0.12-fix-state-duration-postgres.sql");
     }
 }

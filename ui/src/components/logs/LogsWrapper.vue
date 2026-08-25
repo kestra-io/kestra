@@ -381,13 +381,19 @@
         logsStore.downloadLogs(params)
             .then((result) => {
                 downloadOpen.value = false
-                if (result.truncated) {
-                    toast.warning(result.total !== undefined
-                        ? t("logs_download_truncated", {
-                            downloaded: result.downloaded,
-                            skipped: result.total - result.downloaded,
-                        })
-                        : t("logs_download_capped", {downloaded: result.downloaded}))
+                if (result.outcome === "complete") return
+
+                if (result.downloaded === 0) {
+                    toast.error(t("logs_download_failed"))
+                } else if (result.outcome === "failed") {
+                    toast.warning(t("logs_download_partial", {downloaded: result.downloaded}))
+                } else if (result.outcome === "truncated" && result.total !== undefined) {
+                    toast.warning(t("logs_download_truncated", {
+                        downloaded: result.downloaded,
+                        skipped: result.total - result.downloaded,
+                    }))
+                } else {
+                    toast.warning(t("logs_download_capped", {downloaded: result.downloaded}))
                 }
             })
             .finally(() => (downloading.value = false))

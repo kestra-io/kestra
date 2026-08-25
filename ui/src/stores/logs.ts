@@ -27,13 +27,22 @@ const DOWNLOAD_PAGE_SIZE = 1000
  *  tab down with it. The caller is told when an export stops here. */
 const DOWNLOAD_MAX_LINES = 50000
 
+/**
+ * Why an export ended.
+ *
+ * - `complete`  — everything the filters match was written.
+ * - `truncated` — the backend's total says lines are missing, so the count is known.
+ * - `capped`    — {@link DOWNLOAD_MAX_LINES} stopped it and no total is available to quantify it.
+ * - `failed`    — a page request was refused; whatever had been collected is kept.
+ */
+export type LogsDownloadOutcome = "complete" | "truncated" | "capped" | "failed";
+
 export interface LogsDownloadResult {
-    /** Lines actually written to the file. */
+    /** Lines actually written to the file; 0 means no file was produced. */
     downloaded: number;
     /** Lines the filters match. Undefined under cursor pagination, which reports no total. */
     total?: number;
-    /** True when the export stopped short of everything the filters match. */
-    truncated: boolean;
+    outcome: LogsDownloadOutcome;
 }
 
 export interface Log{
@@ -144,8 +153,22 @@ export const useLogsStore = defineStore("logs", () => {
         let page = 1
         let cursor: string | undefined = undefined
 
+        let failed = false
+
         for (;;) {
-            const response = await LogsAPI.searchLogs(toSearchParams({...options, page, size}, cursor))
+            let response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>
+            try {
+                response = await LogsAPI.searchLogs(toSearchParams({...options, page, size}, cursor))
+            } catch (error) {
+                // Deep offset paging can be refused outright rather than returning a short page:
+                // Elasticsearch caps `from + size` at `index.max_result_window` (10 000 by
+                // default), so page 11 fails. Keep the pages already collected and say the export
+                // is incomplete, instead of discarding all of them.
+                console.error("Log export stopped early", error)
+                failed = true
+                break
+            }
+
             const results = (response.results ?? []) as unknown as Log[]
             reportedTotal = response.total ?? reportedTotal
             collected.push(...results)
@@ -166,20 +189,28 @@ export const useLogsStore = defineStore("logs", () => {
         }
 
         const lines = collected.slice(0, DOWNLOAD_MAX_LINES)
-        const text = formatLogsAsText(lines.slice().reverse())
-        Utils.downloadUrl(
-            window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
-            logsDownloadFilename(new Date()),
-        )
-
-        // `cappedOut` stands on its own: cursor pagination reports no total, so comparing against
-        // it would report a capped export as complete — the very silence this fix removes.
-        const matchedTotal = reportedTotal === undefined ? undefined : Math.max(reportedTotal, collected.length)
-        return {
-            downloaded: lines.length,
-            total: matchedTotal,
-            truncated: cappedOut || (matchedTotal !== undefined && lines.length < matchedTotal),
+        // Nothing collected means no file: an empty download is the unusable artefact this
+        // whole change exists to stop producing.
+        if (lines.length > 0) {
+            const text = formatLogsAsText(lines.slice().reverse())
+            Utils.downloadUrl(
+                window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
+                logsDownloadFilename(new Date()),
+            )
         }
+
+        const matchedTotal = reportedTotal === undefined ? undefined : Math.max(reportedTotal, collected.length)
+
+        // A known total is authoritative: deriving truncation from `cappedOut` alone reported a
+        // complete 50 000-line export as truncated with 0 lines skipped. `cappedOut` only has to
+        // stand on its own under cursor pagination, which reports no total at all.
+        const outcome: LogsDownloadOutcome = failed
+            ? "failed"
+            : matchedTotal !== undefined
+                ? (lines.length < matchedTotal ? "truncated" : "complete")
+                : (cappedOut ? "capped" : "complete")
+
+        return {downloaded: lines.length, total: matchedTotal, outcome}
     }
 
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]

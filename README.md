@@ -89,6 +89,8 @@ Deploy Kestra on Google Cloud Infrastructure Manager using [our Terraform module
 
 ### Deploy on RepoCloud
 
+Deploy Kestra on RepoCloud with one click:
+
 [![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/Kestra/)
 
 ### Get Started Locally in 5 Minutes

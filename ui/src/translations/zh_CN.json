@@ -1888,6 +1888,7 @@
           "test": "测试"
         },
         "contextRemoved": "已从上下文移除 {type} {id}。",
+        "modelChanged": "已切换到 {model}。",
         "toolResult": {
           "detail": "详情",
           "error": "{tool} 失败",

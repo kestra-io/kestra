@@ -1888,6 +1888,7 @@
           "test": "тест"
         },
         "contextRemoved": "Удалено {type} {id} из контекста.",
+        "modelChanged": "Переключено на {model}.",
         "toolResult": {
           "detail": "Подробности",
           "error": "{tool} FAILED",

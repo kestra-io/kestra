@@ -1888,6 +1888,7 @@
           "test": "परीक्षण"
         },
         "contextRemoved": "संदर्भ से {type} {id} हटा दिया गया।",
+        "modelChanged": "{model} पर स्विच किया गया।",
         "toolResult": {
           "detail": "विवरण",
           "error": "{tool} विफल रहा",

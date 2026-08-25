@@ -1888,6 +1888,7 @@
           "test": "prueba"
         },
         "contextRemoved": "Eliminado {type} {id} del contexto.",
+        "modelChanged": "Cambiado a {model}.",
         "toolResult": {
           "detail": "Detalles",
           "error": "El {tool} falló",

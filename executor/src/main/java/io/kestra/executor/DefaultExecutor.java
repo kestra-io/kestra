@@ -43,6 +43,7 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
 import io.kestra.executor.configuration.ExecutorConfiguration;
@@ -550,7 +551,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
                                 // (manually via the API, or by a kill) still has a pending delay. Resuming it a
                                 // second time would re-generate the Pause outputs without the onResume inputs and
                                 // wipe them, so we skip the delay unless the task run is still paused.
-                                Optional<TaskRun> pausedTaskRun = execution.findTaskRunByTaskRunIdIfPresent(executionDelay.getTaskRunId());
+                                // The task run is resolved the same way markAs() does below — it may live in a loop
+                                // sub-execution — so the guard cannot drop a delay and leave its task run paused forever.
+                                Optional<TaskRun> pausedTaskRun = executionService.findExecutionWithTaskRun(execution, executionDelay.getTaskRunId())
+                                    .map(ExecutionWithTaskRun::taskRun);
                                 if (pausedTaskRun.isEmpty() || pausedTaskRun.get().getState().getCurrent() != State.Type.PAUSED) {
                                     log.debug(
                                         "Skipping the expired pause delay of the task run '{}' of the execution '{}': it is no longer paused.",

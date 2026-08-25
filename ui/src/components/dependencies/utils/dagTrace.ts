@@ -1,9 +1,9 @@
-export interface TraceEdge {
+interface TraceEdge {
     source: string;
     target: string;
 }
 
-export interface Trace {
+interface Trace {
     /** The node itself plus every transitive ancestor and descendant. */
     nodes: Set<string>;
     /** Keys of the edges joining those nodes, from `traceEdgeKey`. */
@@ -14,11 +14,9 @@ export interface Trace {
 export const traceEdgeKey = (source: string, target: string): string => `${source}\0${target}`
 
 /**
- * Everything upstream and downstream of one node, transitively. Null when there is nothing.
- *
- * `opaque` marks nodes the walk may reach but must not pass through. Flow nodes are opaque:
- * one flow writes many unrelated assets, so traversing it would join every asset it touches
- * into one chain and light the whole graph from any starting point.
+ * Everything upstream and downstream of one node, transitively; null when there is nothing.
+ * `opaque` marks nodes the walk may reach but not pass through, so one flow's many unrelated
+ * assets do not join into a single chain.
  */
 export function computeTrace(
     edges: TraceEdge[],
@@ -40,8 +38,7 @@ export function computeTrace(
     const nodes = new Set<string>([id])
     const traced = new Set<string>()
 
-    // A visited set per direction, not one shared: sharing lets a node found downstream block
-    // the upstream walk through it, hiding genuine ancestors in a cyclic graph.
+    // A visited set per direction: a shared one lets a node found downstream block the upstream walk in a cyclic graph.
     const walk = (adjacency: Map<string, string[]>, forward: boolean): void => {
         const visited = new Set<string>([id])
         const queue = [id]

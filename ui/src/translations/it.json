@@ -2028,6 +2028,7 @@
         },
         "recent_runs": "Esecuzioni recenti",
         "group_by": "Raggruppa per",
+        "groups": "Gruppi ({n})",
         "group_none": "Nessun raggruppamento",
         "group_dataset": "Dataset",
         "ungrouped": "Non raggruppato"

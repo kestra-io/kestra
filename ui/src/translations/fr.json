@@ -2028,6 +2028,7 @@
         },
         "recent_runs": "Exécutions récentes",
         "group_by": "Grouper par",
+        "groups": "Groupes ({n})",
         "group_none": "Pas de regroupement",
         "group_dataset": "Jeu de données",
         "ungrouped": "Non groupé"

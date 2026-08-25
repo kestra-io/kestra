@@ -2028,6 +2028,7 @@
         },
         "recent_runs": "最近运行",
         "group_by": "分组依据",
+        "groups": "分组（{n}）",
         "group_none": "无分组",
         "group_dataset": "数据集",
         "ungrouped": "未分组"

@@ -1,26 +1,17 @@
 import {onBeforeUnmount, onMounted, nextTick, watch, ref, computed} from "vue"
-
+import type {Ref, ComputedRef} from "vue"
+import type {RouteParams} from "vue-router"
+import {useI18n} from "vue-i18n"
+import {v4 as uuid} from "uuid"
+import {State, cssVar} from "@kestra-io/design-system"
+import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import {useCoreStore} from "../../../stores/core"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {useMiscStore} from "override/stores/misc"
-
-import {useI18n} from "vue-i18n"
-
-import type {Ref, ComputedRef} from "vue"
-
-import type {RouteParams} from "vue-router"
-
-import {v4 as uuid} from "uuid"
-
-import {State, cssVar} from "@kestra-io/design-system"
-import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
-
-import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
+import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "../utils/types"
 import type {Types, Node, Edge, Element} from "../utils/types"
-
-// ─── CSS variable maps ────────────────────────────────────────────────────────
 
 const NODE_BG = {
     default:  "--ks-dependencies-node-background-default",
@@ -45,21 +36,14 @@ const EDGE_COLOR = {
     hovered:  "--ks-dependencies-edge-hovered",
 } as const
 
-// ─── Asset node icon ──────────────────────────────────────────────────────────
-
-// Material Design "package-variant-closed" glyph (viewBox 0 0 24 24), used to
-// mark asset nodes in the dependency graph. ECharts graph symbols are drawn on a
-// canvas and cannot mount a Vue <KsIcon>, so the icon is embedded as an SVG
-// `image://` symbol instead — the only way to render a glyph inside a graph node.
+// Material Design "package-variant-closed" glyph: ECharts symbols are drawn on a canvas and
+// cannot mount a Vue component, so the icon is embedded as an SVG `image://` symbol.
 const ASSET_ICON_PATH =
     "M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L10.11,5.22L16,8.61L17.96,7.5L12,4.15M6.04,7.5L12,10.85L13.96,9.75L8.08,6.35L6.04,7.5M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"
 
 /**
- * Builds an ECharts `image://` symbol for an asset node: a filled circle matching
- * the node's current background/border colours with the packageVariantClosed glyph
- * centred inside. Colours are baked into the SVG because ECharts ignores itemStyle
- * for image symbols; the symbol is rebuilt whenever graphNodes recomputes
- * (selection / filter / theme change), so state and theme stay in sync.
+ * ECharts `image://` symbol for an asset node. Colours are baked into the SVG because ECharts
+ * ignores itemStyle for image symbols; graphNodes rebuilds it on every state or theme change.
  */
 function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string): string {
     const svg =
@@ -74,8 +58,6 @@ function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string
 /** Which canvas the asset view shows. The chart only ever renders "force"; DagCanvas owns "dag". */
 export type LayoutMode = "force" | "dag"
 
-// ─── KsGraph instance contract ────────────────────────────────────────────────
-
 interface KsGraphRef {
     zoomIn(): void;
     zoomOut(): void;
@@ -84,33 +66,21 @@ interface KsGraphRef {
     getEchartsInstance(): unknown;
 }
 
-// ─── Node size helpers ────────────────────────────────────────────────────────
-
-/**
- * Computes per-node symbol sizes based on edge connectivity.
- * Size = baseSize + (connectedEdges * scale), capped at maxSize.
- */
 function buildEdgeCounts(elements: Element[]): Map<string, number> {
     const counts = new Map<string, number>()
-    elements.forEach((el) => {
-        if (el.data.type !== EDGE) return
-        const edge = el.data as Edge
+    edgesOf(elements).forEach((edge) => {
         counts.set(edge.source, (counts.get(edge.source) ?? 0) + 1)
         counts.set(edge.target, (counts.get(edge.target) ?? 0) + 1)
     })
     return counts
 }
 
+/** Symbol size grows with connectivity, capped so hubs stay readable. */
 function nodeSize(id: string, edgeCounts: Map<string, number>, base = 20, scale = 2, max = 100): number {
     return Math.min(base + (edgeCounts.get(id) ?? 0) * scale, max)
 }
 
-// ─── Element transformation ───────────────────────────────────────────────────
-
-/**
- * Transforms an API response containing nodes and edges into
- * dependency Element[] with the given subtype.
- */
+/** Transforms an API response of nodes and edges into dependency Element[] with the given subtype. */
 export function transformResponse(
     response: { nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[] },
     subtype: Types,
@@ -135,20 +105,7 @@ export function transformResponse(
     ]
 }
 
-// ─── Main composable ──────────────────────────────────────────────────────────
-
-/**
- * Manages a KsGraph-based dependency visualization inside a Vue component.
- *
- * @param graphRef    - Template ref pointing to the KsGraph component instance.
- * @param subtype     - Dependency subtype: FLOW, EXECUTION, NAMESPACE, or ASSET.
- * @param initialNodeID - ID of the node to preselect after the first render.
- * @param params      - Vue Router params (id, namespace, flowId).
- * @param isTesting   - When true, uses generated fixture data instead of the API.
- * @param fetchAssetDependencies - Custom async fetcher for ASSET subtypes.
- * @param groupOf     - Field the graph is grouped by, used to isolate one group.
- * @param dagView     - True only for the asset view; gates its canvas click/dblclick behaviour.
- */
+/** Manages a KsGraph-based dependency visualization inside a Vue component. */
 export function useDependencies(
     graphRef: Ref<KsGraphRef | null>,
     subtype: Types = FLOW,
@@ -173,18 +130,16 @@ export function useDependencies(
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined)
 
-    // chartNodes/chartEdges are set once after the initial render and never changed.
-    // All subsequent style updates (selection, filter, theme) are applied imperatively
-    // via applyStylesToChart(), which uses layout:"none" + stored positions so that
-    // ECharts never re-runs the force simulation.
+    const getChart = (): Record<string, any> | null =>
+        graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+
+    // chartNodes/chartEdges are frozen after the initial render; applyStylesToChart() then updates
+    // styles imperatively with layout:"none" so ECharts never re-runs the force simulation.
     const chartNodes = ref<KsGraphNode[] | null>(null)
     const chartEdges = ref<KsGraphEdge[] | null>(null)
     /** Positions read back from ECharts once the force simulation has settled. */
     const capturedPositions = ref(new Map<string, {x: number; y: number}>())
-    /**
-     * Kept in step with the user's own panning through graphRoam. Only focusNode and fitGraph
-     * write it; anything else re-asserting it would yank the viewport back.
-     */
+    /** Only focusNode and fitGraph write it; anything else re-asserting it would yank the viewport back. */
     const viewState = ref<{zoom: number; center?: [number, number]}>({zoom: 1})
 
     /** Set when a node is double-clicked, so the view can open that node's own page. */
@@ -194,21 +149,16 @@ export function useDependencies(
     const tableFilterIDs = ref<Set<string> | null>(null)
     const isolatedIDs = ref<Set<string> | null>(null)
 
-    /**
-     * The group the chip row is pinned to. It lives here rather than in the view so a canvas
-     * click can clear the isolation and the chip's active state together.
-     */
+    /** The pinned group, owned here so a canvas click can clear the isolation and the chip state together. */
     const activeGroup = ref<string | undefined>(undefined)
 
     /** Restricts the graph to one group; undefined shows all of them. */
     const isolateGroup = (key?: string): void => {
-        // Only undefined means "no group": the ungrouped bucket is a real, selectable group
-        // whose key is the empty string, so a falsy check isolated it into a no-op.
+        // Only undefined means "no group": the ungrouped bucket is a real group keyed by the empty string.
         if (key === undefined) { isolatedIDs.value = null; return }
-        const match = elements.value.data
-            .filter((el): el is {data: Node} => el.data.type === NODE)
-            .filter(({data}) => (laneOf.value?.(data.id) ?? "") === key)
-            .map(({data}) => data.id)
+        const match = nodesOf(elements.value.data)
+            .filter((node) => (laneOf.value?.(node.id) ?? "") === key)
+            .map((node) => node.id)
         isolatedIDs.value = match.length ? new Set(match) : null
     }
 
@@ -222,11 +172,8 @@ export function useDependencies(
         isolateGroup(undefined)
     }
 
-    /**
-     * Both filters narrow the graph independently, so they intersect. They are kept apart
-     * because the table rewrites its own set on every keystroke, which would otherwise
-     * silently clear a group the user had isolated.
-     */
+    // Kept apart and intersected: the table rewrites its set on every keystroke, which would
+    // otherwise silently clear a group the user had isolated.
     const shownNodeIDs = computed<Set<string> | null>(() => {
         const [table, isolated] = [tableFilterIDs.value, isolatedIDs.value]
         if (!table) return isolated
@@ -241,24 +188,14 @@ export function useDependencies(
         const accessor = groupOf.value
         if (!accessor) return undefined
 
-        const byID = new Map(
-            elements.value.data
-                .filter((el): el is {data: Node} => el.data.type === NODE)
-                .map(({data}) => [data.id, accessor(data)]),
-        )
-
+        const byID = new Map(nodesOf(elements.value.data).map((node) => [node.id, accessor(node)]))
         return (id: string) => byID.get(id)
     })
-
-
-    // ─── Derived graph topology ───────────────────────────────────────────────
 
     function neighborIDs(anchorID: string | undefined): Set<string> {
         if (!anchorID) return new Set()
         const neighbors = new Set<string>([anchorID])
-        elements.value.data.forEach((el) => {
-            if (el.data.type !== EDGE) return
-            const edge = el.data as Edge
+        edgesOf(elements.value.data).forEach((edge) => {
             if (edge.source === anchorID || edge.target === anchorID) {
                 neighbors.add(edge.source)
                 neighbors.add(edge.target)
@@ -270,9 +207,7 @@ export function useDependencies(
     function connectedEdgeIDs(anchorID: string | undefined): Set<string> {
         if (!anchorID) return new Set()
         const ids = new Set<string>()
-        elements.value.data.forEach((el) => {
-            if (el.data.type !== EDGE) return
-            const edge = el.data as Edge
+        edgesOf(elements.value.data).forEach((edge) => {
             if (edge.source === anchorID || edge.target === anchorID) ids.add(edge.id)
         })
         return ids
@@ -284,33 +219,23 @@ export function useDependencies(
     /** Set of edge IDs connected to the selected node. */
     const selectedEdgeIDs: ComputedRef<Set<string>> = computed(() => connectedEdgeIDs(selectedNodeID.value))
 
-    // ─── ECharts data (reactive, rebuilt on state changes) ───────────────────
-    //
-    // Hover highlighting is handled entirely by ECharts' built-in
-    // emphasis.focus = "adjacency" (set in KsGraph series config).
-    // Each node/edge carries emphasis.itemStyle (hover colour) and
-    // blur.itemStyle (= same as base itemStyle) so that selection colours
-    // are preserved when another node is hovered.
-
+    // Hover highlighting is ECharts' own emphasis.focus:"adjacency"; blur.itemStyle mirrors the
+    // base style so selection colours survive while another node is hovered.
     const graphNodes: ComputedRef<KsGraphNode[]> = computed(() => {
         void miscStore.theme // recompute cssVar calls when theme switches
         const edgeCounts   = buildEdgeCounts(elements.value.data)
         const hasSelection = selectedNodeID.value !== undefined
         const hasFilter    = shownNodeIDs.value !== null
-        // Icon colour for asset nodes — theme-adaptive so it stays legible on the
-        // asset background in both light and dark themes.
         const assetIconColor = cssVar("--ks-text-primary")
 
-        const nodes = elements.value.data
-            .filter((el): el is {data: Node} => el.data.type === NODE)
-            .map(({data: node}) => {
+        return nodesOf(elements.value.data)
+            .map((node) => {
                 const isSelected = node.id === selectedNodeID.value
                 const isNeighbor = hasSelection && selectedNeighborIDs.value.has(node.id) && !isSelected
                 const isFaded    = hasSelection && !isSelected && !isNeighbor
                 const isDimmed   = hasFilter && !shownNodeIDs.value!.has(node.id)
                 const isAsset    = node.metadata.subtype === ASSET
 
-                // For EXECUTION subtype, use the execution state color when available.
                 const execState  = subtype === EXECUTION
                     ? (node.metadata as {state?: string}).state
                     : undefined
@@ -328,9 +253,7 @@ export function useDependencies(
                     bgColor     = execColor ?? cssVar(NODE_BG.selected)
                     borderColor = execColor ?? cssVar(NODE_BORDER.selected)
                 } else if (isFaded) {
-                    // A filter is a scope the user set; selecting a node is a focus inside it.
-                    // Focus must not erase scope, so a node that is merely not adjacent to the
-                    // selection keeps its colour and only softens.
+                    // Selection is a focus inside the filter's scope, so an in-scope node keeps its colour and only softens.
                     const inScope = hasFilter && shownNodeIDs.value!.has(node.id)
                     const scopeBG = isAsset ? NODE_BG.assets : NODE_BG.default
                     const scopeBorder = isAsset ? NODE_BORDER.assets : NODE_BORDER.default
@@ -353,11 +276,8 @@ export function useDependencies(
                     id:         node.id,
                     name:       node.id,
                     symbolSize: nodeSize(node.id, edgeCounts),
-                    // Asset nodes carry the packageVariantClosed glyph inside the node;
-                    // other nodes keep the default ECharts circle symbol.
                     ...(isAsset ? {symbol: assetNodeSymbol(bgColor, borderColor, assetIconColor)} : {}),
                     itemStyle:  baseItemStyle,
-                    // Hover colour – applied by ECharts emphasis.focus:"adjacency"
                     emphasis: {
                         itemStyle: {
                             color:       cssVar(NODE_BG.hovered),
@@ -367,14 +287,11 @@ export function useDependencies(
                         },
                         label: {show: true, color: cssVar("--ks-text-primary")},
                     },
-                    // Blur = same as base so selection colours survive when another node is hovered.
-                    // Label uses full opacity so text doesn't dim when a neighbour is hovered.
                     blur: {
                         itemStyle: baseItemStyle,
                         label:     {color: cssVar("--ks-text-primary")},
                     },
-                    // Asset ids are long enough that a few dozen printed at once is a pile, so
-                    // the asset graph reveals them on hover.
+                    // Asset ids are long, so the asset graph reveals labels on hover only.
                     label: {
                         show:            subtype !== ASSET,
                         formatter:       node.flow,
@@ -385,8 +302,6 @@ export function useDependencies(
                     },
                 }
             })
-
-        return nodes
     })
 
     const graphEdges: ComputedRef<KsGraphEdge[]> = computed(() => {
@@ -394,25 +309,19 @@ export function useDependencies(
         const hasSelection = selectedNodeID.value !== undefined
         const hasFilter    = shownNodeIDs.value !== null
 
-        return elements.value.data
-            .filter((el): el is {data: Edge} => el.data.type === EDGE)
-            .map(({data: edge}) => {
+        // For EXECUTION subtype, selected edges take the selected node's state color.
+        const selectedState = subtype === EXECUTION
+            ? (nodesOf(elements.value.data).find((node) => node.id === selectedNodeID.value)?.metadata as {state?: string} | undefined)?.state
+            : undefined
+        const selectedColor = selectedState ? State.getStateColor(selectedState) : undefined
+
+        return edgesOf(elements.value.data)
+            .map((edge) => {
                 const isSelected   = selectedEdgeIDs.value.has(edge.id)
                 const isFaded      = hasSelection && !isSelected
                 const isEdgeDimmed = hasFilter &&
                     (!shownNodeIDs.value!.has(edge.source) || !shownNodeIDs.value!.has(edge.target))
-
-                // For EXECUTION subtype, color selected edges with the source node's state color.
-                const execState    = subtype === EXECUTION && isSelected
-                    ? (() => {
-                        const src = elements.value.data.find(
-                            (el): el is {data: Node} =>
-                                el.data.type === NODE && el.data.id === selectedNodeID.value,
-                        )
-                        return (src?.data.metadata as {state?: string})?.state
-                    })()
-                    : undefined
-                const execColor    = execState ? State.getStateColor(execState) : undefined
+                const execColor    = isSelected ? selectedColor : undefined
 
                 let color: string
                 let opacity = 1
@@ -446,11 +355,9 @@ export function useDependencies(
             })
     })
 
-    // ─── Selection ────────────────────────────────────────────────────────────
-
     /** Mirrors a hover in the side table onto the canvas, and clears it when it leaves. */
     const highlightNode = (id?: Node["id"]): void => {
-        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+        const chart = getChart()
         if (!chart) return
         chart.dispatchAction({type: "downplay", seriesIndex: 0})
         if (id) chart.dispatchAction({type: "highlight", seriesIndex: 0, name: id})
@@ -460,51 +367,28 @@ export function useDependencies(
         if (!id) return
         const pos = capturedPositions.value.get(id)
         if (!pos) return
-        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+        const chart = getChart()
         if (!chart) return
 
         // Clear any stuck hover emphasis (mouseout may not fire when clicking a table row).
         chart.dispatchAction({type: "downplay", seriesIndex: 0})
-        // For ECharts graph series, `center` is in data coordinates.
-        // Setting center=[pos.x, pos.y] places the selected node at canvas centre.
-        // DAG cards are sized in pixels, so zooming past 1:1 only pushes them apart.
+        // `center` is in data coordinates, so this places the selected node at canvas centre.
         viewState.value = {zoom: 1.8, center: [pos.x, pos.y]}
         applyView(chart)
     }
 
-    // Trigger focus after all reactive updates (applyStylesToChart) have flushed.
-    // Only fires after initial capture (capturedPositions populated), so the initial
-    // auto-selection on mount is handled by captureAndFocusWhenReady instead.
-    // Selecting never moves the viewport; only the initial auto-selection centres the graph.
-
-    /**
-     * Selects a node by ID, updating the visual selection state reactively.
-     */
     const selectNode = (id: Node["id"]): void => {
-        const exists = elements.value.data.some(
-            (el): el is {data: Node} => el.data.type === NODE && el.data.id === id,
-        )
-        if (!exists) return
+        if (!nodesOf(elements.value.data).some((node) => node.id === id)) return
         selectedNodeID.value = id
     }
 
-    // ─── Imperative style updates (post-freeze) ───────────────────────────────
-
-    /**
-     * Reads post-simulation node positions from ECharts' internal data store
-     * and caches them in capturedPositions so subsequent style-only updates can
-     * use layout:"none" and avoid re-running the force simulation.
-     */
-    /** Also re-frames: the initial auto-selection zooms in, so clearing must undo that. */
-    /**
-     * Both lenses: clearing only the isolation leaves a table filter dimming the graph, and
-     * clearing isolatedIDs without activeGroup desyncs the chip row from what is isolated.
-     */
+    /** Drops both lenses together: clearing only one desyncs the chip row from what is dimmed. */
     const clearFilters = (): void => {
         tableFilterIDs.value = null
         clearGroup()
     }
 
+    // Also re-frames: the initial auto-selection zooms in, so clearing must undo that.
     const clearSelection = (): void => {
         selectedNodeID.value = undefined
         clearFilters()
@@ -514,7 +398,7 @@ export function useDependencies(
     /** Camera sync for every view; only the asset view also gets bare-canvas click-to-clear. */
     const bindCanvasClicks = (): void => {
         requestAnimationFrame(() => {
-            const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+            const chart = getChart()
             const zr = chart?.getZr?.()
             if (!zr || zr.ksDependenciesBound) return
             zr.ksDependenciesBound = true
@@ -537,18 +421,17 @@ export function useDependencies(
         })
     }
 
+    /** Reads post-simulation positions so style-only updates can use layout:"none". */
     const capturePositions = (): void => {
-        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+        const chart = getChart()
         if (!chart) return
         try {
             const data = chart.getModel?.()?.getSeriesByIndex?.(0)?.getData?.()
             if (!data) return
             const positions = new Map<string, {x: number; y: number}>()
             for (let i = 0; i < data.count(); i++) {
-                // Use getName() — ECharts graph nodes are identified by `name`, which we set to node.id (UUID).
-                // getId() returns an ECharts-internal synthetic ID that won't match our UUID keys.
+                // getName(), not getId(): graph nodes are identified by `name`, which carries node.id.
                 const name   = data.getName(i)
-                // ECharts graph series returns layout as [x, y] array, not {x, y} object.
                 const layout = data.getItemLayout(i) as [number, number] | {x: number; y: number} | undefined
                 const x = Array.isArray(layout) ? layout[0] : layout?.x
                 const y = Array.isArray(layout) ? layout[1] : layout?.y
@@ -558,15 +441,10 @@ export function useDependencies(
             }
             if (positions.size > 0) capturedPositions.value = positions
         } catch {
-            // Internal ECharts API unavailable — style updates will skip layout:none.
+            // Internal ECharts API unavailable: style updates will skip layout:"none".
         }
     }
 
-    /**
-     * Applies the latest graphNodes/graphEdges styles directly to the ECharts
-     * instance, bypassing the frozen reactive props. Uses layout:"none" with
-     * stored positions so the force simulation never re-runs.
-     */
     const applyView = (chart: Record<string, any>): void => {
         chart.setOption({series: [{
             type: "graph",
@@ -575,8 +453,9 @@ export function useDependencies(
         }]}, false)
     }
 
+    /** Applies the latest styles directly to ECharts with layout:"none", bypassing the frozen props. */
     const applyStylesToChart = (): void => {
-        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+        const chart = getChart()
         if (!chart) return
         bindCanvasClicks()
         const positions    = capturedPositions.value
@@ -593,28 +472,16 @@ export function useDependencies(
         applyStylesToChart()
     })
 
-    // ─── Data loading ─────────────────────────────────────────────────────────
-
     /**
-     * Polls until ECharts has completed the initial force layout and node positions
-     * are available, then centres the view on the selected node (or fits all nodes
-     * for NAMESPACE graphs where no node is preselected).
-     *
-     * Why polling instead of listening for the `finished` event:
-     * `chartNodes` is set synchronously, which schedules a Vue microtask flush.
-     * That flush updates KsGraph's props, VChart calls setOption, and ECharts
-     * queues its own RAF for rendering.  `captureAndFocusWhenReady` is called
-     * right afterwards and queues *our* RAF.  Because both RAFs are in the same
-     * browser frame, ECharts renders (and fires `finished`) before our first poll
-     * fires — so the event is missed and positions are never captured.
-     * Polling `capturePositions()` every frame avoids that race: positions become
-     * non-empty one frame after ECharts renders, and we capture them reliably.
+     * Polls until the force layout has settled, then centres on the selected node or fits the graph.
+     * Polling, not the `finished` event: ECharts renders in the same frame as our first RAF, so the
+     * event fires before a listener could be attached and positions would never be captured.
      */
     const captureAndFocusWhenReady = (): void => {
         let attempts = 0
-        const MAX_ATTEMPTS = 120 // ~2s at 60fps — bail in environments where ECharts never initialises (e.g. Storybook stubs).
+        const MAX_ATTEMPTS = 120 // About 2s at 60fps, bailing where ECharts never initialises (e.g. Storybook stubs).
         const poll = () => {
-            const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+            const chart = getChart()
             if (!chart) {
                 if (++attempts >= MAX_ATTEMPTS) return
                 requestAnimationFrame(poll)
@@ -662,8 +529,7 @@ export function useDependencies(
                 )
                 elements.value = {data: result.data ?? [], count: result.count}
             }
-        } catch (error) {
-            console.error(`Failed to load ${subtype} dependencies:`, error)
+        } catch {
             elements.value = {data: [], count: 0}
         }
 
@@ -683,51 +549,34 @@ export function useDependencies(
         if (subtype === EXECUTION) nextTick(() => openSSE())
     })
 
-    // ─── SSE (live execution state updates) ──────────────────────────────────
-
     const sse = ref()
-    const messages = ref<Record<string, unknown>[]>([])
 
-    watch(
-        messages,
-        (newMessages) => {
-            if (!newMessages?.length) return
+    /** Applies a live execution-state update to its node, replacing the element so Vue picks up the change. */
+    const applyExecutionUpdate = (message: Record<string, any>): void => {
+        const nodeId = `${message.tenantId}_${message.namespace}_${message.flowId}`
+        const idx = elements.value.data.findIndex(
+            (el): el is {data: Node} => el.data.type === NODE && el.data.id === nodeId,
+        )
+        if (idx === -1) return
 
-            const message = newMessages[newMessages.length - 1] as Record<string, any>
-            const nodeId  = `${message.tenantId}_${message.namespace}_${message.flowId}`
-
-            const idx = elements.value.data.findIndex(
-                (el): el is {data: Node} =>
-                    el.data.type === NODE && el.data.id === nodeId,
-            )
-
-            if (idx === -1) return
-
-            const el = elements.value.data[idx] as {data: Node}
-            const state = message.state.current as string
-
-            // Replace the element to ensure Vue picks up the change.
-            const updated = {
-                data: {
-                    ...el.data,
-                    metadata: {...el.data.metadata, id: message.executionId, state},
-                },
-            }
-            elements.value.data.splice(idx, 1, updated)
-        },
-        {deep: true},
-    )
+        const el = elements.value.data[idx] as {data: Node}
+        const updated = {
+            data: {
+                ...el.data,
+                metadata: {...el.data.metadata, id: message.executionId, state: message.state.current as string},
+            },
+        }
+        elements.value.data.splice(idx, 1, updated)
+    }
 
     const openSSE = () => {
         if (subtype !== EXECUTION) return
         closeSSE()
         sse.value = executionsStore.followExecutionDependencies({id: params.id as string, expandAll: true})
         sse.value.onmessage = (event: MessageEvent) => {
-            const isEnd = event?.lastEventId === "end-all"
-            if (isEnd) closeSSE()
+            if (event?.lastEventId === "end-all") closeSSE()
             const message = JSON.parse(event.data)
-            if (!message.state) return
-            messages.value.push(message)
+            if (message.state) applyExecutionUpdate(message)
         }
         sse.value.onerror = () => {
             coreStore.message = {
@@ -736,9 +585,8 @@ export function useDependencies(
                 message: t("something_went_wrong.loading_execution"),
             }
 
-            // Close on error: EventSource auto-reconnects unless explicitly closed,
-            // and each reconnect leaks a server-side SSE connection (Netty direct
-            // buffers) over time. See kestra-io/kestra#16982.
+            // Close on error: EventSource auto-reconnects unless explicitly closed, and each
+            // reconnect leaks a server-side SSE connection. See kestra-io/kestra#16982.
             closeSSE()
         }
     }
@@ -749,16 +597,13 @@ export function useDependencies(
         sse.value = undefined
     }
 
-    // No resize handling of our own: KsEchart passes `autoresize`, whose ResizeObserver
-    // already covers window resizes and splitter drags alike.
+    // No resize handling of our own: KsEchart's `autoresize` already covers window resizes and splitter drags.
     onBeforeUnmount(() => {
         if (subtype === EXECUTION) closeSSE()
     })
 
-    // ─── Public API ───────────────────────────────────────────────────────────
-
     const fitGraph = (): void => {
-        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+        const chart = getChart()
         const positions = capturedPositions.value
         if (!chart || positions.size === 0) { graphRef.value?.fit(); return }
         const xs = [...positions.values()].map(p => p.x)
@@ -783,13 +628,11 @@ export function useDependencies(
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
-        /** Live computed nodes — reflects selection/filter/theme changes; used by applyStylesToChart and tests. */
+        /** Live computed nodes and edges, reflecting selection, filter and theme changes. */
         graphNodes,
-        /** Live computed edges — reflects selection/filter/theme changes; used by applyStylesToChart and tests. */
         graphEdges,
-        /** Frozen snapshot for KsGraph :nodes — set once after initial render. */
+        /** Frozen snapshots for KsGraph props, set once after the initial render. */
         chartNodes,
-        /** Frozen snapshot for KsGraph :edges — set once after initial render. */
         chartEdges,
         /** Intersection of the table filter and any isolated group; dims everything outside it. */
         shownNodeIDs,
@@ -819,7 +662,7 @@ export function useDependencies(
             clearSelection,
             fit: fitGraph,
             highlightShown: (nodeIDs: string[]) => {
-                const allNodeCount = elements.value.data.filter((el) => el.data.type === NODE).length
+                const allNodeCount = nodesOf(elements.value.data).length
                 tableFilterIDs.value = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs)
             },
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {

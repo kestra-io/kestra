@@ -2028,6 +2028,7 @@
         },
         "recent_runs": "최근 실행",
         "group_by": "그룹화 기준",
+        "groups": "그룹 ({n})",
         "group_none": "그룹화 없음",
         "group_dataset": "데이터셋",
         "ungrouped": "그룹 해제됨"

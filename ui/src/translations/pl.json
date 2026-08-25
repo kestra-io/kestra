@@ -2028,6 +2028,7 @@
         },
         "recent_runs": "Ostatnie uruchomienia",
         "group_by": "Grupuj według",
+        "groups": "Grupy ({n})",
         "group_none": "Bez grupowania",
         "group_dataset": "Zbiór danych",
         "ungrouped": "Bez grupy"

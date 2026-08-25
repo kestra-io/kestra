@@ -1,28 +1,44 @@
 <template>
-    <div class="node-details">
-        <KsButton size="small" class="details-back" @click="emit('close')">
+    <div class="details">
+        <KsButton
+            link
+            size="small"
+            class="back"
+            @click="emit('close')"
+        >
             <ArrowLeft />
-            {{ $t("back") }}
+            <span class="label">{{ $t("back") }}</span>
         </KsButton>
 
-        <header class="details-heading">
-            <KsText size="large" tag="h3" class="details-title">
+        <header class="heading">
+            <KsText
+                size="large"
+                tag="h3"
+                class="title"
+            >
                 {{ shortName }}
             </KsText>
-            <span v-if="status" :class="['details-status', `status-${status}`]">
+            <span v-if="status" :class="['state', status]">
+                <KsIcon size="xs" :color="statusColor">
+                    <component :is="statusIcon" />
+                </KsIcon>
                 {{ $t(`dependency.dag.status.${status}`) }}
             </span>
         </header>
 
-        <Link :node :subtype="node.metadata.subtype ?? subtype" />
+        <Link :node :subtype="node.metadata.subtype" />
 
-        <dl class="details-grid">
+        <dl class="grid">
             <template v-for="row in rows" :key="row.label">
-                <dt class="details-label">
+                <dt class="label">
                     {{ row.label }}
                 </dt>
-                <dd class="details-value">
-                    <KsDateAgo v-if="row.date" :inverted="true" :date="row.value" />
+                <dd :class="['value', {mono: row.mono}]">
+                    <KsDateAgo
+                        v-if="row.date"
+                        inverted
+                        :date="row.value"
+                    />
                     <template v-else>
                         {{ row.value }}
                     </template>
@@ -30,20 +46,27 @@
             </template>
         </dl>
 
-        <section v-if="runs.length" class="details-runs">
-            <h4 class="details-label">
+        <section v-if="runs.length" class="runs">
+            <h4 class="label">
                 {{ $t("dependency.dag.recent_runs") }}
             </h4>
 
             <RouterLink
                 v-for="run in runs"
                 :key="run.executionId"
-                class="run-row"
+                class="run"
                 :to="executionRoute(run)"
             >
-                <KsExecutionStatus v-if="run.state" :status="run.state" size="small" />
-                <span class="run-date">
-                    <KsDateAgo :inverted="true" :date="run.created" />
+                <KsExecutionStatus
+                    v-if="run.state"
+                    :status="run.state"
+                    size="small"
+                />
+                <span class="date">
+                    <KsDateAgo
+                        inverted
+                        :date="run.created"
+                    />
                 </span>
             </RouterLink>
         </section>
@@ -54,19 +77,15 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-
     import {stringUtils} from "@kestra-io/design-system"
-
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
-
     import Link from "./Link.vue"
-    import {normalizeStatus} from "../utils/assetStatus"
+    import {normalizeStatus, statusIconOf, statusColorOf} from "../utils/assetStatus"
     import {ASSET} from "../utils/types"
     import type {Types, Node, AssetRun} from "../utils/types"
 
     const props = defineProps<{
         node: Node;
-        subtype: Types;
     }>()
 
     const emit = defineEmits<{close: []}>()
@@ -86,20 +105,39 @@
 
     const shortName = computed(() => stringUtils.afterLastDot(props.node.flow) || props.node.flow)
 
-    const status = computed(() => (metadata.value.subtype === ASSET ? normalizeStatus(metadata.value.status) : undefined))
+    const status = computed(() =>
+        (metadata.value.subtype === ASSET ? normalizeStatus(metadata.value.status) : undefined),
+    )
+    const statusIcon = computed(() => statusIconOf(status.value))
+    const statusColor = computed(() => statusColorOf(status.value))
 
-    // All three are load-bearing: the execution route needs them, and a partial row resolves
-    // to a broken link. The id would also collide as a v-for key.
     const runs = computed(() => (metadata.value.runs ?? [])
         .filter((run) => run.executionId && run.namespace && run.flowId))
 
     const rows = computed(() => [
-        {label: t("dependency.dag.last_update"), value: metadata.value.updated, date: true},
-        // Trailing segment on the type, matching the card; the producer keeps its full FQCN.
-        {label: t("type"), value: metadata.value.assetType ? stringUtils.afterLastDot(metadata.value.assetType) : undefined},
-        {label: t("plugins.names"), value: metadata.value.producer},
-        {label: t("dependency.dag.system"), value: metadata.value.system},
-        {label: t("namespace"), value: props.node.namespace},
+        {
+            label: t("dependency.dag.last_update"),
+            value: metadata.value.updated,
+            date: true,
+        },
+        {
+            label: t("type"),
+            value: metadata.value.assetType ? stringUtils.afterLastDot(metadata.value.assetType) : undefined,
+        },
+        {
+            label: t("plugins.names"),
+            value: metadata.value.producer,
+            mono: true,
+        },
+        {
+            label: t("dependency.dag.system"),
+            value: metadata.value.system,
+        },
+        {
+            label: t("namespace"),
+            value: props.node.namespace,
+            mono: true,
+        },
     ].filter((row) => Boolean(row.value)))
 
     const executionRoute = (run: AssetRun) => ({
@@ -114,106 +152,125 @@
 </script>
 
 <style scoped lang="scss">
-/* One type scale for the whole panel: labels 12 secondary, values 13 primary. */
-.node-details {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-4);
-    padding: var(--ks-spacing-4);
-    font-size: var(--ks-font-size-sm);
-    line-height: 1.5;
-}
+    .details {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-4);
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.5;
 
-.details-back {
-    align-self: flex-start;
-}
+        .back {
+            align-self: flex-start;
+            color: var(--ks-text-secondary);
 
-.details-heading {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--ks-spacing-3);
-}
+            &:hover {
+                color: var(--ks-text-primary);
+            }
 
-.details-title {
-    margin: 0;
-    word-break: break-all;
-}
+            .label {
+                margin-left: var(--ks-spacing-1);
+            }
+        }
 
-.details-status {
-    flex-shrink: 0;
-    font-size: var(--ks-font-size-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-}
+        .heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-3);
+        }
 
-.status-fresh {
-    color: var(--ks-status-success);
-}
+        .title {
+            margin: 0;
+            word-break: break-all;
+        }
 
-.status-stale {
-    color: var(--ks-status-warning);
-}
+        .state {
+            --ks-details-status: var(--ks-status-neutral);
 
-.status-failed {
-    color: var(--ks-status-error);
-}
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+            gap: var(--ks-spacing-2);
+            padding: var(--ks-spacing-1) var(--ks-spacing-3);
+            border: 1px solid color-mix(in srgb, var(--ks-details-status) 40%, transparent);
+            border-radius: var(--ks-radius-lg);
+            background: color-mix(in srgb, var(--ks-details-status) 12%, transparent);
+            color: var(--ks-details-status);
+            font-size: var(--ks-font-size-xs);
+            font-weight: 600;
+            text-transform: uppercase;
 
-.status-unknown {
-    color: var(--ks-text-secondary);
-}
+            &.fresh {
+                --ks-details-status: var(--ks-status-success);
+            }
 
-.details-grid {
-    display: grid;
-    grid-template-columns: 8rem 1fr;
-    gap: var(--ks-spacing-2) var(--ks-spacing-3);
-    margin: 0;
-    padding-top: var(--ks-spacing-3);
-    border-top: 1px solid var(--ks-border-subtle);
-}
+            &.stale {
+                --ks-details-status: var(--ks-status-warning);
+            }
 
-.details-label {
-    margin: 0;
-    font-size: var(--ks-font-size-xs);
-    font-weight: 400;
-    color: var(--ks-text-secondary);
-}
+            &.failed {
+                --ks-details-status: var(--ks-status-error);
+            }
+        }
 
-.details-value {
-    margin: 0;
-    font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-primary);
-    word-break: break-all;
-}
+        .grid {
+            display: grid;
+            grid-template-columns: 8rem 1fr;
+            gap: var(--ks-spacing-2) var(--ks-spacing-3);
+            margin: 0;
+            padding-top: var(--ks-spacing-3);
+            border-top: 1px solid var(--ks-border-subtle);
+        }
 
-.details-runs {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-1);
-    padding-top: var(--ks-spacing-3);
-    border-top: 1px solid var(--ks-border-subtle);
-}
+        .label {
+            margin: 0;
+            font-size: var(--ks-font-size-xs);
+            font-weight: 400;
+            color: var(--ks-text-secondary);
+        }
 
-.details-runs .details-label {
-    padding-bottom: var(--ks-spacing-1);
-}
+        .value {
+            margin: 0;
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-primary);
+            word-break: break-all;
 
-.run-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ks-spacing-3);
-    padding: var(--ks-spacing-2);
-    border-radius: var(--ks-radius-sm);
-    font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-primary);
-}
+            &.mono {
+                font-family: var(--ks-font-family-mono);
+                font-size: var(--ks-font-size-xs);
+            }
+        }
 
-.run-row:hover {
-    background: var(--ks-bg-hover);
-}
+        .runs {
+            display: flex;
+            flex-direction: column;
+            gap: var(--ks-spacing-1);
+            padding-top: var(--ks-spacing-3);
+            border-top: 1px solid var(--ks-border-subtle);
 
-.run-date {
-    color: var(--ks-text-secondary);
-}
+            .label {
+                padding-bottom: var(--ks-spacing-1);
+            }
+        }
+
+        .run {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-3);
+            padding: var(--ks-spacing-2);
+            border-radius: var(--ks-radius-sm);
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-primary);
+
+            &:hover {
+                background: var(--ks-bg-hover);
+            }
+
+            .date {
+                color: var(--ks-text-secondary);
+            }
+        }
+    }
 </style>

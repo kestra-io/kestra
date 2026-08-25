@@ -540,6 +540,7 @@
   "dependency|controls|zoom_out": "bc7b631a689b",
   "dependency|dag|force": "b85f5fabf97d",
   "dependency|dag|group_by": "956a51f6b098",
+  "dependency|dag|groups": "3ba6cf9bfa76",
   "dependency|dag|group_dataset": "4411e525721e",
   "dependency|dag|group_none": "a638b9f67ff0",
   "dependency|dag|last_update": "b36e466c6ea3",

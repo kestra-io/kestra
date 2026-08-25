@@ -2028,6 +2028,7 @@
         },
         "recent_runs": "Letzte Runs",
         "group_by": "Gruppieren nach",
+        "groups": "Gruppen ({n})",
         "group_none": "Keine Gruppierung",
         "group_dataset": "Dataset",
         "ungrouped": "Ungruppiert"

@@ -57,13 +57,10 @@
         --kel-alert-description-font-size: var(--ks-font-size-xs);
         --kel-alert-title-with-description-font-size: var(--ks-font-size-sm);
 
-        /* Element Plus centres the row, which parks the icon in the middle of a wrapped message
-           instead of beside the first line - 7px low at two lines, 14px at three. Anchor the row to
-           the top so the icon stays on line one however far the text wraps. */
+        /* Element Plus centres the row, which leaves the icon mid-block once the message wraps. */
         align-items: flex-start;
 
-        /* Font size of whichever element renders line one, used below to centre the icon against it.
-           Three cases, since Element Plus shrinks the title once a description joins it. */
+        /* Font size of whichever element renders line one; the title shrinks when a description is present. */
         --ks-alert-first-line-font-size: var(--kel-alert-title-font-size);
 
         &:has(.kel-alert__title.with-description) {
@@ -75,8 +72,6 @@
         }
 
          .kel-alert__title {
-            /* Matches the description so line one has the same box in both, and gives wrapped lines
-               the leading that `line-height: 1` denied them. */
             line-height: var(--ks-line-height-base);
         }
 
@@ -85,8 +80,6 @@
         }
 
         .kel-alert__icon {
-            /* Keeps the icon's own box at its natural size so a single-line alert is exactly as tall
-               as before; `align-items` above is what puts it on the first line. */
             height: var(--kel-alert-icon-size);
             align-self: flex-start;
 
@@ -97,8 +90,7 @@
             }
 
             .material-design-icon > .material-design-icon__svg {
-                /* The icon box is taller than one line of text, so raise the glyph by half the
-                   difference to land it on the centre of line one rather than of its own box. */
+                /* Raise the glyph by half its overhang so it centres on line one, not on its own taller box. */
                 bottom: calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2);
             }
         }

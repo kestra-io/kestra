@@ -45,11 +45,23 @@ public class KVController {
     @Inject
     protected TenantService tenantService;
 
+    /**
+     * Maps a {@link KVEntry} field name to its {@code kv_metadata} column.
+     *
+     * <p>Sort properties are otherwise turned into columns by camel-to-snake conversion, which
+     * yields no column at all for these four and fails the query. Only {@code updateDate} is
+     * reachable from the UI today, but the whole set is mapped so adding a sortable column cannot
+     * reintroduce the same failure.
+     */
+    private static final Map<String, String> SORT_COLUMNS = Map.of(
+        "key", "name",
+        "revision", "version",
+        "creationDate", "created",
+        "updateDate", "updated"
+    );
+
     private String sortMapper(String key) {
-        if (key != null && key.equals("key")) {
-            return "name";
-        }
-        return key;
+        return key == null ? null : SORT_COLUMNS.getOrDefault(key, key);
     }
 
     @ExecuteOn(TaskExecutors.IO)

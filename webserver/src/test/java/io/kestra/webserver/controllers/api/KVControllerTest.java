@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -75,6 +76,33 @@ class KVControllerTest {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * Sort properties are turned into columns by camel-to-snake conversion, which produced
+     * `update_date`, `creation_date` and `revision` — none of which exist on `kv_metadata`. The
+     * query then failed with a 500 and the UI rendered an empty store.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"key", "namespace", "description", "expirationDate", "creationDate", "updateDate", "revision"})
+    void shouldSortAllKeysByEveryEntryField(String field) throws IOException {
+        // Given: two keys in one namespace
+        String namespace = TestsUtils.randomNamespace();
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataStateStore);
+        kvStore.put("a-key", new KVValueAndMetadata(new KVMetadata("first", null), "a-value"));
+        kvStore.put("b-key", new KVValueAndMetadata(new KVMetadata("second", null), "b-value"));
+
+        // When / Then: sorting on any KVEntry field resolves to a real column, in both directions
+        for (String direction : List.of("asc", "desc")) {
+            PagedResults<KVEntry> res = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/kv?size=10&page=1&sort=" + field + ":" + direction),
+                Argument.of(PagedResults.class, KVEntry.class)
+            );
+
+            assertThat(res.getResults())
+                .as("sorting by %s:%s should not fail", field, direction)
+                .hasSize(2);
+        }
+    }
+
     @Test
     void listAllKeys() throws IOException {
         String namespace = TestsUtils.randomNamespace();

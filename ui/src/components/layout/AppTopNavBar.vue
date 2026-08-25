@@ -154,13 +154,18 @@
     // Bookmark labels are stored as resolved text, so one created in another language keeps it.
     // Visiting the page is the only moment a freshly translated label exists, so refresh it here;
     // the store leaves a label the user typed alone.
+    //
+    // `route` and the topNav store update in different flushes: the route lands first, the page's
+    // own TopNavBar writes the title after. Without gating, the previous page's label was written
+    // onto the newly visited bookmark and only corrected by the write that followed. `flush: post`
+    // plus an owner check means the pair always describes the same page.
     watch(
-        [bookmarked, derivedBookmarkLabel],
-        ([isBookmarked, label]) => {
-            if (!isBookmarked || !label) return
+        [bookmarked, derivedBookmarkLabel, () => store.ownerId],
+        ([isBookmarked, label, ownerId]) => {
+            if (!isBookmarked || !label || ownerId === null) return
             bookmarksStore.refreshLabel({path: currentFavURI.value, label})
         },
-        {immediate: true},
+        {immediate: true, flush: "post"},
     )
 </script>
 

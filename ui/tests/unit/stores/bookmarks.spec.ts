@@ -64,7 +64,9 @@ describe("bookmarks store", () => {
         expect(store.pages.map(p => p.label)).toEqual(["Flows", "Executions"])
     })
 
-    it("should be a no-op when the label is unchanged", () => {
+    // Element identity only — the array is reassigned either way, and `useStorage` is what
+    // skips the unchanged write.
+    it("should keep the entry's object identity when the label is unchanged", () => {
         const store = useBookmarksStore()
         store.add({path: "/flows", label: "Flows"})
         const before = store.pages[0]
@@ -72,5 +74,17 @@ describe("bookmarks store", () => {
         store.refreshLabel({path: "/flows", label: "Flows"})
 
         expect(store.pages[0]).toBe(before)
+    })
+
+    // Confirming the inline editor without typing must not freeze the label's language.
+    it("should not mark a bookmark custom when the rename changes nothing", () => {
+        const store = useBookmarksStore()
+        store.add({path: "/flows", label: "Flows"})
+
+        store.rename({path: "/flows", label: "Flows"})
+
+        expect(store.pages[0].custom).toBeUndefined()
+        store.refreshLabel({path: "/flows", label: "Ablaeufe"})
+        expect(store.pages[0].label).toBe("Ablaeufe")
     })
 })

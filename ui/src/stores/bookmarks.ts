@@ -27,15 +27,22 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
     }
 
     function rename(page: Page) {
-        pages.value = pages.value.map(p =>
-            p.path === page.path ? {...p, label: page.label, custom: true} : p,
-        )
+        pages.value = pages.value.map(p => {
+            // Confirming the editor without changing anything must not freeze the label's
+            // language: only a label the user actually altered counts as theirs.
+            if (p.path !== page.path || p.label === page.label) return p
+
+            return {...p, label: page.label, custom: true}
+        })
     }
 
     /**
      * Re-derives a bookmark's label from the page it points at. Labels are stored as resolved
      * text — they are composed from a translated title and breadcrumb — so a bookmark otherwise
      * keeps the language it was created in forever. A label the user typed is left alone.
+     *
+     * The unchanged-label check keeps the entry's object identity, which matters for consumers
+     * comparing entries; `useStorage` already skips an unchanged write on its own.
      */
     function refreshLabel(page: Page) {
         pages.value = pages.value.map(p =>

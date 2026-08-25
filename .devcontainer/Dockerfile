@@ -31,6 +31,29 @@ ENV SHELL=/bin/zsh
 # --------------------------------------
 
 # --------------------------------------
+# Docker
+# --------------------------------------
+# Add Docker's official GPG key:
+RUN install -m 0755 -d /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+RUN chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+RUN tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+# Install the Docker packages.
+RUN apt update && apt install -y \ 
+  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# --------------------------------------
+
+# --------------------------------------
 # Java
 # --------------------------------------
 ARG OS_ARCHITECTURE
@@ -62,8 +85,13 @@ ENV KESTRA_PLUGINS_PATH="/workspaces/kestra/local/plugins"
 # --------------------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh \
   && bash nodesource_setup.sh && apt install -y nodejs
-# Increases JavaScript heap memory to 4GB to prevent heap out of error during startup
+  # Increases JavaScript heap memory to 4GB to prevent heap out of error during startup
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Install required dependencies for playwright as e2e tests rely on it.
+RUN npx playwright install-deps
+# Install browsers for playwright
+RUN npx playwright install
 # --------------------------------------
 
 # --------------------------------------

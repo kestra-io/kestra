@@ -1,0 +1,13 @@
+id: subflow-kill-child-parent
+namespace: io.kestra.tests
+
+tasks:
+  - id: call_child
+    type: io.kestra.plugin.core.flow.Subflow
+    flowId: subflow-kill-child-of-parent
+    namespace: io.kestra.tests
+    wait: true
+    transmitFailed: true
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: Subflow was successful

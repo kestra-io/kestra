@@ -982,6 +982,14 @@ public class JdbcExecutor implements ExecutorInterface {
                         newExecution = executionService.killParentTaskruns(taskRun, newExecution);
                     }
 
+                    // A killed subflow taskrun must also stop the parent execution, otherwise the executor
+                    // would still be RUNNING when computing next tasks and would schedule the successors.
+                    if (taskRun.getState().getCurrent() == State.Type.KILLED
+                        && newExecution.getState().getCurrent() != State.Type.KILLING
+                        && !newExecution.getState().isTerminated()) {
+                        newExecution = newExecution.withState(State.Type.KILLING);
+                    }
+
                     current = current.withExecution(newExecution, "joinSubflowExecutionResult");
 
                     // send metrics on parent taskRun terminated

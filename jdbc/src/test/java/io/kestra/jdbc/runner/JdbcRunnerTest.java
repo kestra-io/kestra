@@ -183,4 +183,30 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     protected void forEachItemNoWait() throws Exception {
         forEachItemCaseTest.forEachItemNoWait("foreachitemnowait");
     }
+
+    @Test
+    @LoadFlows(
+        value = { "flows/valids/subflow-kill-child-parent.yaml",
+            "flows/valids/subflow-kill-child-of-parent.yaml" },
+        tenantId = "subflowkillchild"
+    )
+    void killSubflowExecutionStopsParent() throws Exception {
+        Execution parent = runnerUtils.runOneUntilRunning(
+            "subflowkillchild", NAMESPACE, "subflow-kill-child-parent", null, null, Duration.ofSeconds(30)
+        );
+        Execution child = runnerUtils.awaitFlowExecution(
+            e -> e.getState().isRunning(), "subflowkillchild", NAMESPACE, "subflow-kill-child-of-parent",
+            Duration.ofSeconds(30)
+        );
+
+        runnerUtils.killExecution(child);
+
+        Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), parent);
+
+        assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        // the task following the killed subflow must never be scheduled
+        assertThat(terminated.getTaskRunList()).hasSize(1);
+        assertThat(terminated.getTaskRunList().getFirst().getTaskId()).isEqualTo("call_child");
+        assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+    }
 }

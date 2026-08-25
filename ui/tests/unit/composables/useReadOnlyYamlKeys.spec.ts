@@ -131,11 +131,18 @@ describe("violatedKeys", () => {
  * Minimal stand-in for the slice of Monaco the composable touches. Edits are
  * applied by line range, which is what makes the "keep the rest of the edit"
  * behaviour observable.
+ *
+ * The undo stack is modelled because the guard's correctness depends on it: an
+ * edit made with `pushEditOperations` joins the element already open, while one
+ * made with `executeEdits` opens a new element of its own. Undo pops one element
+ * and, like Monaco, notifies the content listeners afterwards.
  */
 function editorDouble(initial: string) {
     let lines = initial.split("\n")
     const listeners: Array<() => void> = []
     let painted: unknown[] = []
+    /** Snapshot taken before each undo element; last entry is the newest. */
+    const undoStack: string[] = []
 
     const model = {
         getValue: () => lines.join("\n"),
@@ -146,6 +153,26 @@ function editorDouble(initial: string) {
             endColumn: (lines[lines.length - 1]?.length ?? 0) + 1,
         }),
         getLineMaxColumn: (line: number) => (lines[line - 1]?.length ?? 0) + 1,
+        /** Joins the element already open — no new undo step. */
+        pushEditOperations(
+            _before: unknown,
+            edits: {range: {startLineNumber: number; endLineNumber: number}; text: string}[],
+        ) {
+            applyEdits(edits)
+            return null
+        },
+    }
+
+    function applyEdits(edits: {range: {startLineNumber: number; endLineNumber: number}; text: string}[]) {
+        // Descending, so earlier line numbers stay valid as we splice.
+        for (const edit of [...edits].sort((a, b) => b.range.startLineNumber - a.range.startLineNumber)) {
+            const start = edit.range.startLineNumber - 1
+            const count = edit.range.endLineNumber - edit.range.startLineNumber + 1
+            lines.splice(start, count, ...edit.text.split("\n"))
+        }
+        // Monaco notifies synchronously, which is also what exercises the
+        // composable's re-entrancy guard.
+        listeners.forEach((listener) => listener())
     }
 
     const editor = {
@@ -158,19 +185,14 @@ function editorDouble(initial: string) {
             set: (next: unknown[]) => { painted = next },
             clear: () => { painted = [] },
         }),
+        /** Opens its own undo element, as Monaco does outside an open one. */
         executeEdits(_source: string, edits: {range: {startLineNumber: number; endLineNumber: number}; text: string}[]) {
-            // Descending, so earlier line numbers stay valid as we splice.
-            for (const edit of [...edits].sort((a, b) => b.range.startLineNumber - a.range.startLineNumber)) {
-                const start = edit.range.startLineNumber - 1
-                const count = edit.range.endLineNumber - edit.range.startLineNumber + 1
-                lines.splice(start, count, ...edit.text.split("\n"))
-            }
-            // Monaco notifies synchronously, which is also what exercises the
-            // composable's re-entrancy guard.
-            listeners.forEach((listener) => listener())
+            undoStack.push(lines.join("\n"))
+            applyEdits(edits)
             return true
         },
         getSelection: () => null,
+        getSelections: () => [],
         setSelection: () => {},
     }
 
@@ -178,9 +200,18 @@ function editorDouble(initial: string) {
         editor,
         current: () => lines.join("\n"),
         decorationCount: () => painted.length,
-        /** Simulate the user changing the buffer. */
+        undoDepth: () => undoStack.length,
+        /** Simulate the user changing the buffer; each one opens an undo element. */
         type(next: string) {
+            undoStack.push(lines.join("\n"))
             lines = next.split("\n")
+            listeners.forEach((listener) => listener())
+        },
+        /** Pop one undo element, then notify — the order Monaco uses. */
+        undo() {
+            const previous = undoStack.pop()
+            if (previous === undefined) return
+            lines = previous.split("\n")
             listeners.forEach((listener) => listener())
         },
     }
@@ -300,5 +331,41 @@ describe("useReadOnlyYamlKeys", () => {
         guard(double, false)
 
         expect(double.decorationCount()).toBe(0)
+    })
+
+    it("leaves undo working after a keystroke is refused", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        // A legitimate edit the user will expect to be able to undo later.
+        const edited = FLOW.replace("message: hello", "message: changed")
+        double.type(edited)
+        expect(double.current()).toBe(edited)
+
+        // A keystroke on a locked line, correctly refused.
+        double.type(edited.replace("id: my_flow", "id: my_flowX"))
+        expect(double.current()).toBe(edited)
+
+        // The refused keystroke and its correction are one step, so this undoes
+        // both and lands on a document that violates nothing.
+        double.undo()
+        expect(double.current()).toBe(edited)
+
+        // And the legitimate edit is still reachable, which is what a correction
+        // in its own undo element takes away.
+        double.undo()
+        expect(double.current()).toBe(FLOW)
+    })
+
+    it("does not grow the undo stack for a correction", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        const before = double.undoDepth()
+        double.type(FLOW.replace("id: my_flow", "id: my_flowX"))
+
+        // One element for the user's keystroke; the correction joins it rather
+        // than adding a second the user would have to press through.
+        expect(double.undoDepth()).toBe(before + 1)
     })
 })

@@ -570,6 +570,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Nessun trigger trovato",
     "triggers_add_ee_tooltip": "Questo trigger richiede l'Enterprise Edition.",
+    "ee_feature_tooltip": "Questa funzionalità richiede l'Enterprise Edition.",
     "triggers_add_card_add": "Aggiungi",
     "triggers_add_modal_tab_form": "Modulo",
     "triggers_add_modal_tab_source": "Sorgente",
@@ -2430,9 +2431,6 @@
       "install_description": "Installa Kestra come app per un accesso più rapido e un'esperienza a schermo intero.",
       "install": "Installa",
       "dismiss": "Non ora"
-    },
-    "ee-tooltip": {
-      "features-blocked": "Enterprise edition"
     }
   }
 }

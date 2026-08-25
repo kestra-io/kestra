@@ -570,6 +570,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Nie znaleziono Triggerów",
     "triggers_add_ee_tooltip": "Ten Trigger wymaga Enterprise Edition.",
+    "ee_feature_tooltip": "Ta funkcja wymaga Enterprise Edition.",
     "triggers_add_card_add": "Dodaj",
     "triggers_add_modal_tab_form": "Formularz",
     "triggers_add_modal_tab_source": "Źródło",
@@ -2430,9 +2431,6 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
-    },
-    "ee-tooltip": {
-      "features-blocked": "Enterprise edition"
     }
   }
 }

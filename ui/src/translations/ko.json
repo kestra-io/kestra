@@ -570,6 +570,7 @@
     "triggers_add_filter_app": "앱",
     "triggers_add_empty_title": "트리거를 찾을 수 없음",
     "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
+    "ee_feature_tooltip": "이 기능은 Enterprise Edition이 필요합니다.",
     "triggers_add_card_add": "추가",
     "triggers_add_modal_tab_form": "폼",
     "triggers_add_modal_tab_source": "출처",
@@ -2430,9 +2431,6 @@
       "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
       "install": "설치",
       "dismiss": "나중에"
-    },
-    "ee-tooltip": {
-      "features-blocked": "엔터프라이즈 에디션"
     }
   }
 }

@@ -1,48 +1,28 @@
 <template>
-    <section id="filtering">
-        <KsSearch
-            v-model="search"
-            :placeholder="$t(`dependency.search.placeholders.${props.subtype === ASSET ? 'asset' : 'default'}`)"
-            clearable
-        />
-
-        <KsSelect
-            v-model="namespace"
-            :placeholder="$t('dependency.search.namespace.select')"
-            clearable
-            filterable
-        >
-            <KsOption
-                v-for="item in namespaces"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-            />
-        </KsSelect>
-
-        <KsSwitch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
-
-        <!-- Numerals only, so it needs no translated string. -->
-        <KsText size="small" class="result-count">{{ results.length }} / {{ nodeCount }}</KsText>
-    </section>
+    <TableFilters
+        v-model:search="search"
+        v-model:namespace="namespace"
+        v-model:flow="flow"
+        :assetView="isAssetView"
+        :namespaces="namespaces"
+        :shown="results.length"
+        :total="nodeCount"
+    />
 
     <KsTable
         :data="results"
         :emptyText="$t('dependency.search.no_results', {term: search})"
         :showHeader="false"
         class="nodes"
-        @row-click="(row: { data: Node }) => emits('select', row.data.id)"
-        @row-dblclick="(row: { data: Node }) => emits('open', row.data)"
-        @cell-mouse-enter="(row: { data: Node }) => emits('hover', row.data.id)"
-        @cell-mouse-leave="() => emits('hover', undefined)"
-        :rowClassName="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
+        @row-click="(row: { data: Node }) => emit('select', row.data.id)"
+        @row-dblclick="(row: { data: Node }) => emit('open', row.data)"
+        @cell-mouse-enter="(row: { data: Node }) => emit('hover', row.data.id)"
+        @cell-mouse-leave="() => emit('hover', undefined)"
+        :rowClassName="({row}: { row: { data: Node } }) => row.data.id === selected ? 'selected' : ''"
     >
         <KsTableColumn>
             <template #default="{row}">
                 <section id="row" :class="statusOf(row.data) ? `status-${statusOf(row.data)}` : undefined">
-                    <!-- Same glyph map as the canvas card, so the two never describe one state
-                         two ways. Colour via KsIcon's prop, not a class: the class lands on the
-                         ElIcon root where a kel-icon rule already sets colour and wins. -->
                     <KsIcon
                         v-if="showStatus && statusOf(row.data)"
                         size="xs"
@@ -55,11 +35,7 @@
 
                     <section id="left">
                         <div id="link">
-                            <!-- Only the asset view mounts the table with the ASSET subtype. -->
                             <code v-if="isAssetView" class="name" :title="row.data.flow">
-                                <!-- Three zones so width is given up in order: shared prefix
-                                     first, then the rest of the path; the final segment never
-                                     truncates, being the only part that names the asset. -->
                                 <span v-if="prefixOf(row.data.flow)" class="name-prefix">{{ prefixOf(row.data.flow) }}</span><span v-if="pathOf(row.data.flow)" class="name-path">{{ pathOf(row.data.flow) }}</span><span class="name-leaf">{{ leafOf(row.data.flow) }}</span>
                             </code>
                             <Link
@@ -69,17 +45,12 @@
                             />
                         </div>
 
-                        <!-- Assets carry no namespace; the other three views populate it. -->
                         <p v-if="row.data.namespace" class="description">
                             {{ row.data.namespace }}
                         </p>
                     </section>
 
                     <section id="right">
-                        <!-- A glyph says "stale", not "stale since when", so the age saves a
-                             round-trip to the card per asset. Compact (`1h`, `2d3h`) because at
-                             this density words cost more width than they carry; the full
-                             timestamp stays on the title. -->
                         <span
                             v-if="isAssetView && compactAge(updatedOf(row.data))"
                             class="row-age"
@@ -108,17 +79,15 @@
 
 <script setup lang="ts">
     import {watch, nextTick, ref, computed} from "vue"
-
-    import Link from "./Link.vue"
+    import {useI18n} from "vue-i18n"
     import {KsExecutionStatus, stringUtils} from "@kestra-io/design-system"
-
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-
+    import Link from "./Link.vue"
+    import TableFilters from "./TableFilters.vue"
     import {statusIconOf, statusColorOf, compactAge, normalizeStatus} from "../utils/assetStatus"
     import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
     import type {Types, Node, Element} from "../utils/types"
 
-    import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
 
     /** Asset view: where a row's open arrow goes; executions carry their own execution id. */
@@ -139,10 +108,10 @@
             : {namespace: node.namespace, id: node.flow},
     })
 
-    const emits = defineEmits<{
-        (e: "select", id: Node["id"]): void;
-        (e: "hover", id?: Node["id"]): void;
-        (e: "open", node: Node): void;
+    const emit = defineEmits<{
+        select: [id: Node["id"]];
+        hover: [id?: Node["id"]];
+        open: [node: Node];
     }>()
     const props = defineProps<{
         elements: Element[];
@@ -154,99 +123,73 @@
     /** Equivalent to Dependencies' dagView gate: only the asset view passes the ASSET subtype. */
     const isAssetView = computed(() => props.subtype === ASSET)
 
-    const focusSelectedRow = () => {
-        const row = document.querySelector<HTMLElement>(".kel-table__row.selected")
-
-        if (!row) return
-
-        row.scrollIntoView({behavior: "smooth", block: "center"})
-    }
-
-    watch(
-        () => props.selected,
-        async (ID) => {
-            if (!ID) return
-
-            await nextTick()
-
-            focusSelectedRow()
-        },
-    )
+    watch(() => props.selected, async (id) => {
+        if (!id) {
+            return
+        }
+        await nextTick()
+        document.querySelector<HTMLElement>(".kel-table__row.selected")
+            ?.scrollIntoView({behavior: "smooth", block: "center"})
+    })
 
     const search = ref("")
     const namespace = ref<string | undefined>(undefined)
-    const flow = ref<boolean>(true)
+    const flow = ref(true)
 
     const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__"
 
     const isNodeElement = (e: Element): e is {data: Node} => e?.data?.type === NODE
 
     const namespaces = computed(() => {
-        const unique = new Set<string>(
-            props.elements
-                ?.filter((e): e is {data: Node} => isNodeElement(e) && !!e.data.namespace)
-                .map(e => e.data.namespace),
+        const unique = new Set(
+            props.elements.flatMap((e) => (isNodeElement(e) && e.data.namespace ? [e.data.namespace] : [])),
         )
 
         return [
-            ...Array.from(unique).map((ns) => ({
-                label: ns,
-                value: ns,
-            })),
-            ...(props.subtype === ASSET ?  [{
+            ...[...unique].map((ns) => ({label: ns, value: ns})),
+            ...(isAssetView.value ? [{
                 label: t("dependency.search.namespace.no_namespace"),
                 value: NO_NAMESPACE_VALUE,
             }] : []),
         ]
     })
 
+    /** All rows the include-flows switch leaves visible; the result count uses it as its denominator. */
+    const visibleRows = computed(() => props.elements
+        .filter(isNodeElement)
+        .filter(({data}) => flow.value || data.metadata.subtype !== FLOW))
+
     const results = computed(() => {
         const query = search.value.trim().toLowerCase()
 
-        const filtered = props.elements
-            .filter(isNodeElement)
-            .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
+        return visibleRows.value
             .filter(({data}) => {
                 if (!namespace.value) return true
-
-                if (namespace.value === NO_NAMESPACE_VALUE) {
-                    return data.namespace === undefined
-                }
-
+                if (namespace.value === NO_NAMESPACE_VALUE) return data.namespace === undefined
                 return data.namespace === namespace.value
             })
             .filter(({data}) => {
                 if (!query) return true
-
-                return (
-                    data.flow?.toLowerCase().includes(query) ||
-                    data.namespace?.toLowerCase().includes(query)
-                )
+                return data.flow?.toLowerCase().includes(query) || data.namespace?.toLowerCase().includes(query)
             })
-
-        return filtered
     })
 
-    /** The include-flows switch is a filter like any other, so the denominator honours it too. */
-    const nodeCount = computed(() => props.elements
-        .filter(isNodeElement)
-        .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
-        .length)
+    const nodeCount = computed(() => visibleRows.value.length)
 
     /** Nothing tracked anywhere means the glyph column is a row of question marks. */
-    const showStatus = computed(() => results.value.some(({data}) =>
-        data.metadata.subtype === ASSET && (data.metadata as {status?: string}).status
-        && (data.metadata as {status?: string}).status !== "unknown"))
+    const showStatus = computed(() => results.value.some(({data}) => {
+        if (data.metadata.subtype !== ASSET) {
+            return false
+        }
+        const {status} = data.metadata as {status?: string}
+        return Boolean(status) && status !== "unknown"
+    }))
 
     const updatedOf = (node: Node): string | undefined =>
         (node.metadata.subtype === ASSET ? (node.metadata as {updated?: string}).updated : undefined)
 
-    /**
-     * A watch, not the body of `results`: emitting from there re-dimmed every canvas node on
-     * each keystroke from inside a render pass. Keyed on a joined string so the source compares
-     * by value, per AGENTS.md.
-     */
-    const shownIDs = computed(() => results.value.flatMap((r) => (r.data.id !== undefined ? [r.data.id] : [])))
+    // A watch keyed on a joined string, per AGENTS.md: emitting from `results` itself would fire inside a render pass.
+    const shownIDs = computed(() => results.value.map((r) => r.data.id))
 
     watch(
         () => shownIDs.value.join(","),
@@ -258,27 +201,30 @@
     const statusOf = (node: Node): string | undefined =>
         (node.metadata.subtype === ASSET ? normalizeStatus((node.metadata as {status?: string}).status) : undefined)
 
-    /**
-     * Longest dotted prefix shared by every asset id on screen, usually the warehouse project
-     * and dataset. Muted, never hidden, so it stays searchable.
-     */
+    /** Longest dotted prefix shared by every asset id on screen, usually the warehouse project and dataset. */
     const commonPrefix = computed(() => {
-        if (!isAssetView.value) return ""
+        if (!isAssetView.value) {
+            return ""
+        }
 
         const ids = results.value
             .filter(({data}) => data.metadata.subtype === ASSET)
             .map(({data}) => data.flow)
-        if (ids.length < 2) return ""
-
-        const segments = ids[0].split(".").slice(0, -1)
-        let shared = 0
-        while (shared < segments.length) {
-            const candidate = segments.slice(0, shared + 1).join(".") + "."
-            if (!ids.every((id) => id.startsWith(candidate))) break
-            shared++
+        if (ids.length < 2) {
+            return ""
         }
 
-        return shared ? segments.slice(0, shared).join(".") + "." : ""
+        // Grow the prefix one dotted segment at a time, as long as every id still starts with it.
+        let prefix = ""
+        for (const segment of ids[0].split(".").slice(0, -1)) {
+            const candidate = `${prefix}${segment}.`
+            if (!ids.every((id) => id.startsWith(candidate))) {
+                break
+            }
+            prefix = candidate
+        }
+
+        return prefix
     })
 
     const prefixOf = (id: string): string => (commonPrefix.value && id.startsWith(commonPrefix.value) ? commonPrefix.value : "")
@@ -297,19 +243,6 @@
     max-width: 100%;
     font-size: var(--ks-font-size-sm);
     color: var(--ks-text-primary);
-}
-
-section#filtering {
-    position: sticky;
-    top: 0;
-    z-index: 10; // Keeps it above table rows
-    padding: 1rem;
-    background-color: var(--ks-bg-input);
-
-    :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
-        margin-bottom: 0.5rem;
-        font-size: var(--ks-font-size-sm);
-    }
 }
 
 .kel-table.nodes {
@@ -331,16 +264,6 @@ section#filtering {
     }
 }
 
-.result-count {
-    display: block;
-    color: var(--ks-text-muted);
-}
-
-/*
- * Two parts so they yield width differently: the prefix ellipsises, the trailing segment never
- * does. End-truncating the whole id would cut the segment that tells two assets apart.
- */
-/* Both context zones shrink; the prefix is first to go because every visible row repeats it. */
 .name-prefix,
 .name-path {
     min-width: 0;
@@ -365,8 +288,6 @@ section#filtering {
     color: var(--ks-text-primary);
 }
 
-/* Yields before the asset name does: on a narrow pane a clipped age still reads as an
-   order of magnitude, whereas a clipped name identifies nothing. */
 .row-age {
     flex: 0 1 auto;
     min-width: 0;
@@ -380,7 +301,6 @@ section#filtering {
     flex: 0 0 auto;
 }
 
-/** Same state colour as the glyph, so the pair reads as one signal, matching the canvas card. */
 section#row.status-fresh .row-age {
     color: var(--ks-text-success);
 }
@@ -399,8 +319,6 @@ section#row {
     align-items: center;
     gap: var(--ks-spacing-2);
     max-width: 100%;
-    // Horizontal only: the table cell already contributes vertical padding, and doubling it
-    // made a one-line row half again as tall.
     padding: 0 0 0 var(--ks-spacing-3);
     font-size: var(--ks-font-size-xs);
     cursor: pointer;
@@ -432,11 +350,9 @@ section#row {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2);
-        // A high shrink factor, not just a shrinkable one: flex distributes shrinkage by base
-        // size, so the wider left side would otherwise absorb it and clip the asset name.
         flex: 0 8 auto;
         min-width: 0;
-        margin-left: 0.5rem;
+        margin-left: var(--ks-spacing-2);
 
         & > a {
             flex: 0 0 auto;
@@ -448,16 +364,10 @@ section#row {
     }
 }
 
-/**
- * `visibility`, not `display`, so revealing the per-row arrow never reflows the row. The
- * selected row keeps it visible.
- */
 section#row section#right a {
     visibility: hidden;
 }
 
-/* focus-within is not optional: visibility:hidden takes the link out of the tab order, so
-   without it a keyboard user has no way to reach the open action at all. */
 section#row:hover section#right a,
 section#row:focus-within section#right a,
 .kel-table__row.selected section#row section#right a {

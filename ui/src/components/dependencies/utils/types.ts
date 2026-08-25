@@ -24,23 +24,17 @@ type Namespace = {
 
 type Asset = {
     subtype: typeof ASSET;
-    /** Source system of the asset, e.g. `bigquery`. Coalesced from `system` or `provider`. */
+    /** Source system of the asset, e.g. `bigquery`. */
     system?: string;
-    /** Warehouse schema, e.g. a BigQuery dataset. Set by every plugin emitting a Table. */
+    /** Warehouse schema, e.g. a BigQuery dataset. */
     schema?: string;
-    /** ISO timestamp of the last lineage event, shown as the node age in DAG view. */
+    /** ISO timestamp of the last lineage event. */
     updated?: string;
-    /**
-     * Asset type FQCN, e.g. `io.kestra.plugin.ee.assets.Table`. Whole value is stored;
-     * display sites show the trailing segment (`Table`, `VM`).
-     */
+    /** Asset type FQCN, e.g. `io.kestra.plugin.ee.assets.Table`; display sites show the trailing segment. */
     assetType?: string;
-    /**
-     * Task type FQCN of whatever last wrote the asset, e.g. `io.kestra.plugin.dbt.cli.DbtCLI`.
-     * Whole value resolves the plugin icon; its fourth segment is the grouping key.
-     */
+    /** Task type FQCN of whatever last wrote the asset; resolves the plugin icon and the grouping key. */
     producer?: string;
-    /** Freshness against the producing flow's schedule: fresh, stale, failed, never, unknown. */
+    /** Freshness against the producing flow's schedule: fresh, stale, failed, unknown. */
     status?: string;
     /** Most recent runs that wrote the asset, newest first. */
     runs?: AssetRun[];
@@ -58,7 +52,8 @@ export type Node = {
     id: string;
     type: "NODE";
     flow: string;
-    namespace: string;
+    /** Absent on asset nodes; the other three subtypes always carry one. */
+    namespace?: string;
     metadata: Flow | Execution | Namespace | Asset;
 };
 
@@ -71,10 +66,8 @@ export type Edge = {
 
 export type Element = { data: Node } | { data: Edge };
 
-export type States = {
-    default: string;
-    faded: string;
-    selected: string;
-    hovered: string;
-    assets: string;
-};
+export const nodesOf = (elements: Element[]): Node[] =>
+    elements.filter((el): el is {data: Node} => el.data.type === NODE).map(({data}) => data)
+
+export const edgesOf = (elements: Element[]): Edge[] =>
+    elements.filter((el): el is {data: Edge} => el.data.type === EDGE).map(({data}) => data)

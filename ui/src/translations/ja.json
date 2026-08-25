@@ -2026,7 +2026,12 @@
           "last_run": "最終実行 {ago}",
           "unknown": "{n} は追跡されていません"
         },
-        "recent_runs": "最近の実行"
+        "recent_runs": "最近の実行",
+        "group_by": "グループ化",
+        "groups": "グループ（{n}）",
+        "group_none": "グループ化なし",
+        "group_dataset": "データセット",
+        "ungrouped": "グループ化されていません"
       },
       "search": {
         "placeholders": {

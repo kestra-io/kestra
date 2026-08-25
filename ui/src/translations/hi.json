@@ -2026,7 +2026,12 @@
           "last_run": "अंतिम रन {ago}",
           "unknown": "{n} ट्रैक नहीं किया गया"
         },
-        "recent_runs": "हाल की रन"
+        "recent_runs": "हाल की रन",
+        "group_by": "द्वारा समूहबद्ध करें",
+        "groups": "समूह ({n})",
+        "group_none": "कोई ग्रुपिंग नहीं",
+        "group_dataset": "डेटासेट",
+        "ungrouped": "असमूहित"
       },
       "search": {
         "placeholders": {

@@ -165,13 +165,13 @@
                     <KsInput v-model="secret.key" :disabled="secret.update" :placeholder="$t('secret.keyPlaceholder')" required />
                 </KsFormItem>
                 <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required inline class="field-item">
-                    <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
+                    <KsPassword v-model="secret.value" :placeholder="$t('secret.valuePlaceholder')" />
                 </KsFormItem>
                 <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value" inline class="field-item">
                     <div class="secret-value-control">
                         <KsPassword
                             v-model="secret.value"
-                            :placeholder="secretModalTitle"
+                            :placeholder="$t('secret.valuePlaceholder')"
                             :disabled="!secret.updateValue"
                         />
                         <KsSwitch

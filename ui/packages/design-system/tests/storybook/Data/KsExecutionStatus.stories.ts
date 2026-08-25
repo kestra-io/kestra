@@ -95,8 +95,10 @@ export const CustomTitle: Story = {
 
 /**
  * Hover both badges: only the opted-in one shows a pointer. Bootstrap's reboot puts
- * `cursor: pointer` on every non-disabled `<button>` at a specificity a lone class cannot
- * beat, so the non-clickable badge used to advertise a click it never handled.
+ * `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties with the component's own
+ * scoped rule and wins on source order, so the non-clickable badge used to advertise a click it
+ * never handled. It now inherits instead, so a badge inside a clickable row still shows the
+ * row's pointer rather than a dead patch.
  */
 export const CursorAffordance: Story = {
     render: () => ({

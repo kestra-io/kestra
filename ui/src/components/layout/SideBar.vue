@@ -11,6 +11,7 @@
             <div
                 ref="dragHandle"
                 class="menu-drag-handle"
+                :class="{'is-swiping': isSwiping}"
                 aria-hidden="true"
             />
         </template>
@@ -165,7 +166,7 @@
 
     const DRAG_CLOSE_THRESHOLD = 60
     const dragHandle = ref<HTMLElement>()
-    const {direction} = usePointerSwipe(dragHandle, {
+    const {direction, isSwiping} = usePointerSwipe(dragHandle, {
         threshold: DRAG_CLOSE_THRESHOLD,
         disableTextSelect: true,
         onSwipeEnd: () => {
@@ -299,7 +300,9 @@
     cursor: grab;
     touch-action: pan-y;
 
-    &:active {
+    /* Driven by the composable rather than :active, which depends on the UA keeping the state
+       on an 8px div through a pointer capture. */
+    &.is-swiping {
         cursor: grabbing;
     }
 }

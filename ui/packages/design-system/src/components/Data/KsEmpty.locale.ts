@@ -3,7 +3,7 @@ export default {
         "no_data": "Looks like there's nothing here… yet!\nAdjust your filters, or give it another go!",
     },
     "de": {
-        "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!\nPassen Sie Ihre Filter an oder versuchen Sie es erneut!",
+        "no_data": "Sieht aus, als wäre hier noch nichts…\nPasse deine Filter an oder versuche es noch einmal!",
     },
     "es": {
         "no_data": "Parece que no hay nada aquí... ¡todavía!\nAjusta tus filtros o inténtalo de nuevo.",
@@ -24,7 +24,7 @@ export default {
         "no_data": "여기에는 아직 아무것도 없는 것 같아요…\n필터를 조정하거나 다시 시도해 보세요!",
     },
     "pl": {
-        "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!\nDostosuj swoje filtry lub spróbuj ponownie!",
+        "no_data": "Wygląda na to, że nic tu jeszcze nie ma!\nDostosuj swoje filtry lub spróbuj ponownie.",
     },
     "pt": {
         "no_data": "Parece que não há nada aqui... ainda!\nAjuste seus filtros ou tente novamente!",

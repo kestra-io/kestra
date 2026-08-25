@@ -194,13 +194,19 @@ public abstract class KestraContext {
         /** {@inheritDoc} **/
         @Override
         public PluginRegistry getPluginRegistry() {
+            if (this.applicationContext == null) {
+                throw new IllegalStateException("ApplicationContext is null");
+            }
             // Lazy init of the PluginRegistry.
             return this.applicationContext.getBean(PluginRegistry.class);
         }
 
         @Override
         public StorageInterface getStorageInterface() {
-            // Lazy init of the PluginRegistry.
+            if (this.applicationContext == null) {
+                throw new IllegalStateException("ApplicationContext is null");
+            }
+            // Lazy init of the StorageInterface.
             return this.applicationContext.getBean(StorageInterface.class);
         }
 

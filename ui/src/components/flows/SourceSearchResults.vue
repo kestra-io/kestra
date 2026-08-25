@@ -79,7 +79,7 @@
                                         {{ $t('source_search.replace_all_in_flow') }}
                                     </KsButton>
                                     <router-link
-                                        :to="{path: `/flows/edit/${group.namespace}/${group.id}/source`}"
+                                        :to="editorLinkTarget(group)"
                                         class="result-group-open-link"
                                         :aria-label="$t('source_search.open_flow')"
                                         :title="$t('source_search.open_flow')"
@@ -305,6 +305,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
+    import {useRoute} from "vue-router"
     import _escape from "lodash/escape"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
@@ -362,6 +363,7 @@
     }>()
 
     const {t} = useI18n()
+    const route = useRoute()
 
     const SECRET_PATTERN = /secret\(\s*['"]([^'"]+)['"]\s*\)/
 
@@ -480,6 +482,13 @@
 
     function groupKey(group: SourceSearchResult) {
         return `flows:${group.namespace}.${group.id}`
+    }
+
+    function editorLinkTarget(group: SourceSearchResult) {
+        return {
+            name: "flows/update/edit",
+            params: {tenant: route.params.tenant, namespace: group.namespace, id: group.id},
+        }
     }
 
     function matchKey(group: SourceSearchResult, match: SourceMatch) {

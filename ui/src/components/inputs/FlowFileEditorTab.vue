@@ -7,23 +7,18 @@
         >
         <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
             <KsAlert type="warning" :closable="false">
-                {{ $t("file_preview.big_file_warning", {size: humanSize}) }}
+                {{ $t("file_preview.big_file_download_only", {size: humanSize}) }}
             </KsAlert>
-            <KsButtonGroup>
-                <KsButton type="primary" data-test="big-file-load-anyway" :icon="FileEyeOutline" @click="loadAnyway()">
-                    {{ $t("file_preview.load_anyway") }}
-                </KsButton>
-                <KsButton
-                    type="primary"
-                    tag="a"
-                    :href="fileUrl"
-                    :download="name"
-                    :icon="Download"
-                    rel="noopener noreferrer"
-                >
-                    {{ $t("download") }}
-                </KsButton>
-            </KsButtonGroup>
+            <KsButton
+                type="primary"
+                tag="a"
+                :href="fileUrl"
+                :download="name"
+                :icon="Download"
+                rel="noopener noreferrer"
+            >
+                {{ $t("download") }}
+            </KsButton>
         </div>
         <KsEditor
             v-else
@@ -101,7 +96,6 @@
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import FileEyeOutline from "vue-material-design-icons/FileEyeOutline.vue"
     import {humanFileSize} from "../../utils/utils"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
@@ -147,28 +141,24 @@
 
     const bigFile = ref(false)
     const fileSize = ref<number>()
-    /** once the user opts in via "Load anyway", tab re-activations skip the guard */
-    const bypassSizeGuard = ref(false)
 
     async function loadFile() {
         if (props.dirty || props.flow) return
 
         if (!fileNamespace.value) return
 
-        if (!bypassSizeGuard.value) {
-            try {
-                const stats = await namespacesStore.fileMetadata({
-                    namespace: fileNamespace.value,
-                    path: props.path ?? "",
-                })
-                fileSize.value = stats?.size
-            } catch {
-                /** the size guard must not block the file when stats are unavailable */
-                fileSize.value = undefined
-            }
-            bigFile.value = (fileSize.value ?? 0) >= BIG_FILE_THRESHOLD
-            if (bigFile.value) return
+        try {
+            const stats = await namespacesStore.fileMetadata({
+                namespace: fileNamespace.value,
+                path: props.path ?? "",
+            })
+            fileSize.value = stats?.size
+        } catch {
+            /** the size guard must not block the file when stats are unavailable */
+            fileSize.value = undefined
         }
+        bigFile.value = (fileSize.value ?? 0) >= BIG_FILE_THRESHOLD
+        if (bigFile.value) return
 
         const result = await namespacesStore.readFile({
             namespace: fileNamespace.value,
@@ -190,12 +180,6 @@
             sourceNS.value = result.content
             savedSourceNS.value = result.content
         }
-    }
-
-    async function loadAnyway() {
-        bypassSizeGuard.value = true
-        bigFile.value = false
-        await loadFile()
     }
 
     const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {})

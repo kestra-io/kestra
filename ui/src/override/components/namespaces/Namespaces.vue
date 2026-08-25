@@ -79,6 +79,7 @@
     import useNamespaces from "../../../composables/useNamespaces"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
+    import {useSystemNamespace} from "../../../composables/useSystemNamespace"
 
     import Navbar from "../../../components/layout/TopNavBar.vue"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
@@ -127,10 +128,7 @@
         {immediate: true, deep: true},
     )
 
-    const miscStore = useMiscStore()
-    const systemNamespace = computed(
-        () => miscStore.configs?.systemNamespace || "system",
-    )
+    const systemNamespace = useSystemNamespace()
 
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 

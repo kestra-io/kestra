@@ -24,6 +24,7 @@ import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import _throttle from "lodash/throttle"
 import {useUnsavedChangesStore} from "./unsavedChanges"
+import {useBookmarksStore} from "./bookmarks"
 import {RouteLocation} from "vue-router"
 
 export const DEFAULT_DASHBOARD = {
@@ -237,7 +238,17 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        return DashboardsAPI.deleteDashboard({id})
+        const deleted = await DashboardsAPI.deleteDashboard({id})
+
+        const bookmarksStore = useBookmarksStore()
+        const encodedId = encodeURIComponent(id)
+        bookmarksStore.updateAll(bookmarksStore.pages.filter(({path}) => {
+            const segments = path.split(/[?#]/)[0].split("/")
+            const index = segments.indexOf("dashboards")
+            return index === -1 || segments[index + 1] !== encodedId
+        }))
+
+        return deleted
     }
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {

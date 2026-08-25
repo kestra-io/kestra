@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import GlobalSearch from "./GlobalSearch.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
@@ -134,18 +134,34 @@
         bookmarksStore.pages.some((page) => page.path === currentFavURI.value),
     )
 
+    const derivedBookmarkLabel = computed(() =>
+        store.bookmarkLabel || (store.breadcrumb.length
+            ? `${store.breadcrumb[store.breadcrumb.length - 1].label}: ${store.title}`
+            : store.title),
+    )
+
     const onStarClick = () => {
         if (bookmarked.value) {
             bookmarksStore.remove({path: currentFavURI.value})
         } else {
             bookmarksStore.add({
                 path: currentFavURI.value,
-                label: store.bookmarkLabel || (store.breadcrumb.length
-                    ? `${store.breadcrumb[store.breadcrumb.length - 1].label}: ${store.title}`
-                    : store.title),
+                label: derivedBookmarkLabel.value,
             })
         }
     }
+
+    // Bookmark labels are stored as resolved text, so one created in another language keeps it.
+    // Visiting the page is the only moment a freshly translated label exists, so refresh it here;
+    // the store leaves a label the user typed alone.
+    watch(
+        [bookmarked, derivedBookmarkLabel],
+        ([isBookmarked, label]) => {
+            if (!isBookmarked || !label) return
+            bookmarksStore.refreshLabel({path: currentFavURI.value, label})
+        },
+        {immediate: true},
+    )
 </script>
 
 <style scoped lang="scss">

@@ -1,11 +1,16 @@
-import { defineStore } from "pinia"
-import { useStorage } from "@vueuse/core"
+import {defineStore} from "pinia"
+import {useStorage} from "@vueuse/core"
 
 const LOCAL_STORAGE_KEY = "starred.bookmarks"
 
 interface Page {
     path: string;
     label?: string;
+    /**
+     * True once the user has typed their own label, which then has to survive a language
+     * change. Absent on entries stored before this existed, which are treated as derived.
+     */
+    custom?: boolean;
 }
 
 export const useBookmarksStore = defineStore("bookmarks", () => {
@@ -23,7 +28,20 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
 
     function rename(page: Page) {
         pages.value = pages.value.map(p =>
-            p.path === page.path ? { ...p, label: page.label } : p
+            p.path === page.path ? {...p, label: page.label, custom: true} : p,
+        )
+    }
+
+    /**
+     * Re-derives a bookmark's label from the page it points at. Labels are stored as resolved
+     * text — they are composed from a translated title and breadcrumb — so a bookmark otherwise
+     * keeps the language it was created in forever. A label the user typed is left alone.
+     */
+    function refreshLabel(page: Page) {
+        pages.value = pages.value.map(p =>
+            p.path === page.path && !p.custom && p.label !== page.label
+                ? {...p, label: page.label}
+                : p,
         )
     }
 
@@ -36,6 +54,7 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
         add,
         remove,
         rename,
+        refreshLabel,
         updateAll,
     }
 })

@@ -381,18 +381,22 @@
         logsStore.downloadLogs(params)
             .then((result) => {
                 downloadOpen.value = false
-                if (result.outcome === "complete") return
 
+                // No lines means no file either way, so staying silent would read as a broken
+                // button — which is the silence this whole change exists to remove.
                 if (result.downloaded === 0) {
-                    toast.error(t("logs_download_failed"))
+                    if (result.outcome === "complete") toast.warning(t("logs_download_empty"))
+                    else toast.error(t("logs_download_failed"))
+                    return
+                }
+
+                // A known total is the useful number, whether the export was capped or cut short.
+                const skipped = result.total === undefined ? undefined : result.total - result.downloaded
+                if (skipped !== undefined && skipped > 0) {
+                    toast.warning(t("logs_download_truncated", {downloaded: result.downloaded, skipped}))
                 } else if (result.outcome === "failed") {
                     toast.warning(t("logs_download_partial", {downloaded: result.downloaded}))
-                } else if (result.outcome === "truncated" && result.total !== undefined) {
-                    toast.warning(t("logs_download_truncated", {
-                        downloaded: result.downloaded,
-                        skipped: result.total - result.downloaded,
-                    }))
-                } else {
+                } else if (result.outcome === "capped") {
                     toast.warning(t("logs_download_capped", {downloaded: result.downloaded}))
                 }
             })

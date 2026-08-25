@@ -43,6 +43,25 @@ describe("logs store downloadLogs", () => {
         expect(downloadUrl).toHaveBeenCalledOnce()
     })
 
+    // The spec's original seven cases all had rows, which is how the silent no-op survived:
+    // no file is written and the outcome is `complete`, so the caller had nothing to report.
+    it("should report a complete export that matched nothing, with no file", async () => {
+        searchLogs.mockResolvedValueOnce(page(0, 0))
+
+        const result = await useLogsStore().downloadLogs({})
+
+        expect(result).toEqual({downloaded: 0, total: 0, outcome: "complete"})
+        expect(downloadUrl).not.toHaveBeenCalled()
+    })
+
+    it("should opt out of the global error toast on a failed page", async () => {
+        searchLogs.mockRejectedValueOnce(new Error("boom"))
+
+        await useLogsStore().downloadLogs({})
+
+        expect(searchLogs.mock.calls[0][1]).toEqual({showMessageOnError: false})
+    })
+
     it("should follow nextCursor under cursor pagination", async () => {
         searchLogs
             .mockResolvedValueOnce(page(1000, undefined, {type: "CURSOR", nextCursor: "c1"}))

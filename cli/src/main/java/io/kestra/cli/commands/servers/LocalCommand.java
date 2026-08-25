@@ -34,9 +34,10 @@ public class LocalCommand extends StandAloneCommand {
             .put("kestra.queue.type", "h2")
             .put("kestra.storage.type", "local")
             .put("kestra.storage.local.base-path", data.toString())
-            // Explicit default for the local persona; the computed default (OSS + local storage)
-            // would already turn it on, but an explicit value keeps the intent visible.
-            .put("kestra.plugins.auto-install.enabled", "true")
+            // Plugin auto-install is deliberately NOT forced here: these properties outrank both
+            // the config file and system properties, so setting it would make the feature
+            // impossible to turn off on this persona. The computed default (OSS + local storage,
+            // which the two entries above establish) already turns it on.
             .put("datasources.h2.url", "jdbc:h2:file:" + data.resolve("database") + ";TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=30000")
             .put("datasources.h2.username", "sa")
             .put("datasources.h2.password", "")

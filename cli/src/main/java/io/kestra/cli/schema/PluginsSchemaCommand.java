@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -72,6 +74,20 @@ public class PluginsSchemaCommand extends AbstractCommand {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
         .enable(SerializationFeature.INDENT_OUTPUT);
+
+    /**
+     * Extensions probed against {@code supports()} for renderers that declare none: file formats a
+     * preview plausibly targets. Only a fallback — a renderer overriding
+     * {@link FileRenderer#extensions()} is taken at its word, and an extension outside this list
+     * has to be declared to be advertised.
+     */
+    private static final Set<String> PROBED_EXTENSIONS = Set.of(
+        "avro", "parquet", "orc", "arrow", "feather",
+        "csv", "tsv", "psv", "xlsx", "xls", "ods",
+        "json", "jsonl", "ndjson", "ion", "xml", "yaml", "yml", "toml",
+        "txt", "md", "log", "html", "pdf",
+        "png", "jpg", "jpeg", "gif", "svg", "webp", "bmp"
+    );
 
     /** SchemaType → root class for schema generation (mirrors JsonSchemaCache). */
     private static final Map<SchemaType, Class<?>> SCHEMA_CLASSES = Map.of(
@@ -217,12 +233,22 @@ public class PluginsSchemaCommand extends AbstractCommand {
         }
     }
 
-    private static java.util.Set<String> declaredExtensions(final Class<? extends FileRenderer> renderer) {
+    /**
+     * Extensions a renderer handles: what it declares through {@link FileRenderer#extensions()},
+     * falling back to probing {@link FileRenderer#supports(String)} over
+     * {@link #PROBED_EXTENSIONS} for renderers that predate the declaration.
+     */
+    private static Set<String> declaredExtensions(final Class<? extends FileRenderer> renderer) {
         try {
-            return renderer.getDeclaredConstructor().newInstance().extensions();
+            FileRenderer instance = renderer.getDeclaredConstructor().newInstance();
+            Set<String> declared = instance.extensions();
+            if (!declared.isEmpty()) {
+                return declared;
+            }
+            return PROBED_EXTENSIONS.stream().filter(instance::supports).collect(Collectors.toSet());
         } catch (ReflectiveOperationException | RuntimeException e) {
-            log.debug("Could not read declared extensions of renderer '{}'", renderer.getName(), e);
-            return java.util.Set.of();
+            log.debug("Could not read the extensions of renderer '{}'", renderer.getName(), e);
+            return Set.of();
         }
     }
 

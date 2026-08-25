@@ -130,10 +130,10 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                             // URI mode: seek to stored offset and read the next value
                             long nextOffset = ((Number) outputs.get(Loop.NEXT_OFFSET_OUTPUT)).longValue();
                             String valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues())
-                                .orElseThrow(() -> new IllegalStateException("Loop has a nextOffset output but values did not resolve to a URI"));
+                                .orElseThrow(() -> new InternalException("Loop has a nextOffset output but values did not resolve to a URI"));
                             var valuesAndOffset = FlowableUtils.readLoopValuesFromUri(runContext, valuesUri, nextOffset, 1);
                             if (valuesAndOffset.getLeft().isEmpty()) {
-                                throw new IllegalStateException(
+                                throw new InternalException(
                                     "Loop 'values' has no value left at offset %d for iteration %d; the underlying source likely changed between iterations.".formatted(nextOffset, nextIndex)
                                 );
                             }
@@ -148,7 +148,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                             if (either.isLeft()) {
                                 List<String> values = either.getLeft();
                                 if (nextIndex >= values.size()) {
-                                    throw new IllegalStateException(
+                                    throw new InternalException(
                                         "Loop 'values' resolved to %d element(s), but iteration %d was expected; the underlying source likely changed between iterations."
                                             .formatted(values.size(), nextIndex)
                                     );
@@ -159,7 +159,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                             } else {
                                 List<Pair<String, String>> values = either.getRight();
                                 if (nextIndex >= values.size()) {
-                                    throw new IllegalStateException(
+                                    throw new InternalException(
                                         "Loop 'values' resolved to %d element(s), but iteration %d was expected; the underlying source likely changed between iterations."
                                             .formatted(values.size(), nextIndex)
                                     );
@@ -195,10 +195,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 }
 
                 return null;
-            } catch (InternalException | QueueException | IOException | RuntimeException e) {
-                // RuntimeException covers user-data issues re-resolving 'values' (e.g. the underlying
-                // source shrank between iterations) - this must fail only this execution, never escape
-                // to the queue subscriber, which would treat it as fatal and shut the whole instance down.
+            } catch (InternalException | QueueException | IOException e) {
                 return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
             }
         });

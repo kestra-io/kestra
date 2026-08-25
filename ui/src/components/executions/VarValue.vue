@@ -53,6 +53,9 @@
     <span v-else-if="value === null">
         <em>null</em>
     </span>
+    <span v-else-if="emptyContainer">
+        {{ emptyContainer }}
+    </span>
     <div v-else-if="isComplexValue(value)">
         <KsEditor
             v-bind="editorBindings"
@@ -75,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, onMounted} from "vue"
+    import {computed, ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
@@ -160,6 +163,19 @@
 
         return value
     }
+
+    // An empty object or array is complex enough to reach the editor branch below, where two
+    // characters of content still mount a five-line Monaco instance — once per empty output row.
+    const emptyContainer = computed(() => {
+        const displayed = getDisplayValue(props.value)
+
+        if (Array.isArray(displayed)) return displayed.length === 0 ? "[]" : undefined
+        if (typeof displayed === "object" && displayed !== null) {
+            return Object.keys(displayed).length === 0 ? "{}" : undefined
+        }
+
+        return undefined
+    })
 
     const itemUrl = (value: string): string => {
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`

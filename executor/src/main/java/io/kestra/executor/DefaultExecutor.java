@@ -77,6 +77,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
+    private final ExecutionTerminatedNotifier executionTerminatedNotifier;
 
     private final ExecutorService executorService;
     private final ExecutionService executionService;
@@ -145,6 +146,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
+        ExecutionTerminatedNotifier executionTerminatedNotifier,
         ExecutorService executorService,
         ExecutionService executionService,
         FlowTriggerService flowTriggerService,
@@ -182,6 +184,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.multipleConditionEventQueue = multipleConditionEventQueue;
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.executionStatisticQueue = executionStatisticQueue;
+        this.executionTerminatedNotifier = executionTerminatedNotifier;
         this.executorService = executorService;
         this.executionService = executionService;
         this.flowTriggerService = flowTriggerService;
@@ -691,12 +694,15 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // purge the trigger: reset scheduler trigger at end
                 // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
-                if (execution.getTrigger() != null &&
-                    (execution.getState().isFailed() || execution.getState().getCurrent().isKilled() || execution.getState().getCurrent().isCancelled()) &&
-                    ListUtils.isEmpty(execution.getTaskRunList())) {
+                if (
+                    execution.getTrigger() != null &&
+                        (execution.getState().isFailed() || execution.getState().getCurrent().isKilled() || execution.getState().getCurrent().isCancelled()) &&
+                        ListUtils.isEmpty(execution.getTaskRunList())
+                ) {
                     sendTriggerExecutionTerminated(execution);
                     this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                     emitExecutionStatistic(execution);
+                    notifyExecutionTerminated(execution);
                 }
 
                 return;
@@ -811,6 +817,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
 
                 emitExecutionStatistic(execution);
+                notifyExecutionTerminated(execution);
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
                 this.executionEventQueue.emit(event);
@@ -840,6 +847,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         this.followExecutionEventQueue.emit(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
 
                         emitExecutionStatistic(failedExecution);
+                        notifyExecutionTerminated(failedExecution);
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
                     }
@@ -859,11 +867,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
         }
     }
 
+    private void notifyExecutionTerminated(Execution execution) {
+        try {
+            this.executionTerminatedNotifier.executionTerminated(execution);
+        } catch (Exception e) {
+            log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+        }
+    }
+
     private void sendTriggerExecutionTerminated(Execution execution) {
         // The scheduler didn't manage states for the WebHook and the Flow trigger
-        if (!execution.getTrigger().getType().equals(Webhook.class.getName()) &&
-            !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
-            !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
+        if (
+            !execution.getTrigger().getType().equals(Webhook.class.getName()) &&
+                !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
+                !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
         ) {
             TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
             triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));

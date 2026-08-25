@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
+import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowId;
@@ -27,6 +28,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.SchedulableTriggerFetcher;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
@@ -84,9 +86,13 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                     return null;
                 }
 
-                final FlowWithSource flow = TriggerFlowParser.parseOrSkip(flowParsingService, maybeFlowTrigger.get(), LOG);
-                if (flow == null) {
+                final FlowWithSource rawFlow = maybeFlowTrigger.get();
+                final FlowWithSource flow;
+                try {
+                    flow = TriggerFlowParser.parseForTrigger(flowParsingService, rawFlow, LOG);
+                } catch (FlowBlockedException e) {
                     // Skip the flow: it is blocked by governance and must not run.
+                    logBlockedByGovernance(rawFlow, triggerState, e);
                     return null;
                 }
 
@@ -147,6 +153,26 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
         } catch (DateTimeException e) {
             throw new InvalidTriggerConfigurationException();
         }
+    }
+
+    /**
+     * Reports a governance block in the trigger's own logs. Skipping is otherwise invisible to the user: the
+     * trigger simply stops firing, and the only trace is a server-side log they cannot reach.
+     */
+    private void logBlockedByGovernance(final FlowWithSource flow, final TriggerState triggerState, final FlowBlockedException e) {
+        ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(it -> it.getId().equals(triggerState.getTriggerId()))
+            .findFirst()
+            .ifPresent(trigger ->
+                Logs.logExecution(
+                    flow,
+                    runContextFactory.of(flow, trigger).logger(),
+                    Level.WARN,
+                    "[trigger: {}] Skipped: {}",
+                    trigger.getId(),
+                    e.getMessage()
+                )
+            );
     }
 
     private void logError(final ZonedDateTime now, ConditionContext conditionContext, FlowInterface flow, AbstractTrigger trigger, Throwable e) {

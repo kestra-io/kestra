@@ -24,7 +24,7 @@
 
                 <template #top>
                     <div
-                        v-if="!showEmptyPage"
+                        v-if="!showEmptyPage || (embed && !system)"
                         class="toolbar"
                         :class="{plain: embed || system}"
                     >
@@ -36,7 +36,11 @@
                             :tags
                             :inline="!embed && !system"
                             @search="handleSearch"
-                        />
+                        >
+                            <template v-if="$slots['beside-search']" #beside-search>
+                                <slot name="beside-search" />
+                            </template>
+                        </BlueprintsFilterBar>
                         <div v-if="ready && !system && !embed" class="tags">
                             <KsCheckTag
                                 v-for="tag in tagList"

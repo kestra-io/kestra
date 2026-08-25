@@ -33,7 +33,7 @@ class DatasourcePoolSizeDefaulterTest {
         DatasourceConfiguration result = new DatasourcePoolSizeDefaulter(environment).onCreated(event);
 
         // Then
-        assertThat(result.getMaximumPoolSize()).isEqualTo(25);
+        assertThat(result.getMaximumPoolSize()).isEqualTo(20);
     }
 
     @Test

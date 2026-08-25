@@ -26,17 +26,17 @@
                 <KsButton class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
                 </KsButton>
-                <KsTooltip :content="!raw_view ? t('logs_view.raw_details') : t('logs_view.compact_details')">
+                <KsTooltip :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')">
                     <KsButton class="logs-toolbar__text-btn" @click="toggleViewType" :icon="logViewTypeButtonIcon">
-                        {{ !raw_view ? t('logs_view.raw') : t('logs_view.compact') }}
+                        {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
                     </KsButton>
                 </KsTooltip>
             </div>
             <div class="logs-toolbar__actions">
                 <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" />
                 <LogDisplaySettings />
-                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
-                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
+                <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="downloadContent()" />
+                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs()" />
             </div>
         </div>
 
@@ -58,8 +58,8 @@
         <KsCard v-else class="attempt-wrapper" style="--kel-card-padding: 0">
             <KsNoData
                 v-if="Array.isArray((executionsStore.logs as any)) && temporalLogs.length === 0"
-                :title="t('no_logs_data_title')"
-                :description="t('no_logs_data_description')"
+                :title="$t('no_logs_data_title')"
+                :description="$t('no_logs_data_description')"
             />
             <DynamicScroller
                 v-if="temporalLogs.length > 0"

@@ -50,17 +50,25 @@ export interface ContextNotice {
     id: string
 }
 
+/** A display-only transcript line noting the AI provider/model was switched mid-conversation. */
+export interface ModelChangeNotice {
+    /** The newly selected provider's display name (e.g. "GPT-5 nano"). */
+    label: string
+}
+
 /** A message as rendered in the chat transcript (a superset of the wire MessageView). */
 export interface ChatMessage {
     /** Local, stable key for v-for. */
     id: string
     role: AgentMessageRole
-    /** `"CONTEXT"` is a local, display-only transcript line noting a focus change — never a wire type. */
-    type: AgentMessageType | "CONTEXT"
+    /** `"CONTEXT"` and `"MODEL_CHANGED"` are local, display-only transcript lines — never wire types. */
+    type: AgentMessageType | "CONTEXT" | "MODEL_CHANGED"
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
     /** The focus change to render; present only on a `"CONTEXT"` line. */
     context?: ContextNotice
+    /** The model switch to render; present only on a `"MODEL_CHANGED"` line. */
+    modelChange?: ModelChangeNotice
     toolCall?: ToolCallEvent
     toolResult?: ToolResultEvent
     proposedAction?: ProposedActionEvent
@@ -390,6 +398,16 @@ export function useAiChat() {
         push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: notice})
     }
 
+    /**
+     * Appends a display-only system line noting the AI provider/model was switched — never a turn,
+     * so never sent to the backend or persisted. Suppressed until a conversation has started, same
+     * as `noteContext`.
+     */
+    function noteModelChange(label: string): void {
+        if (messages.value.length === 0) return
+        push({id: uid(), role: "SYSTEM", type: "MODEL_CHANGED", modelChange: {label}})
+    }
+
     function toErrorCode(e: unknown): ErrorCode {
         if (e instanceof SseHttpError) {
             if (e.status === 409) return "turnInProgress"
@@ -441,6 +459,7 @@ export function useAiChat() {
         retry,
         retryLastTurn,
         noteContext,
+        noteModelChange,
     }
 }
 

@@ -20,8 +20,16 @@
         </KsText>
     </div>
 
+    <!-- A display-only line noting the AI provider/model was switched mid-conversation; same quiet
+         centred treatment as the context notice above. -->
+    <div v-else-if="message.type === 'MODEL_CHANGED' && message.modelChange" class="copilot-msg copilot-context-notice" data-test="copilot-model-notice">
+        <KsText size="small" class="copilot-context-notice-text">
+            {{ $t("ai.copilot.modelChanged", {model: message.modelChange.label}) }}
+        </KsText>
+    </div>
+
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
-        <div class="copilot-bubble copilot-bubble-assistant">
+        <div class="copilot-bubble copilot-bubble-assistant" data-test="copilot-assistant-text">
             <KsMarkdown v-if="message.content" :content="message.content" />
         </div>
     </div>
@@ -165,6 +173,15 @@
         justify-content: flex-start;
     }
 
+    /* Assistant-side blocks (text bubble, draft card, past proposal) span the transcript column, so
+       they end on the same right edge as the full-width tool strip instead of a ragged, content-
+       dependent one (kestra-io/kestra#18388). `min-width: 0` keeps a wide code block or long id from
+       stretching the block past the column. */
+    .copilot-msg-assistant > * {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
     /* Context-change notice: a quiet, centred line, not a chat bubble. It's not selectable prose, so
        the pointer stays the default arrow rather than the text I-beam. */
     .copilot-context-notice {
@@ -203,7 +220,6 @@
     /* Assistant replies get their own left-aligned bubble (surface fill) so they read as
        styled responses rather than plain text. */
     .copilot-bubble-assistant {
-        max-width: 90%;
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-surface);

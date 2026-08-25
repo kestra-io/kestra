@@ -131,6 +131,22 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-cancelled.yaml" })
+    void parallelFailFastCancelled() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            NAMESPACE, "parallel-fail-fast-cancelled", null, null, Duration.ofSeconds(20),
+            execution1 -> execution1.getState().isTerminated()
+                && execution1.getTaskRunList() != null
+                && execution1.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated())
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // the sibling must be cancelled quickly instead of running its full PT10S duration
+        assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
     void restartFailed() throws Exception {
         restartCaseTest.restartFailedThenSuccess();
@@ -268,7 +284,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
-        { "flows/valids/flow-trigger-multiple-depends-on-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml",
+        { "flows/valids/flow-trigger-multiple-depends-on-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml",
             "flows/valids/flow-trigger-multiple-depends-on-flow-listen.yaml" }
     )
     void flowTriggerMultipleDependsOn() throws Exception {
@@ -276,9 +292,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/flow-trigger-fire-once-true-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml", "flows/valids/flow-trigger-fire-once-true-flow-listen.yaml" })
-    void flowTriggerDependsOnFireOnceTrue() throws Exception {
-        multipleConditionTriggerCaseTest.flowTriggerDependsOnFireOnceTrue();
+    @LoadFlows({ "flows/valids/flow-trigger-reset-after-fire-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-unrelated.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-listen.yaml" })
+    void flowTriggerDependsOnResetsAfterFiring() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnResetsAfterFiring();
     }
 
     @Test

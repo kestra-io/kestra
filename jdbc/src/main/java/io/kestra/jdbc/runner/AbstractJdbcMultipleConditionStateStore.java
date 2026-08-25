@@ -42,7 +42,7 @@ public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJd
                 var txContext = new JdbcTransactionContext(dslContext);
                 Execution newExecution = consumer.apply(txContext, multipleConditionWindow);
 
-                if (newExecution != null && !Boolean.FALSE.equals(multipleCondition.getResetOnSuccess())) {
+                if (newExecution != null) {
                     // re-fetch within the same transaction to get the state after the consumer's save(),
                     // then delete if all conditions are now satisfied
                     get(dslContext, flow, multipleCondition.getId())

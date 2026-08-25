@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -48,6 +49,7 @@ import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.plugin.core.debug.Return;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
@@ -119,6 +121,77 @@ public class WorkingDirectoryTest {
     @LoadFlows({ "flows/valids/working-directory-namespace-files-with-namespaces.yaml" })
     void namespaceFilesWithNamespace() throws TimeoutException, IOException, QueueException, URISyntaxException, InternalException {
         suite.namespaceFilesWithNamespaces(runnerUtils);
+    }
+
+    @Test
+    void shouldNotResolveTerminalStateWhenASubtaskIsStillRunning() throws Exception {
+        // Given a WorkingDirectory whose subtasks run inside the Worker and report through independent
+        // queue messages: t4 has already failed but t3's terminal (SUCCESS) result hasn't been joined yet
+        WorkingDirectory workingDirectory = fourSubtasksWorkingDirectory();
+        TaskRun parentTaskRun = TaskRun.builder().id("worker-run").taskId("worker").state(new State()).build();
+        RunContext runContext = runContextFactory.of(workingDirectory, Map.of());
+
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                parentTaskRun,
+                childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
+                childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
+                childTaskRun(parentTaskRun, "t3", State.Type.RUNNING),
+                childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
+            ))
+            .build();
+
+        // When resolving the state while t3 is still RUNNING
+        Optional<State.Type> resolvedState = workingDirectory.resolveState(runContext, execution, parentTaskRun);
+
+        // Then it must not terminate yet
+        assertThat(resolvedState).isEmpty();
+    }
+
+    @Test
+    void shouldResolveFailedWhenAllSubtasksHaveTerminatedAndOneFailed() throws Exception {
+        // Given a WorkingDirectory whose subtasks have all reported their terminal result, t4 among them FAILED
+        WorkingDirectory workingDirectory = fourSubtasksWorkingDirectory();
+        TaskRun parentTaskRun = TaskRun.builder().id("worker-run").taskId("worker").state(new State()).build();
+        RunContext runContext = runContextFactory.of(workingDirectory, Map.of());
+
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                parentTaskRun,
+                childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
+                childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
+                childTaskRun(parentTaskRun, "t3", State.Type.SUCCESS),
+                childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
+            ))
+            .build();
+
+        // When resolving the state now that every subtask has terminated
+        Optional<State.Type> resolvedState = workingDirectory.resolveState(runContext, execution, parentTaskRun);
+
+        // Then the WorkingDirectory resolves to FAILED as t4 failed
+        assertThat(resolvedState).contains(State.Type.FAILED);
+    }
+
+    private static WorkingDirectory fourSubtasksWorkingDirectory() {
+        return WorkingDirectory.builder()
+            .id("worker")
+            .type(WorkingDirectory.class.getName())
+            .tasks(List.of(
+                Return.builder().id("t1").type(Return.class.getName()).format(Property.ofValue("first")).build(),
+                Return.builder().id("t2").type(Return.class.getName()).format(Property.ofValue("second")).build(),
+                Return.builder().id("t3").type(Return.class.getName()).format(Property.ofValue("third")).build(),
+                Return.builder().id("t4").type(Return.class.getName()).format(Property.ofValue("fourth")).build()
+            ))
+            .build();
+    }
+
+    private static TaskRun childTaskRun(TaskRun parentTaskRun, String taskId, State.Type state) {
+        return TaskRun.builder()
+            .id(taskId + "-run")
+            .taskId(taskId)
+            .parentTaskRunId(parentTaskRun.getId())
+            .state(new State().withState(state))
+            .build();
     }
 
     @Test

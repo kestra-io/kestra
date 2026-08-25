@@ -570,6 +570,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "No triggers found",
     "triggers_add_ee_tooltip": "This trigger requires Enterprise Edition.",
+    "ee_feature_tooltip": "This feature requires Enterprise Edition.",
     "triggers_add_card_add": "Add",
     "triggers_add_modal_tab_form": "Form",
     "triggers_add_modal_tab_source": "Source",
@@ -1391,6 +1392,7 @@
       "key": "Name",
       "keyPlaceholder": "Name used to reference this secret, e.g. MY_API_TOKEN",
       "name": "Secret value",
+      "valuePlaceholder": "Enter the secret value",
       "description": "Description",
       "descriptionPlaceholder": "Describe this secret",
       "tags": "Tags",
@@ -1731,7 +1733,7 @@
         "content": "Expose a flow as an MCP tool by adding an <code>McpToolTrigger</code> to it. Read more about the <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in our documentation."
       },
       "versionPlugin": {
-        "title": "You have no versioned plugin yet!",
+        "title": "You have no versioned plugins yet!",
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
       },
       "panels": {
@@ -1887,6 +1889,7 @@
           "test": "test"
         },
         "contextRemoved": "Removed {type} {id} from context.",
+        "modelChanged": "Switched to {model}.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} failed",
@@ -2094,7 +2097,7 @@
       "no_oauth_providers": "No OIDC providers configured in this instance",
       "delete_confirm": "Are you sure you want to delete this MCP server?",
       "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
-      "server_id": "Servers ID",
+      "server_id": "Server ID",
       "id_placeholder": "e.g. my-mcp-server",
       "id_invalid": "ID must start with a lowercase letter or digit, and contain only lowercase letters, digits, hyphens, or underscores",
       "main_tenant": "main",

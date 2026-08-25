@@ -294,12 +294,11 @@
             return {value: state.textValue, label: state.textValue}
         case "select":
             if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                     meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
@@ -314,12 +313,11 @@
             }
         case "time-range":
             if (state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                 }
             }
             return {
@@ -361,8 +359,10 @@
     const applyLive = () => {
         if (!ready.value || !state.selectedComparator) return
 
+        // A custom range needs at least one bound to be worth applying; the other bound
+        // defaults to now (getFilterValue) so typing just a Start or End date applies immediately.
         if (isTimeRange.value && state.timeRangeMode === "custom"
-            && (!state.startDateValue || !state.endDateValue)) {
+            && !state.startDateValue && !state.endDateValue) {
             return
         }
 

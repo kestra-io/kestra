@@ -570,6 +570,7 @@
     "triggers_add_filter_app": "应用程序",
     "triggers_add_empty_title": "未找到trigger",
     "triggers_add_ee_tooltip": "此trigger需要企业版。",
+    "ee_feature_tooltip": "此功能需要企业版。",
     "triggers_add_card_add": "添加",
     "triggers_add_modal_tab_form": "表单",
     "triggers_add_modal_tab_source": "来源",
@@ -1391,6 +1392,7 @@
       "key": "名称",
       "keyPlaceholder": "用于引用此密钥的名称，例如 MY_API_TOKEN",
       "name": "秘密值",
+      "valuePlaceholder": "输入秘密值",
       "description": "描述",
       "descriptionPlaceholder": "描述此 secret",
       "tags": "标签",
@@ -1887,6 +1889,7 @@
           "test": "测试"
         },
         "contextRemoved": "已从上下文移除 {type} {id}。",
+        "modelChanged": "已切换到 {model}。",
         "toolResult": {
           "detail": "详情",
           "error": "{tool} 失败",

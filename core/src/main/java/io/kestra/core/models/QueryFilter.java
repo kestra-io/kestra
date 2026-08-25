@@ -510,8 +510,8 @@ public record QueryFilter(
                 return List.of();
             }
         },
-        @JsonProperty("super_admin")
-        SUPER_ADMIN("super_admin") {
+        @JsonProperty("instance_owner")
+        INSTANCE_OWNER("instance_owner") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
@@ -636,7 +636,7 @@ public record QueryFilter(
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.SUPER_ADMIN);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.INSTANCE_OWNER);
             }
         },
         ROLE {
@@ -648,7 +648,7 @@ public record QueryFilter(
         INVITATION {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT, Field.SUPER_ADMIN);
+                return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT, Field.INSTANCE_OWNER);
             }
 
             @Override

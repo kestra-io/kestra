@@ -19,3 +19,9 @@ export function getExtraColumns(_routeName?: string): ExecutionExtraColumn[] {
 }
 export const cellComponents: Record<string, Component> = {}
 export const bulkActionComponents: Component[] = []
+
+// No-op in OSS. EE contributes extra items to the execution overflow ("...") menu, which is
+// reachable from every execution tab. Each component receives the `execution` prop and gates
+// itself on its own feature flag / permissions. Rendered just before Delete, so the
+// destructive action stays last.
+export const overflowActionComponents: Component[] = []

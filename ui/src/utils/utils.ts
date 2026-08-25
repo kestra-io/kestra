@@ -230,6 +230,14 @@ export function getLang() {
     return localStorage.getItem("lang") || "en"
 }
 
+/**
+ * The stored language as a valid BCP 47 tag ("pt_BR" -> "pt-BR") for Intl APIs and the html lang
+ * attribute, which reject the underscore form getLang() returns.
+ */
+export function getLanguageTag() {
+    return getLang().replace(/_/g, "-")
+}
+
 export function splitFirst(str: string, separator: string) {
     return str.split(separator).slice(1).join(separator)
 }
@@ -273,9 +281,9 @@ export function getDateFormat(startDate: moment.MomentInput, endDate: moment.Mom
     } else if (duration.asDays() > 1) {
         return "yyyy-MM-DD"
     } else if (duration.asHours() > 1) {
-        return "yyyy-MM-DD:HH:00"
+        return "yyyy-MM-DD HH:00"
     } else {
-        return "yyyy-MM-DD:HH:mm"
+        return "yyyy-MM-DD HH:mm"
     }
 }
 

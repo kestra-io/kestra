@@ -2,47 +2,6 @@
   "fr": {
     "loading": "Chargement...",
     "more actions": "Plus d'actions",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Utilisez uniquement des lettres, des chiffres, des points, des tirets et des underscores, en commençant par une lettre ou un chiffre.",
-        "id_label": "Id du flow",
-        "id_placeholder": "mon-flow",
-        "namespace_invalid": "Utilisez uniquement des lettres minuscules, des chiffres, des points, des tirets et des underscores, en commençant par une lettre minuscule ou un chiffre.",
-        "namespace_placeholder": "Sélectionner un namespace",
-        "namespaces_error": "Impossible de charger les namespaces. Saisissez un namespace manuellement.",
-        "open_editor": "Ouvrir l'éditeur",
-        "subtitle": "Commencez avec un modèle \"hello-world\" et construisez à partir de zéro.",
-        "title": "flow vierge"
-      },
-      "blueprints": {
-        "subtitle": "Choisissez un flow prêt à l'emploi dans le catalogue de la communauté.",
-        "title": "Parcourir les blueprints"
-      },
-      "import": {
-        "back": "Retour",
-        "error": {
-          "empty": "Le contenu YAML est vide.",
-          "invalid_mapping": "YAML de flow invalide : attendu un mappage clé-valeur, pas une liste ou un scalaire.",
-          "parse_error": "Impossible d'analyser le YAML.",
-          "too_large": "Ce fichier est trop volumineux. Collez plutôt la définition du flow, ou téléchargez un fichier de moins de 1 Mo."
-        },
-        "paste_label": "Coller le YAML",
-        "read_error": "Impossible de lire le fichier.",
-        "submit": "Importer un flow",
-        "subtitle": "Collez ou téléchargez une définition de flow existante.",
-        "title": "Importer du YAML",
-        "upload_button": "Uploader .yml / .yaml",
-        "upload_label": "Ou téléchargez un fichier",
-        "upload_tip": "Accepte les fichiers .yml et .yaml."
-      },
-      "subtitle": "Commencez à partir d'une toile vierge, explorez les blueprints ou importez un YAML existant.",
-      "system": {
-        "badge": "SYSTÈME",
-        "subtitle": "Créez un flow d'alerte ou d'automatisation pour votre plateforme.",
-        "title": "Créer un system flow"
-      },
-      "title": "Créer un nouveau flow"
-    },
     "recipe": {
       "create_flow": "Créer un flow",
       "email": "E-mail",
@@ -227,6 +186,7 @@
     "edit": "Modifier",
     "back": "Retour",
     "next": "Suivant",
+    "previous": "Précédent",
     "done": "Terminé",
     "review your inputs": "Vérifiez vos entrées",
     "edit flow": "Modifier le flow",
@@ -311,8 +271,6 @@
         "1d": "1j",
         "7d": "7j"
       },
-      "last14days": "Les 14 derniers jours",
-      "last28days": "Les 28 derniers jours",
       "14days": "14 jours",
       "28days": "28 jours"
     },
@@ -478,6 +436,7 @@
     },
     "file_preview": {
       "big_file_warning": "Ce fichier fait {size}. Le chargement peut prendre un certain temps et bloquer votre navigateur. Voulez-vous quand même le charger ?",
+      "big_file_download_only": "Ce fichier fait {size}. Il est trop volumineux pour être ouvert dans l'éditeur, téléchargez-le à la place.",
       "load_anyway": "Charger quand même",
       "load_error": "Échec du chargement de l'aperçu du fichier. Il peut s'agir d'un problème temporaire ou d'un problème d'autorisations.",
       "retry": "Réessayer",
@@ -611,6 +570,7 @@
     "triggers_add_filter_app": "Application",
     "triggers_add_empty_title": "Aucun trigger trouvé",
     "triggers_add_ee_tooltip": "Ce trigger nécessite l'édition Enterprise.",
+    "ee_feature_tooltip": "Cette fonctionnalité nécessite l'édition Enterprise.",
     "triggers_add_card_add": "Ajouter",
     "triggers_add_modal_tab_form": "Formulaire",
     "triggers_add_modal_tab_source": "Source",
@@ -1020,7 +980,8 @@
             "triggers_default_tab": "Onglet par défaut des Triggers",
             "playground": "Aire de jeu",
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
-            "task_edit_default_mode": "Mode d'édition de Task par défaut"
+            "task_edit_default_mode": "Mode d'édition de Task par défaut",
+            "flow_template": "Modèle de flow par défaut"
           },
           "descriptions": {
             "default_namespace": "Utilisé lors de la création de nouveaux flows sans namespace.",
@@ -1033,11 +994,17 @@
             "triggers_default_tab": "Onglet sélectionné lors de la navigation vers la page des triggers.",
             "auto_refresh_interval": "Secondes entre les actualisations automatiques des données sur les pages de liste.",
             "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur.",
-            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code."
+            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code.",
+            "flow_template": "Le YAML s'ouvre dans l'éditeur lorsque vous créez un nouveau flow. L'id et le namespace peuvent être omis, car ils sont générés automatiquement. Si ce champ est vide, le template configuré pour l'instance est utilisé."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Onglet"
+          },
+          "flow_template_reset": "Réinitialiser par défaut",
+          "flow_template_error": {
+            "invalid_mapping": "Modèle de flow invalide : attendu un mappage clé-valeur, pas une liste ou un scalaire.",
+            "parse_error": "Impossible d'analyser le YAML. Le modèle a été enregistré, l'éditeur peut donc afficher la même erreur lorsque vous créez un flow."
           }
         },
         "theme": {
@@ -1114,7 +1081,7 @@
       "contact_sales": "Contactez les ventes",
       "secrets": {
         "title": "Améliorez votre gestion des Secrets",
-        "message": "L'édition Enterprise (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'interface utilisateur, sans nécessiter de redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. L'EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des vaults externes. Les secrets restent chiffrés au repos et en transit. La mise en cache optionnelle réduit les appels d'API, et les pistes d'audit enregistrent tous les accès.",
+        "message": "L'édition Enterprise vous permet d'ajouter, de modifier et de supprimer des secrets directement dans l'interface utilisateur, de les organiser par namespace avec RBAC et de les stocker dans HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager ou Elasticsearch.",
         "add_env": {
           "intro": "Créer un nouveau Secret",
           "first": "Encodez la <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valeur secrète en Base64</a>",
@@ -1426,6 +1393,7 @@
       "key": "Nom",
       "keyPlaceholder": "Nom utilisé pour référencer ce secret, par exemple MY_API_TOKEN",
       "name": "Valeur secrète",
+      "valuePlaceholder": "Saisir la valeur secrète",
       "description": "Description",
       "descriptionPlaceholder": "Décrire ce secret",
       "tags": "Tags",
@@ -1766,7 +1734,7 @@
         "content": "Exposez un flow comme un outil MCP en y ajoutant un <code>McpToolTrigger</code>. Lisez-en plus sur le <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> dans notre documentation."
       },
       "versionPlugin": {
-        "title": "Vous n'avez pas encore de plugin versionné !",
+        "title": "Vous n'avez pas encore de plugins versionnés !",
         "content": "Ici, vous pouvez gérer tous les plugins installés sur votre instance Kestra. Les plugins nouvellement installés peuvent ne pas être immédiatement disponibles dans tous les services Kestra, selon la configuration de votre instance."
       },
       "panels": {

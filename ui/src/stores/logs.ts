@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {ref} from "vue"
+import {ref, computed} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
@@ -9,12 +9,13 @@ import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
 /** Splits a flat `{page, size, sort, "filters[field][OP]": value, ...}` options object
  * (as built by callers' `loadQuery()` route.query merges) into the SDK's declared
  * page/size/sort params plus a proper QueryFilter[] array. */
-function toSearchParams(options: Record<string, any>) {
+function toSearchParams(options: Record<string, any>, cursor?: string) {
     const {page, size, sort, ...filterKeys} = options
     return {
         page,
         size,
         sort: sort ? [sort] : undefined,
+        cursor,
         filters: routeQueryToQueryFilters(filterKeys),
     }
 }
@@ -38,11 +39,77 @@ export interface Log{
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
+    const paginationType = ref<"OFFSET" | "CURSOR">("OFFSET")
+    const nextCursor = ref<string | undefined>(undefined)
 
-    function findLogs(options: Record<string, any>) {
-        return LogsAPI.searchLogs(toSearchParams(options)).then(response => {
-            logs.value = response.results as unknown as Log[]
-            total.value = response.total ?? 0
+    const isCursorMode = computed(() => paginationType.value === "CURSOR")
+    const hasNextCursor = computed(() => Boolean(nextCursor.value))
+
+    // Cursor pagination is forward-only on the backend, but the client remembers every cursor it
+    // used, so it can walk back. `cursorStack` holds the cursors that fetched the pages *behind* the
+    // current one (index 0 is `undefined`, the first page); `currentCursor` fetched the current page.
+    const cursorStack = ref<(string | undefined)[]>([])
+    let currentCursor: string | undefined = undefined
+    const hasPreviousPage = computed(() => cursorStack.value.length > 0)
+
+    let latestSearchId = 0
+
+    function applyResponse(response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>) {
+        logs.value = response.results as unknown as Log[]
+        total.value = response.total ?? 0
+        paginationType.value = response.type ?? "OFFSET"
+        nextCursor.value = response.nextCursor
+    }
+
+    /** Fresh load — resets the cursor back-stack. Used for the first page, filter changes, refresh
+     * and mode transitions. Next/Previous navigation goes through the dedicated actions below. */
+    function findLogs(options: Record<string, any>, cursor?: string) {
+        const searchId = ++latestSearchId
+        return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
+            const isSuperseded = searchId !== latestSearchId
+            if (isSuperseded) return
+
+            cursorStack.value = []
+            currentCursor = cursor
+            applyResponse(response)
+        })
+    }
+
+    /** Advance one page using the current `nextCursor`. The backend leaves `nextCursor` null only on
+     * an empty page, so the last page *with logs* still advertises a cursor; when that Next comes back
+     * empty we keep the current rows and just drop the Next control instead of blanking the view. */
+    function loadNextPage(options: Record<string, any>) {
+        const cursor = nextCursor.value
+        if (!cursor) return Promise.resolve()
+        const searchId = ++latestSearchId
+        return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
+            const isSuperseded = searchId !== latestSearchId
+            if (isSuperseded) return
+
+            const results = (response.results ?? []) as unknown as Log[]
+            if (results.length === 0) {
+                nextCursor.value = undefined
+                return
+            }
+            cursorStack.value = [...cursorStack.value, currentCursor]
+            currentCursor = cursor
+            applyResponse(response)
+        })
+    }
+
+    /** Go back one page by re-fetching the previous page with the cursor that originally loaded it. */
+    function loadPreviousPage(options: Record<string, any>) {
+        if (cursorStack.value.length === 0) return Promise.resolve()
+        const stack = [...cursorStack.value]
+        const previousCursor = stack.pop()
+        const searchId = ++latestSearchId
+        return LogsAPI.searchLogs(toSearchParams(options, previousCursor)).then(response => {
+            const isSuperseded = searchId !== latestSearchId
+            if (isSuperseded) return
+
+            cursorStack.value = stack
+            currentCursor = previousCursor
+            applyResponse(response)
         })
     }
 
@@ -87,7 +154,14 @@ export const useLogsStore = defineStore("logs", () => {
     return {
         logs,
         total,
+        paginationType,
+        nextCursor,
+        isCursorMode,
+        hasNextCursor,
+        hasPreviousPage,
         findLogs,
+        loadNextPage,
+        loadPreviousPage,
         deleteLogs,
         downloadLogs,
         levelCounts,

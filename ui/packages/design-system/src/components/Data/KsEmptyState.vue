@@ -15,35 +15,23 @@
                 </p>
             </div>
 
-            <div v-if="$slots.action || (isOnline && video)" class="ks-empty-state__actions">
+            <div v-if="$slots.action || learnMore" class="ks-empty-state__actions">
                 <slot name="action" />
                 <KsButton
-                    v-if="isOnline && video"
+                    v-if="learnMore"
                     tag="a"
                     target="_blank"
-                    :href="video"
+                    rel="noopener"
+                    :href="learnMore"
                 >
-                    {{ $t("ks_empty_state.watch_the_video") }}
+                    {{ $t("ks_empty_state.learn_more") }}
                 </KsButton>
             </div>
-
-            <a
-                v-if="learnMore"
-                class="ks-empty-state__learn-more"
-                :href="learnMore"
-                target="_blank"
-                rel="noopener"
-            >
-                {{ $t("ks_empty_state.learn_more") }}
-                <ArrowTopRight :size="14" />
-            </a>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
-    import {useNetwork} from "@vueuse/core"
-    import ArrowTopRight from "vue-material-design-icons/ArrowTopRight.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
 
     defineProps<{
@@ -51,7 +39,6 @@
         description?: string;
         image?: string;
         imageAlt?: string;
-        video?: string;
         learnMore?: string;
     }>()
 
@@ -59,8 +46,6 @@
         action?(): unknown;
         description?(): unknown;
     }>()
-
-    const {isOnline} = useNetwork()
 </script>
 
 <style lang="scss" scoped>
@@ -129,19 +114,6 @@
 
     :deep(.kel-button + .kel-button) {
         margin-left: 0;
-    }
-}
-
-.ks-empty-state__learn-more {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-secondary);
-    text-decoration: none;
-
-    &:hover {
-        color: var(--ks-text-link);
     }
 }
 </style>

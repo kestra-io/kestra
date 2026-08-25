@@ -71,7 +71,6 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     align-items: center;
     line-height: 1;
     white-space: nowrap;
-    cursor: default;
     text-align: center;
     box-sizing: border-box;
     outline: none;
@@ -117,6 +116,13 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
         padding: 0 var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         gap: 0.25rem;
+    }
+
+    /* Bootstrap's reboot puts `cursor: pointer` on every non-disabled <button>, and
+       `button:not(:disabled)` out-specifies a lone class — so the badge advertised a click it
+       does not handle unless the caller opted in. This has to be the heavier selector to win. */
+    &:not(.ks-execution-status--clickable) {
+        cursor: default;
     }
 
     &.ks-execution-status--clickable {

@@ -294,8 +294,14 @@
     bottom: 0;
     width: var(--ks-spacing-2);
     z-index: 1;
-    cursor: w-resize;
+    /* Drag-to-collapse, not drag-to-resize: the handle is wired to a swipe gesture and the
+       menu width is fixed, so a resize cursor promised something that never happened. */
+    cursor: grab;
     touch-action: pan-y;
+
+    &:active {
+        cursor: grabbing;
+    }
 }
 
 .menu-drag-handle::after {

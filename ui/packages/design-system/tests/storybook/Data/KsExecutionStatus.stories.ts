@@ -93,6 +93,29 @@ export const CustomTitle: Story = {
     args: {status: "RUNNING", title: "In Progress", icon: true},
 }
 
+/**
+ * Hover both badges: only the opted-in one shows a pointer. Bootstrap's reboot puts
+ * `cursor: pointer` on every non-disabled `<button>` at a specificity a lone class cannot
+ * beat, so the non-clickable badge used to advertise a click it never handled.
+ */
+export const CursorAffordance: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        template: `
+            <div style="padding:24px;display:flex;align-items:center;gap:24px">
+                <span style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+                    <small>default — cursor: default</small>
+                    <ks-execution-status status="SUCCESS" icon />
+                </span>
+                <span style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+                    <small>clickable — cursor: pointer</small>
+                    <ks-execution-status status="SUCCESS" icon clickable />
+                </span>
+            </div>
+        `,
+    }),
+}
+
 export const Clickable: Story = {
     render: () => ({
         components: {KsExecutionStatus},

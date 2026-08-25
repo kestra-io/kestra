@@ -88,10 +88,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh \
   # Increases JavaScript heap memory to 4GB to prevent heap out of error during startup
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# Install required dependencies for playwright as e2e tests rely on it.
+# Install required dependencies for playwright.
 RUN npx playwright install-deps
-# Install browsers for playwright
-RUN npx playwright install
 # --------------------------------------
 
 # --------------------------------------

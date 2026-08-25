@@ -81,17 +81,25 @@ export const WithIcons: Story = {
     }),
 }
 
+/** Sizes, plain and with icons — the icon scales with the control. */
 export const Sizes: Story = {
     render: () => ({
         components: {KsSegmented},
         setup() {
-            return {v1: ref("a"), v2: ref("a"), v3: ref("a")}
+            const iconOptions = [
+                {label: "User", value: "user", icon: Account},
+                {label: "Group", value: "group", icon: AccountGroup},
+            ]
+            return {v1: ref("a"), v2: ref("a"), v3: ref("a"), i1: ref("user"), i2: ref("user"), i3: ref("user"), iconOptions}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
                 <ks-segmented v-model="v1" size="large" :options="['a', 'b', 'c']" />
                 <ks-segmented v-model="v2" :options="['a', 'b', 'c']" />
                 <ks-segmented v-model="v3" size="small" :options="['a', 'b', 'c']" />
+                <ks-segmented v-model="i1" size="large" :options="iconOptions" />
+                <ks-segmented v-model="i2" :options="iconOptions" />
+                <ks-segmented v-model="i3" size="small" :options="iconOptions" />
             </div>
         `,
     }),

@@ -10,7 +10,7 @@
         </template>
         <template v-else-if="hasIcons" #default="{item}">
             <span class="ks-segmented-item">
-                <KsIcon v-if="iconOf(item)" size="sm"><component :is="iconOf(item)" /></KsIcon>
+                <KsIcon v-if="iconOf(item)" :size="iconSize"><component :is="iconOf(item)" /></KsIcon>
                 {{ labelOf(item) }}
             </span>
         </template>
@@ -53,6 +53,15 @@
     const iconOf = (item: unknown): Component | undefined => asObjectOption(item)?.icon
 
     const labelOf = (item: unknown): unknown => asObjectOption(item)?.label ?? item
+
+    // Keep the icon proportional to the control it sits in, rather than one fixed size.
+    const iconSize = computed(() => {
+        switch (props.size) {
+        case "large": return "base"
+        case "small": return "xs"
+        default: return "sm"
+        }
+    })
 </script>
 
 <style lang="scss">

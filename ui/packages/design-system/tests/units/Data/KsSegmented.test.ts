@@ -47,6 +47,18 @@ describe("KsSegmented", () => {
         expect(wrapper.text()).toContain("Group")
     })
 
+    test("scales the option icon with the control size", () => {
+        const options = [{label: "User", value: "user", icon: Account}]
+        const iconSize = (size?: "large" | "default" | "small") => mount(KsSegmented, {
+            props: {modelValue: "user", options, ...(size ? {size} : {})},
+            global: globalConfig,
+        }).findComponent(Account).element.closest("i")?.getAttribute("style")
+
+        expect(iconSize("large")).toContain("--ks-icon-size-base")
+        expect(iconSize()).toContain("--ks-icon-size-sm")
+        expect(iconSize("small")).toContain("--ks-icon-size-xs")
+    })
+
     test("selected item gets is-selected class", () => {
         const wrapper = mount(KsSegmented, {
             props: {modelValue: "b", options: ["a", "b", "c"]},

@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
+import java.lang.reflect.RecordComponent;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
@@ -16,12 +17,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -75,34 +76,84 @@ class KVControllerTest {
         kvMetadataRepository.purge(persistedKvMetadata);
     }
 
-    @SuppressWarnings("unchecked")
     /**
-     * Sort properties are turned into columns by camel-to-snake conversion, which produced
-     * `update_date`, `creation_date` and `revision` — none of which exist on `kv_metadata`. The
-     * query then failed with a 500 and the UI rendered an empty store.
+     * Sorting resolves a {@link KVEntry} field to a repository property; the four whose names
+     * differ resolved to nothing, failed the query with a 500 and left the UI with an empty store.
+     * Driven off the record components so an added field cannot silently reintroduce the gap.
      */
     @ParameterizedTest
-    @ValueSource(strings = {"key", "namespace", "description", "expirationDate", "creationDate", "updateDate", "revision"})
+    @MethodSource("kvEntryFields")
     void shouldSortAllKeysByEveryEntryField(String field) throws IOException {
         // Given: two keys in one namespace
-        String namespace = TestsUtils.randomNamespace();
-        KVStore kvStore = new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataStateStore);
-        kvStore.put("a-key", new KVValueAndMetadata(new KVMetadata("first", null), "a-value"));
-        kvStore.put("b-key", new KVValueAndMetadata(new KVMetadata("second", null), "b-value"));
+        givenTwoKeys();
 
-        // When / Then: sorting on any KVEntry field resolves to a real column, in both directions
+        // When / Then: every entry field is a whitelisted sort, in both directions
         for (String direction : List.of("asc", "desc")) {
-            PagedResults<KVEntry> res = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/main/kv?size=10&page=1&sort=" + field + ":" + direction),
-                Argument.of(PagedResults.class, KVEntry.class)
-            );
-
-            assertThat(res.getResults())
+            assertThat(sortedEntries(field, direction))
                 .as("sorting by %s:%s should not fail", field, direction)
                 .hasSize(2);
         }
     }
 
+    /**
+     * A wrong-but-existing column clears the "no 500" bar above: drop the {@code key} mapping and
+     * the test still passes, ordering on the uid primary key that happens to share the name. These
+     * assertions pin the column each sort actually lands on.
+     */
+    @Test
+    void shouldOrderKeysByTheMappedColumn() throws IOException {
+        // Given: b-key written first, so key order and write order disagree
+        givenTwoKeys();
+
+        // When / Then: `key` orders on the name, not on the uid primary key of the same name
+        assertThat(sortedEntries("key", "asc").getFirst().key()).isEqualTo("a-key");
+        assertThat(sortedEntries("key", "desc").getFirst().key()).isEqualTo("b-key");
+
+        // And: `updateDate` orders on the write order instead
+        List<KVEntry> byUpdateDate = sortedEntries("updateDate", "asc");
+        // Two writes sharing a timestamp leave the order undefined, so skip rather than flake.
+        Assumptions.assumeTrue(!byUpdateDate.getFirst().updateDate().equals(byUpdateDate.getLast().updateDate()));
+        assertThat(byUpdateDate.getFirst().key()).isEqualTo("b-key");
+        assertThat(sortedEntries("updateDate", "desc").getFirst().key()).isEqualTo("a-key");
+    }
+
+    @Test
+    void shouldRejectASortFieldThatIsNotAnEntryField() {
+        // Given / When: a sort on an internal column that was never part of the API contract
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/kv?size=10&page=1&sort=last:asc"),
+                Argument.of(PagedResults.class, KVEntry.class)
+            )
+        );
+
+        // Then: it is answered as an invalid request rather than reaching the query
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    private static Stream<String> kvEntryFields() {
+        return Stream.of(KVEntry.class.getRecordComponents()).map(RecordComponent::getName);
+    }
+
+    /** Writes {@code b-key} before {@code a-key}, so name order and write order disagree. */
+    private void givenTwoKeys() throws IOException {
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, TestsUtils.randomNamespace(), storageInterface, kvMetadataStateStore);
+        kvStore.put("b-key", new KVValueAndMetadata(new KVMetadata("first", null), "b-value"));
+        kvStore.put("a-key", new KVValueAndMetadata(new KVMetadata("second", null), "a-value"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<KVEntry> sortedEntries(String field, String direction) {
+        PagedResults<KVEntry> results = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/kv?size=10&page=1&sort=" + field + ":" + direction),
+            Argument.of(PagedResults.class, KVEntry.class)
+        );
+
+        return results.getResults();
+    }
+
+    @SuppressWarnings("unchecked")
     @Test
     void listAllKeys() throws IOException {
         String namespace = TestsUtils.randomNamespace();

@@ -11,6 +11,7 @@ import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVStoreService;
@@ -46,22 +47,32 @@ public class KVController {
     protected TenantService tenantService;
 
     /**
-     * Maps a {@link KVEntry} field name to its {@code kv_metadata} column.
+     * Maps a {@link KVEntry} field name to the matching {@link PersistedKvMetadata} property, which
+     * is what the repositories sort on: JDBC turns the value into a column by camel-to-snake
+     * conversion, Elasticsearch uses it verbatim as the document field. Four names differ between
+     * the two records, so an unmapped sort resolved to nothing and failed the query with a 500 —
+     * {@code updateDate} being the one the UI exposes.
      *
-     * <p>Sort properties are otherwise turned into columns by camel-to-snake conversion, which
-     * yields no column at all for these four and fails the query. Only {@code updateDate} is
-     * reachable from the UI today, but the whole set is mapped so adding a sortable column cannot
-     * reintroduce the same failure.
+     * <p>{@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
+     * holding the uid, so that mapping prevents an ordering on the wrong data rather than a failure.
+     *
+     * <p>{@link KVEntry} is a closed record, so this is the exhaustive whitelist of sortable fields:
+     * anything else yields {@code null}, which {@link PageableUtils} answers with a 422 instead of
+     * letting an unknown column reach the query. That also rejects sorts on internal columns such
+     * as {@code last} or {@code deleted}, which were never part of the API contract.
      */
-    private static final Map<String, String> SORT_COLUMNS = Map.of(
+    private static final Map<String, String> SORT_FIELDS = Map.of(
+        "namespace", "namespace",
         "key", "name",
         "revision", "version",
+        "description", "description",
         "creationDate", "created",
-        "updateDate", "updated"
+        "updateDate", "updated",
+        "expirationDate", "expirationDate"
     );
 
     private String sortMapper(String key) {
-        return key == null ? null : SORT_COLUMNS.getOrDefault(key, key);
+        return key == null ? null : SORT_FIELDS.get(key);
     }
 
     @ExecuteOn(TaskExecutors.IO)

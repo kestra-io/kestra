@@ -439,11 +439,9 @@
     })
 
     const endTime = computed<string>(() => {
-        if (!execution.value?.state) return ""
-        const endDate = State.isRunning(execution.value.state.current)
-            ? new Date()
-            : new Date(stop())
-        return dateFilter(endDate.toISOString(), TICK_FORMAT)
+        if (!execution.value?.state || !hasValidDate.value) return ""
+        const endDate = State.isRunning(execution.value.state.current) ? Date.now() : stop()
+        return dateFilter(endDate, TICK_FORMAT)
     })
 
     function delta(): number {
@@ -546,8 +544,15 @@
     }
 
     function computeDates(): void {
+        // An execution cancelled or failed before any task started has no span to divide, so
+        // `delta()` is non-finite and every tick would be an unusable placeholder.
+        if (!hasValidDate.value) {
+            dates.value = []
+            return
+        }
+
         const ticks = 5
-        const formatDate = (timestamp: number): string => dateFilter(new Date(timestamp).toISOString(), TICK_FORMAT)
+        const formatDate = (timestamp: number): string => dateFilter(timestamp, TICK_FORMAT)
         const startVal = start.value
         const deltaVal = delta() / ticks
         const newDates: string[] = []

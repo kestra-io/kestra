@@ -90,14 +90,6 @@
             width: var(--ks-icon-size-sm);
             height: var(--ks-icon-size-sm);
         }
-
-        /* vue-material-design-icons nudges its SVG down by 0.125em (baseline alignment meant for
-           inline-with-text use), which reads as off-centre in an icon button — neutralise it. */
-        :deep(.material-design-icon > .material-design-icon__svg) {
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-        }
     }
 
     .ks-icon-button:not(.ks-icon-button--filled) {

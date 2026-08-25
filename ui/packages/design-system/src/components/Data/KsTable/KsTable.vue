@@ -178,14 +178,6 @@
                     width: var(--ks-icon-size-sm);
                     height: var(--ks-icon-size-sm);
                 }
-
-                /* Same baseline-nudge neutralisation as KsIconButton, for the action icons
-                   rendered directly in a table cell. */
-                .material-design-icon > .material-design-icon__svg {
-                    bottom: 0;
-                    left: 50%;
-                    transform: translateX(-50%);
-                }
             }
 
             a:hover,

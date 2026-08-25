@@ -9,6 +9,7 @@
             :to="item.to"
             :target="item.href ? '_blank' : undefined"
             :rel="item.href ? 'noreferrer' : undefined"
+            @click="onItemClick(item, $event)"
         >
             <div class="onboarding-resource-item__icon" :class="item.iconClass">
                 <component :is="item.icon" />
@@ -39,6 +40,19 @@
     defineProps<{
         items: OnboardingResourceItem[];
     }>()
+
+    const emit = defineEmits<{
+        /** An in-app item was followed, so whatever hosts this list is no longer the user's context. */
+        navigate: [];
+    }>()
+
+    function onItemClick(item: OnboardingResourceItem, event: MouseEvent) {
+        // External items open in a new tab, and a modified click does too, so in both cases the
+        // user is still looking at the page this list sits on.
+        if (!item.to || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+
+        emit("navigate")
+    }
 </script>
 
 <style scoped lang="scss">

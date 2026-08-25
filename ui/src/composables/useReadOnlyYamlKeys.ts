@@ -144,6 +144,26 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         return Object.keys(options.expected.value)
     }
 
+    /**
+     * Apply the correction as part of the edit that provoked it.
+     *
+     * By the time `onDidChangeModelContent` runs, Monaco has already closed the
+     * undo element for the user's keystroke. `executeEdits` would open a second
+     * one, and undoing that would put the violating text back, re-enter this
+     * listener and correct again — leaving the undo stack unable to step past
+     * the pair, and the user's earlier work unreachable for the rest of the
+     * session. `pushEditOperations` with no intervening `pushStackElement()`
+     * merges into the element already open, so one undo reverts both halves and
+     * lands on a document that violates nothing.
+     */
+    function applyCorrection(
+        editor: monaco.editor.IStandaloneCodeEditor,
+        model: monaco.editor.ITextModel,
+        edits: monaco.editor.IIdentifiedSingleEditOperation[],
+    ) {
+        model.pushEditOperations(editor.getSelections() ?? [], edits, () => null)
+    }
+
     function paint(editor: monaco.editor.IStandaloneCodeEditor, source: string) {
         decorations ??= editor.createDecorationsCollection()
 
@@ -196,7 +216,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         }
 
         if (!edits.length) return false
-        editor.executeEdits("readonly-yaml-keys", edits)
+        applyCorrection(editor, model, edits)
         return true
     }
 
@@ -241,7 +261,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
             // Whole-document fallback only when a locked key was removed outright;
             // otherwise the user's other changes are preserved.
             if (!restoreLines(editor, model, violations) && lastValid !== undefined) {
-                editor.executeEdits("readonly-yaml-keys", [{
+                applyCorrection(editor, model, [{
                     range: model.getFullModelRange(),
                     text: lastValid,
                     forceMoveMarkers: true,

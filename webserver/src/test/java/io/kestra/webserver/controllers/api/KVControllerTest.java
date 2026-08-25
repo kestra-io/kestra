@@ -129,7 +129,7 @@ class KVControllerTest {
         );
 
         // Then: it is answered as an invalid request rather than reaching the query
-        assertThat(exception.getStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     private static Stream<String> kvEntryFields() {
@@ -139,8 +139,8 @@ class KVControllerTest {
     /** Writes {@code b-key} before {@code a-key}, so name order and write order disagree. */
     private void givenTwoKeys() throws IOException {
         KVStore kvStore = new InternalKVStore(MAIN_TENANT, TestsUtils.randomNamespace(), storageInterface, kvMetadataStateStore);
-        kvStore.put("b-key", new KVValueAndMetadata(new KVMetadata("first", null), "b-value"));
-        kvStore.put("a-key", new KVValueAndMetadata(new KVMetadata("second", null), "a-value"));
+        kvStore.put("b-key", new KVValueAndMetadata(new KVMetadata("first", (Instant) null), "b-value"));
+        kvStore.put("a-key", new KVValueAndMetadata(new KVMetadata("second", (Instant) null), "a-value"));
     }
 
     @SuppressWarnings("unchecked")

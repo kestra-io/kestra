@@ -69,6 +69,7 @@
   "ai|copilot|error|request": "eb4a6857c73e",
   "ai|copilot|error|turnCap": "a802d6a98d7b",
   "ai|copilot|error|turnInProgress": "1be01cdb459c",
+  "ai|copilot|modelChanged": "45801c280dac",
   "ai|copilot|mode|ask": "b8c209cdead6",
   "ai|copilot|mode|edit": "464c4ffd019e",
   "ai|copilot|mode|plan": "fa8ed0bdabdd",

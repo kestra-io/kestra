@@ -20,6 +20,14 @@
         </KsText>
     </div>
 
+    <!-- A display-only line noting the AI provider/model was switched mid-conversation; same quiet
+         centred treatment as the context notice above. -->
+    <div v-else-if="message.type === 'MODEL_CHANGED' && message.modelChange" class="copilot-msg copilot-context-notice" data-test="copilot-model-notice">
+        <KsText size="small" class="copilot-context-notice-text">
+            {{ $t("ai.copilot.modelChanged", {model: message.modelChange.label}) }}
+        </KsText>
+    </div>
+
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
         <div class="copilot-bubble copilot-bubble-assistant" data-test="copilot-assistant-text">
             <KsMarkdown v-if="message.content" :content="message.content" />

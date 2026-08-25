@@ -294,6 +294,66 @@ function planAsyncChunks(ctx) {
         return target
     }
     for (const [id, name] of asyncChunk) asyncChunk.set(id, resolve(name))
+    mergeCycles(ctx)
+}
+
+/**
+ * Merges every group of planned chunks that import each other into one chunk.
+ * Two chunks importing each other build cleanly and then throw ("X is not a
+ * function") the first time either loads, so a cycle is never shippable.
+ * @param {import("rolldown").PluginContext} ctx
+ */
+function mergeCycles(ctx) {
+    /** @type {Map<string, Set<string>>} */
+    const edges = new Map()
+    for (const [id, name] of asyncChunk) {
+        const targets = edges.get(name) ?? new Set()
+        for (const dep of ctx.getModuleInfo(id)?.importedIds ?? []) {
+            const target = asyncChunk.get(dep)
+            if (target && target !== name) targets.add(target)
+        }
+        edges.set(name, targets)
+    }
+
+    // Tarjan: every component with more than one chunk is a cycle to collapse.
+    let index = 0
+    const order = new Map(), low = new Map(), onStack = new Set(), stack = []
+    /** @type {Map<string, string>} */
+    const merged = new Map()
+    const visit = (name) => {
+        order.set(name, index)
+        low.set(name, index)
+        index++
+        stack.push(name)
+        onStack.add(name)
+        for (const target of edges.get(name) ?? []) {
+            if (!order.has(target)) {
+                visit(target)
+                low.set(name, Math.min(low.get(name), low.get(target)))
+            } else if (onStack.has(target)) {
+                low.set(name, Math.min(low.get(name), order.get(target)))
+            }
+        }
+        if (low.get(name) !== order.get(name)) return
+        const component = []
+        let popped
+        do {
+            popped = stack.pop()
+            onStack.delete(popped)
+            component.push(popped)
+        } while (popped !== name)
+        if (component.length === 1) return
+        // The catch-all's name wins, so the merged chunk still reads as what it
+        // is — and so the guards below keep recognising it.
+        const target = component.sort().find((member) => member.startsWith(REST)) ?? component.sort()[0]
+        for (const member of component) merged.set(member, target)
+    }
+    for (const name of edges.keys()) if (!order.has(name)) visit(name)
+
+    for (const [id, name] of asyncChunk) {
+        const target = merged.get(name)
+        if (target) asyncChunk.set(id, target)
+    }
 }
 
 // Negative priorities keep module federation's own groups (priority >= 0)
@@ -426,6 +486,28 @@ export function consolidateChunks({pages = {}} = {}) {
                     }
                     if (isRest(dependency) && isPageChunk(chunk.name)) {
                         this.error(`Chunk '${chunk.name}' statically imports the catch-all '${dependency}' chunk, which drags every unprofiled page along. A hot page's modules should all be owned by planAsyncChunks.`)
+                    }
+                }
+            }
+
+            // A cycle among the planned chunks is what mergeCycles exists to
+            // prevent; one left standing throws at run time, not at build time.
+            const planned = new Set(asyncChunk.values())
+            const name = (file) => bundle[file]?.name ?? ""
+            const deps = (file) => (bundle[file]?.type === "chunk" ? bundle[file].imports ?? [] : [])
+            for (const file of Object.keys(bundle)) {
+                if (!planned.has(name(file))) continue
+                const stack = [[file]]
+                const seen = new Set([file])
+                while (stack.length) {
+                    const path = /** @type {string[]} */ (stack.pop())
+                    for (const dep of deps(path[path.length - 1])) {
+                        if (dep === file) {
+                            this.error(`Chunks import each other: ${[...path, dep].map(name).join(" -> ")}. Either mergeCycles missed this cycle or a group outside the plan is part of it.`)
+                        }
+                        if (seen.has(dep) || !planned.has(name(dep))) continue
+                        seen.add(dep)
+                        stack.push([...path, dep])
                     }
                 }
             }

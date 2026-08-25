@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import dev.failsafe.RetryPolicyBuilder;
+import io.kestra.core.validations.DurationMax;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
@@ -26,6 +27,7 @@ public class Constant extends AbstractRetry {
     protected String type = "constant";
 
     @NotNull
+    @DurationMax
     private Duration interval;
 
     @Override

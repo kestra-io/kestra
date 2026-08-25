@@ -488,21 +488,30 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .toList();
     }
 
+    /**
+     * Find a task run by its task run id.
+     *
+     * @see #findTaskRunByTaskRunIdIfPresent(String) for a safe alternative
+     * @throws InternalException if the task run doesn't exist
+     */
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
-        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()
-            : this.taskRunList)
+        return findTaskRunByTaskRunIdIfPresent(id)
+            .orElseThrow(() -> new InternalException(
+                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
+                    + this.toStringState()
+            ));
+    }
+
+    /**
+     * Find a task run by its task run id if present, else return an empty optional.
+     *
+     * @see #findTaskRunByTaskRunId(String) for a fail-fast alternative
+     */
+    public Optional<TaskRun> findTaskRunByTaskRunIdIfPresent(String id) {
+        return ListUtils.emptyOnNull(this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
-
-        if (find.isEmpty()) {
-            throw new InternalException(
-                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
-                    + this.toStringState()
-            );
-        }
-
-        return find.get();
     }
 
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values)
@@ -1027,6 +1036,31 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return taskRunList.stream()
             .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()))
             .toList();
+    }
+
+    /**
+     * Find every descendant of this {@link TaskRun}, at any depth, in breadth-first order.
+     * Unlike {@link #findChildren(TaskRun)}, which returns only direct children, this walks the
+     * {@code parentTaskRunId} chain recursively.
+     */
+    public List<TaskRun> findAllChildren(TaskRun parentTaskRun) {
+        if (this.taskRunList == null) {
+            return Collections.emptyList();
+        }
+
+        Map<String, List<TaskRun>> childrenByParentId = this.taskRunList.stream()
+            .filter(taskRun -> taskRun.getParentTaskRunId() != null)
+            .collect(Collectors.groupingBy(TaskRun::getParentTaskRunId));
+
+        List<TaskRun> result = new ArrayList<>();
+        Deque<TaskRun> toVisit = new ArrayDeque<>(childrenByParentId.getOrDefault(parentTaskRun.getId(), Collections.emptyList()));
+        while (!toVisit.isEmpty()) {
+            TaskRun current = toVisit.poll();
+            result.add(current);
+            toVisit.addAll(childrenByParentId.getOrDefault(current.getId(), Collections.emptyList()));
+        }
+
+        return result;
     }
 
     public List<String> findParentsValues(TaskRun taskRun, boolean withCurrent) {

@@ -100,6 +100,51 @@
                     @change="onEditorPlayground"
                 />
             </SettingRow>
+
+            <SettingRow
+                stacked
+                :label="$t('settings.blocks.configuration.fields.flow_template')"
+                :description="$t('settings.blocks.configuration.descriptions.flow_template')"
+            >
+                <div class="flow-template">
+                    <KsEditor
+                        v-bind="editorBindings"
+                        v-model="settings.flowTemplate"
+                        lang="yaml"
+                        :options="{fullHeight: false, lineNumbers: true}"
+                        :navbar="false"
+                        class="flow-template-editor"
+                        data-test="flow-template-editor"
+                        @focusout="onFlowTemplate"
+                    />
+
+                    <div class="flow-template-footer">
+                        <KsAlert
+                            v-if="flowTemplateError"
+                            type="warning"
+                            :closable="false"
+                            class="flow-template-error"
+                            data-test="flow-template-error"
+                        >
+                            {{ $t(`settings.blocks.configuration.flow_template_error.${flowTemplateError.errorCode}`) }}
+                            <template v-if="flowTemplateError.parseMessage">
+                                <br>
+                                <KsText class="flow-template-error-detail">{{ flowTemplateError.parseMessage }}</KsText>
+                            </template>
+                        </KsAlert>
+
+                        <KsButton
+                            link
+                            class="flow-template-reset"
+                            :disabled="!settings.flowTemplate.trim()"
+                            data-test="flow-template-reset"
+                            @click="onFlowTemplateReset"
+                        >
+                            {{ $t("settings.blocks.configuration.flow_template_reset") }}
+                        </KsButton>
+                    </div>
+                </div>
+            </SettingRow>
         </Block>
 
         <Block :heading="$t('settings.blocks.theme.label')">
@@ -265,6 +310,8 @@
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
     import {defaultNamespace} from "../../composables/useNamespaces"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {validateFlowTemplate, type FlowTemplateValidation} from "../../utils/newFlowTemplate"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../stores/layout"
     import {useLeftMenu} from "override/components/useLeftMenu"
@@ -298,6 +345,7 @@
         triggersDefaultTab: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
         editorPlayground: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [storageKeys.FLOW_TEMPLATE]: [`${CONFIG}.fields.flow_template`, `${CONFIG}.descriptions.flow_template`],
         [APP_FONT_SIZE_KEY]: [`${THEME}.fields.app_font_size`, `${THEME}.descriptions.app_font_size`],
         logsFontSize: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
         editorFontFamily: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
@@ -316,6 +364,8 @@
     const layoutStore = useLayoutStore()
     const {menu} = useLeftMenu()
     const showSidebarCustomize = ref(false)
+    const editorBindings = useEditorBindings()
+    const flowTemplateError = ref<FlowTemplateValidation | undefined>()
 
     const routeInfo = computed(() => ({title: t("settings.label")}))
     useRouteContext(routeInfo)
@@ -342,6 +392,7 @@
         editorPlayground: localStorage.getItem("editorPlayground") !== "false",
         envName: layoutStore.envName || miscStore.configs?.environment?.name,
         envColor: layoutStore.envColor || miscStore.configs?.environment?.color,
+        flowTemplate: localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "",
     })
 
     const isEnvNameFromConfig = computed(() =>
@@ -559,6 +610,24 @@
         persist("triggersDefaultTab", value)
     }
 
+    function onFlowTemplate(value?: string) {
+        const template = value ?? settings.flowTemplate
+        if (template === (localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "")) {
+            return
+        }
+
+        settings.flowTemplate = template
+        const validation = validateFlowTemplate(template)
+        flowTemplateError.value = validation.errorCode ? validation : undefined
+        persist(storageKeys.FLOW_TEMPLATE, template)
+    }
+
+    function onFlowTemplateReset() {
+        settings.flowTemplate = ""
+        flowTemplateError.value = undefined
+        persist(storageKeys.FLOW_TEMPLATE, "")
+    }
+
     function onAutoRefreshInterval(value: number) {
         settings.autoRefreshInterval = value
         persist(storageKeys.AUTO_REFRESH_INTERVAL, value)
@@ -651,6 +720,9 @@
     onMounted(() => {
         mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
         mediaQuery.addEventListener("change", updateThemeBasedOnSystem)
+
+        const validation = validateFlowTemplate(settings.flowTemplate)
+        flowTemplateError.value = validation.errorCode ? validation : undefined
     })
 
     onBeforeUnmount(() => {
@@ -663,6 +735,41 @@
 </script>
 
 <style scoped lang="scss">
+.flow-template {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+}
+
+.flow-template-editor {
+    min-height: 12rem;
+    border: var(--ks-border-width-thin) solid var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    overflow: hidden;
+}
+
+.flow-template-footer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ks-spacing-2);
+}
+
+.flow-template-error {
+    margin: 0;
+}
+
+.flow-template-error-detail {
+    display: block;
+    font-family: var(--ks-font-family-mono, monospace);
+    font-size: var(--ks-font-size-sm);
+    word-break: break-word;
+}
+
+.flow-template-reset {
+    margin-left: auto;
+}
+
 :deep(kbd) {
     display: inline-block;
     padding: 0.1em 0.4em;

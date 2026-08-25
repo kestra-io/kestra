@@ -710,7 +710,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // purge the trigger: reset scheduler trigger at end
                 // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
-                if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
+                if (execution.getTrigger() != null &&
+                    (execution.getState().isFailed() || execution.getState().getCurrent().isKilled() || execution.getState().getCurrent().isCancelled()) &&
+                    ListUtils.isEmpty(execution.getTaskRunList())) {
                     sendTriggerExecutionTerminated(execution);
                     this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                     emitExecutionStatistic(execution);

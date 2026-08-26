@@ -57,11 +57,9 @@ public abstract class AbstractIndent {
         if (!(amount >= 0)) {
             throw new PebbleException(null, String.format("The '%s' filter expects a positive integer >=0 as argument 'amount'.", indentType), lineNumber, self.getName());
         }
-        if (amount > MAX_AMOUNT) {
-            throw new PebbleException(
-                null, String.format("The '%s' filter's 'amount' argument cannot exceed %d, but %d was given.", indentType, MAX_AMOUNT, amount), lineNumber, self.getName()
-            );
-        }
+        RenderLimits.ensureAtMost(
+            amount, MAX_AMOUNT, "The '" + indentType + "' filter's 'amount' argument cannot exceed %d, but %d was given."
+        );
 
         String prefix = prefix(args);
         String newLine = getLineSeparator(input.toString());

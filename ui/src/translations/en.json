@@ -1663,7 +1663,7 @@
         "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
       },
       "apps": {
-        "title": "You have no apps yet!",
+        "title": "You have no Apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
       },
       "testSuites": {

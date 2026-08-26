@@ -332,11 +332,16 @@ $fill-color-base: #fafcff;
         align-items: flex-start;
     }
 
-    .kel-message-box__message .ks-markdown p {
+    .kel-message-box__message .ks-markdown > * {
         margin: var(--ks-spacing-3) 0;
 
-        &:first-child { margin-top: 0; }
-        &:last-child { margin-bottom: 0; }
+        &:first-child {
+            margin-top: 0;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 
     .kel-message-box__btns {

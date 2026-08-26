@@ -1725,13 +1725,15 @@ public class ExecutorService {
     /**
      * Handle flow ExecutionChangedSLA on an executor.
      * If there are SLA violations, it will take care of updating the execution based on the SLA behavior.
+     * NOTE: Loop executions are skipped.
      *
      * @see #processViolation(RunContext, ExecutorContext, Violation)
      *      <p>
      *      WARNING: ATM, only the first violation will update the execution.
      */
     public ExecutorContext handleExecutionChangedSLA(ExecutorContext executor) throws QueueException {
-        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
+        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
+            executor.getExecution().getKind() ==  ExecutionKind.LOOP) {
             return executor;
         }
 

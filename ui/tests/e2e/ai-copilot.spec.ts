@@ -24,6 +24,8 @@ const D = {
     draft: "[data-test=\"copilot-draft\"]",
     draftOpen: "[data-test=\"copilot-draft-open\"]",
     draftApply: "[data-test=\"copilot-draft-apply\"]",
+    toolCall: "[data-test=\"copilot-tool-call\"]",
+    assistantText: "[data-test=\"copilot-assistant-text\"]",
 }
 
 // A minimal, valid-enough flow whose namespace + id the direct-apply path can parse.
@@ -304,6 +306,39 @@ test.describe("AI Copilot", () => {
         await page.locator(D.send).click()
 
         await expect(page.locator("[data-test=\"copilot-notice\"]")).toBeVisible()
+    })
+
+    test("aligns every assistant block with the tool strip", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["tool_call", {tool: "get_blueprint_flow", kind: "PLATFORM", family: "READ", arguments: {}}],
+                    ["tool_result", {tool: "get_blueprint_flow", outcome: "ok"}],
+                    ["artefact_draft", {draftId: "d4", kind: "FLOW", yaml: FLOW_YAML, valid: true, constraints: null}],
+                    ["token", {text: "Done."}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        await page.locator(D.input).fill("build me a pipeline")
+        await page.locator(D.send).click()
+
+        await expect(page.locator(D.assistantText)).toBeVisible()
+
+        const rightEdge = async (selector: string) => {
+            const box = await page.locator(selector).first().boundingBox()
+            return box!.x + box!.width
+        }
+
+        // A short reply and the draft card end on the same edge as the full-width tool strip, rather
+        // than at a content-dependent one (kestra-io/kestra#18388). A 1px tolerance absorbs the
+        // border rounding; the regression this guards was tens of pixels wide.
+        const strip = await rightEdge(D.toolCall)
+        expect(Math.abs(await rightEdge(D.assistantText) - strip)).toBeLessThanOrEqual(1)
+        expect(Math.abs(await rightEdge(D.draft) - strip)).toBeLessThanOrEqual(1)
     })
 
     test("carries the current page as a context chip on a detail route", async ({page}) => {

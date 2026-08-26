@@ -232,6 +232,18 @@
         }
     })
 
+    // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
+    // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
+    // itself get noted — only a later, deliberate switch does.
+    let previousProvider: string | undefined
+    watch(selectedProvider, (now) => {
+        if (previousProvider !== undefined && now && now !== previousProvider) {
+            const label = providers.value.find((p) => p.id === now)?.displayName ?? now
+            noteModelChange(label)
+        }
+        previousProvider = now
+    })
+
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
         t("ai.copilot.suggestions.errorHandling"),
@@ -240,7 +252,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
 
     // `/configs` reports whether any AI provider is configured, so the unavailable state renders on
     // load rather than after the user composes a prompt that was always going to fail

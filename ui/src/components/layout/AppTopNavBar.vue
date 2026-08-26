@@ -140,9 +140,9 @@
         } else {
             bookmarksStore.add({
                 path: currentFavURI.value,
-                label: store.breadcrumb.length
+                label: store.bookmarkLabel || (store.breadcrumb.length
                     ? `${store.breadcrumb[store.breadcrumb.length - 1].label}: ${store.title}`
-                    : store.title,
+                    : store.title),
             })
         }
     }

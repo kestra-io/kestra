@@ -100,6 +100,66 @@ describe("FilterEditPopper range comparators on a multi-select field", () => {
     })
 })
 
+describe("FilterEditPopper time range custom mode", () => {
+    const timeRangeKey: FilterKeyConfig = {
+        key: "timeRange",
+        label: "Time range",
+        valueType: "select",
+        comparators: [Comparators.EQUALS],
+        valueProvider: async () => [{label: "Last 24 hours", value: "PT24H"}],
+    }
+
+    const mountTimeRangePopper = async () => {
+        const wrapper = mount(FilterEditPopper, {
+            props: {
+                filter: {
+                    id: "f1",
+                    key: "timeRange",
+                    keyLabel: "Time range",
+                    comparator: Comparators.EQUALS,
+                    comparatorLabel: "Equals",
+                    value: "PT24H",
+                    valueLabel: "Last 24 hours",
+                },
+                filterKey: timeRangeKey,
+            },
+            global: globalConfig,
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    test("applies a custom range as soon as only the Start Date is set, defaulting End Date to now", async () => {
+        const wrapper = await mountTimeRangePopper()
+
+        wrapper.findComponent(FilterSelect).vm.$emit("update:timeRangeMode", "custom")
+        await flushPromises()
+
+        const startDate = new Date("2026-06-01T00:00:00")
+        const before = Date.now()
+        wrapper.findComponent(FilterSelect).vm.$emit("update:startDateValue", startDate)
+        await flushPromises()
+        const after = Date.now()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates).toBeTruthy()
+        const lastValue = updates!.at(-1)![0].value as {startDate: Date; endDate: Date}
+        expect(lastValue.startDate).toEqual(startDate)
+        expect(lastValue.endDate.getTime()).toBeGreaterThanOrEqual(before)
+        expect(lastValue.endDate.getTime()).toBeLessThanOrEqual(after)
+    })
+
+    test("does not apply (and does not overwrite the previous filter) when switching to custom mode with neither bound set", async () => {
+        const wrapper = await mountTimeRangePopper()
+
+        wrapper.findComponent(FilterSelect).vm.$emit("update:timeRangeMode", "custom")
+        await flushPromises()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates).toBeFalsy()
+    })
+})
+
 describe("FilterEditPopper date field", () => {
     const expirationKey: FilterKeyConfig = {
         key: "expirationDate",

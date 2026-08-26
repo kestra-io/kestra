@@ -1077,7 +1077,7 @@ public class ExecutionController {
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
                     ManualConstraintViolation.of(
-                        "execution not in state PAUSED or terminated, or is KILLED",
+                        "execution not terminated or is KILLED, a paused execution can only be resumed or killed",
                         executionId,
                         String.class,
                         "execution",

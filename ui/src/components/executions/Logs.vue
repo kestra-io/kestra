@@ -68,7 +68,7 @@
             :logCursor="logCursor"
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
-            @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
+            @log-indices-by-level="setLogIndicesByLevel"
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />
@@ -149,6 +149,8 @@
     } from "../filter/utils/logLevelQuery";
     import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
 
+    const emptyLogIndicesByLevel = () => Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []]));
+
     export default {
         components: {
             LogLine,
@@ -197,7 +199,7 @@
                 filter: undefined,
                 openedTaskrunsCount: 0,
                 raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
-                logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
+                logIndicesByLevel: emptyLogIndicesByLevel(),
                 logCursor: undefined,
                 logsLoading: false,
             };
@@ -300,6 +302,9 @@
             },
         },
         methods: {
+            setLogIndicesByLevel(indices) {
+                this.logIndicesByLevel = {...emptyLogIndicesByLevel(), ...indices};
+            },
             loadLogs(){
                 if (this.logsLoading) return
                 this.logsLoading = true

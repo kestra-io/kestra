@@ -69,10 +69,11 @@ public class SelectInput extends Input<String> implements RenderableInput {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (this.getRequired() && values.stream().noneMatch(v -> Objects.equals(v.value(), input))) {
-            if (this.getAllowCustomValue()) {
-                return;
-            }
+        if (this.getAllowCustomValue() || values == null) {
+            return;
+        }
+
+        if (values.stream().noneMatch(v -> Objects.equals(v.value(), input))) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "it must match the values `" + values.stream().map(ValueOption::value).toList() + "`",
                 this,

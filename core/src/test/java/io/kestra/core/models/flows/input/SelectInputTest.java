@@ -172,6 +172,46 @@ class SelectInputTest {
     }
 
     @Test
+    void validateRejectsValueOutsideValuesWhenInputIsOptional() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .values(List.of(new ValueOption("Prod", "123"), new ValueOption("Staging", "456")))
+            .required(false)
+            .build();
+
+        input.validate("123");
+
+        assertThatThrownBy(() -> input.validate("789"))
+            .hasMessageContaining("[123, 456]");
+    }
+
+    @Test
+    void validateAcceptsAnyValueWhenCustomValuesAreAllowed() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .values(List.of(new ValueOption("Prod", "123")))
+            .required(false)
+            .allowCustomValue(true)
+            .build();
+
+        input.validate("789");
+    }
+
+    @Test
+    void validateAcceptsAnyValueWhenValuesComeFromAnUnrenderedExpression() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .required(false)
+            .build();
+
+        input.validate("789");
+    }
+
+    @Test
     void valueOptionDeserializesFromStringOrObject() {
         ValueOption fromString = ValueOption.from("V1");
         assertThat(fromString.label()).isEqualTo("V1");

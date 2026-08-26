@@ -138,7 +138,7 @@ dependencies {
         api "de.siegmar:fastcsv:4.4.0"
         // Json Diff
         api "com.github.java-json-tools:json-patch:1.13"
-        api 'com.rabbitmq:amqp-client:5.34.0'
+        api 'com.rabbitmq:amqp-client:5.35.0'
         api 'org.apache.commons:commons-pool2:2.13.1'
         api 'io.lettuce:lettuce-core:7.6.0.RELEASE'
 

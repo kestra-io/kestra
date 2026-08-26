@@ -4,7 +4,7 @@ import {createI18n} from "vue-i18n"
 import en from "../../../src/translations/en.json"
 
 // The "Fix with AI" button only renders in a flow editor context.
-vi.mock("vue-router", () => ({useRoute: () => ({name: "flows/update"})}))
+vi.mock("vue-router", () => ({useRoute: () => ({name: "flows/update", params: {id: "my-flow"}})}))
 
 const promptCopilot = vi.fn()
 vi.mock("override/stores/misc", () => ({useMiscStore: () => ({promptCopilot})}))
@@ -35,6 +35,7 @@ describe("ErrorToastContainer — Fix with AI", () => {
         expect(onClose).toHaveBeenCalledOnce()
         expect(promptCopilot).toHaveBeenCalledWith(
             "Fix the following error in the flow:\nboom\n\nAt tasks[0]: bad type",
+            {title: "Fix flow my-flow", newThread: true},
         )
     })
 })

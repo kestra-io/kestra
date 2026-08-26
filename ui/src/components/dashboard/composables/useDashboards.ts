@@ -18,6 +18,16 @@ export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.
 
 export const isMarkdownChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Markdown"
 
+/**
+ * Charts backed by an ECharts canvas. These dominate a dashboard's memory - a canvas backing store is sized by the
+ * chart's box times the device pixel ratio squared - so they are the ones worth unmounting when scrolled out of view.
+ */
+export const isCanvasChart = (type: string): boolean => [
+    "io.kestra.plugin.core.dashboard.chart.Bar",
+    "io.kestra.plugin.core.dashboard.chart.Pie",
+    "io.kestra.plugin.core.dashboard.chart.TimeSeries",
+].includes(type)
+
 export const isExportableChart = (type: string): boolean => !isMarkdownChart(type)
 
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id

@@ -147,11 +147,15 @@ export const _36Cc3F94 = <ThrowOnError extends boolean = true>(options?: Options
 
 /**
  * Get plugins icons
+ *
+ * Answers the icon metadata of every registered class. The `icon` field is always null here: icon bytes are served per class, and cached by the browser, by `GET /plugins/icons/{cls}/icon.svg`. `hash` is non-null exactly when the class has an icon, so callers can still tell which classes to render an icon for.
  */
 export const e16C271 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginIconsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/icons', ...options });
 
 /**
- * Get plugins icons
+ * Get plugin group and subgroup icons
+ *
+ * Answers the icon metadata of every plugin group and subgroup. As on `GET /plugins/icons` the `icon` field is always null; the bytes come from `GET /plugins/icons/{cls}/icon.svg`.
  */
 export const _557632E4 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginGroupIconsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/icons/groups', ...options });
 

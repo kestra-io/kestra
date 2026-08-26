@@ -997,14 +997,9 @@
             }
         }
 
-        :deep(.kel-splitter-bar) {
-            z-index: 0;
-        }
-
-        :deep(.kel-splitter-bar__dragger-horizontal){
-            width: 16px;
-            cursor: ew-resize;
-        }
+       :deep(.kel-splitter-bar) {
+           z-index: 1;
+       }
     }
 
     .content-panel{

@@ -368,7 +368,7 @@
     "unqueue done": "निष्पादन कतार से बाहर है",
     "force run": "फोर्स रन",
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
-    "force run confirm": "क्या आप वाकई execution <code>{id}</code> को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task runs बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queue किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "force run confirm": "क्या आप वाकई execution `{id}` को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट task run बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED tasks को running स्थिति में ले जाया जाएगा।\n- RUNNING tasks को फिर से सबमिट किया जाएगा।\n- QUEUED tasks को un-queue किया जाएगा।\n- PAUSED tasks को फिर से शुरू किया जाएगा।",
     "force run done": "Execution को जबरन चलाया गया",
     "metrics": "मेट्रिक्स",
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
@@ -658,7 +658,7 @@
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
-    "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task executions बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queued किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
     "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
@@ -842,6 +842,7 @@
         "folder_error": "फ़ोल्डर बनाते समय त्रुटि हुई"
       },
       "rename": {
+        "error": "\"{name}\" में नाम बदला नहीं जा सका। इस नाम की फ़ाइल या फ़ोल्डर पहले से मौजूद हो सकता है।",
         "label": "नाम बदलें",
         "file": "फ़ाइल का नाम बदलें",
         "folder": "फ़ोल्डर का नाम बदलें",

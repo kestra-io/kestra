@@ -403,6 +403,20 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
+
+        // A syntactically invalid REGEX filter must be rejected with a 400 that carries no SQL detail,
+        // instead of reaching the DB engine and leaking the rendered query (kestra-ee#10266)
+        exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[namespace][REGEX]=%5Ba-"
+                ), PagedResults.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(exception.getMessage()).doesNotContainIgnoringCase("select");
+        assertThat(exception.getMessage()).doesNotContain("SQL [");
+        assertThat(exception.getMessage()).contains("[a-");
     }
 
     @Test

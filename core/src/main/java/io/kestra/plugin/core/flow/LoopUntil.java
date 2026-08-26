@@ -144,7 +144,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
             .orElse(0);
 
         Optional<Integer> maxIterations = runContext.render(this.getCheckFrequency().getMaxIterations()).as(Integer.class);
-        if (maxIterations.isPresent() && iterationCount > maxIterations.get()) {
+        if (maxIterations.isPresent() && iterationCount >= maxIterations.get()) {
             if (printLog) {
                 logger.warn("Max iterations reached");
             }

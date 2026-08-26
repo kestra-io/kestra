@@ -16,6 +16,7 @@
 
         <KsEchart
             ref="ksEchartRef"
+            :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
             class="canvas"
             :options="echartsOption"
             :loading="false"
@@ -41,7 +42,7 @@
     import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, useLegendToggle} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateFormat, useTheme} from "../../../utils/utils"

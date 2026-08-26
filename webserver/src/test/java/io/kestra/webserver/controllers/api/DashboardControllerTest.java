@@ -148,6 +148,39 @@ class DashboardControllerTest {
     }
 
     @Test
+    void searchDashboardsWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(GET(DASHBOARD_PATH + "?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchDashboardsSortsByTitle() {
+        String idA = IdUtils.create();
+        String idB = IdUtils.create();
+        client.toBlocking().exchange(POST(DASHBOARD_PATH, "id: %s\ntitle: AAA sort test %s".formatted(idA, idA)).contentType(MediaType.APPLICATION_YAML));
+        client.toBlocking().exchange(POST(DASHBOARD_PATH, "id: %s\ntitle: ZZZ sort test %s".formatted(idB, idB)).contentType(MediaType.APPLICATION_YAML));
+
+        PagedResults<DashboardController.DashboardResponse> dashboards = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "?sort=title:asc&size=1000"),
+            Argument.of(PagedResults.class, DashboardController.DashboardResponse.class)
+        );
+
+        List<String> ids = dashboards.getResults().stream().map(DashboardController.DashboardResponse::getId).toList();
+        assertThat(ids.indexOf(idA)).isLessThan(ids.indexOf(idB));
+    }
+
+    @Test
     void shouldManageDefaultDashboards() {
         HttpResponse<DashboardSettings> emptyDefaults = client.toBlocking().exchange(
             GET("/api/v1/main/dashboards/settings/default-dashboards"),

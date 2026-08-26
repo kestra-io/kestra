@@ -93,9 +93,9 @@
             <KsTableColumn columnKey="copy" className="row-action">
                 <template #default="scope">
                     <KsIconButton
-                        :tooltip="$t('copy_to_clipboard')"
+                        :tooltip="$t('copy_pebble_expression')"
                         placement="left"
-                        @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
+                        @click="copyKey(scope.row?.key)"
                     >
                         <ContentCopy />
                     </KsIconButton>
@@ -547,6 +547,11 @@
 
     const removeSecretTag = (index: number) => {
         secret.value?.tags?.splice(index, 1)
+    }
+
+    const copyKey = async (key: string) => {
+        await Utils.copy(`{{ secret('${key}') }}`)
+        toast.success(t("copied"))
     }
 
     const removeSecret = ({key, namespace}: {key: string; namespace: string}) => {

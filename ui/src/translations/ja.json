@@ -1889,6 +1889,7 @@
           "test": "テスト"
         },
         "contextRemoved": "コンテキストから {type} {id} を削除しました。",
+        "modelChanged": "{model} に切り替えました。",
         "toolResult": {
           "detail": "詳細",
           "error": "{tool} が失敗しました",

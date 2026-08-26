@@ -1889,6 +1889,7 @@
           "test": "테스트"
         },
         "contextRemoved": "{type} {id}이(가) 컨텍스트에서 제거되었습니다.",
+        "modelChanged": "{model}으로 전환되었습니다.",
         "toolResult": {
           "detail": "세부 정보",
           "error": "{tool} 실패했습니다",

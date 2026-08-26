@@ -1889,6 +1889,7 @@
           "test": "test"
         },
         "contextRemoved": "Usunięto {type} {id} z kontekstu.",
+        "modelChanged": "Przełączono na {model}.",
         "toolResult": {
           "detail": "Szczegóły",
           "error": "{tool} nie powiodło się",

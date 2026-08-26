@@ -182,6 +182,7 @@
     "add_new_item": "Aggiungi nuovo elemento",
     "copy": "Copia",
     "copy_to_clipboard": "Copia negli appunti",
+    "copy_pebble_expression": "Copia espressione pebble",
     "new": "Nuovo",
     "edit": "Modifica",
     "back": "Indietro",
@@ -1890,6 +1891,7 @@
           "test": "Test"
         },
         "contextRemoved": "Rimosso {type} {id} dal contesto.",
+        "modelChanged": "Passato a {model}.",
         "toolResult": {
           "detail": "Dettagli",
           "error": "{tool} fallito",
@@ -1960,6 +1962,12 @@
           "Convergendo"
         ],
         "newChat": "Nuova chat",
+        "fixThread": {
+          "flow": "Correggi il Flow {id}",
+          "task": "Correggi il task {id}",
+          "execution": "Correggi l'esecuzione di {id}",
+          "generic": "Correggi gli errori del Flow"
+        },
         "draft": {
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",
@@ -2204,7 +2212,7 @@
       "next_match": "Prossima corrispondenza",
       "no_results_description": "Prova ad ampliare il namespace, a riportare lo scope su Tutte le sorgenti o a disattivare Maiuscole/minuscole e Corrispondenza parola intera.",
       "no_results_hidden_type": "Trovata {count} corrispondenza in {type}, che non hai selezionato. | Trovate {count} corrispondenze in {type}, che non hai selezionato.",
-      "no_results_in_types": "Nessuna corrispondenza per “{query}” in {types}",
+      "no_results_in_types": "Nessuna corrispondenza per {query} in {types}",
       "no_results_title": "Nessun risultato per \"{query}\"",
       "open_flow": "Apri flow",
       "open_in_editor": "Apri nell'editor",

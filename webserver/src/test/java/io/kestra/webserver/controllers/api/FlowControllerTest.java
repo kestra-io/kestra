@@ -9,8 +9,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.zip.ZipFile;
 
@@ -18,12 +16,10 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.Helpers;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.*;
@@ -54,7 +50,6 @@ import io.kestra.webserver.models.flows.SourceSearchReplacePreviewResponse;
 import io.kestra.webserver.models.flows.SourceSearchResult;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;
@@ -263,9 +258,11 @@ class FlowControllerTest {
 
     @Test
     void shouldReturnBadRequestForInvalidRegexQuery() {
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.GET(FLOW_PATH + "/source?q=" + URLEncoder.encode("concurrency:(\\s*limit:", StandardCharsets.UTF_8) + "&regex=true")
-        ))
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(FLOW_PATH + "/source?q=" + URLEncoder.encode("concurrency:(\\s*limit:", StandardCharsets.UTF_8) + "&regex=true")
+            )
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -312,9 +309,11 @@ class FlowControllerTest {
         String namespace = "io.kestra.sourcesearch.badbackref.preview";
         createSourceSearchFlow(namespace, "badbackref-flow", "aaa");
 
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.POST(FLOW_PATH + "/source/replace/preview", new SourceSearchReplacePreviewRequest("(a)", false, false, true, namespace, null, "$9"))
-        ))
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(FLOW_PATH + "/source/replace/preview", new SourceSearchReplacePreviewRequest("(a)", false, false, true, namespace, null, "$9"))
+            )
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -325,12 +324,14 @@ class FlowControllerTest {
         String id = "badbackref-flow";
         createSourceSearchFlow(namespace, id, "aaa");
 
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.POST(
-                FLOW_PATH + "/source/replace/apply",
-                new SourceSearchReplaceApplyRequest("(a)", false, false, true, null, "$9", List.of(new IdWithNamespace(namespace, id)))
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    FLOW_PATH + "/source/replace/apply",
+                    new SourceSearchReplaceApplyRequest("(a)", false, false, true, null, "$9", List.of(new IdWithNamespace(namespace, id)))
+                )
             )
-        ))
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -341,12 +342,14 @@ class FlowControllerTest {
         String id = "badbackref-flow";
         createSourceSearchFlow(namespace, id, "aaa");
 
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.POST(
-                FLOW_PATH + "/source/replace/line",
-                new SourceSearchReplaceLineRequest("(a)", false, false, true, "$9", namespace, id, 3, 13)
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    FLOW_PATH + "/source/replace/line",
+                    new SourceSearchReplaceLineRequest("(a)", false, false, true, "$9", namespace, id, 3, 13)
+                )
             )
-        ))
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -572,6 +575,29 @@ class FlowControllerTest {
         );
 
         assertTrue(exception.getMessage().contains("flow namespace is invalid"));
+    }
+
+    @Test
+    void updateFlowsInNamespaceWithMissingNamespaceReturns422() {
+        String flowWithoutNamespace = """
+            id: crashflow
+            tasks:
+              - id: t
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """;
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/flows/io.kestra.updatenamespace", flowWithoutNamespace)
+                    .contentType(MediaType.APPLICATION_YAML_TYPE)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode())
+            .as("a missing namespace is a validation error, not an unhandled 500")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertTrue(exception.getMessage().contains("flow namespace is required"));
     }
 
     @Test
@@ -1563,6 +1589,16 @@ class FlowControllerTest {
         var flows = client.toBlocking()
             .retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(1L);
+    }
+
+    @Test
+    void labelsEqualsWithoutKeyReturnsBadRequestNotServerError() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS]=x"), Argument.of(PagedResults.class, Flow.class))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test

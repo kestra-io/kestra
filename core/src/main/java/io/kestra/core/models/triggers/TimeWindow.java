@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.validations.DurationMax;
 import io.kestra.core.validations.TimeWindowValidation;
 import io.kestra.core.validations.TimezoneId;
 
@@ -48,6 +49,7 @@ public class TimeWindow {
     )
     @PluginProperty
     @With
+    @DurationMax
     private Duration window;
 
     @Schema(
@@ -60,6 +62,7 @@ public class TimeWindow {
     )
     @PluginProperty
     @With
+    @DurationMax
     private Duration windowAdvance;
 
     @Schema(

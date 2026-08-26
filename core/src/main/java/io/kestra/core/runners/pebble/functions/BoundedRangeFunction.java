@@ -3,6 +3,8 @@ package io.kestra.core.runners.pebble.functions;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.runners.pebble.RenderLimits;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.extension.core.RangeFunction;
@@ -14,8 +16,9 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
  * elements it can produce. Pebble's {@link RangeFunction} eagerly materializes the whole
  * range into an {@code ArrayList} before returning, so an expression such as
  * {@code range(0, 2000000000)} allocates billions of entries and can exhaust the JVM heap.
- * This wrapper computes the requested size upfront and fails with a bounded {@link PebbleException}
- * instead of delegating once that size is exceeded.
+ * This wrapper computes the requested size upfront and fails with a bounded
+ * {@link io.kestra.core.runners.pebble.RenderLimitExceededException} instead of delegating once that
+ * size is exceeded.
  */
 public final class BoundedRangeFunction implements Function {
     public static final String NAME = RangeFunction.FUNCTION_NAME;
@@ -43,14 +46,11 @@ public final class BoundedRangeFunction implements Function {
             long incrementValue = increment instanceof Number number ? number.longValue() : 1L;
             if (incrementValue != 0) {
                 long requestedSize = Math.abs(endNumber.longValue() - startNumber.longValue()) / Math.abs(incrementValue) + 1;
-                if (requestedSize > MAX_RANGE_SIZE) {
-                    throw new PebbleException(
-                        null,
-                        "The range function cannot produce more than %d elements, but this call would produce %d.".formatted(MAX_RANGE_SIZE, requestedSize),
-                        lineNumber,
-                        self.getName()
-                    );
-                }
+                RenderLimits.ensureAtMost(
+                    requestedSize,
+                    MAX_RANGE_SIZE,
+                    "The range function cannot produce more than %d elements, but this call would produce %d."
+                );
             }
         }
 

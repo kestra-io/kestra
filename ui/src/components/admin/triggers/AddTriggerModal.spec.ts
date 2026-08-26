@@ -61,7 +61,7 @@ function mountModal() {
     return mount(AddTriggerModal, {
         props: {
             visible: true,
-            trigger: {type: "io.kestra.plugin.core.trigger.Schedule", name: "Schedule", description: null, group: "core", ee: false, icon: "", deprecated: null},
+            trigger: {type: "io.kestra.plugin.core.trigger.Schedule", name: "Schedule", pluginTitle: "core", description: null, group: "core", ee: false, icon: "", deprecated: null},
         },
         global: {
             plugins: [i18n],

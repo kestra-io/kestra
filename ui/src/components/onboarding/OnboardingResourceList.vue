@@ -48,8 +48,11 @@
 
     function onItemClick(item: OnboardingResourceItem, event: MouseEvent) {
         // External items open in a new tab, and a modified click does too, so in both cases the
-        // user is still looking at the page this list sits on.
-        if (!item.to || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+        // user is still looking at the page this list sits on. The modifier set mirrors
+        // vue-router's own `guardEvent`, alt included: browsers read alt+click as "download this
+        // link", so the router does not navigate and reporting one would close the host dialog
+        // over a page that never changed.
+        if (!item.to || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
 
         emit("navigate")
     }

@@ -837,6 +837,7 @@
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
+        "error": "Could not rename to \"{name}\". A file or folder with that name may already exist.",
         "label": "Rename",
         "file": "Rename file",
         "folder": "Rename folder",

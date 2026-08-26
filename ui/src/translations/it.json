@@ -837,6 +837,7 @@
         "folder_error": "Si è verificato un errore durante la creazione della cartella"
       },
       "rename": {
+        "error": "Impossibile rinominare in \"{name}\". Potrebbe già esistere un file o una cartella con quel nome.",
         "label": "Rinomina",
         "file": "Rinomina file",
         "folder": "Rinomina cartella",

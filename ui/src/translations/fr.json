@@ -837,6 +837,7 @@
         "folder_error": "Une erreur s'est produite lors de la création du dossier"
       },
       "rename": {
+        "error": "Impossible de renommer en \"{name}\". Un fichier ou un dossier portant ce nom existe peut-être déjà.",
         "label": "Renommer",
         "file": "Renommer le fichier",
         "folder": "Renommer le dossier",

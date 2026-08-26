@@ -837,6 +837,7 @@
         "folder_error": "Ocorreu um erro ao criar a pasta"
       },
       "rename": {
+        "error": "Não foi possível renomear para \"{name}\". Já pode existir um ficheiro ou uma pasta com esse nome.",
         "label": "Renomear",
         "file": "Renomear arquivo",
         "folder": "Renomear pasta",

@@ -837,6 +837,7 @@
         "folder_error": "Se produjo un error al crear la carpeta"
       },
       "rename": {
+        "error": "No se pudo renombrar a \"{name}\". Puede que ya exista un archivo o una carpeta con ese nombre.",
         "label": "Renombrar",
         "file": "Renombrar archivo",
         "folder": "Renombrar carpeta",

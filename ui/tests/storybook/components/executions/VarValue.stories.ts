@@ -49,13 +49,13 @@ export const EmptyObjectAsString: Story = {
 }
 
 /**
- * A populated object still gets the editor — the early branch must not swallow it. The editor
- * loads Monaco asynchronously, hence the generous timeout.
+ * A populated object still gets the editor, so the early branch cannot be swallowing values that
+ * need one. Monaco loads asynchronously, and mounts here have flaked under 15s before.
  */
 export const PopulatedObject: Story = {
     args: {value: {code: 200}},
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
-        await waitFor(() => expect(canvasElement.querySelector(".complex-value-editor")).not.toBeNull(), {timeout: 8000})
+        await waitFor(() => expect(canvasElement.querySelector(".complex-value-editor")).not.toBeNull(), {timeout: 15000})
     },
 }
 

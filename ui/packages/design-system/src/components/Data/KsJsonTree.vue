@@ -91,6 +91,10 @@
     function leafDisplay(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return `"${value}"`
+        // An empty container is not expandable, so it lands here rather than getting a preview —
+        // and `String` renders it as `[object Object]`, or as nothing at all for an empty array.
+        if (Array.isArray(value)) return "[]"
+        if (typeof value === "object") return "{}"
         return String(value)
     }
 

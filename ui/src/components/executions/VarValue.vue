@@ -54,7 +54,7 @@
         <em>null</em>
     </span>
     <span v-else-if="emptyContainer">
-        {{ emptyContainer }}
+        <em>{{ emptyContainer }}</em>
     </span>
     <div v-else-if="isComplexValue(value)">
         <KsEditor
@@ -165,11 +165,13 @@
     }
 
     // An empty object or array is complex enough to reach the editor branch below, where two
-    // characters of content still mount a five-line Monaco instance — once per empty output row.
+    // characters of content still mount a five-line Monaco instance, once per empty output row.
     const emptyContainer = computed(() => {
         const displayed = getDisplayValue(props.value)
 
-        if (Array.isArray(displayed)) return displayed.length === 0 ? "[]" : undefined
+        if (Array.isArray(displayed)) {
+            return displayed.length === 0 ? "[]" : undefined
+        }
         if (typeof displayed === "object" && displayed !== null) {
             return Object.keys(displayed).length === 0 ? "{}" : undefined
         }

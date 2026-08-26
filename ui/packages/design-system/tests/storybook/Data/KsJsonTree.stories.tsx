@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, waitFor, within} from "storybook/test"
 import KsJsonTree from "../../../src/components/Data/KsJsonTree.vue"
 import {KsCard} from "@kestra-io/design-system"
 
@@ -134,4 +135,36 @@ export const RowsWithGutter: Story = {
             )
         },
     }),
+}
+
+/**
+ * An empty container is not expandable, so it gets no collapsed preview and falls through to the
+ * leaf display. `String({})` is `[object Object]` and `String([])` is the empty string, so both
+ * used to render as something other than the value they are.
+ */
+export const EmptyContainers: Story = {
+    args: {
+        value: {outputFiles: {}, tags: [], nested: {inner: {}}, populated: {a: 1}},
+        defaultExpanded: true,
+    },
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+
+        // Keys render quoted, so match the quoted form the component actually writes.
+        await waitFor(() => expect(canvas.getByText("\"outputFiles\"")).toBeTruthy())
+        expect(canvasElement.textContent).not.toContain("[object Object]")
+
+        // One `{}` per empty object, and the empty array reads as `[]` rather than as a blank.
+        expect(canvas.getAllByText("{}")).toHaveLength(2)
+        expect(canvas.getByText("[]")).toBeTruthy()
+    },
 }

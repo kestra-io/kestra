@@ -21,6 +21,8 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -56,7 +58,7 @@ abstract public class Task implements TaskInterface {
     protected AbstractRetry retry;
 
     @PluginProperty(hidden = true, group = "execution")
-    protected Property<Duration> timeout;
+    protected Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> timeout;
 
     @Builder.Default
     @PluginProperty(hidden = true, group = "execution")

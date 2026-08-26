@@ -2,6 +2,8 @@ package io.kestra.plugin.core.kv;
 
 import java.time.Duration;
 import java.time.Instant;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
@@ -95,7 +97,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Optional Time-To-Live (TTL) duration for the key-value pair. If not set, the KV pair will never be deleted from internal storage."
     )
-    private Property<Duration> ttl;
+    private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> ttl;
 
     @Schema(
         title = "Enum representing the data type of the KV pair. If not set, the value will be stored as a string."

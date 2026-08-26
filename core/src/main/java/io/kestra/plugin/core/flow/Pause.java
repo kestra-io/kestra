@@ -1,6 +1,8 @@
 package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -161,7 +163,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
         implementation = Duration.class
     )
-    private Property<Duration> pauseDuration;
+    private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> pauseDuration;
 
     @Schema(
         title = "Pause behavior, by default set to RESUME. This property controls happens when a pause task reach its duration.",

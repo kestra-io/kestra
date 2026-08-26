@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.RetryPolicyBuilder;
 import io.kestra.core.validations.DurationMax;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 import jakarta.validation.constraints.Min;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,6 +32,7 @@ public abstract class AbstractRetry {
     abstract public String getType();
 
     @DurationMax
+    @DurationMin(nanos = 1, message = "must be a positive duration")
     private Duration maxDuration;
 
     @Min(1)

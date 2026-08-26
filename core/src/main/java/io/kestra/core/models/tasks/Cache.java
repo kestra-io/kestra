@@ -2,6 +2,8 @@ package io.kestra.core.models.tasks;
 
 import java.time.Duration;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,5 +16,6 @@ public class Cache {
     @NotNull
     private Boolean enabled;
 
+    @DurationMin(nanos = 1, message = "must be a positive duration")
     private Duration ttl;
 }

@@ -12,6 +12,8 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -50,7 +52,7 @@ public class Sleep extends Task implements RunnableTask<VoidOutput> {
         description = "The time duration in ISO-8601 format (e.g., `PT5S` for 5 seconds)."
     )
     @NotNull
-    private Property<Duration> duration;
+    private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> duration;
 
     public VoidOutput run(RunContext runContext) throws Exception {
         Duration durationRendered = runContext.render(this.duration).as(Duration.class).orElseThrow();

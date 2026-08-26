@@ -182,6 +182,7 @@
     "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
+    "copy_pebble_expression": "Copy pebble expression",
     "new": "New",
     "edit": "Edit",
     "back": "Back",
@@ -367,7 +368,7 @@
     "unqueue done": "Execution is unqueued",
     "force run": "Force run",
     "force run title": "Force run execution <code>{id}</code>.",
-    "force run confirm": "Are you sure you want to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task runs.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "force run confirm": "Are you sure you want to force run execution `{id}`?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task runs.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "force run done": "Execution is forced ran",
     "metrics": "Metrics",
     "no metrics available": "No metrics recorded for this task run.",
@@ -657,7 +658,7 @@
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
-    "bulk force run": "Are you sure you want to force run <code>{executionCount}</code> execution(s)?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "bulk force run": "Are you sure you want to force run `{executionCount}` execution(s)?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task executions.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "cancel": "Cancel",
@@ -836,6 +837,7 @@
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
+        "error": "Could not rename to \"{name}\". A file or folder with that name may already exist.",
         "label": "Rename",
         "file": "Rename file",
         "folder": "Rename folder",
@@ -1663,7 +1665,7 @@
         "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
       },
       "apps": {
-        "title": "You have no apps yet!",
+        "title": "You have no Apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
       },
       "testSuites": {
@@ -1889,6 +1891,7 @@
           "test": "test"
         },
         "contextRemoved": "Removed {type} {id} from context.",
+        "modelChanged": "Switched to {model}.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} failed",
@@ -1959,6 +1962,12 @@
           "Converging"
         ],
         "newChat": "New chat",
+        "fixThread": {
+          "flow": "Fix flow {id}",
+          "task": "Fix task {id}",
+          "execution": "Fix execution of {id}",
+          "generic": "Fix flow errors"
+        },
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",
@@ -2203,7 +2212,7 @@
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
       "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
-      "no_results_in_types": "No matches for “{query}” in {types}",
+      "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",

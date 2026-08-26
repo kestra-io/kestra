@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import dev.failsafe.RetryPolicyBuilder;
+import io.kestra.core.validations.DurationMax;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
@@ -27,9 +28,11 @@ public class Exponential extends AbstractRetry {
     protected String type = "exponential";
 
     @NotNull
+    @DurationMax
     private Duration interval;
 
     @NotNull
+    @DurationMax
     private Duration maxInterval;
 
     private Double delayFactor;

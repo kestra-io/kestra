@@ -238,7 +238,7 @@ public class FlowTriggerService {
             // prevent recursive flow triggers
             !flowService.removeUnwanted(flow, execution) ||
             // filter out Test Executions
-                (execution.getKind() != null && execution.getKind() != ExecutionKind.NORMAL) ||
+                !ExecutionKind.isNormal(execution) ||
                 // ensure flow & triggers are enabled
                 flow.isDisabled() || flow instanceof FlowWithException ||
                 // a draft revision is never picked up implicitly (see withFlowTriggersOnly)

@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.validations.DurationMax;
+import io.kestra.core.validations.DurationMin;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -23,6 +24,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class MaxDurationSLA extends SLA implements ExecutionMonitoringSLA {
     @NotNull
+    @DurationMin
     @DurationMax
     private Duration duration;
 

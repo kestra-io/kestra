@@ -182,13 +182,13 @@ export const useLogsStore = defineStore("logs", () => {
                 cappedOut = true
                 break
             }
-            // A short page is the last one, whichever pagination mode the backend picked.
-            if (results.length < size) break
-
             if (response.type === "CURSOR") {
-                if (!response.nextCursor) break
+                // Only an empty page ends a cursor walk: a cursor page may come back short
+                // without being the last one, and a non-empty one always carries a cursor.
+                if (results.length === 0 || !response.nextCursor) break
                 cursor = response.nextCursor
             } else {
+                if (results.length < size) break
                 page += 1
             }
         }

@@ -81,9 +81,15 @@ export default defineConfig(({mode}) => {
         },
         resolve: {
             preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls", "moment"],
             alias: [
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+                // moment-timezone's default entry loads data/packed/latest.json: 718 kB of the
+                // eager vendor chunk, for zone transitions nobody displays. This build keeps every
+                // zone name (tz.names() feeds the settings picker) but only 1970-2030 transitions,
+                // so a date past 2030 formats with the last 2030 offset. Not the rolling
+                // 10-year-range build: its window moves with the package release date.
+                {find: /^moment-timezone$/, replacement: "moment-timezone/builds/moment-timezone-with-data-1970-2030"},
             ],
         },
         plugins: [

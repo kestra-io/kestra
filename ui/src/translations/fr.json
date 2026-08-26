@@ -2204,7 +2204,7 @@
       "next_match": "Prochaine correspondance",
       "no_results_description": "Essayez d'élargir le namespace, de revenir à la portée \"Toutes les sources\" ou de désactiver \"Respecter la casse\" et \"Mot entier\".",
       "no_results_hidden_type": "{count} correspondance trouvée dans {type}, que vous n'avez pas sélectionné. | {count} correspondances trouvées dans {type}, que vous n'avez pas sélectionné.",
-      "no_results_in_types": "Aucune correspondance pour « {query} » dans {types}",
+      "no_results_in_types": "Aucune correspondance pour {query} dans {types}",
       "no_results_title": "Aucun résultat pour « {query} »",
       "open_flow": "Ouvrir le flow",
       "open_in_editor": "Ouvrir dans l'éditeur",

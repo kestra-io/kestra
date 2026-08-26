@@ -2204,7 +2204,7 @@
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
       "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
-      "no_results_in_types": "No matches for “{query}” in {types}",
+      "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",

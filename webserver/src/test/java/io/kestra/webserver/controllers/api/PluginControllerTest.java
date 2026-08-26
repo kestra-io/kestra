@@ -56,6 +56,7 @@ class PluginControllerTest {
         Helpers.loadExternalPluginsFromClasspath();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void plugins() {
         PagedResults<Plugin> page = client.toBlocking().retrieve(
@@ -372,6 +373,7 @@ class PluginControllerTest {
         assertThat(conditional.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void flowProperties() {
         Map<String, Object> doc = client.toBlocking().retrieve(
@@ -513,6 +515,7 @@ class PluginControllerTest {
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void should_list_plugins() {
         PagedResults<ApiTriggerPlugin> result = client.toBlocking().retrieve(

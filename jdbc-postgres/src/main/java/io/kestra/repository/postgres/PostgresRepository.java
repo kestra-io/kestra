@@ -130,6 +130,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     // we may find a way to only create this one at some point as here we create unnecessary beans.
     static class PostgresCondition implements io.micronaut.context.condition.Condition {
         @Override
+        @SuppressWarnings({"rawtypes", "unchecked"}) // Condition.matches() declares a raw ConditionContext, so ValueResolver#get() is a raw/unchecked call
         public boolean matches(ConditionContext context) {
             boolean isRepository = ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "postgres".equals(it)).orElse(false);
             boolean isQueue = ((Optional<String>) context.get("kestra.queue.type", String.class)).map(it -> "postgres".equals(it)).orElse(false);

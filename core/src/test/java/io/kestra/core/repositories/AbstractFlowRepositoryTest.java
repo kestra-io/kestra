@@ -955,11 +955,11 @@ public abstract class AbstractFlowRepositoryTest {
             deleteFlow(flow);
         }
 
-        Await.until(
-            () -> FlowListener.filterByTenant(tenant)
-                .size() == 3,
-            Duration.ofMillis(100), Duration.ofSeconds(5)
-        );
+        Await.await()
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(5))
+            .until(() -> FlowListener.filterByTenant(tenant)
+                .size() == 3);
         assertThat(
             FlowListener.filterByTenant(tenant).stream()
                 .filter(r -> r.getType() == CrudEventType.CREATE).count()
@@ -1001,11 +1001,11 @@ public abstract class AbstractFlowRepositoryTest {
             deleteFlow(save);
         }
 
-        Await.until(
-            () -> FlowListener.filterByTenant(tenant)
-                .size() == 2,
-            Duration.ofMillis(100), Duration.ofSeconds(5)
-        );
+        Await.await()
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(5))
+            .until(() -> FlowListener.filterByTenant(tenant)
+                .size() == 2);
         assertThat(
             FlowListener.filterByTenant(tenant).stream()
                 .filter(r -> r.getType() == CrudEventType.CREATE).count()
@@ -2200,6 +2200,8 @@ public abstract class AbstractFlowRepositoryTest {
 
         private String defaultInjected;
 
+        @Override
+        @SuppressWarnings("removal")
         public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws InterruptedException {
             COUNTER++;
 

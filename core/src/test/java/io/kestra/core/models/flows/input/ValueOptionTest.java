@@ -71,13 +71,13 @@ class ValueOptionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldSerializeAsStringWhenLabelEqualsValue() throws Exception {
         SelectInput input = SelectInput.builder()
             .id("id")
             .values(List.of(new ValueOption("V1", "V1"), new ValueOption("V2", "V2")))
             .build();
 
-        @SuppressWarnings("unchecked")
         Map<String, Object> json = JSON.convertValue(input, Map.class);
         assertThat((List<Object>) json.get("values")).containsExactly("V1", "V2");
     }

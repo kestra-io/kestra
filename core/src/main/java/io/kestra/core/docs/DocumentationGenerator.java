@@ -138,6 +138,7 @@ public class DocumentationGenerator {
         );
     }
 
+    @SuppressWarnings("rawtypes")
     private static Map<SubGroup, Map<String, List<ClassPlugin>>> indexGroupedClass(RegisteredPlugin plugin) {
         return plugin.allClassGrouped()
             .entrySet()
@@ -284,7 +285,7 @@ public class DocumentationGenerator {
         return render("task", JacksonMapper.toMap(classPluginDocumentation));
     }
 
-    public static String render(AbstractClassDocumentation classInputDocumentation) throws IOException {
+    public static String render(AbstractClassDocumentation<?> classInputDocumentation) throws IOException {
         return render("task", JacksonMapper.toMap(classInputDocumentation));
     }
 

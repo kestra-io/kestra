@@ -1,6 +1,7 @@
 package io.kestra.core.serializers;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -42,6 +43,8 @@ import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
  * {@code @JsonFormat} on an {@code Instant} has no effect: the width is a contract with the database schema.
  */
 public final class KestraDateTimeModule extends SimpleModule {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     /** Always UTC with a trailing {@code Z}; six fractional digits, zero-padded, never omitted. */
     private static final DateTimeFormatter INSTANT_WRITER =

@@ -782,6 +782,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public ArrayListTotal<Flow> find(
         Pageable pageable,
         @Nullable String tenantId,
@@ -1156,6 +1157,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return findAsync(defaultFilter(tenantId), condition);
     }
 
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
         return Flux.create(
             emitter -> this.jdbcRepository
@@ -1279,6 +1282,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"}) // context.select(field) yields SelectConditionStep<Record1<?>>, but where()/JdbcFilterService are fixed to SelectConditionStep<Record>
     public Double fetchValue(String tenantId, DataFilterKPI<Flows.Fields, ? extends ColumnDescriptor<Flows.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->

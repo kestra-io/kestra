@@ -20,7 +20,7 @@ import jakarta.inject.Singleton;
  * Service for getting schemas.
  */
 @Singleton
-public class JsonSchemaCache {
+public final class JsonSchemaCache {
 
     private final JsonSchemaGenerator jsonSchemaGenerator;
     private final PluginRegistry pluginRegistry;

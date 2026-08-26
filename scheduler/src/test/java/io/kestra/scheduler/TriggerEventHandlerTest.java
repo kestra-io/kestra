@@ -83,6 +83,7 @@ class TriggerEventHandlerTest {
     private BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue;
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     void setUp() {
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
         triggerStateStore = new InMemoryTriggerStateStore();

@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -19,6 +18,8 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
+
+import org.awaitility.core.ConditionTimeoutException;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -51,7 +52,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 @Slf4j
 abstract public class TestsUtils {
     private static final ThreadLocal<List<Runnable>> queueConsumersCancellations = ThreadLocal.withInitial(ArrayList::new);
-    private static final ThreadLocal<List<QueueSubscriber>> subscribers = ThreadLocal.withInitial(ArrayList::new);
+    private static final ThreadLocal<List<QueueSubscriber<?>>> subscribers = ThreadLocal.withInitial(ArrayList::new);
 
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
 
@@ -83,7 +84,7 @@ abstract public class TestsUtils {
 
     /**
      * there is at least one bug in {@link io.kestra.cli.services.FileChangedEventListener#getTenantIdFromPath(Path)} forbidding use to use '_' character
-     * 
+     *
      * @param prefix
      * @return
      */
@@ -147,7 +148,7 @@ abstract public class TestsUtils {
     public static List<LogEntry> awaitLogs(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Predicate<Integer> countMatcher) {
         AtomicReference<List<LogEntry>> matchingLogs = new AtomicReference<>();
         try {
-            Await.until(() ->
+            Await.await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(1000)).until(() ->
             {
                 matchingLogs.set(
                     Collections.synchronizedList(logs)
@@ -162,8 +163,8 @@ abstract public class TestsUtils {
 
                 int matchingLogsCount = matchingLogs.get().size();
                 return countMatcher.test(matchingLogsCount);
-            }, Duration.ofMillis(10), Duration.ofMillis(1000));
-        } catch (TimeoutException e) {
+            });
+        } catch (ConditionTimeoutException e) {
         }
 
         return matchingLogs.get();
@@ -190,6 +191,7 @@ abstract public class TestsUtils {
         return TestsUtils.mockExecution(flow, inputs, null);
     }
 
+    @SuppressWarnings("deprecation")
     public static Execution mockExecution(FlowInterface flow,
         Map<String, Object> inputs,
         Map<String, Object> outputs) {

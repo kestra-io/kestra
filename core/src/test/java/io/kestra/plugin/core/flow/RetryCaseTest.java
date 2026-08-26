@@ -102,9 +102,11 @@ public class RetryCaseTest {
             flow,
             Duration.ofSeconds(30)
         );
-        Await.until(
-            () -> "flow should have ended in Failed state",
-            () ->
+        Await.await()
+            .alias("flow should have ended in Failed state")
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(30))
+            .until(() ->
             {
                 try {
                     return executionRepository.findLatestForStates(flow.getTenantId(), flow.getNamespace(), flow.getId(), List.of(State.Type.FAILED)).isPresent();
@@ -112,10 +114,7 @@ public class RetryCaseTest {
                     // Repository may be unavailable during context teardown (e.g., ES connection pool closed)
                     return false;
                 }
-            },
-            Duration.ofMillis(100),
-            Duration.ofSeconds(30)
-        );
+            });
         var executions = executionRepository.findByFlowId(flow.getTenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED);
         assertThat(executions.stream().map(e -> e.getState().getCurrent())).contains(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED);
     }

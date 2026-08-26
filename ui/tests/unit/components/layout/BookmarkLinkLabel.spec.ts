@@ -45,19 +45,19 @@ describe("BookmarkLink label", () => {
     // The rendered label used to come from a ref seeded once at setup, so a label corrected in
     // the store never reached the sidebar without a remount — and the list keys on the path.
     it("should render an updated title without being remounted", async () => {
-        const wrapper = mountLink("Flows: Ausfuehrungen")
-        expect(wrapper.find(".bookmark-title").text()).toBe("Flows: Ausfuehrungen")
+        const link = mountLink("Flows: Ausfuehrungen")
+        expect(link.find(".bookmark-title").text()).toBe("Flows: Ausfuehrungen")
 
-        await wrapper.setProps({title: "Flows: Executions"})
+        await link.setProps({title: "Flows: Executions"})
 
-        expect(wrapper.find(".bookmark-title").text()).toBe("Flows: Executions")
+        expect(link.find(".bookmark-title").text()).toBe("Flows: Executions")
     })
 
     it("should carry the current title in the link tooltip", async () => {
-        const wrapper = mountLink("Flows")
+        const link = mountLink("Flows")
 
-        await wrapper.setProps({title: "Ablaeufe"})
+        await link.setProps({title: "Ablaeufe"})
 
-        expect(wrapper.find(".bookmark-anchor").attributes("title")).toBe("Ablaeufe")
+        expect(link.find(".bookmark-anchor").attributes("title")).toBe("Ablaeufe")
     })
 })

@@ -40,9 +40,6 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
      * Re-derives a bookmark's label from the page it points at. Labels are stored as resolved
      * text — they are composed from a translated title and breadcrumb — so a bookmark otherwise
      * keeps the language it was created in forever. A label the user typed is left alone.
-     *
-     * The unchanged-label check keeps the entry's object identity, which matters for consumers
-     * comparing entries; `useStorage` already skips an unchanged write on its own.
      */
     function refreshLabel(page: Page) {
         pages.value = pages.value.map(p =>

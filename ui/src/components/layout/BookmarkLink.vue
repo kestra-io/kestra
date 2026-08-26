@@ -50,7 +50,7 @@
     const bookmarksStore = useBookmarksStore()
 
     const editing = ref(false)
-    const updatedTitle = ref(props.title)
+    const updatedTitle = ref("")
     const titleInput = ref<{ focus: () => void; select: () => void } | null>(null)
 
     function deleteBookmark() {

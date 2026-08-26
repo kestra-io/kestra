@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import GlobalSearch from "./GlobalSearch.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
@@ -151,18 +151,27 @@
         }
     }
 
+    // Which path the store's label was last written for. The store is filled by the visited page's
+    // own TopNavBar, which lands a flush after the route — and on a route that mounts none, never:
+    // ownership is released only on the tick after the previous bar unmounts, so a non-null owner
+    // is not proof the label describes where we are now.
+    const labelledPath = ref<string | null>(null)
+
+    watch(
+        [() => store.ownerId, derivedBookmarkLabel],
+        ([ownerId]) => {
+            labelledPath.value = ownerId === null ? null : currentFavURI.value
+        },
+        {immediate: true, flush: "post"},
+    )
+
     // Bookmark labels are stored as resolved text, so one created in another language keeps it.
     // Visiting the page is the only moment a freshly translated label exists, so refresh it here;
     // the store leaves a label the user typed alone.
-    //
-    // `route` and the topNav store update in different flushes: the route lands first, the page's
-    // own TopNavBar writes the title after. Without gating, the previous page's label was written
-    // onto the newly visited bookmark and only corrected by the write that followed. `flush: post`
-    // plus an owner check means the pair always describes the same page.
     watch(
-        [bookmarked, derivedBookmarkLabel, () => store.ownerId],
-        ([isBookmarked, label, ownerId]) => {
-            if (!isBookmarked || !label || ownerId === null) return
+        [bookmarked, derivedBookmarkLabel, labelledPath],
+        ([isBookmarked, label, writtenFor]) => {
+            if (!isBookmarked || !label || writtenFor !== currentFavURI.value) return
             bookmarksStore.refreshLabel({path: currentFavURI.value, label})
         },
         {immediate: true, flush: "post"},

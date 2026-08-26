@@ -37,10 +37,13 @@ const MONACO_MODULES = /node_modules[\\/](monaco-editor|monaco-yaml|monaco-worke
 // Entries that look like typos are real unified-ecosystem package names.
 const MARKDOWN_MODULES = /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]|node_modules[\\/](shiki|@shikijs|oniguruma-to-es|regex(-recursion|-utilities)?|remark-[^\\/]+|micromark[^\\/]*|mdast[^\\/]*|unified|unist[^\\/]*|vfile[^\\/]*|hast[^\\/]*|devlop|ccount|character-[^\\/]+|decode-named-character-reference|markdown-table|longest-streak|trim-lines|zwitch|bail|trough|escape-string-regexp)[\\/]/ // codespell:ignore devlop,trough
 
+const ECHARTS_MODULES = /node_modules[\\/](echarts|zrender|vue-echarts)[\\/]|design-system[\\/]src[\\/]components[\\/]Charts[\\/]/
+
 /** Lazily loaded toolchains, each owning the private subtree of what it matches. */
 const LAZY_GROUPS = [
     {name: "monaco", pattern: MONACO_MODULES},
     {name: "markdown", pattern: MARKDOWN_MODULES},
+    {name: "echarts", pattern: ECHARTS_MODULES},
 ]
 
 /**
@@ -168,6 +171,10 @@ const PAGE_GROUPS = [
     {name: "flow", pattern: /src[\\/](override[\\/])?components[\\/](flows|no-code|inputs)[\\/]/},
     {name: "execution", pattern: /src[\\/](override[\\/])?components[\\/](executions|logs)[\\/]/},
     {name: "dashboard", pattern: /src[\\/](dashboard[\\/]|(override[\\/])?components[\\/]dashboard[\\/])/},
+    // Planned so its chunk carries the "-echarts" suffix: the page imports
+    // echarts/core directly, and an unplanned chunk reaching a lazy toolchain
+    // makes every page that reaches it download the toolchain.
+    {name: "dependencies", pattern: /src[\\/](override[\\/])?components[\\/]dependencies[\\/]/},
 ]
 
 /** {@link PAGE_GROUPS} widened with the patterns the build passed in. */
@@ -374,6 +381,16 @@ const GROUPS = [
         name: "markdown",
         test: matchesWithLazySubtree("markdown", MARKDOWN_MODULES),
         priority: -15,
+        includeDependenciesRecursively: false,
+    },
+    // ECharts and the design-system chart components that statically import it,
+    // in one lazy chunk (the charts are exported as async components). Claimed
+    // before the design-system group, which would otherwise take the Charts
+    // directory and pull ECharts back into the eager bundle with it.
+    {
+        name: "echarts",
+        test: matchesWithLazySubtree("echarts", ECHARTS_MODULES),
+        priority: -18,
         includeDependenciesRecursively: false,
     },
     // One design-system chunk (with element-plus, its foundation) so federated

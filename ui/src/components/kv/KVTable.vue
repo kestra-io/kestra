@@ -103,7 +103,7 @@
             <template #default="scope">
                 <KsIconButton
                     v-if="scope.row.key !== undefined"
-                    :tooltip="$t('copy_to_clipboard')"
+                    :tooltip="$t('copy_pebble_expression')"
                     placement="left"
                     @click="copyKey(scope.row.key)"
                 >

@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.event.Level;
 
@@ -219,7 +220,9 @@ public class FlowParsingService {
         @Nullable final String namespace,
         final String source) throws JsonProcessingException, FlowProcessingException {
         Map<String, Object> mapFlow = YAML_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
-        return injectPluginVersions(tenantId, namespace == null ? (String) mapFlow.get("namespace") : namespace, mapFlow);
+        // the namespace is read back from the parsed YAML, where a digits-only value such as
+        // `namespace: 132312312` arrives as an Integer even though it matches the namespace pattern
+        return injectPluginVersions(tenantId, namespace == null ? Objects.toString(mapFlow.get("namespace"), null) : namespace, mapFlow);
     }
 
     /**

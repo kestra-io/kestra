@@ -24,6 +24,25 @@ class FlowParsingServiceTest {
     private FlowParsingService flowParsingService;
 
     @Test
+    void shouldParseAFlowWhoseNamespaceIsDigitsOnly() throws FlowProcessingException {
+        // Given - YAML parses an unquoted digits-only namespace as an Integer
+        String source = """
+            id: digits
+            namespace: 132312312
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """;
+
+        // When
+        FlowWithSource parsed = flowParsingService.parse(null, source, false);
+
+        // Then - a digits-only namespace matches the namespace pattern, so it must survive parsing
+        assertThat(parsed.getNamespace()).isEqualTo("132312312");
+    }
+
+    @Test
     void shouldNotInjectAnythingGivenFlowMap() throws FlowProcessingException {
         // Given
         Map<String, Object> task = new HashMap<>();

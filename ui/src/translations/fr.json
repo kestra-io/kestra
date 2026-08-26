@@ -1960,6 +1960,12 @@
           "Convergence"
         ],
         "newChat": "Nouvelle discussion",
+        "fixThread": {
+          "flow": "Corriger le flow {id}",
+          "task": "Corriger la tâche {id}",
+          "execution": "Corriger l'exécution de {id}",
+          "generic": "Corriger les erreurs de Flow"
+        },
         "draft": {
           "openInEditor": "Ouvrir dans l'éditeur",
           "apply": "Appliquer",

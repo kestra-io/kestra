@@ -252,7 +252,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
 
     // `/configs` reports whether any AI provider is configured, so the unavailable state renders on
     // load rather than after the user composes a prompt that was always going to fail
@@ -374,8 +374,17 @@
     async function consumeSeededPrompt(): Promise<void> {
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
+        // EE seeds each fix as its own conversation: drop the active thread (still reachable from
+        // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
+        // where resetting would discard the only conversation for good.
+        if (miscStore.copilotNewThread) {
+            if (thread.value || messages.value.length > 0) reset()
+            nextThreadTitle.value = miscStore.copilotThreadTitle
+        }
         composerText.value = seeded
         miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
         await nextTick()
         ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
     }

@@ -26,7 +26,13 @@ type SharedContextFixtures = {
  *  test still gets its own tab (fresh DOM/JS heap, no leaked state). */
 export const test = base.extend<{page: Page}, SharedContextFixtures>({
     sharedContext: [async ({browser}, use) => {
-        const context = await browser.newContext({storageState: STORAGE_STATE})
+        // The production build registers a service worker (workbox `NetworkOnly` for `/api/*`,
+        // `clientsClaim: true`). It doesn't control the very first page, but claims every page
+        // after that — and once it does, `/api/*` fetches are handled inside the worker's own
+        // fetch listener, a layer `page.route()` doesn't see through. Any spec that stubs an API
+        // response and then does a second hard navigation would silently stop being stubbed.
+        // Blocking service workers for the test context sidesteps this entirely.
+        const context = await browser.newContext({storageState: STORAGE_STATE, serviceWorkers: "block"})
 
         // storageState skips sessionStorage, so the login-flag cookie alone
         // still bounces the SPA to /ui/login — re-seed the flag per document.

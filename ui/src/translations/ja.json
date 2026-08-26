@@ -2204,7 +2204,7 @@
       "next_match": "次の一致",
       "no_results_description": "namespaceを広げるか、スコープを「すべてのソース」に戻すか、「大文字と小文字を区別する」と「単語全体に一致」をオフにしてみてください。",
       "no_results_hidden_type": "選択していない{type}で{count}件の一致が見つかりました。 | 選択していない{type}で{count}件の一致が見つかりました。",
-      "no_results_in_types": "“{query}” に一致する結果は{types}にありません",
+      "no_results_in_types": "{query} に一致する結果は{types}にありません",
       "no_results_title": "「{query}」に一致する項目はありません",
       "open_flow": "flow を開く",
       "open_in_editor": "エディターで開く",

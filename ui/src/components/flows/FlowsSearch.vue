@@ -115,7 +115,7 @@
                         <span v-if="query && crossResourceSearchStore.statusFor(type) !== 'idle'" class="source-search__pill-count">{{ crossResourceSearchStore.countFor(type) }}</span>
                         <Loading v-if="crossResourceSearchStore.statusFor(type) === 'counting'" class="source-search__pill-spin" />
                         <AlertCircleOutline v-else-if="query && crossResourceSearchStore.statusFor(type) === 'failed'" :title="crossResourceSearchStore.errorMessageFor(type)" />
-                        <PencilOff v-else-if="type !== 'flows'" />
+                        <PencilLockOutline v-else-if="type !== 'flows'" />
                     </KsCheckTag>
                     <KsButton class="source-search__pill-outline" size="small" @click="selectAllTypes">
                         {{ $t('source_search.select_all_types') }}
@@ -220,29 +220,24 @@
         </KsAlert>
 
         <div v-if="!query" class="source-search__states">
-            <KsEmpty :background="false">
-                <template #image>
-                    <span class="source-search__empty-glyph">
-                        <Magnify />
-                    </span>
-                </template>
-                <template #description>
-                    <h3>{{ $t('source_search.empty_title') }}</h3>
-                    <p>{{ $t('source_search.empty_description') }}</p>
-                </template>
-                <div class="source-search__examples" role="list" :aria-label="$t('source_search.examples_aria')">
-                    <button
-                        v-for="example in exampleQueries"
-                        :key="example"
-                        type="button"
-                        class="source-search__example-chip"
-                        role="listitem"
-                        @click="query = example"
-                    >
-                        {{ example }}
-                    </button>
-                </div>
-            </KsEmpty>
+            <KsNoData
+                class="source-search__empty"
+                :icon="Magnify"
+                :title="$t('source_search.empty_title')"
+                :description="$t('source_search.empty_description')"
+            />
+            <div class="source-search__examples" role="list" :aria-label="$t('source_search.examples_aria')">
+                <button
+                    v-for="example in exampleQueries"
+                    :key="example"
+                    type="button"
+                    class="source-search__example-chip"
+                    role="listitem"
+                    @click="query = example"
+                >
+                    {{ example }}
+                </button>
+            </div>
         </div>
 
         <div v-else-if="showLoadingState" class="source-search__states">
@@ -252,10 +247,11 @@
         </div>
 
         <div v-else-if="showEmptyResultsState" class="source-search__states">
-            <KsEmpty :background="false">
+            <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
                 <template #description>
-                    <h3>{{ $t('source_search.no_results_in_types', {query, types: selectedTypesLabel}) }}</h3>
-                    <p v-if="hiddenTypeHint">{{ hiddenTypeHint }}</p>
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <h3 class="source-search__no-results-title" v-html="noResultsMessage" />
+                    <p v-if="hiddenTypeHint" class="source-search__no-results-hint">{{ hiddenTypeHint }}</p>
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
@@ -338,9 +334,10 @@
     import ArrowExpandVertical from "vue-material-design-icons/ArrowExpandVertical.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import Magnify from "vue-material-design-icons/Magnify.vue"
+    import {images} from "../layout/empty/images"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
-    import PencilOff from "vue-material-design-icons/PencilOff.vue"
+    import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
@@ -531,6 +528,10 @@
         .join(" "))
 
     const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
+    const noResultsMessage = computed(() => t("source_search.no_results_in_types", {
+        query: `<code>${query.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`,
+        types: selectedTypesLabel.value,
+    }))
 
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
@@ -967,17 +968,35 @@
     gap: var(--ks-spacing-3);
 }
 
-.source-search__empty-glyph {
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--ks-radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--ks-bg-base);
-    border: 1px solid var(--ks-border-default);
-    color: var(--ks-text-muted);
-    margin: 0 auto var(--ks-spacing-3);
+.source-search__empty {
+    height: auto;
+}
+
+.source-search__no-results-title {
+    margin: 0 auto;
+    max-width: 28rem;
+    font-size: var(--ks-font-size-sm);
+    font-weight: var(--ks-font-weight-medium);
+    line-height: var(--ks-line-height-base);
+    color: var(--ks-text-secondary);
+
+    :global(code) {
+        padding: 0 var(--ks-spacing-1);
+        background: var(--ks-bg-base);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-primary);
+    }
+}
+
+.source-search__no-results-hint {
+    margin: var(--ks-spacing-2) auto 0;
+    max-width: 28rem;
+    font-size: var(--ks-font-size-sm);
+    line-height: var(--ks-line-height-base);
+    color: var(--ks-text-secondary);
 }
 
 .source-search__examples {

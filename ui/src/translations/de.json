@@ -368,7 +368,7 @@
     "unqueue done": "Die Execution wurde aus der Warteschlange entfernt",
     "force run": "Ausführung erzwingen",
     "force run title": "Execution <code>{id}</code> erzwingen.",
-    "force run confirm": "Möchtest du die Execution <code>{id}</code> wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
+    "force run confirm": "Möchtest du die Execution `{id}` wirklich erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task Runs führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
     "force run done": "Die Execution wurde erzwungen",
     "metrics": "Metriken",
     "no metrics available": "Für diesen Task-Run wurden keine Metriken aufgezeichnet.",
@@ -658,7 +658,7 @@
     "bulk change state": "Möchtest du den Status von <code>{executionCount}</code> Execution(s) wirklich ändern?",
     "bulk resume": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich fortsetzen?",
     "bulk pause": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich pausieren?",
-    "bulk force run": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
+    "bulk force run": "Möchtest du wirklich `{executionCount}` Execution(s) erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution wird nicht garantiert und kann zu doppelten Task-Executions führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
     "bulk restart": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich neu starten?",
     "bulk kill": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich killen?",
     "cancel": "Abbrechen",
@@ -837,6 +837,7 @@
         "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten"
       },
       "rename": {
+        "error": "Umbenennen in \"{name}\" nicht möglich. Möglicherweise existiert bereits eine Datei oder ein Ordner mit diesem Namen.",
         "label": "Umbenennen",
         "file": "Datei umbenennen",
         "folder": "Ordner umbenennen",

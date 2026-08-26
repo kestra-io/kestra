@@ -368,7 +368,7 @@
     "unqueue done": "実行はキューから外されました",
     "force run": "強制実行",
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
-    "force run confirm": "実行 <code>{id}</code> を強制的に実行してもよろしいですか？<br/><br/>警告: 実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATED タスクは実行状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから削除されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run confirm": "実行 `{id}` を強制的に実行してもよろしいですか？\n\n警告: 実行の強制実行は保証されておらず、重複する Task Run が作成される可能性があります。\n\n以下の遷移が行われます。\n\n- CREATED Task は RUNNING 状態に移行します。\n- RUNNING Task は再送信されます。\n- QUEUED Task はキューから削除されます。\n- PAUSED Task は再開されます。",
     "force run done": "実行は強制的に実行されました",
     "metrics": "メトリクス",
     "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
@@ -658,7 +658,7 @@
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
-    "bulk force run": "<code>{executionCount}</code>件の実行を強制的に実行してもよろしいですか？<br/><br/>警告：実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATEDタスクは実行状態に移行します。</li><li>RUNNINGタスクは再提出されます。</li><li>QUEUEDタスクはキューから削除されます。</li><li>PAUSEDタスクは再開されます。</li></ul>",
+    "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
     "bulk restart": "<code>{executionCount}</code>件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
     "cancel": "キャンセル",
@@ -837,6 +837,7 @@
         "folder_error": "フォルダーの作成中にエラーが発生しました"
       },
       "rename": {
+        "error": "\"{name}\" に名前を変更できませんでした。同じ名前のファイルまたはフォルダーが既に存在する可能性があります。",
         "label": "名前を変更",
         "file": "ファイルの名前を変更",
         "folder": "フォルダーの名前を変更",

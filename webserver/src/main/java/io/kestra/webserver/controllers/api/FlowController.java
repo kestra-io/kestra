@@ -173,6 +173,7 @@ public class FlowController {
         throws ConstraintViolationException, IllegalVariableEvaluationException, FlowProcessingException {
         try {
             FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), flow, false);
+            modelValidator.validate(flowParsingService.parseForValidation(flowParsed));
             return graphService.flowGraph(flowParsed, subflows);
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {

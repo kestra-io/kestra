@@ -10,7 +10,7 @@
                     :shouldShowComparator
                     :selectedComparator="state.selectedComparator"
                     :filterKey="filterKey"
-                    @update:selected-comparator="state.selectedComparator = $event"
+                    @update:selected-comparator="changeComparator"
                 />
             </template>
         </FilterHeader>
@@ -38,6 +38,7 @@
         type AppliedFilter,
         type FilterKeyConfig,
         type FilterValue,
+        Comparators,
         COMPARATOR_LABELS,
         RANGE_COMPARATORS,
         TEXT_COMPARATORS,
@@ -135,6 +136,25 @@
         return type
     })
 
+    const normalizeKeyValuePairs = (values: string[]) => {
+        const pairByKey = new Map<string, string>()
+        values.forEach(pair => {
+            const separatorIndex = pair.indexOf(":")
+            if (separatorIndex <= 0 || separatorIndex === pair.length - 1) return
+            pairByKey.set(pair.slice(0, separatorIndex), pair)
+        })
+        return [...pairByKey.values()]
+    }
+
+    const changeComparator = (comparator: AppliedFilter["comparator"]) => {
+        if (props.filterKey?.valueType === "key-value"
+            && comparator !== Comparators.IN
+            && comparator !== Comparators.NOT_IN) {
+            state.keyValuePair = normalizeKeyValuePairs(state.keyValuePair)
+        }
+        state.selectedComparator = comparator
+    }
+
     const valueComponent = computed(() => {
         if (isTextOp.value) {
             return {
@@ -148,7 +168,7 @@
         if (isKVPairFilter.value) {
             return {
                 component: FilterKVPairs,
-                props: {modelValue: state.keyValuePair},
+                props: {modelValue: state.keyValuePair, comparator: state.selectedComparator},
                 events: {"update:modelValue": (value: string[]) => (state.keyValuePair = value)},
             }
         }

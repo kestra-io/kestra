@@ -150,7 +150,6 @@
                             entity="namespace"
                             :value="scope.row.namespace"
                             :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
-                            @click.stop
                         />
                     </template>
                 </KsTableColumn>
@@ -213,18 +212,14 @@
                     className="row-graph"
                 >
                     <template #default="scope">
-                        <!-- Only stop the click from reaching the row when a chart is actually rendered (drill-down owns the click then);
-                             an empty/no-history cell has nothing to intercept it, so it should fall through to the row's own navigation. -->
-                        <div @click="lastExecutionByFlowReady && getLastExecution(scope.row) ? $event.stopPropagation() : undefined">
-                            <TimeSeries
-                                :chart="mappedChart(scope.row.id, scope.row.namespace)"
-                                :filters="chartFilters()"
-                                showDefault
-                                short
-                                :flow="scope.row.id"
-                                :namespace="scope.row.namespace"
-                            />
-                        </div>
+                        <TimeSeries
+                            :chart="mappedChart(scope.row.id, scope.row.namespace)"
+                            :filters="chartFilters()"
+                            showDefault
+                            short
+                            :flow="scope.row.id"
+                            :namespace="scope.row.namespace"
+                        />
                     </template>
                 </KsTableColumn>
 
@@ -271,7 +266,7 @@
                         <KsIconButton
                             v-if="canExecute(scope.row)"
                             :tooltip="$t('execute')"
-                            @click.stop="openExecuteModal(scope.row)"
+                            @click="openExecuteModal(scope.row)"
                         >
                             <Play />
                         </KsIconButton>
@@ -357,6 +352,8 @@
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
+
+    const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -507,9 +504,14 @@
             })
     }
 
-    const onRowClick = (item: any, column: any) => {
-        // The selection checkbox cell also fires row-click; clicking it must select the row, not navigate away.
+    const onRowClick = (item: any, column: any, event: Event) => {
         if (column?.type === "selection") return
+
+        const click = event as MouseEvent
+        // a modifier-click is the browser's own open-in-a-new-tab gesture, which RouterLink deliberately
+        // lets through without preventDefault, so the current tab must stay where it is
+        if (click.metaKey || click.ctrlKey || click.shiftKey || click.altKey || click.button !== 0) return
+        if ((event.target as HTMLElement)?.closest(NON_NAVIGATING_TARGETS)) return
 
         router.push({
             name: route.name?.toString().replace("/list", "/update"),

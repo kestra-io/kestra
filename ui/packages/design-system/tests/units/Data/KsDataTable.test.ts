@@ -5,6 +5,7 @@ import KestraDesignSystem from "../../../src/index"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
 import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
+import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 
 const globalConfig = {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]}
 
@@ -37,19 +38,17 @@ describe("KsDataTable", () => {
         expect(wrapper.find(".kel-table").exists()).toBe(true)
     })
 
-    test("emits row-click when a table row is clicked", async () => {
+    test("forwards row-click from the underlying table", () => {
         const wrapper = mount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
-            slots: {
-                default: "<ks-table-column prop=\"id\" label=\"ID\" />",
-            },
-            global: {...globalConfig, components: {KsTableColumn}},
+            global: globalConfig,
         })
 
-        await wrapper.find(".kel-table__row").trigger("click")
+        const column = {type: "default", property: "id"}
+        const event = new MouseEvent("click")
+        wrapper.findComponent(KsTable).vm.$emit("rowClick", SAMPLE_DATA[0], column, event)
 
-        expect(wrapper.emitted("row-click")).toBeTruthy()
-        expect(wrapper.emitted("row-click")?.[0]?.[0]).toMatchObject({id: "flow-001"})
+        expect(wrapper.emitted("row-click")?.[0]).toEqual([SAMPLE_DATA[0], column, event])
     })
 
     test("does not render pagination when total is 0", () => {

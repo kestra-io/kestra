@@ -2,14 +2,23 @@ package io.kestra.core.models.triggers;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.validations.DurationMax;
 import io.kestra.core.validations.TimeWindowValidation;
+import io.kestra.core.validations.TimezoneId;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.With;
+
+import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
 
 @Getter
 @Builder
@@ -40,6 +49,7 @@ public class TimeWindow {
     )
     @PluginProperty
     @With
+    @DurationMax
     private Duration window;
 
     @Schema(
@@ -52,6 +62,7 @@ public class TimeWindow {
     )
     @PluginProperty
     @With
+    @DurationMax
     private Duration windowAdvance;
 
     @Schema(
@@ -67,6 +78,72 @@ public class TimeWindow {
     )
     @PluginProperty
     private LocalTime endTime;
+
+    @Schema(
+        title = "The timezone used to resolve the daily deadline, start and end times",
+        description = "Defaults to the server timezone. Set a time-zone ID such as `Europe/Paris` so that daily windows follow the intended zone, including daylight-saving transitions."
+    )
+    @PluginProperty
+    @TimezoneId
+    private String timezone;
+
+    /** The zone in which the daily deadline, start and end times are resolved; the server default when unset. */
+    public ZoneId zoneId() {
+        return timezone != null ? ZoneId.of(timezone) : ZoneId.systemDefault();
+    }
+
+    /**
+     * Computes the concrete start/end instants of this window relative to {@code now}.
+     * <p>
+     * Always resolves in {@link #zoneId()} regardless of {@code now}'s own zone -- {@code now} is
+     * re-expressed in that zone first. The two {@code DAILY_*} types then resolve
+     * {@code deadline}/{@code startTime}/{@code endTime} with a null preferred offset (via
+     * {@link ZonedDateTime#of} and {@link java.time.LocalDate#atStartOfDay(ZoneId)}), so the
+     * result depends only on the date, the configured time and the zone -- never on what offset
+     * {@code now} itself happens to carry across a daylight-saving transition.
+     */
+    public Pair<ZonedDateTime, ZonedDateTime> boundaries(ZonedDateTime now) {
+        ZoneId zone = zoneId();
+        now = now.withZoneSameInstant(zone);
+        Type resolvedType = type != null ? type : DURATION_WINDOW;
+
+        return switch (resolvedType) {
+            case DURATION_WINDOW -> {
+                Duration windowDuration = window == null ? Duration.ofDays(1) : window;
+                if (windowDuration.toDays() > 0) {
+                    now = now.withHour(0);
+                }
+
+                if (windowDuration.toHours() > 0) {
+                    now = now.withMinute(0);
+                }
+
+                if (windowDuration.toMinutes() > 0) {
+                    now = now.withSecond(0)
+                        .withMinute(0)
+                        .plusMinutes(windowDuration.toMinutes() * (now.getMinute() / windowDuration.toMinutes()));
+                }
+
+                ZonedDateTime startWindow = windowAdvance == null ? now : now.plus(windowAdvance).truncatedTo(ChronoUnit.MILLIS);
+                yield Pair.of(
+                    startWindow,
+                    startWindow.plus(windowDuration).minus(Duration.ofMillis(1)).truncatedTo(ChronoUnit.MILLIS)
+                );
+            }
+            case SLIDING_WINDOW -> Pair.of(
+                now.truncatedTo(ChronoUnit.MILLIS),
+                now.truncatedTo(ChronoUnit.MILLIS).plus(window == null ? Duration.ofDays(1) : window)
+            );
+            case DAILY_TIME_WINDOW -> Pair.of(
+                ZonedDateTime.of(now.toLocalDate(), startTime, zone).truncatedTo(ChronoUnit.MILLIS),
+                ZonedDateTime.of(now.toLocalDate(), endTime, zone).truncatedTo(ChronoUnit.MILLIS)
+            );
+            case DAILY_TIME_DEADLINE -> Pair.of(
+                now.toLocalDate().atStartOfDay(zone),
+                ZonedDateTime.of(now.toLocalDate(), deadline, zone).truncatedTo(ChronoUnit.MILLIS)
+            );
+        };
+    }
 
     public enum Type {
         DAILY_TIME_DEADLINE,

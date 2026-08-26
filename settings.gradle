@@ -1,6 +1,7 @@
 plugins {
     id("io.kestra.gradle.develocity-conventions") version "1.2.6"
     id("com.gradle.common-custom-user-data-gradle-plugin") version "2.8.0"
+    id("io.github.ben-manes.versions.settings") version "0.61.0"
 }
 
 rootProject.name = "kestra"

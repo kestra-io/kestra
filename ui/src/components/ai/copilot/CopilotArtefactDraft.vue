@@ -53,11 +53,14 @@
 
     const props = defineProps<{draft: ArtefactDraftEvent}>()
 
-    const {applying, appSupported, openInEditor, apply} = useApplyDraft()
+    const {applying, appSupported, dashboardSupported, openInEditor, apply} = useApplyDraft()
 
-    // Flow + dashboard drafts always have actions; app drafts only when the EE app path is present.
+    // Flow drafts always have actions; dashboard drafts only when the backend serves custom
+    // dashboards, app drafts only when the EE app path is present.
     const showActions = computed(
-        () => props.draft.kind === "FLOW" || props.draft.kind === "DASHBOARD" || (props.draft.kind === "APP" && appSupported),
+        () => props.draft.kind === "FLOW"
+            || (props.draft.kind === "DASHBOARD" && dashboardSupported.value)
+            || (props.draft.kind === "APP" && appSupported),
     )
 
     // Render the YAML as a fenced code block so KsMarkdown syntax-highlights it (matching the
@@ -67,10 +70,9 @@
 
 <style scoped>
     .copilot-draft {
-        /* Fill the assistant column (up to the 90% gutter) so the YAML preview uses the available
-           width instead of shrinking to its longest line. */
+        /* Fill the transcript column so the YAML preview uses the available width instead of
+           shrinking to its longest line. */
         width: 100%;
-        max-width: 90%;
         /* --ks-border-default, not -subtle: in light theme -subtle is the same gray as the card's
            --ks-bg-base, so a -subtle border is invisible (it shows fine in dark). */
         border: 1px solid var(--ks-border-default);

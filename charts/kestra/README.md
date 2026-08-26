@@ -347,6 +347,7 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 | common.podLabels | object | `{}` | Labels applied specifically to pods. |
 | common.podSecurityContext | object | `{}` | Security context settings for pods. |
 | common.priorityClassName | string | `""` | Priority class for scheduling pods. |
+| common.progressDeadlineSeconds | int | `""` | Seconds a Deployment rollout may make no progress before the controller reports `ProgressDeadlineExceeded`. Unset uses the Kubernetes default of 600, which a large image can exceed on a cold pull. Deployments only. |
 | common.readinessProbe | object | `{"failureThreshold":3,"httpGet":{"path":"/health/readiness","port":"management"},"initialDelaySeconds":0,"periodSeconds":5,"successThreshold":1,"timeoutSeconds":3}` | Readiness probe configuration to determine pod availability. |
 | common.replicas | int | `1` | Number of pod replicas to run. |
 | common.resources | object | `{}` | Resource requests and limits for containers. |

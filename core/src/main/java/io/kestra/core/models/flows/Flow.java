@@ -97,6 +97,10 @@ public class Flow extends AbstractFlow implements HasUID {
     @PluginProperty
     List<String> policyRefs;
 
+    @Schema(
+        title = "Concurrency",
+        description = "Limits the number of concurrent executions of the flow."
+    )
     @Valid
     Concurrency concurrency;
 

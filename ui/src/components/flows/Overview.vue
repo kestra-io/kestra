@@ -30,7 +30,7 @@
         if (flow.value?.id) {
             loaded.value = false
             executionsStore
-                .findExecutions({namespace: flow.value.namespace, flowId: flow.value.id})
+                .findExecutions({"filters[namespace][EQUALS]": flow.value.namespace, "filters[flowId][EQUALS]": flow.value.id})
                 .then((r) => {
                     total.value = r.total ?? 0
                     loaded.value = true

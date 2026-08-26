@@ -25,6 +25,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -69,6 +70,16 @@ public class DagTest {
     }
 
     @Test
+    void dagInvalidSubtask() {
+        Flow flow = this.parse("flows/invalids/dag-invalid-subtask.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage()).contains("task1");
+        assertThat(validate.get().getMessage()).contains("message: must not be null");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/finally-dag.yaml" }, tenantId = "errors")
     void errors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
@@ -89,6 +100,23 @@ public class DagTest {
             .isTrue();
         assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("e1").getFirst().getState().getEndDate().orElseThrow()))
             .isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/dag-fail-fast-cancelled.yaml" })
+    void dagFailFastCancelled() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            "io.kestra.tests", "dag-fail-fast-cancelled", null, null, Duration.ofSeconds(20),
+            execution1 -> execution1.getState().isTerminated()
+                && execution1.getTaskRunList() != null
+                && execution1.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated())
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("fails_fast").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // the sibling must be cancelled quickly instead of running its full PT10S duration
+        assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 
     private Flow parse(String path) {

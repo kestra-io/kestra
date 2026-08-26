@@ -1,164 +1,125 @@
 import SourceSearchResults from "../../../src/components/flows/SourceSearchResults.vue"
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "@kestra-io/design-system"
+import {vueRouter} from "storybook-vue3-router"
+import type {SearchResourceType, SearchStatus} from "../../../src/utils/crossResourceSearch"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            source_search: {
-                match_count: "{count} match | {count} matches",
-                open_flow: "Open flow",
-            },
-        },
-    },
-})
+// Each flow group's "open in editor" link resolves a named route the global preview
+// router does not declare, so it needs to be registered here or useLink() throws.
+const routes = [
+    {path: "/", name: "home", component: {template: "<div />"}},
+    {path: "/flows/edit/:namespace/:id/edit", name: "flows/update/edit", component: {template: "<div />"}},
+    {path: "/:pathMatch(.*)*", name: "catchAll", component: {template: "<div />"}},
+]
 
 const meta: Meta<typeof SourceSearchResults> = {
     title: "flows/SourceSearchResults",
     component: SourceSearchResults,
     decorators: [
-        (story) => ({
-            components: {story},
-            plugins: [i18n, KestraDesignSystem],
-            template: `<div style="height: 600px; width: 400px;"><story /></div>`,
+        (storyFn) => ({
+            components: {story: storyFn},
+            template: `<div style="height: 600px; width: 480px;"><story /></div>`,
         }),
+        vueRouter(routes, {initialRoute: "/"}),
     ],
 }
 
 export default meta
 
-const singleResult = [
+const flowsResults = [
     {
-        model: {namespace: "company.data", id: "daily-etl"},
-        fragments: [
-            "tasks:\n  - id: [mark]extract[/mark]\n    type: io.kestra.plugin.core.log.Log",
+        namespace: "company.data",
+        id: "daily-etl",
+        editable: true,
+        matches: [
+            {line: 4, column: 8, snippet: "  - id: [mark]extract[/mark]"},
+            {line: 12, column: 12, snippet: "    script: [mark]extract[/mark]Data()"},
+        ],
+    },
+    {
+        namespace: "prod.payments",
+        id: "reconcile-ledger",
+        editable: false,
+        matches: [
+            {line: 9, column: 15, snippet: "    projectId: [mark]analytics[/mark]-prod"},
         ],
     },
 ]
 
-const multipleResults = [
-    {
-        model: {namespace: "company.data", id: "daily-etl"},
-        fragments: [
-            "tasks:\n  - id: [mark]extract[/mark]\n    type: io.kestra.plugin.core.log.Log",
-            "  - id: load\n    script: [mark]extract[/mark]Data()",
-        ],
-    },
-    {
-        model: {namespace: "company.analytics", id: "weekly-report"},
-        fragments: [
-            "description: Weekly [mark]extract[/mark] and summarize",
-        ],
-    },
-    {
-        model: {namespace: "system", id: "health-check"},
-        fragments: [
-            "id: [mark]health[/mark]-check\nnamespace: system",
-        ],
-    },
+const filesNamespaces = [
+    {namespace: "company.data.ingestion", status: "done" as const, paths: ["scripts/us-east-1/extract.py", "configs/us-east-1.yaml"]},
+    {namespace: "company.platform", status: "failed" as const, paths: [], errorMessage: "Request timed out after 30s."},
+    {namespace: "company.ml", status: "pending" as const, paths: []},
 ]
 
-export const Empty: StoryObj<typeof SourceSearchResults> = {
-    render: () => ({
-        setup() {
-            return () => (
-                <SourceSearchResults
-                    results={undefined}
-                    selectedKey={null}
-                />
-            )
-        },
-    }),
+const kvGroups = [
+    {namespace: "company.data.ingestion", matches: [{key: "landing-bucket-us-east-1", updateDate: "2026-01-01T00:00:00Z"}]},
+    {namespace: "company.platform", matches: [{key: "warehouse-endpoint-us-east-1"}]},
+]
+
+const secretsGroups = [
+    {namespace: "company.data.ingestion", matches: [{key: "aws-us-east-1-access-key"}, {key: "aws-us-east-1-secret-key"}]},
+]
+
+const allTypesFound = {
+    flowsResults,
+    filesStatus: "done",
+    filesNamespaces: [filesNamespaces[0]],
+    kvStatus: "done",
+    kvGroups,
+    secretsStatus: "done",
+    secretsGroups,
 }
 
-export const SingleGroup: StoryObj<typeof SourceSearchResults> = {
-    render: () => ({
-        setup() {
-            return () => (
-                <SourceSearchResults
-                    results={singleResult}
-                    selectedKey={null}
-                />
-            )
-        },
-    }),
+function story(overrides: Record<string, unknown> = {}): StoryObj<typeof SourceSearchResults> {
+    const props = {
+        query: "us-east-1",
+        caseSensitive: false,
+        selectedTypes: ["flows", "files", "kv", "secrets"] as SearchResourceType[],
+        flowsStatus: "done" as SearchStatus,
+        flowsResults: [],
+        filesStatus: "idle" as SearchStatus,
+        filesNamespaces: [],
+        kvStatus: "idle" as SearchStatus,
+        kvGroups: [],
+        secretsStatus: "idle" as SearchStatus,
+        secretsGroups: [],
+        selectedKey: null,
+        replaceMode: false,
+        selectedMatchKeys: new Set<string>(),
+        ...overrides,
+    } as InstanceType<typeof SourceSearchResults>["$props"]
+
+    return {render: () => ({setup: () => () => <SourceSearchResults {...props} />})}
 }
 
-export const ManyGroups: StoryObj<typeof SourceSearchResults> = {
-    render: () => ({
-        setup() {
-            return () => (
-                <SourceSearchResults
-                    results={multipleResults}
-                    selectedKey={null}
-                />
-            )
-        },
-    }),
-}
+export const Empty = story()
 
-export const WithSelectedGroup: StoryObj<typeof SourceSearchResults> = {
-    render: () => ({
-        setup() {
-            return () => (
-                <SourceSearchResults
-                    results={multipleResults}
-                    selectedKey="company.data.daily-etl#0"
-                />
-            )
-        },
-    }),
-}
+export const AllFourTypes = story(allTypesFound)
 
-export const WithSelectedFragment: StoryObj<typeof SourceSearchResults> = {
-    render: () => ({
-        setup() {
-            return () => (
-                <SourceSearchResults
-                    results={multipleResults}
-                    selectedKey="company.data.daily-etl#1"
-                />
-            )
-        },
-    }),
-}
+export const ProgressiveFilesWithFailure = story({
+    selectedTypes: ["files"],
+    filesStatus: "counting",
+    filesNamespaces,
+})
 
-export const LongFragments: StoryObj<typeof SourceSearchResults> = {
-    render: () => ({
-        setup() {
-            const longResults = [
-                {
-                    model: {namespace: "very.long.namespace.with.many.parts", id: "a-very-long-flow-identifier-that-goes-on-and-on"},
-                    fragments: [
-                        "This is a very long fragment that contains the [mark]search term[/mark] somewhere in the middle of a very long line that should demonstrate text wrapping behavior in the UI",
-                        "Another long fragment with [mark]search term[/mark] at the start and then continues with a lot more content",
-                    ],
-                },
-            ]
-            return () => (
-                <SourceSearchResults
-                    results={longResults}
-                    selectedKey={null}
-                />
-            )
-        },
-    }),
-}
+export const ReplaceModeWithSelection = story({
+    ...allTypesFound,
+    replaceMode: true,
+    selectedKey: "flows:company.data.daily-etl#4:8",
+    selectedMatchKeys: new Set([
+        "flows:company.data.daily-etl#4:8",
+        "flows:company.data.daily-etl#12:12",
+    ]),
+})
+
+export const SecretsOnlySelected = story({
+    selectedTypes: ["secrets"],
+    secretsStatus: "done",
+    secretsGroups,
+})
 
 export const DarkMode: StoryObj<typeof SourceSearchResults> = {
-    render: () => ({
-        setup() {
-            return () => (
-                <SourceSearchResults
-                    results={multipleResults}
-                    selectedKey="company.analytics.weekly-report#0"
-                />
-            )
-        },
-    }),
+    ...story(allTypesFound),
     parameters: {
         themes: {themeOverride: "dark"},
     },

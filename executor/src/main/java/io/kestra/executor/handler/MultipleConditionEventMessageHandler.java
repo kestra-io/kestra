@@ -1,7 +1,11 @@
 package io.kestra.executor.handler;
 
+import java.time.DateTimeException;
+import java.util.List;
+
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -33,7 +37,15 @@ public class MultipleConditionEventMessageHandler implements MessageHandler<Mult
 
     @Override
     public void handle(MultipleConditionEvent message) {
-        flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(message.execution(), message.flow(), multipleConditionStateStore)
+        final List<Execution> executions;
+        try {
+            executions = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(message.execution(), message.flow(), multipleConditionStateStore);
+        } catch (DateTimeException | ArithmeticException e) {
+            log.error("Skipping flow-trigger evaluation for flow '{}': the trigger window is out of the supported range.", message.flow().getId(), e);
+            return;
+        }
+
+        executions
             .forEach(exec ->
             {
                 try {

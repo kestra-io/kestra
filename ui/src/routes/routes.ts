@@ -13,6 +13,8 @@ import DemoAssets from "../components/demo/Assets.vue"
 import DemoCases from "../components/demo/Cases.vue"
 import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
+import DemoPromote from "../components/demo/Promote.vue"
+import DemoDashboards from "../components/demo/Dashboards.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
@@ -32,8 +34,6 @@ const routes: KestraRouteRecord[] = [
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
     },
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},
 
     //Flows
     {
@@ -114,6 +114,8 @@ const routes: KestraRouteRecord[] = [
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},
 
     //Demo Pages
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: DemoDashboards},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: DemoDashboards},
     {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
     {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
     {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
@@ -124,6 +126,7 @@ const routes: KestraRouteRecord[] = [
     {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: DemoQuotas},
     {name: "admin/policies", path: "/:tenant?/admin/policies", component: DemoPolicies},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
+    {name: "promote/targets", path: "/:tenant?/promote/targets", component: DemoPromote},
 ]
 
 export default routes

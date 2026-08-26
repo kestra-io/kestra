@@ -1,5 +1,7 @@
 package io.kestra.core.runners.pebble;
 
+import java.io.Serial;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 
 /**
@@ -14,6 +16,9 @@ import io.pebbletemplates.pebble.error.PebbleException;
  * would bypass that catch and crash the JVM.
  */
 public class RenderLimitExceededException extends PebbleException {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     public RenderLimitExceededException(String message) {
         super(null, message);
     }

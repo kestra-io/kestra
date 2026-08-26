@@ -131,13 +131,14 @@ public final class Enums {
 
     /**
      * Convert an object to a list of a specific enum.
-     * 
+     *
      * @param value the object to convert to list of enum.
      * @param enumClass the class of the enum to convert to.
      * @return A list of the corresponding enum type
      * @param <T> The type of the enum.
      * @throws IllegalArgumentException If the value does not match any enum value.
      */
+    @SuppressWarnings("unchecked")
     public static <T extends Enum<T>> List<T> fromList(Object value, Class<T> enumClass) {
         return switch (value) {
             case List<?> list when !list.isEmpty() && enumClass.isInstance(list.getFirst()) -> (List<T>) list;

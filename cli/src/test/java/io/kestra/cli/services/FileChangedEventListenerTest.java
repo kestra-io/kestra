@@ -79,11 +79,10 @@ class FileChangedEventListenerTest {
 
         GenericFlow genericFlow = GenericFlow.fromYaml(tenant, flow);
         Files.write(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"), flow.getBytes());
-        Await.until(
-            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isPresent(),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(10)
-        );
+        Await.await()
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(10))
+            .until(() -> flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isPresent());
         Flow myflow = flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").orElseThrow();
         assertThat(myflow.getTasks()).hasSize(1);
         assertThat(myflow.getTasks().getFirst().getId()).isEqualTo("hello");
@@ -91,11 +90,10 @@ class FileChangedEventListenerTest {
 
         // delete the flow
         Files.delete(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"));
-        Await.until(
-            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isEmpty(),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(10)
-        );
+        Await.await()
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(10))
+            .until(() -> flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isEmpty());
     }
 
 }

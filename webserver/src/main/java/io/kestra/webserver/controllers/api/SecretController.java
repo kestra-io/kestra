@@ -44,6 +44,7 @@ public class SecretController<META extends ApiSecretMeta> {
     @Get
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Search secrets of all namespaces")
+    @SuppressWarnings("unchecked")
     public HttpResponse<ApiSecretListResponse<META>> listSecrets(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
@@ -54,7 +55,6 @@ public class SecretController<META extends ApiSecretMeta> {
         Pageable pageable = PageableUtils.from(page, size, sort, this::sortMapper);
 
         ArrayListTotal<String> items = secretService.list(pageable, tenantId, filters);
-        //noinspection unchecked
         return HttpResponse.ok(
             (ApiSecretListResponse<META>) new ApiSecretListResponse<>(
                 true,

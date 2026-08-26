@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.trigger;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -195,6 +196,9 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
     }
 
     public static class Output extends HashMap<String, Object> implements io.kestra.core.models.tasks.Output {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         public Output(Map<String, Object> map) {
             super(map);
         }

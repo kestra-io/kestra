@@ -155,14 +155,14 @@ class DockerTest extends AbstractTaskRunnerTest {
 
             var timeout = Duration.ofSeconds(30);
             // Wait for the container to be created
-            Await.until(() ->
+            Await.await().pollDelay(Duration.ofMillis(100)).atMost(timeout).until(() ->
             {
                 List<Container> existingContainers = client.listContainersCmd()
                     .withShowAll(true)
                     .withLabelFilter(labels)
                     .exec();
                 return !existingContainers.isEmpty() && existingContainers.get(0).getState().equals("running");
-            }, Duration.ofMillis(100), timeout); // Add timeout to avoid waiting forever for container to be created
+            }); // Add timeout to avoid waiting forever for container to be created
 
             callOnKill(taskRunner, () ->
             {
@@ -263,14 +263,14 @@ class DockerTest extends AbstractTaskRunnerTest {
 
             var timeout = Duration.ofSeconds(30);
             // Wait for the container to be created
-            Await.until(() ->
+            Await.await().pollDelay(Duration.ofMillis(100)).atMost(timeout).until(() ->
             {
                 List<Container> existingContainers = client.listContainersCmd()
                     .withShowAll(true)
                     .withLabelFilter(labels)
                     .exec();
                 return !existingContainers.isEmpty() && existingContainers.get(0).getState().equals("running");
-            }, Duration.ofMillis(100), timeout); // Add timeout to avoid waiting forever for container to be created
+            }); // Add timeout to avoid waiting forever for container to be created
 
             TestsUtils.awaitLog(
                 logs,

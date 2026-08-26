@@ -14,6 +14,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@SuppressWarnings("unchecked")
 class SecretControllerTest {
 
     @Inject

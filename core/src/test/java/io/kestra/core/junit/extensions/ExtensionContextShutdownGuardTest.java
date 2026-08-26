@@ -37,6 +37,7 @@ class ExtensionContextShutdownGuardTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldAbortWithoutResolvingBeansWhenContextStoppedOnCreateTenant() {
         // Given
         ApplicationContext stopped = stoppedContext();
@@ -52,6 +53,7 @@ class ExtensionContextShutdownGuardTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldAbortWithoutResolvingBeansWhenContextStoppedOnLoadFlows() {
         // Given
         ApplicationContext stopped = stoppedContext();
@@ -66,6 +68,7 @@ class ExtensionContextShutdownGuardTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldAbortWithoutResolvingBeansWhenContextStoppedOnEvaluateTrigger() {
         // Given — the package-private context field stands in for a completed lookup
         ApplicationContext stopped = stoppedContext();
@@ -81,6 +84,7 @@ class ExtensionContextShutdownGuardTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldAbortOnEvaluateTriggerWhenContextStopsBetweenTwoResolutions() {
         // Given a context that is running for the first resolution and stopped for the next, as happens
         // across the invocations of a @TestTemplate sharing one extension instance

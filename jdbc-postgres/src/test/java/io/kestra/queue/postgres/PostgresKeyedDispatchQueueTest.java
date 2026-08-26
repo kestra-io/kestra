@@ -17,8 +17,8 @@ class PostgresKeyedDispatchQueueTest extends AbstractKeyedDispatchQueueTest {
     JdbcTestUtils jdbcTestUtils;
 
     @BeforeEach
+    @SuppressWarnings("deprecation")
     protected void init() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 }

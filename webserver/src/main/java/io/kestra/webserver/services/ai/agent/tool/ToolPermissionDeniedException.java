@@ -1,5 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
+import java.io.Serial;
+
 import io.kestra.core.exceptions.KestraRuntimeException;
 
 /**
@@ -8,6 +10,9 @@ import io.kestra.core.exceptions.KestraRuntimeException;
  * turn failing.
  */
 public class ToolPermissionDeniedException extends KestraRuntimeException {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     public ToolPermissionDeniedException(final String tool, final String tenant) {
         super("Permission denied: tool '%s' cannot be used on tenant '%s' by the caller.".formatted(tool, tenant));
     }

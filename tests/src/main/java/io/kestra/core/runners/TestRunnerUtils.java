@@ -4,11 +4,14 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+
+import org.awaitility.core.ConditionTimeoutException;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -250,16 +253,16 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            return Await.until(() ->
+            return Await.await().pollDelay(Duration.ofMillis(10)).atMost(duration).until(() ->
             {
                 Optional<Execution> exec = executionRepository.findById(execution.getTenantId(), execution.getId());
                 if (exec.isPresent() && predicate.test(exec.get())) {
                     return exec.get();
                 }
                 return null;
-            }, Duration.ofMillis(10), duration);
+            }, Objects::nonNull);
 
-        } catch (TimeoutException e) {
+        } catch (ConditionTimeoutException e) {
             Optional<Execution> byId = executionRepository.findById(execution.getTenantId(), execution.getId());
             if (byId.isPresent()) {
                 Execution exec = byId.get();
@@ -289,7 +292,7 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            return Await.until(() ->
+            return Await.await().pollDelay(Duration.ofMillis(50)).atMost(duration).until(() ->
             {
                 ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
                     tenantId, namespace, flowId, Pageable.UNPAGED
@@ -304,9 +307,9 @@ public class TestRunnerUtils {
                     }
                 }
                 return null;
-            }, Duration.ofMillis(50), duration);
+            }, Objects::nonNull);
 
-        } catch (TimeoutException e) {
+        } catch (ConditionTimeoutException e) {
             ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
                 tenantId, namespace, flowId, Pageable.UNPAGED
             );
@@ -334,7 +337,7 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            Await.until(() ->
+            Await.await().pollDelay(Duration.ofMillis(50)).atMost(duration).until(() ->
             {
                 ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
                     tenantId, namespace, flowId, Pageable.UNPAGED
@@ -349,9 +352,9 @@ public class TestRunnerUtils {
                     return true;
                 }
                 return false;
-            }, Duration.ofMillis(50), duration);
+            });
 
-        } catch (TimeoutException e) {
+        } catch (ConditionTimeoutException e) {
             ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
                 tenantId, namespace, flowId, Pageable.UNPAGED
             );
@@ -391,7 +394,7 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            return Await.until(() ->
+            return Await.await().pollDelay(Duration.ofMillis(10)).atMost(duration).until(() ->
             {
                 Optional<Execution> exec = executionRepository.findByFlowId(flow.getTenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                     .stream()
@@ -401,9 +404,9 @@ public class TestRunnerUtils {
                     return exec.get();
                 }
                 return null;
-            }, Duration.ofMillis(10), duration);
+            }, Objects::nonNull);
 
-        } catch (TimeoutException e) {
+        } catch (ConditionTimeoutException e) {
             Optional<Execution> byId = executionRepository.findByFlowId(flow.getTenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                 .stream()
                 .filter(exec -> parentExecution.getId().equals(exec.getParentId()))

@@ -10,14 +10,15 @@
             <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
-        <!-- AI unavailable: the backend has no configured provider (503). -->
-        <div v-if="unavailable" class="copilot-unavailable" data-test="copilot-unavailable">
+        <!-- AI unavailable: the backend has no configured provider — known up front from `/configs`,
+             or discovered mid-session (503). -->
+        <div v-if="isUnavailable" class="copilot-unavailable" data-test="copilot-unavailable">
             <KsIcon class="copilot-unavailable-icon">
                 <RobotOffOutline />
             </KsIcon>
             <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
             <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
-            <KsButton size="small" data-test="copilot-unavailable-retry" @click="retry">
+            <KsButton size="small" data-test="copilot-unavailable-retry" @click="onRetry">
                 {{ $t("ai.copilot.unavailable.retry") }}
             </KsButton>
         </div>
@@ -231,6 +232,18 @@
         }
     })
 
+    // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
+    // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
+    // itself get noted — only a later, deliberate switch does.
+    let previousProvider: string | undefined
+    watch(selectedProvider, (now) => {
+        if (previousProvider !== undefined && now && now !== previousProvider) {
+            const label = providers.value.find((p) => p.id === now)?.displayName ?? now
+            noteModelChange(label)
+        }
+        previousProvider = now
+    })
+
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
         t("ai.copilot.suggestions.errorHandling"),
@@ -239,7 +252,22 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
+
+    // `/configs` reports whether any AI provider is configured, so the unavailable state renders on
+    // load rather than after the user composes a prompt that was always going to fail
+    // (kestra-io/kestra#18322). `unavailable` still covers the mid-session case (provider removed or
+    // unreachable → 503). An older backend that doesn't send the flag leaves the copilot usable.
+    const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
+    const isUnavailable = computed(() => unavailable.value || noProviderConfigured.value)
+
+    /** Re-check availability: a provider may have just been added, so refresh `/configs` too. */
+    async function onRetry(): Promise<void> {
+        try {
+            await miscStore.loadConfigs()
+        } catch { /* keep the unavailable state; the user can try again */ }
+        retry()
+    }
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })

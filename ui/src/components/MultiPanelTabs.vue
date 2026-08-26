@@ -997,9 +997,9 @@
             }
         }
 
-        :deep(.kel-splitter-bar) {
-            z-index: 0;
-        }
+       :deep(.kel-splitter-bar) {
+           z-index: 1;
+       }
     }
 
     .content-panel{

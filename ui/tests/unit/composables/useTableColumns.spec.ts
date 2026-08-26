@@ -26,7 +26,7 @@ const setup = (storageKey: string, initialVisibleColumns: string[] = []) => {
     return table
 }
 
-describe("useTableColumns persistence", () => {
+describe("useTableColumns", () => {
     // The composable also writes a `ks-column-order-*` key, so the tree has to be cleared
     // after the last test too or the repo's leak guard trips.
     beforeEach(() => localStorage.clear())
@@ -51,6 +51,16 @@ describe("useTableColumns persistence", () => {
         table.initializeVisibleColumns()
 
         expect(table.visibleColumns.value).toEqual([])
+    })
+
+    test("should keep the stored columns that still exist and drop the rest", () => {
+        localStorage.setItem("columns_partly-stale", "gone,a,c")
+
+        const table = setup("partly-stale")
+
+        expect(table.visibleColumns.value).toEqual(["a", "c"])
+        expect(table.visibleCount.value).toBe(2)
+        expect(table.totalCount.value).toBe(COLUMNS.length)
     })
 
     // No initialVisibleColumns, so this exercises the `default` flag branch rather than

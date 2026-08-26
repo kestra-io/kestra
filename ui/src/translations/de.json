@@ -1889,6 +1889,7 @@
           "test": "Test"
         },
         "contextRemoved": "{type} {id} aus dem Kontext entfernt.",
+        "modelChanged": "Zu {model} gewechselt.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} fehlgeschlagen",
@@ -2203,7 +2204,7 @@
       "next_match": "Nächste Übereinstimmung",
       "no_results_description": "Versuche, den Namespace zu erweitern, den Bereich auf „Alle Quellen“ zurückzustellen oder „Groß-/Kleinschreibung beachten“ und „Ganzes Wort“ zu deaktivieren.",
       "no_results_hidden_type": "{count} Treffer in {type} gefunden, das du nicht ausgewählt hast. | {count} Treffer in {type} gefunden, das du nicht ausgewählt hast.",
-      "no_results_in_types": "Keine Treffer für „{query}“ in {types}",
+      "no_results_in_types": "Keine Treffer für {query} in {types}",
       "no_results_title": "Keine Übereinstimmungen für „{query}“",
       "open_flow": "Flow öffnen",
       "open_in_editor": "Im Editor öffnen",

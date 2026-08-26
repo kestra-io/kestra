@@ -1889,6 +1889,7 @@
           "test": "Test"
         },
         "contextRemoved": "Rimosso {type} {id} dal contesto.",
+        "modelChanged": "Passato a {model}.",
         "toolResult": {
           "detail": "Dettagli",
           "error": "{tool} fallito",
@@ -2203,7 +2204,7 @@
       "next_match": "Prossima corrispondenza",
       "no_results_description": "Prova ad ampliare il namespace, a riportare lo scope su Tutte le sorgenti o a disattivare Maiuscole/minuscole e Corrispondenza parola intera.",
       "no_results_hidden_type": "Trovata {count} corrispondenza in {type}, che non hai selezionato. | Trovate {count} corrispondenze in {type}, che non hai selezionato.",
-      "no_results_in_types": "Nessuna corrispondenza per “{query}” in {types}",
+      "no_results_in_types": "Nessuna corrispondenza per {query} in {types}",
       "no_results_title": "Nessun risultato per \"{query}\"",
       "open_flow": "Apri flow",
       "open_in_editor": "Apri nell'editor",

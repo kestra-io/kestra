@@ -11,6 +11,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.jooq.*;
 import org.jooq.Record;
@@ -23,6 +24,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.NonSortableFields;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 
@@ -41,12 +43,12 @@ public abstract class AbstractJdbcRepository<T> {
 
     /**
      * Columns never exposed as a sort key, on top of whatever the metadata check in {@link #sort} rejects because
-     * it does not exist: {@code key}/{@code value} carry the whole entity and {@code source_code}/{@code fulltext}
-     * are large text columns; {@code deleted} / {@code tenant_id} / {@code revision} are internal bookkeeping.
+     * it does not exist. Derived from {@link NonSortableFields#DEFAULT}, converted to the snake_case column names
+     * this backend compares against, so the JDBC and Elasticsearch backends refuse the same sort fields.
      */
-    private static final Set<String> NON_SORTABLE_COLUMNS = Set.of(
-        "key", "value", "fulltext", "source_code", "deleted", "tenant_id", "revision"
-    );
+    private static final Set<String> NON_SORTABLE_COLUMNS = NonSortableFields.DEFAULT.stream()
+        .map(field -> camelToSnake(field).toLowerCase())
+        .collect(Collectors.toUnmodifiableSet());
 
     protected final Class<T> cls;
 

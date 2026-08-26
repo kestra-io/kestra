@@ -859,7 +859,7 @@
         "success": "ファイルが正常にインポートされました",
         "error": "ファイルのインポート中にエラーが発生しました"
       },
-      "export": "namespaceファイルをエクスポート",
+      "export": "NamespaceファイルとFlowをエクスポート",
       "export_single": "ファイルをエクスポート",
       "dialog": {
         "name": {

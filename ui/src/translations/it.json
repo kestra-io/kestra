@@ -859,7 +859,7 @@
         "success": "File importati con successo",
         "error": "Si sono verificati errori durante l'importazione dei file"
       },
-      "export": "Esporta file del namespace",
+      "export": "Esporta i file e i Flow del namespace",
       "export_single": "Esporta file",
       "dialog": {
         "name": {

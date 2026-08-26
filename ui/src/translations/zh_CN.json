@@ -859,7 +859,7 @@
         "success": "文件成功导入",
         "error": "导入文件时出错"
       },
-      "export": "导出命名空间文件",
+      "export": "导出 namespace 文件和 Flow",
       "export_single": "导出文件",
       "dialog": {
         "name": {

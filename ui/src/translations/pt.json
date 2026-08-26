@@ -859,7 +859,7 @@
         "success": "Arquivo(s) importado(s) com sucesso",
         "error": "Ocorreu(ram) erro(s) ao importar o(s) arquivo(s)"
       },
-      "export": "Exportar arquivos do namespace",
+      "export": "Exportar arquivos de namespace e flows",
       "export_single": "Exportar arquivo",
       "dialog": {
         "name": {

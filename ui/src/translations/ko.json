@@ -859,7 +859,7 @@
         "success": "파일이 성공적으로 가져와졌습니다",
         "error": "파일을 가져오는 동안 오류가 발생했습니다"
       },
-      "export": "namespace 파일 내보내기",
+      "export": "네임스페이스 파일 및 Flow 내보내기",
       "export_single": "파일 내보내기",
       "dialog": {
         "name": {

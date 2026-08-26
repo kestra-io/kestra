@@ -859,7 +859,7 @@
         "success": "Datei(en) erfolgreich importiert",
         "error": "Fehler beim Importieren der Datei(en)"
       },
-      "export": "Namespace-Dateien exportieren",
+      "export": "Namespace-Dateien und Flows exportieren",
       "export_single": "Datei exportieren",
       "dialog": {
         "name": {

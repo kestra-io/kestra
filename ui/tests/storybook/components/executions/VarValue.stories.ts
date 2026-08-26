@@ -3,11 +3,7 @@ import {expect, waitFor, within} from "storybook/test"
 
 import VarValue from "../../../../src/components/executions/VarValue.vue"
 
-/**
- * Renders a single output value. Anything object-shaped goes through an inline read-only
- * Monaco editor, so the empty cases below are the ones worth pinning: they must stay plain
- * text rather than each mounting an editor of their own.
- */
+/** Object-shaped values go through an inline Monaco editor; the empty ones must not. */
 const meta: Meta<typeof VarValue> = {
     title: "Components/Executions/VarValue",
     component: VarValue,
@@ -48,10 +44,7 @@ export const EmptyObjectAsString: Story = {
     },
 }
 
-/**
- * A populated object still gets the editor, so the early branch cannot be swallowing values that
- * need one. Monaco loads asynchronously, and mounts here have flaked under 15s before.
- */
+/** A populated object still gets the editor. Monaco loads async, hence the timeout. */
 export const PopulatedObject: Story = {
     args: {value: {code: 200}},
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {

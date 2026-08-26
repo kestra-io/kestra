@@ -41,10 +41,8 @@ export function flatten(object: Record<string, any>) {
 
         const keys = Object.keys(child)
 
-        // An empty object or array holds no leaves to recurse into, so recursing dropped the key
-        // entirely: a task output of `{}` vanished instead of showing as empty. Keep the empty
-        // container as its own value. Guarded on `path` so a top-level `{}` still flattens to `{}`
-        // rather than gaining a blank key.
+        // An empty container has no leaves, so recursing dropped the key entirely. The `path`
+        // guard keeps a top-level `{}` flattening to `{}` rather than gaining a blank key.
         if (path.length > 0 && keys.length === 0) {
             return [{[path.join(".")]: child}]
         }

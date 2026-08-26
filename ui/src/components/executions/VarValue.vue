@@ -164,8 +164,7 @@
         return value
     }
 
-    // An empty object or array is complex enough to reach the editor branch below, where two
-    // characters of content still mount a five-line Monaco instance, once per empty output row.
+    // Empty containers are complex enough to reach the editor branch, one Monaco mount per row.
     const emptyContainer = computed(() => {
         const displayed = getDisplayValue(props.value)
 

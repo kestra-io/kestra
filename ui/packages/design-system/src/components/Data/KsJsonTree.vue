@@ -102,8 +102,7 @@
     function leafDisplay(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return `"${value}"`
-        // An empty container is not expandable, so it lands here rather than getting a preview,
-        // and `String` renders it as `[object Object]`, or as nothing at all for an empty array.
+        // `String({})` is `[object Object]` and `String([])` is empty.
         if (Array.isArray(value)) return "[]"
         if (typeof value === "object") return "{}"
         return String(value)
@@ -184,12 +183,7 @@
         return result
     })
 
-    /**
-     * Rows come from iterating the value's entries, so a container that *is* the whole value and is
-     * empty yields none and the tree renders blank. That reads as a broken pane in the variable
-     * explorer, and in `LogLine` it is worse: a message of exactly `{}` parses as structured, which
-     * suppresses the raw-message fallback, so the log line disappears entirely.
-     */
+    /** An empty root yields no rows, so the literal is rendered instead of nothing. */
     const rootLiteral = computed<string | undefined>(() =>
         !rows.value.length && props.value !== null && typeof props.value === "object"
             ? leafDisplay(props.value)

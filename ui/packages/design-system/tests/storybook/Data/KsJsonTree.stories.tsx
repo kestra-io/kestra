@@ -137,11 +137,7 @@ export const RowsWithGutter: Story = {
     }),
 }
 
-/**
- * An empty container is not expandable, so it gets no collapsed preview and falls through to the
- * leaf display. `String({})` is `[object Object]` and `String([])` is the empty string, so both
- * used to render as something other than the value they are.
- */
+/** Empty containers used to render as `[object Object]` and as a blank. */
 export const EmptyContainers: Story = {
     args: {
         value: {outputFiles: {}, tags: [], nested: {inner: {}}, populated: {a: 1}},
@@ -169,11 +165,7 @@ export const EmptyContainers: Story = {
     },
 }
 
-/**
- * A container that is the whole value and is empty yields no rows at all. The tree used to render
- * blank, which reads as a broken pane in the variable explorer, and hid a log line whose entire
- * message was `{}`, which parses as structured and so suppresses the raw-message fallback.
- */
+/** An empty root rendered nothing at all, which hid a log line whose message was `{}`. */
 export const EmptyRoot: Story = {
     args: {value: {}, defaultExpanded: true},
     render: (args) => ({

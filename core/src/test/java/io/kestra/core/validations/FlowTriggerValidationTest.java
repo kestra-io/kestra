@@ -60,6 +60,10 @@ class FlowTriggerValidationTest {
             .type(Flow.class.getName())
             .mode(MultipleCondition.Mode.AT_LEAST)
             .minSatisfied(2)
+            .dependsOn(List.of(
+                Flow.Dependency.builder().build(),
+                Flow.Dependency.builder().build()
+            ))
             .build();
 
         // When

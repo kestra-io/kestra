@@ -73,7 +73,7 @@
                     <div :ref="(el) => observeChartBlock(el, chart.id)" class="flex-grow-1">
                         <component
                             v-if="activatedCharts.has(chart.id)"
-                            ref="chartsComponents"
+                            :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
                             :dashboardId="dashboard.id"
@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {computed, type ComponentPublicInstance} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
     import {isKPIChart, isCanvasChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
@@ -116,11 +116,19 @@
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const chartsComponents = ref<({refresh(): void} | null)[]>()
+    const chartsComponents = new Map<string, {
+        refresh(): void;
+        exportParameters?(): {pageNumber?: number; pageSize?: number; filters?: QueryFilter[]};
+    }>()
 
+    function registerChartComponent(el: Element | ComponentPublicInstance | null, chartId: string) {
+        if (el) chartsComponents.set(chartId, el as unknown as {refresh(): void})
+        else chartsComponents.delete(chartId)
+    }
+
+    // Only mounted charts are in the map, so a recycled one is skipped here and reloads when it scrolls back in.
     function refreshCharts() {
-        // Recycled charts leave holes in the ref array and reload on their own when they scroll back in.
-        (chartsComponents.value ?? []).forEach((component) => component?.refresh())
+        chartsComponents.forEach((component) => component.refresh())
     }
 
     defineExpose({
@@ -164,8 +172,11 @@
     })
 
     function exportChart(chart: Chart, format: "CSV" | "ION") {
+        const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
+
         dashboardStore.export(props.dashboard, chart, {
-            filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? []),
+            ...pagination,
+            filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
         }, format)
     }
 </script>

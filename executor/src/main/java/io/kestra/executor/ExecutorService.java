@@ -1075,7 +1075,8 @@ public class ExecutorService {
     }
 
     private ExecutorContext handleAfterExecution(ExecutorContext executor) {
-        if (!executor.getExecution().getState().isTerminated()) {
+        // LOOP sub-executions must not execute afterExecution tasks
+        if (!executor.getExecution().getState().isTerminated() || executor.getExecution().getKind() == ExecutionKind.LOOP) {
             return executor;
         }
 

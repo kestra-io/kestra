@@ -23,6 +23,7 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.log.Log;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -158,6 +159,66 @@ class ExecutorServiceTest {
         ExecutorContext result = executorService.handleExecutionChangedSLA(executor);
 
         assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+    }
+
+    @Test
+    void shouldSkipAfterExecutionTasksWhenExecutionKindIsLoop() throws Exception {
+        var innerTask = Log.builder().id("inner").type(Log.class.getName()).message("inner").build();
+        var afterTask = Log.builder().id("after").type(Log.class.getName()).message("after").build();
+        var loopTask = Loop.builder().id("loop").type(Loop.class.getName()).values("[\"a\"]").tasks(List.of(innerTask)).build();
+
+        var flow = Flow.builder()
+            .tenantId("tenant")
+            .namespace("io.kestra.unit-test")
+            .id(IdUtils.create())
+            .tasks(List.of(loopTask))
+            .afterExecution(List.of(afterTask))
+            .build();
+
+        var loopTaskRun = TaskRun.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .executionId(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .taskId(loopTask.getId())
+            .state(new State())
+            .build();
+
+        var parentExecution = Execution.builder()
+            .tenantId("tenant")
+            .id(loopTaskRun.getExecutionId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .state(new State())
+            .build();
+
+        var innerTaskRun = TaskRun.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .executionId(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .taskId(innerTask.getId())
+            .parentTaskRunId(loopTaskRun.getId())
+            .state(new State())
+            .build()
+            .withState(State.Type.SUCCESS);
+
+        var loopExecution = parentExecution.loopExecution(loopTaskRun, 0, null, "a")
+            .toBuilder()
+            .taskRunList(List.of(innerTaskRun))
+            .build();
+
+        var executor = new ExecutorContext(loopExecution, FlowWithSource.of(flow, "flow-source"));
+
+        ExecutorContext result = executorService.process(executor);
+
+        // a Loop sub-execution reuses the parent flow, which may declare afterExecution tasks: they
+        // belong to the parent execution's own completion, not to each loop iteration's sub-execution
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(result.getExecution().getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("inner");
     }
 
     private Asset asset(String id) {

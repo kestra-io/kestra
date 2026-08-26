@@ -24,8 +24,7 @@ describe("EXECUTION_ROUTE redirect", () => {
         expect(redirectTo().name).toBe(`${EXECUTION_PARENT_ROUTE}/logs`)
     })
 
-    // The three places that answer "no preference set" have to agree, or triggering a flow and
-    // replaying one land on different tabs while Settings claims a third answer.
+    // The three sites answering "no preference set" have to agree.
     it("should fall back to the shared default with nothing stored", () => {
         expect(redirectTo().name).toBe(`${EXECUTION_PARENT_ROUTE}/${DEFAULT_EXECUTION_TAB}`)
     })
@@ -43,8 +42,7 @@ describe("EXECUTION_ROUTE redirect", () => {
         expect(redirectTo({tab: "overview"}).name).toBe(`${EXECUTION_PARENT_ROUTE}/overview`)
     })
 
-    // `resolveDefaultTab` returns its fallback verbatim without checking it exists, so a typo in
-    // the constant would build a route name no record matches.
+    // The fallback is returned verbatim, so a typo would build a route name nothing matches.
     it("should default to a tab that is actually a route", () => {
         expect(EXECUTION_TAB_ROUTES.some((route) => route.meta?.tab === DEFAULT_EXECUTION_TAB)).toBe(true)
     })

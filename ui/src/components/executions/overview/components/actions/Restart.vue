@@ -378,8 +378,7 @@
         toast.success(t(props.isReplay ? "replayed" : "restarted"))
 
         if (newExecution.id !== props.execution.id) {
-            // The parent route resolves the user's default execution tab; naming a tab here
-            // ignored it. `resolve` does not run the redirect, the full page load does.
+            // The parent route resolves the default tab; the full page load runs the redirect.
             window.location.href = router.resolve({
                 name: EXECUTION_PARENT_ROUTE,
                 params: {

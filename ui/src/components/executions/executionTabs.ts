@@ -7,11 +7,7 @@ export const EXECUTION_PARENT_ROUTE = "executions/update"
 /** localStorage key remembering the last tab the user viewed, used as the redirect fallback below. */
 export const DEFAULT_TAB_STORAGE_KEY = "executeDefaultTab"
 
-/**
- * Where an execution opens when the user has set no preference. Exported because three places
- * need the same answer — this redirect, the post-submit navigation in `submitTask`, and the
- * Settings screen that shows the user what the current value is — and they used to disagree.
- */
+/** Where an execution opens with no preference set. Shared by the redirect, `submitTask` and Settings. */
 export const DEFAULT_EXECUTION_TAB = "gantt"
 
 /**

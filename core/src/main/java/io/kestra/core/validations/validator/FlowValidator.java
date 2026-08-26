@@ -13,9 +13,11 @@ import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.Schedule;
 
 import io.micronaut.core.annotation.AnnotationValue;
@@ -110,8 +112,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
         }
 
-        // No missing defaults for schedule triggers
-        findMissingInputsForScheduleTriggers(value).forEach(violations::add);
+        findMissingInputsForTriggers(value).forEach(violations::add);
 
         // system labels
         ListUtils.emptyOnNull(value.getLabels()).stream()
@@ -279,38 +280,49 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     }
 
     /**
-     * @return the violation formatted message of missing inputs for each schedule trigger
+     * @return the violation formatted message of missing inputs for each trigger able to supply them
      */
-    private Stream<String> findMissingInputsForScheduleTriggers(Flow value) {
-        if (
-            !ListUtils.emptyOnNull(value.getTriggers()).isEmpty()
-                && !ListUtils.emptyOnNull(value.getInputs()).isEmpty()
-        ) {
-            // Find inputs without defaults (expanded to dotted leaf paths; schedules provide values keyed by
-            // the same dotted path, matching how FlowInputOutput resolves them).
-            Set<String> inputsWithoutDefaults = value.resolvableInputs().stream()
-                .filter(input -> input.getDefaults() == null)
-                .map(Data::getId)
-                .collect(Collectors.toSet());
-            // Find schedules with missing inputs or null inputs
-            return value.getTriggers().stream()
-                .filter(Schedule.class::isInstance)
-                .map(Schedule.class::cast)
-                .flatMap(schedule ->
-                {
-                    Set<String> violations = new HashSet<>();
-                    Map<String, Object> scheduleInputs = schedule.getInputs() != null ? schedule.getInputs() : new HashMap<>();
-                    var missingInputs = inputsWithoutDefaults.stream()
-                        .filter(inputId -> !scheduleInputs.containsKey(inputId))
-                        .collect(Collectors.joining(" | "));
-                    if (!missingInputs.isEmpty()) {
-                        violations.add("Missing inputs for Schedule Trigger '%s', missing inputs: '%s'".formatted(schedule.getId(), missingInputs));
-                    }
-                    return violations.stream();
-                });
-        } else {
+    private Stream<String> findMissingInputsForTriggers(Flow value) {
+        if (ListUtils.emptyOnNull(value.getTriggers()).isEmpty() || ListUtils.emptyOnNull(value.getInputs()).isEmpty()) {
             return Stream.empty();
         }
+
+        // Inputs no execution can fill on its own, expanded to dotted leaf paths: triggers supply values keyed by
+        // the same dotted path, matching how FlowInputOutput resolves them.
+        Set<String> inputsNeedingATriggerValue = value.resolvableInputs().stream()
+            .filter(input -> input.getDefaults() == null && !Boolean.FALSE.equals(input.getRequired()))
+            .map(Data::getId)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (inputsNeedingATriggerValue.isEmpty()) {
+            return Stream.empty();
+        }
+
+        return value.getTriggers().stream()
+            .flatMap(
+                trigger -> inputsSuppliedBy(trigger).stream()
+                    .flatMap(triggerInputs ->
+                    {
+                        String missingInputs = inputsNeedingATriggerValue.stream()
+                            .filter(inputId -> !triggerInputs.supplied().containsKey(inputId))
+                            .collect(Collectors.joining(" | "));
+
+                        return missingInputs.isEmpty()
+                            ? Stream.<String> empty()
+                            : Stream.of("Missing inputs for %s Trigger '%s', missing inputs: '%s'".formatted(triggerInputs.kind(), trigger.getId(), missingInputs));
+                    })
+            );
+    }
+
+    private static Optional<TriggerInputs> inputsSuppliedBy(AbstractTrigger trigger) {
+        return switch (trigger) {
+            case Schedule schedule -> Optional.of(new TriggerInputs("Schedule", schedule.getInputs() == null ? Map.of() : schedule.getInputs()));
+            case AbstractWebhookTrigger webhook -> Optional.of(new TriggerInputs("Webhook", webhook.getInputs() == null ? Map.of() : webhook.getInputs()));
+            default -> Optional.empty();
+        };
+    }
+
+    private record TriggerInputs(String kind, Map<String, Object> supplied) {
     }
 
     /**

@@ -32,6 +32,7 @@ import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
+import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.worker.WorkerQueues;
@@ -160,18 +161,22 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted())) {
                             // create an SLA monitor if needed
                             if (!ListUtils.isEmpty(flow.getSla())) {
-                                List<SLAMonitor> monitors = flow.getSla().stream()
-                                    .filter(ExecutionMonitoringSLA.class::isInstance)
-                                    .map(ExecutionMonitoringSLA.class::cast)
-                                    .map(
-                                        sla -> SLAMonitor.builder()
-                                            .executionId(execution.getId())
-                                            .slaId(((SLA) sla).getId())
-                                            .deadline(execution.getState().getStartDate().plus(sla.getDuration()))
-                                            .build()
-                                    )
-                                    .toList();
-                                monitors.forEach(monitor -> slaMonitorStateStore.save(monitor));
+                                try {
+                                    List<SLAMonitor> monitors = new ArrayList<>();
+                                    for (SLA sla : flow.getSla()) {
+                                        if (sla instanceof ExecutionMonitoringSLA monitoringSla) {
+                                            monitors.add(SLAMonitor.builder()
+                                                .executionId(execution.getId())
+                                                .slaId(sla.getId())
+                                                .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), monitoringSla.getDuration()))
+                                                .build());
+                                        }
+                                    }
+                                    monitors.forEach(slaMonitorStateStore::save);
+                                } catch (InternalException e) {
+                                    Execution failedExecution = fail(execution, e);
+                                    return new ExecutorContext(execution).withExecution(failedExecution, "slaMonitorInvalidDuration");
+                                }
                             }
 
                             // handle quotas

@@ -178,6 +178,24 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-disabled.yaml"})
+    void webhookDisabled() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST(
+                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS +"/webhook-disabled/webhook-disabled-key",
+                        null
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(exception.getMessage()).contains("the trigger 'webhook' is disabled");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
     void webhookOnDraftFlowReturnsNotFound() {
         HttpClientResponseException exception = assertThrows(

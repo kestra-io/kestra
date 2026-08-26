@@ -22,7 +22,7 @@
                 </KsTag>
                 <KsTag v-else-if="type !== 'flows'" size="small" round>
                     <template #icon>
-                        <PencilOff />
+                        <PencilLockOutline />
                     </template>
                     {{ $t('source_search.tag_search_only') }}
                 </KsTag>
@@ -316,7 +316,7 @@
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import PencilOff from "vue-material-design-icons/PencilOff.vue"
+    import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import Refresh from "vue-material-design-icons/Refresh.vue"
     import Loading from "vue-material-design-icons/Loading.vue"

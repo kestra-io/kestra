@@ -342,6 +342,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         // the execution snapshots the flow labels and variables, so it is built through the same factory as
         // every other creation path rather than field by field, which is how flow variables went missing here
         Execution execution = Execution.newExecution(flow, labels).withTrigger(executionTrigger);
+        execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(current.getMetadata().executionDepthOrZero() + 1));
 
         try {
             Map<String, Object> renderedInputs;

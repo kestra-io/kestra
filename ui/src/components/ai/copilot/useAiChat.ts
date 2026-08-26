@@ -96,6 +96,8 @@ export function useAiChat() {
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
     /** True when the backend reports no AI provider is configured (503) — render an "unavailable" state. */
     const unavailable = ref(false)
+    /** Title for the next thread created by `ensureThread` (e.g. a seeded "Fix with AI" turn); consumed once. */
+    const nextThreadTitle = ref<string | null>(null)
 
     /** Reference to the assistant bubble currently being streamed into. */
     let activeAssistant: ChatMessage | null = null
@@ -125,6 +127,9 @@ export function useAiChat() {
     /** Creates the thread once and reuses its uid for the rest of the session. */
     async function ensureThread(request: CreateThreadRequest = {}): Promise<ThreadSummary> {
         if (thread.value) return thread.value
+        if (nextThreadTitle.value) {
+            request = {...request, title: nextThreadTitle.value}
+        }
         // `showMessageOnError: false` opts out of the global "page not found" redirect: when no AI
         // provider is configured the agentic endpoints (`AiAgentController`, `@Requires` the
         // AiServiceManager bean) aren't registered, so this create 404s — surfaced as the copilot's
@@ -132,6 +137,7 @@ export function useAiChat() {
         const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false})
         thread.value = data
         status.value = data.status
+        nextThreadTitle.value = null
         rememberThread(data.uid)
         return data
     }
@@ -289,6 +295,7 @@ export function useAiChat() {
         notice.value = null
         pendingConfirmation.value = null
         unavailable.value = false
+        nextThreadTitle.value = null
         activeAssistant = null
         lastTurn = null
         forgetThread()
@@ -448,6 +455,7 @@ export function useAiChat() {
         pendingConfirmation,
         unavailable,
         canSend,
+        nextThreadTitle,
         // actions
         ensureThread,
         loadThread,

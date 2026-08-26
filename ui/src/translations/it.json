@@ -182,6 +182,7 @@
     "add_new_item": "Aggiungi nuovo elemento",
     "copy": "Copia",
     "copy_to_clipboard": "Copia negli appunti",
+    "copy_pebble_expression": "Copia espressione pebble",
     "new": "Nuovo",
     "edit": "Modifica",
     "back": "Indietro",
@@ -1960,6 +1961,12 @@
           "Convergendo"
         ],
         "newChat": "Nuova chat",
+        "fixThread": {
+          "flow": "Correggi il Flow {id}",
+          "task": "Correggi il task {id}",
+          "execution": "Correggi l'esecuzione di {id}",
+          "generic": "Correggi gli errori del Flow"
+        },
         "draft": {
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",

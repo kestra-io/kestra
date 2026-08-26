@@ -1,5 +1,6 @@
 package io.kestra.core.exceptions;
 
+import java.io.Serial;
 import java.util.Collection;
 
 /**
@@ -7,6 +8,8 @@ import java.util.Collection;
  * of the required tags (and the tenant has access).
  */
 public class NoMatchingWorkerQueueException extends KestraException {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public NoMatchingWorkerQueueException(Collection<String> requiredTags) {
         this(requiredTags, null, null);

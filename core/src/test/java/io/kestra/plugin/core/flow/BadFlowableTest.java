@@ -39,11 +39,10 @@ public class BadFlowableTest {
 
         // The parent terminates when the first sub-execution fails, but concurrent sub-executions
         // may still be running. Wait for all to reach a terminal state before asserting.
-        Await.until(
-            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(30)
-        );
+        Await.await()
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(30))
+            .until(() -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()));
         var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions).hasSize(2);
         assertThat(subExecutions).extracting("state.current").containsOnly(State.Type.FAILED);

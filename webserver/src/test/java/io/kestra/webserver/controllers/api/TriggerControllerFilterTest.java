@@ -82,10 +82,10 @@ class TriggerControllerFilterTest {
     @Inject
     SchedulerConfiguration schedulerConfiguration;
 
+    @SuppressWarnings("deprecation")
     @BeforeEach
     protected void setup() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 
     private TriggerState.TriggerStateBuilder fixture(String triggerId, String namespace, String flowId, String workerId) {

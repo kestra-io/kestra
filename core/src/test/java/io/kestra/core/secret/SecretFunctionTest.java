@@ -43,7 +43,7 @@ public class SecretFunctionTest {
     private TestRunnerUtils runnerUtils;
 
     @Inject
-    private SecretService secretService;
+    private SecretService<String> secretService;
 
     @Inject
     VariableRenderer variableRenderer;
@@ -157,7 +157,7 @@ public class SecretFunctionTest {
     }
 
     @MockBean(SecretService.class)
-    public static class TestSecretService extends SecretService {
+    public static class TestSecretService extends SecretService<String> {
 
         private static final Map<String, String> SECRETS = Map.of(
             "io.kestra.unittest.json-secret", """

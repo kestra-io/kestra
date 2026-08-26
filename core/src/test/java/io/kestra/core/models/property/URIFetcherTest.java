@@ -59,7 +59,9 @@ class URIFetcherTest {
         }
     }
 
+    // The resource is intentionally unused: the assertion is that fetch() itself throws before returning one.
     @Test
+    @SuppressWarnings("try")
     void shouldFailToFetchFromLocalFileWhenNotAllowed() throws IOException {
         URI uri = createFile();
         RunContext runContext = buildRunContext();

@@ -1,5 +1,6 @@
 package io.kestra.core.utils;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -221,6 +222,9 @@ public final class RegexUtils {
      * Exception thrown when a regex operation exceeds the configured timeout.
      */
     public static class RegexTimeoutException extends RuntimeException {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         public RegexTimeoutException(Duration timeout) {
             super(
                 "Regex operation timed out after " + timeout.toMillis() + "ms. " +

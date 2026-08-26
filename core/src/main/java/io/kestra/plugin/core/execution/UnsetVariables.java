@@ -80,6 +80,7 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
         return execution.withVariables(variables);
     }
 
+    @SuppressWarnings("unchecked")
     private void removeVar(Map<String, Object> vars, String key, boolean ignoreMissing) {
         if (key.indexOf('.') >= 0) {
             String prefix = key.substring(0, key.indexOf('.'));

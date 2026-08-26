@@ -27,6 +27,7 @@ class SetVariablesTest {
 
     @ExecuteFlow("flows/valids/set-variables.yaml")
     @Test
+    @SuppressWarnings("unchecked")
     void shouldUpdateExecution(Execution execution) throws io.kestra.core.exceptions.InternalException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);

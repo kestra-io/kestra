@@ -98,8 +98,8 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, PluginClassAndMetadata<T> plugin, String version, boolean allProperties) {
-        //noinspection unchecked
         return (ClassPluginDocumentation<T>) CACHE.get(
             new PluginDocIdentifier(plugin.type(), version, allProperties),
             (key) -> new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, allProperties)

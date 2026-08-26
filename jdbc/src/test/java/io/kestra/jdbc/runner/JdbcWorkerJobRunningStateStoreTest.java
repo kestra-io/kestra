@@ -41,9 +41,9 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
     private JdbcTestUtils jdbcTestUtils;
 
     @BeforeAll
+    @SuppressWarnings("deprecation")
     void initSchema() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 
     @AfterEach

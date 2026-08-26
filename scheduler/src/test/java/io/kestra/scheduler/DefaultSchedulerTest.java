@@ -341,6 +341,7 @@ class DefaultSchedulerTest {
         );
     }
 
+    @SuppressWarnings("unchecked")
     TriggerEventHandler newTriggerEventHandler() {
         return new TriggerEventHandler(
             triggerStateStore,

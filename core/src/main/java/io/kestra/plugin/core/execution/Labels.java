@@ -180,6 +180,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         );
     }
 
+    @SuppressWarnings("unchecked")
     private String renderValue(RunContext runContext, Object value) throws IllegalVariableEvaluationException {
         return switch (value) {
             case Map<?, ?> map -> {

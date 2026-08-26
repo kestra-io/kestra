@@ -57,7 +57,7 @@ dependencies {
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
 
-tasks.withType(JavaCompile).configureEach {
+tasks.named('compileJava', JavaCompile).configure {
     options.compilerArgs += [
         "-Amicronaut.openapi.expand.version=${project.version}"
     ]

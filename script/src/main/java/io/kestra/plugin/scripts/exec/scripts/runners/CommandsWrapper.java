@@ -232,9 +232,10 @@ public class CommandsWrapper implements TaskCommands {
 
         this.commands = Property.ofValue(finalCommands);
 
-        ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder();
+        ScriptOutput.ScriptOutputBuilder<?, ?> scriptOutputBuilder = ScriptOutput.builder();
 
         try {
+            @SuppressWarnings("unchecked")
             TaskRunnerResult<T> taskRunnerResult = (TaskRunnerResult<T>) taskRunner.run(taskRunnerRunContext, this, this.outputFiles);
             scriptOutputBuilder.exitCode(taskRunnerResult.getExitCode())
                 .outputFiles(getOutputFiles(taskRunnerRunContext))

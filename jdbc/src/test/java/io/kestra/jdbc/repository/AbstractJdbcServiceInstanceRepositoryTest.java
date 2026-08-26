@@ -41,9 +41,9 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest extends Abstract
     JdbcTestUtils jdbcTestUtils;
 
     @BeforeEach
+    @SuppressWarnings("deprecation")
     protected void init() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 
     @Test

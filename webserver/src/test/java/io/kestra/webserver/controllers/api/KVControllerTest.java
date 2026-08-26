@@ -154,6 +154,7 @@ class KVControllerTest {
         assertThat(res.getTotal()).isEqualTo(1);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void listKeysWithInheritance() throws IOException {
         Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);

@@ -114,15 +114,6 @@ public class AgentOrchestrator {
     }
 
     /**
-     * Renders caller-supplied per-turn context into a trailing {@link UserMessage}. Serialized as JSON
-     * so nested structures survive intact. Returns empty when there is no usable context (null, empty,
-     * or unserializable) so nothing is added to the model input. Deliberately built here rather than
-     * persisted via {@link AiThreadManager}, so it never enters the thread's durable history.
-     *
-     * @param additionalContext the caller-supplied context map for this turn, may be {@code null}
-     * @return the context message to append at the end of the turn's input, or empty
-     */
-    /**
      * Appends the shared common prompt to the resolved (per-mode or custom) system prompt, so the shared
      * guidance applies to every prompt — including EE custom prompts, which otherwise replace the mode
      * persona entirely. A blank common prompt leaves the base unchanged.
@@ -131,6 +122,15 @@ public class AgentOrchestrator {
         return commonPrompt == null || commonPrompt.isBlank() ? base : base + "\n\n" + commonPrompt;
     }
 
+    /**
+     * Renders caller-supplied per-turn context into a trailing {@link UserMessage}. Serialized as JSON
+     * so nested structures survive intact. Returns empty when there is no usable context (null, empty,
+     * or unserializable) so nothing is added to the model input. Deliberately built here rather than
+     * persisted via {@link AiThreadManager}, so it never enters the thread's durable history.
+     *
+     * @param additionalContext the caller-supplied context map for this turn, may be {@code null}
+     * @return the context message to append at the end of the turn's input, or empty
+     */
     private Optional<ChatMessage> additionalContextMessage(final Map<String, Object> additionalContext) {
         if (additionalContext == null || additionalContext.isEmpty()) {
             return Optional.empty();

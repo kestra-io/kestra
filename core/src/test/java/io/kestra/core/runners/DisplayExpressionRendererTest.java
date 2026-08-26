@@ -23,10 +23,11 @@ class DisplayExpressionRendererTest {
     private DisplayExpressionRenderer renderer;
 
     @Inject
-    private SecretService secretService;
+    private SecretService<String> secretService;
 
     @MockBean(SecretService.class)
-    SecretService mockSecretService() {
+    @SuppressWarnings("unchecked")
+    SecretService<String> mockSecretService() {
         return Mockito.mock(SecretService.class);
     }
 

@@ -97,10 +97,10 @@ class FlowControllerTest {
         Helpers.loadExternalPluginsFromClasspath();
     }
 
+    @SuppressWarnings("deprecation")
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
 
         TestsUtils.loads(MAIN_TENANT, repositoryLoader);
     }

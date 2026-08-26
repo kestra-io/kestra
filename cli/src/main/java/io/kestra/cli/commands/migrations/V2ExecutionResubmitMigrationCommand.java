@@ -26,6 +26,7 @@ public class V2ExecutionResubmitMigrationCommand extends AbstractCommand {
     private ApplicationContext applicationContext;
 
     @Override
+    @SuppressWarnings("unchecked") // DispatchQueueInterface.class is necessarily raw, class literals cannot carry a type argument
     public Integer call() throws Exception {
         super.call();
 

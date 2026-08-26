@@ -278,6 +278,7 @@ class LogControllerTest {
         assertThat(logs.size()).isZero();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void deleteLogsFromExecutionByQuery() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -301,6 +302,7 @@ class LogControllerTest {
         assertThat(logs.size()).isZero();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void searchLogsFilteredByDate() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

@@ -1,5 +1,7 @@
 package io.kestra.webserver.exceptions;
 
+import java.io.Serial;
+
 import io.kestra.webserver.responses.BulkErrorResponse;
 
 import lombok.Getter;
@@ -11,7 +13,10 @@ import lombok.Getter;
  */
 @Getter
 public class BulkValidationException extends RuntimeException {
-    private final BulkErrorResponse bulkErrorResponse;
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final transient BulkErrorResponse bulkErrorResponse;
 
     public BulkValidationException(BulkErrorResponse bulkErrorResponse) {
         super(bulkErrorResponse.getMessage());

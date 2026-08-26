@@ -573,6 +573,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             });
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"}) // context.select(field) yields SelectConditionStep<Record1<?>>, but where()/JdbcFilterService are fixed to SelectConditionStep<Record>
     public Double fetchValue(String tenantId, DataFilterKPI<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->

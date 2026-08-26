@@ -206,6 +206,8 @@ class WorkerTest {
         }
     }
 
+    // The resource is intentionally unused in the body: this only asserts that construction and close() don't throw.
+    @SuppressWarnings("try")
     @Test
     void shouldCreateInstanceGivenApplicationContext() {
         assertThatCode(() ->

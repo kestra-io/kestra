@@ -480,7 +480,9 @@ public final class RunVariables {
                                 String secret;
                                 // if decryption is disabled, secret input would be still a map of type and encrypted value
                                 if (!decryptVariables) {
-                                    secret = ((Map<String, String>) secretValue).get("value");
+                                    @SuppressWarnings("unchecked")
+                                    Map<String, String> secretValueMap = (Map<String, String>) secretValue;
+                                    secret = secretValueMap.get("value");
                                 } else {
                                     secret = (String) secretValue;
                                 }

@@ -122,6 +122,7 @@ class NamespaceFileControllerTest {
         assertThat(res.getType()).isEqualTo(FileAttributes.FileType.File);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void getRevisions() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
@@ -138,6 +139,7 @@ class NamespaceFileControllerTest {
         assertThat(res).containsExactlyInAnyOrder(new NamespaceFileRevision(1), new NamespaceFileRevision(2));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void getRevisionsWithoutLeadingSlash() throws IOException, URISyntaxException {
         // The UI's file explorer builds paths without a leading slash (e.g. "test.txt" for a root-level file),

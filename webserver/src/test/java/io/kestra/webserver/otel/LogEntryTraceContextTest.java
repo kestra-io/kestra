@@ -18,6 +18,8 @@ class LogEntryTraceContextTest {
     @RegisterExtension
     static final OpenTelemetryExtension otelTesting = OpenTelemetryExtension.create();
 
+    // The Scope is only held open to make the span current for the try block; it is never read.
+    @SuppressWarnings("try")
     @Test
     void shouldExposeActiveTraceContextInMdc() {
         // Given

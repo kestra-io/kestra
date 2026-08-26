@@ -13,6 +13,8 @@ dependencies {
 
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("org.postgresql:postgresql")
+    // see https://github.com/jOOQ/jOOQ/issues/14865
+    testCompileOnly("jakarta.xml.bind:jakarta.xml.bind-api:4.0.5")
 
     testAnnotationProcessor project(":processor")
     testImplementation project(path: ':core', configuration: 'testArtifacts')

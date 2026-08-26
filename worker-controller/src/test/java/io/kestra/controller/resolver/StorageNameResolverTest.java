@@ -42,7 +42,7 @@ class StorageNameResolverTest {
 
         // Then
         assertThat(result.get()).isNotNull();
-        assertThat(result.get().getAddresses()).hasSize(2);
+        assertThat(result.get().getAddressesOrError().getValue()).hasSize(2);
 
         resolver.shutdown();
     }
@@ -91,7 +91,7 @@ class StorageNameResolverTest {
 
         // Then
         assertThat(callCount.get()).isEqualTo(2);
-        assertThat(result.get().getAddresses()).hasSize(2);
+        assertThat(result.get().getAddressesOrError().getValue()).hasSize(2);
 
         resolver.shutdown();
     }

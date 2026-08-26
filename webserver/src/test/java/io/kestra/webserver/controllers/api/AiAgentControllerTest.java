@@ -50,6 +50,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @KestraTest
+@SuppressWarnings("rawtypes")
 class AiAgentControllerTest {
     private static final String BASE = "/api/v1/" + TenantService.MAIN_TENANT + "/ai/threads";
 

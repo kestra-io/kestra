@@ -89,6 +89,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
      *                        when null, so creation (no previous asset) keeps the incoming type either way.
      * @return this asset, merged.
      */
+    @SuppressWarnings("unchecked")
     public <T extends Asset> T toUpdated(T previousAsset, boolean allowTypeChange) {
         this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset).map(Asset::getCreated)).orElseGet(Instant::now);
         this.updated = Instant.now();

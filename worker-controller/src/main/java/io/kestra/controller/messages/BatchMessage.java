@@ -16,6 +16,8 @@ public record BatchMessage<T>(
         return new BatchMessage<>(records);
     }
 
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <T> BatchMessage<T> of(T... records) {
         return new BatchMessage<>(Arrays.asList(records));
     }

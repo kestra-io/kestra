@@ -93,6 +93,7 @@ class VariableRendererTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldKeepKeyOrderWhenRenderingMap() throws IllegalVariableEvaluationException {
         final Map<String, Object> input = new LinkedHashMap<>();
         input.put("foo-1", "A");

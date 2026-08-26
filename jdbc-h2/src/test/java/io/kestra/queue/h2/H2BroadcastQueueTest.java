@@ -17,8 +17,8 @@ class H2BroadcastQueueTest extends AbstractBroadcastQueueTest {
     JdbcTestUtils jdbcTestUtils;
 
     @BeforeEach
+    @SuppressWarnings("deprecation")
     protected void init() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 }

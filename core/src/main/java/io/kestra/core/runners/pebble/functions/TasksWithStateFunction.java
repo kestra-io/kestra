@@ -22,6 +22,7 @@ public class TasksWithStateFunction implements KestraFunction {
         return Map.of("state", "'FAILED'");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         if (!args.containsKey("state")) {

@@ -2,6 +2,12 @@ configurations {
     implementation.extendsFrom(micronaut)
 }
 
+tasks.withType(JavaCompile).configureEach {
+    // Kestra.java deliberately extends Micronaut's internal DefaultApplicationContext to customize
+    // bean-definition resolution per server type; see the WorkerApplicationContext/MigrationApplicationContext javadoc.
+    options.compilerArgs.add("-Amicronaut.processing.internal.warnings=false")
+}
+
 tasks.register('runLocal', JavaExec) {
     group = "application"
     description = "Run Kestra as server local"

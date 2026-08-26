@@ -30,8 +30,8 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
@@ -183,7 +183,7 @@ public class HttpClient implements Closeable {
         // ssl
         if (this.configuration.getSsl() != null) {
             if (this.configuration.getSsl().getInsecureTrustAllCertificates() != null) {
-                connectionManagerBuilder.setSSLSocketFactory(this.selfSignedConnectionSocketFactory());
+                connectionManagerBuilder.setTlsSocketStrategy(this.selfSignedTlsSocketStrategy());
             }
         }
 
@@ -220,14 +220,14 @@ public class HttpClient implements Closeable {
         return client;
     }
 
-    private SSLConnectionSocketFactory selfSignedConnectionSocketFactory() {
+    private DefaultClientTlsStrategy selfSignedTlsSocketStrategy() {
         try {
             SSLContext sslContext = SSLContexts
                 .custom()
                 .loadTrustMaterial(null, (chain, authType) -> true)
                 .build();
 
-            return new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+            return new DefaultClientTlsStrategy(sslContext, NoopHostnameVerifier.INSTANCE);
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             throw new IllegalArgumentException(e);
         }

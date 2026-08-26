@@ -394,9 +394,43 @@ public class PluginController {
 
     @Get(uri = "icons")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get plugins icons",
+        description = "Answers the icon metadata of every registered class. The `icon` field is always null here: " +
+            "icon bytes are served per class, and cached by the browser, by `GET /plugins/icons/{cls}/icon.svg`. " +
+            "`hash` is non-null exactly when the class has an icon, so callers can still tell which classes to " +
+            "render an icon for."
+    )
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginIcons() {
-        return HttpResponse.ok(pluginIconsIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return HttpResponse.ok(pluginIconsMetadataIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Cacheable("plugin-icons-metadata")
+    protected Map<String, PluginIcon> pluginIconsMetadataIndex() {
+        return withoutIconBytes(pluginIconsIndex());
+    }
+
+    @Cacheable("plugin-group-icons-metadata")
+    protected Map<String, PluginIcon> pluginGroupIconsMetadataIndex() {
+        return withoutIconBytes(loadPluginsIcon());
+    }
+
+    /**
+     * Copies an icon index without its icon bytes, so bulk indexes stay small.
+     *
+     * @return a new map; the cached indexes must not be mutated
+     */
+    private static Map<String, PluginIcon> withoutIconBytes(Map<String, PluginIcon> icons) {
+        Map<String, PluginIcon> metadataOnly = new HashMap<>(icons.size());
+        icons.forEach(
+            (cls, icon) -> metadataOnly.put(
+                cls,
+                new PluginIcon(icon.getName(), null, icon.getFlowable(), icon.getMonochrome(), icon.getHash())
+            )
+        );
+
+        return metadataOnly;
     }
 
     @Get(uri = "icons/{cls}")
@@ -455,7 +489,9 @@ public class PluginController {
         );
     }
 
-    @Cacheable("default")
+    // Own cache, not the shared "default" one: Micronaut derives a cache key from the method arguments alone, so
+    // every no-arg @Cacheable method shares the same key and two of them in one cache serve each other's entries.
+    @Cacheable("plugin-icons")
     protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
@@ -507,14 +543,17 @@ public class PluginController {
 
     @Get(uri = "icons/groups")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get plugin group and subgroup icons",
+        description = "Answers the icon metadata of every plugin group and subgroup. As on `GET /plugins/icons` the " +
+            "`icon` field is always null; the bytes come from `GET /plugins/icons/{cls}/icon.svg`."
+    )
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginGroupIcons() {
-        Map<String, PluginIcon> icons = loadPluginsIcon();
-
-        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return HttpResponse.ok(pluginGroupIconsMetadataIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
-    @Cacheable("default")
+    @Cacheable("plugin-group-icons")
     protected Map<String, PluginIcon> loadPluginsIcon() {
         Map<String, PluginIcon> icons = new HashMap<>();
 

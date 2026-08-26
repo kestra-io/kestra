@@ -786,6 +786,10 @@ public class ExecutionController {
         final AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
         this.onWebhookMatched(flow, webhook);
 
+        if (webhook.isDisabled()) {
+            throw new ConflictException("Cannot execute webhook: the trigger '%s' is disabled.".formatted(webhook.getId()));
+        }
+
         // Webhook context
         var webhookContext = new WebhookContext(
             request,

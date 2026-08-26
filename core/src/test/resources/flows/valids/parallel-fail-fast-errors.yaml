@@ -1,0 +1,22 @@
+id: parallel-fail-fast-errors
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    onChildFailure: CANCELLED
+    errors:
+      - id: e1
+        type: io.kestra.plugin.core.log.Log
+        message: "handled"
+    finally:
+      - id: f1
+        type: io.kestra.plugin.core.log.Log
+        message: "cleaned up"
+    tasks:
+      - id: fails_fast
+        type: io.kestra.plugin.core.execution.Fail
+
+      - id: sleep
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT10S

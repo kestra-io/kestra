@@ -476,10 +476,15 @@ public class FlowController {
             // control namespace to update
             Set<ManualConstraintViolation<GenericFlow>> invalids = flows
                 .stream()
-                .filter(flow -> !flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
+                .filter(
+                    flow -> flow.getNamespace() == null
+                        || (!flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
+                )
                 .map(
                     flow -> ManualConstraintViolation.of(
-                        String.format("%s - flow namespace is invalid", flow.uid()),
+                        flow.getNamespace() == null
+                            ? String.format("%s - flow namespace is required", flow.getId())
+                            : String.format("%s - flow namespace is invalid", flow.uid()),
                         flow,
                         GenericFlow.class,
                         "flow.namespace",

@@ -182,10 +182,12 @@
     "add_new_item": "Neues Element hinzufügen",
     "copy": "Kopieren",
     "copy_to_clipboard": "In die Zwischenablage kopieren",
+    "copy_pebble_expression": "Pebble-Ausdruck kopieren",
     "new": "Neu",
     "edit": "Bearbeiten",
     "back": "Zurück",
     "next": "Weiter",
+    "previous": "Zurück",
     "done": "Fertig",
     "review your inputs": "Überprüfe deine Inputs",
     "edit flow": "Flow bearbeiten",
@@ -578,6 +580,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Keine Trigger gefunden",
     "triggers_add_ee_tooltip": "Dieser Trigger erfordert die Enterprise Edition.",
+    "ee_feature_tooltip": "Diese Funktion erfordert die Enterprise Edition.",
     "triggers_add_card_add": "Hinzufügen",
     "triggers_add_modal_tab_form": "Formular",
     "triggers_add_modal_tab_source": "Quelle",
@@ -1399,6 +1402,7 @@
       "key": "Name",
       "keyPlaceholder": "Name, über den dieses Secret referenziert wird, z. B. MY_API_TOKEN",
       "name": "Secret-Wert",
+      "valuePlaceholder": "Secret-Wert eingeben",
       "description": "Beschreibung",
       "descriptionPlaceholder": "Beschreibe dieses Secret",
       "tags": "Tags",
@@ -1739,7 +1743,7 @@
         "content": "Stelle einen Flow als MCP-Tool bereit, indem du ihm einen <code>McpToolTrigger</code> hinzufügst. Erfahre mehr über den <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in unserer Dokumentation."
       },
       "versionPlugin": {
-        "title": "Du hast noch kein versioniertes Plugin!",
+        "title": "Du hast noch keine versionierten Plugins!",
         "content": "Hier kannst du alle Plugins verwalten, die auf deiner Kestra-Instanz installiert sind. Neu installierte Plugins stehen je nach Konfiguration deiner Instanz möglicherweise nicht sofort in allen Kestra-Services zur Verfügung."
       },
       "panels": {
@@ -1895,6 +1899,7 @@
           "test": "Test"
         },
         "contextRemoved": "{type} {id} aus dem Kontext entfernt.",
+        "modelChanged": "Zu {model} gewechselt.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} fehlgeschlagen",
@@ -1965,6 +1970,12 @@
           "Konvergenz"
         ],
         "newChat": "Neuer Chat",
+        "fixThread": {
+          "flow": "Flow {id} reparieren",
+          "task": "Task {id} reparieren",
+          "execution": "Execution {id} reparieren",
+          "generic": "Flow-Fehler beheben"
+        },
         "draft": {
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",
@@ -2209,7 +2220,7 @@
       "next_match": "Nächste Übereinstimmung",
       "no_results_description": "Versuche, den Namespace zu erweitern, den Bereich auf „Alle Quellen“ zurückzustellen oder „Groß-/Kleinschreibung beachten“ und „Ganzes Wort“ zu deaktivieren.",
       "no_results_hidden_type": "{count} Treffer in {type} gefunden, das du nicht ausgewählt hast. | {count} Treffer in {type} gefunden, das du nicht ausgewählt hast.",
-      "no_results_in_types": "Keine Treffer für „{query}“ in {types}",
+      "no_results_in_types": "Keine Treffer für {query} in {types}",
       "no_results_title": "Keine Übereinstimmungen für „{query}“",
       "open_flow": "Flow öffnen",
       "open_in_editor": "Im Editor öffnen",

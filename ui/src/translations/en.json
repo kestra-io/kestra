@@ -182,10 +182,12 @@
     "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
+    "copy_pebble_expression": "Copy pebble expression",
     "new": "New",
     "edit": "Edit",
     "back": "Back",
     "next": "Next",
+    "previous": "Previous",
     "done": "Done",
     "review your inputs": "Review your inputs",
     "edit flow": "Edit flow",
@@ -578,6 +580,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "No triggers found",
     "triggers_add_ee_tooltip": "This trigger requires Enterprise Edition.",
+    "ee_feature_tooltip": "This feature requires Enterprise Edition.",
     "triggers_add_card_add": "Add",
     "triggers_add_modal_tab_form": "Form",
     "triggers_add_modal_tab_source": "Source",
@@ -1399,6 +1402,7 @@
       "key": "Name",
       "keyPlaceholder": "Name used to reference this secret, e.g. MY_API_TOKEN",
       "name": "Secret value",
+      "valuePlaceholder": "Enter the secret value",
       "description": "Description",
       "descriptionPlaceholder": "Describe this secret",
       "tags": "Tags",
@@ -1669,7 +1673,7 @@
         "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
       },
       "apps": {
-        "title": "You have no apps yet!",
+        "title": "You have no Apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
       },
       "testSuites": {
@@ -1739,7 +1743,7 @@
         "content": "Expose a flow as an MCP tool by adding an <code>McpToolTrigger</code> to it. Read more about the <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in our documentation."
       },
       "versionPlugin": {
-        "title": "You have no versioned plugin yet!",
+        "title": "You have no versioned plugins yet!",
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
       },
       "panels": {
@@ -1895,6 +1899,7 @@
           "test": "test"
         },
         "contextRemoved": "Removed {type} {id} from context.",
+        "modelChanged": "Switched to {model}.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} failed",
@@ -1965,6 +1970,12 @@
           "Converging"
         ],
         "newChat": "New chat",
+        "fixThread": {
+          "flow": "Fix flow {id}",
+          "task": "Fix task {id}",
+          "execution": "Fix execution of {id}",
+          "generic": "Fix flow errors"
+        },
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",
@@ -2102,7 +2113,7 @@
       "no_oauth_providers": "No OIDC providers configured in this instance",
       "delete_confirm": "Are you sure you want to delete this MCP server?",
       "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
-      "server_id": "Servers ID",
+      "server_id": "Server ID",
       "id_placeholder": "e.g. my-mcp-server",
       "id_invalid": "ID must start with a lowercase letter or digit, and contain only lowercase letters, digits, hyphens, or underscores",
       "main_tenant": "main",
@@ -2209,7 +2220,7 @@
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
       "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
-      "no_results_in_types": "No matches for “{query}” in {types}",
+      "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",

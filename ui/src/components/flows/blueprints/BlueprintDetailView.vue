@@ -52,6 +52,7 @@
                         :flowGraph="flowGraph"
                         :source="blueprint.source"
                         :horizontalDefault="stacked"
+                        :showDetailsToggle="false"
                     />
                 </KsSplitterPanel>
             </KsSplitter>

@@ -18,6 +18,15 @@ vi.mock("../../../../src/stores/executions", () => ({
     }),
 }))
 
+// Hoisted: the mock factory below reads it eagerly, before plain top-level consts exist.
+const extraOverflowAction = vi.hoisted(() => ({template: "<button>Create case</button>"}))
+vi.mock("override/components/executions/executionsExtensions", () => ({
+    getExtraColumns: () => [],
+    cellComponents: {},
+    bulkActionComponents: [],
+    overflowActionComponents: [extraOverflowAction],
+}))
+
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({
         user: {isAllowed: (_resource: string, act: string) => (act === "EXECUTE" ? permissions.execute : true)},
@@ -110,5 +119,27 @@ describe("ExecutionRootTopBar — Execute is the primary on every execution stat
 
         expect(buttons).not.toContain("Execute")
         expect(buttons).toContain("Replay")
+    })
+})
+
+describe("ExecutionRootTopBar — the overflow menu", () => {
+    beforeEach(() => {
+        executionState.current = "SUCCESS"
+        permissions.execute = true
+    })
+
+    it("keeps Delete last, after any edition-specific action contributed to the menu", async () => {
+        const wrapper = mountTopBar()
+
+        await wrapper.find("button[aria-label=\"Actions\"]").trigger("click")
+        await new Promise(resolve => setTimeout(resolve))
+
+        const labels = Array.from(document.querySelectorAll("button"))
+            .map(button => button.textContent?.trim())
+            .filter((label): label is string => Boolean(label))
+
+        expect(labels).toContain("Create case")
+        expect(labels.indexOf("Create case")).toBeLessThan(labels.indexOf("Delete"))
+        expect(labels.at(-1)).toBe("Delete")
     })
 })

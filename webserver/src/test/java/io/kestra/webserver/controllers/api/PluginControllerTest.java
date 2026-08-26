@@ -99,17 +99,44 @@ class PluginControllerTest {
             Argument.mapOf(String.class, PluginIcon.class)
         );
 
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals(Log.class.getName()))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon log = list.get(Log.class.getName());
+        assertThat(log).isNotNull();
+        assertThat(log.getHash()).isNotBlank();
         // test an alias
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals("io.kestra.core.runners.test.task.Alias"))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon alias = list.get("io.kestra.core.runners.test.task.Alias");
+        assertThat(alias).isNotNull();
+        assertThat(alias.getHash()).isNotBlank();
+    }
+
+    @Test
+    void shouldNotInlineIconBytesInIconsIndex() {
+        Map<String, PluginIcon> list = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(list).isNotEmpty();
+        assertThat(list.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
+    }
+
+    @Test
+    void shouldAnswerGroupsRatherThanClassesForGroupIcons() {
+        // Ask for the class index first: both indexes are keyed by no argument, so before they were split apart
+        // this call is what filled the shared cache key that the group index then answered from. Without it the
+        // assertions below would pass against the unsplit code whenever this test happened to run first.
+        client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        Map<String, PluginIcon> groups = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/groups"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(groups).isNotEmpty();
+        assertThat(groups).doesNotContainKey(Log.class.getName());
+        assertThat(groups.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
     }
 
     @Test

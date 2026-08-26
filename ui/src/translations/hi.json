@@ -182,10 +182,12 @@
     "add_new_item": "नया आइटम जोड़ें",
     "copy": "कॉपी करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
+    "copy_pebble_expression": "pebble एक्सप्रेशन कॉपी करें",
     "new": "नया",
     "edit": "संपादित करें",
     "back": "वापस",
     "next": "अगला",
+    "previous": "पिछला",
     "done": "पूर्ण",
     "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "edit flow": "Flow संपादित करें",
@@ -578,6 +580,7 @@
     "triggers_add_filter_app": "ऐप",
     "triggers_add_empty_title": "कोई triggers नहीं मिले",
     "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
+    "ee_feature_tooltip": "इस सुविधा के लिए एंटरप्राइज़ एडिशन की आवश्यकता है।",
     "triggers_add_card_add": "जोड़ें",
     "triggers_add_modal_tab_form": "फॉर्म",
     "triggers_add_modal_tab_source": "स्रोत",
@@ -1399,6 +1402,7 @@
       "key": "नाम",
       "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
       "name": "गुप्त मान",
+      "valuePlaceholder": "गुप्त मान दर्ज करें",
       "description": "विवरण",
       "descriptionPlaceholder": "इस secret का वर्णन करें",
       "tags": "टैग",
@@ -1895,6 +1899,7 @@
           "test": "परीक्षण"
         },
         "contextRemoved": "संदर्भ से {type} {id} हटा दिया गया।",
+        "modelChanged": "{model} पर स्विच किया गया।",
         "toolResult": {
           "detail": "विवरण",
           "error": "{tool} विफल रहा",
@@ -1965,6 +1970,12 @@
           "अभिसरण हो रहा है"
         ],
         "newChat": "नया चैट",
+        "fixThread": {
+          "flow": "फ्लो {id} को ठीक करें",
+          "task": "टास्क {id} को ठीक करें",
+          "execution": "{id} के निष्पादन को ठीक करें",
+          "generic": "फ्लो त्रुटियों को ठीक करें"
+        },
         "draft": {
           "openInEditor": "संपादक में खोलें",
           "apply": "लागू करें",
@@ -2209,7 +2220,7 @@
       "next_match": "अगला मिलान",
       "no_results_description": "namespace को विस्तृत करने का प्रयास करें, स्कोप को वापस All source पर स्विच करें, या Match case और Match whole word को बंद करें।",
       "no_results_hidden_type": "आपके द्वारा न चुने गए {type} में {count} मिलान मिला। | आपके द्वारा न चुने गए {type} में {count} मिलान मिले।",
-      "no_results_in_types": "{types} में “{query}” के लिए कोई मिलान नहीं",
+      "no_results_in_types": "{types} में {query} के लिए कोई मिलान नहीं",
       "no_results_title": "“{query}” के लिए कोई मिलान नहीं मिला",
       "open_flow": "flow खोलें",
       "open_in_editor": "एडिटर में खोलें",

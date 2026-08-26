@@ -66,6 +66,16 @@ micronaut:
   caches:
     default:
       maximum-weight: 10485760
+    # One cache per icon index: the methods behind them take no argument, so they all resolve to the same cache
+    # key and sharing a cache would make them serve each other's entries. Each therefore holds a single entry.
+    plugin-icons:
+      maximum-size: 1
+    plugin-icons-metadata:
+      maximum-size: 1
+    plugin-group-icons:
+      maximum-size: 1
+    plugin-group-icons-metadata:
+      maximum-size: 1
   http:
     client:
       read-idle-timeout: 60s

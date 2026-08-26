@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, onMounted, watch} from "vue"
     import {Reorder} from "motion-v"
     import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
     import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
@@ -49,6 +49,7 @@
 
     const emits = defineEmits<{
         updateColumns: [columns: string[]];
+        resolved: [columns: string[]];
     }>()
 
     const {
@@ -64,6 +65,8 @@
     })
 
     const orderedItems = ref<ColumnConfig[]>(orderedColumns.value.slice())
+
+    onMounted(() => emits("resolved", localVisibleColumns.value))
 
     watch(orderedColumns, (cols) => {
         if (cols.map(c => c.prop).join() !== orderedItems.value.map(c => c.prop).join()) {

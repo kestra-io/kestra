@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {parseQuery, stringifyQuery} from "vue-router"
 import {
     decodeSearchParams,
     encodeFiltersToQuery,
@@ -140,6 +141,95 @@ describe("Filter Helpers", () => {
     })
 
     describe("encodeFilterGroupsToQuery", () => {
+        it.each([Comparators.IN, Comparators.NOT_IN])(
+            "preserves repeated label values for %s",
+            (comparator) => {
+                const groups: FilterGroup[] = [
+                    leaf("g1", [{
+                        key: "labels",
+                        comparator,
+                        value: ["environment:production", "environment:staging"],
+                    }]),
+                ]
+
+                expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
+                    [`filters[labels][${keyOfComparator(comparator)}][environment]`]: ["production", "staging"],
+                })
+            },
+        )
+
+        it.each([Comparators.IN, Comparators.NOT_IN])(
+            "preserves colons in repeated label values for %s",
+            (comparator) => {
+                const groups: FilterGroup[] = [
+                    leaf("g1", [{
+                        key: "labels",
+                        comparator,
+                        value: ["url:https://prod:8443/a", "url:https://stage:9443/b"],
+                    }]),
+                ]
+                const operation = keyOfComparator(comparator)
+                const query = encodeFilterGroupsToQuery(groups, keyOfComparator)
+
+                expect(query).toEqual({
+                    [`filters[labels][${operation}][url]`]: ["https://prod:8443/a", "https://stage:9443/b"],
+                })
+                expect(decodeSearchParams(query)).toEqual([
+                    {
+                        field: "labels",
+                        value: ["url:https://prod:8443/a", "url:https://stage:9443/b"],
+                        operation,
+                    },
+                ])
+            },
+        )
+
+        it("preserves percent characters after vue-router decodes the query", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [{
+                    key: "labels",
+                    comparator: Comparators.IN,
+                    value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                }]),
+            ]
+            const query = encodeFilterGroupsToQuery(groups, keyOfComparator)
+            const routed = parseQuery(stringifyQuery(query))
+
+            expect(decodeSearchParams(routed)).toEqual([
+                {
+                    field: "labels",
+                    value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                    operation: "IN",
+                },
+            ])
+        })
+
+        it("ignores malformed key-value entries while preserving valid labels", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [{
+                    key: "labels",
+                    comparator: Comparators.IN,
+                    value: ["environment:production", "invalid", ":missing-key", "empty-value:"],
+                }]),
+            ]
+
+            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
+                "filters[labels][IN][environment]": "production",
+            })
+        })
+
+        it("drops an all-malformed labels array instead of encoding a scalar label filter", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [{
+                    key: "labels",
+                    comparator: Comparators.IN,
+                    value: ["invalid"],
+                }]),
+            ]
+
+            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({})
+        })
+
         it("emits the flat legacy format for a single leaf group", () => {
             const groups: FilterGroup[] = [
                 leaf("g1", [{key: "namespace", comparator: Comparators.EQUALS, value: "io.kestra"}]),

@@ -182,6 +182,7 @@
     "add_new_item": "새 항목 추가",
     "copy": "복사",
     "copy_to_clipboard": "클립보드에 복사",
+    "copy_pebble_expression": "pebble 표현식 복사",
     "new": "새로 만들기",
     "edit": "편집",
     "back": "뒤로",
@@ -1960,6 +1961,12 @@
           "수렴 중"
         ],
         "newChat": "새 채팅",
+        "fixThread": {
+          "flow": "Flow {id} 수정",
+          "task": "Task {id} 수정",
+          "execution": "{id} 실행 수정",
+          "generic": "Flow 오류 수정"
+        },
         "draft": {
           "openInEditor": "에디터에서 열기",
           "apply": "적용",
@@ -2204,7 +2211,7 @@
       "next_match": "다음 일치",
       "no_results_description": "namespace를 확장하거나, 범위를 '모든 소스'로 다시 전환하거나, '대소문자 일치' 및 '단어 전체 일치'를 끄십시오.",
       "no_results_hidden_type": "선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다. | 선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다.",
-      "no_results_in_types": "{types}에서 “{query}”와 일치하는 항목이 없습니다",
+      "no_results_in_types": "{types}에서 {query}와 일치하는 항목이 없습니다",
       "no_results_title": "\"{query}\"에 대한 일치 항목 없음",
       "open_flow": "flow 열기",
       "open_in_editor": "에디터에서 열기",

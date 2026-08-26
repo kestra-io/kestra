@@ -1,6 +1,6 @@
 <template>
     <div class="trigger">
-        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon">
+        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon" @click.stop>
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <KsPopover
                     :ref="(el: any) => setPopoverRef(el, trigger)"

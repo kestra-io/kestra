@@ -1,5 +1,11 @@
 <template>
     <div class="json-tree">
+        <div v-if="rootLiteral !== undefined" class="json-tree__row">
+            <span class="json-tree__gutter">1</span>
+            <span class="json-tree__content">
+                <span class="json-tree__value" :class="`json-tree__value--${valueType(value)}`">{{ rootLiteral }}</span>
+            </span>
+        </div>
         <div
             v-for="(row, index) in rows"
             :key="row.path"
@@ -91,7 +97,7 @@
     function leafDisplay(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return `"${value}"`
-        // An empty container is not expandable, so it lands here rather than getting a preview —
+        // An empty container is not expandable, so it lands here rather than getting a preview,
         // and `String` renders it as `[object Object]`, or as nothing at all for an empty array.
         if (Array.isArray(value)) return "[]"
         if (typeof value === "object") return "{}"
@@ -172,6 +178,18 @@
         buildRows(value, props.basePath ?? "", 0, result)
         return result
     })
+
+    /**
+     * Rows come from iterating the value's entries, so a container that *is* the whole value and is
+     * empty yields none and the tree renders blank. That reads as a broken pane in the variable
+     * explorer, and in `LogLine` it is worse: a message of exactly `{}` parses as structured, which
+     * suppresses the raw-message fallback, so the log line disappears entirely.
+     */
+    const rootLiteral = computed<string | undefined>(() =>
+        !rows.value.length && props.value !== null && typeof props.value === "object"
+            ? leafDisplay(props.value)
+            : undefined,
+    )
 </script>
 
 <style scoped lang="scss">

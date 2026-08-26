@@ -168,3 +168,40 @@ export const EmptyContainers: Story = {
         expect(canvas.getByText("[]")).toBeTruthy()
     },
 }
+
+/**
+ * A container that is the whole value and is empty yields no rows at all. The tree used to render
+ * blank, which reads as a broken pane in the variable explorer, and hid a log line whose entire
+ * message was `{}` — that message parses as structured, so the raw-message fallback is skipped.
+ */
+export const EmptyRoot: Story = {
+    args: {value: {}, defaultExpanded: true},
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        await waitFor(() => expect(within(canvasElement).getByText("{}")).toBeTruthy())
+    },
+}
+
+export const EmptyRootArray: Story = {
+    args: {value: [], defaultExpanded: true},
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        await waitFor(() => expect(within(canvasElement).getByText("[]")).toBeTruthy())
+    },
+}

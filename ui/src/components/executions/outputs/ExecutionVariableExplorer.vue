@@ -152,7 +152,9 @@
         }
         if (typeof value === "object") {
             const keys = Object.keys(value as object)
-            return `{ ${keys.join(", ")} }`
+            // Without the guard an empty object previews as `{  }`, two spaces, next to a tree
+            // that now says `{}`.
+            return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
     }

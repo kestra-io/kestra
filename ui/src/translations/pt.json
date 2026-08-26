@@ -1960,6 +1960,12 @@
           "Convergindo"
         ],
         "newChat": "Novo chat",
+        "fixThread": {
+          "flow": "Corrigir Flow {id}",
+          "task": "Corrigir Task {id}",
+          "execution": "Corrigir execução de {id}",
+          "generic": "Corrigir erros do Flow"
+        },
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",

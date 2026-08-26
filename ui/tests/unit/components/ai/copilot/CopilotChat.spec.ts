@@ -15,6 +15,7 @@ const state = {
     pendingConfirmation: ref<any>(null),
     unavailable: ref(false),
     canSend: ref(true),
+    nextThreadTitle: ref<string | null>(null),
     sendChat: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
@@ -36,6 +37,8 @@ vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue
 // unit env.
 const miscStore = reactive({
     copilotPrompt: null as string | null,
+    copilotThreadTitle: null as string | null,
+    copilotNewThread: false,
     configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
     loadConfigs: vi.fn(),
     openCopilot: vi.fn(),
@@ -68,7 +71,10 @@ describe("CopilotChat", () => {
         state.restoreThread.mockReset()
         state.noteContext.mockReset()
         state.thread.value = null
+        state.nextThreadTitle.value = null
         miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
         miscStore.configs = {isAiApiKeyConfigured: true}
         miscStore.loadConfigs.mockReset()
     })
@@ -103,6 +109,32 @@ describe("CopilotChat", () => {
         expect(textarea.value).toBe("Fix this error")
         // Consumed once, so it doesn't re-seed on the next open.
         expect(miscStore.copilotPrompt).toBeNull()
+    })
+
+    // kestra-io/kestra-ee#10424: a seeded fix must not stack onto the active conversation.
+    it("drops the active conversation and titles the next thread when the seeded prompt asks for a new thread", async () => {
+        state.thread.value = {uid: "t-1"} as any
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
+        // Consumed once, so a later open doesn't reset again.
+        expect(miscStore.copilotNewThread).toBe(false)
+        expect(miscStore.copilotThreadTitle).toBeNull()
+    })
+
+    it("seeds a new-thread fix without resetting when the chat is already fresh", async () => {
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).not.toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
     })
 
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {

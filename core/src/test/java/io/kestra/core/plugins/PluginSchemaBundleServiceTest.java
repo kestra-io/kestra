@@ -9,14 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.docs.SchemaType;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.VersionProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -27,16 +26,12 @@ class PluginSchemaBundleServiceTest {
     @TempDir
     Path tempDir;
 
+    private VersionProvider versionProvider;
+
     @BeforeEach
     void setUp() {
-        KestraContext kestraContext = mock(KestraContext.class);
-        when(kestraContext.getVersion()).thenReturn("1.0.0");
-        KestraContext.setContext(kestraContext);
-    }
-
-    @AfterEach
-    void tearDown() {
-        KestraContext.setContext(null);
+        versionProvider = mock(VersionProvider.class);
+        when(versionProvider.getVersion()).thenReturn("1.0.0");
     }
 
     private static PluginSchemaBundleConfig config(String path, String urlTemplate) {
@@ -46,7 +41,7 @@ class PluginSchemaBundleServiceTest {
     @Test
     void shouldReturnLocalSchemaUnchangedWhenDisabled() {
         // Given
-        PluginSchemaBundleService service = new PluginSchemaBundleService(config(null, null));
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(null, null), versionProvider);
         Map<String, Object> localSchema = Map.of("$ref", "#/definitions/io.kestra.core.models.tasks.Task");
 
         // When
@@ -95,7 +90,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null));
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null), versionProvider);
 
         Map<String, Object> localSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -186,7 +181,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null));
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null), versionProvider);
 
         Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -253,7 +248,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null));
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(tempDir.resolve("plugins-schema.json").toString(), null), versionProvider);
 
         Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -405,7 +400,7 @@ class PluginSchemaBundleServiceTest {
             }
             """);
         PluginSchemaBundleService service = new PluginSchemaBundleService(
-            config(tempDir.resolve("plugins-schema.json").toString(), null)
+            config(tempDir.resolve("plugins-schema.json").toString(), null), versionProvider
         );
 
         // When / Then — catalog entries are exposed as manifests
@@ -442,7 +437,7 @@ class PluginSchemaBundleServiceTest {
             }
             """);
         PluginSchemaBundleService service = new PluginSchemaBundleService(
-            config(tempDir.resolve("plugins-schema.json").toString(), null)
+            config(tempDir.resolve("plugins-schema.json").toString(), null), versionProvider
         );
 
         // When / Then
@@ -453,7 +448,7 @@ class PluginSchemaBundleServiceTest {
     @Test
     void shouldReturnNoCatalogEntriesWhenDisabled() {
         // Given
-        PluginSchemaBundleService service = new PluginSchemaBundleService(config(null, null));
+        PluginSchemaBundleService service = new PluginSchemaBundleService(config(null, null), versionProvider);
 
         // When / Then
         assertThat(service.catalogEntries()).isEmpty();

@@ -26,11 +26,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.docs.SchemaType;
 import io.kestra.core.plugins.PluginCatalogService.PluginManifest;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Version;
+import io.kestra.core.utils.VersionProvider;
 
 import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
@@ -68,12 +68,12 @@ public class PluginSchemaBundleService {
     private volatile Bundle bundle;
     private volatile Instant lastFailureAt;
 
-    public PluginSchemaBundleService(final PluginSchemaBundleConfig config) {
+    public PluginSchemaBundleService(final PluginSchemaBundleConfig config, final VersionProvider versionProvider) {
         this.resolvedBundleUrl = resolveBundleSource(
             config.schemaBundlePath().orElse(null),
             config.schemaBundleUrlTemplate().orElse(null),
             PluginSchemaBundleService.class.getResource(CLASSPATH_BUNDLE),
-            () -> KestraContext.getContext().getVersion()
+            versionProvider::getVersion
         );
     }
 

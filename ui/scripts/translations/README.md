@@ -178,6 +178,10 @@ npm run translations:check               # must be fully clean
 - EE keys must not redefine OSS keys - the gate rejects it. If a key belongs to the other edition, move it to the owning repository.
 - When a change spans both repositories, run generate + check in **both**.
 
+### Adding a whole new language
+
+Adding a new locale touches more than the pipeline (locale declaration, moment locale loader, settings selector, plural rules, per-language generator rules, the EE wrapper file). The full step-by-step checklist lives in [ADDING_A_LANGUAGE.md](ADDING_A_LANGUAGE.md).
+
 ## History: why it works this way
 
 Until August 2026 the two repositories had forked copies of the generator with different prompts and rules, there was no change detection at all (only key *presence* was checked), and the standard workaround for the missing-keys check was to copy the English value into every locale. The result, tracked in [#10656](https://github.com/kestra-io/kestra/issues/10656): edited English values never propagated, ~220 keys were English in all locales while every check passed, hundreds of ghost keys were paid for on every generator run, and broken placeholders crashed `t()` at render time in some locales.

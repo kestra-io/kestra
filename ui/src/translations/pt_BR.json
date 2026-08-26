@@ -570,6 +570,7 @@
     "triggers_add_filter_app": "Aplicativo",
     "triggers_add_empty_title": "Nenhum trigger encontrado",
     "triggers_add_ee_tooltip": "Este trigger requer a Enterprise Edition.",
+    "ee_feature_tooltip": "Este recurso requer a Enterprise Edition.",
     "triggers_add_card_add": "Adicionar",
     "triggers_add_modal_tab_form": "Formulário",
     "triggers_add_modal_tab_source": "Fonte",
@@ -1391,6 +1392,7 @@
       "key": "Nome",
       "keyPlaceholder": "Nome usado para referenciar este segredo, ex: MY_API_TOKEN",
       "name": "Valor do segredo",
+      "valuePlaceholder": "Insira o valor do segredo",
       "description": "Descrição",
       "descriptionPlaceholder": "Descreva este segredo",
       "tags": "Etiquetas",
@@ -1731,7 +1733,7 @@
         "content": "Exponha um flow como uma ferramenta MCP adicionando um <code>McpToolTrigger</code> a ele. Leia mais sobre o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> em nossa documentação."
       },
       "versionPlugin": {
-        "title": "Você ainda não tem um plugin versionado!",
+        "title": "Você ainda não tem plugins versionados!",
         "content": "Aqui você pode gerenciar todos os plugins instalados na sua instância do Kestra. Plugins recém-instalados podem não estar imediatamente disponíveis em todos os serviços do Kestra, dependendo da configuração da sua instância."
       },
       "panels": {
@@ -1887,6 +1889,7 @@
           "test": "teste"
         },
         "contextRemoved": "Removido {type} {id} do contexto.",
+        "modelChanged": "Alterado para {model}.",
         "toolResult": {
           "detail": "Detalhes",
           "error": "{tool} falhou",
@@ -2201,7 +2204,7 @@
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, alternar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
       "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
-      "no_results_in_types": "Sem correspondências para “{query}” em {types}",
+      "no_results_in_types": "Sem correspondências para {query} em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",

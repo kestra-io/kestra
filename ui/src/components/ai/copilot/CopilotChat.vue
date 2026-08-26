@@ -10,14 +10,15 @@
             <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
-        <!-- AI unavailable: the backend has no configured provider (503). -->
-        <div v-if="unavailable" class="copilot-unavailable" data-test="copilot-unavailable">
+        <!-- AI unavailable: the backend has no configured provider — known up front from `/configs`,
+             or discovered mid-session (503). -->
+        <div v-if="isUnavailable" class="copilot-unavailable" data-test="copilot-unavailable">
             <KsIcon class="copilot-unavailable-icon">
                 <RobotOffOutline />
             </KsIcon>
             <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
             <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
-            <KsButton size="small" data-test="copilot-unavailable-retry" @click="retry">
+            <KsButton size="small" data-test="copilot-unavailable-retry" @click="onRetry">
                 {{ $t("ai.copilot.unavailable.retry") }}
             </KsButton>
         </div>
@@ -66,26 +67,30 @@
                 aria-live="polite"
                 :aria-busy="streaming ? 'true' : 'false'"
             >
-                <CopilotMessage
-                    v-for="message in messages"
-                    :key="message.id"
-                    :message="message"
-                    :isPending="message.id === pendingProposalMessageId"
-                    :isRunning="message.id === runningToolCallId"
-                />
+                <!-- Inner column so the page layout can span the scroller full-width (wheel works
+                     from anywhere on the page) while the transcript stays a bounded, centered column. -->
+                <div class="copilot-transcript">
+                    <CopilotMessage
+                        v-for="message in messages"
+                        :key="message.id"
+                        :message="message"
+                        :isPending="message.id === pendingProposalMessageId"
+                        :isRunning="message.id === runningToolCallId"
+                    />
 
-                <CopilotThinking v-if="working" :phase="workPhase" />
+                    <CopilotThinking v-if="working" :phase="workPhase" />
 
-                <ProposedActionCard
-                    v-if="pendingConfirmation"
-                    :action="pendingConfirmation"
-                    :disabled="streaming"
-                    @approve="confirm('APPROVE', undefined, selectedProvider)"
-                    @reject="onReject"
-                />
+                    <ProposedActionCard
+                        v-if="pendingConfirmation"
+                        :action="pendingConfirmation"
+                        :disabled="streaming"
+                        @approve="confirm('APPROVE', undefined, selectedProvider)"
+                        @reject="onReject"
+                    />
 
-                <!-- Anchor the auto-scroll follows as new content streams in. -->
-                <div ref="bottomAnchor" class="copilot-scroll-anchor" />
+                    <!-- Anchor the auto-scroll follows as new content streams in. -->
+                    <div ref="bottomAnchor" class="copilot-scroll-anchor" />
+                </div>
             </KsScrollbar>
 
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
@@ -227,6 +232,18 @@
         }
     })
 
+    // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
+    // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
+    // itself get noted — only a later, deliberate switch does.
+    let previousProvider: string | undefined
+    watch(selectedProvider, (now) => {
+        if (previousProvider !== undefined && now && now !== previousProvider) {
+            const label = providers.value.find((p) => p.id === now)?.displayName ?? now
+            noteModelChange(label)
+        }
+        previousProvider = now
+    })
+
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
         t("ai.copilot.suggestions.errorHandling"),
@@ -235,7 +252,22 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
+
+    // `/configs` reports whether any AI provider is configured, so the unavailable state renders on
+    // load rather than after the user composes a prompt that was always going to fail
+    // (kestra-io/kestra#18322). `unavailable` still covers the mid-session case (provider removed or
+    // unreachable → 503). An older backend that doesn't send the flag leaves the copilot usable.
+    const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
+    const isUnavailable = computed(() => unavailable.value || noProviderConfigured.value)
+
+    /** Re-check availability: a provider may have just been added, so refresh `/configs` too. */
+    async function onRetry(): Promise<void> {
+        try {
+            await miscStore.loadConfigs()
+        } catch { /* keep the unavailable state; the user can try again */ }
+        retry()
+    }
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })
@@ -517,5 +549,17 @@
     .copilot-footer {
         padding: var(--ks-spacing-3) var(--ks-spacing-5);
         border-top: 1px solid var(--ks-border-subtle);
+    }
+
+    /* Page layout: the host surface is full-width so the transcript scroller catches the wheel
+       anywhere on the page; each section re-centers its content into the same bounded column the
+       page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
+       stay pinned to the left edge of the page instead of floating with the centered column. */
+    .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-banner,
+    .copilot-chat--page .copilot-footer {
+        width: 100%;
+        max-width: 56rem;
+        margin: 0 auto;
     }
 </style>

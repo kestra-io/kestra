@@ -3054,6 +3054,24 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void shouldRejectAMissingExecutionsIdWhenSettingLabelsByIds(String tenantId) {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/%s/executions/labels/by-ids".formatted(tenantId),
+                    new ExecutionController.SetLabelsByIdsRequest(null, List.of(new Label("team", "data")))
+                ),
+                ApiAsyncOperationResponse.class
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("executionsId");
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldRejectAnInvalidLabelKeyWhenSettingLabelsByIds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");

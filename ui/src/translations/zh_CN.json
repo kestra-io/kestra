@@ -1960,6 +1960,12 @@
           "汇聚"
         ],
         "newChat": "新建聊天",
+        "fixThread": {
+          "flow": "修复 Flow {id}",
+          "task": "修复 task {id}",
+          "execution": "修复 {id} 的 Execution",
+          "generic": "修复 Flow 错误"
+        },
         "draft": {
           "openInEditor": "在编辑器中打开",
           "apply": "应用",

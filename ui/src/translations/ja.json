@@ -1960,6 +1960,12 @@
           "収束中"
         ],
         "newChat": "新規チャット",
+        "fixThread": {
+          "flow": "Flow {id} を修正",
+          "task": "タスク {id} を修正",
+          "execution": "{id} の実行を修正",
+          "generic": "Flowのエラーを修正する"
+        },
         "draft": {
           "openInEditor": "エディターで開く",
           "apply": "適用",

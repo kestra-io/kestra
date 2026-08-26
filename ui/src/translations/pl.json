@@ -1960,6 +1960,12 @@
           "Konwergowanie"
         ],
         "newChat": "Nowy czat",
+        "fixThread": {
+          "flow": "Napraw Flow {id}",
+          "task": "Napraw Task {id}",
+          "execution": "Napraw egzekucję {id}",
+          "generic": "Napraw błędy Flow"
+        },
         "draft": {
           "openInEditor": "Otwórz w edytorze",
           "apply": "Zastosuj",

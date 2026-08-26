@@ -1960,6 +1960,12 @@
           "Konvergenz"
         ],
         "newChat": "Neuer Chat",
+        "fixThread": {
+          "flow": "Flow {id} reparieren",
+          "task": "Task {id} reparieren",
+          "execution": "Execution {id} reparieren",
+          "generic": "Flow-Fehler beheben"
+        },
         "draft": {
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",

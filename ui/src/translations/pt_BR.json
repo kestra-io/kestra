@@ -1663,7 +1663,7 @@
         "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente."
       },
       "apps": {
-        "title": "Você ainda não tem apps!",
+        "title": "Você ainda não tem Apps!",
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo."
       },
       "testSuites": {

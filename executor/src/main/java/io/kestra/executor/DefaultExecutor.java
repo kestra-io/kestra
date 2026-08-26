@@ -852,7 +852,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
      * Asynchronously emits a raw execution-statistic row for the indexer to persist for every terminal NORMAL-kind execution.
      */
     private void emitExecutionStatistic(Execution execution) {
-        if (execution.getKind() == null || ExecutionKind.NORMAL == execution.getKind()) {
+        if (ExecutionKind.isNormal(execution)) {
             // An end date should always be set, but use the current date as a safety belt
             Instant bucket = execution.getState().getEndDate().orElse(Instant.now()).truncatedTo(ChronoUnit.MINUTES);
             this.executionStatisticQueue.emitAsync(new ExecutionStatistic(execution, bucket));

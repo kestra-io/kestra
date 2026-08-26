@@ -125,6 +125,22 @@ function collectLazySubtrees(ctx) {
 const matchesWithLazySubtree = (name, pattern) => (id) =>
     isRealModule(id) && (pattern.test(id) || lazySubtrees.get(name)?.has(id) === true)
 
+/**
+ * Every module imports the design-system barrel, so one static edge from it into
+ * a lazy group makes {@link collectLazyReach} tag the whole application.
+ * @param {import("rolldown").PluginContext} ctx
+ */
+function assertBarrelReachesNoToolchain(ctx) {
+    const barrel = [...ctx.getModuleIds()].find((id) => /design-system[\\/]src[\\/]index\.ts$/.test(id))
+    for (const {name, pattern} of LAZY_GROUPS) {
+        const leak = (ctx.getModuleInfo(barrel ?? "")?.importedIds ?? [])
+            .find((id) => pattern.test(id) || lazySubtrees.get(name)?.has(id) === true)
+        if (leak) {
+            ctx.error(`The design-system barrel statically imports '${leak}', which belongs to the lazy '${name}' chunk, so every page importing the barrel is tagged as reaching '${name}' and can be folded into a chunk that downloads it. Export it lazily (asyncComponent) or move it out of the '${name}' group's directory.`)
+        }
+    }
+}
+
 const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]langs)[\\/]/
 const LANG_REGISTRY = /node_modules[\\/]shiki[\\/]dist[\\/]langs(-bundle-full-[^\\/]+)?\.mjs$/
 
@@ -469,6 +485,7 @@ export function consolidateChunks({pages = {}} = {}) {
         buildEnd() {
             collectStaticLangs(this)
             collectLazySubtrees(this)
+            assertBarrelReachesNoToolchain(this)
             planAsyncChunks(this)
         },
         generateBundle(_options, bundle) {

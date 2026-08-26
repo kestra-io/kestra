@@ -24,7 +24,7 @@
 
     import KsEchart from "./KsEchart.vue"
     import type {KsChartSeriesItem} from "./KsEchart.vue"
-    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     use([BarChart])
 

@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
-import {ref} from "vue"
+import {reactive, ref} from "vue"
 import {mountGlobal} from "./_helpers"
 
 // Drive the composable from the test so we can assert how CopilotChat renders each
@@ -15,6 +15,7 @@ const state = {
     pendingConfirmation: ref<any>(null),
     unavailable: ref(false),
     canSend: ref(true),
+    nextThreadTitle: ref<string | null>(null),
     sendChat: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
@@ -31,9 +32,18 @@ let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, 
 vi.mock("vue-router", () => ({useRoute: () => routeStub}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
-// CopilotChat reads a seeded prompt from the misc store on mount. Shared mutable stub so a
-// test can seed a prompt before mounting (no Pinia in the unit env).
-const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), promptCopilot: vi.fn()}
+// CopilotChat reads a seeded prompt and the AI-availability flag from the misc store. Shared
+// mutable stub (reactive, so a mid-test `configs` swap re-renders) since there's no Pinia in the
+// unit env.
+const miscStore = reactive({
+    copilotPrompt: null as string | null,
+    copilotThreadTitle: null as string | null,
+    copilotNewThread: false,
+    configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
+    loadConfigs: vi.fn(),
+    openCopilot: vi.fn(),
+    promptCopilot: vi.fn(),
+})
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
@@ -61,7 +71,12 @@ describe("CopilotChat", () => {
         state.restoreThread.mockReset()
         state.noteContext.mockReset()
         state.thread.value = null
+        state.nextThreadTitle.value = null
         miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
+        miscStore.configs = {isAiApiKeyConfigured: true}
+        miscStore.loadConfigs.mockReset()
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -94,6 +109,32 @@ describe("CopilotChat", () => {
         expect(textarea.value).toBe("Fix this error")
         // Consumed once, so it doesn't re-seed on the next open.
         expect(miscStore.copilotPrompt).toBeNull()
+    })
+
+    // kestra-io/kestra-ee#10424: a seeded fix must not stack onto the active conversation.
+    it("drops the active conversation and titles the next thread when the seeded prompt asks for a new thread", async () => {
+        state.thread.value = {uid: "t-1"} as any
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
+        // Consumed once, so a later open doesn't reset again.
+        expect(miscStore.copilotNewThread).toBe(false)
+        expect(miscStore.copilotThreadTitle).toBeNull()
+    })
+
+    it("seeds a new-thread fix without resetting when the chat is already fresh", async () => {
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).not.toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
     })
 
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {
@@ -244,11 +285,43 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
     })
 
-    it("retries from the unavailable state", async () => {
+    it("retries from the unavailable state, re-checking whether a provider has been added", async () => {
         state.unavailable.value = true
         const w = mountChat()
         await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
+        await flushPromises()
+        expect(miscStore.loadConfigs).toHaveBeenCalled()
         expect(state.retry).toHaveBeenCalled()
+    })
+
+    // kestra-io/kestra#18322: no provider configured is known from `/configs` before the first turn,
+    // so the surface must say so on load instead of offering a chat that can only fail.
+    it("shows the unavailable state on load when no AI provider is configured", () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
+        expect(w.find(".copilot-suggestions").exists()).toBe(false)
+    })
+
+    it("keeps the copilot usable when the availability flag is absent (older backend)", () => {
+        miscStore.configs = {}
+        expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+
+        miscStore.configs = undefined
+        expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+    })
+
+    it("clears the up-front unavailable state once a provider is configured", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        miscStore.loadConfigs.mockImplementation(async () => {
+            miscStore.configs = {isAiApiKeyConfigured: true}
+        })
+        const w = mountChat()
+        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
+        await flushPromises()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
     })
 
     it("auto-scrolls the transcript to the bottom as new content arrives", async () => {

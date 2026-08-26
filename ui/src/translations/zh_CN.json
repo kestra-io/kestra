@@ -182,6 +182,7 @@
     "add_new_item": "添加新项目",
     "copy": "复制",
     "copy_to_clipboard": "复制到剪贴板",
+    "copy_pebble_expression": "复制 pebble 表达式",
     "new": "新建",
     "edit": "编辑",
     "back": "返回",
@@ -1895,6 +1896,7 @@
           "test": "测试"
         },
         "contextRemoved": "已从上下文移除 {type} {id}。",
+        "modelChanged": "已切换到 {model}。",
         "toolResult": {
           "detail": "详情",
           "error": "{tool} 失败",
@@ -1965,6 +1967,12 @@
           "汇聚"
         ],
         "newChat": "新建聊天",
+        "fixThread": {
+          "flow": "修复 Flow {id}",
+          "task": "修复 task {id}",
+          "execution": "修复 {id} 的 Execution",
+          "generic": "修复 Flow 错误"
+        },
         "draft": {
           "openInEditor": "在编辑器中打开",
           "apply": "应用",
@@ -2209,7 +2217,7 @@
       "next_match": "下一个匹配项",
       "no_results_description": "尝试扩大 namespace 范围，将作用域切换回“所有来源”，或关闭“区分大小写”和“全字匹配”。",
       "no_results_hidden_type": "在未选择的 {type} 中找到 {count} 个匹配项。 | 在未选择的 {type} 中找到 {count} 个匹配项。",
-      "no_results_in_types": "在 {types} 中没有找到 “{query}” 的匹配项",
+      "no_results_in_types": "在 {types} 中没有找到 {query} 的匹配项",
       "no_results_title": "“{query}” 无匹配项",
       "open_flow": "打开 flow",
       "open_in_editor": "在编辑器中打开",

@@ -182,6 +182,7 @@
     "add_new_item": "新しいアイテムを追加",
     "copy": "コピー",
     "copy_to_clipboard": "クリップボードにコピー",
+    "copy_pebble_expression": "pebble 式をコピー",
     "new": "新規",
     "edit": "編集",
     "back": "戻る",
@@ -1895,6 +1896,7 @@
           "test": "テスト"
         },
         "contextRemoved": "コンテキストから {type} {id} を削除しました。",
+        "modelChanged": "{model} に切り替えました。",
         "toolResult": {
           "detail": "詳細",
           "error": "{tool} が失敗しました",
@@ -1965,6 +1967,12 @@
           "収束中"
         ],
         "newChat": "新規チャット",
+        "fixThread": {
+          "flow": "Flow {id} を修正",
+          "task": "タスク {id} を修正",
+          "execution": "{id} の実行を修正",
+          "generic": "Flowのエラーを修正する"
+        },
         "draft": {
           "openInEditor": "エディターで開く",
           "apply": "適用",
@@ -2209,7 +2217,7 @@
       "next_match": "次の一致",
       "no_results_description": "namespaceを広げるか、スコープを「すべてのソース」に戻すか、「大文字と小文字を区別する」と「単語全体に一致」をオフにしてみてください。",
       "no_results_hidden_type": "選択していない{type}で{count}件の一致が見つかりました。 | 選択していない{type}で{count}件の一致が見つかりました。",
-      "no_results_in_types": "“{query}” に一致する結果は{types}にありません",
+      "no_results_in_types": "{query} に一致する結果は{types}にありません",
       "no_results_title": "「{query}」に一致する項目はありません",
       "open_flow": "flow を開く",
       "open_in_editor": "エディターで開く",

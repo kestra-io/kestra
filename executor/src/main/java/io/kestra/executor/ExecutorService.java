@@ -1,5 +1,6 @@
 package io.kestra.executor;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -584,29 +585,33 @@ public class ExecutorService {
                 Instant nextRetryDate = null;
                 AbstractRetry.Behavior behavior = null;
 
-                // Case task has a retry
-                if (task.getRetry() != null) {
-                    AbstractRetry retry = task.getRetry();
-                    behavior = retry.getBehavior();
-                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
-                } else {
-                    // Case parent task has a retry
-                    Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
-                    AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
-                    if (retry != null) {
-                        // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                        if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                try {
+                    // Case task has a retry
+                    if (task.getRetry() != null) {
+                        AbstractRetry retry = task.getRetry();
+                        behavior = retry.getBehavior();
+                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                    } else {
+                        // Case parent task has a retry
+                        Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
+                        AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
+                        if (retry != null) {
+                            // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
+                            if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                                behavior = retry.getBehavior();
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                            }
+                        }
+                        // Case flow has a retry
+                        else if (executor.getFlow().getRetry() != null) {
+                            retry = executor.getFlow().getRetry();
                             behavior = retry.getBehavior();
-                            nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                            nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? executionService.nextRetryDate(retry, executor.getExecution())
+                                : taskRun.nextRetryDate(retry);
                         }
                     }
-                    // Case flow has a retry
-                    else if (executor.getFlow().getRetry() != null) {
-                        retry = executor.getFlow().getRetry();
-                        behavior = retry.getBehavior();
-                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? executionService.nextRetryDate(retry, executor.getExecution())
-                            : taskRun.nextRetryDate(retry);
-                    }
+                } catch (DateTimeException | ArithmeticException e) {
+                    throw new InternalException("The retry interval or maxDuration is out of the supported range.", e);
                 }
 
                 if (nextRetryDate != null) {
@@ -1000,7 +1005,7 @@ public class ExecutorService {
                             return ExecutionDelay.builder()
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
-                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
+                                .date(DateUtils.plusOrThrow(workerTaskResult.getTaskRun().getState().maxDate(), duration != null ? duration : timeout))
                                 .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();

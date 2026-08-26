@@ -182,6 +182,7 @@
     "add_new_item": "Ajouter un nouvel élément",
     "copy": "Copier",
     "copy_to_clipboard": "Copier dans le presse-papiers",
+    "copy_pebble_expression": "Copier l'expression pebble",
     "new": "Nouveau",
     "edit": "Modifier",
     "back": "Retour",
@@ -1895,6 +1896,7 @@
           "test": "test"
         },
         "contextRemoved": "Retiré {type} {id} du contexte.",
+        "modelChanged": "Passé à {model}.",
         "toolResult": {
           "detail": "Détails",
           "error": "{tool} a échoué",
@@ -1965,6 +1967,12 @@
           "Convergence"
         ],
         "newChat": "Nouvelle discussion",
+        "fixThread": {
+          "flow": "Corriger le flow {id}",
+          "task": "Corriger la tâche {id}",
+          "execution": "Corriger l'exécution de {id}",
+          "generic": "Corriger les erreurs de Flow"
+        },
         "draft": {
           "openInEditor": "Ouvrir dans l'éditeur",
           "apply": "Appliquer",
@@ -2209,7 +2217,7 @@
       "next_match": "Prochaine correspondance",
       "no_results_description": "Essayez d'élargir le namespace, de revenir à la portée \"Toutes les sources\" ou de désactiver \"Respecter la casse\" et \"Mot entier\".",
       "no_results_hidden_type": "{count} correspondance trouvée dans {type}, que vous n'avez pas sélectionné. | {count} correspondances trouvées dans {type}, que vous n'avez pas sélectionné.",
-      "no_results_in_types": "Aucune correspondance pour « {query} » dans {types}",
+      "no_results_in_types": "Aucune correspondance pour {query} dans {types}",
       "no_results_title": "Aucun résultat pour « {query} »",
       "open_flow": "Ouvrir le flow",
       "open_in_editor": "Ouvrir dans l'éditeur",

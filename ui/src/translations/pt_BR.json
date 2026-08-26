@@ -182,6 +182,7 @@
     "add_new_item": "Adicionar novo item",
     "copy": "Copiar",
     "copy_to_clipboard": "Copiar para a área de transferência",
+    "copy_pebble_expression": "Copiar expressão pebble",
     "new": "Novo",
     "edit": "Editar",
     "back": "Voltar",
@@ -1668,7 +1669,7 @@
         "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente."
       },
       "apps": {
-        "title": "Você ainda não tem apps!",
+        "title": "Você ainda não tem Apps!",
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo."
       },
       "testSuites": {
@@ -1895,6 +1896,7 @@
           "test": "teste"
         },
         "contextRemoved": "Removido {type} {id} do contexto.",
+        "modelChanged": "Alterado para {model}.",
         "toolResult": {
           "detail": "Detalhes",
           "error": "{tool} falhou",
@@ -1965,6 +1967,12 @@
           "Convergindo"
         ],
         "newChat": "Novo chat",
+        "fixThread": {
+          "flow": "Corrigir Flow {id}",
+          "task": "Corrigir Task {id}",
+          "execution": "Corrigir execução de {id}",
+          "generic": "Corrigir erros do Flow"
+        },
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",
@@ -2209,7 +2217,7 @@
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, alternar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
       "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
-      "no_results_in_types": "Sem correspondências para “{query}” em {types}",
+      "no_results_in_types": "Sem correspondências para {query} em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",

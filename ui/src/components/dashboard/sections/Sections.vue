@@ -4,7 +4,6 @@
             <div
                 v-for="chart in props.charts"
                 :key="`chart__${chart.id}`"
-                :ref="(el) => observeChartBlock(el, chart.id)"
                 class="dashboard-block"
                 :class="{
                     [`dash-width-${chart.chartOptions?.width || 6}`]: true
@@ -71,7 +70,7 @@
                         </div>
                     </div>
 
-                    <div class="flex-grow-1">
+                    <div :ref="(el) => observeChartBlock(el, chart.id)" class="flex-grow-1">
                         <component
                             v-if="activatedCharts.has(chart.id)"
                             :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
@@ -87,6 +86,7 @@
                             :rows="3"
                             class="chart-placeholder"
                             :class="{'is-kpi': isKPIChart(chart.type)}"
+                            :style="placeholderHeight(chart.id) ? {minHeight: `${placeholderHeight(chart.id)}px`} : undefined"
                         />
                     </div>
                 </div>
@@ -96,10 +96,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onBeforeUnmount, type ComponentPublicInstance} from "vue"
+    import {computed, type ComponentPublicInstance} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
-    import {isKPIChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
+    import {isKPIChart, isCanvasChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
+    import {useLazyChartBlocks} from "../composables/useLazyChartBlocks"
     import {TYPES} from "../dashboard-types"
 
     import {useRoute} from "vue-router"
@@ -125,39 +126,10 @@
         else chartsComponents.delete(chartId)
     }
 
+    // Only mounted charts are in the map, so a recycled one is skipped here and reloads when it scrolls back in.
     function refreshCharts() {
         chartsComponents.forEach((component) => component.refresh())
     }
-
-    // Charts mount lazily, ~200px before their block scrolls into view; once activated they stay mounted.
-    const activatedCharts = ref(new Set<string>())
-    const observedBlocks = new WeakMap<Element, string>()
-
-    const blockObserver = typeof IntersectionObserver === "undefined"
-        ? undefined
-        : new IntersectionObserver((entries) => {
-            for (const entry of entries) {
-                if (!entry.isIntersecting) continue
-                blockObserver!.unobserve(entry.target)
-                const chartId = observedBlocks.get(entry.target)
-                if (chartId) activatedCharts.value.add(chartId)
-            }
-        }, {rootMargin: "200px 0px"})
-
-    function observeChartBlock(el: Element | ComponentPublicInstance | null, chartId: string) {
-        if (!(el instanceof Element) || activatedCharts.value.has(chartId)) return
-
-        // environments without IntersectionObserver (e.g. jsdom) load every chart eagerly
-        if (!blockObserver) {
-            activatedCharts.value.add(chartId)
-            return
-        }
-
-        observedBlocks.set(el, chartId)
-        blockObserver.observe(el)
-    }
-
-    onBeforeUnmount(() => blockObserver?.disconnect())
 
     defineExpose({
         refreshCharts,
@@ -169,6 +141,12 @@
         showDefault?: boolean;
         padding?: boolean;
     }>()
+
+    const chartTypesById = computed(() => new Map((props.charts ?? []).map((chart) => [chart.id, chart.type])))
+
+    const {activatedCharts, observeChartBlock, placeholderHeight} = useLazyChartBlocks(
+        (chartId) => isCanvasChart(chartTypesById.value.get(chartId) ?? ""),
+    )
 
     const labels = (chart: Chart) => ({
         title: getChartTitle(chart),

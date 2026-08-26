@@ -3035,6 +3035,43 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldrejectinvalidlabelkeyontrigger")
+    void shouldRejectAnInvalidLabelKeyWhenTriggeringAnExecution() {
+        String tenantId = "shouldrejectinvalidlabelkeyontrigger";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST("/api/v1/%s/executions/io.kestra.tests/minimal?labels=Team:x&wait=true".formatted(tenantId), null)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                Execution.class
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("Invalid label key");
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void shouldRejectAnInvalidLabelKeyWhenSettingLabelsByIds(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution result = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/%s/executions/labels/by-ids".formatted(tenantId),
+                    new ExecutionController.SetLabelsByIdsRequest(List.of(result.getId()), List.of(new Label("Team", "x")))
+                ),
+                ApiAsyncOperationResponse.class
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("Invalid label key");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendatbreakpointthenresume")
     void shouldSuspendAtBreakpointThenResume() {
         String tenantId = "shouldsuspendatbreakpointthenresume";

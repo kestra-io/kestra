@@ -55,6 +55,7 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
@@ -250,6 +251,9 @@ public class ExecutionController {
 
     @Inject
     private WebhookBodyService webhookBodyService;
+
+    @Inject
+    private ModelValidator modelValidator;
 
     @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
@@ -1154,6 +1158,10 @@ public class ExecutionController {
             : RequestUtils.toMap(labels).entrySet().stream()
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
+
+        // the label key format is enforced on the flow definition and on the single set-labels
+        // endpoint, so enforce it here too rather than letting a malformed key in through this door
+        parsedLabels.forEach(modelValidator::validate);
 
         // system labels can only be set by Kestra itself; the only exceptions accepted from a
         // client are system.correlationId and system.from=ui (sent by the UI). Any other
@@ -2417,7 +2425,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByIds(
-        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
+        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body @Valid SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -2468,7 +2476,7 @@ public class ExecutionController {
         });
     }
 
-    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<@Valid Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)

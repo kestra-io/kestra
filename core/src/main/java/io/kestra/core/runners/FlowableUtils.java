@@ -415,6 +415,20 @@ public class FlowableUtils {
      * @return a list of String with no duplicates if the values were a list, or a list of pairs of String/String if the values were a map.
      * @throws IllegalVariableEvaluationException in case of JSON error, unsupported value type or duplicate values.
      */
+    private static final int MAX_REPORTED_VALUE_LENGTH = 100;
+
+    /**
+     * Builds the user-facing message for a `values` that did not render to a list or a map. The rendered value is
+     * truncated so a large rendered payload cannot flood the execution logs.
+     */
+    private static String notAListOrMapMessage(String renderValue) {
+        String reported = renderValue == null ? "null"
+            : renderValue.length() > MAX_REPORTED_VALUE_LENGTH
+                ? renderValue.substring(0, MAX_REPORTED_VALUE_LENGTH) + "…"
+                : renderValue;
+        return "The `values` property must be a list, a map, or an expression that renders to one, but it rendered to: " + reported;
+    }
+
     public static Either<List<String>, List<Pair<String, String>>> resolveValues(RunContext runContext, Object values) throws IllegalVariableEvaluationException {
         switch (values) {
             case String stringValue -> {
@@ -447,10 +461,13 @@ public class FlowableUtils {
                         }
                         return Either.right(resolvedValues);
                     } else {
-                        throw new IllegalVariableEvaluationException("Unknown value type: " + valuesNode.getNodeType());
+                        throw new IllegalVariableEvaluationException(notAListOrMapMessage(renderValue));
                     }
                 } catch (IOException e) {
-                    throw new IllegalVariableEvaluationException(e);
+                    // the rendered value is not parseable at all (e.g. a plain string such as
+                    // `values: "hello world"`); keep the parse error as the cause so it stays in the
+                    // stack trace, but tell the user what is actually wrong
+                    throw new IllegalVariableEvaluationException(notAListOrMapMessage(renderValue), e);
                 }
             }
             case List<?> listValue -> {

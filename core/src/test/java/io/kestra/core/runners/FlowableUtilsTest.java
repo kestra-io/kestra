@@ -234,6 +234,21 @@ class FlowableUtilsTest {
     }
 
     @Test
+    void resolveValues_withPlainString_shouldFailWithAUserFacingMessage() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When / Then - a plain string is not a list, and the failure must say so
+        // rather than surfacing the Jackson parse error
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "hello world"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("must be a list, a map, or an expression that renders to one")
+            .hasMessageNotContaining("JsonParseException")
+            .hasMessageNotContaining("Unrecognized token")
+            .hasMessageNotContaining("StreamReadFeature");
+    }
+
+    @Test
     void resolveValues_withStringJsonArray_shouldReturnListOfStrings() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();

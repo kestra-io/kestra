@@ -1,6 +1,11 @@
 <template>
     <div class="json-tree">
-        <div v-if="rootLiteral !== undefined" class="json-tree__row">
+        <div
+            v-if="rootLiteral !== undefined"
+            class="json-tree__row"
+            :style="{'--depth': 0}"
+            @click="$emit('select', basePath ?? '', value)"
+        >
             <span class="json-tree__gutter">1</span>
             <span class="json-tree__content">
                 <span class="json-tree__value" :class="`json-tree__value--${valueType(value)}`">{{ rootLiteral }}</span>

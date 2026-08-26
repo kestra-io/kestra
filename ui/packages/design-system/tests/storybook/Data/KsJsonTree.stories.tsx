@@ -172,7 +172,7 @@ export const EmptyContainers: Story = {
 /**
  * A container that is the whole value and is empty yields no rows at all. The tree used to render
  * blank, which reads as a broken pane in the variable explorer, and hid a log line whose entire
- * message was `{}` — that message parses as structured, so the raw-message fallback is skipped.
+ * message was `{}`, which parses as structured and so suppresses the raw-message fallback.
  */
 export const EmptyRoot: Story = {
     args: {value: {}, defaultExpanded: true},

@@ -128,6 +128,39 @@ class McpServerControllerTest {
     }
 
     @Test
+    void listMcpsWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(GET(MCP_PATH + "?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void listMcpsSortsById() {
+        ApiMcpServer first = buildMcp("aaa-" + IdUtils.create());
+        ApiMcpServer second = buildMcp("zzz-" + IdUtils.create());
+        client.toBlocking().retrieve(POST(MCP_PATH, first), ApiMcpServer.class);
+        client.toBlocking().retrieve(POST(MCP_PATH, second), ApiMcpServer.class);
+
+        PagedResults<ApiMcpServer> results = client.toBlocking().retrieve(
+            GET(MCP_PATH + "?sort=id:asc&size=1000"),
+            Argument.of(PagedResults.class, ApiMcpServer.class)
+        );
+
+        List<String> ids = results.getResults().stream().map(ApiMcpServer::id).toList();
+        assertThat(ids.indexOf(first.id())).isLessThan(ids.indexOf(second.id()));
+    }
+
+    @Test
     void shouldUpdateMcpWhenUpdatingExistingMcp() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());

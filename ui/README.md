@@ -57,8 +57,7 @@ kestra:
 
 datasources:
   postgres:
-    # It is important to note that you must use the "host.docker.internal" host when connecting to a docker container outside of your devcontainer as attempting to use localhost will only point back to this devcontainer.
-    url: jdbc:postgresql://host.docker.internal:5432/kestra
+    url: jdbc:postgresql://localhost:5432/kestra
     driverClassName: org.postgresql.Driver
     username: kestra
     password: k3str4
@@ -89,9 +88,8 @@ If you're doing frontend development, you can run `npm run dev` from the `ui` fo
 
 ### Testing
 
-If inside of a devcontainer, make sure to follow these instructions:
-
-- Install browsers using playwright: `npx playwright install`
+The devcontainer installs the Playwright browsers on create, so `npm run test:e2e` works out of the
+box. If they are ever missing, reinstall them with `npx playwright install` from this folder.
 
 ---
 

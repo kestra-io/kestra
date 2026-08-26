@@ -44,6 +44,7 @@ import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {consolidateChunks} from "./plugins/consolidateChunks.js"
+import {precompressAssets} from "./plugins/precompressAssets.js"
 import {VitePWA} from "vite-plugin-pwa"
 import {loaderFragment} from "./plugins/loaderFragment.js"
 
@@ -121,6 +122,7 @@ export default defineConfig(({mode}) => {
                 },
             }),
             !process.env.STORYBOOK && consolidateChunks(),
+            !process.env.STORYBOOK && precompressAssets(),
             stripDeadPrebuildDefault(),
             commit(),
             codecovVitePlugin({

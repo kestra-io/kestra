@@ -6,13 +6,6 @@ micronaut:
       signature-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
       filter:
         enabled: false
-  router:
-    static-resources:
-      ui:
-        paths: classpath:ui
-        mapping: /ui/**
-        enabled: ${kestra.webserver.ui.enabled:true}
-
   http:
     client:
       read-idle-timeout: 60s

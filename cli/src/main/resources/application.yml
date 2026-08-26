@@ -9,10 +9,6 @@ micronaut:
       swagger:
         paths: classpath:META-INF/swagger
         mapping: /swagger/**
-      ui:
-        paths: classpath:ui
-        mapping: /ui/**
-        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**
@@ -162,6 +158,7 @@ kestra:
       # content-security-policy: "default-src 'self'; ..." # tune for the UI before enforcing
       # content-security-policy-report-only: true # report-only intermediate step
       # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
+
 
   retries:
     attempts: 5

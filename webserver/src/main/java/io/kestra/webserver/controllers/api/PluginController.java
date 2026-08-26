@@ -1,7 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,11 +23,13 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.EditionProvider;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.HttpCacheUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
@@ -36,6 +38,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
@@ -52,6 +55,8 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.validation.constraints.Max;
@@ -573,10 +578,13 @@ public class PluginController {
     @Get(value = "/{group}/pluginUi/{path:.*}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins group by subgroups")
-    public HttpResponse<StreamedFile> getPluginUi(
+    // The response is raw file bytes, not base64: keep the OpenAPI schema as binary like the previous StreamedFile signature.
+    @ApiResponse(responseCode = "200", description = "Ok", content = @Content(schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
+    public HttpResponse<?> getPluginUi(
+        HttpRequest<?> request,
         @Parameter(description = "The plugin group") @PathVariable String group,
-        @Parameter(description = "The file path") @PathVariable String path) {
-        if (path.contains("..") || path.startsWith("/") || path.startsWith("\\") || path.contains("\0")) {
+        @Parameter(description = "The file path") @PathVariable String path) throws IOException {
+        if (!FileUtils.isSafeRelativePath(path)) {
             return HttpResponse.badRequest();
         }
 
@@ -585,10 +593,10 @@ public class PluginController {
             .findFirst()
             .orElseThrow(NotFoundException::new);
 
-        String resourcePath = path.startsWith("/") ? "plugin-ui" + path : "plugin-ui/" + path;
+        String resourcePath = "plugin-ui/" + path;
 
-        InputStream in = plugin.getClassLoader().getResourceAsStream(resourcePath);
-        if (in == null) {
+        URL resourceUrl = plugin.getClassLoader().getResource(resourcePath);
+        if (resourceUrl == null) {
             throw new NotFoundException();
         }
 
@@ -596,10 +604,22 @@ public class PluginController {
             .forExtension(NameUtils.extension(resourcePath))
             .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
 
-        StreamedFile streamedFile = new StreamedFile(in, mediaType);
+        // Plugin files are third-party artifacts of arbitrary size, so they are always streamed and
+        // never buffered. The entity tag derives from the plugin UI source hash, which changes with
+        // the content, so revalidation costs no read; the weak marker reflects that any transfer
+        // coding is applied downstream per request.
+        String etag = "W/\"" + plugin.getPluginUiSourceHash() + "-" + HttpCacheUtils.sha256Hex(path.getBytes(java.nio.charset.StandardCharsets.UTF_8)).substring(0, 16) + "\"";
+        if (HttpCacheUtils.anyEtagMatches(request.getHeaders().get(io.micronaut.http.HttpHeaders.IF_NONE_MATCH), etag)) {
+            return HttpResponse.notModified()
+                .header(io.micronaut.http.HttpHeaders.ETAG, etag)
+                .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE)
+                .header(io.micronaut.http.HttpHeaders.VARY, io.micronaut.http.HttpHeaders.ACCEPT_ENCODING);
+        }
 
-        //todo add front cache later
-        return HttpResponse.ok(streamedFile);
+        return HttpResponse.ok(new StreamedFile(resourceUrl.openStream(), mediaType))
+            .header(io.micronaut.http.HttpHeaders.ETAG, etag)
+            .header(io.micronaut.http.HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE)
+            .header(io.micronaut.http.HttpHeaders.VARY, io.micronaut.http.HttpHeaders.ACCEPT_ENCODING);
     }
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {

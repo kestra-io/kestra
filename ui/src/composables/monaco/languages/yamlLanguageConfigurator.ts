@@ -33,84 +33,17 @@ import {
     filterExistingSubflowLinks,
     SUBFLOW_LINK_SCHEME,
 } from "./subflowLinkProvider"
+import {
+    filterMissingRequiredTaskProperties,
+    scopePropertySuggestionsToTaskType,
+    taskTypeAtCursor,
+} from "./taskCompletionScoping"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
 import CompletionContext = languages.CompletionContext;
-
-type TaskLike = Record<string, unknown>;
-
-function isTaskLike(value: unknown): value is TaskLike {
-    return (
-        typeof value === "object" &&
-        value !== null &&
-        typeof (value as TaskLike).id === "string" &&
-        typeof (value as TaskLike).type === "string"
-    )
-}
-
-function filterMissingRequiredTaskProperties({
-                                                 source,
-                                                 cursorIndex,
-                                                 requiredProperties,
-                                             }: {
-    source: string;
-    cursorIndex: number;
-    requiredProperties: string[];
-}): string[] {
-    if (!requiredProperties.length || !source.length) {
-        return []
-    }
-
-    try {
-        const safeCursorIndex = Math.max(
-            0,
-            Math.min(cursorIndex - 1, source.length - 1),
-        )
-        const probeIndexes = [safeCursorIndex]
-        let previousNonWhitespace = safeCursorIndex
-        while (
-            previousNonWhitespace > 0 &&
-            /\s/.test(source.charAt(previousNonWhitespace))
-            ) {
-            previousNonWhitespace--
-        }
-        if (previousNonWhitespace !== safeCursorIndex) {
-            probeIndexes.push(previousNonWhitespace)
-        }
-
-        for (const probeIndex of probeIndexes) {
-            const localized = YAML_UTILS.localizeElementAtIndex(
-                source,
-                probeIndex,
-            )
-            const candidates = [...(localized?.parents ?? []), localized?.value]
-
-            for (let i = candidates.length - 1; i >= 0; i--) {
-                const candidate = candidates[i]
-                if (
-                    isTaskLike(candidate) &&
-                    typeof candidate.id === "string" &&
-                    typeof candidate.type === "string"
-                ) {
-                    return requiredProperties.filter(
-                        (property) =>
-                            !Object.prototype.hasOwnProperty.call(
-                                candidate,
-                                property,
-                            ),
-                    )
-                }
-            }
-        }
-
-        return requiredProperties
-    } catch {
-        return requiredProperties
-    }
-}
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     protected readonly yamlAutoCompletionObject: YamlAutoCompletion
@@ -391,10 +324,33 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion
                 })
 
+            // Monaco YAML derives property suggestions from the union of every task type, so a task
+            // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
+            let scopedSuggestions = suggestions
+            if (!isTypeValueContext) {
+                const type = taskTypeAtCursor({
+                    source: model.getValue(),
+                    cursorIndex: model.getOffsetAt(position),
+                })
+                if (type) {
+                    try {
+                        const pluginDoc = await pluginsStore.load({cls: type, commit: false})
+                        const properties = pluginDoc?.schema?.properties?.properties
+                        scopedSuggestions = scopePropertySuggestionsToTaskType({
+                            suggestions,
+                            validPropertyKeys: properties ? Object.keys(properties) : undefined,
+                            propertyKind: monaco.languages.CompletionItemKind.Property,
+                        })
+                    } catch {
+                        // Fail open: keep the unscoped suggestions when the type schema can't be loaded.
+                    }
+                }
+            }
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions,
+                suggestions: scopedSuggestions,
             }
         }
     }

@@ -16,12 +16,13 @@ const queryFilterNode = (logical: LogicalOperator, children: QueryFilter[]): Que
 /**
  * Builds one logical position in the filter tree, mirroring the backend's
  * `QueryFilterFormatBinder.NodeBuilder`: direct leaves land here directly, LABELS leaves sharing an
- * operation are merged into one filter with a map value, and nested `[and|or][N]` segments descend
- * into a sub-node keyed by (logical, index) that is recursively flattened by {@link build}.
+ * operation are merged into one filter unless an IN/NOT_IN key repeats, and nested `[and|or][N]`
+ * segments descend into a sub-node keyed by (logical, index) that is recursively flattened by
+ * {@link build}.
  */
 class FilterNodeBuilder {
     private readonly directLeaves: QueryFilter[] = []
-    private readonly labelsByOp = new Map<QueryFilterOp, Record<string, string>>()
+    private readonly labelsByOp = new Map<QueryFilterOp, Record<string, string[]>>()
     private readonly subNodes = new Map<LogicalOperator, Map<number, FilterNodeBuilder>>()
 
     descend(logical: LogicalOperator, index: number): FilterNodeBuilder {
@@ -33,12 +34,17 @@ class FilterNodeBuilder {
     }
 
     addLeaf(field: QueryFilterField, operation: QueryFilterOp, subKey: string | undefined, value: string | string[]) {
-        const scalarValue = Array.isArray(value) ? value[0] : value
-
-        if (field === "labels" && subKey) {
-            const map = this.labelsByOp.get(operation) ?? {}
-            map[subKey] = scalarValue
-            this.labelsByOp.set(operation, map)
+        if (field === "labels") {
+            const values = (Array.isArray(value) ? value : [value]).filter(Boolean)
+            if (values.length === 0) return
+            if (subKey !== undefined) {
+                if (!subKey) return
+                const map = this.labelsByOp.get(operation) ?? Object.create(null) as Record<string, string[]>
+                map[subKey] = [...(map[subKey] ?? []), ...values]
+                this.labelsByOp.set(operation, map)
+                return
+            }
+            this.directLeaves.push({field, operation, value: Array.isArray(value) ? values : values[0]})
             return
         }
 
@@ -48,10 +54,24 @@ class FilterNodeBuilder {
     build(): QueryFilter[] {
         const items: QueryFilter[] = [...this.directLeaves]
 
-        this.labelsByOp.forEach((map, operation) => {
-            if (Object.keys(map).length > 0) {
-                items.push({field: "labels", operation, value: map})
+        this.labelsByOp.forEach((valuesByKey, operation) => {
+            const entries = Object.entries(valuesByKey)
+            if (entries.length === 0) return
+
+            const hasRepeatedKey = entries.some(([, values]) => values.length > 1)
+            if (hasRepeatedKey && (operation === "IN" || operation === "NOT_IN")) {
+                const children = entries.flatMap(([key, values]) =>
+                    values.map(value => ({field: "labels", operation, value: {[key]: value}} as QueryFilter)),
+                )
+                items.push(queryFilterNode(operation === "IN" ? "OR" : "AND", children))
+                return
             }
+
+            items.push({
+                field: "labels",
+                operation,
+                value: Object.fromEntries(entries.map(([key, values]) => [key, values[0]])),
+            })
         })
 
         this.subNodes.forEach((slots, logical) => {

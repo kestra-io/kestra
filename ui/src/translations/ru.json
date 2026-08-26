@@ -2204,7 +2204,7 @@
       "next_match": "Следующее совпадение",
       "no_results_description": "Попробуйте расширить namespace, переключить область видимости обратно на All source или отключить Match case и Match whole word.",
       "no_results_hidden_type": "Найдено {count} совпадение в {type}, который вы не выбрали. | Найдено {count} совпадения в {type}, который вы не выбрали. | Найдено {count} совпадений в {type}, который вы не выбрали.",
-      "no_results_in_types": "Нет совпадений для «{query}» в {types}",
+      "no_results_in_types": "Нет совпадений для {query} в {types}",
       "no_results_title": "Нет совпадений для «{query}»",
       "open_flow": "Открыть flow",
       "open_in_editor": "Открыть в редакторе",

@@ -2204,7 +2204,7 @@
       "next_match": "अगला मिलान",
       "no_results_description": "namespace को विस्तृत करने का प्रयास करें, स्कोप को वापस All source पर स्विच करें, या Match case और Match whole word को बंद करें।",
       "no_results_hidden_type": "आपके द्वारा न चुने गए {type} में {count} मिलान मिला। | आपके द्वारा न चुने गए {type} में {count} मिलान मिले।",
-      "no_results_in_types": "{types} में “{query}” के लिए कोई मिलान नहीं",
+      "no_results_in_types": "{types} में {query} के लिए कोई मिलान नहीं",
       "no_results_title": "“{query}” के लिए कोई मिलान नहीं मिला",
       "open_flow": "flow खोलें",
       "open_in_editor": "एडिटर में खोलें",

@@ -2204,7 +2204,7 @@
       "next_match": "Siguiente coincidencia",
       "no_results_description": "Intenta ampliar el namespace, cambiar el ámbito a \"All source\" o desactivar \"Match case\" y \"Match whole word\".",
       "no_results_hidden_type": "Se encontró {count} coincidencia en {type}, que no has seleccionado. | Se encontraron {count} coincidencias en {type}, que no has seleccionado.",
-      "no_results_in_types": "Sin coincidencias para “{query}” en {types}",
+      "no_results_in_types": "Sin coincidencias para {query} en {types}",
       "no_results_title": "No hay coincidencias para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir en el editor",

@@ -129,6 +129,14 @@ const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]lan
 const LANG_REGISTRY = /node_modules[\\/]shiki[\\/]dist[\\/]langs(-bundle-full-[^\\/]+)?\.mjs$/
 
 /**
+ * True for the on-demand grammar chunks: one per language, plus the registry
+ * index mapping a language to its chunk. Matches both a bare chunk name and the
+ * hashed file it is emitted as.
+ * @param {string} name
+ */
+const isLangChunkName = (name) => /(^|[\\/])shiki-lang(-|s-registry)/.test(name)
+
+/**
  * Grammars some module statically imports (shikiHighlighter.ts pre-registers a
  * set, shikiToolset.ts another), plus the ones those pull in transitively — html
  * embeds css and javascript, and so on. Filled during buildEnd: derived from the
@@ -365,13 +373,19 @@ const GROUPS = [
         priority: -10,
         includeDependenciesRecursively: false,
     },
-    // Every grammar that is not pre-registered, in one chunk fetched only when a
-    // code fence uses an exotic language (see loadLanguageOnDemand). Without
-    // this group Shiki's registry emits one chunk per language (~350 files).
+    // One chunk per grammar that is not pre-registered, so an exotic code fence
+    // fetches only the language it names (see loadLanguageOnDemand) instead of
+    // the whole registry, plus the registry index that maps a language to its
+    // chunk. Claimed here rather than left to automatic chunking because the
+    // markdown group's pattern also matches @shikijs/langs and would otherwise
+    // pull every grammar into the chunk that every markdown render downloads.
     {
-        name: "shiki-langs",
-        test: (id) => isRealModule(id) &&
-            (LANG_REGISTRY.test(id) || (LANG_MODULE.test(id) && !staticLangs.has(id))),
+        name: (id) => {
+            if (!isRealModule(id)) return null
+            if (LANG_REGISTRY.test(id)) return "shiki-langs-registry"
+            if (!LANG_MODULE.test(id) || staticLangs.has(id)) return null
+            return `shiki-lang-${(id.split(/[\\/]/).pop() ?? "").replace(/\.m?js$/, "")}`
+        },
         priority: -12,
         includeDependenciesRecursively: false,
     },
@@ -476,8 +490,9 @@ export function consolidateChunks({pages = {}} = {}) {
             // catch-all, or an untainted chunk reaching a lazy toolchain.
             const lazyNames = LAZY_GROUPS.map((group) => group.name)
             for (const chunk of Object.values(bundle)) {
-                // shiki-langs belongs to the markdown toolchain and may reach it.
-                if (chunk.type !== "chunk" || chunk.name === "shiki-langs" || lazyNames.includes(chunk.name)) continue
+                // A grammar chunk belongs to the markdown toolchain and may reach
+                // it: a non-pre-registered grammar can embed a pre-registered one.
+                if (chunk.type !== "chunk" || isLangChunkName(chunk.name) || lazyNames.includes(chunk.name)) continue
                 for (const dependency of (chunk.imports ?? []).map((file) => bundle[file]?.name ?? "")) {
                     if (lazyNames.includes(dependency) && !chunk.name.includes(dependency)) {
                         this.error(`Chunk '${chunk.name}' statically imports the lazy '${dependency}' chunk, so every page reaching '${chunk.name}' now downloads it. Its modules should be reported as reaching '${dependency}' by collectLazyReach.`)
@@ -507,14 +522,14 @@ export function consolidateChunks({pages = {}} = {}) {
                 }
             }
 
-            // A static edge into shiki-langs would make every markdown render
-            // fetch all ~350 grammars, which is exactly what this split avoids.
-            const isLangChunk = (name) => /(^|[\\/])shiki-langs-/.test(name)
+            // A static edge into a grammar chunk or into the registry index would
+            // make every markdown render fetch grammars it has no use for, which
+            // is exactly what this split avoids.
             for (const [name, chunk] of Object.entries(bundle)) {
-                if (chunk.type !== "chunk" || isLangChunk(name)) continue
-                const leaked = (chunk.imports ?? []).filter(isLangChunk)
+                if (chunk.type !== "chunk" || isLangChunkName(name)) continue
+                const leaked = (chunk.imports ?? []).filter(isLangChunkName)
                 if (leaked.length) {
-                    this.error(`Chunk '${name}' statically imports the on-demand grammar bundle (${leaked.join(", ")}). A statically imported grammar likely gained a transitive import that collectStaticLangs failed to reach.`)
+                    this.error(`Chunk '${name}' statically imports the on-demand grammar chunks (${leaked.join(", ")}). A statically imported grammar likely gained a transitive import that collectStaticLangs failed to reach.`)
                 }
             }
         },

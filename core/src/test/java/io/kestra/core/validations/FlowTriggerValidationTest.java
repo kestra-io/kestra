@@ -1,11 +1,13 @@
 package io.kestra.core.validations;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.plugin.core.trigger.Flow;
 
@@ -103,5 +105,51 @@ class FlowTriggerValidationTest {
         assertThat(valid).isPresent();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getConstraintViolations().iterator().next().getPropertyPath().toString()).isEqualTo("minSatisfied");
+    }
+
+    @Test
+    void shouldNotBeValidWhenMinSatisfiedExceedsTheNumberOfDependencies() {
+        // Given
+        var trigger = Flow.builder()
+            .id("flow-trigger")
+            .type(Flow.class.getName())
+            .mode(MultipleCondition.Mode.AT_LEAST)
+            .minSatisfied(99)
+            .dependsOn(List.of(
+                Flow.Dependency.builder()
+                    .namespace("company.team")
+                    .flowId("upstream_flow")
+                    .states(List.of(State.Type.SUCCESS))
+                    .build()
+            ))
+            .build();
+
+        // When
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(trigger);
+
+        // Then
+        assertThat(valid).isPresent();
+        assertThat(valid.get().getMessage()).contains("`minSatisfied` cannot be greater than the number of `dependsOn` conditions");
+    }
+
+    @Test
+    void shouldBeValidWhenMinSatisfiedEqualsTheNumberOfDependencies() {
+        // Given
+        var trigger = Flow.builder()
+            .id("flow-trigger")
+            .type(Flow.class.getName())
+            .mode(MultipleCondition.Mode.AT_LEAST)
+            .minSatisfied(2)
+            .dependsOn(List.of(
+                Flow.Dependency.builder().namespace("company.team").flowId("a").states(List.of(State.Type.SUCCESS)).build(),
+                Flow.Dependency.builder().namespace("company.team").flowId("b").states(List.of(State.Type.SUCCESS)).build()
+            ))
+            .build();
+
+        // When
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(trigger);
+
+        // Then
+        assertThat(valid).isEmpty();
     }
 }

@@ -19,9 +19,22 @@ public class FlowTriggerValidator implements ConstraintValidator<FlowTriggerVali
             return true; // nulls are allowed according to spec
         }
 
-        if (MultipleCondition.Mode.AT_LEAST == value.getMode() && value.getMinSatisfied() == null) {
+        if (MultipleCondition.Mode.AT_LEAST != value.getMode()) {
+            return true;
+        }
+
+        if (value.getMinSatisfied() == null) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("`minSatisfied` must be set when mode is AT_LEAST")
+                .addConstraintViolation();
+            return false;
+        }
+
+        if (value.getDependsOn() != null && value.getMinSatisfied() > value.getDependsOn().size()) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate(
+                    "`minSatisfied` cannot be greater than the number of `dependsOn` conditions (" + value.getDependsOn().size() + ")"
+                )
                 .addConstraintViolation();
             return false;
         }

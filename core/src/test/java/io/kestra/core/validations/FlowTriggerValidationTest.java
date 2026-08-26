@@ -1,5 +1,6 @@
 package io.kestra.core.validations;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -103,5 +104,24 @@ class FlowTriggerValidationTest {
         assertThat(valid).isPresent();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getConstraintViolations().iterator().next().getPropertyPath().toString()).isEqualTo("minSatisfied");
+    }
+
+    @Test
+    void shouldNotBeValidWhenMinSatisfiedAboveDependsOn() {
+        // Given
+        var trigger = Flow.builder()
+            .id("flow-trigger")
+            .type(Flow.class.getName())
+            .dependsOn(List.of())
+            .minSatisfied(1)
+            .build();
+
+        // When
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(trigger);
+
+        // Then
+        assertThat(valid).isPresent();
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).contains("`minSatisfied` must be lower than or equal to the number of `dependsOn`");
     }
 }

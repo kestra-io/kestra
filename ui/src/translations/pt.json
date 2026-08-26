@@ -182,6 +182,7 @@
     "add_new_item": "Adicionar novo item",
     "copy": "Copiar",
     "copy_to_clipboard": "Copiar para a área de transferência",
+    "copy_pebble_expression": "Copiar expressão pebble",
     "new": "Novo",
     "edit": "Editar",
     "back": "Voltar",
@@ -367,7 +368,7 @@
     "unqueue done": "A execução está fora da fila",
     "force run": "Executar forçadamente",
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
-    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "force run confirm": "Tem certeza de que deseja forçar a execução `{id}`?\n\nAVISO: forçar a execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "force run done": "A execução foi forçada",
     "metrics": "Métricas",
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
@@ -657,7 +658,7 @@
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",
     "bulk pause": "Tem certeza de que deseja pausar a(s) execução(ões) <code>{executionCount}</code>?",
-    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "bulk force run": "Tem certeza de que deseja forçar a execução de `{executionCount}` execução(ões)?\n\nAVISO: forçar a execução de uma execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
@@ -836,6 +837,7 @@
         "folder_error": "Ocorreu um erro ao criar a pasta"
       },
       "rename": {
+        "error": "Não foi possível renomear para \"{name}\". Já pode existir um ficheiro ou uma pasta com esse nome.",
         "label": "Renomear",
         "file": "Renomear arquivo",
         "folder": "Renomear pasta",
@@ -1663,7 +1665,7 @@
         "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente."
       },
       "apps": {
-        "title": "Você ainda não tem apps!",
+        "title": "Você ainda não tem Apps!",
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo."
       },
       "testSuites": {
@@ -1889,6 +1891,7 @@
           "test": "teste"
         },
         "contextRemoved": "Removido {type} {id} do contexto.",
+        "modelChanged": "Mudou para {model}.",
         "toolResult": {
           "detail": "Detalhes",
           "error": "{tool} falhou",
@@ -1959,6 +1962,12 @@
           "Convergindo"
         ],
         "newChat": "Novo chat",
+        "fixThread": {
+          "flow": "Corrigir Flow {id}",
+          "task": "Corrigir Task {id}",
+          "execution": "Corrigir execução de {id}",
+          "generic": "Corrigir erros do Flow"
+        },
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",
@@ -2203,7 +2212,7 @@
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, mudar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
       "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
-      "no_results_in_types": "Sem correspondências para “{query}” em {types}",
+      "no_results_in_types": "Sem correspondências para {query} em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",

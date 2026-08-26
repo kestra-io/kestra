@@ -224,6 +224,37 @@ class KVControllerTest {
     }
 
     @Test
+    void listAllKeysWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET("/api/v1/main/kv?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void listAllKeysSortsByUpdateDateAlias() throws IOException {
+        // updateDate is the KVEntry API field name; the real column is "updated"
+        String namespace = TestsUtils.randomNamespace();
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataStateStore);
+        kvStore.put("some-key", new KVValueAndMetadata(new KVMetadata(null, (Instant) null), "some-value"));
+
+        PagedResults<KVEntry> res = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/kv?sort=updateDate:desc"),
+            Argument.of(PagedResults.class, KVEntry.class)
+        );
+        assertThat(res.getTotal()).isEqualTo(1);
+    }
+
+    @Test
     void listKeysWithInheritance() throws IOException {
         Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
         String namespaceParent = "io";

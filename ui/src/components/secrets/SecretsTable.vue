@@ -93,9 +93,9 @@
             <KsTableColumn columnKey="copy" className="row-action">
                 <template #default="scope">
                     <KsIconButton
-                        :tooltip="$t('copy_to_clipboard')"
+                        :tooltip="$t('copy_pebble_expression')"
                         placement="left"
-                        @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
+                        @click="copyKey(scope.row?.key)"
                     >
                         <ContentCopy />
                     </KsIconButton>
@@ -222,7 +222,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {ref, computed, watch, onMounted, nextTick, useTemplateRef} from "vue"
+    import {ref, computed, watch, nextTick, useTemplateRef} from "vue"
     import _merge from "lodash/merge"
 
     import Lock from "vue-material-design-icons/Lock.vue"
@@ -323,7 +323,11 @@
     const {guardedClose: guardSecretClose} = useDiscardGuard(() => JSON.stringify(secret.value) !== secretBaseline.value)
     const beforeSecretClose = (done: () => void) => guardSecretClose(() => done())
 
-    const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS
+    const hasNamespaceColumn = props.namespace === undefined || props.namespaceColumn
+
+    const storageKey = hasNamespaceColumn
+        ? storageKeys.DISPLAY_SECRETS_COLUMNS
+        : storageKeys.DISPLAY_NAMESPACE_SECRETS_COLUMNS
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -348,7 +352,7 @@
         ]
 
         return columns.filter(col => {
-            if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false
+            if (col.prop === "namespace" && !hasNamespaceColumn) return false
             if (col.prop === "description" && props.keyOnly) return false
             if (col.prop === "tags" && (props.keyOnly || props.paneView)) return false
             return true
@@ -545,6 +549,11 @@
         secret.value?.tags?.splice(index, 1)
     }
 
+    const copyKey = async (key: string) => {
+        await Utils.copy(`{{ secret('${key}') }}`)
+        toast.success(t("copied"))
+    }
+
     const removeSecret = ({key, namespace}: {key: string; namespace: string}) => {
         toast.confirm(t("delete confirm", {name: key}), () => {
             return namespacesStore
@@ -633,13 +642,6 @@
         if (oldValue !== newValue) {
             emit("hasData", newValue!)
         }
-    })
-
-    onMounted(() => {
-        updateDisplayColumns(
-            localStorage.getItem(`columns_${storageKey}`)?.split(",") ||
-                optionalColumns.value?.filter(col => col.default).map(col => col.prop),
-        )
     })
 </script>
 <style scoped lang="scss">

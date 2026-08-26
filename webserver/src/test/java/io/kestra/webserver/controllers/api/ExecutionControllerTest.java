@@ -417,6 +417,15 @@ class ExecutionControllerTest {
         assertThat(exception.getMessage()).doesNotContainIgnoringCase("select");
         assertThat(exception.getMessage()).doesNotContain("SQL [");
         assertThat(exception.getMessage()).contains("[a-");
+
+        exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[namespace][BOGUS_OP]=test"
+                ), PagedResults.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test

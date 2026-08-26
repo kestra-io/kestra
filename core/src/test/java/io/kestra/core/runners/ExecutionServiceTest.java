@@ -502,6 +502,22 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
+    void shouldNotRestartPausedExecution() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+
+        // a PAUSED execution must be resumed or killed, restarting it would lose the pause information
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> executionService.restart(execution, null)
+        );
+
+        assertThat(exception.getMessage()).contains("current state is 'PAUSED'");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/failed-first.yaml")
     void shouldRestartAfterChangeTaskState(Execution execution) throws Exception {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

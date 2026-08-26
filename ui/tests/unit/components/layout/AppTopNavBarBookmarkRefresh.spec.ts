@@ -70,7 +70,7 @@ describe("AppTopNavBar bookmark label refresh", () => {
         mountNavBar()
         await nextTick()
 
-        expect(bookmarks.pages).toEqual([{path: "/main/flows", label: "Flows"}])
+        expect(bookmarks.pages).toEqual([{path: "/main/flows", label: "Flows", custom: false}])
     })
 
     // The previous bar's ownership is only released a tick after it unmounts, so a route that
@@ -89,7 +89,7 @@ describe("AppTopNavBar bookmark label refresh", () => {
         route.fullPath = "/main/blueprints/1"
         await nextTick()
 
-        expect(bookmarks.pages).toEqual([{path: "/main/blueprints/1", label: "Blueprint one"}])
+        expect(bookmarks.pages).toEqual([{path: "/main/blueprints/1", label: "Blueprint one", custom: false}])
     })
 
     it("should re-derive the label once the visited page claims the top nav", async () => {
@@ -110,6 +110,6 @@ describe("AppTopNavBar bookmark label refresh", () => {
         topNav.title = "Blueprint one"
         await nextTick()
 
-        expect(bookmarks.pages).toEqual([{path: "/main/blueprints/1", label: "Blueprint one"}])
+        expect(bookmarks.pages).toEqual([{path: "/main/blueprints/1", label: "Blueprint one", custom: false}])
     })
 })

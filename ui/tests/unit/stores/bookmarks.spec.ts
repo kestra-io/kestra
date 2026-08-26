@@ -38,20 +38,21 @@ describe("bookmarks store", () => {
         const store = useBookmarksStore()
         store.add({path: "/flows", label: "Flows"})
 
-        expect(store.pages[0].custom).toBeUndefined()
+        expect(store.pages[0].custom).toBe(false)
         store.rename({path: "/flows", label: "Mine"})
         expect(store.pages[0].custom).toBe(true)
     })
 
-    // Entries persisted before the flag existed carry no `custom`, and must be refreshable —
-    // they are exactly the stale-language bookmarks this fixes.
-    it("should refresh a bookmark stored before the custom flag existed", () => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([{path: "/flows", label: "Ausführungen"}]))
+    // Entries persisted before the flag existed carry no `custom`, so there is no way to tell one
+    // the user renamed from one this store derived. Re-deriving them would silently rename a
+    // bookmark someone named themselves, so an unflagged entry keeps whatever label it holds.
+    it("should leave a bookmark stored before the custom flag existed alone", () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([{path: "/flows", label: "Mes flows"}]))
         const store = useBookmarksStore()
 
-        store.refreshLabel({path: "/flows", label: "Executions"})
+        store.refreshLabel({path: "/flows", label: "Flows: Executions"})
 
-        expect(store.pages[0].label).toBe("Executions")
+        expect(store.pages[0].label).toBe("Mes flows")
     })
 
     it("should not touch other bookmarks", () => {
@@ -83,7 +84,7 @@ describe("bookmarks store", () => {
 
         store.rename({path: "/flows", label: "Flows"})
 
-        expect(store.pages[0].custom).toBeUndefined()
+        expect(store.pages[0].custom).toBe(false)
         store.refreshLabel({path: "/flows", label: "Ablaeufe"})
         expect(store.pages[0].label).toBe("Ablaeufe")
     })

@@ -7,8 +7,9 @@ interface Page {
     path: string;
     label?: string;
     /**
-     * True once the user has typed their own label, which then has to survive a language
-     * change. Absent on entries stored before this existed, which are treated as derived.
+     * Whether the label is the user's own words (`true`) or derived from the page (`false`).
+     * Absent means an entry stored before this existed, whose provenance is unknown: it may
+     * well have been renamed by hand, so it is never re-derived either.
      */
     custom?: boolean;
 }
@@ -18,7 +19,9 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
 
     function add(page: Page) {
         if (!pages.value.find(p => p.path === page.path)) {
-            pages.value = [...pages.value, page]
+            // Stamped as derived so `refreshLabel` may re-derive it: without the flag it would be
+            // indistinguishable from a pre-existing entry, which is deliberately left alone.
+            pages.value = [...pages.value, {custom: false, ...page}]
         }
     }
 
@@ -39,11 +42,12 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
     /**
      * Re-derives a bookmark's label from the page it points at. Labels are stored as resolved
      * text — they are composed from a translated title and breadcrumb — so a bookmark otherwise
-     * keeps the language it was created in forever. A label the user typed is left alone.
+     * keeps the language it was created in forever. Only a label this store derived itself is
+     * re-derived: one the user typed, and one from before the flag existed, are left alone.
      */
     function refreshLabel(page: Page) {
         pages.value = pages.value.map(p =>
-            p.path === page.path && !p.custom && p.label !== page.label
+            p.path === page.path && p.custom === false && p.label !== page.label
                 ? {...p, label: page.label}
                 : p,
         )

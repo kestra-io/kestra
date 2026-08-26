@@ -1592,6 +1592,16 @@ class FlowControllerTest {
     }
 
     @Test
+    void labelsEqualsWithoutKeyReturnsBadRequestNotServerError() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS]=x"), Argument.of(PagedResults.class, Flow.class))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+    }
+
+    @Test
     void validateTask() throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource("tasks/validTask.json");
 

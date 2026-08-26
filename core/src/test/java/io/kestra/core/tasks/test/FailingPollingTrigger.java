@@ -19,6 +19,7 @@ import lombok.experimental.SuperBuilder;
 public class FailingPollingTrigger extends AbstractTrigger implements PollingTriggerInterface {
 
     @Override
+    @SuppressWarnings("removal")
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws IllegalVariableEvaluationException {
         throw new RuntimeException("fail");
     }

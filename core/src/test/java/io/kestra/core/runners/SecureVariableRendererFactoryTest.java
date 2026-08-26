@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for SecureVariableRendererFactory.
- * 
+ *
  * This class tests the factory's ability to create debug renderers that:
  * - Properly mask secret functions
  * - Maintain security by preventing secret value leakage
@@ -46,8 +46,8 @@ class SecureVariableRendererFactoryTest {
     private StorageInterface storageInterface;
 
     @MockBean(SecretService.class)
-    SecretService testSecretService() {
-        return new SecretService() {
+    SecretService<String> testSecretService() {
+        return new SecretService<String>() {
             @Override
             public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
                 return switch (key) {

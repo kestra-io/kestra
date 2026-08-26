@@ -2,6 +2,7 @@ package io.kestra.core.security;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serial;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -88,6 +89,9 @@ public class ProtectedZipInputStream extends ZipInputStream {
      * other invalid-user-input errors (e.g. mapped to an HTTP 422 response by the webserver).
      */
     public static final class ZipBombDetectedException extends IllegalArgumentException {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         private ZipBombDetectedException(String message) {
             super(message);
         }

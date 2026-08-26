@@ -45,6 +45,7 @@ class AdditionalPluginTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldResolveAdditionalPluginSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, AdditionalPluginTest.AdditionalPluginTestTask.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");

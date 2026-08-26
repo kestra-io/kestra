@@ -223,11 +223,10 @@ class FinallyTest {
         // With transmitFailed=true, the parent terminates when the first sub-execution fails,
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
-        Await.until(
-            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(30)
-        );
+        Await.await()
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(30))
+            .until(() -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()));
         var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -273,11 +272,10 @@ class FinallyTest {
         // With transmitFailed=true, the parent terminates when the first sub-execution fails,
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
-        Await.until(
-            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(30)
-        );
+        Await.await()
+            .pollDelay(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(30))
+            .until(() -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()));
         var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
 

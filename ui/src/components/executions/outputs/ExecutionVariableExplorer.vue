@@ -152,7 +152,8 @@
         }
         if (typeof value === "object") {
             const keys = Object.keys(value as object)
-            return `{ ${keys.join(", ")} }`
+            // Unguarded, an empty object previews as `{  }`.
+            return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
     }

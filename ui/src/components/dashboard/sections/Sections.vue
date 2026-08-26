@@ -74,7 +74,7 @@
                     <div class="flex-grow-1">
                         <component
                             v-if="activatedCharts.has(chart.id)"
-                            ref="chartsComponents"
+                            :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
                             :dashboardId="dashboard.id"
@@ -115,10 +115,18 @@
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const chartsComponents = ref<{refresh(): void}[]>()
+    const chartsComponents = new Map<string, {
+        refresh(): void;
+        exportParameters?(): {pageNumber?: number; pageSize?: number; filters?: QueryFilter[]};
+    }>()
+
+    function registerChartComponent(el: Element | ComponentPublicInstance | null, chartId: string) {
+        if (el) chartsComponents.set(chartId, el as unknown as {refresh(): void})
+        else chartsComponents.delete(chartId)
+    }
 
     function refreshCharts() {
-        (chartsComponents.value ?? []).forEach((component) => component.refresh())
+        chartsComponents.forEach((component) => component.refresh())
     }
 
     // Charts mount lazily, ~200px before their block scrolls into view; once activated they stay mounted.
@@ -186,8 +194,11 @@
     })
 
     function exportChart(chart: Chart, format: "CSV" | "ION") {
+        const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
+
         dashboardStore.export(props.dashboard, chart, {
-            filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? []),
+            ...pagination,
+            filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
         }, format)
     }
 </script>

@@ -154,7 +154,7 @@
     import Cog from "vue-material-design-icons/Cog.vue"
 
     import {KsTag} from "@kestra-io/design-system"
-    import {flowYamlUtils} from "@kestra-io/topology"
+    import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
     import {useFlowStore} from "../../../stores/flow"
     import {useCoreStore} from "../../../stores/core"

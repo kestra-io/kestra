@@ -183,7 +183,7 @@
         }
     }
 
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {})
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => false)
 
     function closeCurrentTab() {
         closeTab(props)

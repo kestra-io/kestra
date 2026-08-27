@@ -4,11 +4,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.assets.AssetService;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetsInOut;
@@ -19,8 +19,11 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.log.Log;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -35,14 +38,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-/**
- * Covers ExecutorService's own logic around processTaskRunAssets: the guard deciding whether to call
- * it, and applying the escalated TaskRun it returns. The escalation logic itself (assetFailureBehavior,
- * allowFailure/allowWarning clamps, mark-and-continue upserts) only exists in the EE AssetService
- * implementation and is covered there directly (core-ee's AssetServiceTest).
- */
-@KestraTest
-class ExecutorServiceProcessTaskRunAssetsTest {
+@MicronautTest
+class ExecutorServiceTest {
     @Inject
     private ExecutorService executorService;
 
@@ -136,6 +133,92 @@ class ExecutorServiceProcessTaskRunAssetsTest {
 
         assertThat(executor.getExecution().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         verify(assetService).processTaskRunAssets(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldSkipSLAEvaluationWhenExecutionKindIsLoop() throws Exception {
+        SLA sla = ExecutionAssertionSLA.builder()
+            .id("always-fails")
+            .type(SLA.Type.EXECUTION_ASSERTION)
+            .behavior(SLA.Behavior.FAIL)
+            ._assert("false")
+            .build();
+        var task = Log.builder().id("task").type(Log.class.getName()).message("hello").build();
+        var flow = Flow.builder().tenantId("tenant").namespace("io.kestra.unit-test").id(IdUtils.create()).tasks(List.of(task)).sla(List.of(sla)).build();
+        var execution = Execution.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .kind(ExecutionKind.LOOP)
+            .state(new State())
+            .build();
+        var executor = new ExecutorContext(execution, FlowWithSource.of(flow, "flow-source"));
+
+        ExecutorContext result = executorService.handleExecutionChangedSLA(executor);
+
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+    }
+
+    @Test
+    void shouldSkipAfterExecutionTasksWhenExecutionKindIsLoop() throws Exception {
+        var innerTask = Log.builder().id("inner").type(Log.class.getName()).message("inner").build();
+        var afterTask = Log.builder().id("after").type(Log.class.getName()).message("after").build();
+        var loopTask = Loop.builder().id("loop").type(Loop.class.getName()).values("[\"a\"]").tasks(List.of(innerTask)).build();
+
+        var flow = Flow.builder()
+            .tenantId("tenant")
+            .namespace("io.kestra.unit-test")
+            .id(IdUtils.create())
+            .tasks(List.of(loopTask))
+            .afterExecution(List.of(afterTask))
+            .build();
+
+        var loopTaskRun = TaskRun.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .executionId(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .taskId(loopTask.getId())
+            .state(new State())
+            .build();
+
+        var parentExecution = Execution.builder()
+            .tenantId("tenant")
+            .id(loopTaskRun.getExecutionId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .state(new State())
+            .build();
+
+        var innerTaskRun = TaskRun.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .executionId(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .taskId(innerTask.getId())
+            .parentTaskRunId(loopTaskRun.getId())
+            .state(new State())
+            .build()
+            .withState(State.Type.SUCCESS);
+
+        var loopExecution = parentExecution.loopExecution(loopTaskRun, 0, null, "a")
+            .toBuilder()
+            .taskRunList(List.of(innerTaskRun))
+            .build();
+
+        var executor = new ExecutorContext(loopExecution, FlowWithSource.of(flow, "flow-source"));
+
+        ExecutorContext result = executorService.process(executor);
+
+        // a Loop sub-execution reuses the parent flow, which may declare afterExecution tasks: they
+        // belong to the parent execution's own completion, not to each loop iteration's sub-execution
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(result.getExecution().getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("inner");
     }
 
     private Asset asset(String id) {

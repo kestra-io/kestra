@@ -207,6 +207,7 @@
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
     "queued duration": "Duração na fila",
+    "paused duration": "Duração em pausa",
     "executionProgress": {
       "title": "Progresso da execução",
       "estimatedRemaining": "Tempo restante estimado: {duration}",
@@ -299,6 +300,21 @@
     "to": "Para",
     "steps": "Passos",
     "state": "Estado",
+    "state_history": {
+      "title": "Histórico de estado",
+      "open": "Histórico de estado",
+      "aria_open": "Mostrar o histórico de estado",
+      "aria_open_for": "Mostrar o histórico de estado de {subject}",
+      "started_at": "Iniciado às {time}",
+      "failed_at": "Falhou às {time}",
+      "skipped_at": "Ignorado às {time}",
+      "created_at": "Criado às {time}",
+      "did_not_run": "Esta tarefa não foi executada",
+      "waiting_to_start": "A aguardar início",
+      "attempt_n": "Tentativa {index}",
+      "attempt_count": "{count} tentativas",
+      "copy": "Copiar histórico de estado"
+    },
     "search": "Buscar",
     "source search": "Busca de fonte",
     "selected": "Selecionado",
@@ -368,7 +384,7 @@
     "unqueue done": "A execução está fora da fila",
     "force run": "Executar forçadamente",
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
-    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "force run confirm": "Tem certeza de que deseja forçar a execução `{id}`?\n\nAVISO: forçar a execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "force run done": "A execução foi forçada",
     "metrics": "Métricas",
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
@@ -667,7 +683,7 @@
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",
     "bulk pause": "Tem certeza de que deseja pausar a(s) execução(ões) <code>{executionCount}</code>?",
-    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "bulk force run": "Tem certeza de que deseja forçar a execução de `{executionCount}` execução(ões)?\n\nAVISO: forçar a execução de uma execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
@@ -846,6 +862,7 @@
         "folder_error": "Ocorreu um erro ao criar a pasta"
       },
       "rename": {
+        "error": "Não foi possível renomear para \"{name}\". Já pode existir um ficheiro ou uma pasta com esse nome.",
         "label": "Renomear",
         "file": "Renomear arquivo",
         "folder": "Renomear pasta",
@@ -2024,6 +2041,31 @@
         "zoom_out": "Reduzir zoom",
         "clear_selection": "Limpar seleção",
         "fit_view": "Ajustar à tela"
+      },
+      "dag": {
+        "force": "Árvore",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Última atualização",
+        "status": {
+          "fresh": "Novo",
+          "stale": "Obsoleto",
+          "failed": "Falhou",
+          "unknown": "Não rastreado"
+        },
+        "summary": {
+          "fresh": "Todos os {n} assets atualizados",
+          "issues": "{n} obsoleto",
+          "failed": "{n} falhou",
+          "last_run": "última execução {ago}",
+          "unknown": "{n} não rastreado"
+        },
+        "recent_runs": "Execuções recentes",
+        "group_by": "Agrupar por",
+        "groups": "Grupos ({n})",
+        "group_none": "Sem agrupamento",
+        "group_dataset": "Dataset",
+        "ungrouped": "Não agrupado"
       },
       "search": {
         "placeholders": {

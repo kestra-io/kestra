@@ -193,12 +193,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Function<String, String> sortMapping() throws IllegalArgumentException {
-        Map<String, String> mapper = Map.of(
-            "flowId", "flow_id",
-            "triggerId", "trigger_id",
-            "executionId", "execution_id",
-            "nextExecutionDate", NEXT_EVALUATION_DATE_COLUMN
-        );
+        // nextExecutionDate needs remapping, since its real column is next_evaluation_date.
+        Map<String, String> mapper = Map.of("nextExecutionDate", NEXT_EVALUATION_DATE_COLUMN);
 
         return s -> mapper.getOrDefault(s, s);
     }

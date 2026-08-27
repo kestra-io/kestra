@@ -192,18 +192,23 @@ class JsonSchemaGeneratorTest {
 
             String base = "io.kestra.core.http.client.configurations.BasicAuthConfiguration";
             assertThat(
-                "the plain definition, only ever used by its own wrapper, must be inlined away instead of kept as a separate entry",
-                definitions.containsKey(base + "-1"), is(false)
+                "the wrapper, whose only content is a $ref to the plain definition plus the discriminator addition, must be inlined away instead of kept as a separate entry",
+                definitions.containsKey(base + "-2"), is(false)
             );
 
-            var wrapper = definitions.get(base + "-2");
-            assertThat("the wrapper must survive, carrying its own discriminator addition", wrapper, is(notNullValue()));
-            assertThat((List<String>) wrapper.get("required"), hasItem("type"));
+            var merged = definitions.get(base + "-1");
+            assertThat("the plain definition must survive under its own key — downstream consumers address subtypes by it", merged, is(notNullValue()));
+            assertThat("the wrapper's discriminator addition must not be lost in the merge", (List<String>) merged.get("required"), hasItem("type"));
 
-            var properties = (Map<String, Object>) wrapper.get("properties");
+            var properties = (Map<String, Object>) merged.get("properties");
             assertThat(
                 "the original class's own properties must not be lost in the merge",
                 properties.keySet(), hasItems("username", "password")
+            );
+
+            assertThat(
+                "no reference to the dropped wrapper may survive anywhere in the schema",
+                generate.toString().contains(base + "-2"), is(false)
             );
         });
     }

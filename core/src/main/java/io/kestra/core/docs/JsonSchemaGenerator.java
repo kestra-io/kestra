@@ -212,8 +212,11 @@ public class JsonSchemaGenerator {
      * {@code <Class>} object, and a {@code <Class>-2} wrapper ({@code allOf: [{$ref: <Class>-1}, {
      * required: ["type"], ...}]}) carrying the discriminator {@code required} needed to use it as
      * an {@code anyOf} branch. When the plain definition is referenced from nowhere else, keeping
-     * it separate only adds an indirection with no reuse benefit — inline it into its wrapper and
-     * drop it, cutting the schema's definition count without changing what it validates.
+     * it separate only adds an indirection with no reuse benefit — merge the wrapper's addition
+     * into it and drop the wrapper, cutting the schema's definition count without changing what it
+     * validates. The plain definition's key is the one kept, with every reference to the wrapper
+     * rewritten to it: downstream consumers (the EE no-code editors among them) address subtype
+     * definitions by that name.
      */
     private void collapseSingleUseDiscriminatorWrappers(ObjectNode objectNode) {
         if (!(objectNode.get("definitions") instanceof ObjectNode definitions)) {
@@ -223,7 +226,8 @@ public class JsonSchemaGenerator {
         Map<String, Integer> refCounts = new HashMap<>();
         countRefs(objectNode, refCounts);
 
-        List<String> baseKeysToRemove = new ArrayList<>();
+        List<String> wrapperKeysToRemove = new ArrayList<>();
+        Map<String, String> refRewrites = new HashMap<>();
         definitions.properties().forEach(entry ->
         {
             String wrapperKey = entry.getKey();
@@ -247,11 +251,33 @@ public class JsonSchemaGenerator {
                 return;
             }
 
-            definitions.set(wrapperKey, mergeAllOfBranches(base, extra));
-            baseKeysToRemove.add(baseKey);
+            definitions.set(baseKey, mergeAllOfBranches(base, extra));
+            wrapperKeysToRemove.add(wrapperKey);
+            refRewrites.put("#/definitions/" + wrapperKey, ref);
         });
 
-        baseKeysToRemove.forEach(definitions::remove);
+        wrapperKeysToRemove.forEach(definitions::remove);
+        if (!refRewrites.isEmpty()) {
+            rewriteRefs(objectNode, refRewrites);
+        }
+    }
+
+    private static void rewriteRefs(JsonNode node, Map<String, String> rewrites) {
+        if (node instanceof ObjectNode obj) {
+            obj.properties().forEach(entry ->
+            {
+                if (entry.getKey().equals("$ref") && entry.getValue() instanceof TextNode ref) {
+                    String rewritten = rewrites.get(ref.asText());
+                    if (rewritten != null) {
+                        obj.put("$ref", rewritten);
+                    }
+                } else {
+                    rewriteRefs(entry.getValue(), rewrites);
+                }
+            });
+        } else if (node instanceof ArrayNode arr) {
+            arr.forEach(child -> rewriteRefs(child, rewrites));
+        }
     }
 
     /** Merges {@code extra} onto a copy of {@code base}, unioning {@code properties}/{@code required} instead of overwriting them. */

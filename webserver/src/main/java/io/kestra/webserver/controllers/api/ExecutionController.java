@@ -54,6 +54,7 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -254,6 +255,9 @@ public class ExecutionController {
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
+
+    @Inject
+    private ModelValidator modelValidator;
 
     @Inject
     private FileRendererService fileRendererService;
@@ -1152,6 +1156,8 @@ public class ExecutionController {
             : RequestUtils.toMap(labels).entrySet().stream()
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
+
+        parsedLabels.forEach(modelValidator::validate);
 
         // system labels can only be set by Kestra itself; the only exceptions accepted from a
         // client are system.correlationId and system.from=ui (sent by the UI). Any other
@@ -2402,7 +2408,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByIds(
-        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
+        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body @Valid SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -2443,17 +2449,22 @@ public class ExecutionController {
             );
         }
 
+        // merge and validate every execution's labels before emitting anything, so a rejected
+        // batch (e.g. a system label in the payload) never applies to some executions but not others
+        Map<String, List<Label>> mergedLabelsByExecutionId = new HashMap<>(executions.size());
+        for (Execution execution : executions) {
+            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
+            mergedLabelsByExecutionId.put(execution.getId(), mergeSystemLabels(execution, deduplicated));
+        }
+
         this.updateLabelsCounter.increment(executions.size());
 
         return submitBatchAction(executions, (execution, opId) ->
-        {
-            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
-            List<Label> merged = mergeSystemLabels(execution, deduplicated);
-            executionCommandQueue.emit(UpdateLabels.from(execution, merged).withOperationId(opId));
-        });
+            executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId))
+        );
     }
 
-    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull @Valid List<Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)

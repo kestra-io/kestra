@@ -15,6 +15,7 @@ import GithubDark from "shiki/themes/github-dark.mjs"
 import Bash from "shiki/langs/bash.mjs"
 import C from "shiki/langs/c.mjs"
 import Cpp from "shiki/langs/cpp.mjs"
+import Csharp from "shiki/langs/csharp.mjs"
 import Csv from "shiki/langs/csv.mjs"
 import Diff from "shiki/langs/diff.mjs"
 import Dockerfile from "shiki/langs/dockerfile.mjs"
@@ -27,6 +28,7 @@ import Java from "shiki/langs/java.mjs"
 import Javascript from "shiki/langs/javascript.mjs"
 import Json from "shiki/langs/json.mjs"
 import Julia from "shiki/langs/julia.mjs"
+import Kotlin from "shiki/langs/kotlin.mjs"
 import Markdown from "shiki/langs/markdown.mjs"
 import Mermaid from "shiki/langs/mermaid.mjs"
 import Perl from "shiki/langs/perl.mjs"
@@ -59,6 +61,7 @@ export function getShiki(): Promise<any> {
                     Bash,
                     C,
                     Cpp,
+                    Csharp,
                     Csv,
                     Diff,
                     Dockerfile,
@@ -71,6 +74,7 @@ export function getShiki(): Promise<any> {
                     Javascript,
                     Json,
                     Julia,
+                    Kotlin,
                     Markdown,
                     Mermaid,
                     Perl,

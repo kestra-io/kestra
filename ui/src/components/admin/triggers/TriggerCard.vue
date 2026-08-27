@@ -23,9 +23,6 @@
                         </KsIcon>
                     </KsTooltip>
                 </div>
-                <KsTooltip :content="trigger.type" placement="bottom-start" :showAfter="250">
-                    <code class="type">{{ trigger.type }}</code>
-                </KsTooltip>
                 <div class="description">
                     <template v-for="(part, i) in descriptionParts" :key="i">
                         <code v-if="i % 2 === 1">{{ part.slice(1, -1) }}</code>
@@ -161,16 +158,6 @@
                             cursor: pointer;
                         }
                     }
-                }
-
-                .type {
-                    font-family: var(--ks-font-family-mono);
-                    font-size: var(--ks-font-size-xs);
-                    color: var(--ks-text-secondary);
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    user-select: all;
                 }
 
                 .description {

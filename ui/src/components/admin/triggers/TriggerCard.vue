@@ -23,6 +23,9 @@
                         </KsIcon>
                     </KsTooltip>
                 </div>
+                <KsTooltip :content="trigger.type" placement="bottom-start" :showAfter="250">
+                    <code class="type">{{ trigger.type }}</code>
+                </KsTooltip>
                 <div class="description">
                     <template v-for="(part, i) in descriptionParts" :key="i">
                         <code v-if="i % 2 === 1">{{ part.slice(1, -1) }}</code>
@@ -60,6 +63,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import {KsMarkdown} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -78,8 +82,9 @@
         color: "var(--ks-content-primary)",
     }
 
+    const {t} = useI18n({useScope: "global"})
     const pluginsStore = usePluginsStore()
-    const displayName = computed(() => triggerDisplayName(props.trigger))
+    const displayName = computed(() => triggerDisplayName(props.trigger, t))
     const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g))
 </script>
 
@@ -139,9 +144,11 @@
                     .name {
                         flex: 1;
                         min-width: 0;
-                        white-space: nowrap;
+                        display: -webkit-box;
+                        line-clamp: 2;
+                        -webkit-line-clamp: 2;
+                        -webkit-box-orient: vertical;
                         overflow: hidden;
-                        text-overflow: ellipsis;
                         font-size: var(--ks-font-size-md);
                         font-weight: var(--ks-font-weight-semibold);
                         color: var(--ks-text-primary);
@@ -156,6 +163,16 @@
                             cursor: pointer;
                         }
                     }
+                }
+
+                .type {
+                    font-family: var(--ks-font-family-mono);
+                    font-size: var(--ks-font-size-xs);
+                    color: var(--ks-text-secondary);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    user-select: all;
                 }
 
                 .description {

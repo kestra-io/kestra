@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, ref, type Component} from "vue"
+    import {useI18n} from "vue-i18n"
 
     import AvTimer from "vue-material-design-icons/AvTimer.vue"
     import BriefcaseOutline from "vue-material-design-icons/BriefcaseOutline.vue"
@@ -93,15 +94,16 @@
         app: LayersTripleOutline,
     })
 
+    const {t} = useI18n({useScope: "global"})
+    const pluginsStore = usePluginsStore()
+
     const nameAsc = (a: TriggerPluginDto, b: TriggerPluginDto) =>
-        triggerDisplayName(a).localeCompare(triggerDisplayName(b))
+        triggerDisplayName(a, t).localeCompare(triggerDisplayName(b, t))
 
     const COMPARATORS: Record<SortKey, (a: TriggerPluginDto, b: TriggerPluginDto) => number> = {
         nameAsc,
         nameDesc: (a, b) => nameAsc(b, a),
     }
-
-    const pluginsStore = usePluginsStore()
 
     const loading = ref(true)
     const searchQuery = ref("")
@@ -115,7 +117,7 @@
         const q = searchQuery.value.trim().toLowerCase()
         const matchesSearch = (tr: TriggerPluginDto) =>
             !q ||
-            tr.name.toLowerCase().includes(q) ||
+            triggerDisplayName(tr, t).toLowerCase().includes(q) ||
             tr.type.toLowerCase().includes(q) ||
             (tr.description ?? "").toLowerCase().includes(q)
 

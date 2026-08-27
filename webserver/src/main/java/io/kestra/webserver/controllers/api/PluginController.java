@@ -244,7 +244,7 @@ public class PluginController {
         return new ApiTriggerPlugin(
             triggerClass.getName(),
             title,
-            io.kestra.core.docs.Plugin.titleFor(registeredPlugin, triggerClass),
+            Plugin.titleFor(registeredPlugin, triggerClass),
             description,
             TriggerPluginCategory.classify(registeredPlugin, triggerClass),
             isEnterpriseEdition(registeredPlugin, triggerClass),

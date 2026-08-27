@@ -515,6 +515,21 @@ class PluginControllerTest {
         assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
     }
 
+    @Test
+    void should_qualify_trigger_title_with_its_sub_group() {
+        PagedResults<ApiTriggerPlugin> result = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/triggers"),
+            Argument.of(PagedResults.class, PluginController.ApiTriggerPlugin.class)
+        );
+
+        // Both Redis triggers are named `Trigger` / `RealtimeTrigger` and the `list` sub-group
+        // declares no title of its own, so only the plugin registry can name them.
+        assertThat(result.getResults())
+            .filteredOn(trigger -> trigger.type().startsWith("io.kestra.plugin.redis.list."))
+            .isNotEmpty()
+            .allSatisfy(trigger -> assertThat(trigger.pluginTitle()).isEqualTo("Redis List"));
+    }
+
     private static RegisteredPlugin pluginWithTitle(String title) {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("X-Kestra-Title", title);

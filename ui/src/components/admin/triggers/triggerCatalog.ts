@@ -6,14 +6,26 @@ export const MCP_TOOL_TYPE = "io.kestra.core.models.triggers.McpTool"
 export const isMcpTrigger = (trigger: Pick<TriggerPluginDto, "type">): boolean =>
     trigger.type === MCP_TOOL_TYPE || trigger.type.endsWith(".McpTool")
 
-export const triggerDisplayName = (trigger: Pick<TriggerPluginDto, "type" | "name" | "pluginTitle">): string => {
-    if (trigger.name && trigger.name !== "Trigger") return trigger.name
+type TriggerNaming = Pick<TriggerPluginDto, "type" | "name" | "pluginTitle" | "group">
 
-    // Most plugins name their trigger class `Trigger`, so `trigger.name` above is useless for
-    // disambiguation. Fall back to the plugin's own declared, correctly-cased title (resolved
-    // server-side from its metadata) rather than guessing from the class package: two unrelated
-    // plugins can share a package segment (e.g. io.kestra.plugin.mongodb vs
-    // io.kestra.plugin.debezium.mongodb both end in "mongodb"), and a package-derived guess would
-    // collide the two under the same wrongly-cased "Mongodb" label.
-    return trigger.pluginTitle || getShortName(trigger.type)
+// "MailReceivedTrigger" -> "Mail Received", "RealtimeTrigger" -> "Realtime", bare "Trigger" -> ""
+const classKind = (trigger: TriggerNaming): string =>
+    (trigger.name || getShortName(trigger.type))
+        .replace(/Trigger$/, "")
+        .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+
+/**
+ * The plugin's own declared title (resolved server-side, see Plugin#titleFor) plus what the trigger
+ * does within that plugin, since a plugin usually ships several triggers and Kestra's convention
+ * names most of their classes a bare `Trigger`: "Debezium MongoDB Polling" and "Debezium MongoDB
+ * Realtime" rather than two cards both reading "Mongodb".
+ */
+export const triggerDisplayName = (trigger: TriggerNaming, t: (key: string) => string): string => {
+    // A core trigger's class name is already unique and readable ("Schedule", "Webhook"), and its
+    // plugin title only restates the category the card already shows.
+    if (trigger.group === "core" || !trigger.pluginTitle) {
+        return classKind(trigger) || getShortName(trigger.type)
+    }
+
+    return `${trigger.pluginTitle} ${classKind(trigger) || t(`triggers_add_kind_${trigger.group}`)}`.trim()
 }

@@ -34,19 +34,30 @@ class PluginTest {
     }
 
     @Test
-    void titleForUsesTheSubGroupsOwnDeclaredTitleWhenPresent() {
+    void titleForQualifiesThePluginTitleWithTheSubGroupsOwnDeclaredTitle() {
         RegisteredPlugin core = pluginWithTitleAndGroup("core", "io.kestra.plugin.core");
 
-        // io.kestra.plugin.core.dashboard.data declares @PluginSubGroup(title = "Data Filter", ...)
-        assertThat(Plugin.titleFor(core, Flows.class)).isEqualTo("Data Filter");
+        // io.kestra.plugin.core.dashboard.data declares @PluginSubGroup(title = "Data Filter", ...).
+        // A sub-group title is written relative to its plugin ("SQS" under the AWS plugin), so it
+        // only reads correctly behind it.
+        assertThat(Plugin.titleFor(core, Flows.class)).isEqualTo("core Data Filter");
     }
 
     @Test
-    void titleForFallsBackToTheRawSubGroupSegmentWhenTheSubGroupDeclaresNoTitle() {
+    void titleForFallsBackToTheCapitalizedSubGroupSegmentsWhenTheSubGroupDeclaresNoTitle() {
         RegisteredPlugin core = pluginWithTitleAndGroup("core", "io.kestra.plugin.core");
 
         // io.kestra.plugin.core.storage declares @PluginSubGroup(categories = CORE) with no title.
-        assertThat(Plugin.titleFor(core, Delete.class)).isEqualTo("storage");
+        assertThat(Plugin.titleFor(core, Delete.class)).isEqualTo("core Storage");
+    }
+
+    @Test
+    void titleForIgnoresSubGroupsOfAClassThatLivesOutsideThePluginsGroup() {
+        // EE plugins ship classes under io.kestra.plugin.core.*, so a plugin's own title must win
+        // over the sub-group annotation of a package it does not own.
+        RegisteredPlugin plugin = pluginWithTitleAndGroup("Kestra EE", "io.kestra.plugin.ee");
+
+        assertThat(Plugin.titleFor(plugin, Delete.class)).isEqualTo("Kestra EE");
     }
 
     private static RegisteredPlugin pluginWithTitle(String title) {

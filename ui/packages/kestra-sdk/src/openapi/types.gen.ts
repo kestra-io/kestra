@@ -3471,6 +3471,26 @@ export type SearchConcurrencyLimitsResponses = {
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
 
+export type GetConcurrencyLimitData = {
+    body?: never;
+    path: {
+        namespace: string;
+        flowId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
+};
+
+export type GetConcurrencyLimitResponses = {
+    /**
+     * getConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
+
 export type UpdateConcurrencyLimitData = {
     body: ConcurrencyLimit;
     path: {

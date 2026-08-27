@@ -48,6 +48,7 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -402,6 +403,10 @@ public class ExecutorService {
                     }
                     return taskRuns;
                 }
+            } catch (ConstraintViolationException e) {
+                // An invalid flowable config (e.g. a negative concurrency) is surfaced to the caller,
+                // which fails the flowable task run so the execution terminates cleanly.
+                throw e;
             } catch (Exception e) {
                 log.warn("Unable to resolve the next tasks to run", e);
             }
@@ -559,14 +564,21 @@ public class ExecutorService {
             // For running flowable tasks: compute both next task runs and the worker task result in a single pass.
             if (taskRun.getState().isRunning() && task instanceof FlowableTask<?> && this.canChildrenProgress(executor.getExecution(), taskRun)) {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
-                Optional<WorkerTaskResult> flowableResult = this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext);
-                if (flowableResult.isPresent()) {
-                    list.add(flowableResult.get());
-                    // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
-                    if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                        this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                try {
+                    nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
+                    Optional<WorkerTaskResult> flowableResult = this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext);
+                    if (flowableResult.isPresent()) {
+                        list.add(flowableResult.get());
+                        // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
+                        if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
+                            this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                        }
                     }
+                } catch (ConstraintViolationException e) {
+                    // An invalid flowable configuration fails the flowable task run, which terminates the
+                    // execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                    runContext.logger().error("Failed to process flowable task {}: {}", taskRun.getId(), e.getMessage(), e);
+                    executor.withExecution(executor.getExecution().withTaskRun(taskRun.withState(State.Type.FAILED)), "flowableValidation");
                 }
             }
 

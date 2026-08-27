@@ -28,7 +28,11 @@ import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.validator.constraints.time.DurationMin;
+
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -87,6 +91,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
     )
     @Builder.Default
     @PluginProperty
+    @Valid
     private CheckFrequency checkFrequency = CheckFrequency.builder().build();
 
     @Override
@@ -247,19 +252,19 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
             title = "Maximum count of iterations",
             description = "If not set, defines an unlimited number of iterations."
         )
-        private Property<Integer> maxIterations;
+        private Property<@Positive Integer> maxIterations;
 
         @Schema(
             title = "Maximum duration of the task",
             description = "If not set, defines an unlimited maximum duration of iterations."
         )
-        private Property<Duration> maxDuration;
+        private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> maxDuration;
 
         @Schema(
             title = "Interval between each iteration"
         )
         @NotNull
         @Builder.Default
-        private Property<Duration> interval = Property.ofValue(Duration.ofMinutes(1));
+        private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> interval = Property.ofValue(Duration.ofMinutes(1));
     }
 }

@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {ref, nextTick} from "vue"
-import {useDependencies, transformResponse} from "../../../../src/components/dependencies/composables/useDependencies"
+import {useDependencies} from "../../../../src/components/dependencies/composables/useDependencies"
+import {transformResponse} from "../../../../src/components/dependencies/utils/transform"
 import {type Node, type Edge, FLOW, EXECUTION, NAMESPACE} from "../../../../src/components/dependencies/utils/types"
 import {setActivePinia, createPinia} from "pinia"
 import {mount} from "@vue/test-utils"

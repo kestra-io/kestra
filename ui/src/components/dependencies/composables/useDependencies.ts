@@ -12,12 +12,12 @@ import type {Ref, ComputedRef} from "vue"
 
 import type {RouteParams} from "vue-router"
 
-import {v4 as uuid} from "uuid"
 
 import {State, cssVar} from "@kestra-io/design-system"
 import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
+import {transformResponse} from "../utils/transform"
 import type {Types, Node, Edge, Element} from "../utils/types"
 
 // ─── CSS variable maps ────────────────────────────────────────────────────────
@@ -99,36 +99,6 @@ function buildEdgeCounts(elements: Element[]): Map<string, number> {
 
 function nodeSize(id: string, edgeCounts: Map<string, number>, base = 20, scale = 2, max = 100): number {
     return Math.min(base + (edgeCounts.get(id) ?? 0) * scale, max)
-}
-
-// ─── Element transformation ───────────────────────────────────────────────────
-
-/**
- * Transforms an API response containing nodes and edges into
- * dependency Element[] with the given subtype.
- */
-export function transformResponse(
-    response: { nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[] },
-    subtype: Types,
-): Element[] {
-    const nodes: Node[] = response.nodes.map((node) => ({
-        id: node.uid,
-        type: NODE,
-        flow: node.id,
-        namespace: node.namespace,
-        metadata: {subtype},
-    }))
-    const edges: Edge[] = response.edges.map((edge) => ({
-        id: uuid(),
-        type: EDGE,
-        source: edge.source,
-        target: edge.target,
-    }))
-
-    return [
-        ...nodes.map((node) => ({data: node}) as Element),
-        ...edges.map((edge) => ({data: edge}) as Element),
-    ]
 }
 
 // ─── Main composable ──────────────────────────────────────────────────────────

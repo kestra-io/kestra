@@ -473,6 +473,11 @@
         "title": "Limite di concorrenza residuo"
       }
     },
+    "docsPage": {
+      "notFound": "Questa pagina della documentazione non esiste. Potrebbe essere stata spostata o rinominata.",
+      "loadError": "Impossibile caricare questa pagina della documentazione. Riprova.",
+      "backToDocs": "Torna ai Docs"
+    },
     "documentation": {
       "documentation": "Documentazione"
     },

@@ -17,7 +17,7 @@
                 :to="{
                     name: 'docs/view',
                     params:{
-                        path:docPath
+                        path:docsRoutePath
                     }
                 }"
                 target="_blank"
@@ -109,6 +109,7 @@
     const pageMetadata = computed(() => docStore.pageMetadata)
     const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
+    const docsRoutePath = computed(() => docPath.value?.replace(/^docs(\/|$)/, ""))
 
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),

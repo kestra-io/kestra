@@ -473,6 +473,11 @@
         "title": "Leftover concurrency limit"
       }
     },
+    "docsPage": {
+      "notFound": "This documentation page does not exist. It may have been moved or renamed.",
+      "loadError": "Could not load this documentation page. Please try again.",
+      "backToDocs": "Back to docs"
+    },
     "documentation": {
       "documentation": "Documentation"
     },

@@ -473,6 +473,11 @@
         "title": "Limite de concorrência remanescente"
       }
     },
+    "docsPage": {
+      "notFound": "Esta página da documentação não existe. Ela pode ter sido movida ou renomeada.",
+      "loadError": "Não foi possível carregar esta página da documentação. Tente novamente.",
+      "backToDocs": "Voltar aos Docs"
+    },
     "documentation": {
       "documentation": "Documentação"
     },

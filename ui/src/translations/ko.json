@@ -473,6 +473,11 @@
         "title": "남아 있는 동시성 제한"
       }
     },
+    "docsPage": {
+      "notFound": "이 문서 페이지가 존재하지 않습니다. 이동되었거나 이름이 변경되었을 수 있습니다.",
+      "loadError": "이 문서 페이지를 불러올 수 없습니다. 다시 시도해 주세요.",
+      "backToDocs": "Docs로 돌아가기"
+    },
     "documentation": {
       "documentation": "문서"
     },

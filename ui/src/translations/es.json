@@ -473,6 +473,11 @@
         "title": "Límite de concurrencia residual"
       }
     },
+    "docsPage": {
+      "notFound": "Esta página de documentación no existe. Puede que se haya movido o renombrado.",
+      "loadError": "No se pudo cargar esta página de documentación. Inténtalo de nuevo.",
+      "backToDocs": "Volver a Docs"
+    },
     "documentation": {
       "documentation": "Documentación"
     },

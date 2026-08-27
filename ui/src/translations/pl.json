@@ -473,6 +473,11 @@
         "title": "Pozostały limit Concurrency"
       }
     },
+    "docsPage": {
+      "notFound": "Ta strona dokumentacji nie istnieje. Mogła zostać przeniesiona lub jej nazwa mogła się zmienić.",
+      "loadError": "Nie udało się załadować tej strony dokumentacji. Spróbuj ponownie.",
+      "backToDocs": "Powrót do Docs"
+    },
     "documentation": {
       "documentation": "Dokumentacja"
     },

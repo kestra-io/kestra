@@ -5,7 +5,8 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import {loadLanguageOnDemand} from "@kestra-io/design-system/shiki"
 import SchemaToCode from "../../../../src/components/plugins/schema/SchemaToCode.vue"
 
-vi.mock("@kestra-io/design-system/shiki", () => ({
+vi.mock("@kestra-io/design-system/shiki", async () => ({
+    isSpecialLang: (await vi.importActual<typeof import("shiki/core")>("shiki/core")).isSpecialLang,
     loadLanguageOnDemand: vi.fn(),
 }))
 
@@ -17,7 +18,7 @@ const loaded = ["yaml"]
 const highlighter = {
     getLoadedLanguages: () => loaded,
     codeToHtml: (code: string, {lang}: {lang: string}) => {
-        if (!loaded.includes(lang) && lang !== "text") {
+        if (!loaded.includes(lang) && !["", "text", "txt", "plain", "plaintext", "ansi"].includes(lang)) {
             throw new Error(`Language \`${lang}\` not found`)
         }
         return `<pre data-lang="${lang}">${code}</pre>`
@@ -55,6 +56,14 @@ describe("SchemaToCode", () => {
 
         expect(loadLanguageOnDemand).toHaveBeenCalledWith(highlighter, "sql")
         expect(wrapper.html()).toContain("data-lang=\"sql\"")
+    })
+
+    test("passes a no-grammar language straight through without fetching the bundle", async () => {
+        const wrapper = mountCode("ansi")
+        await flushPromises()
+
+        expect(loadLanguageOnDemand).not.toHaveBeenCalled()
+        expect(wrapper.html()).toContain("data-lang=\"ansi\"")
     })
 
     test("renders plain text when the grammar cannot be fetched", async () => {

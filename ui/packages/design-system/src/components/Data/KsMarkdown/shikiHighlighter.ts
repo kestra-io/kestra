@@ -1,8 +1,9 @@
 // shiki/core keeps the grammars below as the only ones in this chunk; every
 // other language is fetched on demand by loadLanguageOnDemand().
-import {createHighlighterCore, type HighlighterCore} from "shiki/core"
+import {createHighlighterCore, isSpecialLang, type HighlighterCore} from "shiki/core"
 
 export type {HighlighterCore}
+export {isSpecialLang}
 
 /**
  * Module-level singleton for the Shiki highlighter, shared by every KsMarkdown
@@ -109,10 +110,23 @@ let bundledLanguages: Promise<Record<string, any>> | null = null
 
 /**
  * Registers a grammar that is not pre-registered above, from Shiki's full
- * bundle (one extra chunk, fetched once). Returns false for unknown languages.
+ * bundle (one extra chunk, fetched once). Returns whether the language can be
+ * passed to codeToHtml: false only for one Shiki does not know at all.
  */
 export async function loadLanguageOnDemand(highlighter: HighlighterCore, lang: string): Promise<boolean> {
-    bundledLanguages ??= import("shiki/langs").then((module) => module.bundledLanguages)
+    // text/plaintext/plain/txt/ansi render without a grammar and are absent from the
+    // bundle, so fetching it for one of them would download 5 MB to change nothing.
+    if (isSpecialLang(lang)) {
+        return true
+    }
+
+    bundledLanguages ??= import("shiki/langs")
+        .then((module) => module.bundledLanguages)
+        // Drop the memo on failure: a cached rejection would fail every later load.
+        .catch(() => {
+            bundledLanguages = null
+            return {}
+        })
 
     const loader = (await bundledLanguages)[lang]
     if (!loader) {

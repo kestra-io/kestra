@@ -24,7 +24,7 @@
 <script setup lang="ts">
     import {computed, ref, watchEffect} from "vue"
     import {KsButton, KsTooltip, copyToClipboard as writeToClipboard} from "@kestra-io/design-system"
-    import {loadLanguageOnDemand, type HighlighterCore} from "@kestra-io/design-system/shiki"
+    import {isSpecialLang, loadLanguageOnDemand, type HighlighterCore} from "@kestra-io/design-system/shiki"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -51,7 +51,7 @@
         const {highlighter} = props
         const requested = props.language ?? "text"
 
-        if (requested === "text" || highlighter.getLoadedLanguages().includes(requested)) {
+        if (isSpecialLang(requested) || highlighter.getLoadedLanguages().includes(requested)) {
             resolvedLanguage.value = requested
             return
         }

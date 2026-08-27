@@ -13,7 +13,7 @@ split-view). All flows through real keyboard interaction against a live
 dev server and backend, with mutations verified against the YAML the
 backend actually persisted — not just the DOM.
 
-## Fixture
+## Fixtures
 
 `tests/e2e/fixtures/flows/blocks-canvas.yaml` — one flow exercising every
 canvas shape the suite needs to walk and mutate:
@@ -23,11 +23,18 @@ canvas shape the suite needs to walk and mutate:
 - two top-level leaf tasks
 - empty top-level errors/finally sections (covers empty-state insertion)
 
+`tests/e2e/fixtures/flows/blocks-tall.yaml` — sixteen leaf tasks plus an
+errors and a finally block, used only by the scrolling spec. Scrolling
+behaviour only exists once the canvas overflows the viewport, and the
+finally block (`cleanup`) is the last stop on the canvas, which is the
+one that cannot be centred.
+
 ## Files
 
 | File | Covers |
 |---|---|
 | `blocks-navigation.spec.ts` | Keyboard-only canvas navigation |
+| `blocks-canvas-scroll.spec.ts` | Scrolling: palette-jump centring, the max-scroll boundary, status-bar clearance |
 | `blocks-insert.spec.ts` | Every insertion entry point |
 | `blocks-edit-forms.spec.ts` | Every generated-form input family |
 | `blocks-mutations.spec.ts` | Duplicate, delete, reorder, split view, command menu, save |
@@ -50,6 +57,18 @@ canvas shape the suite needs to walk and mutate:
 - Dock-pane focus: ArrowRight/ArrowLeft walks Inputs → Form → back to card
 - Escape backs out one level at a time (dock field → panel → gone)
 - Help overlay open/close (`?` / Escape)
+
+**Scrolling** (`blocks-canvas-scroll.spec.ts`) — a separate file because it
+needs the tall fixture, and a describe block only gets one `beforeEach`:
+- A command-palette `Go to` jump centres its destination, asserted as a
+  distance from the scrollport centre so neither `nearest` (parks it at the
+  edge) nor `start` (pins it to the top) passes
+- The max-scroll boundary: jumping to the last block, which cannot be
+  centred because less than half a scrollport of content sits beneath it,
+  still leaves it fully visible and clear of the status bar
+- Arrow-stepping keeps a block near the bottom clear of the status bar —
+  stepping stays on `nearest`, so this pins `scroll-padding-bottom`
+- Jumping back up leaves the destination fully within the scrollport
 
 **Insertion** (`blocks-insert.spec.ts`)
 - Insertion caret shows `⇧A` above / `A` below the focused block
@@ -153,6 +172,11 @@ to.
   executor at runtime (EE feature) in a way that poison-pills the queue and
   crash-loops the server on every boot — the flow properties panel
   deliberately does not offer it, and a test pins that.
+- **Overlay text matches must be scoped to the overlay.** The canvas renders
+  block labels carrying the same words as menu entries, and a card sitting
+  behind an overlay still looks visible to Playwright. `pickTask()` and
+  `goToSectionViaPalette()` both scope their lookup to the picker's listbox
+  and the command menu respectively.
 
 ## Known gaps / follow-ups
 

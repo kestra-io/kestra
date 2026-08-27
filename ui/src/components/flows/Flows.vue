@@ -43,7 +43,7 @@
         >
             <template #top>
                 <KSFilter
-                    :configuration="flowFilter"
+                    :configuration="filterConfiguration ?? flowFilter"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -330,7 +330,7 @@
 
     import FlowRun from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, type FilterConfiguration} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
     import type {Chart} from "../dashboard/types"
@@ -362,6 +362,7 @@
         id?: string | null;
         defaultScopeFilter?: boolean,
         embed?: boolean;
+        filterConfiguration?: FilterConfiguration;
     }>(), {
         topbar: true,
         fitHeight: undefined,
@@ -369,6 +370,7 @@
         id: undefined,
         defaultScopeFilter: false,
         embed: false,
+        filterConfiguration: undefined,
     })
 
     const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)

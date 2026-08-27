@@ -1,4 +1,4 @@
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 type TaskLike = Record<string, unknown>
 

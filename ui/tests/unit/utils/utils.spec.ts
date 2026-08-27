@@ -1,5 +1,5 @@
 import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars} from "../../../src/utils/utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateFormat} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -97,9 +97,58 @@ describe("flatten()", () => {
             .toEqual({"values.greeting": "hello", "values.count": "42", uri: "kestra:///x"})
     })
 
+    // An empty output used to vanish from the Outputs view: recursion found no leaves and
+    // contributed nothing, so the user could not tell an empty value from a missing one.
+    it("keeps an empty object as its own value instead of dropping the key", () => {
+        expect(flatten({data: "Code finished", outputFiles: {}}))
+            .toEqual({data: "Code finished", outputFiles: {}})
+    })
+
+    it("keeps an empty array as its own value instead of dropping the key", () => {
+        expect(flatten({data: "x", outputFiles: []})).toEqual({data: "x", outputFiles: []})
+    })
+
+    it("keeps a nested empty object at its dotted path", () => {
+        expect(flatten({a: {b: {}}})).toEqual({"a.b": {}})
+    })
+
+    it("still flattens a top-level empty object to an empty result", () => {
+        expect(flatten({})).toEqual({})
+    })
+
     it("flattens arrays with index keys and keeps nulls", () => {
         expect(flatten({list: ["a", "b"], empty: null}))
             .toEqual({"list.0": "a", "list.1": "b", empty: null})
+    })
+})
+
+describe("getDateFormat()", () => {
+    it("returns a date-only format when no dates and no time range are provided", () => {
+        expect(getDateFormat(undefined, undefined, undefined)).toBe("yyyy-MM-DD")
+    })
+
+    it("returns a month format for ranges over a year", () => {
+        expect(getDateFormat(undefined, undefined, "P400D")).toBe("yyyy-MM")
+    })
+
+    it("returns a week format for ranges over 180 days", () => {
+        expect(getDateFormat(undefined, undefined, "P200D")).toBe("yyyy-'W'ww")
+    })
+
+    it("returns a date-only format for ranges over a day", () => {
+        expect(getDateFormat(undefined, undefined, "P7D")).toBe("yyyy-MM-DD")
+    })
+
+    it("separates date and hour with a space for ranges over an hour", () => {
+        expect(getDateFormat(undefined, undefined, "PT24H")).toBe("yyyy-MM-DD HH:00")
+    })
+
+    it("separates date and time with a space for ranges up to an hour", () => {
+        expect(getDateFormat(undefined, undefined, "PT30M")).toBe("yyyy-MM-DD HH:mm")
+    })
+
+    it("derives the duration from start and end dates when no time range is provided", () => {
+        expect(getDateFormat("2026-08-17T00:00:00Z", "2026-08-17T12:00:00Z", undefined)).toBe("yyyy-MM-DD HH:00")
     })
 })
 

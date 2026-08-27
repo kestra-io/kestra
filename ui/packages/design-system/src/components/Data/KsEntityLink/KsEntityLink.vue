@@ -1,8 +1,10 @@
 <template>
-    <RouterLink :to="to" :title="value" class="ks-entity-link" @click.stop>
-        <component :is="icon" v-if="!props.noIcon" aria-hidden="true" class="ks-entity-link__icon" />
-        <span class="ks-entity-link__value">{{ value }}</span>
-    </RouterLink>
+    <KsTooltip :content="value">
+        <RouterLink :to="to" class="ks-entity-link" @click.stop>
+            <component :is="icon" v-if="!noIcon" aria-hidden="true" class="ks-entity-link__icon" />
+            <span class="ks-entity-link__value">{{ value }}</span>
+        </RouterLink>
+    </KsTooltip>
 </template>
 
 <script lang="ts">
@@ -14,6 +16,7 @@
     import {RouterLink, type RouteLocationRaw} from "vue-router"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
+    import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     const ENTITY_ICONS: Record<KsEntityLinkEntity, Component> = {
         namespace: FolderOpenOutline,

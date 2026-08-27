@@ -24,22 +24,27 @@
         "editor.guides.bracketPairs": "active"
       },
       "extensions": [
-        "redhat.vscode-yaml",
+        "aaron-bond.better-comments",
+        "andys8.jest-snippets",
+        "codeandstuff.package-json-upgrade",
         "dbaeumer.vscode-eslint",
-        "vscode-icons-team.vscode-icons",
+        "docker.docker",
         "eamodio.gitlens",
         "esbenp.prettier-vscode",
-        "aaron-bond.better-comments",
-        "codeandstuff.package-json-upgrade",
-        "andys8.jest-snippets",
-        "oderwat.indent-rainbow",
         "evondev.indent-rainbow-palettes",
         "formulahendry.auto-rename-tag",
-        "IronGeek.vscode-env",
-        "yoavbls.pretty-ts-errors",
         "github.vscode-github-actions",
+        "FanaticPythoner.better-todo-tree",
+        "IronGeek.vscode-env",
+        "ms-azuretools.vscode-containers",
+        "oderwat.indent-rainbow",
+        "oxc.oxc-vscode",
+        "redhat.vscode-yaml",
+        "vitest.explorer",
         "vscjava.vscode-java-pack",
-        "docker.docker"
+        "vscode-icons-team.vscode-icons",
+        "Vue.volar",
+        "yoavbls.pretty-ts-errors"
       ]
     }
   }

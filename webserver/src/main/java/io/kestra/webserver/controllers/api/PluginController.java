@@ -141,7 +141,7 @@ public class PluginController {
     }
 
     private <T> HttpResponse<T> notModified(final String etag) {
-        return HttpResponse.<T>notModified()
+        return HttpResponse.<T> notModified()
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
@@ -235,7 +235,7 @@ public class PluginController {
         return PagedResults.of(new ArrayListTotal<>(all, all.size()));
     }
 
-    private ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
+    protected ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
         io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
         String title = triggerClass.getSimpleName();
         String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
@@ -244,6 +244,7 @@ public class PluginController {
         return new ApiTriggerPlugin(
             triggerClass.getName(),
             title,
+            io.kestra.core.docs.Plugin.titleFor(registeredPlugin, triggerClass),
             description,
             TriggerPluginCategory.classify(registeredPlugin, triggerClass),
             isEnterpriseEdition(registeredPlugin, triggerClass),
@@ -275,9 +276,43 @@ public class PluginController {
 
     @Get(uri = "icons")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get plugins icons",
+        description = "Answers the icon metadata of every registered class. The `icon` field is always null here: " +
+            "icon bytes are served per class, and cached by the browser, by `GET /plugins/icons/{cls}/icon.svg`. " +
+            "`hash` is non-null exactly when the class has an icon, so callers can still tell which classes to " +
+            "render an icon for."
+    )
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginIcons() {
-        return HttpResponse.ok(pluginIconsIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return HttpResponse.ok(pluginIconsMetadataIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Cacheable("plugin-icons-metadata")
+    protected Map<String, PluginIcon> pluginIconsMetadataIndex() {
+        return withoutIconBytes(pluginIconsIndex());
+    }
+
+    @Cacheable("plugin-group-icons-metadata")
+    protected Map<String, PluginIcon> pluginGroupIconsMetadataIndex() {
+        return withoutIconBytes(loadPluginsIcon());
+    }
+
+    /**
+     * Copies an icon index without its icon bytes, so bulk indexes stay small.
+     *
+     * @return a new map; the cached indexes must not be mutated
+     */
+    private static Map<String, PluginIcon> withoutIconBytes(Map<String, PluginIcon> icons) {
+        Map<String, PluginIcon> metadataOnly = new HashMap<>(icons.size());
+        icons.forEach(
+            (cls, icon) -> metadataOnly.put(
+                cls,
+                new PluginIcon(icon.getName(), null, icon.getFlowable(), icon.getMonochrome(), icon.getHash())
+            )
+        );
+
+        return metadataOnly;
     }
 
     @Get(uri = "icons/{cls}")
@@ -336,7 +371,9 @@ public class PluginController {
         );
     }
 
-    @Cacheable("default")
+    // Own cache, not the shared "default" one: Micronaut derives a cache key from the method arguments alone, so
+    // every no-arg @Cacheable method shares the same key and two of them in one cache serve each other's entries.
+    @Cacheable("plugin-icons")
     protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
@@ -388,14 +425,17 @@ public class PluginController {
 
     @Get(uri = "icons/groups")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get plugin group and subgroup icons",
+        description = "Answers the icon metadata of every plugin group and subgroup. As on `GET /plugins/icons` the " +
+            "`icon` field is always null; the bytes come from `GET /plugins/icons/{cls}/icon.svg`."
+    )
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginGroupIcons() {
-        Map<String, PluginIcon> icons = loadPluginsIcon();
-
-        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return HttpResponse.ok(pluginGroupIconsMetadataIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
-    @Cacheable("default")
+    @Cacheable("plugin-group-icons")
     protected Map<String, PluginIcon> loadPluginsIcon() {
         Map<String, PluginIcon> icons = new HashMap<>();
 
@@ -639,6 +679,11 @@ public class PluginController {
      *
      * @param type fully qualified class name (for example {@code io.kestra.plugin.core.trigger.Schedule})
      * @param name human-readable name (Schema#title if set, otherwise simple class name)
+     * @param pluginTitle the owning plugin's (or subgroup's) human-readable, correctly-cased title
+     *        (for example {@code "MongoDB"} or {@code "Debezium MongoDB"}), resolved from
+     *        its own declared metadata rather than guessed from the class package — used
+     *        by the UI to disambiguate triggers from different plugins that otherwise share
+     *        the same last Java package segment (see {@link io.kestra.core.docs.Plugin#titleFor})
      * @param description one-line description from the plugin @Schema
      * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
      * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)
@@ -648,6 +693,7 @@ public class PluginController {
     public record ApiTriggerPlugin(
         String type,
         String name,
+        String pluginTitle,
         String description,
         TriggerPluginCategory group,
         boolean ee,

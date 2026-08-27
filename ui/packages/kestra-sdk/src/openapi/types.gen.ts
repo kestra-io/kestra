@@ -965,6 +965,11 @@ export type Flow = AbstractFlow & {
      * Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition.
      */
     policyRefs?: Array<string>;
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -1198,6 +1203,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     variables?: {};
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -1729,6 +1739,10 @@ export type PluginControllerApiTriggerPlugin = {
      */
     name?: string;
     /**
+     * the owning plugin's (or subgroup's) human-readable, correctly-cased title (for example `"MongoDB"` or `"Debezium MongoDB"`), resolved from its own declared metadata rather than guessed from the class package --- used by the UI to disambiguate triggers from different plugins that otherwise share the same last Java package segment (see io.kestra.core.docs.Plugin#titleFor)
+     */
+    pluginTitle?: string;
+    /**
      * one-line description from the plugin
      */
     description?: string;
@@ -1862,7 +1876,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'super_admin' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2238,7 +2252,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
     index: number;
@@ -7819,6 +7833,30 @@ export type SetKeyValueResponses = {
     200: unknown;
 };
 
+export type GetExecutionOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/outputs/executions/{executionId}';
+};
+
+export type GetExecutionOutputsResponses = {
+    /**
+     * The execution outputs as a map of output names to their values
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
+
 export type GetTaskOutputsInformationData = {
     body?: never;
     path: {
@@ -7829,7 +7867,7 @@ export type GetTaskOutputsInformationData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}';
 };
 
 export type GetTaskOutputsInformationResponses = {
@@ -7855,7 +7893,7 @@ export type GetTaskRunOutputsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}/{taskRunId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}';
 };
 
 export type GetTaskRunOutputsResponses = {

@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubAiProviderConfigured, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * End-to-end coverage for the AI Copilot chat drawer.
@@ -24,6 +24,8 @@ const D = {
     draft: "[data-test=\"copilot-draft\"]",
     draftOpen: "[data-test=\"copilot-draft-open\"]",
     draftApply: "[data-test=\"copilot-draft-apply\"]",
+    toolCall: "[data-test=\"copilot-tool-call\"]",
+    assistantText: "[data-test=\"copilot-assistant-text\"]",
 }
 
 // A minimal, valid-enough flow whose namespace + id the direct-apply path can parse.
@@ -31,6 +33,8 @@ const FLOW_YAML = "id: applied\nnamespace: company.team\ntasks:\n  - id: log\n  
 
 test.describe("AI Copilot", () => {
     test.beforeEach(async ({page}) => {
+        // The turn is stubbed, so the surface has to behave as it does on a configured instance.
+        await stubAiProviderConfigured(page, true)
         // Thread creation is always the same stubbed thread.
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
@@ -304,11 +308,49 @@ test.describe("AI Copilot", () => {
         await expect(page.locator("[data-test=\"copilot-notice\"]")).toBeVisible()
     })
 
+    test("aligns every assistant block with the tool strip", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["tool_call", {tool: "get_blueprint_flow", kind: "PLATFORM", family: "READ", arguments: {}}],
+                    ["tool_result", {tool: "get_blueprint_flow", outcome: "ok"}],
+                    ["artefact_draft", {draftId: "d4", kind: "FLOW", yaml: FLOW_YAML, valid: true, constraints: null}],
+                    ["token", {text: "Done."}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        await page.locator(D.input).fill("build me a pipeline")
+        await page.locator(D.send).click()
+
+        await expect(page.locator(D.assistantText)).toBeVisible()
+
+        const rightEdge = async (selector: string) => {
+            const box = await page.locator(selector).first().boundingBox()
+            return box!.x + box!.width
+        }
+
+        // A short reply and the draft card end on the same edge as the full-width tool strip, rather
+        // than at a content-dependent one (kestra-io/kestra#18388). A 1px tolerance absorbs the
+        // border rounding; the regression this guards was tens of pixels wide.
+        const strip = await rightEdge(D.toolCall)
+        expect(Math.abs(await rightEdge(D.assistantText) - strip)).toBeLessThanOrEqual(1)
+        expect(Math.abs(await rightEdge(D.draft) - strip)).toBeLessThanOrEqual(1)
+    })
+
     test("carries the current page as a context chip on a detail route", async ({page}) => {
         // Open a flow detail route (the flow need not exist — the chip is derived from the route name
         // + params). Re-open the AI dock on the new page, then assert the context chip reflects it.
-        const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
-        await page.goto(`/ui/${tenant}/flows/edit/company.team/e2e-context-flow`, {waitUntil: "domcontentloaded"})
+        // `:tenant?` is optional on every route, so a tenant-less path resolves the same whether or
+        // not this instance exposes one in the URL (an OSS instance's dashboard is plain "/ui/dashboards",
+        // and guessing the tenant from that path previously grabbed "dashboards" itself and 404'd).
+        // `waitUntil: "load"` (not "domcontentloaded"): this is a second hard navigation on a page
+        // that already booted the app once in `beforeEach` — proceeding before the browser's own
+        // asset/module-federation loading settles has raced the app's chunk loader in CI.
+        await page.goto("/ui/flows/edit/company.team/e2e-context-flow", {waitUntil: "load"})
 
         await openCopilotDock(page)
 
@@ -387,10 +429,11 @@ test.describe("AI Copilot", () => {
  */
 test.describe("AI Copilot — full-page /ai surface", () => {
     test("hosts the copilot full-page at /ai with the page-only Need Help section", async ({page}) => {
+        await stubAiProviderConfigured(page, true)
         await disableProductTour(page)
-        await page.goto("/ui")
-        const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
-        await page.goto(`/ui/${tenant}/ai`, {waitUntil: "domcontentloaded"})
+        // `:tenant?` is optional on every route, so a tenant-less path resolves the same regardless
+        // of whether this instance exposes one in the URL. `waitUntil: "load"`: see the chip test above.
+        await page.goto("/ui/ai", {waitUntil: "load"})
 
         // The copilot mounts as the full-page host (hard navigation → fresh document; a thread uid
         // remembered by an earlier test 404s server-side and is forgotten → empty state, no dock).
@@ -403,5 +446,19 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         await expect(help).toBeVisible()
         await expect(help).toContainText("Blueprints")
         await expect(help).toContainText("Slack")
+    })
+
+    // kestra-io/kestra#18322: an instance with no provider used to render a working-looking chat and
+    // only owned up after the first turn failed.
+    test("says the copilot is unavailable on load when no provider is configured", async ({page}) => {
+        await stubAiProviderConfigured(page, false)
+        await disableProductTour(page)
+        await page.goto("/ui/ai", {waitUntil: "load"})
+
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible({timeout: 15000})
+        // Nothing invites a prompt: the composer is gone, and so is the empty state that hosts it
+        // together with the quick-action chips (Need Help is the page-layout marker for that block).
+        await expect(page.locator(D.input)).toBeHidden()
+        await expect(page.locator("[data-test=\"copilot-help\"]")).toBeHidden()
     })
 })

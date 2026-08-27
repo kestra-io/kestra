@@ -374,7 +374,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             this.logger = logger;
         }
 
-        private String replaceSecret(String data) {
+        protected String replaceSecret(String data) {
             for (String s : runContextLogger.useSecrets) {
                 if (data.contains(s)) {
                     data = data.replace(s, "******");
@@ -484,7 +484,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         protected void append(ILoggingEvent e) {
             e = this.transform(e);
 
-            var entries = logEntries(e, logEntry);
+            // transform() only masks the log statement's own message/args; an attached
+            // exception's message and stack trace (built into these entries below) carry the
+            // original exception content untouched, so mask them here too.
+            var entries = logEntries(e, logEntry).stream()
+                .map(entry -> entry.toBuilder().message(replaceSecret(entry.getMessage())).build())
+                .toList();
             logEmitter.emits(entries);
         }
     }

@@ -10,6 +10,10 @@ vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {isAllowed: () => false}}),
 }))
 
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {}}),
+}))
+
 import Header from "../../../../src/components/dashboard/components/Header.vue"
 
 const i18n = createI18n({legacy: false, locale: "en", messages: {en: {overview: "Overview"}}, missingWarn: false, fallbackWarn: false})

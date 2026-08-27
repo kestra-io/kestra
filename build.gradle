@@ -24,9 +24,6 @@ plugins {
     id "org.sonarqube" version "7.4.0.8496"
     id 'jacoco-report-aggregation'
 
-    // helper
-    id "com.github.ben-manes.versions" version "0.60.0"
-
     // release
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
@@ -657,7 +654,7 @@ tasks.register('runLocal') {
 
 tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server standalone"
+    description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     dependsOn ':cli:runStandalone'
 }
 
@@ -701,7 +698,7 @@ subprojects {subProject ->
         }
 
         //These modules should not be published
-        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver", "worker", "scheduler", "worker-controller", "executor"]
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
         if (subProject.name in unpublishedModules){
             return
         }

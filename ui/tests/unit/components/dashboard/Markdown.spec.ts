@@ -23,27 +23,33 @@ function mountMarkdown(chart: any) {
 }
 
 describe("dashboard sections/Markdown.vue", () => {
-    it("renders the chart's source.content", () => {
+    it("renders the chart's source.content", async () => {
         const wrapper = mountMarkdown({
             id: "notes",
             type: "io.kestra.plugin.core.dashboard.chart.Markdown",
             source: {type: "Text", content: "## Export check"},
         })
 
+        // KsMarkdown is an async component; wait for its loader to resolve.
+        await vi.dynamicImportSettled()
+
         expect(wrapper.text()).toContain("Export check")
     })
 
-    // Regression guard: Dashboard.vue/Editor.vue/PreviewDashboardWrapper.vue all stamp every
+    // Regression guard: Dashboard.vue and the EE editor previews all stamp every
     // loaded chart with `content: <yaml dump of the whole chart>` to support ad-hoc chart
     // preview submission for non-Markdown chart types. A Markdown chart must ignore that
     // stamped `content` and always render its own `source.content`.
-    it("prefers source.content over a stamped whole-chart content field", () => {
+    it("prefers source.content over a stamped whole-chart content field", async () => {
         const chart = {
             id: "notes",
             type: "io.kestra.plugin.core.dashboard.chart.Markdown",
             source: {type: "Text", content: "## Export check"},
         }
         const wrapper = mountMarkdown({...chart, content: "id: notes\ntype: io.kestra.plugin.core.dashboard.chart.Markdown\nsource:\n  type: Text\n  content: \"## Export check\""})
+
+        // KsMarkdown is an async component; wait for its loader to resolve.
+        await vi.dynamicImportSettled()
 
         expect(wrapper.text()).toContain("Export check")
         expect(wrapper.text()).not.toContain("chartOptions")

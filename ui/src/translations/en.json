@@ -2,6 +2,116 @@
   "en": {
     "loading": "Loading...",
     "more actions": "More actions",
+    "recipe": {
+      "create_flow": "Create flow",
+      "email": "Email",
+      "execution": {
+        "include_sub": "Include sub-namespaces",
+        "include_sub_hint_off": "Only flows in the exact namespace will trigger this alert.",
+        "include_sub_hint_on": "Flows in child namespaces will also trigger this alert.",
+        "namespace_placeholder": "Select a namespace",
+        "namespaces_error": "Namespaces could not be loaded. Type a namespace to watch, or retry later.",
+        "states": "On these states",
+        "states_recommended": "FAILED is the recommended default for alerting.",
+        "states_required": "Select at least one state.",
+        "watch_namespace": "Watch namespace"
+      },
+      "notify": {
+        "email_label": "Email",
+        "email_sub": "Send an email notification",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "Custom",
+        "custom_note": "A placeholder task is added — swap it for any notification plugin in the editor.",
+        "custom_sub": "Add your own notification task",
+        "plugin_unavailable": "Plugin not installed",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Post a message to a Slack channel",
+        "teams_sub": "Send a card to a Teams channel",
+        "teams_webhook_placeholder": "Teams incoming webhook URL"
+      },
+      "other": {
+        "load_error": "Triggers could not be loaded. Retry later.",
+        "no_results": "No triggers found.",
+        "search_label": "Search triggers",
+        "search_placeholder": "Filter by name or type"
+      },
+      "schedule": {
+        "cron": "Cron expression",
+        "custom": "Custom",
+        "daily": "Daily",
+        "daily_hint": "Runs every day at 9:00 AM.",
+        "frequency": "Frequency",
+        "hourly": "Hourly",
+        "hourly_hint": "Runs every hour at minute 0.",
+        "timezone": "Timezone",
+        "timezone_placeholder": "Select a timezone (default UTC)",
+        "weekly": "Weekly",
+        "weekly_hint": "Runs every Monday at 9:00 AM."
+      },
+      "section_subtitle": "Build a flow that monitors your platform and notifies your team automatically.",
+      "section_title": "Create a system flow",
+      "summary": {
+        "any_namespace": "any namespace",
+        "empty": "Configure the trigger and at least one notification channel to preview your flow.",
+        "exact_match": "exact match",
+        "execution": "When a flow in {ns} ({scope}) reaches state {states}, notify via {channels}.",
+        "including_sub": "and sub-namespaces",
+        "invalid_hint": "Add at least one notification channel and complete the trigger configuration.",
+        "invalid_hint_trigger": "Complete the trigger configuration.",
+        "no_channel": "the channels you select",
+        "other": "When the {trigger} trigger fires, notify via {channels}.",
+        "schedule": "On schedule \"{cron}\", notify via {channels}.",
+        "selected_trigger": "selected",
+        "title": "Summary",
+        "webhook": "When a webhook is received, notify via {channels}.",
+        "preview_title": "Preview",
+        "live": "LIVE"
+      },
+      "then": {
+        "no_channel_warning": "Select at least one notification channel.",
+        "subtitle": "Select how to notify your team.",
+        "title": "Then notify",
+        "unavailable_channels_warning": "{channels}: plugin not installed for this trigger type, no notification will be sent."
+      },
+      "trigger": {
+        "case_sub": "EE only feature",
+        "case_title": "Case status",
+        "execution_sub": "Reacts to flow state changes",
+        "execution_title": "Execution state",
+        "other_sub": "Any available trigger plugin",
+        "other_title": "Other trigger",
+        "schedule_sub": "Runs on a time schedule",
+        "schedule_title": "Schedule",
+        "webhook_sub": "Triggered by an HTTP request",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Send a POST request to this URL to trigger the flow.",
+        "endpoint_url": "Endpoint URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "Enter a unique key for this webhook"
+      },
+      "when": {
+        "subtitle": "Choose what triggers this system flow.",
+        "title": "When this happens",
+        "trigger_type": "Trigger type"
+      },
+      "hero_eyebrow": "Your system flow",
+      "hero_empty": "Pick a trigger and a channel to preview your flow.",
+      "browse_blueprints": "Prefer to start from a template? Browse community system blueprints",
+      "start_blank": "Prefer to write it yourself? Skip the steps and open an empty flow",
+      "steps": {
+        "trigger_title": "Trigger",
+        "trigger_desc": "When it runs",
+        "trigger_heading": "When should this flow run?",
+        "notify_title": "Notify",
+        "notify_desc": "Who hears about it",
+        "notify_heading": "How should we notify your team?",
+        "review_title": "Review",
+        "review_desc": "Check & create",
+        "review_heading": "Review your system flow"
+      }
+    },
     "toggle menu": "Toggle menu",
     "panel actions": "Panel actions",
     "playground actions": "Playground actions",
@@ -72,10 +182,12 @@
     "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
+    "copy_pebble_expression": "Copy pebble expression",
     "new": "New",
     "edit": "Edit",
     "back": "Back",
     "next": "Next",
+    "previous": "Previous",
     "done": "Done",
     "review your inputs": "Review your inputs",
     "edit flow": "Edit flow",
@@ -160,8 +272,6 @@
         "1d": "1d",
         "7d": "7d"
       },
-      "last14days": "Last 14 days",
-      "last28days": "Last 28 days",
       "14days": "14 days",
       "28days": "28 days"
     },
@@ -258,7 +368,7 @@
     "unqueue done": "Execution is unqueued",
     "force run": "Force run",
     "force run title": "Force run execution <code>{id}</code>.",
-    "force run confirm": "Are you sure you want to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task runs.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "force run confirm": "Are you sure you want to force run execution `{id}`?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task runs.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "force run done": "Execution is forced ran",
     "metrics": "Metrics",
     "no metrics available": "No metrics recorded for this task run.",
@@ -327,6 +437,7 @@
     },
     "file_preview": {
       "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "big_file_download_only": "This file is {size}. It is too large to open in the editor, download it instead.",
       "load_anyway": "Load anyway",
       "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
       "retry": "Retry",
@@ -370,12 +481,15 @@
       "detail": {
         "category": "Category type",
         "links": "Link & Resources",
-        "openInEditor": "Open in Edit Flow"
+        "openInEditor": "Open in Edit Flow",
+        "openInAppsEditor": "Open in Apps Editor",
+        "openInDashboardEditor": "Open in Dashboard Editor"
       },
       "missingPlugins": {
-        "title": "Missing plugins",
-        "description": "This blueprint uses tasks from plugin(s) that aren't installed on this instance: {plugins}. Install them to use this blueprint.",
-        "card": "Requires plugin(s) not installed on this instance: {plugins}",
+        "title": "Unavailable tasks",
+        "description": "This blueprint uses task types that aren't available on this instance:",
+        "installHint": "Install the missing plugin(s) to use this blueprint: {plugins}.",
+        "card": "Uses task types that aren't available on this instance: {tasks}",
         "install": "Install plugins"
       }
     },
@@ -457,6 +571,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "No triggers found",
     "triggers_add_ee_tooltip": "This trigger requires Enterprise Edition.",
+    "ee_feature_tooltip": "This feature requires Enterprise Edition.",
     "triggers_add_card_add": "Add",
     "triggers_add_modal_tab_form": "Form",
     "triggers_add_modal_tab_source": "Source",
@@ -543,7 +658,7 @@
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
-    "bulk force run": "Are you sure you want to force run <code>{executionCount}</code> execution(s)?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "bulk force run": "Are you sure you want to force run `{executionCount}` execution(s)?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task executions.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "cancel": "Cancel",
@@ -722,6 +837,7 @@
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
+        "error": "Could not rename to \"{name}\". A file or folder with that name may already exist.",
         "label": "Rename",
         "file": "Rename file",
         "folder": "Rename folder",
@@ -734,6 +850,10 @@
         "folder": "Delete folder",
         "files": "Delete {count} selected files",
         "folders": "Delete {count} selected folders"
+      },
+      "move": {
+        "bulk_success": "Selected files moved successfully.",
+        "bulk_error": "Failed to move {count} of the selected item(s)."
       },
       "import": {
         "files": "Import files",
@@ -862,7 +982,8 @@
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval",
-            "task_edit_default_mode": "Default Task Edit Mode"
+            "task_edit_default_mode": "Default Task Edit Mode",
+            "flow_template": "Default Flow Template"
           },
           "descriptions": {
             "default_namespace": "Used when creating new flows without a namespace.",
@@ -875,11 +996,17 @@
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground.",
-            "task_edit_default_mode": "How a task opens by default from the no-code editor."
+            "task_edit_default_mode": "How a task opens by default from the no-code editor.",
+            "flow_template": "YAML opened in the editor when you create a new flow. The id and namespace can be left out, since they are generated for you. When this is empty, the template configured for the instance is used."
           },
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Tab"
+          },
+          "flow_template_reset": "Reset to default",
+          "flow_template_error": {
+            "invalid_mapping": "Invalid flow template: expected a key-value mapping, not a list or scalar.",
+            "parse_error": "Could not parse YAML. The template was saved, so the editor may show the same error when you create a flow."
           }
         },
         "theme": {
@@ -956,7 +1083,7 @@
       "contact_sales": "Contact Sales",
       "secrets": {
         "title": "Upgrade your Secrets Management",
-        "message": "The Enterprise Edition (EE) lets you add, edit, or delete secrets directly in the UI—no instance restarts needed. Organize secrets by namespace with granular RBAC permissions, and inherit them from parent to child namespaces. EE integrates with secrets managers like HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, and Elasticsearch. Set up dedicated backends per namespace, tenant, or instance to isolate secrets across teams, or enable read-only secrets stored in external vaults. Secrets stay encrypted at rest and in transit. Optional caching reduces API calls, and audit trails log all access.",
+        "message": "The Enterprise Edition lets you add, edit, and delete secrets straight from the UI, organize them by namespace with RBAC, and back them with HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, or Elasticsearch.",
         "add_env": {
           "intro": "Create a New Secret",
           "first": "Encode the <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a>",
@@ -966,7 +1093,11 @@
       },
       "apps": {
         "title": "Build custom Apps with Kestra",
-        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval."
+        "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval.",
+        "blueprints": {
+          "title": "Start from an app blueprint.",
+          "message": "App blueprints are ready-made apps for common use cases such as forms, approvals and data submission. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt it to build custom UIs on top of your workflows."
+        }
       },
       "tests": {
         "label": "Tests",
@@ -989,6 +1120,15 @@
       "promote": {
         "title": "Promote Flows Across Environments",
         "message": "Kestra Enterprise Edition lets you promote flows from one environment to another — such as dev to staging to production — directly from the UI, no Git or CI/CD pipelines required. Review a diff of exactly what will change before promoting, protect sensitive targets with a confirmation gate, spot drift at a glance, and keep a full history of who promoted what, where, and when."
+      },
+      "dashboards": {
+        "header": "Custom Dashboards",
+        "title": "Build custom dashboards tailored to your team.",
+        "message": "Custom dashboards in Kestra Enterprise Edition let you create and share your own views on top of executions, logs and metrics, combining time series, KPIs, tables and Markdown charts, with a code and no-code editor, live preview, and per-tenant default dashboards.",
+        "blueprints": {
+          "title": "Start from a dashboard blueprint.",
+          "message": "Dashboard blueprints are ready-made custom dashboards for common monitoring needs. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt its charts, KPIs and tables to your team in the dashboard editor."
+        }
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
@@ -1023,7 +1163,7 @@
       "namespace": {
         "edit": {
           "title": "Upgrade Your Namespace Management",
-          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables, and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
+          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and control of secrets, variables, and governance Policies at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and governance rules remain secure and easy to maintain across different teams and projects."
         },
         "secrets": {
           "title": "Manage Secrets in a Secure Way",
@@ -1048,8 +1188,7 @@
         "audit-logs": {
           "title": "Track All Changes in One Place",
           "message": "In Kestra Enterprise Edition, you can view namespace-level audit logs with detailed diffs, giving you a clear history of who changed what and when across all resources."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1255,6 +1394,7 @@
       "key": "Name",
       "keyPlaceholder": "Name used to reference this secret, e.g. MY_API_TOKEN",
       "name": "Secret value",
+      "valuePlaceholder": "Enter the secret value",
       "description": "Description",
       "descriptionPlaceholder": "Describe this secret",
       "tags": "Tags",
@@ -1525,7 +1665,7 @@
         "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
       },
       "apps": {
-        "title": "You have no apps yet!",
+        "title": "You have no Apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
       },
       "testSuites": {
@@ -1586,10 +1726,6 @@
           "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
-      "plugins": {
-        "title": "No plugin defaults are set for this for this Namespace.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-      },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> in our documentation."
@@ -1599,14 +1735,13 @@
         "content": "Expose a flow as an MCP tool by adding an <code>McpToolTrigger</code> to it. Read more about the <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in our documentation."
       },
       "versionPlugin": {
-        "title": "You have no versioned plugin yet!",
+        "title": "You have no versioned plugins yet!",
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
       },
       "panels": {
         "title": "No panel open",
         "content": "You've closed all panels.\nPick a tab above to continue."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
     "copied_logs_to_clipboard": "Copied logs to clipboard.",
@@ -1634,31 +1769,18 @@
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Default Dashboard",
-      "switch": "Switch Dashboard",
-      "preview": "Preview Dashboard",
       "empty": "There are no results to be shown.",
-      "creation": {
-        "label": "Create Dashboard",
-        "confirmation": "Dashboard <code>{title}</code> is created."
-      },
       "edition": {
         "label": "Edit Dashboard",
-        "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
-        "chart": "Edit this chart",
-        "id readonly": "The property `id` cannot be changed — it's now set to its initial values. If you want to change it, you can create a new dashboard and remove the old one."
-      },
-      "deletion": {
-        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
+        "chart": "Edit this chart"
       },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
       "viewAll": "View all",
-      "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export",
       "exportTo": {
         "csv": "Export to CSV",
@@ -1769,6 +1891,7 @@
           "test": "test"
         },
         "contextRemoved": "Removed {type} {id} from context.",
+        "modelChanged": "Switched to {model}.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} failed",
@@ -1839,6 +1962,12 @@
           "Converging"
         ],
         "newChat": "New chat",
+        "fixThread": {
+          "flow": "Fix flow {id}",
+          "task": "Fix task {id}",
+          "execution": "Fix execution of {id}",
+          "generic": "Fix flow errors"
+        },
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",
@@ -1887,6 +2016,31 @@
         "zoom_out": "Zoom out",
         "clear_selection": "Clear selection",
         "fit_view": "Fit to screen"
+      },
+      "dag": {
+        "force": "Tree",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Last update",
+        "status": {
+          "fresh": "Fresh",
+          "stale": "Stale",
+          "failed": "Failed",
+          "unknown": "Not tracked"
+        },
+        "summary": {
+          "fresh": "All {n} assets fresh",
+          "issues": "{n} stale",
+          "failed": "{n} failed",
+          "last_run": "last run {ago}",
+          "unknown": "{n} not tracked"
+        },
+        "recent_runs": "Recent runs",
+        "group_by": "Group by",
+        "groups": "Groups ({n})",
+        "group_none": "No grouping",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungrouped"
       },
       "search": {
         "placeholders": {
@@ -1976,7 +2130,7 @@
       "no_oauth_providers": "No OIDC providers configured in this instance",
       "delete_confirm": "Are you sure you want to delete this MCP server?",
       "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
-      "server_id": "Servers ID",
+      "server_id": "Server ID",
       "id_placeholder": "e.g. my-mcp-server",
       "id_invalid": "ID must start with a lowercase letter or digit, and contain only lowercase letters, digits, hyphens, or underscores",
       "main_tenant": "main",
@@ -2041,28 +2195,56 @@
     "source_search": {
       "cannot_select_read_only": "Cannot select — you lack edit permission on {namespace} / {id}",
       "collapse_all": "Collapse all",
+      "confirm_bar_excluded": "{count} more match will not be changed. | {count} more matches will not be changed.",
       "confirm_bar_message": "Replace {matches} across {flows} editable flows. {skipped} read-only flows will be skipped.",
+      "count_flows": "{count} flow | {count} flows",
+      "count_keys": "{count} key | {count} keys",
+      "count_namespaces": "{count} namespace | {count} namespaces",
+      "count_paths": "{count} path | {count} paths",
+      "count_resources": "{count} resource | {count} resources",
+      "count_types": "{count} type | {count} types",
       "diff_preview_aria": "Replacement diff preview",
       "diff_preview_label": "diff preview · not yet applied",
-      "empty_description": "Search every flow's YAML source for a plugin type, a property, or any definition. Enable .* for regular expressions, Aa for case-sensitivity, and open Replace to change matches in place — respecting your permissions.",
-      "empty_title": "Find where anything is used across your flows",
+      "empty_description": "Flows are searched inside their source. Namespace files match on their path, KV and secrets on their key name. Pick the types above, then type a query.",
+      "empty_title": "Find a value across flows, files and keys",
       "error_title": "Invalid regular expression",
       "examples_aria": "Example queries",
+      "exclusion_flows_readonly": "Flows — {count} read-only match: you need FLOW · UPDATE permission. | Flows — {count} read-only matches: you need FLOW · UPDATE permission.",
+      "exclusion_search_only": "{type} — {count} match: search only, cannot be replaced. | {type} — {count} matches: search only, cannot be replaced.",
+      "exclusion_title": "{count} match is excluded from Replace all | {count} matches are excluded from Replace all",
       "expand_all": "Expand all",
+      "file_match_notice": "The file path matched. File content is not searched — open the file to search inside it.",
+      "files_progress_banner_failed": "Namespace files are searched one namespace at a time. {done} of {total} done, {failed} failed. The total will still change.",
+      "files_progress_banner_ok": "Namespace files are searched one namespace at a time. {done} of {total} done. The total will still change.",
+      "flow_only_toggle_hint": "Match case, whole word and regular expression apply to Flows only. File paths and keys always match plain text.",
+      "flow_section": "Flow section",
       "flow_update_permission": "FLOW · UPDATE",
       "hide_replace": "Hide replace",
+      "key_only_hint": "Searches key names only. Cannot be replaced.",
+      "kv_match_notice": "Only the key name was searched. Open the KV store to read the value.",
       "line_label": "line {line}",
       "match_case": "Match case",
       "match_count": "{count} match | {count} matches",
       "match_nav": "{current} of {total}",
       "match_nav_empty": "0 of 0",
       "match_whole_word": "Match whole word",
+      "meta_created": "Created",
+      "meta_expires": "Expires",
+      "meta_never": "Never",
+      "meta_updated": "Updated",
+      "namespace_search_failed": "{namespace} couldn't be searched",
+      "namespace_search_failed_detail": "Request failed. The other namespaces are unaffected.",
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
+      "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
+      "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",
+      "open_in_kv": "Open in KV store",
+      "open_in_secrets": "Open in secrets",
       "options_aria": "Search options",
+      "path_only_hint": "Searches the file path only, not the file content. Cannot be replaced.",
       "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
       "preview_error": "Failed to load flow source",
       "previous_match": "Previous match",
@@ -2078,6 +2260,7 @@
       "replace_aria": "Replace with",
       "replace_placeholder": "Replace…",
       "replace_preview_failed": "Failed to compute replace preview",
+      "replace_scope_hint": "Replace applies to Flows only. The other three types are search-only.",
       "replace_skip_reason": {
         "INVALID_FLOW": "would become invalid",
         "NOT_FOUND": "no longer exists",
@@ -2088,6 +2271,7 @@
       },
       "replace_this": "Replace",
       "replace_this_match": "Replace this match",
+      "retry_namespace": "Retry this namespace",
       "retry_search": "Retry search",
       "scope": "Scope",
       "scope_all": "All source",
@@ -2096,12 +2280,33 @@
       "scope_triggers": "Triggers",
       "search_aria": "Search flow source",
       "search_failed": "Search failed",
-      "search_placeholder": "Search across all flow source…",
+      "search_in": "Search in",
+      "search_placeholder": "Search flow source, file paths, KV and secret keys…",
+      "searching_namespace": "Searching {namespace}",
+      "secret_match_notice": "Secret values are never read by search. Only key names are matched.",
       "select_all_in_flow": "Select all matches in {namespace} / {id}",
+      "select_all_types": "Select all types",
       "select_match": "Select match on line {line}",
       "show_replace": "Show replace",
       "summary": "{matches} matches in {flows} flows",
-      "use_regex": "Use regular expression"
+      "summary_cross": "{matches} in {resources} across {types}",
+      "tag_keys_only_never": "Keys only — values never shown or searched",
+      "tag_keys_only_values": "Keys only — values are not searched",
+      "tag_paths_only": "Paths only — file content is not searched",
+      "tag_search_only": "Search only — not replaced",
+      "tag_source_code": "Source code",
+      "truncated_flows": "Showing the first {shown} of {total} matches. Replace all only applies to the matches shown — narrow the query first.",
+      "truncated_type": "first {shown} of {total}",
+      "turn_off": "Turn off {option}",
+      "type_files": "Namespace files",
+      "type_flows": "Flows",
+      "type_kv": "KV keys",
+      "type_meta": "{matches} · {resources}",
+      "type_search_failed": "{type} couldn't be searched",
+      "type_secrets": "Secret keys",
+      "use_regex": "Use regular expression",
+      "value_never_shown": "Never shown or searched",
+      "value_withheld": "Not shown"
     },
     "open source": "Open Source",
     "pricing": "Pricing",
@@ -2253,7 +2458,6 @@
     "blocks": "Blocks",
     "flow_description": "Flow Description",
     "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
-    "pluginDefaults": {},
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {

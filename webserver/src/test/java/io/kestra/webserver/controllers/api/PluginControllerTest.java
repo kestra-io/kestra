@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Manifest;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,11 @@ import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -99,17 +103,44 @@ class PluginControllerTest {
             Argument.mapOf(String.class, PluginIcon.class)
         );
 
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals(Log.class.getName()))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon log = list.get(Log.class.getName());
+        assertThat(log).isNotNull();
+        assertThat(log.getHash()).isNotBlank();
         // test an alias
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals("io.kestra.core.runners.test.task.Alias"))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon alias = list.get("io.kestra.core.runners.test.task.Alias");
+        assertThat(alias).isNotNull();
+        assertThat(alias.getHash()).isNotBlank();
+    }
+
+    @Test
+    void shouldNotInlineIconBytesInIconsIndex() {
+        Map<String, PluginIcon> list = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(list).isNotEmpty();
+        assertThat(list.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
+    }
+
+    @Test
+    void shouldAnswerGroupsRatherThanClassesForGroupIcons() {
+        // Ask for the class index first: both indexes are keyed by no argument, so before they were split apart
+        // this call is what filled the shared cache key that the group index then answered from. Without it the
+        // assertions below would pass against the unsplit code whenever this test happened to run first.
+        client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        Map<String, PluginIcon> groups = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/groups"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(groups).isNotEmpty();
+        assertThat(groups).doesNotContainKey(Log.class.getName());
+        assertThat(groups.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
     }
 
     @Test
@@ -353,7 +384,7 @@ class PluginControllerTest {
             Argument.listOf(InputType.class)
         );
 
-        assertThat(doc.size()).isEqualTo(18);
+        assertThat(doc.size()).isEqualTo(19);
     }
 
     @SuppressWarnings("unchecked")
@@ -462,5 +493,31 @@ class PluginControllerTest {
         assertThat(result.getResults())
             .map(ApiTriggerPlugin::name)
             .contains("Webhook");
+    }
+
+    @Test
+    void triggerPluginTitleDisambiguatesPluginsThatShareAPackageSegment() {
+        // Regression test for the "Add Trigger" picker showing colliding, wrongly-cased labels for
+        // unrelated plugins whose package happens to share a segment (e.g. io.kestra.plugin.mongodb
+        // vs io.kestra.plugin.debezium.mongodb, both conventionally named `Trigger`). The picker label
+        // must come from each plugin's own declared title, not from the trigger class' package name -
+        // this only exercises the resolution, using two real trigger classes as arbitrary stand-ins.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin mongodb = pluginWithTitle("MongoDB");
+        RegisteredPlugin debeziumMongodb = pluginWithTitle("Debezium MongoDB");
+
+        ApiTriggerPlugin mongodbTrigger = controller.toApiTriggerPlugin(mongodb, Schedule.class);
+        ApiTriggerPlugin debeziumMongodbTrigger = controller.toApiTriggerPlugin(debeziumMongodb, Webhook.class);
+
+        assertThat(mongodbTrigger.pluginTitle()).isEqualTo("MongoDB");
+        assertThat(debeziumMongodbTrigger.pluginTitle()).isEqualTo("Debezium MongoDB");
+        assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
+    }
+
+    private static RegisteredPlugin pluginWithTitle(String title) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", title);
+        return RegisteredPlugin.builder().manifest(manifest).build();
     }
 }

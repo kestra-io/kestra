@@ -13,12 +13,13 @@
                 :columns="columns"
                 :visibleColumns="currentVisibleColumns"
                 :storageKey="storageKey"
+                @resolved="currentVisibleColumns = $event"
                 @update-columns="handleUpdateColumns"
             />
         </div>
 
         <div class="footer">
-            <small>{{ visibleCount }} of {{ totalCount }} columns visible</small>
+            <small data-test="visible-columns-count">{{ visibleCount }} of {{ totalCount }} columns visible</small>
         </div>
     </div>
 </template>
@@ -42,8 +43,10 @@
 
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
 
-    const totalCount = computed(() => props.columns.length)
-    const visibleCount = computed(() => currentVisibleColumns.value.length)
+    const selectableColumns = computed(() => props.columns.filter(c => !c.condition || c.condition()))
+
+    const totalCount = computed(() => selectableColumns.value.length)
+    const visibleCount = computed(() => selectableColumns.value.filter(c => currentVisibleColumns.value.includes(c.prop)).length)
 
     const handleUpdateColumns = (newColumns: string[]) => {
         currentVisibleColumns.value = newColumns

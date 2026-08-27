@@ -13,7 +13,7 @@ export default {
     },
     "es": {
         "ks_bulk_select": {
-            "selected": "**{count}** seleccionados",
+            "selected": "<strong>{count}</strong> seleccionados",
             "all": "Seleccionar todo ({count})",
         },
     },

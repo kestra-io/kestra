@@ -119,10 +119,10 @@
                             <KsDropdownItem v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                 {{ $t("pause") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                 {{ $t("unqueue") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" @click="forceRunExecutions()">
                                 {{ $t("force run") }}
                             </KsDropdownItem>
                         </KsDropdownMenu>
@@ -719,7 +719,7 @@
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value || canKill.value
+        return canDelete.value || canUpdate.value || canKill.value || canForceRun.value || canUnqueue.value
     })
 
     const canReplay = computed(() => {
@@ -736,6 +736,14 @@
 
     const canKill = computed(() => {
         return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
+    })
+
+    const canForceRun = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.FORCE_RUN, props.namespace)
+    })
+
+    const canUnqueue = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.namespace)
     })
 
     const isAllowedEdit = computed(() => {

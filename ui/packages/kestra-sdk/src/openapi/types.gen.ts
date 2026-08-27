@@ -965,6 +965,11 @@ export type Flow = AbstractFlow & {
      * Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition.
      */
     policyRefs?: Array<string>;
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -1198,6 +1203,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     variables?: {};
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -1728,6 +1738,10 @@ export type PluginControllerApiTriggerPlugin = {
      * human-readable name (Schema#title if set, otherwise simple class name)
      */
     name?: string;
+    /**
+     * the owning plugin's (or subgroup's) human-readable, correctly-cased title (for example `"MongoDB"` or `"Debezium MongoDB"`), resolved from its own declared metadata rather than guessed from the class package --- used by the UI to disambiguate triggers from different plugins that otherwise share the same last Java package segment (see io.kestra.core.docs.Plugin#titleFor)
+     */
+    pluginTitle?: string;
     /**
      * one-line description from the plugin
      */

@@ -182,6 +182,7 @@
     "add_new_item": "Agregar nuevo elemento",
     "copy": "Copiar",
     "copy_to_clipboard": "Copiar al portapapeles",
+    "copy_pebble_expression": "Copiar expresión pebble",
     "new": "Nuevo",
     "edit": "Editar",
     "back": "Atrás",
@@ -367,7 +368,7 @@
     "unqueue done": "La ejecución está descolada",
     "force run": "Forzar ejecución",
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
-    "force run confirm": "¿Está seguro de que desea forzar la ejecución <code>{id}</code>?<br/><br/>ADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de task duplicadas.<br/><br/>Se realizarán las siguientes transiciones:<br/><ul><li>Las tasks CREATED se moverán al estado RUNNING.</li><li>Las tasks RUNNING se volverán a enviar.</li><li>Las tasks QUEUED se sacarán de la cola.</li><li>Las tasks PAUSED se reanudarán.</li></ul>",
+    "force run confirm": "¿Estás seguro de que quieres forzar la ejecución del Execution `{id}`?\n\nADVERTENCIA: forzar la ejecución de un Execution no está garantizado y puede crear Task Runs duplicados.\n\nSe realizarán las siguientes transiciones:\n\n- Los Tasks CREATED se moverán al estado RUNNING.\n- Los Tasks RUNNING se volverán a enviar.\n- Los Tasks QUEUED se des-encolarán.\n- Los Tasks PAUSED se reanudarán.",
     "force run done": "La ejecución se forzó",
     "metrics": "Métricas",
     "no metrics available": "No se registraron métricas para esta ejecución de task.",
@@ -570,6 +571,7 @@
     "triggers_add_filter_app": "Aplicación",
     "triggers_add_empty_title": "No se encontraron triggers",
     "triggers_add_ee_tooltip": "Este trigger requiere la Enterprise Edition.",
+    "ee_feature_tooltip": "Esta característica requiere la Enterprise Edition.",
     "triggers_add_card_add": "Agregar",
     "triggers_add_modal_tab_form": "Formulario",
     "triggers_add_modal_tab_source": "Origen",
@@ -656,7 +658,7 @@
     "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
     "bulk resume": "¿Estás seguro de que quieres reanudar <code>{executionCount}</code> ejecución(es)?",
     "bulk pause": "¿Está seguro de que desea pausar la(s) ejecución(es) <code>{executionCount}</code>?",
-    "bulk force run": "¿Estás seguro de que quieres forzar la ejecución de <code>{executionCount}</code> ejecución(es)?<br/><br/>ADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de task duplicadas.<br/><br/>Se realizarán las siguientes transiciones:<br/><ul><li>Las tasks CREATED se moverán al estado RUNNING.</li><li>Las tasks RUNNING se volverán a enviar.</li><li>Las tasks QUEUED se sacarán de la cola.</li><li>Las tasks PAUSED se reanudarán.</li></ul>",
+    "bulk force run": "¿Estás seguro de que quieres forzar la ejecución de `{executionCount}` ejecución(es)?\n\nADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de Task duplicadas.\n\nSe realizarán las siguientes transiciones:\n\n- Los Tasks CREATED se moverán al estado RUNNING.\n- Los Tasks RUNNING se volverán a enviar.\n- Los Tasks QUEUED se des-encolarán.\n- Los Tasks PAUSED se reanudarán.",
     "bulk restart": "¿Estás seguro de que quieres reiniciar <code>{executionCount}</code> ejecución(es)?",
     "bulk kill": "¿Estás seguro de que quieres matar <code>{executionCount}</code> ejecución(es)?",
     "cancel": "Cancelar",
@@ -835,6 +837,7 @@
         "folder_error": "Se produjo un error al crear la carpeta"
       },
       "rename": {
+        "error": "No se pudo renombrar a \"{name}\". Puede que ya exista un archivo o una carpeta con ese nombre.",
         "label": "Renombrar",
         "file": "Renombrar archivo",
         "folder": "Renombrar carpeta",
@@ -1391,6 +1394,7 @@
       "key": "Nombre",
       "keyPlaceholder": "Nombre para referenciar este secreto, ej. MY_API_TOKEN",
       "name": "Valor secreto",
+      "valuePlaceholder": "Introduce el valor secreto",
       "description": "Descripción",
       "descriptionPlaceholder": "Describe este secreto",
       "tags": "Etiquetas",
@@ -1731,7 +1735,7 @@
         "content": "Exponga un flow como una herramienta MCP añadiendo un <code>McpToolTrigger</code> a él. Lea más sobre el <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> en nuestra documentación."
       },
       "versionPlugin": {
-        "title": "¡Aún no tienes ningún plugin versionado!",
+        "title": "¡Aún no tienes plugins versionados!",
         "content": "Aquí puedes gestionar todos los plugins instalados en tu instancia de Kestra. Los plugins recién instalados pueden no estar disponibles de inmediato en todos los servicios de Kestra, dependiendo de la configuración de tu instancia."
       },
       "panels": {
@@ -1887,6 +1891,7 @@
           "test": "prueba"
         },
         "contextRemoved": "Eliminado {type} {id} del contexto.",
+        "modelChanged": "Cambiado a {model}.",
         "toolResult": {
           "detail": "Detalles",
           "error": "El {tool} falló",
@@ -1957,6 +1962,12 @@
           "Convergiendo"
         ],
         "newChat": "Nuevo chat",
+        "fixThread": {
+          "flow": "Arreglar Flow {id}",
+          "task": "Corregir Task {id}",
+          "execution": "Corregir la ejecución de {id}",
+          "generic": "Corregir errores de Flow"
+        },
         "draft": {
           "openInEditor": "Abrir en el editor",
           "apply": "Aplicar",
@@ -2201,7 +2212,7 @@
       "next_match": "Siguiente coincidencia",
       "no_results_description": "Intenta ampliar el namespace, cambiar el ámbito a \"All source\" o desactivar \"Match case\" y \"Match whole word\".",
       "no_results_hidden_type": "Se encontró {count} coincidencia en {type}, que no has seleccionado. | Se encontraron {count} coincidencias en {type}, que no has seleccionado.",
-      "no_results_in_types": "Sin coincidencias para “{query}” en {types}",
+      "no_results_in_types": "Sin coincidencias para {query} en {types}",
       "no_results_title": "No hay coincidencias para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir en el editor",

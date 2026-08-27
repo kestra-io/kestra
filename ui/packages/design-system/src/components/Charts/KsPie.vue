@@ -8,6 +8,7 @@
         :tooltipType="tooltipType"
         :disableFeatures="disableFeatures"
         :renderer="renderer"
+        :maxPixelRatio="maxPixelRatio"
         type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
@@ -53,6 +54,8 @@
             disableFeatures?: ChartFeature[]
             /** ECharts renderer backend. */
             renderer?: ChartRenderer
+            /** Upper bound for the canvas pixel ratio; see KsEchart. */
+            maxPixelRatio?: number
         }>(),
         {
             data: null,
@@ -63,6 +66,7 @@
             disableFeatures: () => [],
             tooltipType: TooltipType.NATIVE,
             renderer: ChartRenderer.CANVAS,
+            maxPixelRatio: undefined,
         },
     )
 

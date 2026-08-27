@@ -182,6 +182,7 @@
     "add_new_item": "새 항목 추가",
     "copy": "복사",
     "copy_to_clipboard": "클립보드에 복사",
+    "copy_pebble_expression": "pebble 표현식 복사",
     "new": "새로 만들기",
     "edit": "편집",
     "back": "뒤로",
@@ -367,7 +368,7 @@
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "force run": "강제 실행",
     "force run title": "실행 <code>{id}</code> 강제 실행.",
-    "force run confirm": "실행 <code>{id}</code>를 강제로 실행하시겠습니까?<br/><br/>경고: 실행 강제 실행은 보장되지 않으며 중복 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED task는 실행 중 상태로 이동됩니다.</li><li>RUNNING task는 다시 제출됩니다.</li><li>QUEUED task는 대기열에서 제거됩니다.</li><li>PAUSED task는 재개됩니다.</li></ul>",
+    "force run confirm": "실행 `{id}`를 강제로 실행하시겠습니까?\n\n경고: 실행 강제 실행은 보장되지 않으며 중복 Task 실행을 생성할 수 있습니다.\n\n다음 전환이 수행됩니다:\n\n- CREATED Task는 실행 중 상태로 이동됩니다.\n- RUNNING Task는 다시 제출됩니다.\n- QUEUED Task는 대기열에서 제거됩니다.\n- PAUSED Task는 재개됩니다.",
     "force run done": "실행이 강제로 실행됨",
     "metrics": "메트릭",
     "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
@@ -570,6 +571,7 @@
     "triggers_add_filter_app": "앱",
     "triggers_add_empty_title": "트리거를 찾을 수 없음",
     "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
+    "ee_feature_tooltip": "이 기능은 Enterprise Edition이 필요합니다.",
     "triggers_add_card_add": "추가",
     "triggers_add_modal_tab_form": "폼",
     "triggers_add_modal_tab_source": "출처",
@@ -656,7 +658,7 @@
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",
     "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
-    "bulk force run": "<code>{executionCount}</code>개의 실행을 강제로 실행하시겠습니까?<br/><br/>경고: 실행 강제 실행은 보장되지 않으며 중복 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED task는 실행 중 상태로 이동됩니다.</li><li>RUNNING task는 다시 제출됩니다.</li><li>QUEUED task는 대기열에서 제거됩니다.</li><li>PAUSED task는 재개됩니다.</li></ul>",
+    "bulk force run": "`{executionCount}`개의 실행을 강제로 실행하시겠습니까?\n\n경고: 실행 강제 실행은 보장되지 않으며 중복 Task 실행을 생성할 수 있습니다.\n\n다음 전환이 수행됩니다:\n\n- CREATED Task는 실행 중 상태로 이동됩니다.\n- RUNNING Task는 다시 제출됩니다.\n- QUEUED Task는 대기열에서 제거됩니다.\n- PAUSED Task는 재개됩니다.",
     "bulk restart": "<code>{executionCount}</code> 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
     "cancel": "취소",
@@ -835,6 +837,7 @@
         "folder_error": "폴더 생성 중 오류가 발생했습니다"
       },
       "rename": {
+        "error": "\"{name}\"(으)로 이름을 변경할 수 없습니다. 같은 이름의 파일 또는 폴더가 이미 있을 수 있습니다.",
         "label": "이름 변경",
         "file": "파일 이름 변경",
         "folder": "폴더 이름 변경",
@@ -1391,6 +1394,7 @@
       "key": "이름",
       "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
       "name": "비밀 value",
+      "valuePlaceholder": "비밀 value 입력",
       "description": "설명",
       "descriptionPlaceholder": "이 비밀을 설명하세요",
       "tags": "태그",
@@ -1887,6 +1891,7 @@
           "test": "테스트"
         },
         "contextRemoved": "{type} {id}이(가) 컨텍스트에서 제거되었습니다.",
+        "modelChanged": "{model}으로 전환되었습니다.",
         "toolResult": {
           "detail": "세부 정보",
           "error": "{tool} 실패했습니다",
@@ -1957,6 +1962,12 @@
           "수렴 중"
         ],
         "newChat": "새 채팅",
+        "fixThread": {
+          "flow": "Flow {id} 수정",
+          "task": "Task {id} 수정",
+          "execution": "{id} 실행 수정",
+          "generic": "Flow 오류 수정"
+        },
         "draft": {
           "openInEditor": "에디터에서 열기",
           "apply": "적용",
@@ -2201,7 +2212,7 @@
       "next_match": "다음 일치",
       "no_results_description": "namespace를 확장하거나, 범위를 '모든 소스'로 다시 전환하거나, '대소문자 일치' 및 '단어 전체 일치'를 끄십시오.",
       "no_results_hidden_type": "선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다. | 선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다.",
-      "no_results_in_types": "{types}에서 “{query}”와 일치하는 항목이 없습니다",
+      "no_results_in_types": "{types}에서 {query}와 일치하는 항목이 없습니다",
       "no_results_title": "\"{query}\"에 대한 일치 항목 없음",
       "open_flow": "flow 열기",
       "open_in_editor": "에디터에서 열기",

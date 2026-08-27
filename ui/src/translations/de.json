@@ -182,6 +182,7 @@
     "add_new_item": "Neues Element hinzufügen",
     "copy": "Kopieren",
     "copy_to_clipboard": "In die Zwischenablage kopieren",
+    "copy_pebble_expression": "Pebble-Ausdruck kopieren",
     "new": "Neu",
     "edit": "Bearbeiten",
     "back": "Zurück",
@@ -367,7 +368,7 @@
     "unqueue done": "Die Execution wurde aus der Warteschlange entfernt",
     "force run": "Ausführung erzwingen",
     "force run title": "Execution <code>{id}</code> erzwingen.",
-    "force run confirm": "Möchtest du die Execution <code>{id}</code> wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
+    "force run confirm": "Möchtest du die Execution `{id}` wirklich erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task Runs führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
     "force run done": "Die Execution wurde erzwungen",
     "metrics": "Metriken",
     "no metrics available": "Für diesen Task-Run wurden keine Metriken aufgezeichnet.",
@@ -570,6 +571,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Keine Trigger gefunden",
     "triggers_add_ee_tooltip": "Dieser Trigger erfordert die Enterprise Edition.",
+    "ee_feature_tooltip": "Diese Funktion erfordert die Enterprise Edition.",
     "triggers_add_card_add": "Hinzufügen",
     "triggers_add_modal_tab_form": "Formular",
     "triggers_add_modal_tab_source": "Quelle",
@@ -656,7 +658,7 @@
     "bulk change state": "Möchtest du den Status von <code>{executionCount}</code> Execution(s) wirklich ändern?",
     "bulk resume": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich fortsetzen?",
     "bulk pause": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich pausieren?",
-    "bulk force run": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
+    "bulk force run": "Möchtest du wirklich `{executionCount}` Execution(s) erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution wird nicht garantiert und kann zu doppelten Task-Executions führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
     "bulk restart": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich neu starten?",
     "bulk kill": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich killen?",
     "cancel": "Abbrechen",
@@ -835,6 +837,7 @@
         "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten"
       },
       "rename": {
+        "error": "Umbenennen in \"{name}\" nicht möglich. Möglicherweise existiert bereits eine Datei oder ein Ordner mit diesem Namen.",
         "label": "Umbenennen",
         "file": "Datei umbenennen",
         "folder": "Ordner umbenennen",
@@ -1391,6 +1394,7 @@
       "key": "Name",
       "keyPlaceholder": "Name, über den dieses Secret referenziert wird, z. B. MY_API_TOKEN",
       "name": "Secret-Wert",
+      "valuePlaceholder": "Secret-Wert eingeben",
       "description": "Beschreibung",
       "descriptionPlaceholder": "Beschreibe dieses Secret",
       "tags": "Tags",
@@ -1731,7 +1735,7 @@
         "content": "Stelle einen Flow als MCP-Tool bereit, indem du ihm einen <code>McpToolTrigger</code> hinzufügst. Erfahre mehr über den <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in unserer Dokumentation."
       },
       "versionPlugin": {
-        "title": "Du hast noch kein versioniertes Plugin!",
+        "title": "Du hast noch keine versionierten Plugins!",
         "content": "Hier kannst du alle Plugins verwalten, die auf deiner Kestra-Instanz installiert sind. Neu installierte Plugins stehen je nach Konfiguration deiner Instanz möglicherweise nicht sofort in allen Kestra-Services zur Verfügung."
       },
       "panels": {
@@ -1887,6 +1891,7 @@
           "test": "Test"
         },
         "contextRemoved": "{type} {id} aus dem Kontext entfernt.",
+        "modelChanged": "Zu {model} gewechselt.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} fehlgeschlagen",
@@ -1957,6 +1962,12 @@
           "Konvergenz"
         ],
         "newChat": "Neuer Chat",
+        "fixThread": {
+          "flow": "Flow {id} reparieren",
+          "task": "Task {id} reparieren",
+          "execution": "Execution {id} reparieren",
+          "generic": "Flow-Fehler beheben"
+        },
         "draft": {
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",
@@ -2201,7 +2212,7 @@
       "next_match": "Nächste Übereinstimmung",
       "no_results_description": "Versuche, den Namespace zu erweitern, den Bereich auf „Alle Quellen“ zurückzustellen oder „Groß-/Kleinschreibung beachten“ und „Ganzes Wort“ zu deaktivieren.",
       "no_results_hidden_type": "{count} Treffer in {type} gefunden, das du nicht ausgewählt hast. | {count} Treffer in {type} gefunden, das du nicht ausgewählt hast.",
-      "no_results_in_types": "Keine Treffer für „{query}“ in {types}",
+      "no_results_in_types": "Keine Treffer für {query} in {types}",
       "no_results_title": "Keine Übereinstimmungen für „{query}“",
       "open_flow": "Flow öffnen",
       "open_in_editor": "Im Editor öffnen",

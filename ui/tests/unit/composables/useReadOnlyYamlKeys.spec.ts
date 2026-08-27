@@ -1,7 +1,8 @@
 import {describe, expect, it} from "vitest"
 import {mount} from "@vue/test-utils"
-import {computed, defineComponent, ref} from "vue"
+import {computed, defineComponent, ref, type Ref} from "vue"
 import {
+    commentOf,
     findReadOnlyLines,
     readTopLevelValue,
     useReadOnlyYamlKeys,
@@ -55,6 +56,23 @@ describe("readTopLevelValue", () => {
 
     it("handles CRLF line endings", () => {
         expect(readTopLevelValue("id: win\r\nnamespace: ns\r\n", "id")).toBe("win")
+    })
+})
+
+describe("commentOf", () => {
+    it.each([
+        [" my_flow # keep this", " # keep this"],
+        [" \"my_flow\" # keep this", " # keep this"],
+        [" 'my_flow'   # spaced", "   # spaced"],
+        // Nothing to keep.
+        [" my_flow", ""],
+        [" \"my_flow\"", ""],
+        ["", ""],
+        // `#` only opens a comment when preceded by whitespace, so this one is
+        // part of the value and must not be mistaken for a suffix.
+        [" a#b", ""],
+    ])("reads the suffix of %s", (afterKey, expected) => {
+        expect(commentOf(afterKey)).toBe(expected)
     })
 })
 
@@ -136,11 +154,16 @@ describe("violatedKeys", () => {
  * edit made with `pushEditOperations` joins the element already open, while one
  * made with `executeEdits` opens a new element of its own. Undo pops one element
  * and, like Monaco, notifies the content listeners afterwards.
+ *
+ * Listener registrations are counted rather than merely tracked, so that a guard
+ * re-attaching when it should not is visible even though attach() leaves exactly
+ * one listener behind either way.
  */
 function editorDouble(initial: string) {
     let lines = initial.split("\n")
     const listeners: Array<() => void> = []
     let painted: unknown[] = []
+    let registrations = 0
     /** Snapshot taken before each undo element; last entry is the newest. */
     const undoStack: string[] = []
 
@@ -178,6 +201,7 @@ function editorDouble(initial: string) {
     const editor = {
         getModel: () => model,
         onDidChangeModelContent(callback: () => void) {
+            registrations += 1
             listeners.push(callback)
             return {dispose: () => listeners.splice(listeners.indexOf(callback), 1)}
         },
@@ -201,6 +225,7 @@ function editorDouble(initial: string) {
         current: () => lines.join("\n"),
         decorationCount: () => painted.length,
         undoDepth: () => undoStack.length,
+        attachCount: () => registrations,
         /** Simulate the user changing the buffer; each one opens an undo element. */
         type(next: string) {
             undoStack.push(lines.join("\n"))
@@ -227,12 +252,20 @@ function withComposable(run: () => void) {
 }
 
 describe("useReadOnlyYamlKeys", () => {
-    function guard(double: ReturnType<typeof editorDouble>, enabled = true) {
+    function guardWith(
+        double: ReturnType<typeof editorDouble>,
+        expected: Ref<Record<string, string | undefined>>,
+        enabled = true,
+    ) {
         return withComposable(() => useReadOnlyYamlKeys({
             editor: ref(double.editor) as any,
-            expected: computed(() => ({id: "my_flow", namespace: "company.team"})),
+            expected,
             enabled: computed(() => enabled),
         }))
+    }
+
+    function guard(double: ReturnType<typeof editorDouble>, enabled = true) {
+        return guardWith(double, ref({id: "my_flow", namespace: "company.team"}), enabled)
     }
 
     it("rejects an edit to a locked value", () => {
@@ -297,7 +330,33 @@ describe("useReadOnlyYamlKeys", () => {
         expect(double.current()).toBe(FLOW)
     })
 
-    it("does not freeze a document whose locked line carries a comment", () => {
+    it("keeps an inline comment when correcting the line it sits on", () => {
+        const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
+        const double = editorDouble(commented)
+        guard(double)
+
+        // Typing on the locked line itself, which is what reaches restoreLines —
+        // an edit elsewhere leaves violatedKeys empty and never gets there.
+        double.type(commented.replace("id: my_flow # keep", "id: my_flowX # keep"))
+
+        // The value snaps back and the comment, which was the user's to write,
+        // survives with it.
+        expect(double.current()).toBe(commented)
+    })
+
+    it("keeps a comment on a locked line that a paste rewrote wholesale", () => {
+        const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
+        const double = editorDouble(commented)
+        guard(double)
+
+        // The pasted line carries its own comment; the value is refused but the
+        // comment that arrived with it is what the line now legitimately holds.
+        double.type(commented.replace("id: my_flow # keep", "id: pasted # theirs"))
+
+        expect(double.current()).toContain("id: my_flow # theirs")
+    })
+
+    it("does not provoke a correction for an edit elsewhere in a commented document", () => {
         const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
         const double = editorDouble(commented)
         guard(double)
@@ -305,7 +364,7 @@ describe("useReadOnlyYamlKeys", () => {
         const edited = commented.replace("message: hello", "message: changed")
         double.type(edited)
 
-        // The comment survives and the unrelated edit lands.
+        // Nothing was violated, so nothing was rewritten.
         expect(double.current()).toBe(edited)
     })
 
@@ -367,5 +426,41 @@ describe("useReadOnlyYamlKeys", () => {
         // One element for the user's keystroke; the correction joins it rather
         // than adding a second the user would have to press through.
         expect(double.undoDepth()).toBe(before + 1)
+    })
+
+    it("does not re-attach when the expectations are replaced by an equal object", async () => {
+        const double = editorDouble(FLOW)
+        const expected = ref<Record<string, string | undefined>>({
+            id: "my_flow",
+            namespace: "company.team",
+        })
+        guardWith(double, expected)
+
+        const attached = double.attachCount()
+
+        // What the flow store does on every save, revision load and refetch: a
+        // fresh object carrying the same values. Keying the watcher on the
+        // container rather than the values re-ran attach() for each one, which
+        // clears the decorations and can strand `lastValid` at undefined.
+        expected.value = {id: "my_flow", namespace: "company.team"}
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(double.attachCount()).toBe(attached)
+    })
+
+    it("does re-attach when a locked value actually changes", async () => {
+        const double = editorDouble(FLOW)
+        const expected = ref<Record<string, string | undefined>>({
+            id: "my_flow",
+            namespace: "company.team",
+        })
+        guardWith(double, expected)
+
+        const attached = double.attachCount()
+
+        expected.value = {id: "renamed_flow", namespace: "company.team"}
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(double.attachCount()).toBe(attached + 1)
     })
 })

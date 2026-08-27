@@ -70,17 +70,9 @@
 }
 
 .ks-empty-state__artwork {
-    width: 104px;
-    height: 104px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--ks-bg-surface);
-    border-radius: 12px;
-
     img {
-        width: 80px;
-        height: 80px;
+        width: 120px;
+        height: 120px;
         display: block;
     }
 }

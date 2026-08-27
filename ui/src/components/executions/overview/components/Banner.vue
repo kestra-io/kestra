@@ -273,7 +273,7 @@
         const prompt = errorLines
             ? `Fix the flow ${props.execution.flowId} as it generated the following error:\n${errorLines}`
             : `Fix the flow ${props.execution.flowId} as its execution failed.`
-        useMiscStore().promptCopilot(prompt)
+        useMiscStore().promptCopilot(prompt, {title: t("ai.copilot.fixThread.execution", {id: props.execution.flowId}), newThread: true})
     }
 </script>
 

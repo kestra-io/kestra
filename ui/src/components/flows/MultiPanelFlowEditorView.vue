@@ -109,7 +109,7 @@
                     "triggers",
                     "items",
                 ].join("/")
-                actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
+                noCodeHandlers.onCreateTask({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
             }
         }
     })
@@ -169,7 +169,7 @@
         }))
     }
 
-    const {panels, actions} = useNoCodePanelsFull({
+    const {panels, actions, noCodeHandlers} = useNoCodePanelsFull({
         RawNoCode,
         editorView,
         editorElements: EDITOR_ELEMENTS,

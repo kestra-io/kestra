@@ -66,7 +66,7 @@ export default defineConfig(({mode}) => {
             },
             proxy: {
                 "^/api": {
-                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    target: process.env.VITE_PROXY_URL || "http://localhost:8080",
                     ws: true,
                     changeOrigin: true,
                 },
@@ -74,7 +74,7 @@ export default defineConfig(({mode}) => {
                 // OpenAPI spec (${context-path}/swagger/kestra.yml) to compare its hash. Dev-only;
                 // the check itself is tree-shaken from production builds.
                 "^/swagger": {
-                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    target: process.env.VITE_PROXY_URL || "http://localhost:8080",
                     changeOrigin: true,
                 },
             },

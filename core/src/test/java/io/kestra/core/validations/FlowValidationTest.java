@@ -264,6 +264,77 @@ class FlowValidationTest {
     }
 
     @Test
+    void webhookFlowMissingRequiredInput_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: name
+                type: STRING
+                required: true
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: hook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: mykey
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Missing inputs for Webhook Trigger 'hook', missing inputs: 'name'");
+    }
+
+    @Test
+    void webhookFlowSuppliesRequiredInput_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: name
+                type: STRING
+                required: true
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: hook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: mykey
+                inputs:
+                  name: "{{ trigger.body.name }}"
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void webhookFlowMissingOptionalInput_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: name
+                type: STRING
+                required: false
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: hook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: mykey
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
     void shouldGetConstraintErrorGivenOptionalInputWithDefault() {
         // Given
         GenericFlow flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """

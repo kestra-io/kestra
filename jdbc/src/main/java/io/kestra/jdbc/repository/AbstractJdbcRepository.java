@@ -46,6 +46,13 @@ public abstract class AbstractJdbcRepository {
 
     protected static final int FETCH_SIZE = 100;
 
+    /**
+     * Operations valid on the {@link QueryFilter.Field#LABELS} field when its value is a plain
+     * string, i.e. {@code filters[labels][OP]=value} with no label key. Every other operation
+     * requires a keyed map value ({@code filters[labels][OP][key]=value}).
+     */
+    private static final Set<Op> SCALAR_LABEL_OPS = EnumSet.of(Op.CONTAINS, Op.NOT_CONTAINS, Op.IS_NULL, Op.IS_NOT_NULL);
+
     @Getter
     @Inject
     // Micronaut field-injects this for bean-managed repositories; log-store plugins (deserialized,
@@ -386,6 +393,13 @@ public abstract class AbstractJdbcRepository {
             if (value instanceof Map<?, ?> map) {
                 return findLabelCondition(Either.left(map), operation);
             } else if (value instanceof String string) {
+                if (!SCALAR_LABEL_OPS.contains(operation)) {
+                    throw new InvalidQueryFiltersException(
+                        "Operation %s on the labels field requires a label key, as in filters[labels][%s][<key>]=<value>. Operations supported without a key are %s.".formatted(
+                            operation, operation, SCALAR_LABEL_OPS
+                        )
+                    );
+                }
                 return findLabelCondition(Either.right(string), operation);
             } else {
                 throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");

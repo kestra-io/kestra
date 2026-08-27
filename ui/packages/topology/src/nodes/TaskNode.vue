@@ -6,6 +6,7 @@
         :state="state"
         :class="classes"
         :icons="icons"
+        :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
@@ -142,6 +143,7 @@
         targetPosition?: Position;
         id: string;
         icons?: Record<string, unknown>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -153,6 +155,7 @@
         targetPosition: Position.Left,
         enableSubflowInteraction: true,
         icons: undefined,
+        loadIcon: undefined,
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),

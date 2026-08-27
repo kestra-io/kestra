@@ -110,13 +110,18 @@ export default defineConfig(({mode}) => {
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
                     },
-                    // add all exports of @kestra-io/kestra-sdk as shared singletons
+                    // add all exports of @kestra-io/kestra-sdk as shared singletons.
+                    // eager: the SDK's barrel entry re-exports every per-tag module, so they are all
+                    // in the initial graph no matter what. A lazy share would emit an import() that
+                    // cannot split them out of it (INEFFECTIVE_DYNAMIC_IMPORT, one per subpath);
+                    // eager emits the static import instead, and plugins still resolve to this instance.
                     ...Object.fromEntries(Object.keys(kestraSdkExports)
                         .filter((key) => key !== "." && !key.endsWith(".json"))
                         .map((key) => {
                             const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
                             return [`@kestra-io/kestra-sdk/${name}`, {
                                 singleton: true,
+                                eager: true,
                             }]
                         }),
                     ),

@@ -1,4 +1,4 @@
-import type {Execution, MetricEntry, PagedResultsMetricEntry, Task} from "@kestra-io/kestra-sdk"
+import type {Execution, PagedResultsMetricEntry, Task} from "@kestra-io/kestra-sdk"
 import {z} from "zod"
 import {defineArtifactSlot} from "./define-artifact-slot"
 
@@ -21,7 +21,6 @@ export const propsSchema = z.object({
     tenant: z.string().optional(),
     // Current (possibly unsaved) flow source, so plugins can resolve draft expressions for display.
     source: z.string().optional(),
-    metrics: z.custom<MetricEntry>().array(),
     progress: progressEventSchema.array(),
     // Outputs of this task's current task run, fetched on call so an artifact that doesn't render
     // them costs no request. Resolves to `{}` outside an execution.

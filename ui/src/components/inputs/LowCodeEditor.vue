@@ -49,7 +49,6 @@
                         :flowId="props.flowId"
                         :tenant="tenant"
                         :source="flowSource"
-                        :metrics="taskMetrics(taskProps.data.node?.task?.id)"
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
                         :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
                         :fetchMetrics="fetchExecutionMetrics"
@@ -192,7 +191,6 @@
                     :flowId="props.flowId"
                     :tenant="tenant"
                     :source="flowSource"
-                    :metrics="taskMetrics(selectedTask?.id)"
                     :progress="taskProgress(selectedTask?.id)"
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
                     :fetchMetrics="fetchExecutionMetrics"
@@ -234,6 +232,7 @@
     import {Topology} from "@kestra-io/topology"
     import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
+    import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
@@ -357,7 +356,7 @@
         )
     })
 
-    // metrics/progressEvents are never reset across execution navigations (taskRunId is globally
+    // progressEvents are never reset across execution navigations (taskRunId is globally
     // unique so old entries are harmless in isolation) — but filtering on taskId alone lets a
     // PREVIOUS taskRun's entries leak into a fresh run of the same task, or into a pre-execution
     // view with no run at all. Resolve this task's CURRENT taskRun from the execution and filter
@@ -366,12 +365,6 @@
         const list = exec.value?.taskRunList as any[] | undefined
         const filtered = list?.filter((r: any) => r.taskId === taskId) ?? []
         return filtered[filtered.length - 1]?.id
-    }
-
-    const taskMetrics = (taskId: string | undefined) => {
-        const taskRunId = currentTaskRunId(taskId)
-        if (!taskRunId) return []
-        return executionsStore.metrics.filter((m) => m.taskRunId === taskRunId)
     }
 
     const taskProgress = (taskId: string | undefined) => {
@@ -390,17 +383,24 @@
         return loadTaskRunOutputs(executionId, taskRunId)
     }
 
-    const fetchExecutionMetrics = (query: {page?: number, size?: number, sort?: string, taskId?: string, taskRunId?: string} = {}) => {
+    const fetchExecutionMetrics = ({page, size, sort, taskId, taskRunId}: {page?: number, size?: number, sort?: string, taskId?: string, taskRunId?: string} = {}) => {
         const executionId = exec.value?.id
         if (!executionId) return Promise.resolve({results: [], total: 0})
-        return executionsStore.loadMetrics({executionId, params: query, store: false})
+        return MetricsAPI.searchByExecution({
+            executionId,
+            page,
+            size,
+            sort: sort ? [sort] : undefined,
+            taskId,
+            taskRunId,
+        })
     }
 
-    // Topology nodes only re-evaluate their taskDetails slot (where taskMetrics/taskProgress are
-    // read) when the graph is regenerated — bump this so a live metrics/progress update (which
-    // isn't part of `execution` or `flowGraph`) still reaches an already-rendered node.
+    // Topology nodes only re-evaluate their taskDetails slot (where taskProgress is read) when the
+    // graph is regenerated — bump this so a live progress update (which isn't part of `execution`
+    // or `flowGraph`) still reaches an already-rendered node.
     const taskDetailsVersion = ref(0)
-    watch([() => executionsStore.metrics, () => executionsStore.progressEvents], () => {
+    watch(() => executionsStore.progressEvents, () => {
         taskDetailsVersion.value++
     })
 
@@ -831,7 +831,7 @@
                 flowId: props.flowId,
                 tenant: tenant.value,
                 source: flowSource.value,
-                metrics: taskMetrics(fullTask?.id),
+                progress: taskProgress(fullTask?.id),
                 fetchOutputs: fetchTaskOutputs(fullTask?.id),
                 fetchMetrics: fetchExecutionMetrics,
             }

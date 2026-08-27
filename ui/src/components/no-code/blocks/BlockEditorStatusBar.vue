@@ -131,6 +131,9 @@
         padding: 0 1px;
     }
 
+    /* The height every other offset here is derived from. Declared on
+       .block-editor in BlockEditor.vue; the fallback keeps this component
+       correct on its own. */
     .block-editor-footer {
         position: absolute;
         left: 0;
@@ -140,7 +143,7 @@
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-4);
-        height: 2.25rem;
+        height: var(--status-bar-height, 2.25rem);
         padding: 0 var(--ks-spacing-4);
         background: var(--ks-bg-surface);
         border-top: 1px solid var(--ks-border-subtle);
@@ -192,7 +195,7 @@
     .block-editor-help {
         position: absolute;
         right: var(--ks-spacing-4);
-        bottom: calc(2.25rem + var(--ks-spacing-3));
+        bottom: calc(var(--status-bar-height, 2.25rem) + var(--ks-spacing-3));
         z-index: 10;
         display: inline-flex;
         align-items: center;
@@ -237,7 +240,7 @@
 
     .block-editor-undo {
         position: absolute;
-        bottom: calc(2.25rem + var(--ks-spacing-3));
+        bottom: calc(var(--status-bar-height, 2.25rem) + var(--ks-spacing-3));
         left: 50%;
         transform: translateX(-50%);
         z-index: 11;

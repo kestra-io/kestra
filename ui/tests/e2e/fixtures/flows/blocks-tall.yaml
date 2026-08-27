@@ -56,3 +56,11 @@ errors:
   - id: err_handler
     type: io.kestra.plugin.core.log.Log
     message: handled
+# Finally renders after Errors, so `cleanup` is the genuinely last stop on the
+# canvas — the one block with less than half a scrollport of content beneath it,
+# and therefore the one that cannot be centred. That is the boundary the
+# max-scroll case needs.
+finally:
+  - id: cleanup
+    type: io.kestra.plugin.core.log.Log
+    message: cleaned up

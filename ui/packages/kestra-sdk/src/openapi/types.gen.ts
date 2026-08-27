@@ -1498,6 +1498,7 @@ export type MiscControllerConfiguration = {
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
     pluginsHash?: number;
+    isPluginAutoInstallEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1722,6 +1723,15 @@ export type PluginPluginElementMetadata = {
     description?: string;
 };
 
+export type PluginArtifact = {
+    groupId?: string;
+    artifactId?: string;
+    extension?: string;
+    classifier?: string;
+    version?: string;
+    uri?: string;
+};
+
 export type PluginControllerApiPluginVersions = {
     type?: string;
     versions?: Array<string>;
@@ -1778,6 +1788,29 @@ export type PluginIcon = {
     monochrome?: boolean;
     hash?: string;
 };
+
+export type PluginInstallJob = {
+    id?: string;
+    status?: PluginInstallJobStatus;
+    artifacts?: Array<PluginArtifact>;
+    progress?: {
+        [key: string]: PluginInstallJobArtifactProgress;
+    };
+    startedAt?: string;
+    finishedAt?: string;
+    error?: string;
+};
+
+export type PluginInstallJobArtifactProgress = {
+    resource?: string;
+    transferred?: number;
+    total?: number;
+    state?: PluginInstallJobArtifactState;
+};
+
+export type PluginInstallJobArtifactState = 'STARTED' | 'PROGRESSING' | 'SUCCEEDED' | 'FAILED';
+
+export type PluginInstallJobStatus = 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
 
 export type PluginSchema = {
     properties?: {
@@ -2719,6 +2752,31 @@ export type ListPluginsResponses = {
 
 export type ListPluginsResponse = ListPluginsResponses[keyof ListPluginsResponses];
 
+export type DetectMissingPluginsData = {
+    body: string;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/auto-install/detect';
+};
+
+export type DetectMissingPluginsErrors = {
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: unknown;
+};
+
+export type DetectMissingPluginsResponses = {
+    /**
+     * Detection result
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DetectMissingPluginsResponse = DetectMissingPluginsResponses[keyof DetectMissingPluginsResponses];
+
 export type GetPluginBySubgroupsData = {
     body?: never;
     path?: never;
@@ -2850,6 +2908,60 @@ export type GetSchemaFromInputTypeResponses = {
 
 export type GetSchemaFromInputTypeResponse = GetSchemaFromInputTypeResponses[keyof GetSchemaFromInputTypeResponses];
 
+export type InstallPluginsData = {
+    body: Array<PluginArtifact>;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/install';
+};
+
+export type InstallPluginsErrors = {
+    /**
+     * An artifact is not part of the plugin catalog
+     */
+    400: unknown;
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: unknown;
+    /**
+     * Too many install jobs are already pending or running
+     */
+    429: unknown;
+};
+
+export type InstallPluginsResponses = {
+    /**
+     * Installation job accepted
+     */
+    202: unknown;
+};
+
+export type GetInstallJobData = {
+    body?: never;
+    path: {
+        jobId: string;
+    };
+    query?: never;
+    url: '/api/v1/plugins/install/{jobId}';
+};
+
+export type GetInstallJobErrors = {
+    /**
+     * Job not found
+     */
+    404: unknown;
+};
+
+export type GetInstallJobResponses = {
+    /**
+     * Job snapshot
+     */
+    200: PluginInstallJob;
+};
+
+export type GetInstallJobResponse = GetInstallJobResponses[keyof GetInstallJobResponses];
+
 export type GetPluginUiManifestData = {
     body: Array<TaskWithVersion>;
     path?: never;
@@ -2904,6 +3016,10 @@ export type GetSchemasFromTypeData = {
          * If schema should be an array of requested type
          */
         arrayOf?: boolean | null;
+        /**
+         * Whether to merge the pre-baked plugin schema bundle for un-installed types
+         */
+        includeCatalog?: boolean | null;
     };
     url: '/api/v1/plugins/schemas/{type}';
 };

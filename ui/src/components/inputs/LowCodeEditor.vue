@@ -51,7 +51,7 @@
                         :source="flowSource"
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
                         :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
-                        :fetchMetrics="fetchExecutionMetrics"
+                        :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
                     />
                 </slot>
             </template>
@@ -193,7 +193,7 @@
                     :source="flowSource"
                     :progress="taskProgress(selectedTask?.id)"
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
-                    :fetchMetrics="fetchExecutionMetrics"
+                    :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
                     displayMode="full"
                     class="mt-3"
                 />
@@ -373,9 +373,9 @@
         return executionsStore.progressEvents.filter((p) => p.taskRunId === taskRunId)
     }
 
-    // Both fetchers resolve the execution and task run when CALLED, not when bound: an artifact is
-    // handed its props once, when the graph is generated, and the task run it should read may only
-    // come into existence later (a playground run, a replay).
+    // Both fetchers resolve the execution when CALLED, not when bound: an artifact is handed its
+    // props once, when the graph is generated, and the execution (or the task run it should read)
+    // may only come into existence later (a playground run, a replay).
     const fetchTaskOutputs = (taskId: string | undefined) => () => {
         const executionId = exec.value?.id
         const taskRunId = currentTaskRunId(taskId)
@@ -383,16 +383,16 @@
         return loadTaskRunOutputs(executionId, taskRunId)
     }
 
-    const fetchExecutionMetrics = ({page, size, sort, taskId, taskRunId}: {page?: number, size?: number, sort?: string, taskId?: string, taskRunId?: string} = {}) => {
+    const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}) => {
         const executionId = exec.value?.id
-        if (!executionId) return Promise.resolve({results: [], total: 0})
+        if (!executionId || !taskId) return Promise.resolve({results: [], total: 0})
         return MetricsAPI.searchByExecution({
             executionId,
+            taskId,
+            taskRunId,
             page,
             size,
             sort: sort ? [sort] : undefined,
-            taskId,
-            taskRunId,
         })
     }
 
@@ -833,7 +833,7 @@
                 source: flowSource.value,
                 progress: taskProgress(fullTask?.id),
                 fetchOutputs: fetchTaskOutputs(fullTask?.id),
-                fetchMetrics: fetchExecutionMetrics,
+                fetchMetrics: fetchTaskMetrics(fullTask?.id),
             }
             isTaskModalOpen.value = true
             return

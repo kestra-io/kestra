@@ -25,13 +25,13 @@ export const propsSchema = z.object({
     // Outputs of this task's current task run, fetched on call so an artifact that doesn't render
     // them costs no request. Resolves to `{}` outside an execution.
     fetchOutputs: z.custom<() => Promise<Record<string, unknown>>>().optional(),
-    // searchByExecution for the current execution, with the execution and tenant already bound —
-    // pass `taskId` or `taskRunId` to narrow it. Resolves to an empty page outside an execution.
+    // This task's metrics in the current execution — searchByExecution with the execution, the
+    // tenant and this task already bound. A looped task has one entry set per iteration; pass
+    // `taskRunId` to narrow to one. Resolves to an empty page outside an execution.
     fetchMetrics: z.custom<(query?: {
         page?: number
         size?: number
         sort?: string
-        taskId?: string
         taskRunId?: string
     }) => Promise<PagedResultsMetricEntry>>().optional(),
 })

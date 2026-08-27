@@ -62,17 +62,6 @@ function pathSegments(path: string): string[] {
     return path.split("/").filter(Boolean)
 }
 
-function readFile(file: File): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as ArrayBuffer)
-        reader.onerror = reject
-        reader.readAsArrayBuffer(file)
-    })
-}
-
-
-
 function isNotRootTreeNode(node: ElTreeNode | {level: 0}): node is ElTreeNode {
     return node.level > 0
 }
@@ -353,68 +342,19 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         return null
     }
 
+    /** The tree is reloaded rather than updated in place: a zip is expanded server-side. */
     async function importFiles(importedFiles: FileList) {
         if(!namespaceId.value) return
-        for (const file of Array.from(importedFiles)) {
-            if ((file as any).webkitRelativePath) {
-                const filePath: string = (file as any).webkitRelativePath
-                const pathParts = filePath.split("/")
-                let currentFolder: TreeNode[] | undefined = fileTree.value
-                const folderPath: string[] = []
-                for (let i = 0; i < pathParts.length - 1; i++) {
-                    const folderName = pathParts[i]
-                    folderPath.push(folderName)
-                    if(!currentFolder) continue
-                    const folderIndex = currentFolder.findIndex(
-                        (item: any) => typeof item === "object" && item.fileName === folderName,
-                    )
-                    if (folderIndex === -1) {
-                        const newFolder: TreeNodeDirectory = {
-                            id: Utils.uid(),
-                            fileName: folderName,
-                            children: [],
-                            type: "Directory",
-                            leaf: false,
-                        }
-                        currentFolder.push(newFolder)
-                        sorted(currentFolder)
-                        currentFolder = newFolder.children
-                    } else {
-                        currentFolder = (currentFolder[folderIndex] as TreeNodeDirectory).children
-                    }
-                }
-                const fileName = pathParts[pathParts.length - 1]
-                const [name, extension] = getFileNameWithExtension(fileName)
-                const content = await readFile(file)
+        try {
+            for (const file of Array.from(importedFiles)) {
                 await namespacesStore.importFileDirectory({
                     namespace: namespaceId.value,
-                    content,
-                    path: `${folderPath}/${fileName}`,
-                })
-                currentFolder?.push({
-                    id: Utils.uid(),
-                    fileName: `${name}${extension ? `.${extension}` : ""}`,
-                    extension,
-                    type: "File",
-                    leaf: true,
-                })
-            } else {
-                const content = await readFile(file)
-                const [name, extension] = getFileNameWithExtension(file.name)
-                await namespacesStore.importFileDirectory({
-                    namespace: namespaceId.value,
-                    content,
-                    path: file.name,
-                })
-
-                fileTree.value.push({
-                    id: Utils.uid(),
-                    fileName: `${name}${extension ? `.${extension}` : ""}`,
-                    extension,
-                    type: "File",
-                    leaf: true,
+                    path: file.webkitRelativePath || file.name,
+                    file,
                 })
             }
+        } finally {
+            await loadNodes()
         }
     }
 

@@ -11,6 +11,39 @@ function isTaskLike(value: unknown): value is TaskLike {
     )
 }
 
+function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefined {
+    const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
+    const probeIndexes = [safeCursorIndex]
+    let previousNonWhitespace = safeCursorIndex
+    while (previousNonWhitespace > 0 && /\s/.test(source.charAt(previousNonWhitespace))) {
+        previousNonWhitespace--
+    }
+    if (previousNonWhitespace !== safeCursorIndex) {
+        probeIndexes.push(previousNonWhitespace)
+    }
+
+    for (const probeIndex of probeIndexes) {
+        const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
+        const candidates = [...(localized?.parents ?? []), localized?.value]
+
+        for (let i = candidates.length - 1; i >= 0; i--) {
+            const candidate = candidates[i]
+            if (isTaskLike(candidate)) {
+                return candidate
+            }
+        }
+    }
+
+    return undefined
+}
+
+function blankLineAtCursor(source: string, cursorIndex: number): string {
+    const lineStart = source.lastIndexOf("\n", Math.max(0, cursorIndex - 1)) + 1
+    const nextNewline = source.indexOf("\n", lineStart)
+    const lineEnd = nextNewline === -1 ? source.length : nextNewline
+    return source.slice(0, lineStart) + " ".repeat(lineEnd - lineStart) + source.slice(lineEnd)
+}
+
 /**
  * Resolves the task map enclosing the cursor by localizing the YAML node at (and just before) the
  * cursor and walking its ancestry outwards to the nearest node that has both an `id` and a `type`.
@@ -21,29 +54,10 @@ export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cur
     }
 
     try {
-        const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
-        const probeIndexes = [safeCursorIndex]
-        let previousNonWhitespace = safeCursorIndex
-        while (previousNonWhitespace > 0 && /\s/.test(source.charAt(previousNonWhitespace))) {
-            previousNonWhitespace--
-        }
-        if (previousNonWhitespace !== safeCursorIndex) {
-            probeIndexes.push(previousNonWhitespace)
-        }
-
-        for (const probeIndex of probeIndexes) {
-            const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
-            const candidates = [...(localized?.parents ?? []), localized?.value]
-
-            for (let i = candidates.length - 1; i >= 0; i--) {
-                const candidate = candidates[i]
-                if (isTaskLike(candidate)) {
-                    return candidate
-                }
-            }
-        }
-
-        return undefined
+        // A half-typed property key localizes to nothing, so retry with the cursor's line blanked out
+        // (same length, so offsets still line up) to resolve from the surrounding task instead.
+        return probeTaskLike(source, cursorIndex)
+            ?? probeTaskLike(blankLineAtCursor(source, cursorIndex), cursorIndex)
     } catch {
         return undefined
     }

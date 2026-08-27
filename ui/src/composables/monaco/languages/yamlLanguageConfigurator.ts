@@ -334,7 +334,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 })
                 if (type) {
                     try {
-                        const pluginDoc = await pluginsStore.load({cls: type, commit: false})
+                        // `all` is required: without it the endpoint omits every inherited `Task`
+                        // property (`retry`, `timeout`, `description`…), which would filter them out.
+                        const pluginDoc = await pluginsStore.load({cls: type, commit: false, all: true})
                         const properties = pluginDoc?.schema?.properties?.properties
                         scopedSuggestions = scopePropertySuggestionsToTaskType({
                             suggestions,

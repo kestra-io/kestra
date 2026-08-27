@@ -473,6 +473,11 @@
         "title": "Pozostały limit Concurrency"
       }
     },
+    "docsPage": {
+      "notFound": "Ta strona dokumentacji nie istnieje. Mogła zostać przeniesiona lub jej nazwa mogła się zmienić.",
+      "loadError": "Nie udało się załadować tej strony dokumentacji. Spróbuj ponownie.",
+      "backToDocs": "Powrót do Docs"
+    },
     "documentation": {
       "documentation": "Dokumentacja"
     },
@@ -779,6 +784,11 @@
     "expand_by_default": "Domyślnie rozwiń ustrukturyzowane logi",
     "similar lines": "podobne wiersze",
     "download_logs_description": "Wybierz, które logi wyeksportować. Filtry domyślnie odpowiadają Twojemu bieżącemu widokowi.",
+    "logs_download_truncated": "Wyeksportowano {downloaded} najnowszych wierszy log. Kolejne {skipped} pasowały do filtrów i zostały pominięte.",
+    "logs_download_capped": "Wyeksportowano {downloaded} najnowszych wierszy log, czyli maksimum dla jednego eksportu. Filtrom mogło odpowiadać więcej wierszy.",
+    "logs_download_partial": "Eksport zatrzymał się na {downloaded} wierszach log, ponieważ tego filtra nie można stronicować dalej. Brakuje części pasujących wierszy.",
+    "logs_download_failed": "Eksport log nie powiódł się. Nie pobrano żadnego pliku.",
+    "logs_download_empty": "Żaden wiersz log nie odpowiadał filtrom, więc nie pobrano pliku.",
     "display_settings": "Ustawienia wyświetlania",
     "density": "Gęstość",
     "density_compact": "Kompaktowy",
@@ -1807,6 +1817,7 @@
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
       "export": "Eksportuj",
+      "exportEmpty": "Ten wykres nie ma danych do wyeksportowania.",
       "exportTo": {
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"

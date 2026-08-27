@@ -312,12 +312,6 @@
     border: none;
 }
 
-:deep(.kel-input__inner::placeholder),
-:deep(.kel-textarea__inner::placeholder) {
-    color: var(--ks-text-dim);
-    font-size: var(--ks-font-size-sm);
-}
-
 :deep(footer.kel-dialog__footer) {
     padding-top: 0 !important;
 }

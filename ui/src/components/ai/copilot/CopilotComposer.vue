@@ -379,6 +379,8 @@
         border: none;
         outline: none;
         resize: none;
+        /* Safari renders a horizontal scrollbar track on auto-overflow textareas even though wrapped text never overflows. */
+        overflow-x: hidden;
         padding: 0;
         background: transparent;
         color: var(--ks-text-primary);
@@ -387,7 +389,9 @@
     }
 
     .copilot-textarea::placeholder {
-        color: var(--ks-text-secondary);
+        color: var(--ks-placeholder-color);
+        font-size: var(--ks-placeholder-font-size);
+        font-weight: var(--ks-placeholder-font-weight);
     }
 
     /* Live dictation waveform — occupies the textarea's slot. */

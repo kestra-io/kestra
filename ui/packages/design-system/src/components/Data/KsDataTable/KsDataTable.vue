@@ -491,11 +491,11 @@
 
         &--fit {
             min-height: 0;
-            overflow: hidden;
 
             .ks-data-table-content {
                 flex: 1 1 0;
                 min-height: 0;
+                overflow: hidden;
 
                 &--slot {
                     overflow: auto;

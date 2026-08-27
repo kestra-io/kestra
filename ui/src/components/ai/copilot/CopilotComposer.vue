@@ -389,7 +389,9 @@
     }
 
     .copilot-textarea::placeholder {
-        color: var(--ks-text-secondary);
+        color: var(--ks-placeholder-color);
+        font-size: var(--ks-placeholder-font-size);
+        font-weight: var(--ks-placeholder-font-weight);
     }
 
     /* Live dictation waveform — occupies the textarea's slot. */

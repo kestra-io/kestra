@@ -25,7 +25,9 @@ vi.mock("override/stores/misc", () => ({
 vi.mock("@kestra-io/design-system/shiki", () => ({
     getShiki: vi.fn().mockResolvedValue({
         codeToHtml: () => "<code>mock code</code>",
+        getLoadedLanguages: () => ["yaml"],
     }),
+    loadLanguageOnDemand: vi.fn().mockResolvedValue(false),
 }))
 
 const i18n = createI18n({

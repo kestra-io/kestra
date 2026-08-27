@@ -91,7 +91,7 @@ class UiControllerTest {
         String html = new String(response.body(), StandardCharsets.UTF_8);
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.headers().firstValue("Content-Type").orElseThrow()).contains("text/html");
-        assertThat(response.headers().firstValue("Cache-Control")).contains("no-cache");
+        assertThat(response.headers().firstValue("Cache-Control")).contains("no-cache, private");
         assertThat(html).contains("src=\"/ui/assets/asset-fixture-abc123.js\"");
         assertThat(html).contains("<meta name=\"csrf-token\" content=\"");
         assertThat(response.headers().firstValue("Set-Cookie")).isPresent();
@@ -118,26 +118,8 @@ class UiControllerTest {
         String html = new String(response.body(), StandardCharsets.UTF_8);
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.headers().firstValue("Content-Type").orElseThrow()).contains("text/html");
-        assertThat(response.headers().firstValue("Cache-Control")).contains("no-cache");
+        assertThat(response.headers().firstValue("Cache-Control")).contains("no-cache, private");
         assertThat(html).contains("<div id=\"app\"></div>");
-    }
-
-    @Test
-    void shouldAnswer304ForIndexWhenTokenAndContentAreStable() {
-        // Given - reuse the CSRF cookie so the rendered body is identical
-        HttpResponse<byte[]> first = send(request("/ui/").build());
-        String etag = first.headers().firstValue("ETag").orElseThrow();
-        String setCookie = first.headers().firstValue("Set-Cookie").orElseThrow();
-        String cookiePair = setCookie.substring(0, setCookie.indexOf(';'));
-
-        // When
-        HttpResponse<byte[]> second = send(
-            request("/ui/").header("Cookie", cookiePair).header("If-None-Match", etag).build()
-        );
-
-        // Then
-        assertThat(second.statusCode()).isEqualTo(304);
-        assertThat(second.body()).isEmpty();
     }
 
     @ParameterizedTest

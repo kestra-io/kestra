@@ -1,9 +1,5 @@
 package io.kestra.webserver.utils;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-
 import io.micronaut.core.annotation.Nullable;
 
 /**
@@ -18,17 +14,6 @@ public final class HttpCacheUtils {
      */
     public static String etag(String etagBase) {
         return "\"" + etagBase + "\"";
-    }
-
-    /**
-     * @return the hex-encoded SHA-256 digest of the given bytes.
-     */
-    public static String sha256Hex(byte[] bytes) {
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
-        } catch (NoSuchAlgorithmException e) {
-            throw new AssertionError(e);
-        }
     }
 
     /**

@@ -23,9 +23,10 @@ class HttpCacheUtilsTest {
     }
 
     @Test
-    void shouldDeriveAStrongEtagFromTheContentDigest() {
-        assertThat(HttpCacheUtils.etag(HttpCacheUtils.sha256Hex("kestra".getBytes())))
-            .isEqualTo("\"" + HttpCacheUtils.sha256Hex("kestra".getBytes()) + "\"")
-            .isNotEqualTo(HttpCacheUtils.etag(HttpCacheUtils.sha256Hex("kestrb".getBytes())));
+    void shouldQuoteTheEtagBaseSoItRoundTripsThroughIfNoneMatch() {
+        String etag = HttpCacheUtils.etag("6f1ed002-2a3");
+
+        assertThat(etag).isEqualTo("\"6f1ed002-2a3\"");
+        assertThat(HttpCacheUtils.anyEtagMatches(etag, etag)).isTrue();
     }
 }

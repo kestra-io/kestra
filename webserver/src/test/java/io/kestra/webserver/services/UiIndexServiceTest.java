@@ -10,7 +10,6 @@ import io.kestra.webserver.configuration.WebserverConfiguration;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.cookie.Cookie;
@@ -58,9 +57,9 @@ class UiIndexServiceTest {
         assertThat(response.status().getCode()).isEqualTo(200);
         assertThat(body(response)).contains("src=\"/ui/assets/asset-fixture-abc123.js\"");
         assertThat(body(response)).contains("window.KESTRA_UI_PATH = \"/ui/\";");
-        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
-        assertThat(response.getHeaders().get(HttpHeaders.VARY)).isEqualTo(HttpHeaders.ACCEPT_ENCODING);
-        assertThat(response.getHeaders().get(HttpHeaders.ETAG)).isNotBlank();
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache, private");
+        // the body carries the user's CSRF token, so it must never be revalidatable
+        assertThat(response.getHeaders().get(HttpHeaders.ETAG)).isNull();
         assertThat(response.getContentLength()).isEqualTo(response.body().length);
     }
 
@@ -161,27 +160,5 @@ class UiIndexServiceTest {
         // Then
         assertThat(body(response)).contains("<meta name=\"csrf-token\" content=\"existing-token\">");
         verify(generator, never()).generateCsrfToken(any());
-    }
-
-    @Test
-    void shouldAnswer304WhenIfNoneMatchMatchesForAStableToken() {
-        // Given - a stable CSRF cookie so the rendered body is identical across requests
-        CsrfConfiguration csrfConfiguration = mock(CsrfConfiguration.class);
-        when(csrfConfiguration.getCookieName()).thenReturn(COOKIE_NAME);
-        @SuppressWarnings("unchecked")
-        CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration), Optional.of(generator));
-        Cookie cookie = Cookie.of(COOKIE_NAME, "stable-token");
-        String etag = service.render(get("/ui/").cookie(cookie)).orElseThrow().getHeaders().get(HttpHeaders.ETAG);
-
-        // When
-        MutableHttpResponse<byte[]> second = service
-            .render(get("/ui/").cookie(cookie).header(HttpHeaders.IF_NONE_MATCH, etag))
-            .orElseThrow();
-
-        // Then
-        assertThat(second.status().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
-        assertThat(second.getBody()).isEmpty();
-        assertThat(second.getHeaders().get(HttpHeaders.ETAG)).isEqualTo(etag);
     }
 }

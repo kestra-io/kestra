@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import io.kestra.webserver.configuration.WebserverConfiguration;
-import io.kestra.webserver.utils.HttpCacheUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
@@ -27,14 +26,18 @@ import jakarta.inject.Singleton;
 
 /**
  * Serves the UI {@code index.html}: the file is read from the classpath and rewritten (base path, analytics,
- * title, custom head) only once into an immutable template; per request only the CSRF meta tag is substituted.
+ * title, custom head) only once into an immutable template; per request only the CSRF meta tag is inserted.
+ * <p>
+ * The response carries the user's CSRF token, so it is never cacheable and gets no entity tag.
  */
 @Singleton
 @Requires(property = "kestra.webserver.ui.enabled", notEquals = "false", defaultValue = "true")
 public class UiIndexService {
     private static final String INDEX_RESOURCE = "ui/index.html";
     private static final String HEAD_TAG = "<head>";
-    private static final String CACHE_CONTROL_NO_CACHE = "no-cache";
+    // 'private' keeps a shared cache from ever storing another user's token; 'no-store' would also
+    // disqualify the page from the browser back/forward cache.
+    private static final String CACHE_CONTROL = "no-cache, private";
 
     private final String basePath;
     private final WebserverConfiguration webserverConfiguration;
@@ -42,7 +45,7 @@ public class UiIndexService {
     private final Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator;
 
     // Empty when the UI is not packaged on the classpath (backend-only builds).
-    private final Optional<IndexTemplate> template;
+    private final Optional<String> template;
 
     @Inject
     public UiIndexService(
@@ -63,11 +66,11 @@ public class UiIndexService {
      * packaged on the classpath.
      */
     public Optional<MutableHttpResponse<byte[]>> render(HttpRequest<?> request) {
-        return template.map(indexTemplate -> render(request, indexTemplate));
+        return template.map(html -> render(request, html));
     }
 
-    private MutableHttpResponse<byte[]> render(HttpRequest<?> request, IndexTemplate indexTemplate) {
-        String html = indexTemplate.html();
+    private MutableHttpResponse<byte[]> render(HttpRequest<?> request, String template) {
+        String html = template;
         Cookie csrfCookie = null;
 
         if (csrfConfiguration.isPresent() && csrfTokenGenerator.isPresent()) {
@@ -80,7 +83,7 @@ public class UiIndexService {
 
             if (csrfToken != null) {
                 String escaped = csrfToken.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
-                html = indexTemplate.withCsrfMeta("<meta name=\"csrf-token\" content=\"" + escaped + "\">");
+                html = withCsrfMeta(template, "<meta name=\"csrf-token\" content=\"" + escaped + "\">");
                 csrfCookie = Cookie.of(csrfConfiguration.get().getCookieName(), csrfToken)
                     .httpOnly(true)
                     .secure(request.isSecure())
@@ -90,13 +93,8 @@ public class UiIndexService {
         }
 
         byte[] body = html.getBytes(StandardCharsets.UTF_8);
-        String etag = HttpCacheUtils.etag(HttpCacheUtils.sha256Hex(body));
-
-        if (HttpCacheUtils.anyEtagMatches(request.getHeaders().get(HttpHeaders.IF_NONE_MATCH), etag)) {
-            return applyHeaders(HttpResponse.notModified(), etag);
-        }
-
-        MutableHttpResponse<byte[]> response = applyHeaders(HttpResponse.ok(body), etag)
+        MutableHttpResponse<byte[]> response = HttpResponse.ok(body)
+            .header(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL)
             .contentType(MediaType.TEXT_HTML_TYPE)
             .contentLength(body.length);
         if (csrfCookie != null) {
@@ -105,26 +103,22 @@ public class UiIndexService {
         return response;
     }
 
-    private static <T> MutableHttpResponse<T> applyHeaders(MutableHttpResponse<T> response, String etag) {
-        return response
-            .header(HttpHeaders.ETAG, etag)
-            .header(HttpHeaders.CACHE_CONTROL, CACHE_CONTROL_NO_CACHE)
-            // the entity tag names the identity content, so caches must key on the coding the server applied
-            .header(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING);
+    // Plain concatenation rather than replaceFirst: a token is untrusted input for a regex replacement.
+    private static String withCsrfMeta(String html, String metaTag) {
+        int headIndex = html.indexOf(HEAD_TAG);
+        if (headIndex < 0) {
+            return html;
+        }
+        int insertionPoint = headIndex + HEAD_TAG.length();
+        return html.substring(0, insertionPoint) + "\n" + metaTag + html.substring(insertionPoint);
     }
 
-    private Optional<IndexTemplate> load() {
+    private Optional<String> load() {
         try (InputStream is = UiIndexService.class.getClassLoader().getResourceAsStream(INDEX_RESOURCE)) {
             if (is == null) {
                 return Optional.empty();
             }
-            String html = replace(new String(is.readAllBytes(), StandardCharsets.UTF_8));
-            int headIndex = html.indexOf(HEAD_TAG);
-            if (headIndex < 0) {
-                return Optional.of(new IndexTemplate(html, null, null));
-            }
-            int insertionPoint = headIndex + HEAD_TAG.length();
-            return Optional.of(new IndexTemplate(html, html.substring(0, insertionPoint), html.substring(insertionPoint)));
+            return Optional.of(replace(new String(is.readAllBytes(), StandardCharsets.UTF_8)));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -148,18 +142,5 @@ public class UiIndexService {
         line = line.replace("<meta name=\"html-head\" content=\"replace\">", webserverConfiguration.htmlHead() == null ? "" : webserverConfiguration.htmlHead());
 
         return line;
-    }
-
-    /**
-     * The immutable, startup-rewritten index page, pre-split at the {@code <head>} insertion point so the
-     * per-request CSRF meta substitution is a plain concatenation.
-     */
-    private record IndexTemplate(String html, @Nullable String headPrefix, @Nullable String headSuffix) {
-        String withCsrfMeta(String metaTag) {
-            if (headPrefix == null) {
-                return html;
-            }
-            return headPrefix + "\n" + metaTag + headSuffix;
-        }
     }
 }

@@ -779,6 +779,11 @@
     "expand_by_default": "기본적으로 구조화된 log 확장",
     "similar lines": "유사한 라인",
     "download_logs_description": "내보낼 log를 선택하세요. 필터는 현재 보기에 기본 설정됩니다.",
+    "logs_download_truncated": "가장 최근 {downloaded} 줄의 log를 내보냈습니다. {skipped} 줄이 더 필터와 일치했지만 제외되었습니다.",
+    "logs_download_capped": "한 번의 내보내기 최대치인 가장 최근 {downloaded} 줄의 log를 내보냈습니다. 필터와 일치하는 줄이 더 있었을 수 있습니다.",
+    "logs_download_partial": "이 필터는 더 이상 페이지를 넘길 수 없어 내보내기가 {downloaded} 줄의 log에서 중단되었습니다. 일치하는 일부 줄이 누락되었습니다.",
+    "logs_download_failed": "log 내보내기에 실패했습니다. 파일이 다운로드되지 않았습니다.",
+    "logs_download_empty": "필터와 일치하는 log 줄이 없어 파일이 다운로드되지 않았습니다.",
     "display_settings": "표시 설정",
     "density": "밀도",
     "density_compact": "압축",
@@ -1807,6 +1812,7 @@
       "others": "기타",
       "viewAll": "전체 보기",
       "export": "내보내기",
+      "exportEmpty": "이 차트에는 내보낼 데이터가 없습니다.",
       "exportTo": {
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"

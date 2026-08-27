@@ -779,6 +779,11 @@
     "expand_by_default": "Expandir logs estructurados por defecto",
     "similar lines": "líneas similares",
     "download_logs_description": "Elige qué logs exportar. Los filtros se ajustan a tu vista actual.",
+    "logs_download_truncated": "Se exportaron las {downloaded} líneas de log más recientes. {skipped} más coincidían con tus filtros y se omitieron.",
+    "logs_download_capped": "Se exportaron las {downloaded} líneas de log más recientes, el máximo para una exportación. Puede que más coincidieran con tus filtros.",
+    "logs_download_partial": "La exportación se detuvo en {downloaded} líneas de log porque este filtro no se puede paginar más. Faltan algunas líneas coincidentes.",
+    "logs_download_failed": "La exportación de log falló. No se descargó ningún archivo.",
+    "logs_download_empty": "Ninguna línea de log coincidió con tus filtros, así que no se descargó ningún archivo.",
     "display_settings": "Configuración de visualización",
     "density": "Densidad",
     "density_compact": "Compacto",
@@ -1807,6 +1812,7 @@
       "others": "Otros",
       "viewAll": "Ver todo",
       "export": "Exportar",
+      "exportEmpty": "Este gráfico no tiene datos para exportar.",
       "exportTo": {
         "csv": "Exportar a CSV",
         "ion": "Exportar a ION"

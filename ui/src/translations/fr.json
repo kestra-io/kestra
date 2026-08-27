@@ -779,6 +779,11 @@
     "expand_by_default": "Développer les logs structurés par défaut",
     "similar lines": "lignes similaires",
     "download_logs_description": "Choisissez les logs à exporter. Les filtres sont définis par défaut sur votre vue actuelle.",
+    "logs_download_truncated": "Les {downloaded} lignes de log les plus récentes ont été exportées. {skipped} autres correspondaient à vos filtres et ont été omises.",
+    "logs_download_capped": "Les {downloaded} lignes de log les plus récentes ont été exportées, le maximum pour un export. D'autres correspondaient peut-être à vos filtres.",
+    "logs_download_partial": "L'export s'est arrêté à {downloaded} lignes de log car ce filtre ne peut pas être paginé au-delà. Certaines lignes correspondantes manquent.",
+    "logs_download_failed": "L'export des logs a échoué. Aucun fichier n'a été téléchargé.",
+    "logs_download_empty": "Aucune ligne de log ne correspond à vos filtres, aucun fichier n'a donc été téléchargé.",
     "display_settings": "Paramètres d'affichage",
     "density": "Densité",
     "density_compact": "Compact",
@@ -1807,6 +1812,7 @@
       "others": "Autres",
       "viewAll": "Tout voir",
       "export": "Exporter",
+      "exportEmpty": "Ce graphique n'a aucune donnée à exporter.",
       "exportTo": {
         "csv": "Exporter vers CSV",
         "ion": "Exporter vers ION"

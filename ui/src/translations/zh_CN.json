@@ -779,6 +779,11 @@
     "expand_by_default": "默认展开结构化 log",
     "similar lines": "相似行",
     "download_logs_description": "选择要导出的 log。过滤器默认为当前视图。",
+    "logs_download_truncated": "已导出最近 {downloaded} 行 log。另有 {skipped} 行符合筛选条件但未包含。",
+    "logs_download_capped": "已导出最近 {downloaded} 行 log，这是单次导出的上限。可能还有更多行符合筛选条件。",
+    "logs_download_partial": "该筛选条件无法继续翻页，导出在 {downloaded} 行 log 处停止。部分符合条件的行缺失。",
+    "logs_download_failed": "log 导出失败。未下载任何文件。",
+    "logs_download_empty": "没有 log 行符合筛选条件，因此未下载任何文件。",
     "display_settings": "显示设置",
     "density": "密度",
     "density_compact": "紧凑",
@@ -1807,6 +1812,7 @@
       "others": "其他",
       "viewAll": "查看全部",
       "export": "导出",
+      "exportEmpty": "此图表没有可导出的数据。",
       "exportTo": {
         "csv": "导出为 CSV",
         "ion": "导出到 ION"

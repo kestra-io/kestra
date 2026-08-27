@@ -779,6 +779,11 @@
     "expand_by_default": "Expand structured logs by default",
     "similar lines": "similar lines",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",
+    "logs_download_truncated": "Exported the most recent {downloaded} log lines. {skipped} more matched your filters and were left out.",
+    "logs_download_capped": "Exported the most recent {downloaded} log lines, the maximum for one export. More may have matched your filters.",
+    "logs_download_partial": "The export stopped at {downloaded} log lines because this filter cannot be paged any further. Some matching lines are missing.",
+    "logs_download_failed": "The log export failed. No file was downloaded.",
+    "logs_download_empty": "No log lines matched your filters, so no file was downloaded.",
     "display_settings": "Display settings",
     "density": "Density",
     "density_compact": "Compact",
@@ -1807,6 +1812,7 @@
       "others": "Others",
       "viewAll": "View all",
       "export": "Export",
+      "exportEmpty": "This chart has no data to export.",
       "exportTo": {
         "csv": "Export to CSV",
         "ion": "Export to ION"

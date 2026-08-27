@@ -302,7 +302,15 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function listTriggers() {
         const response = await PluginsAPI.listTriggerPlugins() as unknown as {results: TriggerPluginDto[]; total: number}
-        return response?.results ?? []
+        // The triggers grid keys its cards by type, and duplicate keys corrupt Vue's keyed diff on
+        // every filter change (https://github.com/kestra-io/kestra/issues/18419), so drop duplicates
+        // even if the API misbehaves.
+        const seen = new Set<string>()
+        return (response?.results ?? []).filter(trigger => {
+            if (seen.has(trigger.type)) return false
+            seen.add(trigger.type)
+            return true
+        })
     }
 
     async function listWithSubgroup(_options?: Record<string, any>) {

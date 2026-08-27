@@ -27,11 +27,15 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginAutoInstallService;
@@ -43,6 +47,7 @@ import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.TriggerCreated;
@@ -55,6 +60,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.utils.SecretUtils;
 import io.kestra.plugin.core.flow.Pause;
 
@@ -108,6 +114,9 @@ public class FlowService {
     @Inject
     private PluginSchemaBundleService pluginSchemaBundleService;
 
+    @Inject
+    private FlowMetaStoreInterface flowMetaStore;
+
     private final ExecutorService executorService;
 
     @Inject
@@ -151,6 +160,7 @@ public class FlowService {
             pluginAutoInstallService.installMissingPlugins(flow.getSource());
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
+            throwOnCyclicDependency(parsed);
         }
 
         FlowWithSource created = flowRepository.create(flow);
@@ -189,6 +199,7 @@ public class FlowService {
             pluginAutoInstallService.installMissingPlugins(flow.getSource());
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
+            throwOnCyclicDependency(parsed);
         }
 
         FlowWithSource updated = flowRepository.update(flow, previous);
@@ -474,6 +485,7 @@ public class FlowService {
                 constraintsBuilder.namespace(flow.getNamespace());
 
                 modelValidator.validate(parsedFlow);
+                throwOnCyclicDependency(parsedFlow);
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);
@@ -483,9 +495,11 @@ public class FlowService {
                     // A missing plugin type is only recoverable when auto-install is on AND the type
                     // exists in the schema bundle: it is then a simple notice (installed on save); a
                     // type unknown to the bundle is a genuine error.
-                    if (pluginAutoInstallService.isEnabled()
-                        && cve instanceof InvalidTypeConstraintViolationException invalidType
-                        && pluginSchemaBundleService.containsType(invalidType.getTypeId())) {
+                    if (
+                        pluginAutoInstallService.isEnabled()
+                            && cve instanceof InvalidTypeConstraintViolationException invalidType
+                            && pluginSchemaBundleService.containsType(invalidType.getTypeId())
+                    ) {
                         constraintsBuilder.infos(List.of(friendlyMessage + ". The plugin is not installed yet and will be installed automatically when the flow is saved."));
                     } else {
                         constraintsBuilder.constraints(friendlyMessage);
@@ -530,6 +544,7 @@ public class FlowService {
         );
 
         FlowWithSource flowToImport = flowParsingService.parse(flow, true);
+        throwOnCyclicDependency(flowToImport);
 
         if (dryRun) {
             return maybeExisting
@@ -678,6 +693,148 @@ public class FlowService {
         });
 
         return violations;
+    }
+
+    /**
+     * Returns a message describing a cross-flow execution cycle the given flow's Subflow tasks and Flow
+     * triggers would close, or {@link Optional#empty()} when saving it introduces none.
+     * <p>
+     * Only edges that fire unconditionally are counted (no {@code disabled}/{@code runIf} on a Subflow
+     * task, no {@code when}/{@code conditions} on a Flow trigger or its {@code dependsOn} entries): a
+     * cycle gated by a condition may be intentional and terminating, and this cannot decide whether the
+     * condition ever goes false. {@code kestra.execution.depth.max-depth}
+     * ({@link io.kestra.core.runners.configuration.ExecutionDepthConfiguration}) bounds that case, and
+     * any other cycle this static check cannot see, at runtime instead.
+     * <p>
+     * Templated ({@code {{ }}}) Subflow namespace/flowId, and a {@code dependsOn} entry naming neither
+     * namespace nor flowId, are skipped for the same reason.
+     */
+    private Optional<String> checkCyclicDependency(Flow flow) {
+        String root = flow.uidWithoutRevision();
+
+        Map<String, List<String>> edges = new HashMap<>();
+        Map<String, String> displayNames = new HashMap<>();
+        for (FlowWithSource candidate : flowMetaStore.allLastVersion()) {
+            // The flow being saved contributes its own edges below, from the version being saved rather
+            // than whatever stale copy the cache may still hold for it.
+            if (!Objects.equals(candidate.getTenantId(), flow.getTenantId()) || candidate.uidWithoutRevision().equals(root) || candidate.isDraft()) {
+                continue;
+            }
+            addUnconditionalEdges(candidate, edges, displayNames);
+        }
+        addUnconditionalEdges(flow, edges, displayNames);
+
+        if (ListUtils.isEmpty(edges.get(root))) {
+            return Optional.empty();
+        }
+
+        List<String> path = new ArrayList<>(List.of(root));
+        if (!findPathToRoot(root, root, edges, path, new HashSet<>(List.of(root)), new HashSet<>())) {
+            return Optional.empty();
+        }
+
+        return Optional.of(path.stream().map(uid -> displayNames.getOrDefault(uid, uid)).collect(Collectors.joining(" → ")));
+    }
+
+    /**
+     * Rejects the save with a 422 when {@link #checkCyclicDependency} finds a cross-flow execution cycle.
+     */
+    private void throwOnCyclicDependency(FlowWithSource flow) {
+        checkCyclicDependency(flow).ifPresent(cycle ->
+        {
+            throw new ConstraintViolationException(
+                Collections.singleton(
+                    ManualConstraintViolation.of(
+                        "Cyclic flow dependency detected: %s. Saving this flow would create an execution loop.".formatted(cycle),
+                        flow,
+                        FlowWithSource.class,
+                        "flow",
+                        cycle
+                    )
+                )
+            );
+        });
+    }
+
+    /**
+     * Adds every unconditional Subflow-task and Flow-trigger {@code dependsOn} edge {@code flow}
+     * contributes to the cross-flow graph, keyed by {@link FlowInterface#uidWithoutRevision()}, and
+     * records a {@code namespace.id} display name for each node touched.
+     */
+    private static void addUnconditionalEdges(Flow flow, Map<String, List<String>> edges, Map<String, String> displayNames) {
+        String from = flow.uidWithoutRevision();
+        displayNames.put(from, flow.getNamespace() + "." + flow.getId());
+
+        flow.allTasksWithChilds().stream()
+            .filter(task -> task instanceof ExecutableTask<?>)
+            .filter(FlowService::isUnconditionalSubflowTask)
+            .map(task -> ((ExecutableTask<?>) task).subflowId())
+            .filter(subflowId -> subflowId.namespace() != null && subflowId.flowId() != null)
+            .filter(subflowId -> !PebbleUtil.containsOpeningBlockDelimiter(subflowId.namespace()) && !PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowId()))
+            .forEach(subflowId ->
+            {
+                String to = FlowId.uidWithoutRevision(flow.getTenantId(), subflowId.namespace(), subflowId.flowId());
+                edges.computeIfAbsent(from, k -> new ArrayList<>()).add(to);
+                displayNames.putIfAbsent(to, subflowId.namespace() + "." + subflowId.flowId());
+            });
+
+        ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
+            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
+            .filter(FlowService::isUnconditionalFlowTrigger)
+            .flatMap(trigger -> ListUtils.emptyOnNull(trigger.getDependsOn()).stream())
+            .filter(FlowService::isUnconditionalDependency)
+            .filter(dependency -> dependency.getNamespace() != null && dependency.getFlowId() != null)
+            .forEach(dependency ->
+            {
+                String depFrom = FlowId.uidWithoutRevision(flow.getTenantId(), dependency.getNamespace(), dependency.getFlowId());
+                edges.computeIfAbsent(depFrom, k -> new ArrayList<>()).add(from);
+                displayNames.putIfAbsent(depFrom, dependency.getNamespace() + "." + dependency.getFlowId());
+            });
+    }
+
+    private static boolean isUnconditionalSubflowTask(Task task) {
+        return !Boolean.TRUE.equals(task.getDisabled()) && (task.getRunIf() == null || "true".equals(task.getRunIf()));
+    }
+
+    private static boolean isUnconditionalFlowTrigger(io.kestra.plugin.core.trigger.Flow trigger) {
+        return !trigger.isDisabled() && (trigger.getWhen() == null || "true".equals(trigger.getWhen()));
+    }
+
+    private static boolean isUnconditionalDependency(io.kestra.plugin.core.trigger.Flow.Dependency dependency) {
+        return dependency.getWhen() == null || Property.ofValue("true").equals(dependency.getWhen());
+    }
+
+    /**
+     * Depth-first search for a path from {@code current} back to {@code root} along {@code edges}, so
+     * that {@code checkCyclicDependency} rejects only a save that closes a cycle through the flow being
+     * saved — not a save that happens to reach into an unrelated cycle among other flows.
+     * <p>
+     * {@code visiting} is the current DFS path (a back-edge into it is a cycle not involving root, and
+     * must be skipped rather than re-entered, or it recurses forever); {@code deadEnds} is nodes fully
+     * explored with no path to root, which is true regardless of which path reached them, so they are
+     * never re-explored.
+     */
+    private static boolean findPathToRoot(String current, String root, Map<String, List<String>> edges, List<String> path, Set<String> visiting, Set<String> deadEnds) {
+        for (String next : ListUtils.emptyOnNull(edges.get(current))) {
+            if (next.equals(root)) {
+                path.add(next);
+                return true;
+            }
+            if (visiting.contains(next) || deadEnds.contains(next)) {
+                continue;
+            }
+            visiting.add(next);
+            path.add(next);
+            if (findPathToRoot(next, root, edges, path, visiting, deadEnds)) {
+                return true;
+            }
+            path.removeLast();
+            visiting.remove(next);
+            deadEnds.add(next);
+        }
+
+        return false;
     }
 
     public record Relocation(String from, String to) {

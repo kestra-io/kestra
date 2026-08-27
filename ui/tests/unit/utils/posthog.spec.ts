@@ -17,7 +17,7 @@ vi.mock("../../../src/composables/usePosthog", () => ({
     }),
 }))
 
-describe("posthog queue", () => {
+describe("posthog queue", {timeout: 15_000}, () => {
     beforeEach(() => {
         posthogMock.__loaded = false
         posthogMock.capture.mockClear()

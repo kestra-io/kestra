@@ -1,7 +1,7 @@
 import {ComputedRef} from "vue"
 import type {JSONSchema} from "../../components/plugins/schema/utils/schemaUtils"
-import {YamlElement} from "@kestra-io/topology"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {QUOTE, YamlAutoCompletion, functionToSnippet, type RootCompletionContext} from "../../services/autoCompletionProvider"
 import RegexProvider from "../../utils/regex"
 import {State} from "@kestra-io/design-system"
@@ -177,7 +177,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             return []
         }
 
+        // the flow may reference a catalog type that isn't installed yet — its doc 404s
         const pluginDoc = await this.pluginsStore.load({cls: taskType, commit: false})
+            .catch(() => undefined)
 
         return Object.keys((pluginDoc?.schema as any)?.outputs?.properties ?? {})
     }
@@ -193,7 +195,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     const triggerDoc: {schema: JSONSchema} | undefined = await this.pluginsStore.load({
                         cls: triggerType,
                         commit: false,
-                    }) as any
+                    }).catch(() => undefined) as any
                     return Object.keys(triggerDoc?.schema?.outputs?.properties ?? {})
                 }),
         )

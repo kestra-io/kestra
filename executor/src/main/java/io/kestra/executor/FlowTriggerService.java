@@ -22,6 +22,7 @@ import io.kestra.core.runners.FlowMetaStores;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
@@ -42,13 +43,17 @@ public class FlowTriggerService {
     private final FlowService flowService;
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionOutputService executionOutputService;
+    private final ExecutionDepthConfiguration executionDepthConfiguration;
 
-    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore, ExecutionOutputService executionOutputService) {
+    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore,
+        ExecutionOutputService executionOutputService,
+        ExecutionDepthConfiguration executionDepthConfiguration) {
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
         this.flowService = flowService;
         this.flowMetaStore = flowMetaStore;
         this.executionOutputService = executionOutputService;
+        this.executionDepthConfiguration = executionDepthConfiguration;
     }
 
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
@@ -155,7 +160,9 @@ public class FlowTriggerService {
                     flowWithMultipleCondition.getMultipleCondition(),
                     buildOutputs(execution, executionOutputs),
                     (txContext,
-                        multipleConditionWindow) -> processMultipleConditionWindow(txContext, flowWithMultipleCondition, multipleConditionWindow, execution, executionOutputs, multipleConditionStorage, resolved)
+                        multipleConditionWindow) -> processMultipleConditionWindow(
+                            txContext, flowWithMultipleCondition, multipleConditionWindow, execution, executionOutputs, multipleConditionStorage, resolved
+                        )
                 )
             )
             .filter(Objects::nonNull)
@@ -249,6 +256,21 @@ public class FlowTriggerService {
         }
 
         RunContext runContext = runContextFactory.of(null, execution);
+
+        int nextDepth = execution.getMetadata().executionDepthOrZero() + 1;
+        if (nextDepth > executionDepthConfiguration.maxDepth()) {
+            // Backstop against a cross-flow execution cycle that save-time validation cannot see (e.g. a
+            // conditional Flow trigger loop): drop the trigger instead of creating another execution,
+            // and surface it where the user is already looking rather than failing silently.
+            runContext.logger().warn(
+                "Flow trigger on '{}.{}' was not evaluated: the execution chain exceeded the maximum depth of {}. You can increase the maximum depth by setting the 'kestra.execution.depth.max-depth' property.",
+                flow.getNamespace(),
+                flow.getId(),
+                executionDepthConfiguration.maxDepth()
+            );
+            return Collections.emptyList();
+        }
+
         return flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger))
             // filter on the execution state the flow listen to
             .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getStates().contains(execution.getState().getCurrent()))

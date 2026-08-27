@@ -1009,6 +1009,9 @@ public class ExecutorService {
                     if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                         Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
+                        if (duration != null && (duration.isZero() || duration.isNegative())) {
+                            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
+                        }
                         Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
                         Pause.Behavior behavior = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
                         if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here

@@ -219,7 +219,7 @@
             "
             width="500"
             appendToBody
-            @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            @keydown.enter.prevent="dialog.name?.trim() ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
             <div class="pb-1">
@@ -259,7 +259,7 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!dialog.name"
+                        :disabled="!dialog.name?.trim()"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
@@ -950,6 +950,9 @@
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}
+            selectedNodes.value = []
+            lastClickedIndex.value = null
+            syncTreeCurrentKey()
         }
     }
 
@@ -962,16 +965,18 @@
     async function addFile({file, creation, shouldReset = true}: { file?: Omit<TreeNodeFile, "id" | "type">; creation?: boolean; shouldReset?: boolean }) {
         let FILE: Omit<TreeNodeFile, "id" | "type">
         if (creation && dialog.value.name) {
-            const [fileName, extension] = getFileNameWithExtension(dialog.value.name)
+            const [fileName, extension] = getFileNameWithExtension(dialog.value.name.trim())
             FILE = {fileName, extension, content: "", leaf: true}
         } else {
             if(!file) return
             FILE = file
         }
 
-        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation)
+        const parentFolder = dialog.value.folder
+        const {path, file: createdFile} = await filesStore.addFile(FILE, parentFolder, creation)
         if (creation) {
             if(path === undefined || createdFile === undefined) return
+            reloadFolder(parentFolder)
             openTab?.({
                 name: createdFile.fileName,
                 path,
@@ -1018,12 +1023,24 @@
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {
         const parentPath = dialog.value.folder || ""
-        filesStore.addFolder({
-            fileName: dialog.value.name ?? "unknown",
+        const payload = {
+            fileName: dialog.value.name?.trim() ?? "unknown",
             parentPath,
             ...folder,
-        }, creation)
+        }
         dialog.value = {...DIALOG_DEFAULTS}
+        await filesStore.addFolder(payload, creation)
+        reloadFolder(parentPath)
+    }
+
+    /** Re-fetches an already loaded folder, since the tree only diffs its own root level and would otherwise stay stale until a refresh. */
+    function reloadFolder(path?: string) {
+        const node = path ? tree.value?.getNode(filesStore.findNodeByPath(path)?.id) : undefined
+        if (!node?.loaded) {
+            return
+        }
+        node.loaded = false
+        node.expand()
     }
 
     async function showRevisionsHistory(data: TreeNode) {

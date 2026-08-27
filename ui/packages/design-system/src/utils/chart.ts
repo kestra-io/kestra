@@ -1,4 +1,5 @@
-// ─── Shared utilities for Ks chart components ────────────────────────────────
+// Shared utilities for the Ks chart components. Deliberately outside components/Charts/:
+// consolidateChunks claims that directory for the lazy echarts chunk, and the barrel re-exports these.
 
 export enum ChartFeature {
     LEGEND = "LEGEND",

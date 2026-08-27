@@ -81,7 +81,7 @@ public abstract class AbstractFlow implements FlowInterface {
         description = "Labels as a list of Label (key/value pairs) or as a map of string to string.",
         implementation = Object.class,
         oneOf = {
-            Label[].class,
+            List.class,
             Map.class
         }
     )

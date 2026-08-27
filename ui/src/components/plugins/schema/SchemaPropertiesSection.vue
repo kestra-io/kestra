@@ -527,6 +527,10 @@
             margin-top: var(--ks-spacing-2);
         }
 
+        :deep(.ks-markdown + .ks-markdown) {
+            margin-top: var(--ks-spacing-2);
+        }
+
         :deep(code) {
             font-family: var(--ks-font-family-mono);
             font-size: 0.92em;

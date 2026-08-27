@@ -903,7 +903,7 @@ function deleteFlowAndDependencies() {
                 : []
 
         const constraintsError =
-            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
+            flowValidation.value?.constraints?.split(/, ?/) ?? []
 
         const errors = [...flowExistsError, ...constraintsError]
 

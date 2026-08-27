@@ -392,8 +392,8 @@
     const detailsTriggerId = ref<string | undefined>()
     const selectedTrigger = ref<SelectedTrigger | undefined>()
 
-    const DATE_COLUMNS: readonly string[] = ["lastTriggeredDate", "nextEvaluationDate", "evaluatedAt", "updatedAt"]
-    const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", ...DATE_COLUMNS]
+    // evaluatedAt/updatedAt are TriggerState JSON fields with no backing column on the triggers table, so they're excluded here.
+    const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", "lastTriggeredDate", "nextEvaluationDate"]
     const DATE_TOOLTIP_KEYS: Record<string, string> = {
         lastTriggeredDate: "last trigger date tooltip",
         updatedAt: "context updated date tooltip",

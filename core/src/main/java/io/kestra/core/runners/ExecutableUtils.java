@@ -190,13 +190,15 @@ public final class ExecutableUtils {
                     });
 
                 if (flow.isDisabled()) {
-                    String msg = "Cannot execute a flow which is disabled";
+                    String msg = "Cannot execute flow '%s'.'%s': it is disabled.".formatted(subflowNamespace, subflowId);
                     runContext.logger().error(msg);
                     throw new IllegalStateException(msg);
                 }
 
                 if (flow instanceof FlowWithException fwe) {
-                    String msg = "Cannot execute an invalid flow: " + fwe.getException();
+                    // The flow could not be resolved for runtime, either because it is invalid or because
+                    // governance blocks it. Which one it was is in the carried message, so state neither here.
+                    String msg = "Cannot execute flow '%s'.'%s': %s".formatted(subflowNamespace, subflowId, fwe.getException());
                     runContext.logger().error(msg);
                     throw new IllegalStateException(msg);
                 }

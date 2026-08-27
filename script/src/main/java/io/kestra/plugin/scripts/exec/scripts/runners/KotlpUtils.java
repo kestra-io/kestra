@@ -15,8 +15,8 @@ import java.util.Set;
  * Utility to inject the embedded <a href="https://github.com/kestra-io/kotlp">kotlp</a> binary into a file destination.
  * <p>
  * kotlp is a single Actually Portable Executable covering Linux, macOS and BSD on amd64 and arm64; the same
- * binary works on Windows once renamed with an {@code .exe} extension. It is embedded at build time by the
- * {@code downloadKotlp} Gradle task of the script module.
+ * binary works on Windows once renamed with an {@code .exe} extension. It comes from the
+ * {@code io.kestra:kotlp} dependency, which carries the binary as the classpath resource this class reads.
  */
 public final class KotlpUtils {
     public static final String BINARY_NAME = "kotlp";
@@ -36,7 +36,7 @@ public final class KotlpUtils {
     public static Path copyTo(Path destination) throws IOException {
         try (InputStream binary = KotlpUtils.class.getResourceAsStream(RESOURCE_PATH)) {
             if (binary == null) {
-                throw new KestraRuntimeException("Cannot inject the kotlp binary: it was not embedded in this build. Run the 'downloadKotlp' Gradle task and rebuild.");
+                throw new KestraRuntimeException("Cannot inject the kotlp binary: the 'io.kestra:kotlp' dependency is missing from the runtime classpath.");
             }
 
             Path parent = destination.getParent();

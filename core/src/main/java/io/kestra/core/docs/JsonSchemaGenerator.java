@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -97,7 +98,7 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new HashMap<>();
+    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
@@ -1066,11 +1067,7 @@ public class JsonSchemaGenerator {
             }
         }
 
-        if (!defaultInstances.containsKey(baseCls)) {
-            defaultInstances.put(baseCls, buildDefaultInstance(baseCls));
-        }
-
-        Object instance = defaultInstances.get(baseCls);
+        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
 
         return instance == null ? null : defaultValue(instance, baseCls, target.getName());
     }

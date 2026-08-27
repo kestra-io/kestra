@@ -3,8 +3,9 @@
         <MultiPanelEditorTabs :tabs="editorElements" @update:tabs="setTabValue" :openTabs="openTabs">
             <div class="tabs-actions">
                 <KsButton
+                    v-if="bottomVisible && slots['bottom-panel']"
                     :icon="splitOrientation === 'vertical' ? ViewSplitVertical : ViewSplitHorizontal"
-                    :tooltip="splitOrientation === 'vertical' ? t('split_horizontal') : t('split_vertical')"
+                    :tooltip="splitOrientation === 'vertical' ? $t('split_horizontal') : $t('split_vertical')"
                     class="orientation-toggle"
                     @click="toggleOrientation"
                 />
@@ -28,15 +29,12 @@
 <script lang="ts" setup>
     import {computed, useSlots} from "vue"
     import {useStorage} from "@vueuse/core"
-    import {useI18n} from "vue-i18n"
     import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"
     import ViewSplitHorizontal from "vue-material-design-icons/ViewSplitHorizontal.vue"
     import MultiPanelEditorTabs from "./MultiPanelEditorTabs.vue"
     import MultiPanelTabs from "./MultiPanelTabs.vue"
     import {EditorElement, Panel} from "../utils/multiPanelTypes"
     import {useStoredPanels} from "../composables/useStoredPanels"
-
-    const {t} = useI18n()
 
     const splitOrientation = useStorage<"vertical" | "horizontal">("editor-split-orientation", "vertical")
 

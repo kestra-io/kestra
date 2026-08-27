@@ -57,6 +57,7 @@ import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest(transactional = false)
@@ -404,11 +405,45 @@ public abstract class AbstractFlowRepositoryTest {
                 .extracting(Flow::getId)
                 .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
 
+            QueryFilter containsKeyValueFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.CONTAINS)
+                .value(Map.of("foo", "ar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(containsKeyValueFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label");
+
+            QueryFilter notContainsKeyValueFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_CONTAINS)
+                .value(Map.of("foo", "ar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(notContainsKeyValueFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
+
         } finally {
             deleteFlow(flowWithLabel);
             deleteFlow(flowWithoutLabel);
             deleteFlow(flowWithDifferentLabel);
         }
+    }
+
+    @Test
+    void shouldThrowExceptionWhenLabelsOperationRequiresKeyButValueIsScalar() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        QueryFilter filter = QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("x")
+            .build();
+
+        assertThatThrownBy(() -> flowRepository.find(Pageable.UNPAGED, tenant, List.of(filter)))
+            .isInstanceOf(InvalidQueryFiltersException.class);
     }
 
     @Test

@@ -1,10 +1,11 @@
 <template>
+    <!-- Anchor attributes are only bound for the external-link variant: passing them as
+         `undefined` would fall through onto RouterLink's anchor and wipe the href it renders,
+         losing the native link cursor (https://github.com/kestra-io/kestra/issues/18148). -->
     <component
         :is="to ? RouterLink : link ? 'a' : 'div'"
         :to="to"
-        :href="link || undefined"
-        :target="link ? '_blank' : undefined"
-        :rel="link ? 'noopener noreferrer' : undefined"
+        v-bind="link ? {href: link, target: '_blank', rel: 'noopener noreferrer'} : {}"
         class="card"
     >
         <KsIcon class="icon">

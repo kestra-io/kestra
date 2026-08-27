@@ -49,6 +49,10 @@ public class KVController {
         if (key != null && key.equals("key")) {
             return "name";
         }
+        // updateDate is the KVEntry API field name; the real column is "updated".
+        if (key != null && key.equals("updateDate")) {
+            return "updated";
+        }
         return key;
     }
 

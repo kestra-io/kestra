@@ -9,7 +9,7 @@ Kestra UI is running using [Vite](https://vite.dev/).
 ### Development:
 - (Optional) By default, your dev server will target `localhost:8080`. If your backend is running elsewhere, you can create `.env.development.local` under `ui` folder with this content:
 ```
-VITE_APP_API_URL={myApiUrl}
+VITE_PROXY_URL={myApiUrl}
 ```
 
 - Navigate into the `ui` folder and run `npm install` to install the dependencies for the frontend project.
@@ -84,3 +84,7 @@ micronaut:
 ```
 
 If you're doing frontend development, you can run `npm run dev` from the `ui` folder after having the above running (which will provide a backend) to access your application from `localhost:5173`. This has the benefit to watch your changes and hot-reload upon doing frontend changes.
+
+## Translations
+
+The UI is translated into thirteen languages, with English as the source of truth and every other locale generated from it. How the pipeline works - generation, fingerprints, checks, CI - is documented in [scripts/translations/README.md](scripts/translations/README.md).

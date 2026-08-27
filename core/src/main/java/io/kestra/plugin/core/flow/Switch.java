@@ -31,7 +31,9 @@ import io.kestra.core.validations.SwitchTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -95,15 +97,14 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     )
     private Property<String> value;
 
-    // @FIXME: @Valid break on io.micronaut.validation.validator.DefaultValidator#cascadeToOne with "Cannot validate java.util.ArrayList"
-    // @Valid
     @Schema(
         title = "The map of keys and a list of tasks to be executed if the conditional `value` matches the key"
     )
     @PluginProperty(additionalProperties = Task[].class)
-    private Map<String, List<Task>> cases;
+    private Map<String, @NotEmpty List<@Valid Task>> cases;
 
     @Valid
+    @Size(min = 1, message = "The 'defaults' property cannot be empty.")
     @PluginProperty
     private List<Task> defaults;
 

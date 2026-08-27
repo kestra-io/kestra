@@ -91,7 +91,7 @@ class FlowTest {
 
         assertThat(validate).isPresent();
         assertThat(validate.get().getConstraintViolations()).hasSize(1);
-        assertThat(validate.get().getMessage()).contains("switch: The case 'A' must define at least one task.");
+        assertThat(validate.get().getMessage()).contains("switch.cases[A].<map value>: must not be empty");
     }
 
     @Test
@@ -101,7 +101,7 @@ class FlowTest {
 
         assertThat(validate).isPresent();
         assertThat(validate.get().getConstraintViolations()).hasSize(1);
-        assertThat(validate.get().getMessage()).contains("switch: The 'defaults' property cannot be empty.");
+        assertThat(validate.get().getMessage()).contains("switch.defaults: The 'defaults' property cannot be empty.");
     }
 
     @Test

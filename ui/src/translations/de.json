@@ -2017,6 +2017,31 @@
         "clear_selection": "Auswahl aufheben",
         "fit_view": "An Bildschirm anpassen"
       },
+      "dag": {
+        "force": "Baum",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Letzte Aktualisierung",
+        "status": {
+          "fresh": "Neu",
+          "stale": "Veraltet",
+          "failed": "Fehlgeschlagen",
+          "unknown": "Nicht getrackt"
+        },
+        "summary": {
+          "fresh": "Alle {n} Assets sind aktuell",
+          "issues": "{n} veraltet",
+          "failed": "{n} fehlgeschlagen",
+          "last_run": "letzter Run {ago}",
+          "unknown": "{n} nicht getrackt"
+        },
+        "recent_runs": "Letzte Runs",
+        "group_by": "Gruppieren nach",
+        "groups": "Gruppen ({n})",
+        "group_none": "Keine Gruppierung",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungruppiert"
+      },
       "search": {
         "placeholders": {
           "default": "Nach Flow oder Namespace suchen…",

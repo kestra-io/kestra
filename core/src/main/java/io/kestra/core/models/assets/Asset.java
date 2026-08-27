@@ -90,7 +90,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
      * @return this asset, merged.
      */
     public <T extends Asset> T toUpdated(T previousAsset, boolean allowTypeChange) {
-        this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset).map(Asset::getCreated)).orElseGet(Instant::now);
+        this.created = Optional.ofNullable(previousAsset).map(Asset::getCreated).or(() -> Optional.ofNullable(this.created)).orElseGet(Instant::now);
         this.updated = Instant.now();
 
         String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);

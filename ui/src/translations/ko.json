@@ -2017,6 +2017,31 @@
         "clear_selection": "선택 해제",
         "fit_view": "화면에 맞추기"
       },
+      "dag": {
+        "force": "트리",
+        "layered": "DAG",
+        "system": "시스템",
+        "last_update": "마지막 업데이트",
+        "status": {
+          "fresh": "신규",
+          "stale": "오래됨",
+          "failed": "실패함",
+          "unknown": "추적되지 않음"
+        },
+        "summary": {
+          "fresh": "모든 {n} Asset이 최신입니다.",
+          "issues": "{n} 고정",
+          "failed": "{n} 실패함",
+          "last_run": "마지막 실행 {ago}",
+          "unknown": "{n} 추적되지 않음"
+        },
+        "recent_runs": "최근 실행",
+        "group_by": "그룹화 기준",
+        "groups": "그룹 ({n})",
+        "group_none": "그룹화 없음",
+        "group_dataset": "데이터셋",
+        "ungrouped": "그룹 해제됨"
+      },
       "search": {
         "placeholders": {
           "default": "flow 또는 namespace로 검색...",

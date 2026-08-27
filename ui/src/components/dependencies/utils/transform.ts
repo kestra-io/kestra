@@ -5,10 +5,7 @@ import {v4 as uuid} from "uuid"
 import {NODE, EDGE} from "./types"
 import type {Types, Node, Edge, Element} from "./types"
 
-/**
- * Transforms an API response containing nodes and edges into
- * dependency Element[] with the given subtype.
- */
+/** Transforms an API response of nodes and edges into dependency Element[] with the given subtype. */
 export function transformResponse(
     response: { nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[] },
     subtype: Types,

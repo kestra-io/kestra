@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Manifest;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,11 @@ import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -489,5 +493,31 @@ class PluginControllerTest {
         assertThat(result.getResults())
             .map(ApiTriggerPlugin::name)
             .contains("Webhook");
+    }
+
+    @Test
+    void triggerPluginTitleDisambiguatesPluginsThatShareAPackageSegment() {
+        // Regression test for the "Add Trigger" picker showing colliding, wrongly-cased labels for
+        // unrelated plugins whose package happens to share a segment (e.g. io.kestra.plugin.mongodb
+        // vs io.kestra.plugin.debezium.mongodb, both conventionally named `Trigger`). The picker label
+        // must come from each plugin's own declared title, not from the trigger class' package name -
+        // this only exercises the resolution, using two real trigger classes as arbitrary stand-ins.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin mongodb = pluginWithTitle("MongoDB");
+        RegisteredPlugin debeziumMongodb = pluginWithTitle("Debezium MongoDB");
+
+        ApiTriggerPlugin mongodbTrigger = controller.toApiTriggerPlugin(mongodb, Schedule.class);
+        ApiTriggerPlugin debeziumMongodbTrigger = controller.toApiTriggerPlugin(debeziumMongodb, Webhook.class);
+
+        assertThat(mongodbTrigger.pluginTitle()).isEqualTo("MongoDB");
+        assertThat(debeziumMongodbTrigger.pluginTitle()).isEqualTo("Debezium MongoDB");
+        assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
+    }
+
+    private static RegisteredPlugin pluginWithTitle(String title) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", title);
+        return RegisteredPlugin.builder().manifest(manifest).build();
     }
 }

@@ -2017,6 +2017,31 @@
         "clear_selection": "चयन साफ़ करें",
         "fit_view": "स्क्रीन के अनुसार फिट करें"
       },
+      "dag": {
+        "force": "ट्री",
+        "layered": "DAG",
+        "system": "सिस्टम",
+        "last_update": "अंतिम अपडेट",
+        "status": {
+          "fresh": "ताज़ा",
+          "stale": "बासी",
+          "failed": "असफल",
+          "unknown": "ट्रैक नहीं किया गया"
+        },
+        "summary": {
+          "fresh": "सभी {n} एसेट नए हैं",
+          "issues": "{n} बासी",
+          "failed": "{n} विफल",
+          "last_run": "अंतिम रन {ago}",
+          "unknown": "{n} ट्रैक नहीं किया गया"
+        },
+        "recent_runs": "हाल की रन",
+        "group_by": "द्वारा समूहबद्ध करें",
+        "groups": "समूह ({n})",
+        "group_none": "कोई ग्रुपिंग नहीं",
+        "group_dataset": "डेटासेट",
+        "ungrouped": "असमूहित"
+      },
       "search": {
         "placeholders": {
           "default": "flow या namespace द्वारा खोजें...",

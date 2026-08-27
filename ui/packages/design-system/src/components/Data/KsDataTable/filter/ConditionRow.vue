@@ -411,7 +411,7 @@
         text-overflow: ellipsis;
 
         &.placeholder {
-            color: var(--ks-text-dim);
+            color: var(--ks-placeholder-color);
         }
     }
 

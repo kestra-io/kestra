@@ -47,12 +47,6 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.kel-input__inner) {
-    &::placeholder {
-        color: var(--ks-text-dim);
-    }
-}
-
 :deep(.kel-select__suffix) {
     display: flex !important;
 }

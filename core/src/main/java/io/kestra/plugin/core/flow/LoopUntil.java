@@ -258,13 +258,13 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
             title = "Maximum duration of the task",
             description = "If not set, defines an unlimited maximum duration of iterations."
         )
-        private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> maxDuration;
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> maxDuration;
 
         @Schema(
             title = "Interval between each iteration"
         )
         @NotNull
         @Builder.Default
-        private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> interval = Property.ofValue(Duration.ofMinutes(1));
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> interval = Property.ofValue(Duration.ofMinutes(1));
     }
 }

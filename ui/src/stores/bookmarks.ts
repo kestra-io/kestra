@@ -1,5 +1,5 @@
-import { defineStore } from "pinia"
-import { useStorage } from "@vueuse/core"
+import {defineStore} from "pinia"
+import {useStorage} from "@vueuse/core"
 
 const LOCAL_STORAGE_KEY = "starred.bookmarks"
 
@@ -23,7 +23,7 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
 
     function rename(page: Page) {
         pages.value = pages.value.map(p =>
-            p.path === page.path ? { ...p, label: page.label } : p
+            p.path === page.path ? {...p, label: page.label} : p,
         )
     }
 

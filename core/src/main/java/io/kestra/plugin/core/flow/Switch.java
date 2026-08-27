@@ -27,6 +27,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.SwitchTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -164,7 +165,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         final String value = rendererValue(runContext);
-        return (this.cases == null ? Map.<String, List<Task>>of() : this.cases).entrySet()
+        return MapUtils.emptyOnNull(this.cases).entrySet()
             .stream()
             .filter(throwPredicate(entry -> entry.getKey().equals(value)))
             .map(Map.Entry::getValue)
@@ -203,7 +204,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
         return Output.builder()
             .value(rendererValue(runContext))
             .defaults(
-                this.cases == null || this.cases
+                MapUtils.isEmpty(this.cases) || this.cases
                     .entrySet()
                     .stream()
                     .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))

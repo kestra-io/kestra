@@ -98,10 +98,14 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
 
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
         const uid = generateUid(tab)
+        let closed = false
         for(const panel of panels.value){
-            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid))
+            // Exact match: uids are `code-<path>`, so a prefix test picks `a.python` when asked
+            // for `a.py`, whenever the longer path is listed first.
+            const tabIndex = panel.tabs.findIndex(e => e.uid === uid)
 
             if (tabIndex > -1) {
+                closed = true
                 // if the closed tab is the active one,
                 // we need to set a new active tab
                 panel.tabs.splice(tabIndex, 1)
@@ -117,6 +121,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                 ]
             }
         }
+        return closed
     })
 
     provide(FILES_SET_DIRTY_INJECTION_KEY, ({path, dirty}) => {

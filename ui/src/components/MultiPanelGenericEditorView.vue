@@ -3,6 +3,7 @@
         <MultiPanelEditorTabs :tabs="editorElements" @update:tabs="setTabValue" :openTabs="openTabs">
             <div class="tabs-actions">
                 <KsButton
+                    v-if="bottomVisible && slots['bottom-panel']"
                     :icon="splitOrientation === 'vertical' ? ViewSplitVertical : ViewSplitHorizontal"
                     :tooltip="splitOrientation === 'vertical' ? $t('split_horizontal') : $t('split_vertical')"
                     class="orientation-toggle"

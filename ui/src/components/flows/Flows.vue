@@ -31,7 +31,7 @@
             :defaultSort="{prop: 'id', order: 'ascending'}"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
-            @row-dblclick="onRowDoubleClick"
+            @row-click="onRowClick"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
             :selectable="canCheck"
@@ -353,6 +353,8 @@
     import {QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
 
+    const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
+
     const props = withDefaults(defineProps<{
         topbar?: boolean;
         fitHeight?: boolean;
@@ -502,10 +504,20 @@
             })
     }
 
-    const onRowDoubleClick = (item: any) => router.push({
-        name: route.name?.toString().replace("/list", "/update"),
-        params: {...item, tenant: route.params.tenant},
-    })
+    const onRowClick = (item: any, column: any, event: Event) => {
+        if (column?.type === "selection") return
+
+        const click = event as MouseEvent
+        // a modifier-click is the browser's own open-in-a-new-tab gesture, which RouterLink deliberately
+        // lets through without preventDefault, so the current tab must stay where it is
+        if (click.metaKey || click.ctrlKey || click.shiftKey || click.altKey || click.button !== 0) return
+        if ((event.target as HTMLElement)?.closest(NON_NAVIGATING_TARGETS)) return
+
+        router.push({
+            name: route.name?.toString().replace("/list", "/update"),
+            params: {...item, tenant: route.params.tenant},
+        })
+    }
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query

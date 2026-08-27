@@ -354,4 +354,31 @@ describe("KsEchart", () => {
         const initOptions = vChart.props("initOptions") as {renderer: string}
         expect(initOptions.renderer).toBe("canvas")
     })
+
+    // ── maxPixelRatio ──────────────────────────────────────────────────────────
+
+    function initOptionsOf(props: Record<string, unknown>) {
+        const vChart = mountChart(props).findComponent({name: "VChart"})
+        return vChart.props("initOptions") as {renderer: string; devicePixelRatio?: number}
+    }
+
+    test("leaves devicePixelRatio to ECharts when maxPixelRatio is not set", () => {
+        vi.stubGlobal("devicePixelRatio", 3)
+        expect(initOptionsOf({})).not.toHaveProperty("devicePixelRatio")
+    })
+
+    test("caps devicePixelRatio at maxPixelRatio on a high-DPI screen", () => {
+        vi.stubGlobal("devicePixelRatio", 3)
+        expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1.5)
+    })
+
+    test("keeps the device pixel ratio when it is already below maxPixelRatio", () => {
+        vi.stubGlobal("devicePixelRatio", 1)
+        expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1)
+    })
+
+    test("falls back to a ratio of 1 when the browser reports none", () => {
+        vi.stubGlobal("devicePixelRatio", undefined)
+        expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1)
+    })
 })

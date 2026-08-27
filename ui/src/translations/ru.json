@@ -182,6 +182,7 @@
     "add_new_item": "Добавить новый элемент",
     "copy": "Копировать",
     "copy_to_clipboard": "Копировать в буфер обмена",
+    "copy_pebble_expression": "Копировать выражение pebble",
     "new": "Новый",
     "edit": "Редактировать",
     "back": "Назад",
@@ -367,7 +368,7 @@
     "unqueue done": "Выполнение находится вне очереди",
     "force run": "Принудительный запуск",
     "force run title": "Принудительный запуск выполнения <code>{id}</code>.",
-    "force run confirm": "Вы уверены, что хотите принудительно запустить выполнение <code>{id}</code>?<br/><br/>ВНИМАНИЕ: принудительный запуск выполнения не гарантируется и может привести к дублированию запусков task.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED task будут переведены в состояние RUNNING.</li><li>RUNNING task будут повторно отправлены.</li><li>QUEUED task будут удалены из очереди.</li><li>PAUSED task будут возобновлены.</li></ul>",
+    "force run confirm": "Вы уверены, что хотите принудительно запустить выполнение `{id}`?\n\nВНИМАНИЕ: принудительный запуск выполнения не гарантируется и может привести к дублированию запусков task.\n\nБудут выполнены следующие переходы:\n\n- CREATED task будут переведены в состояние RUNNING.\n- RUNNING task будут повторно отправлены.\n- QUEUED task будут удалены из очереди.\n- PAUSED task будут возобновлены.",
     "force run done": "Выполнение принудительно запущено",
     "metrics": "Метрики",
     "no metrics available": "Для этого выполнения task метрики не записаны.",
@@ -570,6 +571,7 @@
     "triggers_add_filter_app": "Приложение",
     "triggers_add_empty_title": "Триггеры не найдены",
     "triggers_add_ee_tooltip": "Этот trigger требует Enterprise Edition.",
+    "ee_feature_tooltip": "Эта функция требует Enterprise Edition.",
     "triggers_add_card_add": "Добавить",
     "triggers_add_modal_tab_form": "Форма",
     "triggers_add_modal_tab_source": "Источник",
@@ -656,7 +658,7 @@
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk resume": "Вы уверены, что хотите возобновить <code>{executionCount}</code> выполнение(я)?",
     "bulk pause": "Вы уверены, что хотите приостановить выполнение <code>{executionCount}</code>?",
-    "bulk force run": "Вы уверены, что хотите принудительно запустить {executionCount} выполнение(й)?<br/><br/>ВНИМАНИЕ: принудительный запуск выполнения не гарантирован и может привести к дублированию выполнений task.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED tasks будут переведены в состояние RUNNING.</li><li>RUNNING tasks будут повторно отправлены.</li><li>QUEUED tasks будут удалены из очереди.</li><li>PAUSED tasks будут возобновлены.</li></ul>",
+    "bulk force run": "Вы уверены, что хотите принудительно запустить `{executionCount}` выполнение(й)?\n\nВНИМАНИЕ: принудительный запуск выполнения не гарантирован и может привести к дублированию выполнений task.\n\nБудут выполнены следующие переходы:\n\n- CREATED tasks будут переведены в состояние RUNNING.\n- RUNNING tasks будут повторно отправлены.\n- QUEUED tasks будут удалены из очереди.\n- PAUSED tasks будут возобновлены.",
     "bulk restart": "Вы уверены, что хотите перезапустить <code>{executionCount}</code> выполнение(я)?",
     "bulk kill": "Вы уверены, что хотите убить <code>{executionCount}</code> выполнение(я)?",
     "cancel": "Отмена",
@@ -835,6 +837,7 @@
         "folder_error": "Произошла ошибка при создании папки"
       },
       "rename": {
+        "error": "Не удалось переименовать в \"{name}\". Возможно, файл или папка с таким именем уже существует.",
         "label": "Переименовать",
         "file": "Переименовать файл",
         "folder": "Переименовать папку",
@@ -1391,6 +1394,7 @@
       "key": "Имя",
       "keyPlaceholder": "Имя, используемое для ссылки на этот секрет, например, MY_API_TOKEN",
       "name": "Секретное значение",
+      "valuePlaceholder": "Введите секретное значение",
       "description": "Описание",
       "descriptionPlaceholder": "Опишите этот секрет",
       "tags": "Теги",
@@ -1731,7 +1735,7 @@
         "content": "Представьте flow как инструмент MCP, добавив в него <code>McpToolTrigger</code>. Подробнее о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> читайте в нашей документации."
       },
       "versionPlugin": {
-        "title": "У вас еще нет версионированного плагина!",
+        "title": "У вас еще нет версионированных плагинов!",
         "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра."
       },
       "panels": {
@@ -1887,6 +1891,7 @@
           "test": "тест"
         },
         "contextRemoved": "Удалено {type} {id} из контекста.",
+        "modelChanged": "Переключено на {model}.",
         "toolResult": {
           "detail": "Подробности",
           "error": "{tool} FAILED",
@@ -1957,6 +1962,12 @@
           "Конвергирует"
         ],
         "newChat": "Новый чат",
+        "fixThread": {
+          "flow": "Исправить Flow {id}",
+          "task": "Исправить Task {id}",
+          "execution": "Исправить выполнение {id}",
+          "generic": "Исправить ошибки Flow"
+        },
         "draft": {
           "openInEditor": "Открыть в редакторе",
           "apply": "Применить",
@@ -2201,7 +2212,7 @@
       "next_match": "Следующее совпадение",
       "no_results_description": "Попробуйте расширить namespace, переключить область видимости обратно на All source или отключить Match case и Match whole word.",
       "no_results_hidden_type": "Найдено {count} совпадение в {type}, который вы не выбрали. | Найдено {count} совпадения в {type}, который вы не выбрали. | Найдено {count} совпадений в {type}, который вы не выбрали.",
-      "no_results_in_types": "Нет совпадений для «{query}» в {types}",
+      "no_results_in_types": "Нет совпадений для {query} в {types}",
       "no_results_title": "Нет совпадений для «{query}»",
       "open_flow": "Открыть flow",
       "open_in_editor": "Открыть в редакторе",

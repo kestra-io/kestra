@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import io.kestra.jdbc.migration.AbstractV2_0_23ExecutionOutputsMigration;
+import io.kestra.jdbc.migration.AbstractV2_0_09ExecutionOutputsMigration;
 import io.kestra.repository.postgres.PostgresRepositoryEnabled;
 
 import jakarta.inject.Inject;
@@ -15,12 +15,12 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @PostgresRepositoryEnabled
-public class V2_0_23ExecutionOutputsMigration extends AbstractV2_0_23ExecutionOutputsMigration {
+public class V2_0_09ExecutionOutputsMigration extends AbstractV2_0_09ExecutionOutputsMigration {
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0_23ExecutionOutputsMigration(final DataSource dataSource) {
+    public V2_0_09ExecutionOutputsMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -31,6 +31,6 @@ public class V2_0_23ExecutionOutputsMigration extends AbstractV2_0_23ExecutionOu
 
     @Override
     public List<String> sqlResources() {
-        return List.of("/migrations/2.0.23-execution-outputs-postgres.sql");
+        return List.of("/migrations/2.0.09-execution-outputs-postgres.sql");
     }
 }

@@ -9,7 +9,7 @@ const meta: Meta<typeof KsEntityLink> = {
         entity: {control: "select", options: ["namespace", "flow"]},
     },
     parameters: {
-        docs: {description: {component: "Clickable cross-entity reference (namespace or flow) used in table cells: a neutral tag with a leading entity icon, turning violet on hover so rest-state rows keep their visual hierarchy (kestra-ee#9432)."}},
+        docs: {description: {component: "Clickable cross-entity reference (namespace or flow) used in table cells: a neutral tag with a leading entity icon, turning violet on hover so rest-state rows keep their visual hierarchy (kestra-ee#9432). Narrow cells clip the value with an ellipsis, so hovering reveals it in full (kestra-ee#10157)."}},
     },
 }
 export default meta

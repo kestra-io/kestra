@@ -171,8 +171,12 @@ public class PluginCatalogService {
     /**
      * Extends the hosted catalog with the entries carried by the plugin schema bundle, so a plugin
      * the hosted catalog does not list — a private or in-house one, built into the bundle from a
-     * local plugin folder — resolves and installs like any other. Hosted entries win on conflict:
-     * they carry the license and version metadata the API is authoritative for.
+     * local plugin folder — resolves and installs like any other. On conflict the hosted entry wins,
+     * except its package {@code group}: the bundle derives it from the plugin's scanned classes, the
+     * ground truth for type-to-artifact matching, while the hosted value mirrors the manifest's
+     * {@code X-Kestra-Group}, which some plugins declare wrong (e.g. plugin-transform-json declares
+     * {@code io.kestra.plugin.json} while its types live under {@code io.kestra.plugin.transform.jsonata},
+     * mapping every transform type to plugin-transform-records).
      *
      * @param hosted the manifests retrieved from the Kestra API.
      * @return the merged manifests.
@@ -182,18 +186,37 @@ public class PluginCatalogService {
             return hosted;
         }
 
-        List<PluginManifest> fromBundle = schemaBundleService.catalogEntries();
+        List<PluginManifest> fromBundle = schemaBundleService.catalogEntries().stream()
+            .filter(manifest -> manifest.groupId() != null && manifest.artifactId() != null && manifest.group() != null)
+            .toList();
         if (fromBundle.isEmpty()) {
             return hosted;
         }
+
+        Map<String, String> bundleGroups = fromBundle.stream()
+            .collect(
+                Collectors.toMap(
+                    manifest -> manifest.groupId() + ":" + manifest.artifactId(),
+                    PluginManifest::group,
+                    (first, second) -> first
+                )
+            );
 
         Set<String> known = hosted.stream()
             .map(manifest -> manifest.groupId() + ":" + manifest.artifactId())
             .collect(Collectors.toSet());
 
-        List<PluginManifest> merged = new ArrayList<>(hosted);
+        List<PluginManifest> merged = new ArrayList<>(hosted.size() + fromBundle.size());
+        hosted.stream()
+            .map(manifest ->
+            {
+                String bundleGroup = bundleGroups.get(manifest.groupId() + ":" + manifest.artifactId());
+                return bundleGroup == null || bundleGroup.equals(manifest.group())
+                    ? manifest
+                    : new PluginManifest(manifest.title(), manifest.groupId(), manifest.artifactId(), bundleGroup);
+            })
+            .forEach(merged::add);
         fromBundle.stream()
-            .filter(manifest -> manifest.groupId() != null && manifest.artifactId() != null && manifest.group() != null)
             .filter(manifest -> !known.contains(manifest.groupId() + ":" + manifest.artifactId()))
             .forEach(merged::add);
 

@@ -2,6 +2,7 @@ package io.kestra.cli.schema;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -185,11 +186,42 @@ public class PluginsSchemaCommand extends AbstractCommand {
                 entry.put("title", plugin.title());
                 entry.put("groupId", artifact.groupId());
                 entry.put("artifactId", artifact.artifactId());
-                entry.put("group", plugin.group());
+                entry.put("group", packageGroupOf(plugin));
                 return entry;
             }))
             .flatMap(Optional::stream)
             .toList();
+    }
+
+    /**
+     * The package group backing type-to-artifact matching: the longest common package prefix of the
+     * plugin's registered classes, since those packages are what flow {@code type} values are matched
+     * against. The manifest's {@code X-Kestra-Group} is only a fallback — some plugins declare one
+     * that differs from their real packages (e.g. plugin-transform-json declares
+     * {@code io.kestra.plugin.json} while its types live under {@code io.kestra.plugin.transform.jsonata}).
+     */
+    static String packageGroupOf(final RegisteredPlugin plugin) {
+        List<String> packages = plugin.allClass().stream()
+            .map(Class::getPackageName)
+            .distinct()
+            .toList();
+        return commonPackagePrefix(packages).orElse(plugin.group());
+    }
+
+    static Optional<String> commonPackagePrefix(final List<String> packages) {
+        if (packages.isEmpty()) {
+            return Optional.empty();
+        }
+        List<String> prefix = new ArrayList<>(List.of(packages.getFirst().split("\\.")));
+        for (String pkg : packages) {
+            List<String> segments = List.of(pkg.split("\\."));
+            int common = 0;
+            while (common < Math.min(prefix.size(), segments.size()) && prefix.get(common).equals(segments.get(common))) {
+                common++;
+            }
+            prefix = prefix.subList(0, common);
+        }
+        return prefix.isEmpty() ? Optional.empty() : Optional.of(String.join(".", prefix));
     }
 
     /**

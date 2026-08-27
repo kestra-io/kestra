@@ -343,19 +343,21 @@ class PluginCatalogServiceTest {
     }
 
     @Test
-    void shouldPreferHostedEntryOverBundleEntryForSameArtifact() {
-        // Given — the same artifact on both sides: the hosted one carries the authoritative metadata
+    void shouldPreferBundleGroupOverHostedGroupForSameArtifact() {
+        // Given — the same artifact on both sides: the hosted group mirrors a wrong manifest
+        // X-Kestra-Group (the plugin-transform-json case), the bundle group is derived from the
+        // plugin's real class packages
         when(blockingClient.exchange(any(), any(Argument.class)))
             .thenReturn(
                 HttpResponse.ok(
                     List.of(
-                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                        Map.of("name", "plugin-transform-json", "title", "JSONata", "group", "io.kestra.plugin.json", "license", "OPENSOURCE")
                     )
                 )
             );
         PluginSchemaBundleService schemaBundleService = mock(PluginSchemaBundleService.class);
         when(schemaBundleService.catalogEntries()).thenReturn(
-            List.of(new PluginCatalogService.PluginManifest("Stale", "io.kestra.plugin", "plugin-serdes", "io.kestra.plugin.stale"))
+            List.of(new PluginCatalogService.PluginManifest("JSONata", "io.kestra.plugin", "plugin-transform-json", "io.kestra.plugin.transform.jsonata"))
         );
 
         PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
@@ -363,11 +365,12 @@ class PluginCatalogServiceTest {
         // When
         List<PluginCatalogService.PluginManifest> result = service.get();
 
-        // Then
+        // Then — one entry, hosted title kept, bundle group kept
         assertThat(result).singleElement().satisfies(manifest ->
         {
-            assertThat(manifest.artifactId()).isEqualTo("plugin-serdes");
-            assertThat(manifest.group()).isEqualTo("io.kestra.plugin.serdes");
+            assertThat(manifest.title()).isEqualTo("JSONata");
+            assertThat(manifest.artifactId()).isEqualTo("plugin-transform-json");
+            assertThat(manifest.group()).isEqualTo("io.kestra.plugin.transform.jsonata");
         });
     }
 

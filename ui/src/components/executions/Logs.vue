@@ -51,7 +51,7 @@
             :logCursor="logCursor"
            
             @opened-taskruns-count="openedTaskrunsCount = $event"
-            @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
+            @log-indices-by-level="setLogIndicesByLevel"
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />
@@ -207,9 +207,12 @@
     const filter = ref<string | undefined>(undefined)
     const openedTaskrunsCount = ref(0)
     const raw_view = ref((localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true")
-    const logIndicesByLevel = ref<Record<string, string[]>>(
-        Object.fromEntries(LogUtils.levelOrLower(undefined as any).map((level: string) => [level, []])),
-    )
+    const emptyLogIndicesByLevel = () =>
+        Object.fromEntries(LogUtils.levelOrLower(undefined as any).map((level: string) => [level, [] as string[]]))
+    const logIndicesByLevel = ref<Record<string, string[]>>(emptyLogIndicesByLevel())
+    const setLogIndicesByLevel = (indices: Record<string, string[]>) => {
+        logIndicesByLevel.value = {...emptyLogIndicesByLevel(), ...indices}
+    }
     const logCursor = ref<string | undefined>(undefined)
     const logsLoading = ref(false)
 

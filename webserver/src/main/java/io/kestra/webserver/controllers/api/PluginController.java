@@ -235,7 +235,7 @@ public class PluginController {
         return PagedResults.of(new ArrayListTotal<>(all, all.size()));
     }
 
-    private ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
+    protected ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
         io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
         String title = triggerClass.getSimpleName();
         String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
@@ -244,6 +244,7 @@ public class PluginController {
         return new ApiTriggerPlugin(
             triggerClass.getName(),
             title,
+            io.kestra.core.docs.Plugin.titleFor(registeredPlugin, triggerClass),
             description,
             TriggerPluginCategory.classify(registeredPlugin, triggerClass),
             isEnterpriseEdition(registeredPlugin, triggerClass),
@@ -678,6 +679,11 @@ public class PluginController {
      *
      * @param type fully qualified class name (for example {@code io.kestra.plugin.core.trigger.Schedule})
      * @param name human-readable name (Schema#title if set, otherwise simple class name)
+     * @param pluginTitle the owning plugin's (or subgroup's) human-readable, correctly-cased title
+     *        (for example {@code "MongoDB"} or {@code "Debezium MongoDB"}), resolved from
+     *        its own declared metadata rather than guessed from the class package — used
+     *        by the UI to disambiguate triggers from different plugins that otherwise share
+     *        the same last Java package segment (see {@link io.kestra.core.docs.Plugin#titleFor})
      * @param description one-line description from the plugin @Schema
      * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
      * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)
@@ -687,6 +693,7 @@ public class PluginController {
     public record ApiTriggerPlugin(
         String type,
         String name,
+        String pluginTitle,
         String description,
         TriggerPluginCategory group,
         boolean ee,

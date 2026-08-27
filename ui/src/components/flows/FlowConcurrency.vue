@@ -90,18 +90,18 @@
         error.value = false
 
         try {
-            const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
-            const limits = response.data?.results || []
-
-            const currentFlowLimit = limits.find(
-                (limit: any) =>
-                    limit.namespace === flowStore.flow?.namespace &&
-                    limit.flowId === flowStore.flow?.id,
+            const response = await axios.get(
+                `${apiUrl()}/concurrency-limit/${flowStore.flow.namespace}/${flowStore.flow.id}`,
+                {ignoreNotFound: true, showMessageOnError: false},
             )
 
-            concurrencyLimit.value = currentFlowLimit
-        } catch {
-            error.value = true
+            concurrencyLimit.value = response.data
+        } catch (err: any) {
+            if (err?.status === 404 || err?.response?.status === 404) {
+                concurrencyLimit.value = undefined
+            } else {
+                error.value = true
+            }
         } finally {
             loading.value = false
         }

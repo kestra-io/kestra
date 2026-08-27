@@ -185,6 +185,18 @@ class SelectInputTest {
     }
 
     @Test
+    void validateAcceptsAnyValueWhenValuesComeFromAnUnrenderedExpression() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .required(false)
+            .build();
+
+        input.validate("789");
+    }
+
+    @Test
     void valueOptionDeserializesFromStringOrObject() {
         ValueOption fromString = ValueOption.from("V1");
         assertThat(fromString.label()).isEqualTo("V1");

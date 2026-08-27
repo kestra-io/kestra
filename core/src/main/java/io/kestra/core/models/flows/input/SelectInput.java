@@ -69,7 +69,8 @@ public class SelectInput extends Input<String> implements RenderableInput {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (this.getAllowCustomValue()) {
+        // values is null when the options come from an expression that has not been rendered yet.
+        if (this.getAllowCustomValue() || values == null) {
             return;
         }
 

@@ -145,10 +145,8 @@
     import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
     import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY} from "../injectionKeys"
 
-    // BranchLane renders nested clusters through this component, so the two are mutually
-    // recursive. BranchLane imports us statically, so this is the side that has to stay lazy:
-    // static on both sides is a circular import, and one of the two bindings would be
-    // undefined by the time its module body runs.
+    // BranchLane imports this component statically, so this is the side of the mutual
+    // recursion that must stay lazy — static on both sides is a circular import.
     const BranchLane = defineAsyncComponent(() => import("./BranchLane.vue"))
 
     const {t} = useI18n()

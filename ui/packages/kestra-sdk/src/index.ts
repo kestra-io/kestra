@@ -5,9 +5,7 @@ import type {NamespaceLight} from "./openapi/types.gen"
 import {createConfigureClient} from "@kestra-io/hey-api-plugin/runtime"
 import {createClientFacade} from "./client-facade"
 
-// Types only. The generated operations live on their per-tag subpaths, or all together on
-// `@kestra-io/kestra-sdk/all` — re-exporting them here made the root entry, which is a
-// module-federation share, pin every one of them into the initial graph.
+// Types only: the operations live on their per-tag subpaths, or all together on `./all`.
 export type * from "./openapi/types.gen"
 export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient, StreamConfig} from "./client-facade"
 

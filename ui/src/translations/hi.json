@@ -207,6 +207,7 @@
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
     "queued duration": "कतारबद्ध अवधि",
+    "paused duration": "रुकी हुई अवधि",
     "executionProgress": {
       "title": "निष्पादन प्रगति",
       "estimatedRemaining": "अनुमानित शेष समय: {duration}",
@@ -299,6 +300,21 @@
     "to": "तक",
     "steps": "चरण",
     "state": "स्थिति",
+    "state_history": {
+      "title": "स्थिति इतिहास",
+      "open": "स्थिति इतिहास",
+      "aria_open": "स्थिति इतिहास दिखाएं",
+      "aria_open_for": "{subject} का स्थिति इतिहास दिखाएं",
+      "started_at": "{time} पर शुरू हुआ",
+      "failed_at": "{time} पर विफल",
+      "skipped_at": "{time} पर छोड़ा गया",
+      "created_at": "{time} पर बनाया गया",
+      "did_not_run": "यह टास्क नहीं चला",
+      "waiting_to_start": "शुरू होने की प्रतीक्षा में",
+      "attempt_n": "प्रयास {index}",
+      "attempt_count": "{count} प्रयास",
+      "copy": "स्थिति इतिहास कॉपी करें"
+    },
     "search": "खोजें",
     "source search": "स्रोत खोज",
     "selected": "चयनित",
@@ -495,6 +511,15 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "autoInstall": {
+        "failed": "plugin इंस्टॉलेशन विफल रहा",
+        "failedHint": "flow सेव नहीं हुआ। समस्या ठीक करें या flow से plugin हटाएं, फिर दोबारा सेव करें।",
+        "preparing": "plugin इंस्टॉलेशन की तैयारी हो रही है...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "plugin सफलतापूर्वक इंस्टॉल हो गया | plugins सफलतापूर्वक इंस्टॉल हो गए",
+        "timeout": "plugin इंस्टॉलेशन में अपेक्षा से अधिक समय लग रहा है। flow सेव नहीं हुआ, इंस्टॉलेशन पूरा होने पर दोबारा सेव करें।",
+        "title": "{count} plugin इंस्टॉल हो रहा है | {count} plugins इंस्टॉल हो रहे हैं"
+      },
       "names": "plugins",
       "release": "रिलीज़ नोट्स",
       "beta": "बीटा",

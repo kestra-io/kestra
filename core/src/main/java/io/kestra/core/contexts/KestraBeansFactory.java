@@ -9,6 +9,7 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.log.LogDataStoreInterfaceFactory;
 import io.kestra.core.repositories.log.LogsConfig;
@@ -20,6 +21,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
@@ -51,9 +53,15 @@ public class KestraBeansFactory {
     @Inject
     RepositoryConfiguration repositoryConfiguration;
 
+    // @Primary so unqualified injections (e.g. PluginAutoInstallService) resolve to this
+    // icon-less catalog rather than the webserver's @Named("withIcons") variant.
+    @Primary
     @Singleton
-    public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient, ExecutorsUtils executorsUtils) {
-        return new PluginCatalogService(httpClient, false, true, executorsUtils);
+    public PluginCatalogService pluginCatalogService(
+        @Client("api") HttpClient httpClient,
+        ExecutorsUtils executorsUtils,
+        PluginSchemaBundleService schemaBundleService) {
+        return new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
     }
 
     @Requires(missingBeans = PluginRegistry.class)

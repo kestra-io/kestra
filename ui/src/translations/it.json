@@ -207,6 +207,7 @@
     "total_duration": "Durata totale",
     "running duration": "Durata in esecuzione",
     "queued duration": "Durata in coda",
+    "paused duration": "Durata in pausa",
     "executionProgress": {
       "title": "Avanzamento dell'esecuzione",
       "estimatedRemaining": "Tempo rimanente stimato: {duration}",
@@ -299,6 +300,21 @@
     "to": "A",
     "steps": "Passaggi",
     "state": "Stato",
+    "state_history": {
+      "title": "Cronologia stato",
+      "open": "Cronologia stato",
+      "aria_open": "Mostra la cronologia dello stato",
+      "aria_open_for": "Mostra la cronologia dello stato di {subject}",
+      "started_at": "Avviato alle {time}",
+      "failed_at": "Fallito alle {time}",
+      "skipped_at": "Saltato alle {time}",
+      "created_at": "Creato alle {time}",
+      "did_not_run": "Questo task non è stato eseguito",
+      "waiting_to_start": "In attesa di avvio",
+      "attempt_n": "Tentativo {index}",
+      "attempt_count": "{count} tentativi",
+      "copy": "Copia cronologia stato"
+    },
     "search": "Cerca",
     "source search": "Cerca fonte",
     "selected": "Selezionato",
@@ -495,6 +511,15 @@
     },
     "use": "Usa",
     "plugins": {
+      "autoInstall": {
+        "failed": "Installazione del plugin non riuscita",
+        "failedHint": "Il flow non è stato salvato. Correggi il problema o rimuovi il plugin dal flow, poi salva di nuovo.",
+        "preparing": "Preparazione dell'installazione del plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installato correttamente | Plugin installati correttamente",
+        "timeout": "L'installazione del plugin sta impiegando più tempo del previsto. Il flow non è stato salvato, salva di nuovo al termine dell'installazione.",
+        "title": "Installazione di {count} plugin in corso | Installazione di {count} plugin in corso"
+      },
       "names": "Plugins",
       "release": "Note di rilascio",
       "beta": "Beta",

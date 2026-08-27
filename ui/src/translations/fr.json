@@ -207,6 +207,7 @@
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",
     "queued duration": "Durée d'attente",
+    "paused duration": "Durée en pause",
     "executionProgress": {
       "title": "Progression de l'exécution",
       "estimatedRemaining": "Temps restant estimé : {duration}",
@@ -299,6 +300,21 @@
     "to": "à",
     "steps": "Étapes",
     "state": "État",
+    "state_history": {
+      "title": "Historique des états",
+      "open": "Historique des états",
+      "aria_open": "Afficher l'historique des états",
+      "aria_open_for": "Afficher l'historique des états de {subject}",
+      "started_at": "Démarré à {time}",
+      "failed_at": "Échoué à {time}",
+      "skipped_at": "Ignoré à {time}",
+      "created_at": "Créé à {time}",
+      "did_not_run": "Cette tâche ne s'est pas exécutée",
+      "waiting_to_start": "En attente de démarrage",
+      "attempt_n": "Tentative {index}",
+      "attempt_count": "{count} tentatives",
+      "copy": "Copier l'historique des états"
+    },
     "search": "Chercher",
     "source search": "Recherche de code source",
     "selected": "Sélectionné",
@@ -495,6 +511,15 @@
     },
     "use": "Utiliser",
     "plugins": {
+      "autoInstall": {
+        "failed": "Échec de l'installation du plugin",
+        "failedHint": "Le flow n'a pas été enregistré. Corrigez le problème ou retirez le plugin du flow, puis enregistrez à nouveau.",
+        "preparing": "Préparation de l'installation du plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installé avec succès | Plugins installés avec succès",
+        "timeout": "L'installation du plugin prend plus de temps que prévu. Le flow n'a pas été enregistré, enregistrez à nouveau une fois l'installation terminée.",
+        "title": "Installation de {count} plugin | Installation de {count} plugins"
+      },
       "names": "Plugins",
       "release": "Notes de version",
       "beta": "Bêta",

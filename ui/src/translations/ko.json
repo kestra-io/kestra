@@ -207,6 +207,7 @@
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
     "queued duration": "대기 중 지속 시간",
+    "paused duration": "일시 중지 시간",
     "executionProgress": {
       "title": "실행 진행률",
       "estimatedRemaining": "예상 남은 시간: {duration}",
@@ -299,6 +300,21 @@
     "to": "종료",
     "steps": "단계",
     "state": "상태",
+    "state_history": {
+      "title": "상태 기록",
+      "open": "상태 기록",
+      "aria_open": "상태 기록 표시",
+      "aria_open_for": "{subject}의 상태 기록 표시",
+      "started_at": "{time}에 시작됨",
+      "failed_at": "{time}에 실패함",
+      "skipped_at": "{time}에 건너뜀",
+      "created_at": "{time}에 생성됨",
+      "did_not_run": "이 태스크는 실행되지 않았습니다",
+      "waiting_to_start": "시작 대기 중",
+      "attempt_n": "시도 {index}",
+      "attempt_count": "{count}회 시도",
+      "copy": "상태 기록 복사"
+    },
     "search": "검색",
     "source search": "소스 검색",
     "selected": "선택됨",
@@ -495,6 +511,15 @@
     },
     "use": "사용",
     "plugins": {
+      "autoInstall": {
+        "failed": "플러그인 설치에 실패했습니다",
+        "failedHint": "flow가 저장되지 않았습니다. 문제를 해결하거나 flow에서 plugin을 제거한 후 다시 저장하세요.",
+        "preparing": "플러그인 설치를 준비하는 중...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "플러그인이 성공적으로 설치되었습니다 | 플러그인이 성공적으로 설치되었습니다",
+        "timeout": "플러그인 설치가 예상보다 오래 걸리고 있습니다. flow가 저장되지 않았으므로 설치가 완료되면 다시 저장하세요.",
+        "title": "플러그인 {count}개 설치 중 | 플러그인 {count}개 설치 중"
+      },
       "names": "플러그인들",
       "release": "릴리스 노트",
       "beta": "베타",

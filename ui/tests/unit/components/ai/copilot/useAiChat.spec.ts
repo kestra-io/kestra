@@ -57,6 +57,19 @@ describe("useAiChat", () => {
         expect(post.mock.calls[0][0]).toContain("/ai/threads")
     })
 
+    it("creates the thread with nextThreadTitle and consumes it, so a later thread is untitled", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        chat.nextThreadTitle.value = "Fix task extract"
+        await chat.sendChat({prompt: "fix it"})
+        expect(post.mock.calls[0][1]).toMatchObject({title: "Fix task extract"})
+        expect(chat.nextThreadTitle.value).toBeNull()
+
+        chat.reset()
+        await chat.sendChat({prompt: "hi"})
+        expect(post.mock.calls[1][1].title).toBeUndefined()
+    })
+
     it("appends streamed tokens into a single assistant message", async () => {
         const chat = useAiChat()
         nextFrames = [

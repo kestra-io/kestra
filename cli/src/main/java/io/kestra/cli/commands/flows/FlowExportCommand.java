@@ -1,5 +1,7 @@
 package io.kestra.cli.commands.flows;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -40,7 +42,11 @@ public class FlowExportCommand extends AbstractApiCommand {
 
         try (DefaultHttpClient client = client()) {
             MutableHttpRequest<Object> request = HttpRequest
-                .GET(apiUri("/flows/export/by-query", tenantService.getTenantId(tenantId)) + (namespace != null ? "?namespace=" + namespace : ""))
+                // The endpoint only binds filters in the bracket format, so the flat `namespace=` param was never
+                // read and `--namespace` exported the whole tenant (kestra-io/kestra-ee#10394); PREFIX keeps the
+                // documented meaning of the option, the namespace and its children.
+                .GET(apiUri("/flows/export/by-query", tenantService.getTenantId(tenantId))
+                    + (namespace != null ? "?filters[namespace][PREFIX]=" + URLEncoder.encode(namespace, StandardCharsets.UTF_8) : ""))
                 .accept(MediaType.APPLICATION_OCTET_STREAM);
 
             HttpResponse<byte[]> response = client.toBlocking().exchange(this.requestOptions(request), byte[].class);

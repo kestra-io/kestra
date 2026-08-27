@@ -1739,6 +1739,10 @@ export type PluginControllerApiTriggerPlugin = {
      */
     name?: string;
     /**
+     * the owning plugin's (or subgroup's) human-readable, correctly-cased title (for example `"MongoDB"` or `"Debezium MongoDB"`), resolved from its own declared metadata rather than guessed from the class package --- used by the UI to disambiguate triggers from different plugins that otherwise share the same last Java package segment (see io.kestra.core.docs.Plugin#titleFor)
+     */
+    pluginTitle?: string;
+    /**
      * one-line description from the plugin
      */
     description?: string;

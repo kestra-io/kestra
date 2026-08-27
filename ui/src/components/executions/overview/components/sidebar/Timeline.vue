@@ -23,15 +23,15 @@
     import type {Histories} from "../../../../../stores/executions";
 
     import {getSchemeValue} from "../../../../../utils/scheme";
-
-    import moment from "moment";
+    import {date as dateFilter} from "../../../../../utils/filters";
 
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
     const props = defineProps<{ histories: Histories[] }>();
 
     const formatDate = (date: string) => {
-        return moment(date)?.format("YYYY-MM-DD HH:mm:ss.SSS") ?? date;
+        // "iso" is the filter's sentinel for YYYY-MM-DD HH:mm:ss.SSS.
+        return dateFilter(date, "iso");
     };
 </script>
 

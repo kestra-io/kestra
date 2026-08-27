@@ -369,7 +369,9 @@
                 }
 
                 input::placeholder {
-                    color: var(--ks-text-dim);
+                    color: var(--ks-placeholder-color);
+                    font-size: var(--ks-placeholder-font-size);
+                    font-weight: var(--ks-placeholder-font-weight);
                 }
 
                 .close-button {

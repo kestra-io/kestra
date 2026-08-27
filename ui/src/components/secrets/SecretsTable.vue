@@ -248,7 +248,7 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations"
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns} from "@kestra-io/design-system"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const secretsFilter = useSecretsFilter()

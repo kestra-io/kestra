@@ -319,7 +319,7 @@
     import {useKvFilter} from "../filter/configurations"
     import moment from "moment-timezone"
 
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"

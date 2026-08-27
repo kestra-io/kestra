@@ -184,6 +184,8 @@ export {
     emptyLeafGroup,
 } from "./components/Data/KsDataTable/filter/composables/useFilterGroups"
 export {useDismissedKeys} from "./components/Data/KsDataTable/filter/composables/useDismissedKeys"
+export {useTableColumns} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
+export type {ColumnConfig, UseTableColumnsOptions} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
     decodeSearchParams,

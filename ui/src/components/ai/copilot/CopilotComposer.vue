@@ -379,7 +379,7 @@
         border: none;
         outline: none;
         resize: none;
-        /* Safari renders a horizontal scrollbar track on auto-overflow textareas even though wrapped text never overflows (kestra#18429). */
+        /* Safari renders a horizontal scrollbar track on auto-overflow textareas even though wrapped text never overflows. */
         overflow-x: hidden;
         padding: 0;
         background: transparent;

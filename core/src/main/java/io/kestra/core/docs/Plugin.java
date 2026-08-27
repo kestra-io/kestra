@@ -125,7 +125,11 @@ public class Plugin {
      *
      * @param registeredPlugin the plugin the element belongs to
      * @param cls the plugin element's class
-     * @return a non-null, correctly-cased title
+     * @return a non-null title, cased as the plugin and its subgroup declared it. A subgroup that
+     *         declares no title contributes its capitalized package segments instead, which reads
+     *         well ("Redis List") but cannot recover an acronym ("Azure Eventhubs"). Note that the
+     *         bundled plugin declares its title as a lowercase {@code "core"}, so callers displaying
+     *         this for a bundled class want the class' own name instead.
      */
     public static String titleFor(RegisteredPlugin registeredPlugin, Class<?> cls) {
         String title = registeredPlugin.title();

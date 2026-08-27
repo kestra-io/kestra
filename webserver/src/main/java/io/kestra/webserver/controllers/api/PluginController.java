@@ -679,11 +679,11 @@ public class PluginController {
      *
      * @param type fully qualified class name (for example {@code io.kestra.plugin.core.trigger.Schedule})
      * @param name human-readable name (Schema#title if set, otherwise simple class name)
-     * @param pluginTitle the owning plugin's (or subgroup's) human-readable, correctly-cased title
-     *        (for example {@code "MongoDB"} or {@code "Debezium MongoDB"}), resolved from
-     *        its own declared metadata rather than guessed from the class package — used
-     *        by the UI to disambiguate triggers from different plugins that otherwise share
-     *        the same last Java package segment (see {@link io.kestra.core.docs.Plugin#titleFor})
+     * @param pluginTitle the owning plugin's human-readable title, qualified with the trigger's
+     *        subgroup when it has one (for example {@code "Debezium MongoDB"} or {@code "AWS SQS"}),
+     *        resolved from the plugin's own declared metadata rather than guessed from the class
+     *        package — used by the UI to disambiguate triggers from different plugins that otherwise
+     *        share the same last Java package segment (see {@link io.kestra.core.docs.Plugin#titleFor})
      * @param description one-line description from the plugin @Schema
      * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
      * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)

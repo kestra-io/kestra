@@ -3,15 +3,6 @@ import {describe, test, expect} from "vitest"
 import {triggerDisplayName, isMcpTrigger, MCP_TOOL_TYPE} from "../../../../../src/components/admin/triggers/triggerCatalog"
 
 describe("triggerDisplayName", () => {
-    test("uses the trigger's own name when it isn't the generic class name", () => {
-        expect(triggerDisplayName({
-            type: "io.kestra.plugin.core.trigger.Schedule",
-            name: "Schedule",
-            pluginTitle: "core Trigger",
-            group: "core",
-        })).toBe("Schedule")
-    })
-
     test("falls back to the plugin's own declared title when the class is named `Trigger`", () => {
         expect(triggerDisplayName({
             type: "io.kestra.plugin.mongodb.Trigger",

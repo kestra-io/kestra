@@ -35,12 +35,12 @@
                 :key="trigger.type"
                 role="radio"
                 :selected="recipe.otherTriggerType === trigger.type"
-                :ariaLabel="trigger.name"
+                :ariaLabel="triggerDisplayName(trigger)"
                 @select="setOtherTriggerType(trigger.type)"
             >
                 <TaskIcon :cls="trigger.type" :icons="pluginIcons" class="trigger-icon" />
                 <div class="trigger-info">
-                    <span class="trigger-name">{{ trigger.name }}</span>
+                    <span class="trigger-name">{{ triggerDisplayName(trigger) }}</span>
                     <span v-if="trigger.description" class="trigger-desc">{{ trigger.description }}</span>
                 </div>
                 <KsIcon v-if="recipe.otherTriggerType === trigger.type" class="check-icon">
@@ -55,6 +55,7 @@
     import {computed, onMounted, ref} from "vue"
     import SelectableTile from "../SelectableTile.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
+    import {triggerDisplayName} from "../../../admin/triggers/triggerCatalog"
     import {usePluginsStore} from "../../../../stores/plugins"
     import type {TriggerPluginDto} from "../../../../stores/plugins"
     import type {PluginIconMap} from "../../../../utils/pluginUtils"
@@ -78,7 +79,7 @@
         const q = searchQuery.value.toLowerCase()
         if (!q) return triggers.value
         return triggers.value.filter(
-            t => t.name.toLowerCase().includes(q) || t.type.toLowerCase().includes(q),
+            t => triggerDisplayName(t).toLowerCase().includes(q) || t.type.toLowerCase().includes(q),
         )
     })
 

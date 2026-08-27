@@ -26,9 +26,9 @@ export type {Plugin} from "../utils/pluginUtils"
 export interface TriggerPluginDto {
     type: string;
     name: string;
-    // The owning plugin's (or subgroup's) declared, correctly-cased title (for example "MongoDB" or
-    // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
-    // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
+    // The owning plugin's declared title, qualified with the trigger's subgroup when it has one (for
+    // example "Debezium MongoDB" or "AWS SQS"), resolved server-side from the plugin's own metadata
+    // rather than guessed from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
     pluginTitle: string;
     description: string | null;
     group: "core" | "realtime" | "app";

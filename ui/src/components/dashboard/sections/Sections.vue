@@ -112,6 +112,11 @@
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
 
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../../utils/toast"
+    const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
+
     import Download from "vue-material-design-icons/Download.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
@@ -171,13 +176,15 @@
         return baseFilters
     })
 
-    function exportChart(chart: Chart, format: "CSV" | "ION") {
+    async function exportChart(chart: Chart, format: "CSV" | "ION") {
         const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
 
-        dashboardStore.export(props.dashboard, chart, {
+        const exported = await dashboardStore.export(props.dashboard, chart, {
             ...pagination,
             filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
         }, format)
+
+        if (!exported) toast.warning(t("dashboards.exportEmpty"))
     }
 </script>
 

@@ -277,6 +277,12 @@ public class ExecutionService {
             newExecution = newExecution.toBuilder().fixtures(createCommand.fixtures()).build();
         }
 
+        // Carries the depth a Flow trigger's evaluate() computed before the dependsOn route rebuilt this
+        // execution from the Create command; Execution.newExecution() above reset it via prebuild().
+        if (createCommand.executionDepth() != null) {
+            newExecution = newExecution.withMetadata(newExecution.getMetadata().withExecutionDepth(createCommand.executionDepth()));
+        }
+
         if (createCommand.variables() != null) {
             newExecution = newExecution.withVariables(createCommand.variables());
         }

@@ -122,29 +122,22 @@
                                                 </KsTooltip>
                                             </div>
                                             <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                                <KsTooltip placement="top">
-                                                    <template #content>
-                                                        <span style="white-space: pre-wrap;">
-                                                            {{ item.tooltip }}
-                                                        </span>
-                                                    </template>
-                                                    <div :style="taskBarStyle(item)" class="task-progress">
-                                                        <KsProgress
-                                                            :left="Math.min(item.left, 90)"
-                                                            :percentage="Math.max(100 - item.left, 10)"
-                                                            :color="item.color"
-                                                            :stroke-width="7"
-                                                            :radius="81"
-                                                            :striped="item.running"
-                                                            :stripedFlow="item.running"
-                                                            :showText="false"
-                                                        />
-                                                    </div>
-                                                </KsTooltip>
+                                                <div :style="taskBarStyle(item)" class="task-progress">
+                                                    <KsProgress
+                                                        :left="Math.min(item.left, 90)"
+                                                        :percentage="Math.max(100 - item.left, 10)"
+                                                        :color="item.color"
+                                                        :stroke-width="7"
+                                                        :radius="81"
+                                                        :striped="item.running"
+                                                        :stripedFlow="item.running"
+                                                        :showText="false"
+                                                    />
+                                                </div>
                                             </div>
                                             <div class="task-duration d-none d-md-inline-block">
                                                 <small>
-                                                    <Duration :histories="item.task.state.histories" />
+                                                    <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
                                                 </small>
                                             </div>
                                             <div class="task-actions" @click.stop>
@@ -191,7 +184,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
-    import moment from "moment"
+    import {date as dateFilter} from "../../utils/filters"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -204,7 +197,6 @@
     import {
         State,
         Comparators,
-        durationUtils,
         useRouteFilterPolicy,
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
@@ -230,6 +222,9 @@
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
+
+    // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
+    const TICK_FORMAT = "HH:mm:ss"
 
     interface TaskRun {
         id: string;
@@ -260,7 +255,6 @@
         start: number;
         width: number;
         left: number;
-        tooltip: string;
         color: string;
         running: boolean;
         task: TaskRun;
@@ -432,15 +426,13 @@
 
     const startTime = computed<string>(() => {
         if (!execution.value?.state?.histories?.[0]) return ""
-        return moment(execution.value.state.histories[0].date).format("HH:mm:ss")
+        return dateFilter(execution.value.state.histories[0].date, TICK_FORMAT)
     })
 
     const endTime = computed<string>(() => {
-        if (!execution.value?.state) return ""
-        const endDate = State.isRunning(execution.value.state.current)
-            ? new Date()
-            : new Date(stop())
-        return moment(endDate).format("HH:mm:ss")
+        if (!execution.value?.state || !hasValidDate.value) return ""
+        const endDate = State.isRunning(execution.value.state.current) ? Date.now() : stop()
+        return dateFilter(endDate, TICK_FORMAT)
     })
 
     function delta(): number {
@@ -504,16 +496,6 @@
                 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100)
                 : 0
 
-            const taskDelta = stopTs - startTs
-
-            let tooltip = `${t("duration")} : ${durationUtils.humanDuration(taskDelta / 1000)}`
-
-            if (runningState.length > 0) {
-                tooltip += `\n${t("queued duration")} : ${durationUtils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`
-                tooltip += `\n${t("running duration")} : ${durationUtils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`
-            }
-
-
             const barPercents = barPercentsById[task.id]
             let width = barPercents.width
             if (State.isRunning(task.state.current)) {
@@ -526,7 +508,6 @@
                 start: barPercents.start,
                 width,
                 left,
-                tooltip,
                 color: COLORS[task.state.current],
                 running: Boolean(State.isRunning(task.state.current)),
                 task,
@@ -543,8 +524,15 @@
     }
 
     function computeDates(): void {
+        // An execution cancelled or failed before any task started has no span to divide, so
+        // `delta()` is non-finite and every tick would be an unusable placeholder.
+        if (!hasValidDate.value) {
+            dates.value = []
+            return
+        }
+
         const ticks = 5
-        const formatDate = (timestamp: number): string => moment(timestamp).format("h:mm:ss")
+        const formatDate = (timestamp: number): string => dateFilter(timestamp, TICK_FORMAT)
         const startVal = start.value
         const deltaVal = delta() / ticks
         const newDates: string[] = []

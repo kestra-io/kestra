@@ -14,10 +14,10 @@ const isRealModule = (id) =>
     !id.includes("__loadShare__") &&
     !id.includes("@module-federation") &&
     !id.includes("?worker") &&
-    // Implementations of MF shared singletons (see federation() shared config)
-    // must keep their own chunks: consumers import them through MF loadShare
-    // wrappers, and merging them with wrapper consumers creates a
-    // wrapper <-> chunk evaluation cycle that crashes at boot.
+    // Implementations of MF shared singletons (see federation() shared config).
+    // Merging them with wrapper *consumers* creates a wrapper <-> chunk
+    // evaluation cycle that crashes at boot, so the eager groups may not have
+    // them; the mf-shared group claims them alongside their own shims.
     !/node_modules[\\/](vue|@vue)[\\/]/.test(id) &&
     // Both id forms: the bare-specifier resolution (@kestra-io/kestra-sdk) and
     // the workspace path (packages/kestra-sdk) it can resolve to.
@@ -32,6 +32,16 @@ const isRealModule = (id) =>
  * @returns {(id: string) => boolean}
  */
 const matches = (pattern) => (id) => isRealModule(id) && pattern.test(id)
+
+/**
+ * The shims MF generates per shared module: the async init wrapper, and the
+ * prebuild proxy re-exporting the same implementation.
+ */
+const isShareShim = (id) => id.includes("__loadShare__") || id.includes("__prebuild__")
+
+/** MF's own virtual modules: the shims, the share map, the remote entry. */
+const isMfInternal = (id) =>
+    id.startsWith("\0") || id.includes("virtual:") || id.includes("__mf") || id.includes("@module-federation")
 
 const MONACO_MODULES = /node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)|src[\\/](override[\\/])?composables[\\/]monaco[\\/]/
 // Entries that look like typos are real unified-ecosystem package names.
@@ -124,6 +134,33 @@ function collectLazySubtrees(ctx) {
  */
 const matchesWithLazySubtree = (name, pattern) => (id) =>
     isRealModule(id) && (pattern.test(id) || lazySubtrees.get(name)?.has(id) === true)
+
+/**
+ * The shared singletons' own implementations: everything the share shims
+ * statically reach that no other group may claim. Filled during buildEnd.
+ *
+ * Unclaimed they get a chunk each beside the shim that is their only importer —
+ * vue and the SDK alone are ~360 kB over two eagerly preloaded files. Limiting
+ * the set to what {@link isRealModule} rejects is what makes the merge safe:
+ * nothing is taken out of another group, so an outside importer can only add an
+ * edge into mf-shared, never one back out of it.
+ * @type {Set<string>}
+ */
+const sharedImpls = new Set()
+
+/**
+ * @param {import("rolldown").PluginContext} ctx
+ */
+function collectSharedImpls(ctx) {
+    sharedImpls.clear()
+    for (const id of staticClosure(ctx, [...ctx.getModuleIds()].filter(isShareShim))) {
+        // The whole subtree, including modules the app also imports directly
+        // (@vue/shared): one left behind lands in a chunk that imports
+        // mf-shared while vue's own runtime in there imports it back.
+        if (isMfInternal(id) || isRealModule(id)) continue
+        sharedImpls.add(id)
+    }
+}
 
 const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]langs)[\\/]/
 const LANG_REGISTRY = /node_modules[\\/]shiki[\\/]dist[\\/]langs(-bundle-full-[^\\/]+)?\.mjs$/
@@ -420,11 +457,12 @@ const GROUPS = [
         priority: -40,
         includeDependenciesRecursively: false,
     },
-    // One chunk for every module-federation share wrapper: alone they are
-    // forty-odd two-kilobyte requests, most of them on every page.
+    // One chunk for every module-federation share shim — alone they are
+    // forty-odd two-kilobyte requests, most of them on every page — plus the
+    // shared implementations behind them, which are on every page too.
     {
         name: "mf-shared",
-        test: (id) => id.includes("__loadShare__"),
+        test: (id) => isShareShim(id) || sharedImpls.has(id),
         priority: -44,
         includeDependenciesRecursively: false,
     },
@@ -469,6 +507,7 @@ export function consolidateChunks({pages = {}} = {}) {
         buildEnd() {
             collectStaticLangs(this)
             collectLazySubtrees(this)
+            collectSharedImpls(this)
             planAsyncChunks(this)
         },
         generateBundle(_options, bundle) {
@@ -504,6 +543,24 @@ export function consolidateChunks({pages = {}} = {}) {
                         seen.add(dep)
                         stack.push([...path, dep])
                     }
+                }
+            }
+
+            // Folding the shared implementations in with their shims is only safe
+            // while nothing mf-shared imports imports it back.
+            const mfShared = Object.keys(bundle).find((file) => nameOf(file) === "mf-shared")
+            if (mfShared) {
+                const reached = new Set([mfShared])
+                const paths = deps(mfShared).map((file) => [file])
+                while (paths.length) {
+                    const path = /** @type {string[]} */ (paths.pop())
+                    const file = path[path.length - 1]
+                    if (file === mfShared) {
+                        this.error(`Chunks import each other: ${[mfShared, ...path].map(nameOf).join(" -> ")}. The shared singletons throw the first time any of these chunks loads; an implementation collectSharedImpls claimed reaches a chunk that consumes shares.`)
+                    }
+                    if (reached.has(file)) continue
+                    reached.add(file)
+                    paths.push(...deps(file).map((dep) => [...path, dep]))
                 }
             }
 

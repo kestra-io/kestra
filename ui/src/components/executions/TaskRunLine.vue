@@ -52,7 +52,7 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="currentTaskRun.state.histories" />
+                <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" :subject="currentTaskRun.taskId" />
             </small>
         </div>
 
@@ -103,7 +103,10 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="selectedAttempt(currentTaskRun).state.histories" />
+                <Duration
+                    :histories="selectedAttempt(currentTaskRun).state.histories"
+                    :subject="`${currentTaskRun.taskId}, ${$t('attempt')} ${(selectedAttemptNumberByTaskRunId[currentTaskRun.id] ?? 0) + 1}`"
+                />
             </small>
         </div>
     </div>

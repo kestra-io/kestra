@@ -8,7 +8,7 @@
             <div
                 class="block-command-menu"
                 role="dialog"
-                :aria-label="t('block_editor.command_menu.title')"
+                :aria-label="$t('block_editor.command_menu.title')"
                 @click.stop
                 @keydown="onKeydown"
             >
@@ -17,8 +17,8 @@
                         ref="searchInput"
                         v-model="query"
                         class="block-command-menu-input"
-                        :placeholder="t('block_editor.command_menu.search_placeholder')"
-                        :aria-label="t('block_editor.command_menu.search_placeholder')"
+                        :placeholder="$t('block_editor.command_menu.search_placeholder')"
+                        :aria-label="$t('block_editor.command_menu.search_placeholder')"
                         aria-controls="block-command-menu-listbox"
                         :aria-activedescendant="activeIndex >= 0 ? `block-command-menu-option-${activeIndex}` : undefined"
                         clearable
@@ -31,7 +31,7 @@
                     id="block-command-menu-listbox"
                     class="block-command-menu-list"
                     role="listbox"
-                    :aria-label="t('block_editor.command_menu.title')"
+                    :aria-label="$t('block_editor.command_menu.title')"
                     data-test="block-command-menu-list"
                 >
                     <template v-if="filteredItems.length">
@@ -62,7 +62,7 @@
                             </button>
                         </template>
                     </template>
-                    <p v-else class="block-command-menu-empty">{{ t('block_editor.command_menu.no_match') }}</p>
+                    <p v-else class="block-command-menu-empty">{{ $t('block_editor.command_menu.no_match') }}</p>
                 </div>
             </div>
         </div>
@@ -71,7 +71,6 @@
 
 <script setup lang="ts">
     import {computed, nextTick, onMounted, ref, watch, type Component} from "vue"
-    import {useI18n} from "vue-i18n"
 
     import {KsInput} from "@kestra-io/design-system"
 
@@ -100,7 +99,6 @@
         (e: "close"): void
     }>()
 
-    const {t} = useI18n()
 
     const query = ref("")
     const activeIndex = ref(0)

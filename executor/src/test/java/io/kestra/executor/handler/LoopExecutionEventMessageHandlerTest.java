@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,12 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.executor.ExecutorContext;
@@ -60,6 +66,12 @@ class LoopExecutionEventMessageHandlerTest {
 
     @Inject
     private DispatchQueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private KVMetadataStateStore kvMetadataStateStore;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     @MockBean(KillSwitchService.class)
     KillSwitchService killSwitchService() {
@@ -230,8 +242,63 @@ class LoopExecutionEventMessageHandlerTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    void shouldFailOnlyThisExecutionWhenLoopValuesShrinkBetweenIterations() throws InternalException, IOException {
+        // Given — a loop whose 'values' is re-resolved from a KV that a child task can mutate;
+        // it initially resolves to 3 elements (matching the saved iterationCount), then a
+        // concurrent/child change shrinks it to 1 element before the next iteration is picked.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String namespace = "namespace";
+        KVStore kv = new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore);
+        kv.put("items", new KVValueAndMetadata(null, List.of("a", "b", "c")));
+
+        var flow = flowRepository.create(GenericFlow.of(loopFlowWithKvValues(tenant, namespace)));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        // terminatedIteration + 1 = 1 < iterationCount = 3 → the handler will try to start iteration 1
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        // The source shrinks before the handler re-resolves 'values' for the next iteration
+        kv.put("items", new KVValueAndMetadata(null, List.of("a")));
+
+        // When
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null);
+        var maybeExecutor = handler.handle(message);
+
+        // Then — fails only this execution, does not throw and crash the whole instance
+        assertThat(maybeExecutor).isPresent();
+        var taskRun = maybeExecutor.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
     private Flow loopFlow() {
         return loopFlow(true);
+    }
+
+    private Flow loopFlowWithKvValues(String tenant, String namespace) {
+        var logTask = Log.builder().id("log").type(Log.class.getName()).message("Hello").build();
+        var loopTask = Loop.builder()
+            .id("loop")
+            .type(Loop.class.getName())
+            .values("{{ kv('items') }}")
+            .tasks(List.of(logTask))
+            .transmitFailed(true)
+            .build();
+        return Flow.builder()
+            .tenantId(tenant)
+            .namespace(namespace)
+            .id(IdUtils.create())
+            .tasks(List.of(loopTask))
+            .build();
     }
 
     private Flow loopFlow(boolean transmitFailed) {

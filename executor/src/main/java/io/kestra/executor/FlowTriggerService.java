@@ -6,6 +6,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
@@ -21,8 +23,10 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
@@ -37,12 +41,14 @@ public class FlowTriggerService {
     private final RunContextFactory runContextFactory;
     private final FlowService flowService;
     private final FlowMetaStoreInterface flowMetaStore;
+    private final ExecutionOutputService executionOutputService;
 
-    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore) {
+    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore, ExecutionOutputService executionOutputService) {
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
         this.flowService = flowService;
         this.flowMetaStore = flowMetaStore;
+        this.executionOutputService = executionOutputService;
     }
 
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
@@ -85,7 +91,9 @@ public class FlowTriggerService {
             return Collections.emptyList();
         }
 
-        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).flow();
+
+        Map<String, Object> executionOutputs = executionOutputs(execution);
 
         // compute all executions to create from flow triggers without taken into account multiple conditions
         return flowWithFlowTriggers.stream()
@@ -94,7 +102,8 @@ public class FlowTriggerService {
                     Optional.empty(),
                     runContextFactory.of(resolved, execution),
                     resolved,
-                    execution
+                    execution,
+                    executionOutputs
                 )
             )
             .filter(Optional::isPresent)
@@ -125,7 +134,9 @@ public class FlowTriggerService {
         // resolved before entering the window transaction: the store runs the consumer inside a transaction
         // holding a pooled connection, and resolving there can need a second one — a repository read when the
         // head revision moved, or a governance lookup on a cache miss — deadlocking the pool under load
-        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).flow();
+
+        Map<String, Object> executionOutputs = executionOutputs(execution);
 
         List<Execution> executions = flowWithFlowTriggers.stream()
             .flatMap(
@@ -142,9 +153,9 @@ public class FlowTriggerService {
                 flowWithMultipleCondition -> multipleConditionStorage.process(
                     flowWithMultipleCondition.getFlow(),
                     flowWithMultipleCondition.getMultipleCondition(),
-                    buildOutputs(execution),
+                    buildOutputs(execution, executionOutputs),
                     (txContext,
-                        multipleConditionWindow) -> processMultipleConditionWindow(txContext, flowWithMultipleCondition, multipleConditionWindow, execution, multipleConditionStorage, resolved)
+                        multipleConditionWindow) -> processMultipleConditionWindow(txContext, flowWithMultipleCondition, multipleConditionWindow, execution, executionOutputs, multipleConditionStorage, resolved)
                 )
             )
             .filter(Objects::nonNull)
@@ -157,7 +168,7 @@ public class FlowTriggerService {
     }
 
     private Execution processMultipleConditionWindow(TransactionContext txContext, FlowWithFlowTriggerAndMultipleCondition flowWithMultipleCondition,
-        MultipleConditionWindow multipleConditionWindow, Execution execution, MultipleConditionStateStore multipleConditionStateStore, Flow resolved) {
+        MultipleConditionWindow multipleConditionWindow, Execution execution, Map<String, Object> executionOutputs, MultipleConditionStateStore multipleConditionStateStore, Flow resolved) {
         if (!multipleConditionWindow.isValid(ZonedDateTime.now())) {
             return null;
         }
@@ -192,7 +203,8 @@ public class FlowTriggerService {
                 Optional.of(updatedWindow),
                 runContextFactory.of(resolved, execution),
                 resolved,
-                execution
+                execution,
+                executionOutputs
             );
 
             return maybeExecution.orElse(null);
@@ -201,16 +213,24 @@ public class FlowTriggerService {
         return null;
     }
 
-    private Map<String, Object> buildOutputs(Execution execution) {
-        if (execution.getOutputs() == null) {
+    private Map<String, Object> buildOutputs(Execution execution, Map<String, Object> executionOutputs) {
+        if (MapUtils.isEmpty(executionOutputs)) {
             return null;
         }
 
         return Map.of(
             execution.getNamespace(), Map.of(
-                execution.getFlowId(), execution.getOutputs()
+                execution.getFlowId(), executionOutputs
             )
         );
+    }
+
+    private Map<String, Object> executionOutputs(Execution execution) {
+        try {
+            return executionOutputService.getOutputs(execution);
+        } catch (InternalException e) {
+            throw new KestraRuntimeException(e);
+        }
     }
 
     private List<FlowWithFlowTrigger> computeFlowTriggers(Execution execution, Flow flow) {
@@ -218,7 +238,7 @@ public class FlowTriggerService {
             // prevent recursive flow triggers
             !flowService.removeUnwanted(flow, execution) ||
             // filter out Test Executions
-                (execution.getKind() != null && execution.getKind() != ExecutionKind.NORMAL) ||
+                !ExecutionKind.isNormal(execution) ||
                 // ensure flow & triggers are enabled
                 flow.isDisabled() || flow instanceof FlowWithException ||
                 // a draft revision is never picked up implicitly (see withFlowTriggersOnly)

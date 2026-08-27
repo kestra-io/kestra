@@ -328,6 +328,22 @@ $fill-color-base: #fafcff;
         font-weight: bold;
     }
 
+    .kel-message-box__container {
+        align-items: flex-start;
+    }
+
+    .kel-message-box__message .ks-markdown > * {
+        margin: var(--ks-spacing-3) 0;
+
+        &:first-child {
+            margin-top: 0;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
     .kel-message-box__btns {
         margin-top: calc(var(--kel-messagebox-padding-primary) * 2);
         border-top: 1px solid var(--ks-border-default);

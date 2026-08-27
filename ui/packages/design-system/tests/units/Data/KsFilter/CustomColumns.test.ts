@@ -1,0 +1,55 @@
+import {describe, test, expect, beforeEach} from "vitest"
+import {nextTick} from "vue"
+import {mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
+import KestraDesignSystem from "../../../../src/index"
+import CustomColumns from "../../../../src/components/Data/KsDataTable/filter/segments/CustomColumns.vue"
+import type {ColumnConfig} from "../../../../src/components/Data/KsDataTable/filter/composables/useTableColumns"
+
+const COLUMNS: ColumnConfig[] = [
+    {label: "A", prop: "a", default: true},
+    {label: "B", prop: "b", default: true},
+    {label: "Instance only", prop: "c", default: false, condition: () => false},
+]
+
+const mountWith = (visibleColumns: string[], storageKey: string) =>
+    mount(CustomColumns, {
+        props: {storageKey, columns: COLUMNS, visibleColumns},
+        global: {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]},
+    })
+
+const countOf = (wrapper: ReturnType<typeof mountWith>) =>
+    wrapper.get("[data-test=visible-columns-count]").text()
+
+describe("CustomColumns", () => {
+    beforeEach(() => localStorage.clear())
+
+    test("excludes columns hidden by their condition from the count", () => {
+        const wrapper = mountWith(["a", "b"], "condition-hidden")
+
+        expect(countOf(wrapper)).toBe("2 of 2 columns visible")
+    })
+
+    test("does not count a stored column that its condition hides", () => {
+        const wrapper = mountWith(["a", "b", "c"], "condition-hidden-stored")
+
+        expect(countOf(wrapper)).toBe("2 of 2 columns visible")
+    })
+
+    test("counts the resolved columns when the caller passes no visibleColumns", async () => {
+        const wrapper = mountWith([], "no-visible-columns")
+
+        await nextTick()
+
+        expect(countOf(wrapper)).toBe("2 of 2 columns visible")
+    })
+
+    test("reports what was resolved without persisting it", async () => {
+        const wrapper = mountWith([], "no-write-on-open")
+
+        await nextTick()
+
+        expect(wrapper.emitted("updateColumns")).toBeUndefined()
+        expect(localStorage.getItem("columns_no-write-on-open")).toBeNull()
+    })
+})

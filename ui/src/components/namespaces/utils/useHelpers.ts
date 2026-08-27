@@ -9,7 +9,7 @@ import Executions from "../../../components/executions/Executions.vue"
 import Dependencies from "../../../components/dependencies/Dependencies.vue"
 import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue"
 import NamespaceOverview from "../../../components/namespaces/components/NamespaceOverview.vue"
-import {useMiscStore} from "override/stores/misc"
+import {useSystemNamespace} from "../../../composables/useSystemNamespace"
 
 export interface Tab {
     locked?: boolean;
@@ -20,7 +20,6 @@ export interface Tab {
     component: Component;
     props?: Record<string, any>;
     count?: number;
-    blueprintDetail?: boolean;
     fullContainer?: boolean;
 }
 
@@ -62,10 +61,9 @@ export const ORDER = [
 export function useHelpers() {
     const route = useRoute()
     const {t} = useI18n({useScope: "global"})
-    const miscStore = useMiscStore()
 
     const namespace = computed(() => route.params?.id) as Ref<string>
-    const systemNamespace = computed(() => miscStore.configs?.systemNamespace ?? "system")
+    const systemNamespace = useSystemNamespace()
 
     const parts = computed(() => namespace.value?.split(".") ?? [])
     const details: Ref<Details> = computed(() => ({

@@ -3,7 +3,7 @@
         v-if="isCollapsed"
         class="task-edit-data-rail"
         type="button"
-        :aria-label="`${t('expand')} — ${title}`"
+        :aria-label="`${$t('expand')} — ${title}`"
         :title="title"
         :data-test="`task-edit-data-${kind}`"
         @click="emit('toggle')"
@@ -20,7 +20,7 @@
             <KsIconButton
                 v-if="collapsible"
                 class="task-edit-data-collapse"
-                :tooltip="t('collapse')"
+                :tooltip="$t('collapse')"
                 @click="emit('toggle')"
             >
                 <component :is="stacked ? ChevronDown : (side === 'right' ? ChevronRight : ChevronLeft)" />
@@ -32,8 +32,8 @@
             <input
                 v-model="filter"
                 class="task-edit-data-filter-input"
-                :placeholder="t('block_editor.filter_data')"
-                :aria-label="t('block_editor.filter_data')"
+                :placeholder="$t('block_editor.filter_data')"
+                :aria-label="$t('block_editor.filter_data')"
                 autocomplete="off"
                 spellcheck="false"
             >
@@ -64,7 +64,7 @@
                             @dragstart="chip.expr && onDragStart($event, chip.expr)"
                         >
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
-                            <span v-if="copied === chip.expr" class="task-edit-data-chip-action">{{ t("copied") }}</span>
+                            <span v-if="copied === chip.expr" class="task-edit-data-chip-action">{{ $t("copied") }}</span>
                         </button>
                         <div v-else class="task-edit-data-chip task-edit-data-chip--static">
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
@@ -75,7 +75,7 @@
             </div>
 
             <p v-if="visibleSections.length === 0" class="task-edit-data-empty">
-                {{ t("block_editor.no_data_matches") }}
+                {{ $t("block_editor.no_data_matches") }}
             </p>
         </div>
     </div>
@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {useI18n} from "vue-i18n"
+    import {copyToClipboard} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -123,7 +123,6 @@
 
     const emit = defineEmits<{(e: "toggle"): void}>()
 
-    const {t} = useI18n()
 
     const filter = ref("")
     const collapsed = ref(new Set<string>())
@@ -151,7 +150,7 @@
 
     let copiedTimer: ReturnType<typeof setTimeout> | undefined
     function copy(expr: string) {
-        navigator.clipboard?.writeText(expr)
+        copyToClipboard(expr)
         copied.value = expr
         clearTimeout(copiedTimer)
         copiedTimer = setTimeout(() => {

@@ -219,7 +219,8 @@
                 margin-right: .3rem;
             }
 
-            a {
+            // Plain links only: an <a> rendered by KsButton (tag="a") must keep its button styling.
+            a:not(.kel-button) {
                 color: var(--ks-text-primary);
                 &:hover{
                     text-decoration: underline;

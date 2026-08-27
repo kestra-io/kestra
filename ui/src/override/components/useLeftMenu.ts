@@ -379,7 +379,7 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: Battery40,
-                        }
+                        },
                     },
                     {
                         id: "iam",

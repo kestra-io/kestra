@@ -2,11 +2,14 @@ package io.kestra.core.runners;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
@@ -14,6 +17,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskOutputService;
 
@@ -35,6 +39,9 @@ public class FlowTriggerCaseTest {
 
     @Inject
     private TaskOutputService taskOutputService;
+
+    @Inject
+    private ExecutionOutputService executionOutputService;
 
     @Inject
     private FlowService flowService;
@@ -103,9 +110,9 @@ public class FlowTriggerCaseTest {
         );
 
         assertThat(triggeredExec.size()).isEqualTo(4);
-        assertThat(triggeredExec).filteredOn(e -> "RUNNING".equals(e.getOutputs().get("status"))).hasSize(2);
-        assertThat(triggeredExec).anyMatch(e -> "PAUSED".equals(e.getOutputs().get("status")));
-        assertThat(triggeredExec).anyMatch(e -> "SUCCESS".equals(e.getOutputs().get("status")));
+        assertThat(triggeredExec).filteredOn(e -> "RUNNING".equals(outputs(e).get("status"))).hasSize(2);
+        assertThat(triggeredExec).anyMatch(e -> "PAUSED".equals(outputs(e).get("status")));
+        assertThat(triggeredExec).anyMatch(e -> "SUCCESS".equals(outputs(e).get("status")));
     }
 
     /**
@@ -189,10 +196,18 @@ public class FlowTriggerCaseTest {
         );
 
         assertThat(triggeredExec.size()).isEqualTo(5);
-        assertThat(triggeredExec.stream().anyMatch(e -> e.getOutputs().get("status").equals("RUNNING") && e.getOutputs().get("executionId").equals(execution1.getId()))).isTrue();
-        assertThat(triggeredExec.stream().anyMatch(e -> e.getOutputs().get("status").equals("SUCCESS") && e.getOutputs().get("executionId").equals(execution1.getId()))).isTrue();
-        assertThat(triggeredExec.stream().anyMatch(e -> e.getOutputs().get("status").equals("QUEUED") && e.getOutputs().get("executionId").equals(execution2.getId()))).isTrue();
-        assertThat(triggeredExec.stream().anyMatch(e -> e.getOutputs().get("status").equals("RUNNING") && e.getOutputs().get("executionId").equals(execution2.getId()))).isTrue();
-        assertThat(triggeredExec.stream().anyMatch(e -> e.getOutputs().get("status").equals("SUCCESS") && e.getOutputs().get("executionId").equals(execution2.getId()))).isTrue();
+        assertThat(triggeredExec.stream().anyMatch(e -> outputs(e).get("status").equals("RUNNING") && outputs(e).get("executionId").equals(execution1.getId()))).isTrue();
+        assertThat(triggeredExec.stream().anyMatch(e -> outputs(e).get("status").equals("SUCCESS") && outputs(e).get("executionId").equals(execution1.getId()))).isTrue();
+        assertThat(triggeredExec.stream().anyMatch(e -> outputs(e).get("status").equals("QUEUED") && outputs(e).get("executionId").equals(execution2.getId()))).isTrue();
+        assertThat(triggeredExec.stream().anyMatch(e -> outputs(e).get("status").equals("RUNNING") && outputs(e).get("executionId").equals(execution2.getId()))).isTrue();
+        assertThat(triggeredExec.stream().anyMatch(e -> outputs(e).get("status").equals("SUCCESS") && outputs(e).get("executionId").equals(execution2.getId()))).isTrue();
+    }
+
+    private Map<String, Object> outputs(Execution execution) {
+        try {
+            return executionOutputService.getOutputs(execution);
+        } catch (InternalException e) {
+            throw new KestraRuntimeException(e);
+        }
     }
 }

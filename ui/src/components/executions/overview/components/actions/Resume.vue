@@ -8,7 +8,7 @@
         {{ $t('resume') }}
     </NavBarAction>
 
-    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true" scrollable>
         <template #header>
             <span v-html="$t('resumed title', {id: escape(execution.id)})" />
         </template>

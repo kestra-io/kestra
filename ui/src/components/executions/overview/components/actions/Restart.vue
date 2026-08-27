@@ -1,6 +1,6 @@
 <template>
     <NavBarAction
-        v-if="trigger && asItem && (isReplay || enabled)"
+        v-if="trigger && asItem && hasPermission && (isReplay || enabled)"
         :icon="icon"
         :disabled="!enabled"
         @click="isOpen = !isOpen"
@@ -8,7 +8,7 @@
         {{ $t(replayOrRestart) }}
     </NavBarAction>
     <KsTooltip
-        v-else-if="trigger && (isReplay || enabled)"
+        v-else-if="trigger && hasPermission && (isReplay || enabled)"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -49,22 +49,22 @@
         <template #header>
             <div class="modal-header m-0">
                 <h3 class="modal-title">
-                    {{ t("restart execution title") }}
+                    {{ $t("restart execution title") }}
                 </h3>
                 <KsDivider />
             </div>
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="t('restart confirm', {id: escape(execution.id)})" />
+            <p class="mb-0" v-html="$t('restart confirm', {id: escape(execution.id)})" />
         </div>
 
         <template #footer>
             <KsButton @click="isOpen = false">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" @click="handleRestartExecute">
-                {{ t("restart") }}
+                {{ $t("restart") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -74,11 +74,12 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
+        scrollable
     >
         <template #header>
             <div class="modal-header m-0">
                 <h3 class="modal-title">
-                    {{ t("replay execution title") }}
+                    {{ $t("replay execution title") }}
                 </h3>
                 <KsDivider />
             </div>
@@ -86,23 +87,23 @@
 
         <div class="p-3 pt-0">
             <p class="mb-0">
-                {{ t("replay execution description") }}
+                {{ $t("replay execution description") }}
             </p>
             <KsId :value="execution.id" :shrink="false" />
 
             <h4 class="section-title">
-                {{ t("replay using") }}:
+                {{ $t("replay using") }}:
             </h4>
 
             <KsRadioGroup v-model="replayRevisionMode" class="radio-vertical">
                 <KsRadio value="original" class="radio-item">
-                    {{ t("flow revision original") }}
+                    {{ $t("flow revision original") }}
                 </KsRadio>
                 <KsRadio value="latest" class="radio-item">
-                    {{ t("flow revision latest") }}
+                    {{ $t("flow revision latest") }}
                 </KsRadio>
                 <KsRadio value="specific" class="radio-item">
-                    {{ t("flow revision specific") }}
+                    {{ $t("flow revision specific") }}
                 </KsRadio>
             </KsRadioGroup>
 
@@ -125,30 +126,30 @@
             <template v-if="hasInputs">
                 <template v-if="!taskRun">
                     <h4 class="section-title">
-                        {{ t("replay inputs") }}:
+                        {{ $t("replay inputs") }}:
                     </h4>
 
                     <KsRadioGroup v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
                         <KsRadio value="reuse" class="radio-item">
-                            {{ t("reuse original inputs") }}
+                            {{ $t("reuse original inputs") }}
                         </KsRadio>
                         <KsRadio value="modify" class="radio-item">
-                            {{ t("modify inputs") }}
+                            {{ $t("modify inputs") }}
                         </KsRadio>
                     </KsRadioGroup>
                 </template>
                 <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
-                    {{ t("replay inputs new required") }}
+                    {{ $t("replay inputs new required") }}
                 </p>
             </template>
         </div>
 
         <template #footer>
             <KsButton @click="isOpen = false">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" @click="handleReplayExecute">
-                {{ t("execute") }}
+                {{ $t("execute") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -158,10 +159,11 @@
         v-model="isReplayWithInputsOpen"
         destroyOnClose
         :appendToBody="true"
+        scrollable
     >
         <template #header>
             <span
-                v-html="t('replay the execution', {
+                v-html="$t('replay the execution', {
                     executionId: escape(execution.id),
                     flowId: escape(execution.flowId)
                 })"
@@ -259,14 +261,21 @@
             .reverse(),
     )
 
+    // Split out of `enabled` so a missing permission hides the action entirely instead of
+    // rendering it disabled: a permanently dead button in the nav bar would leave the user with
+    // no reachable action at all in that slot.
+    const hasPermission = computed(() => {
+        if (!props.execution) return false
+
+        return props.isReplay
+            ? !!authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
+            : !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
+    })
+
     const enabled = computed(() => {
         if (!props.execution?.state) return false
 
-        const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
-            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
-
-        if (!hasPermission) return false
+        if (!hasPermission.value) return false
 
         if (
             props.isReplay &&
@@ -363,9 +372,9 @@
             revision: revisionsSelected.value,
         })
 
-        const newExecution = response.data
+        const newExecution = response
 
-        toast.success(t("replayed"))
+        toast.success(t(props.isReplay ? "replayed" : "restarted"))
 
         if (newExecution.id !== props.execution.id) {
             window.location.href = router.resolve({

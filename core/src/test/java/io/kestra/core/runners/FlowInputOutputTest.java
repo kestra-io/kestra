@@ -10,11 +10,13 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.reactivestreams.Publisher;
 
@@ -28,11 +30,14 @@ import io.kestra.core.models.flows.input.FloatInput;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
+import io.kestra.core.models.flows.input.IonInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.flows.input.YamlInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.secret.SecretNotFoundException;
@@ -56,6 +61,7 @@ import reactor.core.publisher.Mono;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
 class FlowInputOutputTest {
@@ -442,6 +448,89 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldParseIonTextIntoStructuredValues() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    IonInput.builder().id("record").type(Type.ION).build(),
+                    IonInput.builder().id("items").type(Type.ION).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of(
+                "record", "{name:\"Ada\",nested:{active:true}}",
+                "items", "[\"one\",\"two\"]"
+            )
+        );
+
+        // Then
+        assertThat(result.get("record")).isEqualTo(
+            Map.of("name", "Ada", "nested", Map.of("active", true))
+        );
+        assertThat(result.get("items")).isEqualTo(List.of("one", "two"));
+    }
+
+    @Test
+    void shouldPassThroughStructuredIonValues() {
+        // Given
+        Map<String, Object> record = Map.of("name", "Ada");
+        List<String> items = List.of("one", "two");
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    IonInput.builder().id("record").type(Type.ION).build(),
+                    IonInput.builder().id("items").type(Type.ION).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("record", record, "items", items)
+        );
+
+        // Then
+        assertThat(result).containsEntry("record", record).containsEntry("items", items);
+    }
+
+    @Test
+    void shouldParseIonTextDefaultIntoStructuredValue() {
+        // Given
+        IonInput input = IonInput.builder()
+            .id("record")
+            .type(Type.ION)
+            .defaults(Property.ofValue("{name:\"Ada\"}"))
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(input))
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of()
+        );
+
+        // Then
+        assertThat(result.get("record")).isEqualTo(Map.of("name", "Ada"));
+    }
+
+    @Test
     void shouldFlagRenderFailuresAsRenderErrorsButNotValueErrors() {
         // A dynamic-values input whose expression fails to render -> the field is broken (render error)
         MultiselectInput brokenExpression = MultiselectInput.builder()
@@ -684,6 +773,111 @@ class FlowInputOutputTest {
         // Then
         assertThat(result.get("upload")).isInstanceOf(URI.class);
         assertThat(result.get("upload").toString()).contains(executionId);
+    }
+
+    private static Stream<Input<?>> inputsThatDoNotAcceptFileUploads() {
+        return Stream.of(
+            IonInput.builder().id("upload").type(Type.ION).build(),
+            YamlInput.builder().id("upload").type(Type.YAML).build(),
+            StringInput.builder().id("upload").type(Type.STRING).build(),
+            SelectInput.builder().id("upload").type(Type.SELECT).build(),
+            EmailInput.builder().id("upload").type(Type.EMAIL).build(),
+            SecretInput.builder().id("upload").type(Type.SECRET).build(),
+            URIInput.builder().id("upload").type(Type.URI).build()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("inputsThatDoNotAcceptFileUploads")
+    void shouldRejectFileUploadForEveryInputTypeOtherThanFile(Input<?> input) {
+        // Given
+        Publisher<CompletedPart> data = Mono.just(new MemoryCompletedFileUpload("upload", "data.txt", "content".getBytes(StandardCharsets.UTF_8)));
+
+        // When
+        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block();
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions())
+            .as("a file upload for a %s input must be rejected", input.getType())
+            .isNotEmpty();
+        // the raw value must stay a plain String (the storage URI), never leak the internal upload marker
+        assertThat(values.getFirst().value()).isInstanceOf(String.class);
+    }
+
+    @Test
+    void shouldIgnoreFileUploadOnDisabledInputInsteadOfRejectingIt() {
+        // Given
+        StringInput trigger = StringInput.builder().id("trigger").build();
+        // disabled: dependsOn condition never matches
+        IonInput disabledPayload = IonInput.builder()
+            .id("payload")
+            .type(Type.ION)
+            .dependsOn(new DependsOn(List.of("trigger"), "{{ inputs.trigger equals 'enable-payload' }}"))
+            .build();
+        Publisher<CompletedPart> data = Flux.concat(
+            Mono.just(new MemoryCompletedPart("trigger", "something-else".getBytes(StandardCharsets.UTF_8))),
+            Mono.just(new MemoryCompletedFileUpload("payload", "data.ion", "{a:1}".getBytes(StandardCharsets.UTF_8)))
+        );
+
+        // When
+        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(trigger, disabledPayload), null, DEFAULT_TEST_EXECUTION, data).block();
+
+        // Then: a disabled input is dropped like any other disabled input, not rejected for its stray file upload
+        InputAndValue payloadResult = values.stream().filter(it -> it.input().getId().equals("payload")).findFirst().orElseThrow();
+        assertThat(payloadResult.enabled()).isFalse();
+        assertThat(payloadResult.exceptions()).isNull();
+    }
+
+    @Test
+    void shouldStillAcceptFileUploadOnFileInputAlongsideOtherInputs() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    FileInput.builder().id("upload").type(Type.FILE).build(),
+                    StringInput.builder().id("comment").type(Type.STRING).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            IdUtils.create(),
+            Flux.concat(
+                Mono.just(new MemoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8))),
+                Mono.just(new MemoryCompletedPart("comment", "hello".getBytes(StandardCharsets.UTF_8)))
+            )
+        ).block();
+
+        // Then
+        assertThat(result.get("upload")).isInstanceOf(URI.class);
+        assertThat(result.get("comment")).isEqualTo("hello");
+    }
+
+    @Test
+    void shouldNotFailWhenFlowHasNoDeclaredInputsAndAFileIsUploaded() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(null)
+            .build();
+
+        // When: an undeclared-inputs flow must not NPE while looking up the (null) declared input list
+        Map<String, Object> outputs = flowInputOutput.readExecutionInputs(
+            flow,
+            IdUtils.create(),
+            Flux.just(new MemoryCompletedFileUpload("upload", "data.txt", "content".getBytes(StandardCharsets.UTF_8)))
+        ).block();
+
+        // Then: the upload is stored under an undeclared input id, which is a separate (pre-existing) warning path
+        assertThat(outputs).isEmpty();
     }
 
     @Test

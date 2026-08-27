@@ -418,4 +418,72 @@ public class HttpRequest {
                 .build();
         }
     }
+
+    /**
+     * A {@code multipart/form-data} body as received, part by part.
+     * <p>
+     * Unlike {@link MultipartRequestBody}, which builds an outgoing body from a map of values, this body describes
+     * an incoming one: a file part has already been streamed into Kestra's internal storage and carries its URI,
+     * while a part that is not a file carries its content as received.
+     */
+    @Getter
+    @AllArgsConstructor
+    @SuperBuilder
+    public static class MultipartFormDataRequestBody extends RequestBody {
+        @Builder.Default
+        private String contentType = ContentType.MULTIPART_FORM_DATA.getMimeType();
+
+        private Charset charset;
+
+        private List<Part> content;
+
+        /**
+         * {@inheritDoc}
+         *
+         * @throws UnsupportedOperationException always, as this body describes an incoming request
+         */
+        @Override
+        public HttpEntity to() {
+            throw new UnsupportedOperationException(
+                "An incoming multipart/form-data body cannot be sent as an outgoing request: the content of its file parts lives in Kestra's internal storage."
+            );
+        }
+
+        /**
+         * A single part of an incoming {@code multipart/form-data} body.
+         */
+        public sealed interface Part {
+            /**
+             * @return the form field name of the part
+             */
+            String name();
+
+            /**
+             * @return the content type of the part, {@code null} if the caller did not send one
+             */
+            String contentType();
+        }
+
+        /**
+         * A file part, whose content has been stored in Kestra's internal storage.
+         *
+         * @param name        the form field name of the part
+         * @param filename    the name of the uploaded file
+         * @param contentType the content type of the part, {@code null} if the caller did not send one
+         * @param size        the size of the content in bytes
+         * @param uri         the URI of the content in Kestra's internal storage
+         */
+        public record FilePart(String name, String filename, String contentType, long size, URI uri) implements Part {
+        }
+
+        /**
+         * A part that is not a file, whose content is carried as received.
+         *
+         * @param name        the form field name of the part
+         * @param contentType the content type of the part, {@code null} if the caller did not send one
+         * @param content     the content of the part, as received
+         */
+        public record FormFieldPart(String name, String contentType, byte[] content) implements Part {
+        }
+    }
 }

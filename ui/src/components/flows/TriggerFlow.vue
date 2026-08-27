@@ -2,24 +2,13 @@
     <div class="trigger-flow-wrapper">
         <span data-onboarding-target="flow-execute-button">
             <KsButton
-                v-if="iconOnly"
                 :id="actionId"
-                class="execute-icon-only"
-                type="success"
-                :icon="PlayOutlineIcon"
-                :disabled="actionDisabled"
-                :aria-label="actionLabel"
-                @click="runAction()"
-            />
-            <KsButton
-                v-else
-                id="execute-button"
                 :icon="PlayOutlineIcon"
                 :type="type"
-                :disabled="isDisabled()"
-                @click="onClick()"
+                :disabled="actionDisabled"
+                @click="runAction()"
             >
-                {{ t("execute") }}
+                {{ actionLabel }}
             </KsButton>
         </span>
         <KsDialog
@@ -29,9 +18,11 @@
             :showClose="true"
             :beforeClose="beforeClose"
             :appendToBody="true"
+            scrollable
+            large
         >
             <template #header>
-                <span v-html="t('execute the flow', {id: flowId})" />
+                <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <FlowRun ref="flowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
@@ -44,11 +35,13 @@
             destroyOnClose
             :beforeClose="beforeSelectFlowClose"
             :appendToBody="true"
+            scrollable
+            large
         >
             <KsForm
                 labelPosition="top"
             >
-                <KsFormItem :label="t('namespace')">
+                <KsFormItem :label="$t('namespace')">
                     <KsSelect
                         v-model="localNamespace"
                     >
@@ -62,7 +55,7 @@
                 </KsFormItem>
                 <KsFormItem
                     v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
-                    :label="t('flow')"
+                    :label="$t('flow')"
                 >
                     <KsSelect
                         v-model="localFlow"
@@ -76,7 +69,7 @@
                         />
                     </KsSelect>
                 </KsFormItem>
-                <KsFormItem v-if="localFlow" :label="t('inputs')">
+                <KsFormItem v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
                         <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
@@ -116,12 +109,10 @@
         disabled?: boolean
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         flowSource?: string | null
-        iconOnly?: boolean
     }>(), {
         disabled: false,
         type: "primary",
         flowSource: null,
-        iconOnly: false,
     })
 
     const {t} = useI18n({useScope: "global"})
@@ -310,11 +301,5 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
-    }
-
-    .execute-icon-only {
-        aspect-ratio: 1 / 1;
-        padding-left: 0;
-        padding-right: 0;
     }
 </style>

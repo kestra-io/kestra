@@ -21,7 +21,7 @@
                             @click="navigate"
                         >
                             <template v-if="tab.count !== undefined" #suffix>
-                                <KsBadge :value="tab.count" type="primary" class="count" />
+                                <KsBadge :value="tab.count" type="primary" inline class="count" />
                             </template>
                         </KsSideBarItem>
                     </router-link>
@@ -135,10 +135,5 @@
 
     .count {
         flex-shrink: 0;
-        :deep(.kel-badge__content) {
-            position: static;
-            border: none;
-            margin-top: 0;
-        }
     }
 </style>

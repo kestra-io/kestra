@@ -19,6 +19,7 @@ import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.WorkerQueues;
 
@@ -212,7 +213,7 @@ public class MetricRegistry {
     public static final String METRIC_MAINTENANCE_EXIT_COUNT_DESCRIPTION = "The total number of times maintenance mode was exited";
 
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
-    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries";
+    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries, including row fetch, tagged with sanitized SQL (IN-lists collapsed, identifiers and sort columns redacted). Only queries above the 'kestra.jdbc.metrics.query-duration-threshold-ms' threshold (default 10ms) are monitored";
 
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION = "jdbc.execution-statistics.compactor.duration";
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION_DESCRIPTION = "Duration of a single execution statistics compaction run";
@@ -557,13 +558,23 @@ public class MetricRegistry {
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
 
-    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId) {
+    /**
+     * Return tags for a trigger evaluation, tagged like the execution it produces.
+     *
+     * @param evaluationResult the evaluation result, carrying the trigger's own labels
+     * @param triggerId the evaluated trigger
+     * @param flowLabels the labels of the flow owning the trigger, which the evaluation result does not carry
+     * @return tags to apply to metrics
+     */
+    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId, @Nullable List<Label> flowLabels) {
         var baseTags = new String[] {
             TAG_FLOW_ID, triggerId.getFlowId(),
             TAG_NAMESPACE_ID, triggerId.getNamespace(),
             TAG_STATE, evaluationResult.stateType().name(),
         };
-        var labelTags = getLabelTags(evaluationResult.labels() != null ? evaluationResult.labels() : List.of());
+        // trigger labels first: getLabelTags keeps the first match, which is how the trigger overrides the
+        // flow on the execution these metrics describe (there, flow labels come first and dedup keeps the last)
+        var labelTags = getLabelTags(ListUtils.emptyOnNull(ListUtils.concat(evaluationResult.labels(), flowLabels)));
         var tenantTag = getTenantTag(triggerId.getTenantId());
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }

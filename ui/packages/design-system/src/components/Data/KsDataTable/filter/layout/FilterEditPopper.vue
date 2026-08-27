@@ -10,7 +10,7 @@
                     :shouldShowComparator
                     :selectedComparator="state.selectedComparator"
                     :filterKey="filterKey"
-                    @update:selected-comparator="state.selectedComparator = $event"
+                    @update:selected-comparator="changeComparator"
                 />
             </template>
         </FilterHeader>
@@ -38,6 +38,7 @@
         type AppliedFilter,
         type FilterKeyConfig,
         type FilterValue,
+        Comparators,
         COMPARATOR_LABELS,
         RANGE_COMPARATORS,
         TEXT_COMPARATORS,
@@ -135,6 +136,25 @@
         return type
     })
 
+    const normalizeKeyValuePairs = (values: string[]) => {
+        const pairByKey = new Map<string, string>()
+        values.forEach(pair => {
+            const separatorIndex = pair.indexOf(":")
+            if (separatorIndex <= 0 || separatorIndex === pair.length - 1) return
+            pairByKey.set(pair.slice(0, separatorIndex), pair)
+        })
+        return [...pairByKey.values()]
+    }
+
+    const changeComparator = (comparator: AppliedFilter["comparator"]) => {
+        if (props.filterKey?.valueType === "key-value"
+            && comparator !== Comparators.IN
+            && comparator !== Comparators.NOT_IN) {
+            state.keyValuePair = normalizeKeyValuePairs(state.keyValuePair)
+        }
+        state.selectedComparator = comparator
+    }
+
     const valueComponent = computed(() => {
         if (isTextOp.value) {
             return {
@@ -148,7 +168,7 @@
         if (isKVPairFilter.value) {
             return {
                 component: FilterKVPairs,
-                props: {modelValue: state.keyValuePair},
+                props: {modelValue: state.keyValuePair, comparator: state.selectedComparator},
                 events: {"update:modelValue": (value: string[]) => (state.keyValuePair = value)},
             }
         }
@@ -294,12 +314,11 @@
             return {value: state.textValue, label: state.textValue}
         case "select":
             if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                     meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
@@ -314,12 +333,11 @@
             }
         case "time-range":
             if (state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                 }
             }
             return {
@@ -361,8 +379,10 @@
     const applyLive = () => {
         if (!ready.value || !state.selectedComparator) return
 
+        // A custom range needs at least one bound to be worth applying; the other bound
+        // defaults to now (getFilterValue) so typing just a Start or End date applies immediately.
         if (isTimeRange.value && state.timeRangeMode === "custom"
-            && (!state.startDateValue || !state.endDateValue)) {
+            && !state.startDateValue && !state.endDateValue) {
             return
         }
 
@@ -518,6 +538,7 @@
         () => state.selectValue,
         () => state.keyValuePair,
         () => state.radioValue,
+        () => state.dateValue,
         () => state.selectedComparator,
         () => state.startDateValue,
         () => state.endDateValue,

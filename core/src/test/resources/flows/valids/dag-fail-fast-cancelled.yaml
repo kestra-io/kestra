@@ -1,0 +1,15 @@
+id: dag-fail-fast-cancelled
+namespace: io.kestra.tests
+
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    onChildFailure: CANCELLED
+    tasks:
+      - task:
+          id: fails_fast
+          type: io.kestra.plugin.core.execution.Fail
+      - task:
+          id: sleep
+          type: io.kestra.plugin.core.flow.Sleep
+          duration: PT10S

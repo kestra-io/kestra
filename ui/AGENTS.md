@@ -22,6 +22,8 @@ Under the hood, the design system wraps Element Plus under the `kel` namespace a
 
 These rules are what keep the UI maintainable as it grows. Treat any deviation as a bug.
 
+**How Kestra looks is decided by the design system; what it does is decided by feature code.** A new visual pattern (a new card treatment, a different spacing rhythm, another status color, a bespoke empty state, a one-off modal layout) counts as a design-system change and belongs in `ui/packages/design-system/`, after a conversation with design. Approximating one inside a feature component is the fastest route to a screen that is fine in the one theme you checked it in and wrong everywhere else. When nothing in the catalogue below covers what you need, raise it as a gap in the design system instead of improvising around it.
+
 1. **Use a `Ks*` component if one exists.** Check the tables below before writing anything custom or importing from `element-plus`. New screens that mix `<el-button>` and `<KsButton>` are a regression.
 2. **Colors come from `--ks-*` tokens. Always.** No hex codes, no `rgb(...)`, no Element Plus tokens (`--el-*`), no Bootstrap variables, no SCSS color variables in component code. If the token you need does not exist, talk to design and add it to `ks-theme-light.scss` / `ks-theme-dark.scss` / `ks-theme-dark-2.scss` — do not pick a one-off color.
 3. **Typography comes from `KsText` or typography tokens.** Use `<KsText>` (with `size`, `type`, `tag`, `truncated`, `lineClamp`) for body copy. For headings or one-off needs, use the `$font-family-*` and `$font-size-*` SCSS variables only inside the design-system package — feature code should not redefine them.
@@ -32,6 +34,12 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 8. **Don't fork — extend.** If a `Ks*` component is *almost* what you need, add a prop or a slot to the component in `ui/packages/design-system/`. Copy-pasting the component into your feature folder is forbidden.
 9. **Every new `Ks*` component needs a Storybook story and a unit test.** Stories double as living documentation for design and product reviewers.
 10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
+11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere. One grep is enough:
+
+    ```bash
+    grep -rn -- "--ks-your-token" packages/design-system/src/assets/styles/
+    ```
+12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
 
 ## Best practices for keeping the design system healthy
 
@@ -46,6 +54,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### While you write code
 
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
+- Keep the style **inside** the SFC. `<style scoped src="./x.scss">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
 - Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
@@ -147,6 +156,10 @@ const pageSize = ref(25)
 
 **Never** maintain a separate `internalPage` / `pageNumber` ref *and* bind the prop to a different value — that re-introduces the drift bug (URL says page 2, UI shows page 1) that this contract exists to prevent.
 
+**Defaults that land in the URL after mount** — a page whose filter defaults are written by a `router.replace` (e.g. the Logs page's default level, via `useRouteFilterPolicy`) must gate its first `loadData` on `isRouteSettled`. `KsDataTable` loads on mount, so without the gate the page fires a request for the bare query, throws that result away when the defaults arrive, and leaves the two responses racing each other. Gating means the query change is what triggers the first load, so also handle the navigation never landing: `isRouteSettled` gives up after a timeout, and the page must reload when it does — otherwise the list stays empty for good, with no request in flight and nothing to retry it.
+
+**Stores that back a filterable list** must ignore superseded responses: keep a sequence number per search and drop a response whose sequence is no longer the newest (see `stores/logs.ts`). Otherwise the response that happens to land last wins and the list can show results for filters the user already left — or nothing at all, when the stale search matched nothing.
+
 ### The deep-watch / computed-spread trap
 
 A `computed` that returns a fresh object (via spread or `{...}`) returns a new reference on every evaluation. Watching it with `{deep: true}` does **not** add structural equality — `deep: true` enables deep dependency tracking; the equality check at the top is still `Object.is`. The callback therefore fires on every dependency change, even when the content is unchanged.
@@ -222,6 +235,24 @@ Rules:
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.
+- A test only earns its place when it can fail for a reason a reviewer would care about. Don't test that a prop is passed through, that a computed returns its own input, or that a `Ks*` component renders: the template is only restated by those assertions, and they are broken by every refactor. Delete a Vitest test once a story covers the same behavior, and say so in the PR description.
+
+### Checking a frontend change before pushing
+
+```bash
+npm run check:types && npm run test:unit && npm run lint
+```
+
+`npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
+
+Then read your own diff for the design-system violations that no linter catches:
+
+```bash
+git diff -U0 develop... -- '*.vue' '*.scss' \
+  | grep -nE '^\+.*(#[0-9a-fA-F]{3,8}\b|rgba?\(|--el-|--bs-|:deep\(|(padding|margin|gap|border-radius|font-size)[[:space:]]*:[[:space:]]*[0-9]+px)'
+```
+
+Every match has to be replaced with a `--ks-*` token, a `Ks*` prop, or a change in the design system. For a user-visible change, also check it in light **and** dark mode, and attach a screenshot to the PR.
 
 ### Deprecation contract
 
@@ -308,6 +339,7 @@ If your `<style>` block needs to exist:
 | `KsAutocomplete` | Autocomplete input with suggestions |
 | `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
+| `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
 | `KsColorPicker` | Color picker |
@@ -334,7 +366,7 @@ If your `<style>` block needs to exist:
 | `KsSkeleton` | Skeleton loader |
 | `KsId` | Copyable ID display |
 | `KsDateAgo` | Relative time display ("2 hours ago") |
-| `KsSegmented` | Segmented control |
+| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
 | `KsTree` | Hierarchical tree view |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |

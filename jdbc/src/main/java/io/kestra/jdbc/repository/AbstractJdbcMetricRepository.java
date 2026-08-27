@@ -323,7 +323,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
             "flowId", "flow_id",
             "taskId", "task_id",
             "executionId", "execution_id",
-            "taskrunId", "taskrun_id",
+            "taskRunId", "taskrun_id",
             "name", "metric_name",
             "timestamp", "timestamp",
             "value", "metric_value"

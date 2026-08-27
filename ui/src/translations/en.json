@@ -207,6 +207,7 @@
     "total_duration": "Total duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",
+    "paused duration": "Paused duration",
     "executionProgress": {
       "title": "Execution progress",
       "estimatedRemaining": "Est. remaining: {duration}",
@@ -299,6 +300,21 @@
     "to": "To",
     "steps": "Steps",
     "state": "State",
+    "state_history": {
+        "title": "State history",
+        "open": "State history",
+        "aria_open": "Show the state history",
+        "aria_open_for": "Show the state history for {subject}",
+        "started_at": "Started {time}",
+        "failed_at": "Failed at {time}",
+        "skipped_at": "Skipped at {time}",
+        "created_at": "Created {time}",
+        "did_not_run": "This task did not run",
+        "waiting_to_start": "Waiting to start",
+        "attempt_n": "Attempt {index}",
+        "attempt_count": "{count} attempts",
+        "copy": "Copy state history"
+    },
     "search": "Search",
     "source search": "Source search",
     "selected": "Selected",
@@ -495,6 +511,15 @@
     },
     "use": "Use",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin installation failed",
+        "failedHint": "The flow was not saved. Fix the issue or remove the plugin from the flow, then save again.",
+        "preparing": "Preparing plugin installation...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installed successfully | Plugins installed successfully",
+        "timeout": "Plugin installation is taking longer than expected. The flow was not saved, save again once the installation completes.",
+        "title": "Installing {count} plugin | Installing {count} plugins"
+      },
       "names": "Plugins",
       "release": "Release notes",
       "beta": "Beta",
@@ -2016,6 +2041,31 @@
         "zoom_out": "Zoom out",
         "clear_selection": "Clear selection",
         "fit_view": "Fit to screen"
+      },
+      "dag": {
+        "force": "Tree",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Last update",
+        "status": {
+          "fresh": "Fresh",
+          "stale": "Stale",
+          "failed": "Failed",
+          "unknown": "Not tracked"
+        },
+        "summary": {
+          "fresh": "All {n} assets fresh",
+          "issues": "{n} stale",
+          "failed": "{n} failed",
+          "last_run": "last run {ago}",
+          "unknown": "{n} not tracked"
+        },
+        "recent_runs": "Recent runs",
+        "group_by": "Group by",
+        "groups": "Groups ({n})",
+        "group_none": "No grouping",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungrouped"
       },
       "search": {
         "placeholders": {

@@ -29,6 +29,7 @@ import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
@@ -66,6 +67,8 @@ class FlowServiceTest {
     private TriggerEventQueue triggerEventQueue;
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+    @Inject
+    private FlowMetaStoreInterface flowMetaStore;
 
     private static FlowWithSource create(String flowId, String taskId, Integer revision) {
         return create(null, TEST_NAMESPACE, flowId, taskId, revision);
@@ -622,6 +625,259 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue 2x
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void shouldRejectSubflowCycleAcrossTwoFlows() throws FlowProcessingException, QueueException {
+        // Given flow B, which Subflow-calls a not-yet-created flow A (#18491/#18492: two flows calling
+        // each other via Subflow save fine today and recurse without bound)
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+            .build();
+
+        // When saving flow A closes the A -> B -> A cycle, then it must be rejected rather than silently
+        // creating an execution loop
+        assertThatThrownBy(() -> flowService.create(GenericFlow.of(flowA)))
+            .isInstanceOf(jakarta.validation.ConstraintViolationException.class)
+            .hasMessageContaining("Cyclic flow dependency detected");
+    }
+
+    @Test
+    void shouldRejectFlowTriggerCycleAcrossTwoFlows() throws FlowProcessingException, QueueException {
+        // Given flow B, whose Flow trigger unconditionally dependsOn a not-yet-created flow A (the exact
+        // shape reported in #18492)
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
+            .build();
+
+        // When saving flow A closes the A -> B -> A cycle via Flow triggers
+        assertThatThrownBy(() -> flowService.create(GenericFlow.of(flowA)))
+            .isInstanceOf(jakarta.validation.ConstraintViolationException.class)
+            .hasMessageContaining("Cyclic flow dependency detected");
+    }
+
+    @Test
+    void shouldNotRejectTemplatedSubflowEdgeEvenWhenItWouldOtherwiseCloseACycle() throws FlowProcessingException, QueueException {
+        // Given flow B, which unconditionally Subflow-calls flow A
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's Subflow call back to B is templated — unresolvable without executing the flow —
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace("{{ inputs.ns }}").flowId("{{ inputs.id }}").build()))
+            .build();
+
+        // Then it must not be rejected as a cycle
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
+    }
+
+    @Test
+    void shouldNotRejectConditionalFlowTriggerEdgeEvenWhenItWouldOtherwiseCloseACycle() throws FlowProcessingException, QueueException {
+        // Given flow B, whose Flow trigger unconditionally dependsOn flow A
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's Flow trigger back to B carries a 'when' — a cycle that may be intentional and
+        // terminating, which this static check cannot decide either way —
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .when("{{ trigger.outputs.state == 'SUCCESS' }}")
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
+            .build();
+
+        // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
+    }
+
+    @Test
+    void shouldNotRejectCycleWhenTheDependsOnEntryItselfIsConditional() throws FlowProcessingException, QueueException {
+        // Given flow B, whose Flow trigger unconditionally dependsOn flow A
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
+            .build();
+        flowService.create(GenericFlow.of(flowB));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's trigger has no 'when' of its own, but the dependsOn entry naming B does —
+        // conditional at the entry level rather than the trigger level, the other place this can hide
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(
+                            List.of(
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+                                    .namespace(TEST_NAMESPACE)
+                                    .flowId(flowBId)
+                                    .when(Property.ofExpression("{{ trigger.outputs.state == 'SUCCESS' }}"))
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
+    }
+
+    @Test
+    void shouldNotConsiderDraftFlowEdgesWhenCheckingForCycles() throws FlowProcessingException, QueueException {
+        // Given flow B saved as a DRAFT, whose Flow trigger unconditionally dependsOn a not-yet-created
+        // flow A. Drafts skip the cycle check on their own save (like every other validation), but their
+        // edges must also not count when a LATER, unrelated flow is checked: the metastore cache holds
+        // B's draft shape, not its actually-active one — the same distinction
+        // DefaultFlowMetaStore.findById() already draws for a cached draft head.
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        String draftBSource = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: t
+                type: io.kestra.plugin.core.log.Log
+                message: b
+            triggers:
+              - id: on_a
+                type: io.kestra.plugin.core.trigger.Flow
+                dependsOn:
+                  - namespace: %s
+                    flowId: %s
+            """.formatted(flowBId, TEST_NAMESPACE, TEST_NAMESPACE, flowAId);
+        flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, draftBSource));
+        await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+
+        // When flow A's Flow trigger unconditionally dependsOn B — which would close a cycle if B's
+        // draft edge counted
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
+            .build();
+
+        // Then it must not be rejected — B is still a draft, so its edges do not count yet
+        flowService.create(GenericFlow.of(flowA));
+        assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
     }
 
     @Test

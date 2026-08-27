@@ -207,6 +207,7 @@
     "total_duration": "总持续时间",
     "running duration": "运行时间",
     "queued duration": "排队时间",
+    "paused duration": "暂停时长",
     "executionProgress": {
       "title": "执行进度",
       "estimatedRemaining": "预计剩余：{duration}",
@@ -299,6 +300,21 @@
     "to": "到",
     "steps": "步骤",
     "state": "状态",
+    "state_history": {
+      "title": "状态历史",
+      "open": "状态历史",
+      "aria_open": "显示状态历史",
+      "aria_open_for": "显示 {subject} 的状态历史",
+      "started_at": "于 {time} 开始",
+      "failed_at": "于 {time} 失败",
+      "skipped_at": "于 {time} 跳过",
+      "created_at": "于 {time} 创建",
+      "did_not_run": "此任务未运行",
+      "waiting_to_start": "等待开始",
+      "attempt_n": "尝试 {index}",
+      "attempt_count": "{count} 次尝试",
+      "copy": "复制状态历史"
+    },
     "search": "搜索",
     "source search": "源搜索",
     "selected": "已选择",
@@ -495,6 +511,15 @@
     },
     "use": "使用",
     "plugins": {
+      "autoInstall": {
+        "failed": "插件安装失败",
+        "failedHint": "flow 未保存。请修复问题或从 flow 中移除该插件，然后重新保存。",
+        "preparing": "正在准备插件安装...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "插件安装成功 | 插件安装成功",
+        "timeout": "插件安装耗时超出预期。flow 未保存，请在安装完成后重新保存。",
+        "title": "正在安装 {count} 个插件 | 正在安装 {count} 个插件"
+      },
       "names": "插件",
       "release": "发行说明",
       "beta": "测试版",
@@ -2016,6 +2041,31 @@
         "zoom_out": "缩小视图",
         "clear_selection": "清除选择",
         "fit_view": "适合屏幕"
+      },
+      "dag": {
+        "force": "树形图",
+        "layered": "DAG",
+        "system": "系统",
+        "last_update": "上次更新",
+        "status": {
+          "fresh": "新鲜",
+          "stale": "陈旧",
+          "failed": "失败",
+          "unknown": "未跟踪"
+        },
+        "summary": {
+          "fresh": "所有 {n} 个 Asset 都是最新的",
+          "issues": "{n} 过时",
+          "failed": "{n} 失败",
+          "last_run": "上次运行 {ago}",
+          "unknown": "{n} 未追踪"
+        },
+        "recent_runs": "最近运行",
+        "group_by": "分组依据",
+        "groups": "分组（{n}）",
+        "group_none": "无分组",
+        "group_dataset": "数据集",
+        "ungrouped": "未分组"
       },
       "search": {
         "placeholders": {

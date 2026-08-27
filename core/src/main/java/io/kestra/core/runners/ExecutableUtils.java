@@ -208,7 +208,8 @@ public final class ExecutableUtils {
                 int maxDepth = ((DefaultRunContext) runContext).services().additionalService(ExecutionDepthConfiguration.class).maxDepth();
                 if (executionDepth > maxDepth) {
                     // Backstop against a cross-flow execution cycle that save-time validation cannot see.
-                    String msg = "Cannot execute flow '%s'.'%s': the execution chain exceeded the maximum depth of %d. You can increase this limit via the `kestra.execution.depth.max-depth` configuration property.".formatted(subflowNamespace, subflowId, maxDepth);
+                    String msg = "Cannot execute flow '%s'.'%s': the execution chain exceeded the maximum depth of %d. You can increase this limit via the `kestra.execution.depth.max-depth` configuration property."
+                        .formatted(subflowNamespace, subflowId, maxDepth);
                     runContext.logger().error(msg);
                     throw new IllegalStateException(msg);
                 }

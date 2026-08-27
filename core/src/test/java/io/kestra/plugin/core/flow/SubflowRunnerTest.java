@@ -12,8 +12,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
-import io.micronaut.context.annotation.Property;
-
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -37,6 +35,7 @@ import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.IdUtils;
 
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -237,9 +236,10 @@ class SubflowRunnerTest {
         flowRepository.create(GenericFlow.of(flowB));
         flowQueue.emit(flowA);
         flowQueue.emit(flowB);
-        await().atMost(Duration.ofSeconds(10)).until(() ->
-            flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowAId))
-                && flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
+        await().atMost(Duration.ofSeconds(10)).until(
+            () -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowAId))
+                && flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId))
+        );
 
         // When
         Execution execution = runnerUtils.runOne(flowA, null);

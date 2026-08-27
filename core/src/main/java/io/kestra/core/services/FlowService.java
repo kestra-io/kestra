@@ -13,17 +13,16 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
-import io.kestra.core.runners.ConcurrencyLimit;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
@@ -39,11 +38,15 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -106,6 +109,12 @@ public class FlowService {
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     @Inject
+    private PluginAutoInstallService pluginAutoInstallService;
+
+    @Inject
+    private PluginSchemaBundleService pluginSchemaBundleService;
+
+    @Inject
     private FlowMetaStoreInterface flowMetaStore;
 
     private final ExecutorService executorService;
@@ -145,6 +154,10 @@ public class FlowService {
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
+            // Best-effort: installed before validation so a save through any server-side path does
+            // not fail on a not-yet-installed plugin type; a failed install just leaves the
+            // pre-existing "Invalid type" validation error in place.
+            pluginAutoInstallService.installMissingPlugins(flow.getSource());
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
             throwOnCyclicDependency(parsed);
@@ -180,6 +193,10 @@ public class FlowService {
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
+            // Best-effort: installed before validation so a save through any server-side path does
+            // not fail on a not-yet-installed plugin type; a failed install just leaves the
+            // pre-existing "Invalid type" validation error in place.
+            pluginAutoInstallService.installMissingPlugins(flow.getSource());
             FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
             modelValidator.validate(flowParsingService.parseForValidation(parsed));
             throwOnCyclicDependency(parsed);
@@ -475,7 +492,18 @@ public class FlowService {
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
                     String friendlyMessage = formatValidationError(cve.getMessage());
-                    constraintsBuilder.constraints(friendlyMessage);
+                    // A missing plugin type is only recoverable when auto-install is on AND the type
+                    // exists in the schema bundle: it is then a simple notice (installed on save); a
+                    // type unknown to the bundle is a genuine error.
+                    if (
+                        pluginAutoInstallService.isEnabled()
+                            && cve instanceof InvalidTypeConstraintViolationException invalidType
+                            && pluginSchemaBundleService.containsType(invalidType.getTypeId())
+                    ) {
+                        constraintsBuilder.infos(List.of(friendlyMessage + ". The plugin is not installed yet and will be installed automatically when the flow is saved."));
+                    } else {
+                        constraintsBuilder.constraints(friendlyMessage);
+                    }
                 } else {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
                     constraintsBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
@@ -500,6 +528,12 @@ public class FlowService {
 
     public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
         final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
+
+        // Best-effort, actual imports only: a dry run must keep reporting a missing plugin type as
+        // a validation failure without side effects.
+        if (!dryRun) {
+            pluginAutoInstallService.installMissingPlugins(source);
+        }
 
         Optional<FlowWithSource> maybeExisting = flowRepository.findByIdWithSource(
             flow.getTenantId(),
@@ -706,7 +740,8 @@ public class FlowService {
      * Rejects the save with a 422 when {@link #checkCyclicDependency} finds a cross-flow execution cycle.
      */
     private void throwOnCyclicDependency(FlowWithSource flow) {
-        checkCyclicDependency(flow).ifPresent(cycle -> {
+        checkCyclicDependency(flow).ifPresent(cycle ->
+        {
             throw new ConstraintViolationException(
                 Collections.singleton(
                     ManualConstraintViolation.of(
@@ -736,7 +771,8 @@ public class FlowService {
             .map(task -> ((ExecutableTask<?>) task).subflowId())
             .filter(subflowId -> subflowId.namespace() != null && subflowId.flowId() != null)
             .filter(subflowId -> !PebbleUtil.containsOpeningBlockDelimiter(subflowId.namespace()) && !PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowId()))
-            .forEach(subflowId -> {
+            .forEach(subflowId ->
+            {
                 String to = FlowId.uidWithoutRevision(flow.getTenantId(), subflowId.namespace(), subflowId.flowId());
                 edges.computeIfAbsent(from, k -> new ArrayList<>()).add(to);
                 displayNames.putIfAbsent(to, subflowId.namespace() + "." + subflowId.flowId());
@@ -749,7 +785,8 @@ public class FlowService {
             .flatMap(trigger -> ListUtils.emptyOnNull(trigger.getDependsOn()).stream())
             .filter(FlowService::isUnconditionalDependency)
             .filter(dependency -> dependency.getNamespace() != null && dependency.getFlowId() != null)
-            .forEach(dependency -> {
+            .forEach(dependency ->
+            {
                 String depFrom = FlowId.uidWithoutRevision(flow.getTenantId(), dependency.getNamespace(), dependency.getFlowId());
                 edges.computeIfAbsent(depFrom, k -> new ArrayList<>()).add(from);
                 displayNames.putIfAbsent(depFrom, dependency.getNamespace() + "." + dependency.getFlowId());

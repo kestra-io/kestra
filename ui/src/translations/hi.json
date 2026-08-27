@@ -511,6 +511,15 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "autoInstall": {
+        "failed": "plugin इंस्टॉलेशन विफल रहा",
+        "failedHint": "flow सेव नहीं हुआ। समस्या ठीक करें या flow से plugin हटाएं, फिर दोबारा सेव करें।",
+        "preparing": "plugin इंस्टॉलेशन की तैयारी हो रही है...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "plugin सफलतापूर्वक इंस्टॉल हो गया | plugins सफलतापूर्वक इंस्टॉल हो गए",
+        "timeout": "plugin इंस्टॉलेशन में अपेक्षा से अधिक समय लग रहा है। flow सेव नहीं हुआ, इंस्टॉलेशन पूरा होने पर दोबारा सेव करें।",
+        "title": "{count} plugin इंस्टॉल हो रहा है | {count} plugins इंस्टॉल हो रहे हैं"
+      },
       "names": "plugins",
       "release": "रिलीज़ नोट्स",
       "beta": "बीटा",

@@ -38,13 +38,13 @@
             </KsTag>
 
             <span v-if="!expanded" class="flowable-cluster-summary" aria-hidden="true">
-                {{ t("block_editor.collapsed_summary", {count: totalNestedCount}) }}
+                {{ $t("block_editor.collapsed_summary", {count: totalNestedCount}) }}
             </span>
 
             <div class="flowable-cluster-actions">
                 <KsIconButton
-                    :aria-label="t('block_editor.configure')"
-                    :tooltip="t('block_editor.configure')"
+                    :aria-label="$t('block_editor.configure')"
+                    :tooltip="$t('block_editor.configure')"
                     data-test="flowable-cluster-configure"
                     tabindex="-1"
                     @click.stop="emit('select', path)"
@@ -53,8 +53,8 @@
                 </KsIconButton>
 
                 <KsIconButton
-                    :aria-label="t('block_editor.duplicate')"
-                    :tooltip="`${t('block_editor.duplicate')} (d)`"
+                    :aria-label="$t('block_editor.duplicate')"
+                    :tooltip="`${$t('block_editor.duplicate')} (d)`"
                     data-test="block-card-duplicate"
                     tabindex="-1"
                     @click.stop="emit('duplicate', path)"
@@ -64,8 +64,8 @@
 
                 <KsIconButton
                     class="flowable-cluster-action--danger"
-                    :aria-label="t('block_editor.delete')"
-                    :tooltip="`${t('block_editor.delete')} (⌫)`"
+                    :aria-label="$t('block_editor.delete')"
+                    :tooltip="`${$t('block_editor.delete')} (⌫)`"
                     data-test="block-card-delete"
                     tabindex="-1"
                     @click.stop="emit('delete', path)"
@@ -100,8 +100,8 @@
             <div v-if="isSwitchTask" class="flowable-cluster-add-case">
                 <KsInput
                     v-model="newCaseKey"
-                    :placeholder="t('block_editor.switch_case_key_placeholder')"
-                    :aria-label="t('block_editor.switch_case_key_placeholder')"
+                    :placeholder="$t('block_editor.switch_case_key_placeholder')"
+                    :aria-label="$t('block_editor.switch_case_key_placeholder')"
                     size="small"
                     class="flowable-cluster-case-input"
                     data-test="flowable-add-case-input"
@@ -111,15 +111,15 @@
                     class="flowable-cluster-add-case-btn"
                     type="button"
                     :disabled="!newCaseKey.trim() || isCaseKeyTaken"
-                    :title="isCaseKeyTaken ? t('block_editor.switch_case_key_taken', {key: newCaseKey.trim()}) : undefined"
+                    :title="isCaseKeyTaken ? $t('block_editor.switch_case_key_taken', {key: newCaseKey.trim()}) : undefined"
                     data-test="flowable-add-case-btn"
                     @click="addCase"
                 >
                     <PlusCircleOutline class="flowable-cluster-add-icon" />
-                    {{ t("block_editor.add_switch_case") }}
+                    {{ $t("block_editor.add_switch_case") }}
                 </button>
                 <span v-if="isCaseKeyTaken" class="flowable-cluster-case-taken" data-test="flowable-add-case-taken">
-                    {{ t("block_editor.switch_case_key_taken", {key: newCaseKey.trim()}) }}
+                    {{ $t("block_editor.switch_case_key_taken", {key: newCaseKey.trim()}) }}
                 </span>
             </div>
         </div>
@@ -142,7 +142,7 @@
 
     import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
     import {displayTaskOf, taskEditPathFor} from "../../../utils/flowableBlockOps"
-    import {flowYamlUtils} from "@kestra-io/topology"
+    import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
     import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY} from "../injectionKeys"
 
     const BranchLane = defineAsyncComponent(() => import("./BranchLane.vue"))

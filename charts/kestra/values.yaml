@@ -40,6 +40,11 @@ common:
   strategy: {}
   # -- StatefulSet update strategy.
   updateStrategy: {}
+  # -- (int) Seconds a Deployment rollout may make no progress before the controller
+  # reports `ProgressDeadlineExceeded`. Unset uses the Kubernetes default of 600,
+  # which a large image can exceed on a cold pull. Deployments only.
+  # @section -- common settings
+  progressDeadlineSeconds: ""
   # -- Number of old ReplicaSets to retain for rollback.
   # @section -- common settings
   revisionHistoryLimit: 10

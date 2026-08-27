@@ -15,6 +15,10 @@
             :fitHeight="!paneView && !keyOnly"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
         >
+            <template v-if="$slots.empty && showEmptyState" #empty>
+                <slot name="empty" />
+            </template>
+
             <template #top v-if="!paneView">
                 <KSFilter
                     :configuration="secretsFilter"
@@ -89,9 +93,9 @@
             <KsTableColumn columnKey="copy" className="row-action">
                 <template #default="scope">
                     <KsIconButton
-                        :tooltip="$t('copy_to_clipboard')"
+                        :tooltip="$t('copy_pebble_expression')"
                         placement="left"
-                        @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
+                        @click="copyKey(scope.row?.key)"
                     >
                         <ContentCopy />
                     </KsIconButton>
@@ -161,13 +165,13 @@
                     <KsInput v-model="secret.key" :disabled="secret.update" :placeholder="$t('secret.keyPlaceholder')" required />
                 </KsFormItem>
                 <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required inline class="field-item">
-                    <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
+                    <KsPassword v-model="secret.value" :placeholder="$t('secret.valuePlaceholder')" />
                 </KsFormItem>
                 <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value" inline class="field-item">
                     <div class="secret-value-control">
                         <KsPassword
                             v-model="secret.value"
-                            :placeholder="secretModalTitle"
+                            :placeholder="$t('secret.valuePlaceholder')"
                             :disabled="!secret.updateValue"
                         />
                         <KsSwitch
@@ -218,7 +222,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {ref, computed, watch, onMounted, nextTick, useTemplateRef} from "vue"
+    import {ref, computed, watch, nextTick, useTemplateRef} from "vue"
     import _merge from "lodash/merge"
 
     import Lock from "vue-material-design-icons/Lock.vue"
@@ -319,7 +323,11 @@
     const {guardedClose: guardSecretClose} = useDiscardGuard(() => JSON.stringify(secret.value) !== secretBaseline.value)
     const beforeSecretClose = (done: () => void) => guardSecretClose(() => done())
 
-    const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS
+    const hasNamespaceColumn = props.namespace === undefined || props.namespaceColumn
+
+    const storageKey = hasNamespaceColumn
+        ? storageKeys.DISPLAY_SECRETS_COLUMNS
+        : storageKeys.DISPLAY_NAMESPACE_SECRETS_COLUMNS
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -344,7 +352,7 @@
         ]
 
         return columns.filter(col => {
-            if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false
+            if (col.prop === "namespace" && !hasNamespaceColumn) return false
             if (col.prop === "description" && props.keyOnly) return false
             if (col.prop === "tags" && (props.keyOnly || props.paneView)) return false
             return true
@@ -494,6 +502,7 @@
         areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
         secrets.value = allSecrets
         total.value = secretsResponse.total ?? 0
+        loadedFilterKey.value = filterQueryKey.value
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
@@ -503,6 +512,20 @@
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
         return JSON.stringify(filters)
     })
+
+    const hasActiveFilters = computed(() => routeQueryToQueryFilters(route.query).length > 0)
+
+    // The filter query the rows on screen were loaded for; until it catches up, `total` still answers
+    // for the previous one.
+    const loadedFilterKey = ref<string>()
+
+    // Judged on the total rather than the loaded page: a page past the end of a shrunken list is
+    // empty without the list being empty.
+    const showEmptyState = computed(() =>
+        loadedFilterKey.value === filterQueryKey.value &&
+        total.value === 0 &&
+        !hasActiveFilters.value,
+    )
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
@@ -524,6 +547,11 @@
 
     const removeSecretTag = (index: number) => {
         secret.value?.tags?.splice(index, 1)
+    }
+
+    const copyKey = async (key: string) => {
+        await Utils.copy(`{{ secret('${key}') }}`)
+        toast.success(t("copied"))
     }
 
     const removeSecret = ({key, namespace}: {key: string; namespace: string}) => {
@@ -614,13 +642,6 @@
         if (oldValue !== newValue) {
             emit("hasData", newValue!)
         }
-    })
-
-    onMounted(() => {
-        updateDisplayColumns(
-            localStorage.getItem(`columns_${storageKey}`)?.split(",") ||
-                optionalColumns.value?.filter(col => col.default).map(col => col.prop),
-        )
     })
 </script>
 <style scoped lang="scss">

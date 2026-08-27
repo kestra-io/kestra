@@ -127,8 +127,8 @@
     import {computed, provide, ref, watch} from "vue"
     import {useRouter} from "vue-router"
 
-    import {KsEditor} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -204,7 +204,8 @@
 
     const triggerSchema = computed<{required?: string[]}>(() => {
         const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        return wrapper?.required ? {required: wrapper.required} : {}
+        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
+        return required?.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
@@ -266,7 +267,7 @@
     }
 
     const copySource = async () => {
-        await navigator.clipboard.writeText(`triggers:\n${sourceYaml.value}\n`)
+        await copyToClipboard(`triggers:\n${sourceYaml.value}\n`)
         copied.value = true
         setTimeout(() => copied.value = false, COPY_FEEDBACK_MS)
     }

@@ -93,6 +93,17 @@
                     {{ $t("delete") }}
                 </KsButton>
 
+                <component
+                    :is="action"
+                    v-for="(action, i) in bulkActionComponents"
+                    :key="i"
+                    :selection="selection"
+                    :queryBulkAction="queryBulkAction"
+                    :namespace="props.namespace"
+                    :loadQuery="loadQuery"
+                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
+                />
+
                 <KsDropdown>
                     <KsButton :aria-label="$t('bulk actions')">
                         <DotsVertical />
@@ -108,10 +119,10 @@
                             <KsDropdownItem v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                 {{ $t("pause") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                 {{ $t("unqueue") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" @click="forceRunExecutions()">
                                 {{ $t("force run") }}
                             </KsDropdownItem>
                         </KsDropdownMenu>
@@ -144,17 +155,6 @@
                         </KsFormItem>
                     </KsForm>
                 </KsDialog>
-
-                <component
-                    :is="action"
-                    v-for="(action, i) in bulkActionComponents"
-                    :key="i"
-                    :selection="selection"
-                    :queryBulkAction="queryBulkAction"
-                    :namespace="props.namespace"
-                    :loadQuery="loadQuery"
-                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
-                />
             </template>
 
             <KsTableColumn
@@ -224,7 +224,7 @@
                             :status="scope.row?.state?.current"
                             size="small"
                             clickable
-                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            :aria-label="$t('filter by status', {status: scope.row?.state?.current})"
                             @click.stop="onStateClick(scope.row?.state?.current)"
                         />
                     </template>
@@ -415,7 +415,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -719,7 +719,7 @@
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value || canKill.value
+        return canDelete.value || canUpdate.value || canKill.value || canForceRun.value || canUnqueue.value
     })
 
     const canReplay = computed(() => {
@@ -736,6 +736,14 @@
 
     const canKill = computed(() => {
         return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
+    })
+
+    const canForceRun = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.FORCE_RUN, props.namespace)
+    })
+
+    const canUnqueue = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.namespace)
     })
 
     const isAllowedEdit = computed(() => {

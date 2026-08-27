@@ -1,64 +1,67 @@
 <template>
     <div class="plugin-doc">
         <template v-if="fetchPluginDocumentation && currentPlugin">
-            <div class="dp-header">
-                <div class="dp-kicker">{{ packagePath }}</div>
-                <div class="dp-title-row">
-                    <TaskIcon
-                        class="dp-icon"
-                        :cls="currentPlugin.cls"
-                        onlyIcon
-                        :loadIcon="pluginsStore.loadIcon"
-                    />
-                    <span class="dp-name text-truncate">{{ pluginName }}</span>
-                    <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
-                    <div class="dp-actions">
-                        <KsButton
-                            v-if="releaseNotesUrl"
-                            :icon="GitHub"
-                            :tooltip="$t('plugins.release')"
-                            size="small"
-                            link
-                            @click="openReleaseNotes"
+            <div class="dp-sticky">
+                <div class="dp-header">
+                    <div class="dp-kicker">{{ packagePath }}</div>
+                    <div class="dp-title-row">
+                        <TaskIcon
+                            class="dp-icon"
+                            :cls="currentPlugin.cls"
+                            onlyIcon
+                            :loadIcon="pluginsStore.loadIcon"
                         />
+                        <span class="dp-name text-truncate">{{ pluginName }}</span>
+                        <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
+                        <div class="dp-actions">
+                            <KsButton
+                                v-if="releaseNotesUrl"
+                                :icon="GitHub"
+                                :tooltip="$t('plugins.release')"
+                                size="small"
+                                link
+                                @click="openReleaseNotes"
+                            />
+                        </div>
                     </div>
+                    <div class="dp-type">
+                        <span class="dp-cls text-truncate">{{ currentPlugin.cls }}</span>
+                        <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
+                            {{ currentPlugin.version }}
+                        </KsTag>
+                        <KsTooltip
+                            trigger="click"
+                            :content="$t('copied')"
+                            :autoClose="2000"
+                            placement="top"
+                        >
+                            <KsButton
+                                :icon="ContentCopy"
+                                :aria-label="$t('plugins.copy_type')"
+                                size="small"
+                                link
+                                @click="copyType"
+                            />
+                        </KsTooltip>
+                    </div>
+                    <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
                 </div>
-                <div class="dp-type">
-                    <span class="dp-cls text-truncate">{{ currentPlugin.cls }}</span>
-                    <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
-                        {{ currentPlugin.version }}
-                    </KsTag>
-                    <KsTooltip
-                        trigger="click"
-                        :content="$t('copied')"
-                        :autoClose="2000"
-                        placement="top"
-                    >
-                        <KsButton
-                            :icon="ContentCopy"
-                            :aria-label="$t('plugins.copy_type')"
-                            size="small"
-                            link
-                            @click="copyType"
-                        />
-                    </KsTooltip>
-                </div>
-                <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
-            </div>
 
-            <nav class="dp-nav" aria-label="Documentation sections">
-                <button
-                    type="button"
-                    v-for="chip in navChips"
-                    :key="chip.id"
-                    class="dp-navchip"
-                    :class="{active: activeSection === chip.id}"
-                    @click="selectSection(chip.id)"
-                >
-                    {{ chip.label }}
-                    <span v-if="chip.count !== undefined" class="dp-navchip-count">{{ chip.count }}</span>
-                </button>
-            </nav>
+                <nav class="dp-nav" aria-label="Documentation sections" data-test="plugin-doc-nav">
+                    <button
+                        type="button"
+                        v-for="chip in navChips"
+                        :key="chip.id"
+                        class="dp-navchip"
+                        :class="{active: activeSection === chip.id}"
+                        :data-test="`plugin-doc-navchip-${chip.id}`"
+                        @click="selectSection(chip.id)"
+                    >
+                        {{ chip.label }}
+                        <span v-if="chip.count !== undefined" class="dp-navchip-count">{{ chip.count }}</span>
+                    </button>
+                </nav>
+            </div>
 
             <Suspense>
                 <SchemaToHtml
@@ -84,6 +87,7 @@
         <KsMarkdown
             v-else-if="overrideIntro"
             :content="overrideIntro"
+            class="dp-override-intro"
             :class="{'position-absolute': absolute}"
         />
 
@@ -92,18 +96,18 @@
                 <div class="dp-intro-icon">
                     <BookOpenVariant :size="22" />
                 </div>
-                <h2 class="dp-intro-title">{{ t("plugins.intro_title") }}</h2>
-                <p class="dp-intro-sub">{{ t("plugins.intro_sub") }}</p>
+                <h2 class="dp-intro-title">{{ $t("plugins.intro_title") }}</h2>
+                <p class="dp-intro-sub">{{ $t("plugins.intro_sub") }}</p>
                 <div class="dp-intro-callout">
                     <CursorPointer :size="17" class="dp-intro-callout-icon" />
-                    <p>{{ t("plugins.intro_callout_prefix") }}<code>type</code>{{ t("plugins.intro_callout_suffix") }}</p>
+                    <p>{{ $t("plugins.intro_callout_prefix") }}<code>type</code>{{ $t("plugins.intro_callout_suffix") }}</p>
                 </div>
             </div>
 
             <div class="dp-intro-search-wrap">
                 <KsInput
                     v-model="introSearch"
-                    :placeholder="t('plugins.intro_search_placeholder')"
+                    :placeholder="$t('plugins.intro_search_placeholder')"
                     clearable
                     size="small"
                     class="dp-intro-search"
@@ -114,7 +118,7 @@
                 </KsInput>
             </div>
 
-            <nav class="dp-nav dp-intro-nav" aria-label="Documentation sections">
+            <nav class="dp-nav" aria-label="Documentation sections">
                 <button
                     type="button"
                     v-for="tab in introTabs"
@@ -129,38 +133,38 @@
 
             <div class="dp-intro-body">
                 <template v-if="introSection === 'overview'">
-                    <div class="dp-intro-sec-label">{{ t("plugins.intro_start_here") }}</div>
+                    <div class="dp-intro-sec-label">{{ $t("plugins.intro_start_here") }}</div>
                     <div class="dp-intro-qstart">
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'flow'">
                             <span class="dp-intro-qnum">1</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step1_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step1_desc_prefix") }}<code>id</code>{{ t("plugins.intro_step1_desc_mid") }}<code>namespace</code>{{ t("plugins.intro_step1_desc_suffix") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step1_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step1_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step1_desc_prefix") }}<code>id</code>{{ $t("plugins.intro_step1_desc_mid") }}<code>namespace</code>{{ $t("plugins.intro_step1_desc_suffix") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step1_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'tasks'">
                             <span class="dp-intro-qnum">2</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step2_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step2_desc") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step2_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step2_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step2_desc") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step2_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                         <button type="button" class="dp-intro-qrow" @click="introSection = 'inputs'">
                             <span class="dp-intro-qnum">3</span>
                             <span class="dp-intro-qtext">
-                                <span class="dp-intro-qt">{{ t("plugins.intro_step3_title") }}</span>
-                                <span class="dp-intro-qd">{{ t("plugins.intro_step3_desc_prefix") }}<code>inputs</code>{{ t("plugins.intro_step3_desc_mid") }}<code>variables</code>{{ t("plugins.intro_step3_desc_suffix") }}</span>
-                                <span class="dp-intro-qcta">{{ t("plugins.intro_step3_cta") }}</span>
+                                <span class="dp-intro-qt">{{ $t("plugins.intro_step3_title") }}</span>
+                                <span class="dp-intro-qd">{{ $t("plugins.intro_step3_desc_prefix") }}<code>inputs</code>{{ $t("plugins.intro_step3_desc_mid") }}<code>variables</code>{{ $t("plugins.intro_step3_desc_suffix") }}</span>
+                                <span class="dp-intro-qcta">{{ $t("plugins.intro_step3_cta") }}</span>
                             </span>
                             <ChevronRight :size="18" class="dp-intro-qchevron" />
                         </button>
                     </div>
 
-                    <div class="dp-intro-sec-label">{{ t("plugins.intro_learn_more") }}</div>
+                    <div class="dp-intro-sec-label">{{ $t("plugins.intro_learn_more") }}</div>
                     <div class="dp-intro-linkgrid">
                         <a
                             v-for="link in learnMoreLinks"
@@ -181,9 +185,9 @@
                     <template v-if="introSearch && filteredFlowRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -197,9 +201,9 @@
                     <template v-if="introSearch && filteredTaskRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -213,9 +217,9 @@
                     <template v-if="introSearch && filteredInputRows.length === 0">
                         <div class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                     </template>
                     <KsMarkdown
@@ -229,12 +233,12 @@
                     <template v-if="introSearch">
                         <div v-if="filteredPebbleRows.length === 0" class="dp-intro-empty">
                             <div class="dp-intro-empty-icon"><Magnify :size="22" /></div>
-                            <h4>{{ t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
-                            <p>{{ t("plugins.intro_no_matches_sub") }}</p>
-                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ t("plugins.intro_clear_search") }}</KsButton>
+                            <h4>{{ $t("plugins.intro_no_matches_title", {q: introSearch}) }}</h4>
+                            <p>{{ $t("plugins.intro_no_matches_sub") }}</p>
+                            <KsButton class="dp-intro-clear-btn" size="small" @click="introSearch = ''">{{ $t("plugins.intro_clear_search") }}</KsButton>
                         </div>
                         <template v-else>
-                            <p class="dp-intro-result-count">{{ t("plugins.intro_result_count", {count: filteredPebbleRows.length}) }}</p>
+                            <p class="dp-intro-result-count">{{ $t("plugins.intro_result_count", {count: filteredPebbleRows.length}) }}</p>
                             <div class="dp-intro-fn-list">
                                 <div
                                     v-for="row in filteredPebbleRows"
@@ -373,9 +377,8 @@
         sectionCounts.value = counts
     }
 
-    watch(currentPlugin, () => {
+    watch([() => currentPlugin.value?.cls, () => currentPlugin.value?.version], () => {
         activeSection.value = "overview"
-        sectionCounts.value = {}
     })
 
     const selectSection = (id: string) => {
@@ -572,14 +575,23 @@
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 
-  .dp-header {
+  .dp-override-intro {
+    width: 100%;
+    padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-sticky {
     position: sticky;
     top: 0;
     z-index: 5;
     background: var(--ks-bg-surface);
+    box-shadow: var(--ks-shadow-sm);
+  }
+
+  .dp-header {
+    background: var(--ks-bg-surface);
     padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-3);
     border-bottom: 1px solid var(--ks-border-default);
-    box-shadow: var(--ks-shadow-sm);
   }
 
   .dp-kicker {
@@ -661,9 +673,6 @@
   }
 
   .dp-nav {
-    position: sticky;
-    top: 0;
-    z-index: 4;
     display: flex;
     gap: var(--ks-spacing-1);
     padding: var(--ks-spacing-3) var(--ks-spacing-4);
@@ -783,10 +792,6 @@
 
   .dp-intro-search {
     width: 100%;
-  }
-
-  .dp-intro-nav {
-    top: 0;
   }
 
   .dp-intro-body {

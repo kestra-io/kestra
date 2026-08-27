@@ -100,6 +100,16 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .build();
     }
 
+    public static LogEntry of(ExecutionId executionId, ExecutionKind executionKind) {
+        return LogEntry.builder()
+            .tenantId(executionId.tenantId())
+            .namespace(executionId.namespace())
+            .flowId(executionId.flowId())
+            .executionId(executionId.executionId())
+            .executionKind(executionKind)
+            .build();
+    }
+
     public static LogEntry of(TaskRun taskRun, ExecutionKind executionKind) {
         return LogEntry.builder()
             .tenantId(taskRun.getTenantId())

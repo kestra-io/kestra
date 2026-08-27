@@ -2,7 +2,7 @@ import fs from "fs"
 import path from "path"
 import {baseCompile} from "@intlify/message-compiler"
 import {readFingerprints, staleKeys} from "./fingerprints.ts"
-import {allKeys, flattenStrings, placeholdersOf} from "./translationRules.mjs"
+import {flattenStrings, leafKeys, placeholdersOf, untranslatedKeys} from "./translationRules.mjs"
 
 import {TRANSLATED_LOCALES} from "../../src/translations/languages.ts"
 
@@ -62,7 +62,12 @@ export function compareTranslations(
 
     // Use English as a base language
     const englishRoot = readJSON(getPath("en"))["en"] as Record<string, unknown>
-    const content = allKeys(englishRoot)
+    // Leaf keys, not every node: `generateTranslations.ts` rebuilds each language file from the
+    // English string leaves, so an object node carrying no message - `pluginDefaults: {}` - is never
+    // written to a locale file and must not be reported missing from one. Counting nodes made this
+    // check disagree with the PR gate in `./check-translations.mjs`, which has always used leaves,
+    // and left `translations:check` failing on a clean develop for three keys nobody could fix.
+    const content = leafKeys(englishRoot)
     const englishStrings = flattenStrings(englishRoot)
 
     // A key is stale when the English text no longer hashes to what it did when the translations
@@ -75,6 +80,7 @@ export function compareTranslations(
     const globalExtra: Record<string, string[]> = {}
     const globalUncompilable: Record<string, string[]> = {}
     const globalPlaceholderDrift: Record<string, string[]> = {}
+    const globalUntranslated: Record<string, string[]> = {}
 
     const checkCompiles = (lang: string, strings: Record<string, string>): string[] => {
         const broken = Object.entries(strings).flatMap(([key, message]) => {
@@ -94,7 +100,7 @@ export function compareTranslations(
 
     languages.forEach((lang) => {
         const root = readJSON(getPath(lang))[lang] as Record<string, unknown>
-        const current = allKeys(root)
+        const current = leafKeys(root)
         const strings = flattenStrings(root)
 
         const missing = content.filter((key) => !current.includes(key))
@@ -109,6 +115,8 @@ export function compareTranslations(
             return [`${key}: expected {${expected.join("}, {")}} but found {${actual.join("}, {")}} — ${JSON.stringify(message)}`]
         })
 
+        const untranslated = untranslatedKeys(lang, strings, englishStrings)
+
         console.warn(`---\n\x1b[34mComparison with ${lang.toUpperCase()}\x1b[0m  \n`)
         console.warn(missing.length ? `Missing keys: \x1b[31m${missing.join(", ")}\x1b[0m` : "No missing keys.")
         console.warn(extra.length ? `Extra keys: \x1b[32m${extra.join(", ")}\x1b[0m` : "No extra keys.")
@@ -116,11 +124,13 @@ export function compareTranslations(
         const broken = checkCompiles(lang, strings)
         console.warn(broken.length ? `Uncompilable messages: \x1b[31m${broken.join("\n  ")}\x1b[0m` : "No uncompilable messages.")
         console.warn(drift.length ? `Placeholder mismatches: \x1b[31m${drift.join("\n  ")}\x1b[0m` : "No placeholder mismatches.")
+        console.warn(untranslated.length ? `Untranslated keys (still the English text): \x1b[31m${untranslated.join(", ")}\x1b[0m` : "No untranslated keys.")
         console.warn("---\n")
 
         if (missing.length) globalMissing[lang] = missing
         if (extra.length) globalExtra[lang] = extra
         if (drift.length) globalPlaceholderDrift[lang] = drift
+        if (untranslated.length) globalUntranslated[lang] = untranslated
     })
 
     let errorString = ""
@@ -138,6 +148,10 @@ export function compareTranslations(
 
     if (Object.keys(globalPlaceholderDrift).length) {
         errorString += "\nPlaceholder mismatches in translations (each translation must interpolate exactly the placeholders its English source does)"
+    }
+
+    if (Object.keys(globalUntranslated).length) {
+        errorString += "\nUntranslated messages: a locale whose script is not Latin still holds the untouched English text, which is what `translations:generate` writes when a translation request fails. Blank those values and re-run it."
     }
 
     if (stale.length) {

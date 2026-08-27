@@ -13,7 +13,7 @@
             >
                 {{ setupError }}
             </KsAlert>
-            <KsButton size="small" data-test="flow-create-error-retry" @click="initialize">
+            <KsButton size="small" data-test="flow-create-error-retry" @click="retrySetup">
                 {{ $t("something_went_wrong.retry") }}
             </KsButton>
         </div>
@@ -25,7 +25,7 @@
     import {computed, onBeforeUnmount, ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import Actions from "override/components/flows/Actions.vue"
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue"
@@ -40,6 +40,8 @@
     import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
+    import {ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
+    import {resolveFlowTemplate} from "../../utils/newFlowTemplate"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -48,25 +50,8 @@
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
-    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
 
     const setupError = ref<string>()
-
-    const defaultFlowTemplate = (id: string, namespace: string) => {
-        const configuredTemplate = miscStore.configs?.flowTemplate
-        if (typeof configuredTemplate === "string" && configuredTemplate.trim()) {
-            return configuredTemplate.trim()
-        }
-
-        return `
-id: ${id}
-namespace: ${namespace}
-
-tasks:
-  - id: hello
-    type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`.trim()
-    }
 
     const isRecord = (value: unknown): value is Record<string, unknown> => {
         return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -92,6 +77,9 @@ tasks:
         const onboardingPresetFlow = route.query.onboardingPreset === "true"
             ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
             : ""
+        const recipePresetFlow = route.query.recipePreset === "true"
+            ? sessionStorage.getItem(RECIPE_PRESET_KEY) ?? ""
+            : ""
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             resource.FLOW,
             action.CREATE,
@@ -106,6 +94,9 @@ tasks:
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source
+        } else if (recipePresetFlow) {
+            flowYaml = recipePresetFlow
+            sessionStorage.removeItem(RECIPE_PRESET_KEY)
         } else if (onboardingPresetFlow) {
             flowYaml = onboardingPresetFlow
             sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
@@ -119,11 +110,11 @@ tasks:
             })
         } else if (blueprintId) {
             const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId)
-            if(flowBlueprint.source){
+            if (flowBlueprint.source) {
                 flowYaml = flowBlueprint.source
             }
         } else {
-            flowYaml = defaultFlowTemplate(id, selectedNamespace)
+            flowYaml = resolveFlowTemplate(id, selectedNamespace, miscStore.configs?.flowTemplate)
             shouldApplyGeneratedMetadata = true
         }
 
@@ -150,11 +141,9 @@ tasks:
     }
 
     /*
-     * `setupFlow` used to be called without awaiting it or catching it. A rejection was
-     * therefore an unhandled promise rejection, and the page stayed empty for good: the
-     * editor is gated on `flowStore.flow` and the Save button on `isAllowedEdit`, which is
-     * false while there is no flow. Awaiting it here turns that silent blank page into an
-     * error the user (and the E2E suite) can see, with a way to try again.
+     * The editor is gated on `flowStore.flow`, so a rejected `setupFlow` used to leave the
+     * page empty for good. Catching it here turns that silent blank page into an error the
+     * user (and the E2E suite) can see, with a way to try again.
      */
     const initialize = async () => {
         setupError.value = undefined
@@ -166,6 +155,8 @@ tasks:
             console.error("Cannot open the flow creation editor.", error)
         }
     }
+
+    const retrySetup = () => initialize()
 
     const routeInfo = computed(() => {
         return {

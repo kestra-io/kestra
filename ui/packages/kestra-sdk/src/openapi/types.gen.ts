@@ -347,7 +347,7 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -830,6 +830,7 @@ export type ExecutionMetadata = {
     attemptNumber?: number;
     originalCreatedDate: string;
     concurrencyScopes?: Array<string>;
+    executionDepth?: number;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';
@@ -965,6 +966,11 @@ export type Flow = AbstractFlow & {
      * Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition.
      */
     policyRefs?: Array<string>;
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -1198,6 +1204,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     variables?: {};
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -1487,6 +1498,7 @@ export type MiscControllerConfiguration = {
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
     pluginsHash?: number;
+    isPluginAutoInstallEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1711,6 +1723,15 @@ export type PluginPluginElementMetadata = {
     description?: string;
 };
 
+export type PluginArtifact = {
+    groupId?: string;
+    artifactId?: string;
+    extension?: string;
+    classifier?: string;
+    version?: string;
+    uri?: string;
+};
+
 export type PluginControllerApiPluginVersions = {
     type?: string;
     versions?: Array<string>;
@@ -1728,6 +1749,10 @@ export type PluginControllerApiTriggerPlugin = {
      * human-readable name (Schema#title if set, otherwise simple class name)
      */
     name?: string;
+    /**
+     * the owning plugin's (or subgroup's) human-readable, correctly-cased title (for example `"MongoDB"` or `"Debezium MongoDB"`), resolved from its own declared metadata rather than guessed from the class package --- used by the UI to disambiguate triggers from different plugins that otherwise share the same last Java package segment (see io.kestra.core.docs.Plugin#titleFor)
+     */
+    pluginTitle?: string;
     /**
      * one-line description from the plugin
      */
@@ -1763,6 +1788,29 @@ export type PluginIcon = {
     monochrome?: boolean;
     hash?: string;
 };
+
+export type PluginInstallJob = {
+    id?: string;
+    status?: PluginInstallJobStatus;
+    artifacts?: Array<PluginArtifact>;
+    progress?: {
+        [key: string]: PluginInstallJobArtifactProgress;
+    };
+    startedAt?: string;
+    finishedAt?: string;
+    error?: string;
+};
+
+export type PluginInstallJobArtifactProgress = {
+    resource?: string;
+    transferred?: number;
+    total?: number;
+    state?: PluginInstallJobArtifactState;
+};
+
+export type PluginInstallJobArtifactState = 'STARTED' | 'PROGRESSING' | 'SUCCEEDED' | 'FAILED';
+
+export type PluginInstallJobStatus = 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
 
 export type PluginSchema = {
     properties?: {
@@ -1862,7 +1910,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'super_admin' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2139,6 +2187,10 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2147,7 +2199,7 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2234,7 +2286,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
     index: number;
@@ -2371,7 +2423,7 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2460,6 +2512,10 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2468,7 +2524,7 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2696,6 +2752,31 @@ export type ListPluginsResponses = {
 
 export type ListPluginsResponse = ListPluginsResponses[keyof ListPluginsResponses];
 
+export type DetectMissingPluginsData = {
+    body: string;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/auto-install/detect';
+};
+
+export type DetectMissingPluginsErrors = {
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: unknown;
+};
+
+export type DetectMissingPluginsResponses = {
+    /**
+     * Detection result
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DetectMissingPluginsResponse = DetectMissingPluginsResponses[keyof DetectMissingPluginsResponses];
+
 export type GetPluginBySubgroupsData = {
     body?: never;
     path?: never;
@@ -2827,6 +2908,60 @@ export type GetSchemaFromInputTypeResponses = {
 
 export type GetSchemaFromInputTypeResponse = GetSchemaFromInputTypeResponses[keyof GetSchemaFromInputTypeResponses];
 
+export type InstallPluginsData = {
+    body: Array<PluginArtifact>;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/install';
+};
+
+export type InstallPluginsErrors = {
+    /**
+     * An artifact is not part of the plugin catalog
+     */
+    400: unknown;
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: unknown;
+    /**
+     * Too many install jobs are already pending or running
+     */
+    429: unknown;
+};
+
+export type InstallPluginsResponses = {
+    /**
+     * Installation job accepted
+     */
+    202: unknown;
+};
+
+export type GetInstallJobData = {
+    body?: never;
+    path: {
+        jobId: string;
+    };
+    query?: never;
+    url: '/api/v1/plugins/install/{jobId}';
+};
+
+export type GetInstallJobErrors = {
+    /**
+     * Job not found
+     */
+    404: unknown;
+};
+
+export type GetInstallJobResponses = {
+    /**
+     * Job snapshot
+     */
+    200: PluginInstallJob;
+};
+
+export type GetInstallJobResponse = GetInstallJobResponses[keyof GetInstallJobResponses];
+
 export type GetPluginUiManifestData = {
     body: Array<TaskWithVersion>;
     path?: never;
@@ -2881,6 +3016,10 @@ export type GetSchemasFromTypeData = {
          * If schema should be an array of requested type
          */
         arrayOf?: boolean | null;
+        /**
+         * Whether to merge the pre-baked plugin schema bundle for un-installed types
+         */
+        includeCatalog?: boolean | null;
     };
     url: '/api/v1/plugins/schemas/{type}';
 };
@@ -3331,6 +3470,26 @@ export type SearchConcurrencyLimitsResponses = {
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
+
+export type GetConcurrencyLimitData = {
+    body?: never;
+    path: {
+        namespace: string;
+        flowId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
+};
+
+export type GetConcurrencyLimitResponses = {
+    /**
+     * getConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
 
 export type UpdateConcurrencyLimitData = {
     body: ConcurrencyLimit;
@@ -7811,6 +7970,30 @@ export type SetKeyValueResponses = {
     200: unknown;
 };
 
+export type GetExecutionOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/outputs/executions/{executionId}';
+};
+
+export type GetExecutionOutputsResponses = {
+    /**
+     * The execution outputs as a map of output names to their values
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
+
 export type GetTaskOutputsInformationData = {
     body?: never;
     path: {
@@ -7821,7 +8004,7 @@ export type GetTaskOutputsInformationData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}';
 };
 
 export type GetTaskOutputsInformationResponses = {
@@ -7847,7 +8030,7 @@ export type GetTaskRunOutputsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}/{taskRunId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}';
 };
 
 export type GetTaskRunOutputsResponses = {

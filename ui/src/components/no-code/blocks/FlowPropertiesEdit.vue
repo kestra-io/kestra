@@ -1,17 +1,17 @@
 <template>
     <div class="flow-properties-edit" data-test="flow-properties-edit">
         <header v-if="!hideHeader" class="flow-properties-head">
-            <KsIconButton :tooltip="t('back')" data-test="flow-properties-back" @click="emit('close')">
+            <KsIconButton :tooltip="$t('back')" data-test="flow-properties-back" @click="emit('close')">
                 <ChevronLeft />
             </KsIconButton>
-            <span class="flow-properties-title">{{ t("no_code.sections.flow") }}</span>
+            <span class="flow-properties-title">{{ $t("no_code.sections.flow") }}</span>
         </header>
 
         <div v-if="createTarget" class="flow-properties-body" data-test="flow-properties-create">
             <FieldNavBreadcrumb
                 class="flow-properties-crumb"
                 :frames="[{path: createTarget.parentPath, label: createTarget.label}]"
-                :rootLabel="t('no_code.sections.flow')"
+                :rootLabel="$t('no_code.sections.flow')"
                 @navigate="closeCreate"
                 @back="closeCreate"
             />
@@ -61,8 +61,7 @@
 
 <script setup lang="ts">
     import {computed, inject, provide, ref} from "vue"
-    import {useI18n} from "vue-i18n"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsForm, KsIconButton} from "@kestra-io/design-system"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
@@ -80,7 +79,6 @@
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../injectionKeys"
 
-    const {t} = useI18n()
     const flowStore = useFlowStore()
 
     const props = defineProps<{hideHeader?: boolean; hostedInModal?: boolean}>()

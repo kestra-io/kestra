@@ -45,7 +45,7 @@
         />
     </div>
 
-    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]" ref="docRef">
+    <div v-else-if="currentView === 'documentation'" class="doc-view" ref="docRef">
         <PluginDocumentation
             :plugin="currentDocumentationPlugin"
         />
@@ -348,10 +348,6 @@
 
         :deep(.kel-input__inner) {
             font-size: var(--ks-font-size-sm);
-
-            &::placeholder {
-                color: var(--ks-text-dim) !important;
-            }
         }
     }
 
@@ -404,7 +400,6 @@
 .doc-view {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
 }
 
 :deep(.markdown h3){

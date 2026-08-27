@@ -1,14 +1,48 @@
-import type {App, Component} from "vue"
-import ElementPlus, {INSTALLED_KEY} from "element-plus"
+import {defineAsyncComponent} from "vue"
+import type {App, AsyncComponentLoader, Component} from "vue"
+import {
+    INSTALLED_KEY,
+    provideGlobalConfig,
+    ElInfiniteScroll,
+    ElLoading,
+    ElMessage,
+    ElMessageBox,
+    ElNotification,
+    ElPopoverDirective,
+} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
 
+// defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
+// real name lets consumers stub the component by name in tests and read it in
+// devtools, exactly as they could before it was made async.
+const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
+    Object.assign(defineAsyncComponent(loader), {name})
+
 import KsAlert from "./components/Feedback/KsAlert.vue"
-import KsEchart from "./components/Charts/KsEchart.vue"
-import KsGraph from "./components/Charts/KsGraph.vue"
-import KsLine from "./components/Charts/KsLine.vue"
-import KsBar from "./components/Charts/KsBar.vue"
-import KsPie from "./components/Charts/KsPie.vue"
+// Async on purpose: every chart statically pulls ECharts, which the barrel would
+// otherwise put in the app's eager bundle on behalf of consumers that never
+// render a chart.
+import type KsEchartSfc from "./components/Charts/KsEchart.vue"
+import type KsGraphSfc from "./components/Charts/KsGraph.vue"
+import type KsLineSfc from "./components/Charts/KsLine.vue"
+import type KsBarSfc from "./components/Charts/KsBar.vue"
+import type KsPieSfc from "./components/Charts/KsPie.vue"
+const KsEchart = asyncComponent("KsEchart",
+    () => import("./components/Charts/KsEchart.vue"),
+) as unknown as typeof KsEchartSfc
+const KsGraph = asyncComponent("KsGraph",
+    () => import("./components/Charts/KsGraph.vue"),
+) as unknown as typeof KsGraphSfc
+const KsLine = asyncComponent("KsLine",
+    () => import("./components/Charts/KsLine.vue"),
+) as unknown as typeof KsLineSfc
+const KsBar = asyncComponent("KsBar",
+    () => import("./components/Charts/KsBar.vue"),
+) as unknown as typeof KsBarSfc
+const KsPie = asyncComponent("KsPie",
+    () => import("./components/Charts/KsPie.vue"),
+) as unknown as typeof KsPieSfc
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
@@ -42,7 +76,12 @@ import KsDialog from "./components/Feedback/KsDialog.vue"
 import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
-import KsEditor from "./components/Form/KsEditor.vue"
+// Async on purpose: KsEditor statically pulls the whole Monaco toolchain, which
+// must stay out of the app's eager bundle (see the "monaco" chunk group).
+import type KsEditorSfc from "./components/Form/KsEditor.vue"
+const KsEditor = asyncComponent("KsEditor",
+    () => import("./components/Form/KsEditor.vue"),
+) as unknown as typeof KsEditorSfc
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
 export type {TaskIconProps} from "./composables/taskIcon"
@@ -69,7 +108,12 @@ import KsPassword from "./components/Form/KsPassword.vue"
 import KsPasswordRequirements from "./components/Form/KsPasswordRequirements.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
-import KsMarkdown from "./components/Data/KsMarkdown/KsMarkdown.vue"
+// Async on purpose: KsMarkdown pulls the whole markdown/Shiki toolchain, which
+// must stay out of the app's eager bundle (see the "markdown" chunk group).
+import type KsMarkdownSfc from "./components/Data/KsMarkdown/KsMarkdown.vue"
+const KsMarkdown = asyncComponent("KsMarkdown",
+    () => import("./components/Data/KsMarkdown/KsMarkdown.vue"),
+) as unknown as typeof KsMarkdownSfc
 import KsMenu from "./components/Navigation/KsMenu/KsMenu.vue"
 import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
@@ -129,6 +173,7 @@ export {KsMessageBox} from "./components/Feedback/KsMessageBox"
 export {KsNotification} from "./components/Feedback/KsNotification"
 
 export {cssVar} from "./utils/css"
+export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export * as durationUtils from "./utils/duration"
@@ -141,7 +186,7 @@ export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
-export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
+export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
@@ -437,7 +482,16 @@ export {
 const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
-            app.use(ElementPlus, {namespace: "kel"})
+            // Every Ks* component imports its own El* dependency directly, so global registration
+            // is unneeded and only defeats tree-shaking of the ~96 Element Plus components. The
+            // services below still need app.use(): it's what wires their _context to this app, so
+            // their detached render trees (e.g. an ElNotification's content) can still resolve
+            // globally-registered Ks* components like KsButton/KsMarkdown.
+            (app as any)[INSTALLED_KEY] = true
+            provideGlobalConfig({namespace: "kel"}, app, true)
+            for (const plugin of [ElInfiniteScroll, ElLoading, ElMessage, ElMessageBox, ElNotification, ElPopoverDirective]) {
+                app.use(plugin)
+            }
         }
         for (const [name, component] of Object.entries(components)) {
             app.component(name, component)

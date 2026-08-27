@@ -2,7 +2,7 @@
 
 import { buildClientParams, type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AggregateMetricsFromFlowResponses, AggregateMetricsFromTaskResponses, AiControllerDashboardGenerationPrompt, AiControllerFlowGenerationPrompt, ApiAutocomplete, ApiChatTurnRequest, ApiConfirmActionRequest, ApiCreateThreadRequest, ApiMcpServerWritable, ApplyReplaceBySourceCodeResponses, AutocompleteNamespacesResponses, BasicAuthCredentials, BlueprintControllerKind, BulkUpdateFlowsResponses, ChartFiltersOverrides, ChatResponse, ChatResponses, ConcurrencyLimit, ConfirmResponse, ConfirmResponses, CreateBackfillErrors, CreateBackfillResponses, CreateBasicAuthResponses, CreateDashboardErrors, CreateDashboardResponses, CreateExecutionErrors, CreateExecutionResponses, CreateFlowResponses, CreateMcpResponses, CreateNamespaceDirectoryResponses, CreateNamespaceFileResponses, CreateResponses, DashboardControllerPreviewRequest, DeleteBackfillByIdsResponses, DeleteBackfillByQueryResponses, DeleteBackfillErrors, DeleteBackfillResponses, DeleteDashboardResponses, DeleteExecutionResponses, DeleteExecutionsByIdsErrors, DeleteExecutionsByIdsResponses, DeleteExecutionsByQueryErrors, DeleteExecutionsByQueryResponses, DeleteFileDirectoryResponses, DeleteFlowResponses, DeleteFlowsByIdsResponses, DeleteFlowsByQueryResponses, DeleteKeyValueResponses, DeleteKeyValuesResponses, DeleteLogsFromExecutionResponses, DeleteLogsFromFlowResponses, DeleteMcpResponses, DeleteRevisionsResponses, DeleteTriggerErrors, DeleteTriggerResponses, DeleteTriggersByIdsResponses, DeleteTriggersByQueryResponses, DisabledTriggersByIdsResponses, DisabledTriggersByQueryResponses, DisableFlowsByIdsResponses, DisableFlowsByQueryResponses, DisableTriggerByIdErrors, DisableTriggerByIdResponses, DownloadFileFromExecutionResponses, DownloadLogsFromExecutionResponses, EnableFlowsByIdsResponses, EnableFlowsByQueryResponses, EvalExpressionResponses, EvalTaskRunExpressionResponses, ExecutionControllerSetLabelsByIdsRequest, ExecutionControllerStateRequest, ExecutionKind, ExecutionRepositoryInterfaceDateFilter, ExecutionRepositoryInterfaceFlowFilter, ExportChartResponses, ExportDashboardChartResponses, ExportExecutionsResponses, ExportFlowsByIdsResponses, ExportFlowsByQueryResponses, ExportFlowsResponses, ExportFormat, ExportNamespaceFilesResponses, ExportTriggersResponses, ExpressionControllerRenderExpressionRequest, ExpressionsResponses, FileFormat, FindDistinctFieldValuesResponses, FollowDependenciesExecutionsResponse, FollowDependenciesExecutionsResponses, FollowExecutionResponse, FollowExecutionResponses, FollowLogsFromExecutionResponse, FollowLogsFromExecutionResponses, ForceRunByIdsErrors, ForceRunByIdsResponses, ForceRunExecutionErrors, ForceRunExecutionResponses, ForceRunExecutionsByQueryErrors, ForceRunExecutionsByQueryResponses, GenerateDashboardResponses, GenerateFlowGraphFromSourceResponses, GenerateFlowGraphResponses, GenerateFlowResponses, GetAllInputTypesResponses, GetBasicAuthConfigErrorsResponses, GetBlueprintGraphResponses, GetBlueprintResponses, GetBlueprintSourceResponses, GetConfigurationResponses, GetDashboardChartDataResponses, GetDashboardResponses, GetDefaultDashboardDefinitionsResponses, GetDefaultDashboardsResponses, GetExecutionAverageDurationResponses, GetExecutionFlowGraphResponses, GetExecutionResponses, GetExpressionFiltersResponses, GetExpressionFunctionsResponses, GetFileContentResponses, GetFileMetadatasFromExecutionResponses, GetFileMetadatasResponses, GetFileRevisionsResponses, GetFlowDependenciesFromNamespaceResponses, GetFlowDependenciesResponses, GetFlowFromExecutionByIdResponses, GetFlowFromExecutionResponses, GetFlowResponses, GetInheritedSecretsResponses, GetKeyValueResponses, GetLatestExecutionsResponses, GetLoginConfigurationResponses, GetMcpResponses, GetNamespaceResponses, GetPluginBySubgroupsResponses, GetPluginDocumentationFromVersionResponses, GetPluginDocumentationResponses, GetPluginGroupIconsResponses, GetPluginIconResponses, GetPluginIconsResponses, GetPluginIconSvgResponses, GetPluginUiManifestResponses, GetPluginUiResponses, GetPluginVersionsResponses, GetPropertiesFromTypeResponses, GetProvidersResponses, GetResponses, GetSchemaFromInputTypeResponses, GetSchemasFromTypeResponses, GetServiceResponses, GetTaskFromFlowResponses, GetTaskOutputsInformationResponses, GetTaskRunOutputsResponses, GetUsagesResponses, HandleDeleteRequestResponses, HandleGetRequestResponse, HandleGetRequestResponses, HandleRequestResponses, IdWithNamespace, ImportFlowsResponses, KillExecutionErrors, KillExecutionResponses, KillExecutionsByIdsErrors, KillExecutionsByIdsResponses, KillExecutionsByQueryErrors, KillExecutionsByQueryResponses, KvControllerApiDeleteBulkRequest, Label, Level, ListAllKeysResponses, ListBlueprintTagsResponses, ListDeprecatedResponses, ListDistinctNamespacesResponses, ListExecutableDistinctNamespacesResponses, ListFlowExecutionsByNamespaceResponses, ListFlowMetricsResponses, ListFlowRevisionsResponses, ListFlowsByNamespaceResponses, ListKeysWithInheritenceResponses, ListLogsFromExecutionResponses, ListMcpsResponses, ListNamespaceDirectoryFilesResponses, ListPluginsResponses, ListSecretsResponses, ListTaskMetricsResponses, ListTasksWithMetricsResponses, ListToolsResponses, ListTriggerPluginsResponses, LoginResponses, LogoutResponses, MetricsResponses, MiscControllerLoginRequest, MoveFileDirectoryResponses, PauseBackfillByIdsResponses, PauseBackfillByQueryResponses, PauseBackfillErrors, PauseBackfillResponses, PauseExecutionErrors, PauseExecutionResponses, PauseExecutionsByIdsErrors, PauseExecutionsByIdsResponses, PauseExecutionsByQueryErrors, PauseExecutionsByQueryResponses, PreviewChartResponses, PreviewFileFromExecutionResponses, PreviewReplaceBySourceCodeResponses, QueryFilter, QueryFilterField, RenderExpressionsResponses, ReplaceLineBySourceCodeResponses, ReplayExecutionErrors, ReplayExecutionResponses, ReplayExecutionsByIdsErrors, ReplayExecutionsByIdsResponses, ReplayExecutionsByQueryErrors, ReplayExecutionsByQueryResponses, ReplayExecutionWithinputsErrors, ReplayExecutionWithinputsResponses, RestartExecutionErrors, RestartExecutionResponses, RestartExecutionsByIdsErrors, RestartExecutionsByIdsResponses, RestartExecutionsByQueryErrors, RestartExecutionsByQueryResponses, RestartTriggerErrors, RestartTriggerResponses, ResumeExecutionErrors, ResumeExecutionFromBreakpointErrors, ResumeExecutionFromBreakpointResponses, ResumeExecutionResponses, ResumeExecutionsByIdsErrors, ResumeExecutionsByIdsResponses, ResumeExecutionsByQueryErrors, ResumeExecutionsByQueryResponses, SchemaType, SearchBlueprintsResponses, SearchByExecutionResponses, SearchConcurrencyLimitsResponses, SearchDashboardsResponses, SearchExecutionsByFlowIdResponses, SearchExecutionsResponses, SearchFlowsBySourceCodeResponses, SearchFlowsResponses, SearchLogsResponses, SearchNamespaceFilesResponses, SearchNamespacesResponses, SearchTriggersForFlowResponses, SearchTriggersResponses, ServiceType, SetKeyValueResponses, SetLabelsOnTerminatedExecutionErrors, SetLabelsOnTerminatedExecutionResponses, SetLabelsOnTerminatedExecutionsByIdsErrors, SetLabelsOnTerminatedExecutionsByIdsResponses, SetLabelsOnTerminatedExecutionsByQueryErrors, SetLabelsOnTerminatedExecutionsByQueryResponses, SetTenantDefaultDashboardResponses, SourceSearchReplaceApplyRequest, SourceSearchReplaceLineRequest, SourceSearchReplacePreviewRequest, SourceSearchScope, StateType, TaskWithVersion, TenantControllerSetTenantDefaultDashboardsRequest, ToggleMcpResponses, TriggerControllerApiCreateBackfillRequest, TriggerControllerApiDisableTriggerRequest, TriggerControllerApiTriggerId, TriggerControllerSetDisabledRequest, TriggerExecutionByGetWebhookResponses, TriggerExecutionByGetWebhookWithPathResponses, TriggerExecutionByPostWebhookResponses, TriggerExecutionByPostWebhookWithPathResponses, TriggerExecutionByPutWebhookResponses, TriggerExecutionByPutWebhookWithPathResponses, Type, UnlockTriggerErrors, UnlockTriggerResponses, UnlockTriggersByIdsResponses, UnlockTriggersByQueryResponses, UnpauseBackfillByIdsResponses, UnpauseBackfillByQueryResponses, UnpauseBackfillErrors, UnpauseBackfillResponses, UnqueueExecutionErrors, UnqueueExecutionResponses, UnqueueExecutionsByIdsErrors, UnqueueExecutionsByIdsResponses, UnqueueExecutionsByQueryErrors, UnqueueExecutionsByQueryResponses, UpdateConcurrencyLimitResponses, UpdateDashboardErrors, UpdateDashboardResponses, UpdateExecutionsStatusByIdsErrors, UpdateExecutionsStatusByIdsResponses, UpdateExecutionsStatusByQueryErrors, UpdateExecutionsStatusByQueryResponses, UpdateExecutionStatusErrors, UpdateExecutionStatusResponses, UpdateFlowResponses, UpdateFlowsInNamespaceResponses, UpdateMcpResponses, UpdateTaskRunStateErrors, UpdateTaskRunStateResponses, ValidateChartResponses, ValidateDashboardResponses, ValidateFlowsResponses, ValidateNewExecutionInputsErrors, ValidateNewExecutionInputsResponses, ValidateResumeExecutionInputsErrors, ValidateResumeExecutionInputsResponses, ValidateTaskResponses, ValidateTriggerResponses } from './types.gen';
+import type { AggregateMetricsFromFlowResponses, AggregateMetricsFromTaskResponses, AiControllerDashboardGenerationPrompt, AiControllerFlowGenerationPrompt, ApiAutocomplete, ApiChatTurnRequest, ApiConfirmActionRequest, ApiCreateThreadRequest, ApiMcpServerWritable, ApplyReplaceBySourceCodeResponses, AutocompleteNamespacesResponses, BasicAuthCredentials, BlueprintControllerKind, BulkUpdateFlowsResponses, ChartFiltersOverrides, ChatResponse, ChatResponses, ConcurrencyLimit, ConfirmResponse, ConfirmResponses, CreateBackfillErrors, CreateBackfillResponses, CreateBasicAuthResponses, CreateDashboardErrors, CreateDashboardResponses, CreateExecutionErrors, CreateExecutionResponses, CreateFlowResponses, CreateMcpResponses, CreateNamespaceDirectoryResponses, CreateNamespaceFileResponses, CreateResponses, DashboardControllerPreviewRequest, DeleteBackfillByIdsResponses, DeleteBackfillByQueryResponses, DeleteBackfillErrors, DeleteBackfillResponses, DeleteDashboardResponses, DeleteExecutionResponses, DeleteExecutionsByIdsErrors, DeleteExecutionsByIdsResponses, DeleteExecutionsByQueryErrors, DeleteExecutionsByQueryResponses, DeleteFileDirectoryResponses, DeleteFlowResponses, DeleteFlowsByIdsResponses, DeleteFlowsByQueryResponses, DeleteKeyValueResponses, DeleteKeyValuesResponses, DeleteLogsFromExecutionResponses, DeleteLogsFromFlowResponses, DeleteMcpResponses, DeleteRevisionsResponses, DeleteTriggerErrors, DeleteTriggerResponses, DeleteTriggersByIdsResponses, DeleteTriggersByQueryResponses, DetectMissingPluginsErrors, DetectMissingPluginsResponses, DisabledTriggersByIdsResponses, DisabledTriggersByQueryResponses, DisableFlowsByIdsResponses, DisableFlowsByQueryResponses, DisableTriggerByIdErrors, DisableTriggerByIdResponses, DownloadFileFromExecutionResponses, DownloadLogsFromExecutionResponses, EnableFlowsByIdsResponses, EnableFlowsByQueryResponses, EvalExpressionResponses, EvalTaskRunExpressionResponses, ExecutionControllerSetLabelsByIdsRequest, ExecutionControllerStateRequest, ExecutionKind, ExecutionRepositoryInterfaceDateFilter, ExecutionRepositoryInterfaceFlowFilter, ExportChartResponses, ExportDashboardChartResponses, ExportExecutionsResponses, ExportFlowsByIdsResponses, ExportFlowsByQueryResponses, ExportFlowsResponses, ExportFormat, ExportNamespaceFilesResponses, ExportTriggersResponses, ExpressionControllerRenderExpressionRequest, ExpressionsResponses, FileFormat, FindDistinctFieldValuesResponses, FollowDependenciesExecutionsResponse, FollowDependenciesExecutionsResponses, FollowExecutionResponse, FollowExecutionResponses, FollowLogsFromExecutionResponse, FollowLogsFromExecutionResponses, ForceRunByIdsErrors, ForceRunByIdsResponses, ForceRunExecutionErrors, ForceRunExecutionResponses, ForceRunExecutionsByQueryErrors, ForceRunExecutionsByQueryResponses, GenerateDashboardResponses, GenerateFlowGraphFromSourceResponses, GenerateFlowGraphResponses, GenerateFlowResponses, GetAllInputTypesResponses, GetBasicAuthConfigErrorsResponses, GetBlueprintGraphResponses, GetBlueprintResponses, GetBlueprintSourceResponses, GetConcurrencyLimitResponses, GetConfigurationResponses, GetDashboardChartDataResponses, GetDashboardResponses, GetDefaultDashboardDefinitionsResponses, GetDefaultDashboardsResponses, GetExecutionAverageDurationResponses, GetExecutionFlowGraphResponses, GetExecutionOutputsResponses, GetExecutionResponses, GetExpressionFiltersResponses, GetExpressionFunctionsResponses, GetFileContentResponses, GetFileMetadatasFromExecutionResponses, GetFileMetadatasResponses, GetFileRevisionsResponses, GetFlowDependenciesFromNamespaceResponses, GetFlowDependenciesResponses, GetFlowFromExecutionByIdResponses, GetFlowFromExecutionResponses, GetFlowResponses, GetInheritedSecretsResponses, GetInstallJobErrors, GetInstallJobResponses, GetKeyValueResponses, GetLatestExecutionsResponses, GetLoginConfigurationResponses, GetMcpResponses, GetNamespaceResponses, GetPluginBySubgroupsResponses, GetPluginDocumentationFromVersionResponses, GetPluginDocumentationResponses, GetPluginGroupIconsResponses, GetPluginIconResponses, GetPluginIconsResponses, GetPluginIconSvgResponses, GetPluginUiManifestResponses, GetPluginUiResponses, GetPluginVersionsResponses, GetPropertiesFromTypeResponses, GetProvidersResponses, GetResponses, GetSchemaFromInputTypeResponses, GetSchemasFromTypeResponses, GetServiceResponses, GetTaskFromFlowResponses, GetTaskOutputsInformationResponses, GetTaskRunOutputsResponses, GetUsagesResponses, HandleDeleteRequestResponses, HandleGetRequestResponse, HandleGetRequestResponses, HandleRequestResponses, IdWithNamespace, ImportFlowsResponses, InstallPluginsErrors, InstallPluginsResponses, KillExecutionErrors, KillExecutionResponses, KillExecutionsByIdsErrors, KillExecutionsByIdsResponses, KillExecutionsByQueryErrors, KillExecutionsByQueryResponses, KvControllerApiDeleteBulkRequest, Label, Level, ListAllKeysResponses, ListBlueprintTagsResponses, ListDeprecatedResponses, ListDistinctNamespacesResponses, ListExecutableDistinctNamespacesResponses, ListFlowExecutionsByNamespaceResponses, ListFlowMetricsResponses, ListFlowRevisionsResponses, ListFlowsByNamespaceResponses, ListKeysWithInheritenceResponses, ListLogsFromExecutionResponses, ListMcpsResponses, ListNamespaceDirectoryFilesResponses, ListPluginsResponses, ListSecretsResponses, ListTaskMetricsResponses, ListTasksWithMetricsResponses, ListToolsResponses, ListTriggerPluginsResponses, LoginResponses, LogoutResponses, MetricsResponses, MiscControllerLoginRequest, MoveFileDirectoryResponses, PauseBackfillByIdsResponses, PauseBackfillByQueryResponses, PauseBackfillErrors, PauseBackfillResponses, PauseExecutionErrors, PauseExecutionResponses, PauseExecutionsByIdsErrors, PauseExecutionsByIdsResponses, PauseExecutionsByQueryErrors, PauseExecutionsByQueryResponses, PluginArtifact, PreviewChartResponses, PreviewFileFromExecutionResponses, PreviewReplaceBySourceCodeResponses, QueryFilter, QueryFilterField, RenderExpressionsResponses, ReplaceLineBySourceCodeResponses, ReplayExecutionErrors, ReplayExecutionResponses, ReplayExecutionsByIdsErrors, ReplayExecutionsByIdsResponses, ReplayExecutionsByQueryErrors, ReplayExecutionsByQueryResponses, ReplayExecutionWithinputsErrors, ReplayExecutionWithinputsResponses, RestartExecutionErrors, RestartExecutionResponses, RestartExecutionsByIdsErrors, RestartExecutionsByIdsResponses, RestartExecutionsByQueryErrors, RestartExecutionsByQueryResponses, RestartTriggerErrors, RestartTriggerResponses, ResumeExecutionErrors, ResumeExecutionFromBreakpointErrors, ResumeExecutionFromBreakpointResponses, ResumeExecutionResponses, ResumeExecutionsByIdsErrors, ResumeExecutionsByIdsResponses, ResumeExecutionsByQueryErrors, ResumeExecutionsByQueryResponses, SchemaType, SearchBlueprintsResponses, SearchByExecutionResponses, SearchConcurrencyLimitsResponses, SearchDashboardsResponses, SearchExecutionsByFlowIdResponses, SearchExecutionsResponses, SearchFlowsBySourceCodeResponses, SearchFlowsResponses, SearchLogsResponses, SearchNamespaceFilesResponses, SearchNamespacesResponses, SearchTriggersForFlowResponses, SearchTriggersResponses, ServiceType, SetKeyValueResponses, SetLabelsOnTerminatedExecutionErrors, SetLabelsOnTerminatedExecutionResponses, SetLabelsOnTerminatedExecutionsByIdsErrors, SetLabelsOnTerminatedExecutionsByIdsResponses, SetLabelsOnTerminatedExecutionsByQueryErrors, SetLabelsOnTerminatedExecutionsByQueryResponses, SetTenantDefaultDashboardResponses, SourceSearchReplaceApplyRequest, SourceSearchReplaceLineRequest, SourceSearchReplacePreviewRequest, SourceSearchScope, StateType, TaskWithVersion, TenantControllerSetTenantDefaultDashboardsRequest, ToggleMcpResponses, TriggerControllerApiCreateBackfillRequest, TriggerControllerApiDisableTriggerRequest, TriggerControllerApiTriggerId, TriggerControllerSetDisabledRequest, TriggerExecutionByGetWebhookResponses, TriggerExecutionByGetWebhookWithPathResponses, TriggerExecutionByPostWebhookResponses, TriggerExecutionByPostWebhookWithPathResponses, TriggerExecutionByPutWebhookResponses, TriggerExecutionByPutWebhookWithPathResponses, Type, UnlockTriggerErrors, UnlockTriggerResponses, UnlockTriggersByIdsResponses, UnlockTriggersByQueryResponses, UnpauseBackfillByIdsResponses, UnpauseBackfillByQueryResponses, UnpauseBackfillErrors, UnpauseBackfillResponses, UnqueueExecutionErrors, UnqueueExecutionResponses, UnqueueExecutionsByIdsErrors, UnqueueExecutionsByIdsResponses, UnqueueExecutionsByQueryErrors, UnqueueExecutionsByQueryResponses, UpdateConcurrencyLimitResponses, UpdateDashboardErrors, UpdateDashboardResponses, UpdateExecutionsStatusByIdsErrors, UpdateExecutionsStatusByIdsResponses, UpdateExecutionsStatusByQueryErrors, UpdateExecutionsStatusByQueryResponses, UpdateExecutionStatusErrors, UpdateExecutionStatusResponses, UpdateFlowResponses, UpdateFlowsInNamespaceResponses, UpdateMcpResponses, UpdateTaskRunStateErrors, UpdateTaskRunStateResponses, ValidateChartResponses, ValidateDashboardResponses, ValidateFlowsResponses, ValidateNewExecutionInputsErrors, ValidateNewExecutionInputsResponses, ValidateResumeExecutionInputsErrors, ValidateResumeExecutionInputsResponses, ValidateTaskResponses, ValidateTriggerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -141,17 +141,43 @@ export const _09Bfeede = <ThrowOnError extends boolean = true>(parameters?: {
 };
 
 /**
+ * Detect missing plugins in a flow
+ *
+ * Parses the provided flow YAML, identifies task and trigger types that are not yet registered, and maps them to their Maven artifacts via the plugin catalog. Returns 403 when the auto-install feature is disabled on this instance.
+ */
+export const _0739F9723 = <ThrowOnError extends boolean = true>(parameters: {
+    body: string;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ key: 'body', map: 'body' }] }]);
+    return (options?.client ?? client).post<DetectMissingPluginsResponses, DetectMissingPluginsErrors, ThrowOnError>({
+        bodySerializer: null,
+        url: '/api/v1/plugins/auto-install/detect',
+        ...options,
+        ...params,
+        headers: {
+            'Content-Type': 'text/plain',
+            ...options?.headers,
+            ...params.headers
+        }
+    });
+};
+
+/**
  * Get plugins group by subgroups
  */
 export const _36Cc3F94 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginBySubgroupsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/groups/subgroups', ...options });
 
 /**
  * Get plugins icons
+ *
+ * Answers the icon metadata of every registered class. The `icon` field is always null here: icon bytes are served per class, and cached by the browser, by `GET /plugins/icons/{cls}/icon.svg`. `hash` is non-null exactly when the class has an icon, so callers can still tell which classes to render an icon for.
  */
 export const e16C271 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginIconsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/icons', ...options });
 
 /**
- * Get plugins icons
+ * Get plugin group and subgroup icons
+ *
+ * Answers the icon metadata of every plugin group and subgroup. As on `GET /plugins/icons` the `icon` field is always null; the bytes come from `GET /plugins/icons/{cls}/icon.svg`.
  */
 export const _557632E4 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginGroupIconsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/icons/groups', ...options });
 
@@ -209,6 +235,43 @@ export const _6Fb73243 = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
+ * Start async plugin installation
+ *
+ * Enqueues installation of the specified plugin artifacts and returns a job id immediately (HTTP 202). Poll GET /plugins/install/{jobId} for status and per-artifact byte-level progress. Only artifacts provided by the plugin catalog (as returned by POST /plugins/auto-install/detect) are accepted. In distributed (EE) deployments the installation is propagated cluster-wide after the job succeeds. Returns 403 when the auto-install feature is disabled on this instance.
+ */
+export const _43437585 = <ThrowOnError extends boolean = true>(parameters: {
+    body: Array<PluginArtifact>;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ key: 'body', map: 'body' }] }]);
+    return (options?.client ?? client).post<InstallPluginsResponses, InstallPluginsErrors, ThrowOnError>({
+        url: '/api/v1/plugins/install',
+        ...options,
+        ...params,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options?.headers,
+            ...params.headers
+        }
+    });
+};
+
+/**
+ * Get plugin installation job status
+ *
+ * Returns the current state of an async plugin installation job, including per-artifact byte-level transfer progress. Returns 404 when the job is unknown or has been evicted (jobs are kept for one hour after completion).
+ */
+export const _23Ec0C18 = <ThrowOnError extends boolean = true>(parameters: {
+    jobId: string;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'jobId' }] }]);
+    return (options?.client ?? client).get<GetInstallJobResponses, GetInstallJobErrors, ThrowOnError>({
+        url: '/api/v1/plugins/install/{jobId}',
+        ...options,
+        ...params
+    });
+};
+
+/**
  * Get plugins group by subgroups
  */
 export const _07477A414 = <ThrowOnError extends boolean = true>(parameters: {
@@ -251,8 +314,13 @@ export const _04C6659B3 = <ThrowOnError extends boolean = true>(parameters: {
 export const _02D5B2720 = <ThrowOnError extends boolean = true>(parameters: {
     type: SchemaType;
     arrayOf?: boolean | null;
+    includeCatalog?: boolean | null;
 }, options?: Options<never, ThrowOnError>) => {
-    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'type' }, { in: 'query', key: 'arrayOf' }] }]);
+    const params = buildClientParams([parameters], [{ args: [
+                { in: 'path', key: 'type' },
+                { in: 'query', key: 'arrayOf' },
+                { in: 'query', key: 'includeCatalog' }
+            ] }]);
     return (options?.client ?? client).get<GetSchemasFromTypeResponses, unknown, ThrowOnError>({
         url: '/api/v1/plugins/schemas/{type}',
         ...options,
@@ -606,6 +674,26 @@ export const _1Ec18Cc3 = <ThrowOnError extends boolean = true>(parameters: {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }] }]);
     return (options?.client ?? client).get<SearchConcurrencyLimitsResponses, unknown, ThrowOnError>({
         url: '/api/v1/{tenant}/concurrency-limit/search',
+        ...options,
+        ...params
+    });
+};
+
+/**
+ * Get the concurrency limit of a flow
+ */
+export const _27Bdb75e = <ThrowOnError extends boolean = true>(parameters: {
+    namespace: string;
+    flowId: string;
+    tenant: string;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [
+                { in: 'path', key: 'namespace' },
+                { in: 'path', key: 'flowId' },
+                { in: 'path', key: 'tenant' }
+            ] }]);
+    return (options?.client ?? client).get<GetConcurrencyLimitResponses, unknown, ThrowOnError>({
+        url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}',
         ...options,
         ...params
     });
@@ -3923,7 +4011,22 @@ export const _06C163B2c = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Get task run outputs
+ * Get the flow-level outputs of an execution
+ */
+export const _5A13D0D0 = <ThrowOnError extends boolean = true>(parameters: {
+    executionId: string;
+    tenant: string;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
+    return (options?.client ?? client).get<GetExecutionOutputsResponses, unknown, ThrowOnError>({
+        url: '/api/v1/{tenant}/outputs/executions/{executionId}',
+        ...options,
+        ...params
+    });
+};
+
+/**
+ * List the task runs of an execution having outputs
  */
 export const _02Fb2086b = <ThrowOnError extends boolean = true>(parameters: {
     executionId: string;
@@ -3931,7 +4034,7 @@ export const _02Fb2086b = <ThrowOnError extends boolean = true>(parameters: {
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
     return (options?.client ?? client).get<GetTaskOutputsInformationResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/outputs/{executionId}',
+        url: '/api/v1/{tenant}/outputs/tasks/{executionId}',
         ...options,
         ...params
     });
@@ -3951,7 +4054,7 @@ export const _1Df97Ee2 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' }
             ] }]);
     return (options?.client ?? client).get<GetTaskRunOutputsResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/outputs/{executionId}/{taskRunId}',
+        url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}',
         ...options,
         ...params
     });

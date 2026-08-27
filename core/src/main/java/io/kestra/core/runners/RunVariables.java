@@ -69,7 +69,7 @@ public final class RunVariables {
         "flow.namespace",
         "flow.revision",
         "flow.tenantId",
-        // ForEach/EachParallel/EachSequential iteration context (item.*)
+        // Loop iteration context (item.*)
         "item",
         "item.index",
         "item.key",
@@ -239,7 +239,7 @@ public final class RunVariables {
     /**
      * Returns an immutable map representation of the given {@link Execution}.
      */
-    static Map<String, Object> of(Execution execution) {
+    static Map<String, Object> of(Execution execution, Map<String, Object> executionOutputs) {
         ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.builder();
 
         executionMap.put("id", execution.getId());
@@ -257,8 +257,8 @@ public final class RunVariables {
         Optional.ofNullable(execution.getOriginalId())
             .ifPresent(originalId -> executionMap.put("originalId", originalId));
 
-        if (execution.getOutputs() != null) {
-            executionMap.put("outputs", execution.getOutputs());
+        if (!MapUtils.isEmpty(executionOutputs)) {
+            executionMap.put("outputs", executionOutputs);
         }
 
         return executionMap.build();
@@ -288,6 +288,8 @@ public final class RunVariables {
         Builder withInputs(Map<String, Object> inputs);
 
         Builder withOutputs(Map<String, Object> outputs);
+
+        Builder withExecutionOutputs(Map<String, Object> executionOutputs);
 
         Builder withTask(Task task);
 
@@ -345,6 +347,7 @@ public final class RunVariables {
         protected Map<String, Object> variables;
         protected Map<String, Object> inputs;
         protected Map<String, Object> outputs;
+        protected Map<String, Object> executionOutputs;
         protected Map<String, ?> envs;
         protected Map<?, ?> globals;
         private final Optional<String> secretKey;
@@ -412,7 +415,7 @@ public final class RunVariables {
                     }
                 }
 
-                builder.put("execution", RunVariables.of(realExecution));
+                builder.put("execution", RunVariables.of(realExecution, executionOutputs));
 
                 if (!MapUtils.isEmpty(outputs)) {
                     if (decryptVariables) {

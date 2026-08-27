@@ -1,6 +1,8 @@
 <template>
+    <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
+
     <div
-        v-if="generated?.total > 0"
+        v-else-if="generated?.total > 0"
         class="chart"
         :class="{short: props.short, execution: props.execution}"
     >
@@ -14,6 +16,7 @@
 
         <KsEchart
             ref="ksEchartRef"
+            :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
             class="canvas"
             :options="echartsOption"
             :loading="false"
@@ -36,10 +39,10 @@
     import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    import {KsEchart, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, useLegendToggle} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateFormat, useTheme} from "../../../utils/utils"
@@ -113,8 +116,8 @@
 
     const shortAxisLabel = (value: string): string => {
         if (typeof value !== "string") return value
-        const [datePart, ...timeParts] = value.split(":")
-        if (timeParts.length) return timeParts.join(":")
+        const [datePart, timePart] = value.split(" ")
+        if (timePart) return timePart
         const segments = datePart.split("-")
         return segments.length === 3 ? segments.slice(1).join("-") : datePart
     }
@@ -343,7 +346,7 @@
         }
     })
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const showLegend = computed(() => !props.short && !props.execution && !!chartOptions?.legend?.enabled)
 

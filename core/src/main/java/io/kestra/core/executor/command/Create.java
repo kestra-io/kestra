@@ -82,7 +82,9 @@ public record Create(
 
     public Create withInputsFromReader(Function<String, Map<String, Object>> inputsReader) {
         var inputs = inputsReader.apply(this.executionId());
-        return new Create(executionFullId, timestamp, eventId, operationId, stateType, kind, trigger, labels, scheduleDate, inputs, breakpoints, traceParent, fixtures, variables, executionDepth);
+        return new Create(
+            executionFullId, timestamp, eventId, operationId, stateType, kind, trigger, labels, scheduleDate, inputs, breakpoints, traceParent, fixtures, variables, executionDepth
+        );
     }
 
     @Override

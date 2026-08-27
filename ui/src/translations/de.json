@@ -511,6 +511,15 @@
     },
     "use": "Verwenden",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin-Installation fehlgeschlagen",
+        "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
+        "preparing": "Plugin-Installation wird vorbereitet...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin erfolgreich installiert | Plugins erfolgreich installiert",
+        "timeout": "Die Plugin-Installation dauert länger als erwartet. Der Flow wurde nicht gespeichert, speichere erneut, sobald die Installation abgeschlossen ist.",
+        "title": "{count} Plugin wird installiert | {count} Plugins werden installiert"
+      },
       "names": "Plugins",
       "release": "Versionshinweise",
       "beta": "Beta",
@@ -770,6 +779,11 @@
     "expand_by_default": "Strukturierte Logs standardmäßig ausklappen",
     "similar lines": "ähnliche Zeilen",
     "download_logs_description": "Wähle aus, welche Logs exportiert werden sollen. Die Filter entsprechen standardmäßig deiner aktuellen Ansicht.",
+    "logs_download_truncated": "Die neuesten {downloaded} Log-Zeilen wurden exportiert. {skipped} weitere entsprachen deinen Filtern und wurden ausgelassen.",
+    "logs_download_capped": "Die neuesten {downloaded} Log-Zeilen wurden exportiert, das Maximum für einen Export. Möglicherweise entsprachen weitere deinen Filtern.",
+    "logs_download_partial": "Der Export endete bei {downloaded} Log-Zeilen, weil dieser Filter nicht weiter durchblättert werden kann. Einige passende Zeilen fehlen.",
+    "logs_download_failed": "Der Log-Export ist fehlgeschlagen. Es wurde keine Datei heruntergeladen.",
+    "logs_download_empty": "Keine Log-Zeilen entsprachen deinen Filtern, daher wurde keine Datei heruntergeladen.",
     "display_settings": "Anzeigeeinstellungen",
     "density": "Dichte",
     "density_compact": "Kompakt",
@@ -1798,6 +1812,7 @@
       "others": "Andere",
       "viewAll": "Alle anzeigen",
       "export": "Exportieren",
+      "exportEmpty": "Dieses Diagramm hat keine Daten zum Exportieren.",
       "exportTo": {
         "csv": "Als CSV exportieren",
         "ion": "Als ION exportieren"

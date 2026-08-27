@@ -2,7 +2,7 @@
     <div class="trigger-card">
         <div class="trigger-body">
             <div class="icon">
-                <TaskIcon class="glyph" :cls="trigger.type" :loadIcon="pluginsStore.loadIcon" onlyIcon />
+                <TaskIcon class="glyph" :cls="trigger.type" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon />
             </div>
             <div class="content">
                 <div class="header">
@@ -84,10 +84,14 @@
 </script>
 
 <style scoped lang="scss">
+    $card-min-height: 8.75rem;
+
     .trigger-card {
         display: flex;
         flex-direction: column;
-        min-height: 8.75rem;
+        min-height: $card-min-height;
+        content-visibility: auto;
+        contain-intrinsic-height: auto $card-min-height;
         padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
         border: var(--ks-border-block-primary);
         border-radius: var(--ks-radius-base);

@@ -133,7 +133,11 @@
 
     onMounted(async () => {
         try {
-            allTriggers.value = await pluginsStore.listTriggers()
+            const [triggers] = await Promise.all([
+                pluginsStore.listTriggers(),
+                pluginsStore.fetchIcons().catch(() => undefined),
+            ])
+            allTriggers.value = triggers
         } finally {
             loading.value = false
         }

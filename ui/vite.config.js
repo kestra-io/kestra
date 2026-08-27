@@ -110,18 +110,21 @@ export default defineConfig(({mode}) => {
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
                     },
-                    // add all exports of @kestra-io/kestra-sdk as shared singletons.
-                    // eager: the SDK's barrel entry re-exports every per-tag module, so they are all
-                    // in the initial graph no matter what. A lazy share would emit an import() that
-                    // cannot split them out of it (INEFFECTIVE_DYNAMIC_IMPORT, one per subpath);
-                    // eager emits the static import instead, and plugins still resolve to this instance.
+                    // add all exports of @kestra-io/kestra-sdk as shared singletons, the "./all"
+                    // convenience barrel included: a plugin importing it has to reach the host's
+                    // modules, or it would bundle its own copy of shared.gen and with it a second
+                    // `globalTenant` that nothing ever sets. Nothing in this app imports "./all",
+                    // so its share lands in a lazy chunk that is never fetched.
                     ...Object.fromEntries(Object.keys(kestraSdkExports)
                         .filter((key) => key !== "." && !key.endsWith(".json"))
                         .map((key) => {
                             const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
                             return [`@kestra-io/kestra-sdk/${name}`, {
                                 singleton: true,
-                                eager: true,
+                                // shared.gen holds the tenant state every generated operation reads,
+                                // so every per-tag module imports it statically and no lazy share
+                                // could split it out. The rest load with the page that uses them.
+                                eager: name === "shared",
                             }]
                         }),
                     ),

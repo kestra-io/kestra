@@ -1,5 +1,8 @@
 package io.kestra.core.validations.validator;
 
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.validations.SwitchTaskValidation;
 import io.kestra.plugin.core.flow.Switch;
 
@@ -27,6 +30,31 @@ public class SwitchTaskValidator implements ConstraintValidator<SwitchTaskValida
         ) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("No task defined, neither cases or default have any tasks")
+                .addConstraintViolation();
+
+            return false;
+        }
+
+        Optional<String> emptyCase = value.getCases() == null
+            ? Optional.empty()
+            : value.getCases()
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == null || entry.getValue().isEmpty())
+                .map(Map.Entry::getKey)
+                .findFirst();
+
+        if (emptyCase.isPresent()) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("The case '%s' must define at least one task.".formatted(emptyCase.get()))
+                .addConstraintViolation();
+
+            return false;
+        }
+
+        if (value.getDefaults() != null && value.getDefaults().isEmpty()) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("The 'defaults' property cannot be empty.")
                 .addConstraintViolation();
 
             return false;

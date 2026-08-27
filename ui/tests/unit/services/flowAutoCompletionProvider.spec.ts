@@ -204,6 +204,7 @@ describe("FlowAutoCompletionProvider", () => {
         expect(result).toContain("outputs")
         expect(result).toContain("inputs")
         expect(result).toContain("kestra")
+        expect(result).toContain("item")
 
         // Function snippets are generated from functionsWithDefaults
         for (const fn of mockFunctions.filter(fn => fn.name !== "subflow")) {

@@ -242,13 +242,6 @@ export default defineConfig(({mode}) => {
                 "* > @kestra-io/ui-libs",
                 "@kestra-io/design-system",
                 "@kestra-io/topology",
-                // The root entry carries no operations, so a page's first call reaches its tag
-                // subpath directly. Excluded, or that late import is a new dep mid-run and the
-                // re-optimize reloads the page under whichever storybook test is running.
-                "@kestra-io/kestra-sdk",
-                ...Object.keys(kestraSdkExports)
-                    .filter((key) => key !== "." && !key.endsWith(".json"))
-                    .map((key) => `@kestra-io/kestra-sdk/${key.replace(/^\.\//, "")}`),
                 "monaco-editor",
                 "monaco-yaml",
                 "monaco-worker-manager",

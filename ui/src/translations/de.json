@@ -302,7 +302,7 @@
     "state_history": {
       "title": "Statusverlauf",
       "open": "Statusverlauf",
-      "aria_open": "Statusverlauf für diesen Task-Lauf anzeigen",
+      "aria_open": "Statusverlauf anzeigen",
       "aria_open_for": "Statusverlauf für {subject} anzeigen",
       "started_at": "Gestartet {time}",
       "failed_at": "Fehlgeschlagen um {time}",
@@ -311,6 +311,7 @@
       "did_not_run": "Dieser Task wurde nicht ausgeführt",
       "waiting_to_start": "Wartet auf Start",
       "attempt_n": "Versuch {index}",
+      "attempt_count": "{count} Versuche",
       "copy": "Statusverlauf kopieren"
     },
     "search": "Suche",

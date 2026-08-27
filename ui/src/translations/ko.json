@@ -302,7 +302,7 @@
     "state_history": {
       "title": "상태 기록",
       "open": "상태 기록",
-      "aria_open": "이 태스크 실행의 상태 기록 표시",
+      "aria_open": "상태 기록 표시",
       "aria_open_for": "{subject}의 상태 기록 표시",
       "started_at": "{time}에 시작됨",
       "failed_at": "{time}에 실패함",
@@ -311,6 +311,7 @@
       "did_not_run": "이 태스크는 실행되지 않았습니다",
       "waiting_to_start": "시작 대기 중",
       "attempt_n": "시도 {index}",
+      "attempt_count": "{count}회 시도",
       "copy": "상태 기록 복사"
     },
     "search": "검색",

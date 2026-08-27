@@ -302,7 +302,7 @@
     "state_history": {
       "title": "Historial de estado",
       "open": "Historial de estado",
-      "aria_open": "Mostrar el historial de estado de esta ejecución de tarea",
+      "aria_open": "Mostrar el historial de estado",
       "aria_open_for": "Mostrar el historial de estado de {subject}",
       "started_at": "Iniciado {time}",
       "failed_at": "Fallido a las {time}",
@@ -311,6 +311,7 @@
       "did_not_run": "Esta tarea no se ejecutó",
       "waiting_to_start": "Esperando para iniciar",
       "attempt_n": "Intento {index}",
+      "attempt_count": "{count} intentos",
       "copy": "Copiar historial de estado"
     },
     "search": "Buscar",

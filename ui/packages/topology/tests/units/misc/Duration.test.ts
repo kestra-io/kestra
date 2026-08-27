@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeEach, afterEach} from "vitest"
+import {describe, expect, it, beforeEach, afterEach, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import Duration from "../../../src/misc/Duration.vue"
@@ -8,16 +8,23 @@ const i18n = createI18n({
     legacy: false,
     locale: "en",
     // Every other key intentionally has no message so tests can assert on the raw key as fallback
-    // text. aria_open_for is the exception: it needs real interpolation to prove two different
-    // subjects produce two different aria-labels.
-    messages: {en: {state_history: {aria_open_for: "Show the state history for {subject}"}}},
+    // text. These two are the exception: they need real interpolation, to prove two different
+    // subjects produce two different aria-labels, and that the attempt count is not concatenated.
+    messages: {
+        en: {
+            state_history: {
+                aria_open_for: "Show the state history for {subject}",
+                attempt_count: "{count} attempts",
+            },
+        },
+    },
     missingWarn: false,
     fallbackWarn: false,
 })
 
 function mountDuration(
     histories: {date: string | number; state: string}[],
-    extraProps: {attemptCount?: number; subject?: string} = {},
+    extraProps: {attemptCount?: number; subject?: string; interval?: number} = {},
 ) {
     return mount(Duration, {
         props: {histories, ...extraProps},
@@ -53,6 +60,7 @@ describe("Duration", () => {
 
     afterEach(() => {
         localStorage.removeItem(TIMEZONE_STORAGE_KEY)
+        vi.useRealTimers()
     })
 
     it("should disable the trigger and show a dash when there is no history", () => {
@@ -141,11 +149,11 @@ describe("Duration", () => {
             {attemptCount: 3},
         )
 
-        expect(wrapper.find(".duration-total-note").text()).toContain("3")
+        expect(wrapper.find(".duration-total-note").text()).toBe("3 attempts")
 
         await openStateHistory(wrapper)
 
-        expect(wrapper.find(".state-history-date").text()).toContain("3")
+        expect(wrapper.find(".state-history-date").text()).toContain("3 attempts")
         // No RETRYING boundary exists in this history, so there is nothing to group by: rendering
         // must degrade to a flat list rather than fabricate attempt groups.
         expect(wrapper.findAll("[data-test='state-history-attempt-header']")).toHaveLength(0)
@@ -222,6 +230,31 @@ describe("Duration", () => {
         expect(aggregateLabel).toBe("Show the state history for flaky")
         expect(attemptLabel).toBe("Show the state history for flaky, Attempt 2")
         expect(attemptLabel).not.toBe(aggregateLabel)
+    })
+
+    it("should resume the live counter when a retried task starts running again", async () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(4_000)
+
+        const firstAttempt = [
+            {date: 0, state: "CREATED"},
+            {date: 1_000, state: "RUNNING"},
+            {date: 2_000, state: "FAILED"},
+            {date: 3_000, state: "RETRYING"},
+        ]
+        const wrapper = mountDuration(firstAttempt, {interval: 100})
+        const label = () => wrapper.find("button.ks-duration-value").text()
+
+        // RETRYING is not a running state, so the elapsed time is frozen at the last transition.
+        expect(label()).toBe("3.00s")
+        await vi.advanceTimersByTimeAsync(1_000)
+        expect(label()).toBe("3.00s")
+
+        await wrapper.setProps({histories: [...firstAttempt, {date: 5_000, state: "RUNNING"}]})
+        expect(label()).toBe("5.00s")
+
+        await vi.advanceTimersByTimeAsync(1_000)
+        expect(label()).toBe("6.00s")
     })
 
     it("should not show a state history button when there is no history to show", () => {

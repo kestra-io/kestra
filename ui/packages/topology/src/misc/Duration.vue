@@ -35,7 +35,7 @@
                     <template v-else>
                         {{ formatCardTotal(breakdown.total) }}
                         <span v-if="waitingToStart" class="duration-total-note">{{ $t('state_history.waiting_to_start') }}</span>
-                        <span v-else-if="displayedAttemptCount" class="duration-total-note">{{ displayedAttemptCount }} {{ $t('attempts') }}</span>
+                        <span v-else-if="displayedAttemptCount" class="duration-total-note">{{ $t('state_history.attempt_count', {count: displayedAttemptCount}) }}</span>
                     </template>
                 </div>
                 <template v-if="!neverRan">
@@ -127,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {computed, onBeforeUnmount, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import moment, {type Moment} from "moment-timezone"
     import {
@@ -235,12 +235,9 @@
 
     function paint() {
         now.value = Date.now()
-        if (!refreshHandler && breakdown.value.isRunning) {
+        if (!refreshHandler) {
             refreshHandler = setInterval(() => {
                 now.value = Date.now()
-                if (!breakdown.value.isRunning) {
-                    cancel()
-                }
             }, props.interval)
         }
     }
@@ -252,16 +249,9 @@
         }
     }
 
-    onMounted(paint)
-
-    watch(
-        normalizedHistories,
-        (newValue, oldValue) => {
-            if (newValue?.[0]?.date?.valueOf() !== oldValue?.[0]?.date?.valueOf()) {
-                paint()
-            }
-        },
-    )
+    // Driven by the state and not by the history's first entry, so the ticker also restarts on the
+    // RUNNING of a second attempt, which leaves that entry untouched.
+    watch(() => breakdown.value.isRunning, (running) => running ? paint() : cancel(), {immediate: true})
 
     onBeforeUnmount(cancel)
 
@@ -326,7 +316,9 @@
     const headerDate = computed(() => {
         if (!hasHistory.value) return ""
         const date = formatInTimezone(filteredHistories.value[0].date, "YYYY-MM-DD")
-        return displayedAttemptCount.value ? `${date} · ${displayedAttemptCount.value} ${t("attempts")}` : date
+        return displayedAttemptCount.value
+            ? `${date} · ${t("state_history.attempt_count", {count: displayedAttemptCount.value})}`
+            : date
     })
 
     interface TimelineRow {

@@ -302,7 +302,7 @@
     "state_history": {
       "title": "状態履歴",
       "open": "状態履歴",
-      "aria_open": "このタスク実行の状態履歴を表示",
+      "aria_open": "状態履歴を表示",
       "aria_open_for": "{subject} の状態履歴を表示",
       "started_at": "{time} に開始",
       "failed_at": "{time} に失敗",
@@ -311,6 +311,7 @@
       "did_not_run": "このタスクは実行されませんでした",
       "waiting_to_start": "開始待ち",
       "attempt_n": "試行 {index}",
+      "attempt_count": "{count} 回の試行",
       "copy": "状態履歴をコピー"
     },
     "search": "検索",

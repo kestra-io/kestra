@@ -302,7 +302,7 @@
     "state_history": {
       "title": "स्थिति इतिहास",
       "open": "स्थिति इतिहास",
-      "aria_open": "इस टास्क रन का स्थिति इतिहास दिखाएं",
+      "aria_open": "स्थिति इतिहास दिखाएं",
       "aria_open_for": "{subject} का स्थिति इतिहास दिखाएं",
       "started_at": "{time} पर शुरू हुआ",
       "failed_at": "{time} पर विफल",
@@ -311,6 +311,7 @@
       "did_not_run": "यह टास्क नहीं चला",
       "waiting_to_start": "शुरू होने की प्रतीक्षा में",
       "attempt_n": "प्रयास {index}",
+      "attempt_count": "{count} प्रयास",
       "copy": "स्थिति इतिहास कॉपी करें"
     },
     "search": "खोजें",

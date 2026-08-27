@@ -302,7 +302,7 @@
     "state_history": {
         "title": "State history",
         "open": "State history",
-        "aria_open": "Show the state history for this task run",
+        "aria_open": "Show the state history",
         "aria_open_for": "Show the state history for {subject}",
         "started_at": "Started {time}",
         "failed_at": "Failed at {time}",
@@ -311,6 +311,7 @@
         "did_not_run": "This task did not run",
         "waiting_to_start": "Waiting to start",
         "attempt_n": "Attempt {index}",
+        "attempt_count": "{count} attempts",
         "copy": "Copy state history"
     },
     "search": "Search",

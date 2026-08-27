@@ -302,7 +302,7 @@
     "state_history": {
       "title": "Cronologia stato",
       "open": "Cronologia stato",
-      "aria_open": "Mostra la cronologia dello stato per questa esecuzione del task",
+      "aria_open": "Mostra la cronologia dello stato",
       "aria_open_for": "Mostra la cronologia dello stato di {subject}",
       "started_at": "Avviato alle {time}",
       "failed_at": "Fallito alle {time}",
@@ -311,6 +311,7 @@
       "did_not_run": "Questo task non è stato eseguito",
       "waiting_to_start": "In attesa di avvio",
       "attempt_n": "Tentativo {index}",
+      "attempt_count": "{count} tentativi",
       "copy": "Copia cronologia stato"
     },
     "search": "Cerca",

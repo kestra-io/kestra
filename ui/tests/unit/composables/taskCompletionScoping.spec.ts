@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {
+    taskIdentityAtCursor,
     taskTypeAtCursor,
     scopePropertySuggestionsToTaskType,
 } from "../../../src/composables/monaco/languages/taskCompletionScoping"
@@ -53,6 +54,38 @@ tasks:
         expect(taskTypeAtCursor({source: nested, cursorIndex: nested.length})).toBe(
             "io.kestra.plugin.core.log.Log",
         )
+    })
+
+    it.each([
+        ["      maxAttempts: 3", "after a set key"],
+        ["      inter", "while a key is half typed"],
+    ])("returns undefined inside a nested sub-map (%s, %s)", (tail) => {
+        const withRetry = `id: myflow
+namespace: my.ns
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: hi
+    retry:
+      type: constant
+${tail}`
+        expect(taskTypeAtCursor({source: withRetry, cursorIndex: withRetry.length})).toBeUndefined()
+    })
+
+    it("reports the task's pinned version alongside its type", () => {
+        const pinned = `id: myflow
+namespace: my.ns
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    version: 1.2.3
+    message: hi
+`
+        const cursorIndex = pinned.indexOf("message: hi") + "message: hi".length
+        expect(taskIdentityAtCursor({source: pinned, cursorIndex})).toEqual({
+            type: "io.kestra.plugin.core.log.Log",
+            version: "1.2.3",
+        })
     })
 })
 

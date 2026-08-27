@@ -11,30 +11,62 @@ function isTaskLike(value: unknown): value is TaskLike {
     )
 }
 
-function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefined {
+function isMap(value: unknown): value is TaskLike {
+    return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function probeIndexes(source: string, cursorIndex: number): number[] {
     const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
-    const probeIndexes = [safeCursorIndex]
+    const indexes = [safeCursorIndex]
     let previousNonWhitespace = safeCursorIndex
     while (previousNonWhitespace > 0 && /\s/.test(source.charAt(previousNonWhitespace))) {
         previousNonWhitespace--
     }
     if (previousNonWhitespace !== safeCursorIndex) {
-        probeIndexes.push(previousNonWhitespace)
+        indexes.push(previousNonWhitespace)
     }
+    return indexes
+}
 
-    for (const probeIndex of probeIndexes) {
+function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[]) => T | undefined): T | undefined {
+    for (const probeIndex of probeIndexes(source, cursorIndex)) {
         const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
-        const candidates = [...(localized?.parents ?? []), localized?.value]
-
-        for (let i = candidates.length - 1; i >= 0; i--) {
-            const candidate = candidates[i]
-            if (isTaskLike(candidate)) {
-                return candidate
-            }
+        const found = pick([...(localized?.parents ?? []), localized?.value])
+        if (found !== undefined) {
+            return found
         }
     }
-
     return undefined
+}
+
+function innermostTaskIndex(candidates: unknown[]): number {
+    for (let i = candidates.length - 1; i >= 0; i--) {
+        if (isTaskLike(candidates[i])) {
+            return i
+        }
+    }
+    return -1
+}
+
+function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefined {
+    return probe(source, cursorIndex, (candidates) => {
+        const taskIndex = innermostTaskIndex(candidates)
+        return taskIndex === -1 ? undefined : (candidates[taskIndex] as TaskLike)
+    })
+}
+
+function probeTaskOwningCursor(source: string, cursorIndex: number): TaskLike | undefined {
+    return probe(source, cursorIndex, (candidates) => {
+        const taskIndex = innermostTaskIndex(candidates)
+        if (taskIndex === -1) {
+            return undefined
+        }
+        // A map between the task and the cursor means the cursor sits in a sub-map (`retry:`,
+        // `taskRunner:`…) whose keys come from its own schema, so the task must not scope them.
+        return candidates.slice(taskIndex + 1).some(isMap)
+            ? undefined
+            : (candidates[taskIndex] as TaskLike)
+    })
 }
 
 function blankLineAtCursor(source: string, cursorIndex: number): string {
@@ -63,10 +95,37 @@ export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cur
     }
 }
 
-/** Returns the `type` of the task enclosing the cursor, or undefined when the cursor is not inside a task. */
+/**
+ * The type, and pinned version if any, of the task whose body *directly* encloses the cursor.
+ * Undefined inside a nested sub-map such as `retry:` or `taskRunner:`, whose keys are drawn from
+ * their own schema rather than the task's, so scoping them against the task would be wrong.
+ */
+export function taskIdentityAtCursor(
+    {source, cursorIndex}: {source: string; cursorIndex: number},
+): {type: string; version?: string} | undefined {
+    if (!source.length) {
+        return undefined
+    }
+
+    try {
+        const task = probeTaskOwningCursor(source, cursorIndex)
+            ?? probeTaskOwningCursor(blankLineAtCursor(source, cursorIndex), cursorIndex)
+        if (!isTaskLike(task)) {
+            return undefined
+        }
+
+        return {
+            type: task.type as string,
+            version: typeof task.version === "string" ? task.version : undefined,
+        }
+    } catch {
+        return undefined
+    }
+}
+
+/** Returns the `type` of the task whose body directly encloses the cursor. */
 export function taskTypeAtCursor(params: {source: string; cursorIndex: number}): string | undefined {
-    const task = findTaskLikeAtCursor(params)
-    return typeof task?.type === "string" ? task.type : undefined
+    return taskIdentityAtCursor(params)?.type
 }
 
 /** Of the given required properties, those the task enclosing the cursor has not set yet. */

@@ -36,7 +36,7 @@ import {
 import {
     filterMissingRequiredTaskProperties,
     scopePropertySuggestionsToTaskType,
-    taskTypeAtCursor,
+    taskIdentityAtCursor,
 } from "./taskCompletionScoping"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
@@ -44,6 +44,8 @@ import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
 import CompletionContext = languages.CompletionContext;
+
+const unscopableTaskTypes = new Set<string>()
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     protected readonly yamlAutoCompletionObject: YamlAutoCompletion
@@ -328,15 +330,25 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
             let scopedSuggestions = suggestions
             if (!isTypeValueContext) {
-                const type = taskTypeAtCursor({
+                const task = taskIdentityAtCursor({
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
                 })
-                if (type) {
+                // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
+                // task shape but carry types like `STRING`, which would 404 on every keystroke.
+                const scopeKey = task && task.type.includes(".")
+                    ? `${task.type}@${task.version ?? ""}`
+                    : undefined
+                if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
                     try {
                         // `all` is required: without it the endpoint omits every inherited `Task`
                         // property (`retry`, `timeout`, `description`…), which would filter them out.
-                        const pluginDoc = await pluginsStore.load({cls: type, commit: false, all: true})
+                        const pluginDoc = await pluginsStore.load({
+                            cls: task.type,
+                            version: task.version,
+                            commit: false,
+                            all: true,
+                        })
                         const properties = pluginDoc?.schema?.properties?.properties
                         scopedSuggestions = scopePropertySuggestionsToTaskType({
                             suggestions,
@@ -344,7 +356,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                             propertyKind: monaco.languages.CompletionItemKind.Property,
                         })
                     } catch {
-                        // Fail open: keep the unscoped suggestions when the type schema can't be loaded.
+                        // Fail open, and remember the failure: the provider is re-invoked on every
+                        // keystroke, so retrying a type that cannot resolve would request it each time.
+                        unscopableTaskTypes.add(scopeKey)
                     }
                 }
             }

@@ -47,13 +47,14 @@
                     <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
                 </div>
 
-                <nav class="dp-nav" aria-label="Documentation sections">
+                <nav class="dp-nav" aria-label="Documentation sections" data-test="plugin-doc-nav">
                     <button
                         type="button"
                         v-for="chip in navChips"
                         :key="chip.id"
                         class="dp-navchip"
                         :class="{active: activeSection === chip.id}"
+                        :data-test="`plugin-doc-navchip-${chip.id}`"
                         @click="selectSection(chip.id)"
                     >
                         {{ chip.label }}
@@ -375,21 +376,9 @@
         sectionCounts.value = counts
     }
 
-    watch(
-        [() => currentPlugin.value?.cls, () => currentPlugin.value?.version],
-        ([cls, version], [oldCls, oldVersion]) => {
-            const clsChanged = cls !== oldCls
-            const versionChanged =
-                oldVersion !== undefined &&
-                version !== undefined &&
-                version !== oldVersion
-
-            if (clsChanged || versionChanged) {
-                activeSection.value = "overview"
-                sectionCounts.value = {}
-            }
-        },
-    )
+    watch([() => currentPlugin.value?.cls, () => currentPlugin.value?.version], () => {
+        activeSection.value = "overview"
+    })
 
     const selectSection = (id: string) => {
         activeSection.value = id

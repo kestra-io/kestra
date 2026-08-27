@@ -473,6 +473,11 @@
         "title": "残留的并发限制"
       }
     },
+    "docsPage": {
+      "notFound": "该文档页面不存在，可能已被移动或重命名。",
+      "loadError": "无法加载该文档页面，请重试。",
+      "backToDocs": "返回 Docs"
+    },
     "documentation": {
       "documentation": "文档"
     },

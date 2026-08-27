@@ -1,5 +1,4 @@
 import Utils from "./utils";
-import {getCurrentInstance} from "vue";
 import {DATE_FORMAT_STORAGE_KEY, TIMEZONE_STORAGE_KEY} from "../components/settings/BasicSettings.vue";
 import moment from "moment-timezone";
 
@@ -18,9 +17,22 @@ export function cap (value:string) {
 export function lower (value:string) {
     return value ? value.toString().toLowerCase() : "";
 }
-export function date (dateString:string, format?:string) {
-    const currentLocale = getCurrentInstance()?.appContext.config.globalProperties.$moment().locale();
-    const momentInstance = getCurrentInstance()?.appContext.config.globalProperties.$moment(dateString).locale(currentLocale);
+/**
+ * Formats an instant in the timezone and date format from Settings.
+ *
+ * Accepts what `moment` accepts: an ISO string, an epoch millisecond timestamp, or a `Date`.
+ * Callers must not pre-serialise a timestamp with `toISOString()` — that throws on a
+ * non-finite value, whereas `moment` degrades to the string "Invalid date".
+ *
+ * @param dateValue the instant to format
+ * @param format    a moment format, or "iso" for `YYYY-MM-DD HH:mm:ss.SSS`; defaults to the
+ *                  user's stored date format
+ */
+export function date (dateValue:string | number | Date, format?:string) {
+    // The app's `$moment` global is this same moment-timezone singleton, so reading it through
+    // getCurrentInstance() only made the helper unusable outside a component render.
+    const currentLocale = moment().locale();
+    const momentInstance = moment(dateValue).locale(currentLocale);
     let f;
     if (format === "iso") {
         f = "YYYY-MM-DD HH:mm:ss.SSS";

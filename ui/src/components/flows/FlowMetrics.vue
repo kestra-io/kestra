@@ -51,7 +51,7 @@
     import {mapStores} from "pinia";
     import {useMiscStore} from "override/stores/misc.js";
     import {useFlowStore} from "../../stores/flow";
-    import moment from "moment";
+    import {date as dateFilter} from "../../utils/filters";
     import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
     import KestraFilter from "../filter/KestraFilter.vue";
@@ -86,7 +86,8 @@
             chartData() {
                 return {
                     labels: this.flowStore.aggregatedMetrics.aggregations.map((e) =>
-                        moment(e.date).format(
+                        dateFilter(
+                            e.date,
                             getFormat(this.flowStore.aggregatedMetrics.groupBy),
                         ),
                     ),

@@ -846,6 +846,8 @@
         )
     }
 
+    const affectedCount = (response: any) => response?.count ?? response?.totalItems ?? 0
+
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: any) => {
         const actionMap: Record<string, () => any> = {
             "queryResumeExecution": () => executionsStore.queryResumeExecution,
@@ -881,7 +883,7 @@
             const ac = actionMap[queryAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 })
@@ -895,7 +897,7 @@
             const ac = actionMap[byIdAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 }).catch((e: any) => {
@@ -1081,7 +1083,7 @@
                         data: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -1092,7 +1094,7 @@
                         executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {

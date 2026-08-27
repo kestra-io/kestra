@@ -360,8 +360,7 @@
     const selectedAttemptNumberByTaskRunId = ref<Record<string, number>>({})
     const executionSSE = ref<any>(undefined) // FIXME: any
     const logsSSE = ref<any>(undefined) // FIXME: any
-    // Execution that `rawLogs` and any open logs SSE belong to, so both can be dropped
-    // when the view moves to another execution.
+    // Execution `rawLogs` and any open logs SSE belong to, so both can be dropped on a change.
     const logsExecutionId = ref<string | undefined>(undefined)
     const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
     const flow = ref<any>(undefined) // FIXME: any
@@ -637,10 +636,7 @@
                 return
             }
 
-            // A replay or a new playground run is a new execution with new taskrun ids, so logs
-            // held for the previous one are unusable. Dropping the stream here also stops the
-            // `!logsSSE.value` guards below from reading a stream that still follows the previous
-            // execution as "these logs are already covered" (kestra-io/kestra#14018).
+            // Closed here so the `!logsSSE.value` guards below cannot read a stream still following the previous execution as "already covered" (kestra-io/kestra#14018).
             if (logsExecutionId.value !== undefined && logsExecutionId.value !== newExecution.id) {
                 closeLogsSSE()
                 rawLogs.value = []
@@ -862,9 +858,7 @@
     }
 
     function followLogs(executionId: string) {
-        // A replay starts in RESTARTED, which is not a running state, so the grace-period close
-        // is armed before the execution reaches RUNNING; leaving it pending would close this
-        // stream two seconds in, mid-execution.
+        // A replay is RESTARTED, not a running state, so the grace-period close is armed before RUNNING and would otherwise close this stream mid-execution.
         cancelLogsSSEClose()
         logsExecutionId.value = executionId
         executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse: any) => { // FIXME: any
@@ -1028,8 +1022,7 @@
                 params: p,
             })
             .then((logs: any) => { // FIXME: any
-                // A response for an execution the view has since left would otherwise overwrite
-                // the current one's logs when it lands.
+                // A response for an execution the view has since left would overwrite the current one's logs.
                 if (logsExecutionId.value !== id) {
                     return
                 }

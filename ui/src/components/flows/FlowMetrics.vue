@@ -48,7 +48,7 @@
     import {ref, computed, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {Bar} from "vue-chartjs";
-    import moment from "moment";
+    import {date as dateFilter} from "../../utils/filters";
     import {useI18n} from "vue-i18n";
     import {useMiscStore} from "override/stores/misc";
     import {useFlowStore} from "../../stores/flow";
@@ -94,7 +94,7 @@
         
         return {
             labels: aggregations.map((e: MetricAggregation) =>
-                moment(e.date).format(getFormat(groupBy)),
+                dateFilter(e.date, getFormat(groupBy)),
             ),
             datasets: [
                 !display.value

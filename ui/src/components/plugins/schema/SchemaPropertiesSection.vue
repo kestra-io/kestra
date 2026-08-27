@@ -85,8 +85,14 @@
                                 class="compact-prop-desc"
                             >
                                 <slot
+                                    v-if="property.title"
                                     name="markdown"
-                                    :content="property.title || property.description || ''"
+                                    :content="sanitizeForMarkdown(property.title)"
+                                />
+                                <slot
+                                    v-if="property.description"
+                                    name="markdown"
+                                    :content="sanitizeForMarkdown(property.description)"
                                 />
                             </div>
                         </div>
@@ -184,6 +190,7 @@
         extractTypeInfo,
         isDeprecated,
         isDynamic,
+        sanitizeForMarkdown,
         type JSONProperty,
         type JSONSchema,
         type SchemaExample,
@@ -505,18 +512,22 @@
 
     .compact-prop-desc {
         margin-top: var(--ks-spacing-2);
-        font-size: var(--ks-font-size-base);
-        line-height: 1.65;
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.5;
         color: var(--ks-text-secondary);
 
         :deep(p) {
             margin: 0;
-            font-size: var(--ks-font-size-base);
-            line-height: 1.65;
+            font-size: var(--ks-font-size-sm);
+            line-height: 1.5;
             color: var(--ks-text-secondary);
         }
 
         :deep(p + p) {
+            margin-top: var(--ks-spacing-2);
+        }
+
+        :deep(.ks-markdown + .ks-markdown) {
             margin-top: var(--ks-spacing-2);
         }
 

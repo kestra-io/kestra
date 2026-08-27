@@ -132,7 +132,7 @@ class RunContextLoggerTest {
         runContextLogger.usedSecret(null);
 
         Logger logger = runContextLogger.logger();
-        // exception are not handle and secret will not be replaced
+        // the attached exception's own message/stacktrace is logged as a separate entry, and is masked too
         logger.debug("test {} test", "john@doe.com", new Exception("exception from doe.com"));
         logger.info("test {} myawesomepassmyawesomepass myawesomepass myawesomepassmyawesomepass", Base64.getEncoder().encodeToString("myawesomepass".getBytes(StandardCharsets.UTF_8)));
         logger.warn("test {}", URI.create("http://it-s.secret"));
@@ -140,7 +140,12 @@ class RunContextLoggerTest {
         // the 3 logs will create 4 log entries as exceptions stacktraces are logged separately at the TRACE level
         matchingLog = TestsUtils.awaitLogs(logs, 4);
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG)).findFirst().orElseThrow().getMessage()).isEqualTo("test john@****** test");
-        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG)).anyMatch(msg -> msg.getMessage().contains("exception from doe.com")));
+        LogEntry stackTraceEntry = matchingLog.stream()
+            .filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG) && logEntry.getMessage().contains("java.lang.Exception"))
+            .findFirst()
+            .orElseThrow();
+        assertThat(stackTraceEntry.getMessage()).doesNotContain("doe.com");
+        assertThat(stackTraceEntry.getMessage()).contains("exception from ******");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElseThrow().getMessage())
             .isEqualTo("test ****** ************ ****** ************");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.WARN)).findFirst().orElseThrow().getMessage()).isEqualTo("test ******");

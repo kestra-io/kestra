@@ -569,8 +569,6 @@
     "triggers_add_filter_realtime": "Realtime",
     "triggers_add_filter_all": "All",
     "triggers_add_filter_app": "App",
-    "triggers_add_kind_realtime": "Realtime",
-    "triggers_add_kind_app": "Polling",
     "triggers_add_empty_title": "No triggers found",
     "triggers_add_ee_tooltip": "This trigger requires Enterprise Edition.",
     "ee_feature_tooltip": "This feature requires Enterprise Edition.",

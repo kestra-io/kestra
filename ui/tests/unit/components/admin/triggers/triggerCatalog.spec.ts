@@ -2,12 +2,6 @@ import {describe, test, expect} from "vitest"
 
 import {triggerDisplayName, isMcpTrigger, MCP_TOOL_TYPE} from "../../../../../src/components/admin/triggers/triggerCatalog"
 
-const KINDS: Record<string, string> = {
-    triggers_add_kind_realtime: "Realtime",
-    triggers_add_kind_app: "Polling",
-}
-const t = (key: string) => KINDS[key] ?? key
-
 describe("triggerDisplayName", () => {
     test("uses the trigger's own name when it isn't the generic class name", () => {
         expect(triggerDisplayName({
@@ -15,7 +9,7 @@ describe("triggerDisplayName", () => {
             name: "Schedule",
             pluginTitle: "core Trigger",
             group: "core",
-        }, t)).toBe("Schedule")
+        })).toBe("Schedule")
     })
 
     test("falls back to the plugin's own declared title when the class is named `Trigger`", () => {
@@ -24,7 +18,7 @@ describe("triggerDisplayName", () => {
             name: "Trigger",
             pluginTitle: "MongoDB",
             group: "app",
-        }, t)).toBe("MongoDB Polling")
+        })).toBe("MongoDB")
     })
 
     test("disambiguates two unrelated plugins that share the same last package segment", () => {
@@ -37,36 +31,36 @@ describe("triggerDisplayName", () => {
             name: "Trigger",
             pluginTitle: "MongoDB",
             group: "app",
-        }, t)
+        })
         const debeziumMongodb = triggerDisplayName({
             type: "io.kestra.plugin.debezium.mongodb.Trigger",
             name: "Trigger",
             pluginTitle: "Debezium MongoDB",
             group: "app",
-        }, t)
+        })
 
-        expect(mongodb).toBe("MongoDB Polling")
-        expect(debeziumMongodb).toBe("Debezium MongoDB Polling")
+        expect(mongodb).toBe("MongoDB")
+        expect(debeziumMongodb).toBe("Debezium MongoDB")
         expect(mongodb).not.toBe(debeziumMongodb)
     })
 
     test("tells apart the polling and realtime triggers of a same plugin", () => {
-        // A plugin ships both, and the classes are named `Trigger` and `RealtimeTrigger`, so the
-        // plugin title alone would render the two cards identically.
+        // A plugin ships both, named `Trigger` and `RealtimeTrigger`, so the plugin title alone
+        // would render the two cards identically.
         const polling = triggerDisplayName({
             type: "io.kestra.plugin.debezium.mongodb.Trigger",
             name: "Trigger",
             pluginTitle: "Debezium MongoDB",
             group: "app",
-        }, t)
+        })
         const realtime = triggerDisplayName({
             type: "io.kestra.plugin.debezium.mongodb.RealtimeTrigger",
             name: "RealtimeTrigger",
             pluginTitle: "Debezium MongoDB",
             group: "realtime",
-        }, t)
+        })
 
-        expect(polling).toBe("Debezium MongoDB Polling")
+        expect(polling).toBe("Debezium MongoDB")
         expect(realtime).toBe("Debezium MongoDB Realtime")
     })
 
@@ -77,26 +71,24 @@ describe("triggerDisplayName", () => {
             name: "CommandsTrigger",
             pluginTitle: "Python",
             group: "app",
-        }, t)).toBe("Python Commands")
+        })).toBe("Python Commands")
         expect(triggerDisplayName({
             type: "io.kestra.plugin.scripts.node.CommandsTrigger",
             name: "CommandsTrigger",
             pluginTitle: "Node",
             group: "app",
-        }, t)).toBe("Node Commands")
+        })).toBe("Node Commands")
     })
 
-    test("looks up no kind key for a core trigger, which has none", () => {
-        const forbidden = () => {
-            throw new Error("the core category has no kind key")
-        }
-
+    test("does not prefix a core trigger with the plugin title it carries", () => {
+        // Core triggers resolve to a plugin title of their own ("core Trigger"), which would only
+        // restate the category the card already shows as a tag.
         expect(triggerDisplayName({
-            type: "io.kestra.plugin.core.trigger.Trigger",
-            name: "Trigger",
+            type: "io.kestra.plugin.core.trigger.Webhook",
+            name: "Webhook",
             pluginTitle: "core Trigger",
             group: "core",
-        }, forbidden)).toBe("Trigger")
+        })).toBe("Webhook")
     })
 
     test("falls back to the short class name when neither name nor pluginTitle is usable", () => {
@@ -105,7 +97,7 @@ describe("triggerDisplayName", () => {
             name: "Trigger",
             pluginTitle: "",
             group: "app",
-        }, t)).toBe("Trigger")
+        })).toBe("Trigger")
     })
 })
 

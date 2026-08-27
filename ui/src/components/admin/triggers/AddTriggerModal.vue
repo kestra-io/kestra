@@ -126,7 +126,6 @@
 <script setup lang="ts">
     import {computed, provide, ref, watch} from "vue"
     import {useRouter} from "vue-router"
-    import {useI18n} from "vue-i18n"
 
     import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -156,7 +155,6 @@
     const TAB_VALUES = ["form", "source", "documentation"] as const
     type TabValue = typeof TAB_VALUES[number];
 
-    const {t} = useI18n({useScope: "global"})
     const router = useRouter()
     const flowStore = useFlowStore()
     const pluginsStore = usePluginsStore()
@@ -191,7 +189,7 @@
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
 
-    const displayName = computed(() => triggerDisplayName(props.trigger, t))
+    const displayName = computed(() => triggerDisplayName(props.trigger))
 
     // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
     // $schema, properties, required, title…). The actual class fields live at

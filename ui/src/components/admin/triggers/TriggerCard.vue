@@ -63,7 +63,6 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {KsMarkdown} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -82,9 +81,8 @@
         color: "var(--ks-content-primary)",
     }
 
-    const {t} = useI18n({useScope: "global"})
     const pluginsStore = usePluginsStore()
-    const displayName = computed(() => triggerDisplayName(props.trigger, t))
+    const displayName = computed(() => triggerDisplayName(props.trigger))
     const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g))
 </script>
 

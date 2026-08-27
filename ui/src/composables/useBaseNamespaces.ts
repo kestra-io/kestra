@@ -218,8 +218,16 @@ export const useBaseNamespacesStore = () => {
         await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
     }
 
+    /**
+     * Unlike {@link moveFileDirectory}, this suppresses the global error toast: the rename caller
+     * reports the failure itself, and the two together left a persistent raw
+     * "Internal Server Error" alongside the friendly one.
+     */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory(
+            {namespace: payload.namespace, from: payload.old, to: payload.new},
+            {showMessageOnError: false} as Parameters<typeof FilesAPI.moveFileDirectory>[1],
+        )
     }
 
     async function deleteFileDirectory(payload: {namespace: string; path: string}) {

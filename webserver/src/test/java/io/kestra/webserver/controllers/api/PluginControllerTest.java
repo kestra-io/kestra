@@ -379,6 +379,19 @@ class PluginControllerTest {
     }
 
     @Test
+    void catalogMergedSchemaRevalidatesViaEtagLikeTheLocalOnlySchema() {
+        HttpResponse<Map> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
+        HttpResponse<Map> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
+
+        // Both variants revalidate on every use via ETag (no-cache, see #12102); the merged tag also
+        // covers the bundle fingerprint so it changes when a different bundle is loaded.
+        assertThat(local.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("ETag")).isNotNull();
+        assertThat(merged.header("ETag")).isNotEqualTo(local.header("ETag"));
+    }
+
+    @Test
     void inputs() {
         List<InputType> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/inputs"),

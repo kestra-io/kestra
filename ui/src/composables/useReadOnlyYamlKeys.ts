@@ -20,27 +20,46 @@ export interface ReadOnlyKeyLine {
 }
 
 /**
- * The scalar carried by everything after `key:`.
+ * Split everything after `key:` into the scalar and whatever trails it.
  *
- * Quotes and inline comments are stripped, because neither changes the value:
- * treating `id: my-flow # note` as the literal `my-flow # note` would make it
- * permanently unequal to the saved id, and every later keystroke would then read
- * as an attempt to change it.
+ * The two halves exist for opposite reasons. The scalar is what gets compared,
+ * so quotes and inline comments are stripped: treating `id: my-flow # note` as
+ * the literal `my-flow # note` would make it permanently unequal to the saved
+ * id, and every later keystroke would read as an attempt to change it. The
+ * suffix is what gets preserved, so that correcting a line does not throw away a
+ * comment the user was entitled to write.
  */
-function scalarOf(raw: string): string {
-    const value = raw.trim()
-    const quote = value[0]
+function splitScalar(raw: string): {value: string; suffix: string} {
+    const trimmed = raw.trim()
+    const quote = trimmed[0]
 
     if (quote === "\"" || quote === "'") {
-        const closing = value.indexOf(quote, 1)
+        const closing = trimmed.indexOf(quote, 1)
         // A quote still being typed has no closing partner yet.
-        return closing === -1 ? value.slice(1) : value.slice(1, closing)
+        return closing === -1
+            ? {value: trimmed.slice(1), suffix: ""}
+            : {value: trimmed.slice(1, closing), suffix: trimmed.slice(closing + 1)}
     }
 
     // YAML only opens an inline comment on a `#` preceded by whitespace, so a
     // `#` inside a bare scalar (`id: a#b`) is part of the value.
-    const comment = value.search(/\s#/)
-    return (comment === -1 ? value : value.slice(0, comment)).trim()
+    const comment = trimmed.search(/\s#/)
+    return comment === -1
+        ? {value: trimmed, suffix: ""}
+        : {value: trimmed.slice(0, comment).trim(), suffix: trimmed.slice(comment)}
+}
+
+/** The scalar carried by everything after `key:`. */
+function scalarOf(raw: string): string {
+    return splitScalar(raw).value
+}
+
+/**
+ * Whatever trails the scalar on a `key:` line — an inline comment, or "" when
+ * there is none. Exported for the test that pins comment preservation.
+ */
+export function commentOf(raw: string): string {
+    return splitScalar(raw).suffix
 }
 
 /**
@@ -192,6 +211,9 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
      * Put the saved value back on each offending line, leaving the rest of the
      * document as the user left it. Returns false when a locked key is no longer
      * present at all, which cannot be corrected line-by-line.
+     *
+     * Anything trailing the value is carried over: an inline comment belongs to
+     * the user even on a line whose value does not.
      */
     function restoreLines(
         editor: monaco.editor.IStandaloneCodeEditor,
@@ -199,11 +221,16 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         violations: string[],
     ): boolean {
         const source = model.getValue()
+        const sourceLines = source.split("\n")
         const edits: monaco.editor.IIdentifiedSingleEditOperation[] = []
 
         for (const key of violations) {
             const line = findReadOnlyLines(source, [key])[0]
             if (!line) return false
+
+            const rawLine = sourceLines[line.lineNumber - 1] ?? ""
+            const afterKey = TOP_LEVEL_KEY.exec(rawLine.replace(/\r$/, ""))?.[2] ?? ""
+
             edits.push({
                 range: {
                     startLineNumber: line.lineNumber,
@@ -211,7 +238,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
                     endLineNumber: line.lineNumber,
                     endColumn: model.getLineMaxColumn(line.lineNumber),
                 },
-                text: `${key}: ${options.expected.value[key]}`,
+                text: `${key}: ${options.expected.value[key]}${commentOf(afterKey)}`,
             })
         }
 
@@ -276,11 +303,18 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         })
     }
 
-    // Identity comparison only. A deep watch here would walk the Monaco editor
-    // object graph, which is both enormous and self-referential; `expected` is a
-    // computed whose identity already changes exactly when the locked values do.
+    // Keyed on the serialised expectations rather than on `expected` itself. The
+    // call site builds that object from the flow store, which replaces the flow
+    // on every save, revision load and refetch — so its identity changes far more
+    // often than the locked values do, and each change would re-run attach().
+    // That is mostly self-healing, except attach() leaves `lastValid` undefined
+    // when the buffer violates at that instant, which disables the only recovery
+    // path for a locked key deleted outright. Serialising is the primitive the
+    // deep-watch / computed-spread trap in ui/AGENTS.md calls for; a deep watch
+    // is not an option here, as it would walk the Monaco editor's enormous and
+    // self-referential object graph.
     watch(
-        [options.editor, options.enabled, options.expected],
+        [options.editor, options.enabled, () => JSON.stringify(options.expected.value)],
         ([editor]) => {
             if (!editor) {
                 detach()

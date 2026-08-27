@@ -84,10 +84,6 @@ vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}}),
 }))
 
-// The tab resolves the locked-line tooltip through useI18n, which throws
-// outside an app that installed the plugin. Same stub as useApplyDraft.spec.ts.
-vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
-
 import {useFlowStore} from "../../../../src/stores/flow"
 import FlowFileEditorTab from "../../../../src/components/inputs/FlowFileEditorTab.vue"
 

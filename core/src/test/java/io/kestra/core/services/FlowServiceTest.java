@@ -225,20 +225,20 @@ class FlowServiceTest {
     void importFlow_ShouldEmitTriggerCreatedEventForNewTriggerInSyncedFlow() throws FlowProcessingException, QueueException {
         reset(triggerEventQueue);
 
-    String source = """
-        id: import_with_trigger
-        namespace: some.namespace
-        triggers:
-          - id: daily
-            type: io.kestra.plugin.core.trigger.Schedule
-            cron: "0 6 * * *"
-        tasks:
-          - id: task
-            type: io.kestra.plugin.core.log.Log
-            message: Hello""";
+        String source = """
+            id: import_with_trigger
+            namespace: some.namespace
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 6 * * *"
+            tasks:
+              - id: task
+                type: io.kestra.plugin.core.log.Log
+                message: Hello""";
 
-    flowService.importFlow("my-tenant", source);
-    verify(triggerEventQueue).send(any());
+        flowService.importFlow("my-tenant", source);
+        verify(triggerEventQueue).send(any());
 
     }
 
@@ -664,13 +664,15 @@ class FlowServiceTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(TEST_NAMESPACE)
             .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("on_a")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
             .build();
         flowService.create(GenericFlow.of(flowB));
         await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
@@ -680,13 +682,15 @@ class FlowServiceTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(TEST_NAMESPACE)
             .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("on_b")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
             .build();
 
         // When saving flow A closes the A -> B -> A cycle via Flow triggers
@@ -732,13 +736,15 @@ class FlowServiceTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(TEST_NAMESPACE)
             .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("on_a")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
             .build();
         flowService.create(GenericFlow.of(flowB));
         await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
@@ -750,14 +756,16 @@ class FlowServiceTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(TEST_NAMESPACE)
             .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("on_b")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .when("{{ trigger.outputs.state == 'SUCCESS' }}")
-                    .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .when("{{ trigger.outputs.state == 'SUCCESS' }}")
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
             .build();
 
         // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
@@ -775,13 +783,15 @@ class FlowServiceTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(TEST_NAMESPACE)
             .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("b")).build()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("on_a")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_a")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowAId).build()))
+                        .build()
+                )
+            )
             .build();
         flowService.create(GenericFlow.of(flowB));
         await().atMost(Duration.ofSeconds(10)).until(() -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId)));
@@ -793,19 +803,23 @@ class FlowServiceTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(TEST_NAMESPACE)
             .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("on_b")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .dependsOn(List.of(
-                        io.kestra.plugin.core.trigger.Flow.Dependency.builder()
-                            .namespace(TEST_NAMESPACE)
-                            .flowId(flowBId)
-                            .when(Property.ofExpression("{{ trigger.outputs.state == 'SUCCESS' }}"))
-                            .build()
-                    ))
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(
+                            List.of(
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+                                    .namespace(TEST_NAMESPACE)
+                                    .flowId(flowBId)
+                                    .when(Property.ofExpression("{{ trigger.outputs.state == 'SUCCESS' }}"))
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
             .build();
 
         // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
@@ -847,13 +861,15 @@ class FlowServiceTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(TEST_NAMESPACE)
             .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("a")).build()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("on_b")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("on_b")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(List.of(io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(TEST_NAMESPACE).flowId(flowBId).build()))
+                        .build()
+                )
+            )
             .build();
 
         // Then it must not be rejected — B is still a draft, so its edges do not count yet

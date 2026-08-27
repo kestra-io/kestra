@@ -32,6 +32,12 @@ vi.mock("../../stores/doc", () => ({
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
 }))
+vi.mock("../../stores/executions", () => ({
+    useExecutionsStore: () => ({triggerExecution: vi.fn(), execution: undefined}),
+}))
+vi.mock("../../stores/playground", () => ({
+    usePlaygroundStore: () => ({enabled: false}),
+}))
 vi.mock("../../composables/useEditorBindings", () => ({
     useEditorBindings: () => ({}),
 }))

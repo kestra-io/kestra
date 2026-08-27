@@ -511,6 +511,15 @@
     },
     "use": "Użyj",
     "plugins": {
+      "autoInstall": {
+        "failed": "Instalacja pluginu nie powiodła się",
+        "failedHint": "Flow nie został zapisany. Napraw problem lub usuń plugin z flow, a następnie zapisz ponownie.",
+        "preparing": "Przygotowywanie instalacji pluginu...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin został pomyślnie zainstalowany | Pluginy zostały pomyślnie zainstalowane",
+        "timeout": "Instalacja pluginu trwa dłużej niż oczekiwano. Flow nie został zapisany, zapisz ponownie po zakończeniu instalacji.",
+        "title": "Instalowanie {count} pluginu | Instalowanie {count} pluginów"
+      },
       "names": "Plugins",
       "release": "Informacje o wydaniu",
       "beta": "Beta",

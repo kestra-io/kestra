@@ -163,13 +163,12 @@ function collectSharedImpls(ctx) {
 }
 
 const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]langs)[\\/]/
-const LANG_REGISTRY = /node_modules[\\/]shiki[\\/]dist[\\/]langs(-bundle-full-[^\\/]+)?\.mjs$/
 
 /**
- * True for a grammar chunk or the registry index, by bare name or hashed file.
+ * True for a grammar chunk, by bare name or hashed file.
  * @param {string} name
  */
-const isLangChunkName = (name) => /(^|[\\/])shiki-lang(-|s-registry)/.test(name)
+const isLangChunkName = (name) => /(^|[\\/])shiki-lang-/.test(name)
 
 /**
  * Grammars some module statically imports (shikiHighlighter.ts pre-registers a
@@ -408,13 +407,13 @@ const GROUPS = [
         priority: -10,
         includeDependenciesRecursively: false,
     },
-    // One chunk per non-pre-registered grammar, claimed here rather than left to
-    // automatic chunking because the markdown group below also matches
-    // @shikijs/langs and would otherwise swallow every grammar.
+    // One chunk per non-pre-registered grammar, claimed here so the markdown
+    // group's @shikijs/langs pattern cannot swallow them all; the registry index
+    // is left to that group on purpose, since it reaches grammars only
+    // dynamically and riding along there saves an exotic fence a request.
     {
         name: (id) => {
             if (!isRealModule(id)) return null
-            if (LANG_REGISTRY.test(id)) return "shiki-langs-registry"
             if (!LANG_MODULE.test(id) || staticLangs.has(id)) return null
             return `shiki-lang-${(id.split(/[\\/]/).pop() ?? "").replace(/\.m?js$/, "")}`
         },

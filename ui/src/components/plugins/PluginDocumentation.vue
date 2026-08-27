@@ -87,6 +87,7 @@
         <KsMarkdown
             v-else-if="overrideIntro"
             :content="overrideIntro"
+            class="dp-override-intro"
             :class="{'position-absolute': absolute}"
         />
 
@@ -571,6 +572,11 @@
 
   .plugin-schema {
     display: block;
+    padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-override-intro {
+    width: 100%;
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 

@@ -43,6 +43,39 @@ class FlowParsingServiceTest {
     }
 
     @Test
+    void shouldPassANullNamespaceOnWhenTheSourceDeclaresNone() throws FlowProcessingException {
+        // Given - an in-progress source with no namespace, as POST /flows/graph accepts from the editor.
+        // injectPluginVersions is a no-op in OSS but editions override it (EE resolves governance
+        // policies from this namespace), so what gets handed over has to stay null rather than "null".
+        String source = """
+            id: nons
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """;
+
+        var capturing = new CapturingFlowParsingService();
+
+        // When
+        capturing.parse(null, source, false);
+
+        // Then
+        assertThat(capturing.captured).isNull();
+    }
+
+    /** Records the namespace {@link FlowParsingService#readFlowAsMap} resolves out of the source. */
+    private static class CapturingFlowParsingService extends FlowParsingService {
+        private String captured;
+
+        @Override
+        public Map<String, Object> injectPluginVersions(String tenantId, String namespace, Map<String, Object> mapFlow) {
+            this.captured = namespace;
+            return mapFlow;
+        }
+    }
+
+    @Test
     void shouldNotInjectAnythingGivenFlowMap() throws FlowProcessingException {
         // Given
         Map<String, Object> task = new HashMap<>();

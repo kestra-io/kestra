@@ -5,6 +5,7 @@ import KestraDesignSystem from "../../../src/index"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
 import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
+import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 
 const globalConfig = {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]}
 
@@ -35,6 +36,19 @@ describe("KsDataTable", () => {
             setup: () => ({data: SAMPLE_DATA}),
         }, {global: globalConfig})
         expect(wrapper.find(".kel-table").exists()).toBe(true)
+    })
+
+    test("forwards row-click from the underlying table", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3},
+            global: globalConfig,
+        })
+
+        const column = {type: "default", property: "id"}
+        const event = new MouseEvent("click")
+        wrapper.findComponent(KsTable).vm.$emit("rowClick", SAMPLE_DATA[0], column, event)
+
+        expect(wrapper.emitted("row-click")?.[0]).toEqual([SAMPLE_DATA[0], column, event])
     })
 
     test("does not render pagination when total is 0", () => {

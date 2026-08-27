@@ -42,7 +42,7 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
         KsEditor: {
             name: "KsEditor",
             template: "<div class=\"ks-editor-mock\" data-test=\"ks-editor\"></div>",
-            props: ["modelValue", "lang", "readOnly", "navbar"],
+            props: ["modelValue", "lang", "readOnly", "navbar", "options"],
             emits: ["editorMounted"],
             setup(_props: unknown, {emit, expose}: {emit: (e: string, ...args: unknown[]) => void; expose: (api: Record<string, unknown>) => void}) {
                 expose({
@@ -57,9 +57,13 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     }
 })
 
+const {mockRoute} = vi.hoisted(() => ({
+    mockRoute: {query: {} as Record<string, unknown>, params: {} as Record<string, unknown>},
+}))
+
 vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn()}),
-    useRoute: () => ({query: {}, params: {}}),
+    useRoute: () => mockRoute,
     RouterLink: {
         template: "<a><slot /></a>",
         props: ["to"],
@@ -67,43 +71,34 @@ vi.mock("vue-router", () => ({
 }))
 
 import SourceSearchPreview from "../../../../src/components/flows/SourceSearchPreview.vue"
+import en from "../../../../src/translations/en.json"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            cancel: "Cancel",
-            source_search: {
-                confirm_bar_message: "Replace {matches} across {flows} editable flows. {skipped} read-only flows will be skipped.",
-                diff_preview_aria: "Replacement diff preview",
-                diff_preview_label: "diff preview · not yet applied",
-                line_label: "line {line}",
-                match_count: "{count} match | {count} matches",
-                open_in_editor: "Open in editor",
-                preview_empty: "Select a result to preview. Click a flow in the results list to see its source.",
-                preview_error: "Failed to load flow source",
-                replace_all: "Replace all",
-            },
-        },
-    },
-})
+const i18n = createI18n({legacy: false, locale: "en", messages: en})
+
+const RouterLinkProbe = {
+    props: ["to"],
+    template: "<a data-test=\"router-link-probe\" :data-to=\"JSON.stringify(to)\"><slot /></a>",
+}
 
 function createGlobal() {
     setActivePinia(createPinia())
     return {
         plugins: [i18n, KestraDesignSystem],
+        stubs: {RouterLink: RouterLinkProbe},
     }
 }
 
 function baseProps(overrides: Record<string, unknown> = {}) {
     return {
-        selected: null,
+        selection: null,
         query: "",
+        caseSensitive: false,
         replaceMode: false,
         previewResponse: null,
         selectionSummary: null,
         readOnlyExcludedCount: 0,
+        excludedFromReplaceCount: 0,
+        kvEntry: null,
         ...overrides,
     }
 }
@@ -114,9 +109,10 @@ describe("SourceSearchPreview", () => {
         mockRevealLineInCenter.mockReset()
         mockClearDecoration.mockReset()
         mockCreateDecorationsCollection.mockClear()
+        mockRoute.params = {}
     })
 
-    test("shows empty state when no flow is selected", async () => {
+    test("shows empty state when nothing is selected", async () => {
         const wrapper = mount(SourceSearchPreview, {
             props: baseProps(),
             global: createGlobal(),
@@ -128,11 +124,11 @@ describe("SourceSearchPreview", () => {
         expect(wrapper.html()).toContain("Select a result to preview.")
     })
 
-    test("fetches source via store using the selected namespace and id", async () => {
+    test("fetches source via store for a flows selection", async () => {
         mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
 
         mount(SourceSearchPreview, {
-            props: baseProps({selected: {namespace: "ns", id: "my-flow", line: 1}, query: "my-flow"}),
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: "my-flow"}),
             global: createGlobal(),
         })
         await flushPromises()
@@ -145,23 +141,21 @@ describe("SourceSearchPreview", () => {
         mockLoadFlow.mockResolvedValue({source})
 
         const wrapper = mount(SourceSearchPreview, {
-            props: baseProps({selected: {namespace: "ns", id: "my-flow", line: 2}, query: ""}),
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 2, column: 0}, query: ""}),
             global: createGlobal(),
         })
         await flushPromises()
 
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(true)
         expect(mockRevealLineInCenter).toHaveBeenCalledWith(2)
-        expect(mockCreateDecorationsCollection).toHaveBeenCalledWith([
-            expect.objectContaining({range: {startLineNumber: 2, startColumn: 1, endLineNumber: 2, endColumn: 1}}),
-        ])
+        expect(wrapper.findComponent({name: "KsEditor"}).props("options")).toEqual({editor: {padding: {top: 16, bottom: 16}}})
     })
 
     test("shows error state when loadFlow rejects", async () => {
         mockLoadFlow.mockRejectedValue(new Error("404 Not Found"))
 
         const wrapper = mount(SourceSearchPreview, {
-            props: baseProps({selected: {namespace: "ns", id: "missing-flow", line: 1}, query: ""}),
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "missing-flow", line: 1, column: 0}, query: ""}),
             global: createGlobal(),
         })
         await flushPromises()
@@ -170,56 +164,20 @@ describe("SourceSearchPreview", () => {
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(false)
     })
 
-    test("resets to empty state when selected becomes null", async () => {
+    test("resets to empty state when selection becomes null", async () => {
         mockLoadFlow.mockResolvedValue({source: "id: flow\nnamespace: ns"})
 
         const wrapper = mount(SourceSearchPreview, {
-            props: baseProps({selected: {namespace: "ns", id: "flow", line: 1}, query: ""}),
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "flow", line: 1, column: 0}, query: ""}),
             global: createGlobal(),
         })
         await flushPromises()
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(true)
 
-        await wrapper.setProps({selected: null})
+        await wrapper.setProps({selection: null})
         await flushPromises()
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(false)
         expect(wrapper.html()).toContain("Select a result to preview.")
-    })
-
-    test("refetches source when selected flow changes to a different flow", async () => {
-        mockLoadFlow
-            .mockResolvedValueOnce({source: "id: flow-a\nnamespace: ns"})
-            .mockResolvedValueOnce({source: "id: flow-b\nnamespace: ns"})
-
-        const wrapper = mount(SourceSearchPreview, {
-            props: baseProps({selected: {namespace: "ns", id: "flow-a", line: 1}, query: ""}),
-            global: createGlobal(),
-        })
-        await flushPromises()
-        expect(mockLoadFlow).toHaveBeenCalledTimes(1)
-
-        await wrapper.setProps({selected: {namespace: "ns", id: "flow-b", line: 1}})
-        await flushPromises()
-        expect(mockLoadFlow).toHaveBeenCalledTimes(2)
-        expect(mockLoadFlow).toHaveBeenLastCalledWith({namespace: "ns", id: "flow-b", store: false})
-    })
-
-    test("re-highlights without a second loadFlow call when the selected line changes on the same flow", async () => {
-        mockLoadFlow.mockResolvedValue({source: "id: flow\nextract: a\nextract: b"})
-
-        const wrapper = mount(SourceSearchPreview, {
-            props: baseProps({selected: {namespace: "ns", id: "flow", line: 2}, query: "extract"}),
-            global: createGlobal(),
-        })
-        await flushPromises()
-        expect(mockLoadFlow).toHaveBeenCalledTimes(1)
-        expect(mockRevealLineInCenter).toHaveBeenLastCalledWith(2)
-
-        await wrapper.setProps({selected: {namespace: "ns", id: "flow", line: 3}})
-        await flushPromises()
-
-        expect(mockLoadFlow).toHaveBeenCalledTimes(1)
-        expect(mockRevealLineInCenter).toHaveBeenLastCalledWith(3)
     })
 
     test("renders the diff preview and confirm bar in replace mode", async () => {
@@ -241,7 +199,7 @@ describe("SourceSearchPreview", () => {
 
         const wrapper = mount(SourceSearchPreview, {
             props: baseProps({
-                selected: {namespace: "ns", id: "flow", line: 3},
+                selection: {type: "flows", namespace: "ns", id: "flow", line: 3, column: 0},
                 query: "analytics-prod",
                 replaceMode: true,
                 previewResponse,
@@ -277,7 +235,7 @@ describe("SourceSearchPreview", () => {
 
         const wrapper = mount(SourceSearchPreview, {
             props: baseProps({
-                selected: {namespace: "ns", id: "flow", line: 3},
+                selection: {type: "flows", namespace: "ns", id: "flow", line: 3, column: 0},
                 query: "analytics-prod",
                 replaceMode: true,
                 previewResponse,
@@ -294,5 +252,76 @@ describe("SourceSearchPreview", () => {
 
         await buttons[1].trigger("click")
         expect(wrapper.emitted("replace-all")).toBeTruthy()
+    })
+
+    test("renders a metadata card for a namespace file selection without calling loadFlow", async () => {
+        const wrapper = mount(SourceSearchPreview, {
+            props: baseProps({selection: {type: "files", namespace: "company.data", path: "scripts/extract.py"}, query: "extract"}),
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        expect(mockLoadFlow).not.toHaveBeenCalled()
+        expect(wrapper.find("[data-test='source-search-preview-meta']").exists()).toBe(true)
+        expect(wrapper.text()).toContain("company.data")
+        expect(wrapper.text()).toContain("File content is not searched")
+    })
+
+    test("renders a metadata card for a KV selection with the value withheld", async () => {
+        const wrapper = mount(SourceSearchPreview, {
+            props: baseProps({
+                selection: {type: "kv", namespace: "company.data", key: "landing-bucket"},
+                query: "bucket",
+                kvEntry: {key: "landing-bucket", updateDate: "2026-08-07T00:00:00Z"},
+            }),
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("Not shown")
+        expect(wrapper.text()).toContain("Updated")
+    })
+
+    test("renders a metadata card for a secret selection and never shows a value", async () => {
+        const wrapper = mount(SourceSearchPreview, {
+            props: baseProps({selection: {type: "secrets", namespace: "company.data", key: "aws-access-key"}, query: "aws"}),
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("Never shown or searched")
+    })
+
+    test("points the Open in editor link at the flow's edit tab route with the current tenant", async () => {
+        mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
+        mockRoute.params = {tenant: "acme"}
+
+        const wrapper = mount(SourceSearchPreview, {
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: ""}),
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        const link = wrapper.get("[data-test='router-link-probe']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: "acme", namespace: "ns", id: "my-flow"},
+        })
+    })
+
+    test("resolves the Open in editor link without a tenant in OSS single-tenant mode", async () => {
+        mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
+
+        const wrapper = mount(SourceSearchPreview, {
+            props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: ""}),
+            global: createGlobal(),
+        })
+        await flushPromises()
+
+        const link = wrapper.get("[data-test='router-link-probe']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: undefined, namespace: "ns", id: "my-flow"},
+        })
     })
 })

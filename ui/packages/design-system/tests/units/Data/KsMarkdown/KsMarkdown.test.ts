@@ -122,6 +122,25 @@ describe("KsMarkdown", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const x = 42")
     })
 
+    test("copy button falls back to execCommand when the Clipboard API is unavailable", async () => {
+        // navigator.clipboard is undefined in non-secure contexts (plain HTTP)
+        Object.defineProperty(navigator, "clipboard", {
+            value: undefined,
+            configurable: true,
+        })
+        const execCommand = vi.fn().mockReturnValue(true)
+        document.execCommand = execCommand
+
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```\nconst x = 42\n```"},
+            global: globalConfig,
+            attachTo: document.body,
+        })
+        await wrapper.find(".ks-markdown__copy-btn").trigger("click")
+        expect(execCommand).toHaveBeenCalledWith("copy")
+        wrapper.unmount()
+    })
+
     test("renders mermaid code block as mermaid div", () => {
         const wrapper = mount(KsMarkdown, {
             props: {content: "```mermaid\ngraph TD\n  A --> B\n```"},
@@ -199,6 +218,62 @@ describe("KsMarkdown", () => {
         const link = wrapper.find("a.ks-markdown__link")
         expect(link.exists()).toBe(true)
         expect(link.attributes("target")).toBeUndefined()
+    })
+
+    test("drops the href of a javascript: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](javascript:alert(document.domain))"},
+            global: globalConfig,
+        })
+        const link = wrapper.find("a.ks-markdown__link")
+        expect(link.exists()).toBe(true)
+        expect(link.text()).toBe("Click here")
+        expect(link.attributes("href")).toBeUndefined()
+    })
+
+    test("drops the href of an obfuscated javascript: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](<JaVa\tScRiPt:alert(1)>)"},
+            global: globalConfig,
+        })
+        const link = wrapper.find("a.ks-markdown__link")
+        expect(link.exists()).toBe(true)
+        expect(link.attributes("href")).toBeUndefined()
+    })
+
+    test("drops the href of a data: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBeUndefined()
+    })
+
+    test("keeps a mailto: link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Mail us](mailto:hello@kestra.io)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("mailto:hello@kestra.io")
+    })
+
+    test("keeps an anchor-only link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Section](#my-title)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("#my-title")
+    })
+
+    test("drops the src of a javascript: markdown image", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "![oops](javascript:alert(document.domain))"},
+            global: globalConfig,
+        })
+        const img = wrapper.find("img.ks-markdown__image")
+        expect(img.exists()).toBe(true)
+        expect(img.attributes("src")).toBeUndefined()
+        expect(img.attributes("alt")).toBe("oops")
     })
 
     test("renders thematic break", () => {
@@ -392,6 +467,32 @@ describe("KsMarkdown", () => {
         expect(wrapper.find(".ks-markdown__code-plain").exists()).toBe(false)
     })
 
+
+    test("highlights a language that is not pre-registered, from Shiki's on-demand bundle", async () => {
+        // Elixir is deliberately absent from shikiHighlighter's static grammars.
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```elixir\ndefmodule Greeter do\nend\n```"},
+            global: globalConfig,
+        })
+
+        await vi.waitFor(
+            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            {timeout: 10000, interval: 50},
+        )
+
+        expect(wrapper.find(".ks-markdown__code-shiki pre.shiki").exists()).toBe(true)
+        expect(wrapper.find(".ks-markdown__code-shiki").text()).toContain("defmodule")
+    }, 15000)
+
+    test("falls back to plain text for a language Shiki does not know", async () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```notarealilanguage\nsome code\n```"},
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("some code")
+    })
 
     test("Shiki-highlighted code contains the original source text", async () => {
         const wrapper = mount(KsMarkdown, {

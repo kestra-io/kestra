@@ -37,7 +37,7 @@
                 <component :is="statusStyle.icon" class="status-tag__icon" />
                 <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
                 <span v-else class="status-tag__text">
-                    <Duration :histories="histories" :interval="100" />
+                    <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
         </template>
@@ -484,6 +484,8 @@ button.playground-button {
 
 .runner-badge {
     align-self: flex-start;
+    max-width: 100%;
+    margin-bottom: var(--ks-spacing-1);
     padding: 0 var(--ks-spacing-2);
     border-radius: var(--ks-radius-base);
     background-color: var(--ks-bg-tag);

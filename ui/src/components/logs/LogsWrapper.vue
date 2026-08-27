@@ -15,11 +15,7 @@
                 <template #navbar v-if="!embed || showFilters">
                     <KSFilter
                         :configuration="logFilter"
-                        :tableOptions="{
-                            chart: {shown: true, value: showChart, callback: onShowChartChange},
-                            refresh: {shown: true, callback: refresh},
-                            columns: {shown: false}
-                        }"
+                        :tableOptions="logTableOptions"
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
@@ -44,8 +40,8 @@
                             </div>
                             <div class="logs-toolbar__actions">
                                 <LogDisplaySettings />
-                                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
-                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
+                                <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="openDownload" />
+                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs" />
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
@@ -70,27 +66,51 @@
                                 :description="$t('no_logs_data_description')"
                             />
                         </div>
+
+                        <div
+                            v-if="logsStore.isCursorMode && (logsStore.hasPreviousPage || logsStore.hasNextCursor)"
+                            class="logs-cursor-nav"
+                        >
+                            <KsButton
+                                v-if="logsStore.hasPreviousPage"
+                                type="default"
+                                :loading="isLoading"
+                                :aria-label="t('previous')"
+                                @click="loadPrevious"
+                            >
+                                {{ t("previous") }}
+                            </KsButton>
+                            <KsButton
+                                v-if="logsStore.hasNextCursor"
+                                type="default"
+                                :loading="isLoading"
+                                :aria-label="t('next')"
+                                @click="loadNext"
+                            >
+                                {{ t("next") }}
+                            </KsButton>
+                        </div>
                     </div>
                 </template>
             </KsDataTable>
         </div>
 
-        <KsDialog v-model="downloadOpen" :title="t('download logs')" destroyOnClose>
-            <p class="download-hint">{{ t('download_logs_description') }}</p>
+        <KsDialog v-model="downloadOpen" :title="$t('download logs')" destroyOnClose>
+            <p class="download-hint">{{ $t('download_logs_description') }}</p>
             <QuickFilters
                 :levels="VALUES.LEVELS"
                 :intervals="quickIntervals"
                 :level="downloadLevel"
                 :timeRange="downloadTimeRange"
-                :levelLabel="t('filter.level_log_executions.label')"
-                :intervalLabel="t('filter.timeRange_log.label')"
+                :levelLabel="$t('filter.level_log_executions.label')"
+                :intervalLabel="$t('filter.timeRange_log.label')"
                 @update:level="(value: string) => (downloadLevel = value)"
                 @update:time-range="(value: string) => (downloadTimeRange = value)"
             />
             <template #footer>
-                <KsButton @click="downloadOpen = false">{{ t('cancel') }}</KsButton>
+                <KsButton @click="downloadOpen = false">{{ $t('cancel') }}</KsButton>
                 <KsButton type="primary" :loading="downloading" @click="downloadLogs">
-                    {{ t('download') }}
+                    {{ $t('download') }}
                 </KsButton>
             </template>
         </KsDialog>
@@ -98,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, useTemplateRef} from "vue"
+    import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
@@ -202,6 +222,7 @@
     )
     const {
         effectiveValue: effectiveLogLevel,
+        isRouteSettled: isLevelRouteSettled,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
     } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
@@ -272,13 +293,37 @@
         return _merge(base, queryFilter)
     }
 
+    let hasLoadedOnce = false
     const loadData = async ({page, size}: {page: number; size: number; sort?: string}) => {
-        if (!loadInit.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value) return
+        hasLoadedOnce = true
         isLoading.value = true
 
         await logsStore.findLogs(loadQuery({
             page,
             size,
+            sort: "timestamp:desc",
+        }))
+            .finally(() => {
+                isLoading.value = false
+            })
+    }
+
+    const loadNext = async () => {
+        isLoading.value = true
+        await logsStore.loadNextPage(loadQuery({
+            size: urlSize.value,
+            sort: "timestamp:desc",
+        }))
+            .finally(() => {
+                isLoading.value = false
+            })
+    }
+
+    const loadPrevious = async () => {
+        isLoading.value = true
+        await logsStore.loadPreviousPage(loadQuery({
+            size: urlSize.value,
             sort: "timestamp:desc",
         }))
             .finally(() => {
@@ -334,7 +379,27 @@
 
         downloading.value = true
         logsStore.downloadLogs(params)
-            .then(() => (downloadOpen.value = false))
+            .then((result) => {
+                downloadOpen.value = false
+
+                // No lines means no file either way, so staying silent would read as a broken
+                // button — which is the silence this whole change exists to remove.
+                if (result.downloaded === 0) {
+                    if (result.outcome === "complete") toast.warning(t("logs_download_empty"))
+                    else toast.error(t("logs_download_failed"))
+                    return
+                }
+
+                // A known total is the useful number, whether the export was capped or cut short.
+                const skipped = result.total === undefined ? undefined : result.total - result.downloaded
+                if (skipped !== undefined && skipped > 0) {
+                    toast.warning(t("logs_download_truncated", {downloaded: result.downloaded, skipped}))
+                } else if (result.outcome === "failed") {
+                    toast.warning(t("logs_download_partial", {downloaded: result.downloaded}))
+                } else if (result.outcome === "capped") {
+                    toast.warning(t("logs_download_capped", {downloaded: result.downloaded}))
+                }
+            })
             .finally(() => (downloading.value = false))
     }
 
@@ -344,7 +409,9 @@
 
     let lastCountedKey = ""
     const refreshLevelCounts = () => {
-        if (!loadInit.value || lastCountedKey === filterQueryKey.value) return
+        // Cursor stores can't produce per-level counts, so the quick-filter chips (which key off a
+        // non-zero count) are hidden in cursor mode; level filtering stays available from the filter bar.
+        if (!loadInit.value || !isLevelRouteSettled.value || logsStore.isCursorMode || lastCountedKey === filterQueryKey.value) return
         const key = filterQueryKey.value
         lastCountedKey = key
         logsStore.levelCounts(loadQuery({})).then((counts) => {
@@ -414,7 +481,18 @@
         dataTable.value?.resetAndReload()
     })
 
-    const showStatChart = () => props.withCharts && showChart.value
+    // The first load is gated on the level default having landed in the URL, and the query change
+    // that lands it is what reloads the table. When the gate opens without one — `isRouteSettled`
+    // giving up on a navigation that never lands — nothing else would trigger that first load.
+    watch(isLevelRouteSettled, (settled) => {
+        if (!settled) return
+        nextTick(() => {
+            if (hasLoadedOnce || isLoading.value) return
+            dataTable.value?.reload()
+        })
+    })
+
+    const showStatChart = () => props.withCharts && showChart.value && !logsStore.isCursorMode
 
     const onShowChartChange = (value: boolean) => {
         showChart.value = value
@@ -432,6 +510,14 @@
         dataTable.value?.reload()
     }
 
+    // The chart toggle is hidden (not just inert) in cursor mode: cursor stores don't aggregate, so
+    // the timeseries chart it controls can't be built — see `showStatChart` above.
+    const logTableOptions = computed(() => ({
+        chart: {shown: !logsStore.isCursorMode, value: showChart.value, callback: onShowChartChange},
+        refresh: {shown: true, callback: refresh},
+        columns: {shown: false},
+    }))
+
     watch(() => props.reloadLogs, (newValue) => {
         if (newValue) refresh()
     })
@@ -446,6 +532,13 @@
 
     .shadow {
         box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
+    }
+
+    .logs-cursor-nav {
+        display: flex;
+        justify-content: center;
+        gap: var(--ks-spacing-2);
+        margin: 0 var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
     .logs-toolbar {

@@ -10,6 +10,38 @@ import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 
+/** Mirrors io.kestra.core.plugins.PluginInstallJob */
+export interface PluginArtifact {
+    groupId: string;
+    artifactId: string;
+    extension: string;
+    classifier: string | null;
+    version: string;
+}
+
+export interface ArtifactProgress {
+    resource: string;
+    transferred: number;
+    total: number;
+    state: "STARTED" | "PROGRESSING" | "SUCCEEDED" | "FAILED";
+}
+
+export interface PluginInstallJob {
+    id: string;
+    status: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED";
+    artifacts: PluginArtifact[];
+    progress: Record<string, ArtifactProgress>;
+    startedAt: string | null;
+    finishedAt: string | null;
+    error: string | null;
+}
+
+export interface PluginAutoInstallDetectResult {
+    enabled: boolean;
+    missingTypes: string[];
+    artifacts: PluginArtifact[];
+}
+
 export interface PluginComponent {
     icon?: string;
     cls?: string;
@@ -26,6 +58,10 @@ export type {Plugin} from "../utils/pluginUtils"
 export interface TriggerPluginDto {
     type: string;
     name: string;
+    // The owning plugin's (or subgroup's) declared, correctly-cased title (for example "MongoDB" or
+    // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
+    // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
+    pluginTitle: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;
@@ -66,11 +102,13 @@ interface RawPluginIcon {
     hash?: string;
 }
 
+// Bulk indexes carry icon metadata only; `hash` is set exactly when the class has an icon, whose bytes are
+// then fetched per class from `/plugins/icons/{cls}/icon.svg`.
 function toPluginIconData(raw: RawPluginIcon): PluginIconData {
     return {
         flowable: raw.flowable,
         monochrome: raw.monochrome ?? false,
-        hasIcon: raw.icon != null,
+        hasIcon: raw.icon != null || raw.hash != null,
         hash: raw.hash,
     }
 }
@@ -78,6 +116,17 @@ function toPluginIconData(raw: RawPluginIcon): PluginIconData {
 function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
     return Object.fromEntries(
         Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon)]),
+    )
+}
+
+// The group index holds an entry for every group and subgroup, iconless ones included. Callers treat any entry as
+// "this group has an icon", so keeping the iconless ones would render the generic icon instead of letting
+// TaskIcon fall through to its lazy lookup and the ecosystem catalog.
+function toGroupIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
+    return Object.fromEntries(
+        Object.entries(raw ?? {})
+            .filter(([, icon]) => icon.icon != null || icon.hash != null)
+            .map(([cls, icon]) => [cls, toPluginIconData(icon)]),
     )
 }
 
@@ -277,11 +326,12 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (installedPluginTypesPending) return installedPluginTypesPending
         installedPluginTypesPending = (PluginsAPI.listPlugins() as Promise<{results: Plugin[]; total: number}>)
             .then(response => {
-                installedPluginTypes.value = response.results.flatMap(p =>
-                    Object.entries(p)
+                installedPluginTypes.value = response.results.flatMap(p => [
+                    ...Object.entries(p)
                         .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
                         .flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)),
-                )
+                    ...(p.aliases ?? []),
+                ])
                 return installedPluginTypes.value
             })
             .finally(() => {
@@ -326,9 +376,13 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc
         }
 
+        // A 404 is a normal outcome here (e.g. as-you-type documentation for a not-yet-installed
+        // catalog type) — every caller handles it locally, so never trip the shared HTTP client's
+        // global not-found page.
+        const requestOptions = {ignoreNotFound: true} as Parameters<typeof PluginsAPI.pluginDocumentation>[1]
         const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, {ignoreNotFound: true})
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, {ignoreNotFound: true})) as PluginComponent
+            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
+            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, requestOptions)) as PluginComponent
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data
@@ -408,7 +462,15 @@ export const usePluginsStore = defineStore("plugins", () => {
             version,
         }
 
-        const pluginData = await load(payload)
+        let pluginData
+        try {
+            pluginData = await load(payload)
+        } catch {
+            // catalog-only type: no local doc until the plugin is actually installed
+            editorPlugin.value = undefined
+            currentlyLoading = undefined
+            return
+        }
 
         editorPlugin.value = {
             cls,
@@ -430,7 +492,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (groupIconsPending) return groupIconsPending
         groupIconsPending = axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
             .then(response => {
-                groupIcons.value = toPluginIconDataMap(response.data)
+                groupIcons.value = toGroupIconDataMap(response.data)
                 return groupIcons.value
             })
             .finally(() => {
@@ -478,6 +540,41 @@ export const usePluginsStore = defineStore("plugins", () => {
         return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
     }
 
+    // Auto-install requests are best-effort and handled locally by their callers: a 403 (feature
+    // disabled) or a 404 (job evicted while the toast is still polling) must never trip the shared
+    // HTTP client's global error page or toast.
+    const silentRequest = {ignoreNotFound: true, showMessageOnError: false}
+
+    async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {
+        const response = await axios.post<PluginAutoInstallDetectResult>(
+            `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
+            flowYaml,
+            {headers: {"Content-Type": "text/plain"}, ...silentRequest},
+        )
+        return response.data
+    }
+
+    async function startInstall(artifacts: PluginArtifact[]): Promise<PluginInstallJob> {
+        const response = await axios.post<PluginInstallJob>(
+            `${apiUrlWithoutTenants()}/plugins/install`,
+            artifacts,
+            silentRequest,
+        )
+        return response.data
+    }
+
+    async function getInstallJob(jobId: string): Promise<PluginInstallJob | null> {
+        try {
+            const response = await axios.get<PluginInstallJob>(
+                `${apiUrlWithoutTenants()}/plugins/install/${jobId}`,
+                silentRequest,
+            )
+            return response.data
+        } catch {
+            return null
+        }
+    }
+
     return {
         plugin,
         versions,
@@ -518,5 +615,10 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadIcon,
         groupIcons,
         ensureGroupIcons,
+
+        // auto-install
+        detectMissingPlugins,
+        startInstall,
+        getInstallJob,
     }
 })

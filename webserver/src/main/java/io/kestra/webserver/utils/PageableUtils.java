@@ -19,6 +19,13 @@ public class PageableUtils {
     }
 
     public static Pageable from(int page, int size, List<String> sort, Function<String, String> sortMapper) throws HttpStatusException {
+        if (page < 1) {
+            throw new HttpStatusException(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "The page number must be greater than or equal to 1."
+            );
+        }
+
         if (size > MAX_PAGE_SIZE) {
             throw new HttpStatusException(
                 HttpStatus.UNPROCESSABLE_ENTITY,

@@ -178,6 +178,24 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-disabled.yaml"})
+    void webhookDisabled() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST(
+                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS +"/webhook-disabled/webhook-disabled-key",
+                        null
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(exception.getMessage()).contains("the trigger 'webhook' is disabled");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
     void webhookOnDraftFlowReturnsNotFound() {
         HttpClientResponseException exception = assertThrows(
@@ -385,6 +403,29 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
+
+        // A syntactically invalid REGEX filter must be rejected with a 400 that carries no SQL detail,
+        // instead of reaching the DB engine and leaking the rendered query (kestra-ee#10266)
+        exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[namespace][REGEX]=%5Ba-"
+                ), PagedResults.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(exception.getMessage()).doesNotContainIgnoringCase("select");
+        assertThat(exception.getMessage()).doesNotContain("SQL [");
+        assertThat(exception.getMessage()).contains("[a-");
+
+        exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[namespace][BOGUS_OP]=test"
+                ), PagedResults.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test

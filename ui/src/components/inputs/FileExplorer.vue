@@ -105,12 +105,7 @@
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
-            @node-drag-start="
-                nodeBeforeDrag = {
-                    parent: $event.parent.data.id,
-                    path: filesStore.getPath($event.data.id) ?? '',
-                }
-            "
+            @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
         >
@@ -224,7 +219,7 @@
             "
             width="500"
             appendToBody
-            @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            @keydown.enter.prevent="dialog.name?.trim() ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
             <div class="pb-1">
@@ -264,7 +259,7 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!dialog.name"
+                        :disabled="!dialog.name?.trim()"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
@@ -298,7 +293,8 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!renameDialog.name"
+                        :disabled="!renameDialog.name || isRenaming"
+                        :loading="isRenaming"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
@@ -370,12 +366,14 @@
     import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
-    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>
+    /** Returns whether a tab was actually open for that path, so callers can reopen it elsewhere. */
+    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => boolean>
 </script>
 
 <script lang="ts" setup>
     import {ref, computed, inject, watch} from "vue"
     import {useRoute} from "vue-router"
+    import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
@@ -423,6 +421,7 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
     const refreshTabContent = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined)
 
     // exposed so parents (e.g. the dedicated empty state) can reuse the
@@ -450,6 +449,11 @@
         filesStore.namespaceId = props.currentNS
     }
 
+    interface FileExplorerNode {
+        data: TreeNode;
+        parent: ElTreeNode;
+    }
+
     interface Dialog{
         visible: boolean;
         type: "file" | "folder";
@@ -463,6 +467,7 @@
     const filter = ref<string>("")
     const dialog = ref<Dialog>({...DIALOG_DEFAULTS})
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
+    const isRenaming = ref(false)
     const tree = ref<any>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
@@ -477,6 +482,7 @@
     const selectedNodes = ref<any[]>([])
     const selectionMode = computed(() => selectedNodes.value.length > 1)
     const lastClickedIndex = ref<number | null>(null)
+    const bulkDragSiblings = ref<{ path: string; fileName: string }[]>()
 
     const selectedFiles = computed(() => {
         return selectedNodes.value.map(id => filesStore.getPath(id)).filter((p): p is string => !!p)
@@ -795,17 +801,79 @@
         }
     }
 
-    function renameItem() {
-        if (!canManageFiles.value) return
-        const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : ""
+    async function renameItem() {
+        // The Enter handler on the dialog is not gated by the button's disabled state, so
+        // without this a second Enter fires a duplicate rename whose `old` path is already gone.
+        if (!canManageFiles.value || isRenaming.value) return
+
+        const {node, old: oldName, name: newName, type} = renameDialog.value
+        if (!newName) return
+
+        const path = node?.data.id ? filesStore.getPath(node.data.id) ?? "" : ""
         const start = path.substring(0, path.lastIndexOf("/") + 1)
-        namespacesStore.renameFileDirectory({
-            namespace: namespaceId.value,
-            old: `${start}${renameDialog.value.old}`,
-            new: `${start}${renameDialog.value.name}`,
-        })
-        tree.value.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name
+        const oldPath = `${start}${oldName}`
+        const newPath = `${start}${newName}`
+
+        isRenaming.value = true
+        try {
+            await namespacesStore.renameFileDirectory({
+                namespace: namespaceId.value,
+                old: oldPath,
+                new: newPath,
+            })
+        } catch (error) {
+            // The tree is left untouched on purpose: it used to be renamed before the response
+            // arrived, so a refused rename (an existing name answers 500) still looked applied.
+            console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
+            toast.error(t("namespace files.rename.error", {name: newName}))
+            return
+        } finally {
+            isRenaming.value = false
+        }
+
+        tree.value.getNode(node).data.fileName = newName
         renameDialog.value = {...RENAME_DEFAULTS}
+
+        // Tabs are keyed by path, so a renamed file left one pointing at a path that no longer
+        // exists — clicking it navigated to a full-page 404. Move it across instead.
+        if (type === "file" && closeTab?.({path: oldPath})) {
+            openTab?.({
+                name: newName,
+                path: newPath,
+                extension: newName.split(".").pop()!,
+                flow: false,
+                dirty: false,
+            })
+        }
+    }
+
+    function onNodeDragStart(draggingNode: FileExplorerNode) {
+        nodeBeforeDrag.value = {
+            parent: draggingNode.parent.data.id,
+            path: filesStore.getPath(draggingNode.data.id) ?? "",
+        }
+    
+        bulkDragSiblings.value = undefined
+
+        const isBulkDrag = selectedNodes.value.length > 1 && selectedNodes.value.includes(draggingNode.data.id)
+        if (!isBulkDrag) {
+            return
+        }
+
+        // handle bulk drag
+        const draggedPath = nodeBeforeDrag.value.path
+        const selectedPaths = selectedFiles.value
+
+        if (selectedPaths.some(p => draggedPath.startsWith(`${p}/`))) {
+            return
+        }
+
+        bulkDragSiblings.value = selectedNodes.value
+            // ignore the main node
+            .filter(id => id !== draggingNode.data.id)
+            .map(id => filesStore.getPath(id))
+            .filter((path): path is string => !!path && !selectedPaths.some(p => p !== path && path.startsWith(`${p}/`)))
+            .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
     async function nodeMoved(draggedNode: any) {
@@ -815,16 +883,47 @@
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             return
         }
+        const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
+
         try {
             await namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
                 old: nodeBeforeDrag.value?.path ?? "",
-                new: filesStore.getPath(draggedNode.data.id) ?? "",
+                new: newPath,
             })
         } catch {
             tree.value.remove(draggedNode.data.id)
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            bulkDragSiblings.value = undefined
+            return
         }
+
+        const siblings = bulkDragSiblings.value
+        bulkDragSiblings.value = undefined
+        if (!siblings?.length) {
+            return
+        }
+
+        // handle siblings move
+        const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
+        const results = await Promise.allSettled(siblings.map((sibling) =>
+            namespacesStore.moveFileDirectory({
+                namespace: namespaceId.value,
+                old: sibling.path,
+                new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName,
+            }),
+        ))
+
+        await filesStore.loadNodes()
+        selectedNodes.value = []
+        lastClickedIndex.value = null
+
+        const failedCount = results.filter(r => r.status === "rejected").length
+
+        if (failedCount > 0) {
+            return toast.error(t("namespace files.move.bulk_error", {count: failedCount}))
+        }
+        return toast.success(t("namespace files.move.bulk_success"))
     }
 
     const creation_name = ref<any>()
@@ -851,6 +950,9 @@
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}
+            selectedNodes.value = []
+            lastClickedIndex.value = null
+            syncTreeCurrentKey()
         }
     }
 
@@ -863,16 +965,18 @@
     async function addFile({file, creation, shouldReset = true}: { file?: Omit<TreeNodeFile, "id" | "type">; creation?: boolean; shouldReset?: boolean }) {
         let FILE: Omit<TreeNodeFile, "id" | "type">
         if (creation && dialog.value.name) {
-            const [fileName, extension] = getFileNameWithExtension(dialog.value.name)
+            const [fileName, extension] = getFileNameWithExtension(dialog.value.name.trim())
             FILE = {fileName, extension, content: "", leaf: true}
         } else {
             if(!file) return
             FILE = file
         }
 
-        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation)
+        const parentFolder = dialog.value.folder
+        const {path, file: createdFile} = await filesStore.addFile(FILE, parentFolder, creation)
         if (creation) {
             if(path === undefined || createdFile === undefined) return
+            reloadFolder(parentFolder)
             openTab?.({
                 name: createdFile.fileName,
                 path,
@@ -894,8 +998,6 @@
             nodes: Array.isArray(nodes) ? nodes : [nodes],
         }
     }
-
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return
@@ -921,12 +1023,24 @@
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {
         const parentPath = dialog.value.folder || ""
-        filesStore.addFolder({
-            fileName: dialog.value.name ?? "unknown",
+        const payload = {
+            fileName: dialog.value.name?.trim() ?? "unknown",
             parentPath,
             ...folder,
-        }, creation)
+        }
         dialog.value = {...DIALOG_DEFAULTS}
+        await filesStore.addFolder(payload, creation)
+        reloadFolder(parentPath)
+    }
+
+    /** Re-fetches an already loaded folder, since the tree only diffs its own root level and would otherwise stay stale until a refresh. */
+    function reloadFolder(path?: string) {
+        const node = path ? tree.value?.getNode(filesStore.findNodeByPath(path)?.id) : undefined
+        if (!node?.loaded) {
+            return
+        }
+        node.loaded = false
+        node.expand()
     }
 
     async function showRevisionsHistory(data: TreeNode) {
@@ -948,15 +1062,9 @@
         }
     }
 
-    async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const {content} = await namespacesStore.readFile({
-            path: filesStore.getPath(node.id) ?? "",
-            namespace: namespaceId.value,
-        })
-        if(!content?.length)
-            throw new Error("File is empty or undefined")
-        const blob = new Blob([content], {type: "text/plain"})
-        Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName)
+    function exportFile(node: TreeNode, data: {fileName: string}) {
+        const path = filesStore.getPath(node.id) ?? ""
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=${encodeURI(`/${path}`)}`, data.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {

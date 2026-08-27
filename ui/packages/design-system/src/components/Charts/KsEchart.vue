@@ -13,7 +13,7 @@
             class="ks-chart__inner"
             :theme="currentTheme"
             :option="effectiveOption"
-            :initOptions="{renderer: renderer}"
+            :initOptions="initOptions"
             autoresize
             @mouseover="onMouseover"
             @mouseout="onMouseout"
@@ -49,7 +49,7 @@
     import {vKsLoading} from "../Feedback/KsLoading"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
-    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     defineOptions({inheritAttrs: false})
 
@@ -81,6 +81,8 @@
             /** Raw series data — if not provided as options. */
             data?: KsChartSeriesItem[] | null,
             renderer?: ChartRenderer
+            /** Upper bound for the canvas pixel ratio. Trades a little sharpness on high-DPI screens for a much smaller canvas; leave unset to render at full device resolution. */
+            maxPixelRatio?: number
         }>(),
         {
             loading: false,
@@ -89,8 +91,18 @@
             disableFeatures: () => [],
             data: null,
             renderer: ChartRenderer.CANVAS,
+            maxPixelRatio: undefined,
         },
     )
+
+    // A canvas backing store costs width × height × pixelRatio² bytes, so capping the ratio is the cheapest way to keep
+    // a page holding many charts affordable on a high-DPI screen.
+    const initOptions = computed(() => ({
+        renderer: props.renderer,
+        ...(props.maxPixelRatio === undefined
+            ? {}
+            : {devicePixelRatio: Math.min(window.devicePixelRatio || 1, props.maxPixelRatio)}),
+    }))
 
     const isDark = ref(false)
 
@@ -206,7 +218,7 @@
                 continue
             }
             const swatch = p.seriesType === "line"
-                ? `<span style="display:inline-block;width:14px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
+                ? `<span style="display:inline-block;width:10px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
                 : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
             const label = isPie ? "" : toCapitalCase(p.seriesName ?? "")
             const suffix = isPie ? ` (${p.percent}%)` : ""

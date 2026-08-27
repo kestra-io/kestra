@@ -7,11 +7,11 @@ import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
-import {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {makeToast} from "../utils/toast"
 import {InputType} from "../utils/inputs"
 import {globalI18n} from "../translations/i18n"
-import {transformResponse} from "../components/dependencies/composables/useDependencies"
+import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
 import type {FlowWithSource,  AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
@@ -559,7 +559,10 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
+    // The editor wants this count twice - tab badge and toolbar stat - so they share one request.
+    const inFlightDependencyCounts = new Map<string, ReturnType<typeof requestDependencies>>()
+
+    function requestDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount: boolean) {
         return FlowsAPI.flowDependencies({namespace: options.namespace, id: options.id, expandAll: !onlyCount}).then(data => {
             const totalNodes = data.nodes ? new Set(data.nodes.map((r:{uid:string}) => r.uid)).size : 0
             const count = Math.max(0, totalNodes - 1)
@@ -569,6 +572,30 @@ export const useFlowStore = defineStore("flow", () => {
                 count,
             }
         })
+    }
+
+    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
+        if (!onlyCount) {
+            return requestDependencies(options, onlyCount)
+        }
+
+        const key = `${options.namespace}/${options.id}`
+        const inFlight = inFlightDependencyCounts.get(key)
+        if (inFlight) {
+            return inFlight
+        }
+
+        const request = requestDependencies(options, onlyCount)
+        inFlightDependencyCounts.set(key, request)
+        // Both handlers, so this derived promise never becomes an unhandled rejection.
+        const settle = () => {
+            if (inFlightDependencyCounts.get(key) === request) {
+                inFlightDependencyCounts.delete(key)
+            }
+        }
+        request.then(settle, settle)
+
+        return request
     }
 
 function deleteFlowAndDependencies() {
@@ -876,7 +903,7 @@ function deleteFlowAndDependencies() {
                 : []
 
         const constraintsError =
-            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
+            flowValidation.value?.constraints?.split(/, ?/) ?? []
 
         const errors = [...flowExistsError, ...constraintsError]
 

@@ -23,7 +23,11 @@
                 </template>
 
                 <template #top>
-                    <div class="toolbar" :class="{plain: embed || system}">
+                    <div
+                        v-if="!showEmptyPage || (embed && !system)"
+                        class="toolbar"
+                        :class="{plain: embed || system}"
+                    >
                         <BlueprintsFilterBar
                             v-model="selectedTags"
                             :class="{search: !embed && !system}"
@@ -32,7 +36,11 @@
                             :tags
                             :inline="!embed && !system"
                             @search="handleSearch"
-                        />
+                        >
+                            <template v-if="$slots['beside-search']" #beside-search>
+                                <slot name="beside-search" />
+                            </template>
+                        </BlueprintsFilterBar>
                         <div v-if="ready && !system && !embed" class="tags">
                             <KsCheckTag
                                 v-for="tag in tagList"
@@ -48,8 +56,11 @@
                 </template>
 
                 <template #table>
+                    <slot v-if="showEmptyPage" name="empty">
+                        <KsNoData :title="$t('blueprints.empty')" />
+                    </slot>
                     <KsNoData
-                        v-if="isEmpty"
+                        v-else-if="isEmpty"
                         :title="$t('blueprints.empty')"
                     />
                     <div v-else-if="embed && !system" class="blueprint-list">
@@ -166,6 +177,11 @@
     const tagList = computed(() => Object.values(tags.value ?? {}))
     const isEmpty = computed(() => ready.value && !blueprints.value?.length)
 
+    const lastLoadFiltered = ref(false)
+    const showEmptyPage = computed(() =>
+        isEmpty.value && !lastLoadFiltered.value,
+    )
+
     const handleSearch = (query: string) => {
         searchText.value = query
     }
@@ -273,6 +289,7 @@
         if (props.blueprintType === beforeLoadBlueprintType) {
             total.value = data.total
             blueprints.value = data.results
+            lastLoadFiltered.value = !!query.q || (!props.system && !!query.tags)
         }
     }
 

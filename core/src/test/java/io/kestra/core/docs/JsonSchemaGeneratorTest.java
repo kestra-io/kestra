@@ -37,6 +37,7 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.storage.Reverse;
 import io.kestra.plugin.core.trigger.Schedule;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -176,6 +177,34 @@ class JsonSchemaGeneratorTest {
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
             var task = definitions.get(Task.class.getName());
             Assertions.assertNotNull(task.get("anyOf"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void taskSchemaCollapsesSingleUseDiscriminatorWrapper() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            String base = "io.kestra.core.http.client.configurations.BasicAuthConfiguration";
+            assertThat(
+                "the plain definition, only ever used by its own wrapper, must be inlined away instead of kept as a separate entry",
+                definitions.containsKey(base + "-1"), is(false)
+            );
+
+            var wrapper = definitions.get(base + "-2");
+            assertThat("the wrapper must survive, carrying its own discriminator addition", wrapper, is(notNullValue()));
+            assertThat((List<String>) wrapper.get("required"), hasItem("type"));
+
+            var properties = (Map<String, Object>) wrapper.get("properties");
+            assertThat(
+                "the original class's own properties must not be lost in the merge",
+                properties.keySet(), hasItems("username", "password")
+            );
         });
     }
 
@@ -351,6 +380,14 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("description"), is("integerPropertyWithDefault description"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("$deprecated"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is("10000"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldDisplayReverseSeparatorDefaultAsEscapedNewline() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, Reverse.class);
+
+        assertThat(properties(generate).get("separator").get("default"), is("\\n"));
     }
 
     @SuppressWarnings("unchecked")

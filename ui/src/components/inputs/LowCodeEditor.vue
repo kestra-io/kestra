@@ -23,7 +23,7 @@
             :replayEnabled="replayEnabled"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :showDetailsToggle="hasExtraDetails"
+            :showDetailsToggle="props.showDetailsToggle && hasExtraDetails"
             :taskDetailsVersion="taskDetailsVersion"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
@@ -429,6 +429,7 @@
             isAllowedEdit?: boolean;
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
+            showDetailsToggle?: boolean;
             expandedSubflows?: string[];
         }>(),
         {
@@ -440,6 +441,7 @@
             isAllowedEdit: false,
             horizontalDefault: undefined,
             toggleOrientationButton: true,
+            showDetailsToggle: true,
             expandedSubflows: () => [],
         })
 

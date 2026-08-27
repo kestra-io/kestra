@@ -20,7 +20,13 @@ public record WebhookResponse(
     List<Label> labels,
     State state,
     URI url) {
-    public static WebhookResponse fromExecution(Execution execution, URI url) {
+    /**
+     * Builds the webhook response from an execution.
+     *
+     * @param outputs the flow-level outputs of the execution, they are stored outside of the execution so they must be
+     *                loaded by the caller via the {@link io.kestra.core.services.ExecutionOutputService}.
+     */
+    public static WebhookResponse fromExecution(Execution execution, Map<String, Object> outputs, URI url) {
         return new WebhookResponse(
             execution.getTenantId(),
             execution.getId(),
@@ -28,7 +34,7 @@ public record WebhookResponse(
             execution.getFlowId(),
             execution.getFlowRevision(),
             execution.getTrigger(),
-            execution.getOutputs(),
+            outputs,
             execution.getLabels(),
             execution.getState(),
             url

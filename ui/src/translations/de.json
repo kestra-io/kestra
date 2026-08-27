@@ -473,6 +473,11 @@
         "title": "Übrig gebliebenes Concurrency-Limit"
       }
     },
+    "docsPage": {
+      "notFound": "Diese Dokumentationsseite existiert nicht. Sie wurde möglicherweise verschoben oder umbenannt.",
+      "loadError": "Diese Dokumentationsseite konnte nicht geladen werden. Bitte versuche es erneut.",
+      "backToDocs": "Zurück zu Docs"
+    },
     "documentation": {
       "documentation": "Dokumentation"
     },

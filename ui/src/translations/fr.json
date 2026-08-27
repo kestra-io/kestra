@@ -473,6 +473,11 @@
         "title": "Limite de concurrence résiduelle"
       }
     },
+    "docsPage": {
+      "notFound": "Cette page de documentation n'existe pas. Elle a peut-être été déplacée ou renommée.",
+      "loadError": "Impossible de charger cette page de documentation. Veuillez réessayer.",
+      "backToDocs": "Retour aux Docs"
+    },
     "documentation": {
       "documentation": "Documentation"
     },

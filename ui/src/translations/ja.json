@@ -473,6 +473,11 @@
         "title": "残存している同時実行制限"
       }
     },
+    "docsPage": {
+      "notFound": "このドキュメントページは存在しません。移動または名前が変更された可能性があります。",
+      "loadError": "このドキュメントページを読み込めませんでした。もう一度お試しください。",
+      "backToDocs": "Docs に戻る"
+    },
     "documentation": {
       "documentation": "ドキュメント"
     },

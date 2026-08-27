@@ -27,18 +27,21 @@ const TaskIconSpy = defineComponent({
     },
 })
 
-function mountBasicNode(props: Record<string, unknown>) {
+function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<string, string> = {}) {
     return mount(BasicNode, {
         props: {
             id: "root.my-task",
             data: {node: {task: {id: "my-task", type: CLS}}, color: "default"},
+            icons: {},
             ...props,
         },
         global: {
             plugins: [i18n],
-            stubs: {KsTooltip: {template: "<div><slot /></div>"}},
+            // KsTooltip wraps the title in an element-plus popper; render only its default slot.
+            stubs: {KsTooltip: {template: "<span><slot /></span>"}},
             provide: {[TASK_ICON_INJECTION_KEY as symbol]: TaskIconSpy},
         },
+        slots,
     })
 }
 
@@ -67,42 +70,22 @@ describe("BasicNode icons", () => {
     })
 })
 
-function mountBasicNode() {
-    return mount(BasicNode, {
-        props: {
-            id: "root.my-task",
-            data: {
-                node: {},
-                color: "default",
-                unused: false,
-                parent: {},
-            },
-            icons: {},
-        },
-        global: {
-            stubs: {
-                // KsTooltip wraps the title in an element-plus popper; render only its default slot.
-                KsTooltip: {template: "<span><slot /></span>"},
-            },
-        },
-        slots: {
-            badge: "<span class='badge-marker'>badge</span>",
-            "title-status": "<span class='status-marker'>status</span>",
-            "title-actions": "<span class='actions-marker'>actions</span>",
-        },
-    })
-}
-
 describe("BasicNode layout", () => {
+    const slots = {
+        badge: "<span class='badge-marker'>badge</span>",
+        "title-status": "<span class='status-marker'>status</span>",
+        "title-actions": "<span class='actions-marker'>actions</span>",
+    }
+
     it("should render the badge above the title, outside the title row", () => {
-        const wrapper = mountBasicNode()
+        const wrapper = mountBasicNode({}, slots)
 
         expect(wrapper.find(".node-content > .badge-marker").exists()).toBe(true)
         expect(wrapper.find(".node-title .badge-marker").exists()).toBe(false)
     })
 
     it("should render the status and actions as direct children of the main content", () => {
-        const wrapper = mountBasicNode()
+        const wrapper = mountBasicNode({}, slots)
 
         expect(wrapper.find(".main-content > .status-marker").exists()).toBe(true)
         expect(wrapper.find(".main-content > .actions-marker").exists()).toBe(true)

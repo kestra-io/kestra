@@ -17,6 +17,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
@@ -36,6 +38,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionStateStore executionStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final TaskOutputService taskOutputService;
+    private final ExecutionOutputService executionOutputService;
     private final AsyncOperationService asyncOperationService;
     private final ExecutionEventMessageHandler executionEventMessageHandler;
     private final KillSwitchService killSwitchService;
@@ -47,6 +50,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         ExecutionStateStore executionStateStore,
         FlowMetaStoreInterface flowMetaStore,
         TaskOutputService taskOutputService,
+        ExecutionOutputService executionOutputService,
         AsyncOperationService asyncOperationService,
         ExecutionEventMessageHandler executionEventMessageHandler,
         KillSwitchService killSwitchService,
@@ -55,6 +59,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
         this.taskOutputService = taskOutputService;
+        this.executionOutputService = executionOutputService;
         this.asyncOperationService = asyncOperationService;
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.killSwitchService = killSwitchService;
@@ -114,7 +119,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                return newExecution != null ? executorContext.withExecution(migrateTaskOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
+                return newExecution != null ? executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
             } catch (Exception e) {
                 log.error("Unable to process event for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
                 outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
@@ -130,11 +135,11 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
         String error = null;
         try {
-            var flow = flowMetaStore
+            var processedFlow = flowMetaStore
                 .findByIdForRuntime(command.tenantId(), command.namespace(), command.flowId(), Optional.ofNullable(command.flowRevision()))
                 .orElseThrow(() -> new FlowNotFoundException(command.executionFullId(), command.flowRevision()));
 
-            var newExecution = executionService.create(command, flow);
+            var newExecution = executionService.create(command, processedFlow);
 
             var persisted = persistNewExecutionWithKillSwitch(newExecution);
             if (persisted.isEmpty()) {
@@ -145,7 +150,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
             // A terminal execution (e.g. a trigger that failed to render its inputs) needs no
             // further processing by the executor — it is already in its final state.
             if (newExecution.getState().isTerminated()) {
-                return Optional.empty();
+                return Optional.of(new ExecutorContext(newExecution)); // short-circuit execution processing
             }
 
             var eventType = newExecution.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
@@ -179,6 +184,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
             if (command.revision() != null) {
                 flow = flowMetaStore
                     .findByIdForRuntime(command.tenantId(), command.namespace(), command.flowId(), Optional.of(command.revision()))
+                    .map(ProcessedFlow::flow)
                     .orElseThrow(() -> new FlowNotFoundException(sourceExecution));
             } else {
                 flow = flowMetaStore
@@ -196,8 +202,16 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 command.executionId()
             );
 
-            if (persistNewExecutionWithKillSwitch(newExecution).isEmpty()) {
+            var persisted = persistNewExecutionWithKillSwitch(newExecution);
+            if (persisted.isEmpty()) {
                 return Optional.empty();
+            }
+            newExecution = persisted.get();
+
+            // A terminal execution (e.g. killed or cancelled by the kill switch) needs no further
+            // processing by the executor — it is already in its final state.
+            if (newExecution.getState().isTerminated()) {
+                return Optional.of(new ExecutorContext(newExecution)); // short-circuit execution processing
             }
 
             return executionEventMessageHandler.handle(new ExecutionEvent(newExecution, ExecutionEventType.CREATED));
@@ -224,34 +238,45 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
      * </p>
      *
      * @return {@code Optional.of(execution)} if the execution should proceed to normal processing;
-     *         {@code Optional.empty()} if it was kill-switched (already persisted in its terminal state).
+     *         {@code Optional.empty()} if it was kill-switched IGNORE.
      */
-    private Optional<Execution> persistNewExecutionWithKillSwitch(Execution newExecution) {
-        EvaluationType evaluationType = killSwitchService.evaluate(newExecution);
-        if (evaluationType == EvaluationType.KILL) {
-            log.warn("Kill switch active (KILL): killing execution {}", newExecution.getId());
-            executionStateStore.create(newExecution.withState(State.Type.KILLED).addLabel(new Label(Label.KILL_SWITCH, "killed")));
-            return Optional.empty();
-        }
-        if (evaluationType == EvaluationType.CANCEL) {
-            log.warn("Kill switch active (CANCEL): cancelling execution {}", newExecution.getId());
-            executionStateStore.create(newExecution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled")));
-            return Optional.empty();
-        }
-        executionStateStore.create(newExecution);
+    private Optional<Execution> persistNewExecutionWithKillSwitch(Execution execution) {
+        EvaluationType evaluationType = killSwitchService.evaluate(execution);
         if (evaluationType == EvaluationType.IGNORE) {
-            log.warn("Kill switch active (IGNORE): ignoring execution {}", newExecution.getId());
-            return Optional.empty();
+            log.warn("Kill switch active (IGNORE): ignoring execution {}", execution.getId());
+            executionStateStore.create(execution.addLabel(new Label(Label.KILL_SWITCH, "ignored")));
+            return Optional.empty(); // short-circuit execution processing
         }
+
+        // KILL and CANCEL should still reach toExecution so terminal steps are done
+        Execution newExecution;
+        if (evaluationType == EvaluationType.KILL) {
+            log.warn("Kill switch active (KILL): killing execution {}", execution.getId());
+            newExecution = execution.withState(State.Type.KILLED).addLabel(new Label(Label.KILL_SWITCH, "killed"));
+        }
+        else if (evaluationType == EvaluationType.CANCEL) {
+            log.warn("Kill switch active (CANCEL): cancelling execution {}", execution.getId());
+            newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
+        } else {
+            newExecution = execution;
+        }
+
+        executionStateStore.create(newExecution);
         return Optional.of(newExecution);
     }
 
     /**
-     * Pre-2.0 backward compatibility: if a task run carries inline outputs (deprecated {@code Variables outputs} field),
-     * persist them into the task output repository so the rest of the executor can work uniformly with the modern storage.
+     * Pre-2.0 backward compatibility: if the execution or one of its task runs carries inline outputs (deprecated
+     * {@code outputs} fields), persist them into the output repositories so the rest of the executor can work
+     * uniformly with the modern storage.
      */
     @SuppressWarnings("deprecation")
-    private Execution migrateTaskOutputs(Execution execution) throws InternalException {
+    private Execution migrateOutputs(Execution execution) throws InternalException {
+        if (execution.getOutputs() != null) {
+            executionOutputService.saveOutputs(execution, execution.getOutputs());
+            execution = execution.withOutputs(null);
+        }
+
         if (ListUtils.isEmpty(execution.getTaskRunList())) {
             return execution;
         }

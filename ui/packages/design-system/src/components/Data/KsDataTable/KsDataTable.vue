@@ -46,6 +46,7 @@
                     @selection-change="selectionChanged"
                     @select="onSelect"
                     @sort-change="onSortChange"
+                    @row-click="(row, column, event) => emit('row-click', row, column, event)"
                     @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
                 >
                     <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection :selectable="rowSelectable" />
@@ -143,6 +144,7 @@
         "update:pageSize": [size: number]
         "sort-change": [sort: SortItem]
         "selection-change": [selection: any[]]
+        "row-click": [row: any, column: any, event: Event]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
         "loaded": []

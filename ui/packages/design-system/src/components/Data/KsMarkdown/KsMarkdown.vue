@@ -19,6 +19,7 @@
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import {getShiki, loadLanguageOnDemand} from "./shikiHighlighter"
+    import {copyToClipboard} from "../../../utils/clipboard"
 
     const props = withDefaults(
         defineProps<{
@@ -90,6 +91,26 @@
         } catch {
             return false
         }
+    }
+
+    // Markdown-native links and images never go through the raw-HTML `xss` whitelist below,
+    // so their URL needs its own scheme allowlist — otherwise `[x](javascript:…)` renders as a
+    // live anchor and executes in the viewer's session (stored XSS).
+    const ALLOWED_URL_SCHEMES = ["http:", "https:", "mailto:", "tel:", "ftp:"]
+
+    function sanitizeUrl(url: unknown): string | undefined {
+        if (typeof url !== "string") return undefined
+
+        const value = url.trim()
+        if (!value) return undefined
+
+        // Whitespace and control characters are dropped before the scheme is matched, so that
+        // neither "java\tscript:" nor a newline-split scheme can smuggle a rejected scheme through.
+        const compacted = Array.from(value).filter((char) => char.charCodeAt(0) > 0x20).join("")
+        const scheme = compacted.match(/^([a-z][a-z0-9+.-]*):/i)
+        if (!scheme) return value // relative URL, fragment or query-only link
+
+        return ALLOWED_URL_SCHEMES.includes(scheme[1].toLowerCase() + ":") ? value : undefined
     }
 
     function htmlEscape(content: string): string {
@@ -221,7 +242,7 @@
                         title: "Copy to clipboard",
                         onClick: (e: MouseEvent) => {
                             const btn = e.currentTarget as HTMLButtonElement
-                            navigator.clipboard.writeText(value).then(() => {
+                            copyToClipboard(value).then(() => {
                                 // Swap the copy glyph for the check (not overlay it) for the confirm window.
                                 btn.classList.add("is-copied")
                                 setTimeout(() => btn.classList.remove("is-copied"), 2000)
@@ -286,7 +307,7 @@
         }
 
         case "link": {
-            const url = node.url as string
+            const url = sanitizeUrl(node.url)
             if (props.components?.a) {
                 return h(props.components.a as any, {
                     href: url,
@@ -295,7 +316,7 @@
                 }, {default: () => renderNodes(node.children)})
             }
 
-            const isExternal = url.startsWith("http://") || url.startsWith("https://")
+            const isExternal = url !== undefined && (url.startsWith("http://") || url.startsWith("https://"))
             return h("a", {
                 href: url,
                 title: node.title ?? undefined,
@@ -305,20 +326,22 @@
             }, renderNodes(node.children))
         }
 
-        case "image":
+        case "image": {
+            const src = sanitizeUrl(node.url)
             if (props.components?.img) {
                 return h(props.components.img as any, {
-                    src: node.url as string,
+                    src,
                     alt: (node.alt ?? "") as string,
                 })
             }
 
             return h("img", {
-                src: node.url as string,
+                src,
                 alt: (node.alt ?? "") as string,
                 title: node.title ?? undefined,
                 class: "ks-markdown__image",
             })
+        }
 
         case "strong":
             return h("strong", renderNodes(node.children))

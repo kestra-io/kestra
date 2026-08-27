@@ -18,6 +18,15 @@
                     :execution="execution"
                 />
 
+                <component
+                    :is="extra"
+                    v-for="(extra, index) in overflowActionComponents"
+                    :key="`extra-${index}`"
+                    :execution="execution"
+                />
+
+                <component :is="ACTIONS.delete.component" :execution="execution" />
+
                 <!--
                     A tab with its own more specific action (Audit Logs exporting to CSV in the
                     Enterprise Edition) contributes it here; every other tab falls back to the
@@ -73,6 +82,7 @@
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {overflowActionComponents} from "override/components/executions/executionsExtensions"
 
     defineProps<{
         // FIXME: any - routeInfo shape varies across usage
@@ -162,7 +172,6 @@
             "forceRun",
             "api",
             "editFlow",
-            "delete",
         ]
         return keys.filter((key) => key !== secondaryKey.value)
     })

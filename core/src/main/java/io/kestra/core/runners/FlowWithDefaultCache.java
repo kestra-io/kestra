@@ -6,12 +6,11 @@ import java.util.Optional;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-import io.kestra.core.models.flows.FlowWithSource;
-
 import jakarta.inject.Singleton;
 
 /**
- * A cache for flows with plugin defaults already injected, keyed by flow UID (including revision).
+ * A cache for flows processed for runtime — plugin defaults injected and, on editions supporting it,
+ * the label keys governance pinned — keyed by flow UID (including revision).
  *
  * <p>
  * Cache entries can be selectively expired at tenant or namespace granularity, which is useful
@@ -20,19 +19,19 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 public class FlowWithDefaultCache {
-    private final Cache<String, FlowWithSource> cache = Caffeine.newBuilder()
+    private final Cache<String, ProcessedFlow> cache = Caffeine.newBuilder()
         .maximumSize(1000)
         .recordStats()
         .build();
 
     /** Returns the cached entry for the given flow UID, or empty if absent. */
-    public Optional<FlowWithSource> getIfPresent(String key) {
+    public Optional<ProcessedFlow> getIfPresent(String key) {
         return Optional.ofNullable(cache.getIfPresent(key));
     }
 
     /** Adds or replaces a cache entry. */
-    public void put(String key, FlowWithSource flow) {
-        cache.put(key, flow);
+    public void put(String key, ProcessedFlow processed) {
+        cache.put(key, processed);
     }
 
     /** Expires the cache entry for the given flow UID. */
@@ -48,8 +47,8 @@ public class FlowWithDefaultCache {
      */
     public void flush(String tenantId) {
         cache.asMap().values().stream()
-            .filter(flow -> Objects.equals(flow.getTenantId(), tenantId))
-            .map(f -> f.uid())
+            .filter(processed -> Objects.equals(processed.flow().getTenantId(), tenantId))
+            .map(processed -> processed.flow().uid())
             .forEach(cache::invalidate);
     }
 
@@ -64,10 +63,10 @@ public class FlowWithDefaultCache {
     public void flush(String tenantId, String namespace) {
         cache.asMap().values().stream()
             .filter(
-                flow -> Objects.equals(flow.getTenantId(), tenantId)
-                    && (Objects.equals(flow.getNamespace(), namespace) || flow.getNamespace().startsWith(namespace + "."))
+                processed -> Objects.equals(processed.flow().getTenantId(), tenantId)
+                    && (Objects.equals(processed.flow().getNamespace(), namespace) || processed.flow().getNamespace().startsWith(namespace + "."))
             )
-            .map(f -> f.uid())
+            .map(processed -> processed.flow().uid())
             .forEach(cache::invalidate);
     }
 

@@ -4,14 +4,14 @@
             <slot name="nav">
                 <div class="text-nowrap">
                     <KsButtonGroup>
-                        <KsTooltip :content="t('Fold content lines')">
+                        <KsTooltip :content="$t('Fold content lines')">
                             <KsButton
                                 :icon="icon.UnfoldLessHorizontal"
                                 @click="autoFold(true)"
                                 size="small"
                             />
                         </KsTooltip>
-                        <KsTooltip :content="t('Unfold content lines')">
+                        <KsTooltip :content="$t('Unfold content lines')">
                             <KsButton
                                 :icon="icon.UnfoldMoreHorizontal"
                                 @click="unfoldAll"
@@ -127,7 +127,6 @@
     const datePicker = ref()
 
     const {
-        t,
         icon,
         containerClass,
         showPlaceholder,
@@ -233,7 +232,7 @@
                 background-color: var(--ks-bg-input);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
                 transition: var(--kel-transition-box-shadow);
-                box-shadow: 0 0 0 1px var(--ks-border-default) inset;
+                box-shadow: 0 0 0 1px var(--ks-editor-single-line-border-color, var(--ks-border-default)) inset;
 
                 &.custom-dark-vs-theme {
                     background-color: var(--ks-bg-input);
@@ -248,7 +247,7 @@
                 padding-right: inherit;
                 cursor: text;
                 user-select: none;
-                color: var(--ks-text-inactive);
+                color: var(--ks-placeholder-color);
             }
 
             .editor-wrapper {
@@ -378,7 +377,7 @@
                 }
             }
 
-            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+            .monaco-list-row[aria-label^="_DATE_PICKER_"] {
                 display: none;
             }
         }

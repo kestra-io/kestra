@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -55,7 +54,6 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -80,7 +78,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.*;
-import io.kestra.plugin.core.preview.TextFileRenderer;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
@@ -92,7 +89,7 @@ import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
-import io.kestra.webserver.services.FlowLabelsResolver;
+import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.services.WebhookBodyService;
@@ -247,9 +244,6 @@ public class ExecutionController {
     private WebhookService webhookService;
 
     @Inject
-    private FlowLabelsResolver flowLabelsResolver;
-
-    @Inject
     private FlowMetaStoreInterface flowMetaStore;
 
     @Inject
@@ -262,7 +256,7 @@ public class ExecutionController {
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
     @Inject
-    private PluginRegistry pluginRegistry;
+    private FileRendererService fileRendererService;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -739,7 +733,7 @@ public class ExecutionController {
         String path,
         HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
-       return webhook(maybeFlow, key, path, request);
+        return webhook(maybeFlow, key, path, request);
     }
 
     protected Mono<HttpResponse<?>> webhook(
@@ -791,6 +785,10 @@ public class ExecutionController {
         // run it: the trigger is part of the flow, so its configuration is the processed one.
         final AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
         this.onWebhookMatched(flow, webhook);
+
+        if (webhook.isDisabled()) {
+            throw new ConflictException("Cannot execute webhook: the trigger '%s' is disabled.".formatted(webhook.getId()));
+        }
 
         // Webhook context
         var webhookContext = new WebhookContext(
@@ -863,7 +861,7 @@ public class ExecutionController {
      *         is the case for a flow governance blocks — rejected a step later by the edition's gate.
      */
     private AbstractWebhookTrigger processedForRuntime(Flow flow, AbstractWebhookTrigger webhook) {
-        return ListUtils.emptyOnNull(FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).getTriggers())
+        return ListUtils.emptyOnNull(FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).flow().getTriggers())
             .stream()
             .filter(processed -> webhook.getId().equals(processed.getId()))
             .filter(AbstractWebhookTrigger.class::isInstance)
@@ -912,16 +910,20 @@ public class ExecutionController {
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        List<Label> parsedLabels = parseLabels(labels, flow);
-        Execution execution = Execution.newExecution(flow, parsedLabels);
+        List<Label> parsedLabels = parseLabels(labels);
+        // inputs render against the flow, and the labels, the executor will build the execution from,
+        // so a `defaults` referencing a label the flow only carries at runtime resolves here too
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolvedFlow = processedFlow.flow() instanceof FlowWithException ? flow : processedFlow.flow();
+        Execution execution = Execution.newExecution(resolvedFlow, LabelService.withoutPinned(parsedLabels, processedFlow.pinnedLabelKeys()));
         return flowInputOutput
-            .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
+            .validateExecutionInputs(resolvedFlow.getInputs(), resolvedFlow, execution, inputs)
             .map(values ->
             {
                 // values are keyed by expanded leaf id (FORM children are dotted, e.g. environment.region);
                 // nest them so checks referencing {{ inputs.environment.region }} resolve like the create path does.
                 Map<String, Object> inputsAsMap = MapUtils.flattenToNestedMap(values.stream().collect(HashMap::new, (m, v) -> m.put(v.input().getId(), v.value()), HashMap::putAll));
-                List<Check> checks = flowService.getFailedChecks(flow, inputsAsMap);
+                List<Check> checks = flowService.getFailedChecks(resolvedFlow, inputsAsMap);
                 return ApiValidateExecutionInputsResponse.of(id, namespace, checks, values);
             });
     }
@@ -971,8 +973,7 @@ public class ExecutionController {
             throw e;
         }
 
-        // parsed once the flow is known: which labels the caller may set can depend on it
-        List<Label> parsedLabels = parseLabels(labels, flow);
+        List<Label> parsedLabels = parseLabels(labels);
 
         if (flow.isDraft()) {
             controlDraftExecutableAs(flow, kind.orElse(null));
@@ -989,6 +990,11 @@ public class ExecutionController {
         }
 
         var executionId = IdUtils.create();
+        // inputs render against the flow, and the labels, the executor will build the execution from,
+        // so a `defaults` referencing a label the flow only carries at runtime resolves here too
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolvedFlow = processedFlow.flow() instanceof FlowWithException ? flow : processedFlow.flow();
+        List<Label> contributed = LabelService.withoutPinned(parsedLabels, processedFlow.pinnedLabelKeys());
         // Capture the OTel context on the current thread before entering the reactive chain.
         // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
         // would return an empty root context since OTel Context is thread-local.
@@ -996,10 +1002,10 @@ public class ExecutionController {
         // Same reason for the Micronaut propagated context: it carries the server request and its
         // authentication, which the CREATE event listeners need to attribute the execution to its author.
         final PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
+        return flowInputOutput.readExecutionInputs(resolvedFlow, executionId, contributed, inputs)
             .flatMap(executionInputs ->
             {
-                List<Check> failed = flowService.getFailedChecks(flow, executionInputs);
+                List<Check> failed = flowService.getFailedChecks(resolvedFlow, executionInputs);
                 Check.Behavior behavior = Check.resolveBehavior(failed);
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
                     return Mono.error(
@@ -1097,11 +1103,11 @@ public class ExecutionController {
         private final URI url;
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
-        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs,
+        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs,
             List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
             Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
-                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
+                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, null, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
                 traceParent, fixtures, kind, breakpoints, loopRun
             );
 
@@ -1117,7 +1123,6 @@ public class ExecutionController {
                 execution.getFlowRevision(),
                 execution.getTaskRunList(),
                 execution.getInputs(),
-                execution.getOutputs(),
                 execution.getLabels(),
                 execution.getVariables(),
                 execution.getState(),
@@ -1138,10 +1143,11 @@ public class ExecutionController {
     }
 
     /**
-     * Parses the labels a caller supplied for an execution of the given flow, rejecting the ones that are not
-     * theirs to set — the system namespace here, and whatever {@link FlowLabelsResolver} restricts for this flow.
+     * Parses the labels a caller supplied for an execution, rejecting the system namespace, which only Kestra
+     * writes. Which of the rest survive onto the execution is the executor's call, so that every creation
+     * route is governed identically rather than once per door.
      */
-    protected List<Label> parseLabels(List<String> labels, FlowInterface flow) {
+    protected List<Label> parseLabels(List<String> labels) {
         List<Label> parsedLabels = labels == null ? new ArrayList<>()
             : RequestUtils.toMap(labels).entrySet().stream()
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
@@ -1151,15 +1157,15 @@ public class ExecutionController {
         // client are system.correlationId and system.from=ui (sent by the UI). Any other
         // system.from value (scheduler/trigger/worker/…) would let a caller spoof the origin.
         Optional<Label> first = parsedLabels.stream()
-            .filter(label -> label.key().startsWith(SYSTEM_PREFIX)
-                && !label.key().equals(CORRELATION_ID)
-                && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value())))
+            .filter(
+                label -> label.key().startsWith(SYSTEM_PREFIX)
+                    && !label.key().equals(CORRELATION_ID)
+                    && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value()))
+            )
             .findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
-
-        parsedLabels = new ArrayList<>(flowLabelsResolver.resolve(flow, parsedLabels));
 
         // default the origin to "api" when the client didn't set it (the UI sends system.from=ui)
         if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
@@ -1406,7 +1412,8 @@ public class ExecutionController {
 
         return submitBatchAction(
             executions,
-            (execution, opId) -> {
+            (execution, opId) ->
+            {
                 Integer revision = null;
                 if (Boolean.TRUE.equals(latestRevision)) {
                     Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
@@ -2310,12 +2317,7 @@ public class ExecutionController {
         }
 
         String extension = FilenameUtils.getExtension(path.toString());
-        FileRenderer renderer = pluginRegistry.plugins().stream()
-            .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
-            .map(this::instantiate)
-            .filter(fileRenderer -> fileRenderer.supports(extension))
-            .findFirst()
-            .orElseGet(TextFileRenderer::new);
+        FileRenderer renderer = fileRendererService.resolve(extension);
 
         InputStream fileStream = switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME ->
@@ -2337,14 +2339,6 @@ public class ExecutionController {
             );
 
             return HttpResponse.ok(preview);
-        }
-    }
-
-    private FileRenderer instantiate(Class<? extends FileRenderer> fileRenderer) {
-        try {
-            return fileRenderer.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -2838,7 +2832,9 @@ public class ExecutionController {
                             dependencies.stream()
                                 .anyMatch(node -> node.getTenantId().equals(exec.getTenantId()) && node.getNamespace().equals(exec.getNamespace()) && node.getId().equals(exec.getFlowId()))
                         ) {
-                            if (streamingService.isStopFollow(flows.get(FlowId.uidWithoutRevision(current)), current)) {
+                            // evaluate the dependency execution itself, not the followed one: a terminated
+                            // dependency must be ended and removed even while the followed execution runs
+                            if (streamingService.isStopFollow(flows.get(FlowId.uidWithoutRevision(exec)), exec)) {
                                 emitter.next(Event.of(ExecutionStatusEvent.of(exec)).id("end"));
                                 return exec;
                             } else {

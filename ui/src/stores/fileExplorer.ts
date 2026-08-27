@@ -58,6 +58,10 @@ export function getFileNameWithExtension(fileNameWithExtension: string): [string
         : [fileNameWithExtension, ""]
 }
 
+function pathSegments(path: string): string[] {
+    return path.split("/").filter(Boolean)
+}
+
 function readFile(file: File): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()
@@ -95,23 +99,26 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         }
     }
 
-    function pushToParentFolder(parentPath: string, newNode: TreeNode) {
-        const traverseAndInsert = (basePath = "", array: TreeNode[]) => {
-            for (const item of array) {
-                const folderPath = `${basePath}${item.fileName}`
-                if (folderPath === parentPath && isDirectory(item) && Array.isArray(item.children)) {
-                    if (!item.children.find((child) => child.fileName === newNode.fileName)) {
-                        item.children.push(newNode)
-                        item.children = sorted(item.children)
-                    }
-                    return true
-                } else if (isDirectory(item) && Array.isArray(item.children)) {
-                    if (traverseAndInsert(`${folderPath}/`, item.children)) return true
-                }
+    /**
+     * Creates the folder nodes missing along `segments`
+     * and returns the deepest one's children, or
+     * undefined when a file already holds one of those names.
+     */
+    function ensureFolderPath(segments: string[]): TreeNode[] | undefined {
+        let children = fileTree.value
+        for (const segment of segments) {
+            const existing = children.find((item) => item.fileName === segment)
+            if (existing && !isDirectory(existing)) {
+                return undefined
             }
-            return false
+            const folder = existing ?? folderNode(segment, [])
+            if (!existing) {
+                children.push(folder)
+                sorted(children)
+            }
+            children = folder.children
         }
-        traverseAndInsert("", fileTree.value)
+        return children
     }
 
     function getSiblingsAtPath(parentPath: string): TreeNode[] {
@@ -137,11 +144,14 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     }, creation?: boolean) {
         if(!namespaceId.value) return
         const {fileName, parentPath = ""} = folder
-        const NEW = folderNode(fileName, folder?.children ?? [])
-        const path = parentPath ? `${parentPath}/${fileName}` : fileName
+        const segments = [...pathSegments(parentPath), ...pathSegments(fileName)]
+        const name = segments.pop()
+        if (!name) {
+            return
+        }
+        const path = [...segments, name].join("/")
         if (creation) {
-            const siblings = getSiblingsAtPath(parentPath)
-            const conflict = siblings.find(item => item.fileName === fileName)
+            const conflict = getSiblingsAtPath(segments.join("/")).find(item => item.fileName === name)
             if (conflict) {
                 if (isDirectory(conflict)) {
                     toast.error(t("namespace files.create.folder_already_exists"))
@@ -152,31 +162,19 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             }
             try {
                 await namespacesStore.createDirectory({namespace: namespaceId.value, path})
-                if (!parentPath) {
-                    fileTree.value.push(NEW)
-                    fileTree.value = sorted(fileTree.value)
-                } else {
-                    pushToParentFolder(parentPath, NEW)
-                }
-                toast.success(`Folder "${fileName}" created successfully.`)
+                toast.success(`Folder "${name}" created successfully.`)
             } catch (error) {
-                console.error(`Failed to create folder: ${fileName}`, error)
+                console.error(`Failed to create folder: ${name}`, error)
                 toast.error(t("namespace files.create.folder_error"))
                 return
             }
-
+        }
+        const parent = ensureFolderPath(segments)
+        if (!parent || parent.find(item => item.fileName === name)) {
             return
         }
-        if (!parentPath) {
-            const firstFolder = NEW.fileName.split("/")[0]
-            if (!fileTree.value.find(item => item.fileName === firstFolder)) {
-                NEW.fileName = firstFolder
-                fileTree.value.push(NEW)
-                fileTree.value = sorted(fileTree.value)
-            }
-        } else {
-            pushToParentFolder(parentPath, NEW)
-        }
+        parent.push(folderNode(name, folder?.children ?? []))
+        sorted(parent)
     }
 
     async function searchFilesList(value: string) {
@@ -209,19 +207,23 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     async function addFile(file: Omit<TreeNodeFile, "id" | "type">, parentPath?: string, creation: boolean = false): Promise<{ path?: string; file?: TreeNodeFile; }> {
         if(!namespaceId.value) return {}
         const {fileName, extension, content = "", leaf} = file
-        const NAME = `${fileName}${extension ? `.${extension}` : ""}`
+        const segments = [...pathSegments(parentPath ?? ""), ...pathSegments(`${fileName}${extension ? `.${extension}` : ""}`)]
+        const NAME = segments.pop()
+        if (!NAME) {
+            return {}
+        }
+        const path = [...segments, NAME].join("/")
 
         const NEW: TreeNodeFile = {
             id: Utils.uid(),
             fileName: NAME,
-            extension,
+            extension: getFileNameWithExtension(NAME)[1],
             content,
             type: "File",
             leaf,
         }
-        const path = `${parentPath ? `${parentPath}/` : ""}${NAME}`
         if (creation) {
-            const siblings = getSiblingsAtPath(parentPath ?? "")
+            const siblings = getSiblingsAtPath(segments.join("/"))
             const conflict = siblings.find(item => item.fileName === NAME)
             if (conflict) {
                 if (!isDirectory(conflict)) {
@@ -244,11 +246,10 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 return {}
             }
         }
-        if (!parentPath) {
-            fileTree.value.push(NEW)
-            fileTree.value = sorted(fileTree.value)
-        } else {
-            pushToParentFolder(parentPath, NEW)
+        const parent = ensureFolderPath(segments)
+        if (parent && !parent.find(item => item.fileName === NAME)) {
+            parent.push(NEW)
+            sorted(parent)
         }
         return {path, file: NEW}
     }

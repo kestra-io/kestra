@@ -14,9 +14,7 @@
 
 <style scoped lang="scss">
 .plugin-doc-wrapper {
-    padding: 1px 1rem;
     background-color: var(--ks-bg-surface);
-    padding-bottom: 5rem;
 }
 
 .plugin-doc {
@@ -24,7 +22,6 @@
 }
 
 .editorPlugin{
-    padding: 1rem ;
     min-height: 100%;
 }
 </style>

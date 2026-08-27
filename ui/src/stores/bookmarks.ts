@@ -1,47 +1,34 @@
 import {defineStore} from "pinia"
-import {ref} from "vue"
+import {useStorage} from "@vueuse/core"
 
 const LOCAL_STORAGE_KEY = "starred.bookmarks"
 
-const initialPages = localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]"
 interface Page {
     path: string;
     label?: string;
 }
 
 export const useBookmarksStore = defineStore("bookmarks", () => {
-    const pages = ref<Page[]>(JSON.parse(initialPages))
+    const pages = useStorage<Page[]>(LOCAL_STORAGE_KEY, [])
 
-    function add(page: Page ) {
-        const currentPages = pages.value
-        if (!currentPages.find(p => p.path === page.path)) {
-            currentPages.push(page)
-            updateAll(currentPages)
+    function add(page: Page) {
+        if (!pages.value.find(p => p.path === page.path)) {
+            pages.value = [...pages.value, page]
         }
     }
+
     function remove(page: Page) {
-        const currentPages = pages.value
-        const index = currentPages.findIndex(p => p.path === page.path)
-        if (index > -1) {
-            currentPages.splice(index, 1)
-            updateAll(currentPages)
-        }
+        pages.value = pages.value.filter(p => p.path !== page.path)
     }
-    function rename(page: Page) {
-        const currentPages = pages.value
-        const index = currentPages.findIndex(p => p.path === page.path)
-        if (index > -1) {
-            currentPages.splice(index, 1, {
-                ...currentPages[index],
-                label: page.label,
-            })
-            updateAll(currentPages)
-        }
 
+    function rename(page: Page) {
+        pages.value = pages.value.map(p =>
+            p.path === page.path ? {...p, label: page.label} : p,
+        )
     }
+
     function updateAll(newPages: Array<Page>) {
-        pages.value = newPages
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newPages))
+        pages.value = [...newPages]
     }
 
     return {

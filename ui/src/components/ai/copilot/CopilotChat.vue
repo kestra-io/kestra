@@ -3,21 +3,22 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" :disabled="isFreshChat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
             <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
-        <!-- AI unavailable: the backend has no configured provider (503). -->
-        <div v-if="unavailable" class="copilot-unavailable" data-test="copilot-unavailable">
+        <!-- AI unavailable: the backend has no configured provider — known up front from `/configs`,
+             or discovered mid-session (503). -->
+        <div v-if="isUnavailable" class="copilot-unavailable" data-test="copilot-unavailable">
             <KsIcon class="copilot-unavailable-icon">
                 <RobotOffOutline />
             </KsIcon>
             <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
             <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
-            <KsButton size="small" data-test="copilot-unavailable-retry" @click="retry">
+            <KsButton size="small" data-test="copilot-unavailable-retry" @click="onRetry">
                 {{ $t("ai.copilot.unavailable.retry") }}
             </KsButton>
         </div>
@@ -66,26 +67,30 @@
                 aria-live="polite"
                 :aria-busy="streaming ? 'true' : 'false'"
             >
-                <CopilotMessage
-                    v-for="message in messages"
-                    :key="message.id"
-                    :message="message"
-                    :isPending="message.id === pendingProposalMessageId"
-                    :isRunning="message.id === runningToolCallId"
-                />
+                <!-- Inner column so the page layout can span the scroller full-width (wheel works
+                     from anywhere on the page) while the transcript stays a bounded, centered column. -->
+                <div class="copilot-transcript">
+                    <CopilotMessage
+                        v-for="message in messages"
+                        :key="message.id"
+                        :message="message"
+                        :isPending="message.id === pendingProposalMessageId"
+                        :isRunning="message.id === runningToolCallId"
+                    />
 
-                <CopilotThinking v-if="working" :phase="workPhase" />
+                    <CopilotThinking v-if="working" :phase="workPhase" />
 
-                <ProposedActionCard
-                    v-if="pendingConfirmation"
-                    :action="pendingConfirmation"
-                    :disabled="streaming"
-                    @approve="confirm('APPROVE', undefined, selectedProvider)"
-                    @reject="onReject"
-                />
+                    <ProposedActionCard
+                        v-if="pendingConfirmation"
+                        :action="pendingConfirmation"
+                        :disabled="streaming"
+                        @approve="confirm('APPROVE', undefined, selectedProvider)"
+                        @reject="onReject"
+                    />
 
-                <!-- Anchor the auto-scroll follows as new content streams in. -->
-                <div ref="bottomAnchor" class="copilot-scroll-anchor" />
+                    <!-- Anchor the auto-scroll follows as new content streams in. -->
+                    <div ref="bottomAnchor" class="copilot-scroll-anchor" />
+                </div>
             </KsScrollbar>
 
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
@@ -227,6 +232,18 @@
         }
     })
 
+    // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
+    // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
+    // itself get noted — only a later, deliberate switch does.
+    let previousProvider: string | undefined
+    watch(selectedProvider, (now) => {
+        if (previousProvider !== undefined && now && now !== previousProvider) {
+            const label = providers.value.find((p) => p.id === now)?.displayName ?? now
+            noteModelChange(label)
+        }
+        previousProvider = now
+    })
+
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
         t("ai.copilot.suggestions.errorHandling"),
@@ -235,7 +252,22 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
+
+    // `/configs` reports whether any AI provider is configured, so the unavailable state renders on
+    // load rather than after the user composes a prompt that was always going to fail
+    // (kestra-io/kestra#18322). `unavailable` still covers the mid-session case (provider removed or
+    // unreachable → 503). An older backend that doesn't send the flag leaves the copilot usable.
+    const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
+    const isUnavailable = computed(() => unavailable.value || noProviderConfigured.value)
+
+    /** Re-check availability: a provider may have just been added, so refresh `/configs` too. */
+    async function onRetry(): Promise<void> {
+        try {
+            await miscStore.loadConfigs()
+        } catch { /* keep the unavailable state; the user can try again */ }
+        retry()
+    }
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })
@@ -253,8 +285,8 @@
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
     )
 
-    // "New chat" resets the conversation — so it's a no-op (and disabled) when we're already on a
-    // fresh, empty chat with no thread to clear.
+    // "New chat" resets the conversation - so it's hidden when we're already on a fresh, empty
+    // chat with no thread to clear.
     const isFreshChat = computed(() => isEmpty.value && !thread.value)
 
     // The pending proposal is always the last PROPOSED_ACTION message; the interactive card below the
@@ -342,8 +374,17 @@
     async function consumeSeededPrompt(): Promise<void> {
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
+        // EE seeds each fix as its own conversation: drop the active thread (still reachable from
+        // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
+        // where resetting would discard the only conversation for good.
+        if (miscStore.copilotNewThread) {
+            if (thread.value || messages.value.length > 0) reset()
+            nextThreadTitle.value = miscStore.copilotThreadTitle
+        }
         composerText.value = seeded
         miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
         await nextTick()
         ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
     }
@@ -390,20 +431,12 @@
         transition: background 0.15s ease, box-shadow 0.15s ease;
     }
 
-    /* Hover feedback so the pills read as interactive (the disabled New-chat pill excepted). The
-       bg interaction tokens are all near-identical dark greys, so a fill change alone is barely
-       visible — pair it with a lighter inset ring (border-strong) so the hover clearly reads. */
-    .copilot-topbar-pill:not(.is-disabled):hover {
+    /* Hover feedback so the pills read as interactive. The bg interaction tokens are all
+       near-identical dark greys, so a fill change alone is barely visible - pair it with a
+       lighter inset ring (border-strong) so the hover clearly reads. */
+    .copilot-topbar-pill:hover {
         background: var(--ks-bg-hover-elevated);
         box-shadow: inset 0 0 0 1px var(--ks-border-strong);
-    }
-
-    /* Disabled New-chat — already on a fresh, empty chat with nothing to reset. Dim the whole
-       pill (opacity) so it clearly reads as non-interactive, not just muted text. */
-    .copilot-topbar-pill.is-disabled {
-        color: var(--ks-text-inactive);
-        cursor: not-allowed;
-        opacity: 0.5;
     }
 
     .copilot-empty {
@@ -525,5 +558,17 @@
     .copilot-footer {
         padding: var(--ks-spacing-3) var(--ks-spacing-5);
         border-top: 1px solid var(--ks-border-subtle);
+    }
+
+    /* Page layout: the host surface is full-width so the transcript scroller catches the wheel
+       anywhere on the page; each section re-centers its content into the same bounded column the
+       page used to be (kestra-io/kestra#18386). The topbar is deliberately left out: its pills
+       stay pinned to the left edge of the page instead of floating with the centered column. */
+    .copilot-chat--page .copilot-transcript,
+    .copilot-chat--page .copilot-banner,
+    .copilot-chat--page .copilot-footer {
+        width: 100%;
+        max-width: 56rem;
+        margin: 0 auto;
     }
 </style>

@@ -104,7 +104,7 @@
                                             <ChevronDown />
                                         </KsIcon>
                                         <span class="log-group-count">×{{ item.members.length }}</span>
-                                        <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? t("collapse") : t("similar lines") }}</span>
+                                        <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? $t("collapse") : $t("similar lines") }}</span>
                                     </button>
                                 </template>
                                 <template v-else>
@@ -119,7 +119,7 @@
                                                 :icon="Download"
                                                 rel="noopener noreferrer"
                                             >
-                                                {{ t("download") }}
+                                                {{ $t("download") }}
                                             </KsButton>
                                             <FilePreview
                                                 :value="item.logFile"
@@ -247,7 +247,7 @@
                         }"
                         size="small"
                     >
-                        {{ t("iterations") }}
+                        {{ $t("iterations") }}
                     </KsButton>
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
@@ -360,6 +360,9 @@
     const selectedAttemptNumberByTaskRunId = ref<Record<string, number>>({})
     const executionSSE = ref<any>(undefined) // FIXME: any
     const logsSSE = ref<any>(undefined) // FIXME: any
+    // Execution `rawLogs` and any open logs SSE belong to, so both can be dropped on a change.
+    const logsExecutionId = ref<string | undefined>(undefined)
+    const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
     const flow = ref<any>(undefined) // FIXME: any
     const logsBuffer = ref<any[]>([]) // FIXME: any
     const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
@@ -633,6 +636,13 @@
                 return
             }
 
+            // Closed here so the `!logsSSE.value` guards below cannot read a stream still following the previous execution as "already covered" (kestra-io/kestra#14018).
+            if (logsExecutionId.value !== undefined && logsExecutionId.value !== newExecution.id) {
+                closeLogsSSE()
+                rawLogs.value = []
+                logsBuffer.value = []
+            }
+
             if (!oldExecution) {
                 nextTick(() => {
                     const parentScroller =
@@ -666,7 +676,8 @@
 
             if (!State.isRunning(followedExecution.value.state.current)) {
                 // wait a bit to make sure we don't miss logs as log indexer is asynchronous
-                setTimeout(() => {
+                cancelLogsSSEClose()
+                logsCloseTimeout.value = setTimeout(() => {
                     closeLogsSSE()
                 }, 2000)
 
@@ -759,7 +770,15 @@
         )
     }
 
+    function cancelLogsSSEClose() {
+        if (logsCloseTimeout.value) {
+            clearTimeout(logsCloseTimeout.value)
+            logsCloseTimeout.value = undefined
+        }
+    }
+
     function closeLogsSSE() {
+        cancelLogsSSEClose()
         if (logsSSE.value) {
             logsSSE.value.close()
             logsSSE.value = undefined
@@ -839,6 +858,9 @@
     }
 
     function followLogs(executionId: string) {
+        // A replay is RESTARTED, not a running state, so the grace-period close is armed before RUNNING and would otherwise close this stream mid-execution.
+        cancelLogsSSEClose()
+        logsExecutionId.value = executionId
         executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse: any) => { // FIXME: any
             logsSSE.value = sse
 
@@ -988,13 +1010,22 @@
     }
 
     function loadLogs(executionId?: string) {
+        const id = executionId ?? followedExecution.value?.id
+        if (!id) {
+            return
+        }
+        logsExecutionId.value = id
         const p = buildLogParams()
         executionsStore
             .loadLogs({
-                executionId: executionId!,
+                executionId: id,
                 params: p,
             })
             .then((logs: any) => { // FIXME: any
+                // A response for an execution the view has since left would overwrite the current one's logs.
+                if (logsExecutionId.value !== id) {
+                    return
+                }
                 // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.
                 rawLogs.value = logs?.results ?? logs ?? []
                 // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.

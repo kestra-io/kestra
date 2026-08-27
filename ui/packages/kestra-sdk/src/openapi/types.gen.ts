@@ -830,6 +830,7 @@ export type ExecutionMetadata = {
     attemptNumber?: number;
     originalCreatedDate: string;
     concurrencyScopes?: Array<string>;
+    executionDepth?: number;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';

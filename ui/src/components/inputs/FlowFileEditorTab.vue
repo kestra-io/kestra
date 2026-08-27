@@ -77,13 +77,14 @@
 
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute} from "vue-router"
     import {apiUrl} from "override/utils/route"
     import type * as monaco from "monaco-editor/editor/editor.api"
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
     import {useFlowStore} from "../../stores/flow"
+    import {useFlowEditorActions} from "../flows/useFlowEditorActions"
     import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
@@ -101,8 +102,8 @@
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
 
     const route = useRoute()
-    const router = useRouter()
 
+    const {save} = useFlowEditorActions()
     const flowStore = useFlowStore()
     const editorBindings = useEditorBindings()
 
@@ -182,7 +183,7 @@
         }
     }
 
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {})
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => false)
 
     function closeCurrentTab() {
         closeTab(props)
@@ -324,22 +325,13 @@
         pluginsStore.updateDocumentation({cls, version, hash: hash.value})
     }
 
+    // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
+    // path as the Save button — including auto-install of missing plugins before persisting.
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value)
         if(!editorRefElement.value?.getEditor()) return
 
-        const result = await flowStore.saveAll()
-
-        if (result === "redirect_to_update") {
-            await router.push({
-                name: "flows/update/edit",
-                params: {
-                    id: flowStore.flow?.id,
-                    namespace: flowStore.flow?.namespace,
-                    tenant: route.params?.tenant,
-                },
-            })
-        }
+        await save()
     }
 
     const saveFileContent = async () => {

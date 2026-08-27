@@ -165,6 +165,37 @@ class FlowControllerTest {
     }
 
     @Test
+    void graphFromSource() {
+        String flowSource = generateFlowAsString(IdUtils.create(), TEST_NAMESPACE, "test");
+
+        FlowGraph result = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows/graph", flowSource).contentType(MediaType.APPLICATION_YAML),
+            FlowGraph.class
+        );
+
+        assertThat(result.getNodes()).isNotEmpty();
+        assertThat(result.getEdges()).isNotEmpty();
+    }
+
+    @Test
+    void graphFromSource_invalid() {
+        String flowSource = """
+            id: %s
+            namespace: %s
+            """.formatted(IdUtils.create(), TEST_NAMESPACE);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/flows/graph", flowSource).contentType(MediaType.APPLICATION_YAML),
+                FlowGraph.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(exception.getResponse().getBody(String.class).get()).contains("tasks");
+    }
+
+    @Test
     void idNotFound() {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
         {
@@ -205,6 +236,39 @@ class FlowControllerTest {
         PagedResults<Flow> flows = client.toBlocking()
             .retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[q][EQUALS]=io.kestra.tests2&filters[q][NOT_EQUALS]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(0L);
+    }
+
+    @Test
+    void searchFlowsWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET("/api/v1/main/flows/search?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsSortsRegardlessOfFieldCase() {
+        // the real column is "id"; wrong case previously 500'd because H2 is case-sensitive on quoted identifiers
+        PagedResults<Flow> flows = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/flows/search?sort=ID:desc"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsSortsOnMultipleFields() {
+        PagedResults<Flow> flows = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/flows/search?sort=namespace:asc&sort=updated:desc"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
@@ -1361,6 +1425,8 @@ class FlowControllerTest {
         body = response.body();
         assertThat(body.size()).isEqualTo(2);
         assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        // The unknown type is absent from the schema bundle (none in the test env), so even with
+        // auto-install enabled it stays a hard constraint.
         assertThat(body.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
 
@@ -1516,11 +1582,11 @@ class FlowControllerTest {
         assertNull(violations.getFirst().getWarnings());
         assertNull(violations.getFirst().getInfos());
 
-        // Second flow is also invalid, so most properties should be null or have default values
+        // Second flow references an unknown task type: it is absent from the schema bundle
+        // (none in the test env), so even with auto-install enabled it stays a hard constraint.
         assertEquals("invalidFlow2.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
         assertNull(violations.get(1).getDeprecationPaths());
-        assertNull(violations.get(1).getWarnings());
         assertNull(violations.get(1).getInfos());
 
         assertThat(violations.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
@@ -1589,6 +1655,16 @@ class FlowControllerTest {
         var flows = client.toBlocking()
             .retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(1L);
+    }
+
+    @Test
+    void labelsEqualsWithoutKeyReturnsBadRequestNotServerError() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS]=x"), Argument.of(PagedResults.class, Flow.class))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test

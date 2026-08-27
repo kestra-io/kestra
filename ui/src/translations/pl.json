@@ -207,6 +207,7 @@
     "total_duration": "Całkowity czas trwania",
     "running duration": "Czas działania",
     "queued duration": "Czas w kolejce",
+    "paused duration": "Czas wstrzymania",
     "executionProgress": {
       "title": "Postęp egzekucji",
       "estimatedRemaining": "Szacowany pozostały czas: {duration}",
@@ -299,6 +300,21 @@
     "to": "Do",
     "steps": "Kroki",
     "state": "Status",
+    "state_history": {
+      "title": "Historia stanu",
+      "open": "Historia stanu",
+      "aria_open": "Pokaż historię stanu",
+      "aria_open_for": "Pokaż historię stanu dla {subject}",
+      "started_at": "Rozpoczęto {time}",
+      "failed_at": "Niepowodzenie o {time}",
+      "skipped_at": "Pominięto o {time}",
+      "created_at": "Utworzono {time}",
+      "did_not_run": "To zadanie nie zostało uruchomione",
+      "waiting_to_start": "Oczekiwanie na rozpoczęcie",
+      "attempt_n": "Próba {index}",
+      "attempt_count": "Liczba prób: {count}",
+      "copy": "Kopiuj historię stanu"
+    },
     "search": "Szukaj",
     "source search": "Wyszukaj źródło",
     "selected": "Wybrane",
@@ -368,7 +384,7 @@
     "unqueue done": "Egzekucja została usunięta z kolejki",
     "force run": "Wymuś uruchomienie",
     "force run title": "Wymuś uruchomienie egzekucji <code>{id}</code>.",
-    "force run confirm": "Czy na pewno chcesz wymusić uruchomienie egzekucji <code>{id}</code>?<br/><br/>OSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane Task Runy.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w statusie CREATED przejdą do statusu RUNNING.</li><li>Taski w statusie RUNNING zostaną ponownie przesłane.</li><li>Taski w statusie QUEUED zostaną usunięte z kolejki.</li><li>Taski w statusie PAUSED zostaną wznowione.</li></ul>",
+    "force run confirm": "Czy na pewno chcesz wymusić uruchomienie egzekucji `{id}`?\n\nOSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowanie Task Runów.\n\nZostaną wykonane następujące przejścia:\n\n- Taski CREATED zostaną przeniesione do stanu RUNNING.\n- Taski RUNNING zostaną ponownie przesłane.\n- Taski QUEUED zostaną usunięte z kolejki.\n- Taski PAUSED zostaną wznowione.",
     "force run done": "Wymuszono uruchomienie egzekucji",
     "metrics": "Metryki",
     "no metrics available": "Brak metryk zarejestrowanych dla tego Task Runa.",
@@ -457,6 +473,11 @@
         "title": "Pozostały limit Concurrency"
       }
     },
+    "docsPage": {
+      "notFound": "Ta strona dokumentacji nie istnieje. Mogła zostać przeniesiona lub jej nazwa mogła się zmienić.",
+      "loadError": "Nie udało się załadować tej strony dokumentacji. Spróbuj ponownie.",
+      "backToDocs": "Powrót do Docs"
+    },
     "documentation": {
       "documentation": "Dokumentacja"
     },
@@ -495,6 +516,15 @@
     },
     "use": "Użyj",
     "plugins": {
+      "autoInstall": {
+        "failed": "Instalacja pluginu nie powiodła się",
+        "failedHint": "Flow nie został zapisany. Napraw problem lub usuń plugin z flow, a następnie zapisz ponownie.",
+        "preparing": "Przygotowywanie instalacji pluginu...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin został pomyślnie zainstalowany | Pluginy zostały pomyślnie zainstalowane",
+        "timeout": "Instalacja pluginu trwa dłużej niż oczekiwano. Flow nie został zapisany, zapisz ponownie po zakończeniu instalacji.",
+        "title": "Instalowanie {count} pluginu | Instalowanie {count} pluginów"
+      },
       "names": "Plugins",
       "release": "Informacje o wydaniu",
       "beta": "Beta",
@@ -658,7 +688,7 @@
     "bulk change state": "Czy na pewno chcesz zmienić status <code>{executionCount}</code> egzekucji?",
     "bulk resume": "Czy na pewno chcesz wznowić <code>{executionCount}</code> egzekucji?",
     "bulk pause": "Czy na pewno chcesz wstrzymać <code>{executionCount}</code> egzekucji?",
-    "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> egzekucji?<br/><br/>OSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane Task Runy.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w statusie CREATED przejdą do statusu RUNNING.</li><li>Taski w statusie RUNNING zostaną ponownie przesłane.</li><li>Taski w statusie QUEUED zostaną usunięte z kolejki.</li><li>Taski w statusie PAUSED zostaną wznowione.</li></ul>",
+    "bulk force run": "Czy na pewno chcesz wymusić uruchomienie `{executionCount}` egzekucji?\n\nOSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane egzekucje Tasków.\n\nZostaną wykonane następujące przejścia:\n\n- Taski CREATED zostaną przeniesione do stanu RUNNING.\n- Taski RUNNING zostaną ponownie przesłane.\n- Taski QUEUED zostaną usunięte z kolejki.\n- Taski PAUSED zostaną wznowione.",
     "bulk restart": "Czy na pewno chcesz ponownie uruchomić <code>{executionCount}</code> egzekucji?",
     "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> egzekucji?",
     "cancel": "Anuluj",
@@ -754,6 +784,11 @@
     "expand_by_default": "Domyślnie rozwiń ustrukturyzowane logi",
     "similar lines": "podobne wiersze",
     "download_logs_description": "Wybierz, które logi wyeksportować. Filtry domyślnie odpowiadają Twojemu bieżącemu widokowi.",
+    "logs_download_truncated": "Wyeksportowano {downloaded} najnowszych wierszy log. Kolejne {skipped} pasowały do filtrów i zostały pominięte.",
+    "logs_download_capped": "Wyeksportowano {downloaded} najnowszych wierszy log, czyli maksimum dla jednego eksportu. Filtrom mogło odpowiadać więcej wierszy.",
+    "logs_download_partial": "Eksport zatrzymał się na {downloaded} wierszach log, ponieważ tego filtra nie można stronicować dalej. Brakuje części pasujących wierszy.",
+    "logs_download_failed": "Eksport log nie powiódł się. Nie pobrano żadnego pliku.",
+    "logs_download_empty": "Żaden wiersz log nie odpowiadał filtrom, więc nie pobrano pliku.",
     "display_settings": "Ustawienia wyświetlania",
     "density": "Gęstość",
     "density_compact": "Kompaktowy",
@@ -837,6 +872,7 @@
         "folder_error": "Wystąpił błąd podczas tworzenia folderu"
       },
       "rename": {
+        "error": "Nie udało się zmienić nazwy na \"{name}\". Plik lub folder o tej nazwie może już istnieć.",
         "label": "Zmień nazwę",
         "file": "Zmień nazwę pliku",
         "folder": "Zmień nazwę folderu",
@@ -1781,6 +1817,7 @@
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
       "export": "Eksportuj",
+      "exportEmpty": "Ten wykres nie ma danych do wyeksportowania.",
       "exportTo": {
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"
@@ -2015,6 +2052,31 @@
         "zoom_out": "Oddal",
         "clear_selection": "Wyczyść zaznaczenie",
         "fit_view": "Dopasuj do ekranu"
+      },
+      "dag": {
+        "force": "Drzewo",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Ostatnia aktualizacja",
+        "status": {
+          "fresh": "Świeże",
+          "stale": "Stale",
+          "failed": "Niepowodzenie",
+          "unknown": "Nieśledzone"
+        },
+        "summary": {
+          "fresh": "Wszystkie {n} Assety są aktualne",
+          "issues": "{n} stałych",
+          "failed": "{n} niepowodzenie",
+          "last_run": "ostatnie uruchomienie {ago}",
+          "unknown": "{n} nieśledzonych"
+        },
+        "recent_runs": "Ostatnie uruchomienia",
+        "group_by": "Grupuj według",
+        "groups": "Grupy ({n})",
+        "group_none": "Bez grupowania",
+        "group_dataset": "Zbiór danych",
+        "ungrouped": "Bez grupy"
       },
       "search": {
         "placeholders": {

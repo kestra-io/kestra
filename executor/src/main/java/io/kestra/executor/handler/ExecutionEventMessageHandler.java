@@ -159,8 +159,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         // process actions that must be done after the execution has been created
                         if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted())) {
-                            // create an SLA monitor if needed
-                            if (!ListUtils.isEmpty(flow.getSla())) {
+                            // create an SLA monitor if needed, we skip LOOP executions
+                            if (!ListUtils.isEmpty(flow.getSla()) && execution.getKind() != ExecutionKind.LOOP) {
                                 try {
                                     List<SLAMonitor> monitors = new ArrayList<>();
                                     for (SLA sla : flow.getSla()) {

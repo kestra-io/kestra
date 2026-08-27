@@ -43,13 +43,16 @@
                 <slot name="taskDetails" v-bind="taskProps">
                     <TopologyDetailsRemote
                         :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
-                        :task="taskProps.data.node?.task"
+                        :task="taskWithSource(taskProps.data.node?.task)"
                         :execution="exec"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
-                        :source="flowStore.flowYaml || props.source"
+                        :tenant="tenant"
+                        :source="flowSource"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
+                        :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
+                        :fetchMetrics="fetchExecutionMetrics"
                     />
                 </slot>
             </template>
@@ -183,12 +186,16 @@
                 />
                 <TaskDrawerRemote
                     :taskType="selectedTask.type"
-                    :task="selectedTask"
+                    :task="taskWithSource(selectedTask)"
                     :execution="exec"
                     :namespace="props.namespace"
                     :flowId="props.flowId"
+                    :tenant="tenant"
+                    :source="flowSource"
                     :metrics="taskMetrics(selectedTask?.id)"
                     :progress="taskProgress(selectedTask?.id)"
+                    :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
+                    :fetchMetrics="fetchExecutionMetrics"
                     displayMode="full"
                     class="mt-3"
                 />
@@ -212,7 +219,7 @@
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
-    import {useRouter} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {useVueFlow} from "@vue-flow/core"
 
     import SearchField from "../layout/SearchField.vue"
@@ -245,6 +252,7 @@
     import {openFlowInNewTab} from "../../utils/openFlow"
 
     const router = useRouter()
+    const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
     const {fitView, setMinZoom} = useVueFlow(vueflowId.value)
@@ -256,6 +264,10 @@
     const flowStore = useFlowStore()
 
     const exec = computed(() => executionsStore.execution as any as Execution)
+
+    const tenant = computed(() => route.params.tenant as string | undefined)
+
+    const flowSource = computed(() => flowStore.flowYaml || props.source)
 
     const effectiveFlowGraph = computed(() =>
         playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
@@ -293,6 +305,33 @@
             }),
         }
     })
+
+    const collectTasksById = (node: unknown, into: Record<string, any>) => {
+        if (Array.isArray(node)) {
+            node.forEach((item) => collectTasksById(item, into))
+            return
+        }
+        if (!node || typeof node !== "object") return
+        const candidate = node as Record<string, any>
+        if (typeof candidate.id === "string" && typeof candidate.type === "string" && !(candidate.id in into)) {
+            into[candidate.id] = candidate
+        }
+        Object.values(candidate).forEach((value) => collectTasksById(value, into))
+    }
+
+    const sourceTaskById = computed((): Record<string, any> => {
+        const result: Record<string, any> = {}
+        collectTasksById(YAML_UTILS.parse(flowSource.value, false), result)
+        return result
+    })
+
+    // A graph node's task comes from forExecution(), which strips properties an artifact renders
+    // (taskRunner, and anything the plugin's own UI reads). Hand out the source definition merged
+    // over it so a plugin gets the raw task without parsing the flow itself.
+    const taskWithSource = (task: Record<string, any> | undefined) => {
+        const fromSource = task?.id ? sourceTaskById.value[task.id] : undefined
+        return fromSource ? {...task, ...fromSource} : task
+    }
 
     const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent: TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
@@ -339,6 +378,22 @@
         const taskRunId = currentTaskRunId(taskId)
         if (!taskRunId) return []
         return executionsStore.progressEvents.filter((p) => p.taskRunId === taskRunId)
+    }
+
+    // Both fetchers resolve the execution and task run when CALLED, not when bound: an artifact is
+    // handed its props once, when the graph is generated, and the task run it should read may only
+    // come into existence later (a playground run, a replay).
+    const fetchTaskOutputs = (taskId: string | undefined) => () => {
+        const executionId = exec.value?.id
+        const taskRunId = currentTaskRunId(taskId)
+        if (!executionId || !taskRunId) return Promise.resolve({})
+        return loadTaskRunOutputs(executionId, taskRunId)
+    }
+
+    const fetchExecutionMetrics = (query: {page?: number, size?: number, sort?: string, taskId?: string, taskRunId?: string} = {}) => {
+        const executionId = exec.value?.id
+        if (!executionId) return Promise.resolve({results: [], total: 0})
+        return executionsStore.loadMetrics({executionId, params: query, store: false})
     }
 
     // Topology nodes only re-evaluate their taskDetails slot (where taskMetrics/taskProgress are
@@ -764,13 +819,7 @@
     const isShowCustomActionOpen = ref(false)
 
     const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
-        const parsed = flowStore.flowParsed
-        const allTasks = [
-            ...(parsed?.tasks ?? []),
-            ...(parsed?.errors ?? []),
-            ...(parsed?.finally ?? []),
-        ]
-        const fullTask = allTasks.find((task: any) => task.id === event.task.id) ?? event.task
+        const fullTask = taskWithSource(event.task)
         if (!event.customAction.taskProp) {
             const runnerType = fullTask?.taskRunner?.type as string | undefined
             taskModalCtx.value = {
@@ -780,8 +829,11 @@
                 execution: exec.value,
                 namespace: props.namespace,
                 flowId: props.flowId,
-                source: flowStore.flowYaml || props.source,
+                tenant: tenant.value,
+                source: flowSource.value,
                 metrics: taskMetrics(fullTask?.id),
+                fetchOutputs: fetchTaskOutputs(fullTask?.id),
+                fetchMetrics: fetchExecutionMetrics,
             }
             isTaskModalOpen.value = true
             return

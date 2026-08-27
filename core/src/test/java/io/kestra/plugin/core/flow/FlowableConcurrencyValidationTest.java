@@ -5,17 +5,17 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.plugin.core.log.Log;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.validation.validator.Validator;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class FlowableConcurrencyValidationTest {
     @Inject
     private Validator validator;

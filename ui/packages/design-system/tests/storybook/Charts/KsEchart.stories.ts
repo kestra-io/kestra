@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {use} from "echarts/core"
 import {BarChart, LineChart} from "echarts/charts"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
-import {TooltipType} from "../../../src/components/Charts/ksChartUtils"
+import {TooltipType} from "../../../src/utils/chart"
 
 use([BarChart, LineChart])
 

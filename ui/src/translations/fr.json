@@ -2,47 +2,6 @@
   "fr": {
     "loading": "Chargement...",
     "more actions": "Plus d'actions",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Utilisez uniquement des lettres, des chiffres, des points, des tirets et des underscores, en commençant par une lettre ou un chiffre.",
-        "id_label": "Id du flow",
-        "id_placeholder": "mon-flow",
-        "namespace_invalid": "Utilisez uniquement des lettres minuscules, des chiffres, des points, des tirets et des underscores, en commençant par une lettre minuscule ou un chiffre.",
-        "namespace_placeholder": "Sélectionner un namespace",
-        "namespaces_error": "Impossible de charger les namespaces. Saisissez un namespace manuellement.",
-        "open_editor": "Ouvrir l'éditeur",
-        "subtitle": "Commencez avec un modèle \"hello-world\" et construisez à partir de zéro.",
-        "title": "flow vierge"
-      },
-      "blueprints": {
-        "subtitle": "Choisissez un flow prêt à l'emploi dans le catalogue de la communauté.",
-        "title": "Parcourir les blueprints"
-      },
-      "import": {
-        "back": "Retour",
-        "error": {
-          "empty": "Le contenu YAML est vide.",
-          "invalid_mapping": "YAML de flow invalide : attendu un mappage clé-valeur, pas une liste ou un scalaire.",
-          "parse_error": "Impossible d'analyser le YAML.",
-          "too_large": "Ce fichier est trop volumineux. Collez plutôt la définition du flow, ou téléchargez un fichier de moins de 1 Mo."
-        },
-        "paste_label": "Coller le YAML",
-        "read_error": "Impossible de lire le fichier.",
-        "submit": "Importer un flow",
-        "subtitle": "Collez ou téléchargez une définition de flow existante.",
-        "title": "Importer du YAML",
-        "upload_button": "Uploader .yml / .yaml",
-        "upload_label": "Ou téléchargez un fichier",
-        "upload_tip": "Accepte les fichiers .yml et .yaml."
-      },
-      "subtitle": "Commencez à partir d'une toile vierge, explorez les blueprints ou importez un YAML existant.",
-      "system": {
-        "badge": "SYSTÈME",
-        "subtitle": "Créez un flow d'alerte ou d'automatisation pour votre plateforme.",
-        "title": "Créer un system flow"
-      },
-      "title": "Créer un nouveau flow"
-    },
     "recipe": {
       "create_flow": "Créer un flow",
       "email": "E-mail",
@@ -223,10 +182,12 @@
     "add_new_item": "Ajouter un nouvel élément",
     "copy": "Copier",
     "copy_to_clipboard": "Copier dans le presse-papiers",
+    "copy_pebble_expression": "Copier l'expression pebble",
     "new": "Nouveau",
     "edit": "Modifier",
     "back": "Retour",
     "next": "Suivant",
+    "previous": "Précédent",
     "done": "Terminé",
     "review your inputs": "Vérifiez vos entrées",
     "edit flow": "Modifier le flow",
@@ -311,8 +272,6 @@
         "1d": "1j",
         "7d": "7j"
       },
-      "last14days": "Les 14 derniers jours",
-      "last28days": "Les 28 derniers jours",
       "14days": "14 jours",
       "28days": "28 jours"
     },
@@ -409,7 +368,7 @@
     "unqueue done": "L'exécution est retirée de la file d'attente",
     "force run": "Forcer l'exécution",
     "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
-    "force run confirm": "Voulez-vous vraiment forcer l'exécution <code>{id}</code> ?<br/><br/>AVERTISSEMENT : forcer l'exécution n'est pas garanti et peut créer des exécutions de task en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tasks CREATED passeront à l'état RUNNING.</li><li>Les tasks RUNNING seront soumises à nouveau.</li><li>Les tasks QUEUED seront dé-mises en file d'attente.</li><li>Les tasks PAUSED seront reprises.</li></ul>",
+    "force run confirm": "Voulez-vous vraiment forcer l'exécution `{id}` ?\n\nAVERTISSEMENT : le forçage d'une exécution n'est pas garanti et peut créer des exécutions de Task en double.\n\nLes transitions suivantes seront effectuées :\n\n- Les Tasks CREATED passeront à l'état RUNNING.\n- Les Tasks RUNNING seront soumises à nouveau.\n- Les Tasks QUEUED seront retirées de la file d'attente.\n- Les Tasks PAUSED seront reprises.",
     "force run done": "L'exécution est forcée",
     "metrics": "Mesures",
     "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
@@ -478,6 +437,7 @@
     },
     "file_preview": {
       "big_file_warning": "Ce fichier fait {size}. Le chargement peut prendre un certain temps et bloquer votre navigateur. Voulez-vous quand même le charger ?",
+      "big_file_download_only": "Ce fichier fait {size}. Il est trop volumineux pour être ouvert dans l'éditeur, téléchargez-le à la place.",
       "load_anyway": "Charger quand même",
       "load_error": "Échec du chargement de l'aperçu du fichier. Il peut s'agir d'un problème temporaire ou d'un problème d'autorisations.",
       "retry": "Réessayer",
@@ -526,9 +486,10 @@
         "openInDashboardEditor": "Ouvrir dans l'éditeur de tableau de bord"
       },
       "missingPlugins": {
-        "title": "Plugins manquants",
-        "description": "Ce blueprint utilise des tasks de plugin(s) qui ne sont pas installés sur cette instance : {plugins}. Installez-les pour utiliser ce blueprint.",
-        "card": "Nécessite des plugin(s) non installés sur cette instance : {plugins}",
+        "title": "Tasks indisponibles",
+        "description": "Ce blueprint utilise des types de task qui ne sont pas disponibles sur cette instance :",
+        "installHint": "Installez le ou les plugin(s) manquants pour utiliser ce blueprint : {plugins}.",
+        "card": "Utilise des types de task qui ne sont pas disponibles sur cette instance : {tasks}",
         "install": "Installer les plugins"
       }
     },
@@ -610,6 +571,7 @@
     "triggers_add_filter_app": "Application",
     "triggers_add_empty_title": "Aucun trigger trouvé",
     "triggers_add_ee_tooltip": "Ce trigger nécessite l'édition Enterprise.",
+    "ee_feature_tooltip": "Cette fonctionnalité nécessite l'édition Enterprise.",
     "triggers_add_card_add": "Ajouter",
     "triggers_add_modal_tab_form": "Formulaire",
     "triggers_add_modal_tab_source": "Source",
@@ -696,7 +658,7 @@
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
     "bulk resume": "Êtes-vous sur de vouloir reprendre <code>{executionCount}</code> exécution(s)?",
     "bulk pause": "Êtes-vous sûr de vouloir mettre en pause l'exécution de <code>{executionCount}</code> ?",
-    "bulk force run": "Voulez-vous vraiment forcer l'exécution de <code>{executionCount}</code> exécution(s) ?<br/><br/>AVERTISSEMENT : forcer l'exécution n'est pas garanti et peut créer des exécutions de task en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tasks CREATED passeront à l'état RUNNING.</li><li>Les tasks RUNNING seront soumises à nouveau.</li><li>Les tasks QUEUED seront retirées de la file d'attente.</li><li>Les tasks PAUSED seront reprises.</li></ul>",
+    "bulk force run": "Voulez-vous vraiment forcer l'exécution de `{executionCount}` exécution(s) ?\n\nAVERTISSEMENT : l'exécution forcée d'une exécution n'est pas garantie et peut créer des exécutions de Task en double.\n\nLes transitions suivantes seront effectuées :\n\n- Les Tasks CREATED passeront à l'état RUNNING.\n- Les Tasks RUNNING seront soumises à nouveau.\n- Les Tasks QUEUED seront retirées de la file d'attente.\n- Les Tasks PAUSED seront reprises.",
     "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> exécution(s) ?",
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> exécution(s) ?",
     "cancel": "Annuler",
@@ -875,6 +837,7 @@
         "folder_error": "Une erreur s'est produite lors de la création du dossier"
       },
       "rename": {
+        "error": "Impossible de renommer en \"{name}\". Un fichier ou un dossier portant ce nom existe peut-être déjà.",
         "label": "Renommer",
         "file": "Renommer le fichier",
         "folder": "Renommer le dossier",
@@ -887,6 +850,10 @@
         "folder": "Supprimer le dossier",
         "files": "Supprimer {count} fichiers sélectionnés",
         "folders": "Supprimer {count} dossiers sélectionnés"
+      },
+      "move": {
+        "bulk_success": "Fichiers sélectionnés déplacés avec succès.",
+        "bulk_error": "Échec du déplacement de {count} des éléments sélectionnés."
       },
       "import": {
         "files": "Importer des fichiers",
@@ -1015,7 +982,8 @@
             "triggers_default_tab": "Onglet par défaut des Triggers",
             "playground": "Aire de jeu",
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
-            "task_edit_default_mode": "Mode d'édition de Task par défaut"
+            "task_edit_default_mode": "Mode d'édition de Task par défaut",
+            "flow_template": "Modèle de flow par défaut"
           },
           "descriptions": {
             "default_namespace": "Utilisé lors de la création de nouveaux flows sans namespace.",
@@ -1028,11 +996,17 @@
             "triggers_default_tab": "Onglet sélectionné lors de la navigation vers la page des triggers.",
             "auto_refresh_interval": "Secondes entre les actualisations automatiques des données sur les pages de liste.",
             "playground": "Exécutez les tasks individuellement dans le bac à sable de l'éditeur.",
-            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code."
+            "task_edit_default_mode": "Comment une task s'ouvre par défaut depuis l'éditeur no-code.",
+            "flow_template": "Le YAML s'ouvre dans l'éditeur lorsque vous créez un nouveau flow. L'id et le namespace peuvent être omis, car ils sont générés automatiquement. Si ce champ est vide, le template configuré pour l'instance est utilisé."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Onglet"
+          },
+          "flow_template_reset": "Réinitialiser par défaut",
+          "flow_template_error": {
+            "invalid_mapping": "Modèle de flow invalide : attendu un mappage clé-valeur, pas une liste ou un scalaire.",
+            "parse_error": "Impossible d'analyser le YAML. Le modèle a été enregistré, l'éditeur peut donc afficher la même erreur lorsque vous créez un flow."
           }
         },
         "theme": {
@@ -1109,7 +1083,7 @@
       "contact_sales": "Contactez les ventes",
       "secrets": {
         "title": "Améliorez votre gestion des Secrets",
-        "message": "L'édition Enterprise (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'interface utilisateur, sans nécessiter de redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. L'EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des vaults externes. Les secrets restent chiffrés au repos et en transit. La mise en cache optionnelle réduit les appels d'API, et les pistes d'audit enregistrent tous les accès.",
+        "message": "L'édition Enterprise vous permet d'ajouter, de modifier et de supprimer des secrets directement dans l'interface utilisateur, de les organiser par namespace avec RBAC et de les stocker dans HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager ou Elasticsearch.",
         "add_env": {
           "intro": "Créer un nouveau Secret",
           "first": "Encodez la <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valeur secrète en Base64</a>",
@@ -1189,7 +1163,7 @@
       "namespace": {
         "edit": {
           "title": "Améliorez la Gestion de votre Namespace",
-          "message": "Dans Kestra Enterprise Edition, les namespaces offrent une isolation avancée et une gouvernance des secrets, des variables et des valeurs par défaut des plugins à l'échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des backends de stockage isolés, des groupes de workers dédiés et des permissions granulaires par namespace. Cela garantit que les secrets, les variables et les configurations de plugins restent sécurisés et faciles à maintenir entre les différentes équipes et projets."
+          "message": "Dans Kestra Enterprise Edition, les namespaces offrent une isolation avancée et un contrôle des secrets, des variables et des politiques de gouvernance à grande échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des backends de stockage isolés, des groupes de workers dédiés et des permissions granulaires par namespace. Cela garantit que les secrets, les variables et les règles de gouvernance restent sécurisés et faciles à maintenir pour différentes équipes et projets."
         },
         "secrets": {
           "title": "Gérer les secrets de manière sécurisée",
@@ -1420,6 +1394,7 @@
       "key": "Nom",
       "keyPlaceholder": "Nom utilisé pour référencer ce secret, par exemple MY_API_TOKEN",
       "name": "Valeur secrète",
+      "valuePlaceholder": "Saisir la valeur secrète",
       "description": "Description",
       "descriptionPlaceholder": "Décrire ce secret",
       "tags": "Tags",
@@ -1751,10 +1726,6 @@
           "content": "Cet actif n'a pas de dépendances amont ou aval avec des flows ou d'autres actifs."
         }
       },
-      "plugins": {
-        "title": "Aucun paramètre par défaut de plugin n'est défini pour ce namespace.",
-        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation."
-      },
       "triggers": {
         "title": "Votre flow n'a pas de triggers.",
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> dans notre documentation."
@@ -1764,7 +1735,7 @@
         "content": "Exposez un flow comme un outil MCP en y ajoutant un <code>McpToolTrigger</code>. Lisez-en plus sur le <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> dans notre documentation."
       },
       "versionPlugin": {
-        "title": "Vous n'avez pas encore de plugin versionné !",
+        "title": "Vous n'avez pas encore de plugins versionnés !",
         "content": "Ici, vous pouvez gérer tous les plugins installés sur votre instance Kestra. Les plugins nouvellement installés peuvent ne pas être immédiatement disponibles dans tous les services Kestra, selon la configuration de votre instance."
       },
       "panels": {
@@ -1920,6 +1891,7 @@
           "test": "test"
         },
         "contextRemoved": "Retiré {type} {id} du contexte.",
+        "modelChanged": "Passé à {model}.",
         "toolResult": {
           "detail": "Détails",
           "error": "{tool} a échoué",
@@ -1990,6 +1962,12 @@
           "Convergence"
         ],
         "newChat": "Nouvelle discussion",
+        "fixThread": {
+          "flow": "Corriger le flow {id}",
+          "task": "Corriger la tâche {id}",
+          "execution": "Corriger l'exécution de {id}",
+          "generic": "Corriger les erreurs de Flow"
+        },
         "draft": {
           "openInEditor": "Ouvrir dans l'éditeur",
           "apply": "Appliquer",
@@ -2234,7 +2212,7 @@
       "next_match": "Prochaine correspondance",
       "no_results_description": "Essayez d'élargir le namespace, de revenir à la portée \"Toutes les sources\" ou de désactiver \"Respecter la casse\" et \"Mot entier\".",
       "no_results_hidden_type": "{count} correspondance trouvée dans {type}, que vous n'avez pas sélectionné. | {count} correspondances trouvées dans {type}, que vous n'avez pas sélectionné.",
-      "no_results_in_types": "Aucune correspondance pour « {query} » dans {types}",
+      "no_results_in_types": "Aucune correspondance pour {query} dans {types}",
       "no_results_title": "Aucun résultat pour « {query} »",
       "open_flow": "Ouvrir le flow",
       "open_in_editor": "Ouvrir dans l'éditeur",

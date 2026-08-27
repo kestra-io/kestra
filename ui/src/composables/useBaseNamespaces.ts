@@ -182,6 +182,10 @@ export const useBaseNamespacesStore = () => {
         }
     }
 
+    async function fileMetadata(payload: {namespace: string; path: string}) {
+        return await FilesAPI.fileMetadatas(payload)
+    }
+
     async function readFile(payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
         if (!payload.path) return {error: "Path is required"}
 
@@ -214,8 +218,16 @@ export const useBaseNamespacesStore = () => {
         await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
     }
 
+    /**
+     * Unlike {@link moveFileDirectory}, this suppresses the global error toast: the rename caller
+     * reports the failure itself, and the two together left a persistent raw
+     * "Internal Server Error" alongside the friendly one.
+     */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory(
+            {namespace: payload.namespace, from: payload.old, to: payload.new},
+            {showMessageOnError: false} as Parameters<typeof FilesAPI.moveFileDirectory>[1],
+        )
     }
 
     async function deleteFileDirectory(payload: {namespace: string; path: string}) {
@@ -259,6 +271,7 @@ export const useBaseNamespacesStore = () => {
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,
+        fileMetadata,
         readFile,
         fileRevisions,
         searchFiles,

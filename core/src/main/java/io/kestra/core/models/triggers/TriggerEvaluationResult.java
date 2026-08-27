@@ -69,6 +69,13 @@ public record TriggerEvaluationResult(
     }
 
     /**
+     * Returns a copy with a different schedule date.
+     */
+    public TriggerEvaluationResult withScheduleDate(Instant scheduleDate) {
+        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs);
+    }
+
+    /**
      * Reconstructs a full {@link Execution} from this lightweight result.
      *
      * @param triggerId the trigger identifier providing namespace, flowId, and tenantId.

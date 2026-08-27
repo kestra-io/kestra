@@ -4,8 +4,8 @@
             v-if="hasFlow"
             :icon="History"
             :count="revisionsCount"
-            :suffix="t('flow_editor_stats.revisions.suffix')"
-            :tooltip="t('flow_editor_stats.revisions.tooltip')"
+            :suffix="$t('flow_editor_stats.revisions.suffix')"
+            :tooltip="$t('flow_editor_stats.revisions.tooltip')"
             tab="revisions"
         />
 
@@ -13,8 +13,8 @@
             v-if="hasFlow"
             :icon="GraphOutline"
             :count="dependenciesCount"
-            :suffix="t('flow_editor_stats.dependencies.suffix')"
-            :tooltip="t('flow_editor_stats.dependencies.tooltip')"
+            :suffix="$t('flow_editor_stats.dependencies.suffix')"
+            :tooltip="$t('flow_editor_stats.dependencies.tooltip')"
             tab="dependencies"
         />
 
@@ -35,7 +35,6 @@
 <script setup lang="ts">
     import {computed, onUnmounted, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useMediaQuery} from "@vueuse/core"
 
     import History from "vue-material-design-icons/History.vue"
     import GraphOutline from "vue-material-design-icons/GraphOutline.vue"
@@ -44,8 +43,10 @@
     import {deferToIdle} from "../../../utils/deferToIdle"
     import ValidationError from "../../../components/flows/ValidationError.vue"
     import FlowEditorStatCounter from "../../../components/flows/FlowEditorStatCounter.vue"
+    import {EDITOR_HEADER_BREAKPOINTS, useEditorHeaderWidth} from "../../../composables/useEditorHeaderWidth"
 
-    const isNarrow = useMediaQuery("(max-width: 1260px)")
+    const headerWidth = useEditorHeaderWidth()
+    const isNarrow = computed(() => headerWidth.value <= EDITOR_HEADER_BREAKPOINTS.iconOnlyControls)
 
     const {t} = useI18n({useScope: "global"})
     const flowStore = useFlowStore()

@@ -26,6 +26,10 @@ export type {Plugin} from "../utils/pluginUtils"
 export interface TriggerPluginDto {
     type: string;
     name: string;
+    // The owning plugin's (or subgroup's) declared, correctly-cased title (for example "MongoDB" or
+    // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
+    // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
+    pluginTitle: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;
@@ -66,11 +70,13 @@ interface RawPluginIcon {
     hash?: string;
 }
 
+// Bulk indexes carry icon metadata only; `hash` is set exactly when the class has an icon, whose bytes are
+// then fetched per class from `/plugins/icons/{cls}/icon.svg`.
 function toPluginIconData(raw: RawPluginIcon): PluginIconData {
     return {
         flowable: raw.flowable,
         monochrome: raw.monochrome ?? false,
-        hasIcon: raw.icon != null,
+        hasIcon: raw.icon != null || raw.hash != null,
         hash: raw.hash,
     }
 }
@@ -78,6 +84,17 @@ function toPluginIconData(raw: RawPluginIcon): PluginIconData {
 function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
     return Object.fromEntries(
         Object.entries(raw ?? {}).map(([cls, icon]) => [cls, toPluginIconData(icon)]),
+    )
+}
+
+// The group index holds an entry for every group and subgroup, iconless ones included. Callers treat any entry as
+// "this group has an icon", so keeping the iconless ones would render the generic icon instead of letting
+// TaskIcon fall through to its lazy lookup and the ecosystem catalog.
+function toGroupIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Record<string, PluginIconData> {
+    return Object.fromEntries(
+        Object.entries(raw ?? {})
+            .filter(([, icon]) => icon.icon != null || icon.hash != null)
+            .map(([cls, icon]) => [cls, toPluginIconData(icon)]),
     )
 }
 
@@ -269,11 +286,12 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (installedPluginTypesPending) return installedPluginTypesPending
         installedPluginTypesPending = (PluginsAPI.listPlugins() as Promise<{results: Plugin[]; total: number}>)
             .then(response => {
-                installedPluginTypes.value = response.results.flatMap(p =>
-                    Object.entries(p)
+                installedPluginTypes.value = response.results.flatMap(p => [
+                    ...Object.entries(p)
                         .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
                         .flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)),
-                )
+                    ...(p.aliases ?? []),
+                ])
                 return installedPluginTypes.value
             })
             .finally(() => {
@@ -422,7 +440,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (groupIconsPending) return groupIconsPending
         groupIconsPending = axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
             .then(response => {
-                groupIcons.value = toPluginIconDataMap(response.data)
+                groupIcons.value = toGroupIconDataMap(response.data)
                 return groupIcons.value
             })
             .finally(() => {

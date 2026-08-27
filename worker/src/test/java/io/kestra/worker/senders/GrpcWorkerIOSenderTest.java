@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -18,8 +19,11 @@ import io.kestra.controller.grpc.services.GrpcWorkerControllerService;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.worker.Controller;
@@ -54,6 +58,9 @@ class GrpcWorkerIOSenderTest {
     @Inject
     GrpcWorkerControllerService grpcWorkerControllerService;
 
+    @Inject
+    LogEntryEmitter logEntryEmitter;
+
     private Controller controller;
 
     @MockBean(GrpcWorkerControllerService.class)
@@ -62,6 +69,11 @@ class GrpcWorkerIOSenderTest {
         // bindService() must work so the gRPC server can route incoming calls to mock methods
         when(mock.bindService()).thenCallRealMethod();
         return mock;
+    }
+
+    @MockBean(LogEntryEmitter.class)
+    LogEntryEmitter logEntryEmitter() {
+        return mock(LogEntryEmitter.class);
     }
 
     @BeforeEach
@@ -107,7 +119,10 @@ class GrpcWorkerIOSenderTest {
         // 2 MB payload — exceeds the 1 MB server-side limit set via @Property
         char[] largePayload = new char[2 * 1024 * 1024];
         Arrays.fill(largePayload, 'a');
-        WorkerTaskResult large = buildTaskResult(Map.of("output", new String(largePayload)));
+        TaskRun taskRun = buildTaskResult(Map.of()).getTaskRun()
+            .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .withState(State.Type.SUCCESS);
+        WorkerTaskResult large = new WorkerTaskResult(taskRun, Map.of("output", new String(largePayload)));
 
         taskResultSender.send(List.of(large));
 
@@ -122,6 +137,17 @@ class GrpcWorkerIOSenderTest {
         assertThat(received.getTaskRun().getId()).isEqualTo(large.getTaskRun().getId());
         assertThat(received.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(received.getOutputs()).isNull();
+        assertThat(received.getTaskRun().getAttempts()).hasSize(1);
+        assertThat(received.getTaskRun().lastAttempt().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        ArgumentCaptor<LogEntry> logCaptor = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logEntryEmitter).emits(logCaptor.capture());
+
+        LogEntry logEntry = logCaptor.getValue();
+        assertThat(logEntry.getLevel()).isEqualTo(Level.ERROR);
+        assertThat(logEntry.getTaskRunId()).isEqualTo(taskRun.getId());
+        assertThat(logEntry.getAttemptNumber()).isZero();
+        assertThat(logEntry.getMessage()).contains("kestra.grpc.max-inbound-message-size");
     }
 
     @Test

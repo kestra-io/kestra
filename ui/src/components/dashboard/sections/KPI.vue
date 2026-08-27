@@ -1,5 +1,7 @@
 <template>
-    <section v-if="data" class="kpi">
+    <KsSkeleton v-if="loading && !data" animated :rows="1" />
+
+    <section v-else-if="data" class="kpi">
         <span class="title">{{ getChartTitle(props.chart) }}</span>
 
         <p class="value">
@@ -26,7 +28,7 @@
     import {computed, watch} from "vue"
     import {useRoute} from "vue-router"
 
-    import {KsProgress} from "@kestra-io/design-system"
+    import {KsProgress, KsSkeleton} from "@kestra-io/design-system"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {Chart, getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards"
@@ -47,7 +49,7 @@
     const route = useRoute()
     const theme = useTheme()
 
-    const {percentageShown, data, generate} = useChartGenerator(props.dashboardId, props)
+    const {percentageShown, data, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const description = computed(() => props.chart.chartOptions?.description)
 

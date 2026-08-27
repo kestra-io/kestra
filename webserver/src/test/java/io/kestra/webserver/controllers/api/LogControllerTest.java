@@ -136,6 +136,7 @@ class LogControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchLogsSortsByTimestamp() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);

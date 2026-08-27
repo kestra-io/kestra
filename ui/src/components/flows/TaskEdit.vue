@@ -158,7 +158,7 @@
     import {useI18n} from "vue-i18n"
     import {SECTIONS, KsIconButton, KsDrawer} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CodeTags from "vue-material-design-icons/CodeTags.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Close from "vue-material-design-icons/Close.vue"

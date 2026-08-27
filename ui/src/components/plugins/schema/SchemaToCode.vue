@@ -23,8 +23,8 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import type {HighlighterCore} from "shiki/core"
     import {KsButton, KsTooltip, copyToClipboard as writeToClipboard} from "@kestra-io/design-system"
+    import type {HighlighterCore} from "@kestra-io/design-system/shiki"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 

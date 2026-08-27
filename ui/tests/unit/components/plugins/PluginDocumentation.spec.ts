@@ -22,8 +22,8 @@ vi.mock("override/stores/misc", () => ({
     }),
 }))
 
-vi.mock("../../../../src/components/plugins/schema/shikiToolset", () => ({
-    getHighlighterCore: vi.fn().mockResolvedValue({
+vi.mock("@kestra-io/design-system/shiki", () => ({
+    getShiki: vi.fn().mockResolvedValue({
         codeToHtml: () => "<code>mock code</code>",
     }),
 }))

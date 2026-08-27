@@ -194,12 +194,11 @@
 
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
-    import type {HighlighterCore} from "shiki/core"
     import {KsAlert} from "@kestra-io/design-system"
+    import {getShiki} from "@kestra-io/design-system/shiki"
     import SchemaSection from "./SchemaSection.vue"
     import SchemaPropertiesSection from "./SchemaPropertiesSection.vue"
     import SchemaToCode from "./SchemaToCode.vue"
-    import {getHighlighterCore} from "./shikiToolset"
     import {isDeprecated, type JSONProperty, type JSONSchema, type SchemaExample} from "./utils/schemaUtils"
 
     const COLON_NORMALIZE_REGEX = /(?<!:):(?![: /])/g
@@ -230,7 +229,7 @@
     const definitionsExpanded = ref(false)
     const expandedDefinitions = ref<Set<string>>(new Set())
     const forceExpandKey = ref(0)
-    const highlighter: HighlighterCore = await getHighlighterCore()
+    const highlighter = await getShiki()
 
     const codeTheme = computed(() => `github-${props.darkMode ? "dark" : "light"}`)
 

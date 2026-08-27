@@ -229,7 +229,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         description = "If the scheduled execution didn't start after this delay (e.g. due to infrastructure issues), the execution will be skipped."
     )
     @PluginProperty
-    @DurationMin(nanos = 1, message = "must be a positive duration")
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration lateMaximumDelay;
 
     @Getter(AccessLevel.NONE)

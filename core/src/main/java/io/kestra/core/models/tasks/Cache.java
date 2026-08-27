@@ -16,6 +16,6 @@ public class Cache {
     @NotNull
     private Boolean enabled;
 
-    @DurationMin(nanos = 1, message = "must be a positive duration")
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration ttl;
 }

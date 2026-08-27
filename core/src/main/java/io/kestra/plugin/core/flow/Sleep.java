@@ -52,7 +52,7 @@ public class Sleep extends Task implements RunnableTask<VoidOutput> {
         description = "The time duration in ISO-8601 format (e.g., `PT5S` for 5 seconds)."
     )
     @NotNull
-    private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> duration;
+    private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> duration;
 
     public VoidOutput run(RunContext runContext) throws Exception {
         Duration durationRendered = runContext.render(this.duration).as(Duration.class).orElseThrow();

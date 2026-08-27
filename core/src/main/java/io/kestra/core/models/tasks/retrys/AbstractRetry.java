@@ -32,7 +32,7 @@ public abstract class AbstractRetry {
     abstract public String getType();
 
     @DurationMax
-    @DurationMin(nanos = 1, message = "must be a positive duration")
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration maxDuration;
 
     @Min(1)

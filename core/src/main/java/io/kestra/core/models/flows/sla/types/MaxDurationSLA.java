@@ -26,7 +26,7 @@ import lombok.experimental.SuperBuilder;
 public class MaxDurationSLA extends SLA implements ExecutionMonitoringSLA {
     @NotNull
     @DurationMax
-    @DurationMin(nanos = 1, message = "must be a positive duration")
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration duration;
 
     @Override

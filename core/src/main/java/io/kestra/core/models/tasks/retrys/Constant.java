@@ -30,7 +30,7 @@ public class Constant extends AbstractRetry {
 
     @NotNull
     @DurationMax
-    @DurationMin(nanos = 1, message = "must be a positive duration")
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration interval;
 
     @Override

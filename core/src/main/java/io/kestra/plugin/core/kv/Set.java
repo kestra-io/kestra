@@ -97,7 +97,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Optional Time-To-Live (TTL) duration for the key-value pair. If not set, the KV pair will never be deleted from internal storage."
     )
-    private Property<@DurationMin(nanos = 1, message = "must be a positive duration") Duration> ttl;
+    private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> ttl;
 
     @Schema(
         title = "Enum representing the data type of the KV pair. If not set, the value will be stored as a string."

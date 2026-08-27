@@ -140,7 +140,9 @@ export interface ReadOnlyYamlKeysOptions {
 /**
  * Keep the given top-level YAML keys read-only inside a Monaco editor.
  *
- * Monaco has no native read-only ranges, so the guard undoes an offending change
+ * Monaco ships no read-only-range API of its own — the constrained-editor
+ * pattern the issue mentions comes from a third-party plugin — so the guard
+ * undoes an offending change
  * on the same tick it arrives. That is invisible to the user — the character
  * never appears — unlike correcting it after a debounce, which shows the edit
  * being accepted and then taken away.

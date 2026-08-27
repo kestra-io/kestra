@@ -266,7 +266,14 @@
             : undefined
     }
 
-    const metadataGuarded = computed(() => props.flow
+    // Gated on the editor too, not just on the flow being editable. This value
+    // does double duty: it enables the guard, and it tells the store to drop the
+    // read-only warning. Without a code editor the guard cannot attach, so
+    // suppressing the warning on the strength of the other conditions alone
+    // would leave an edit silently reverted with nothing said — which is the
+    // behaviour this change exists to remove.
+    const metadataGuarded = computed(() => Boolean(monacoEditor.value)
+        && props.flow
         && !flowStore.isCreating
         && !flowStore.isReadOnly
         && previewSource.value === undefined)

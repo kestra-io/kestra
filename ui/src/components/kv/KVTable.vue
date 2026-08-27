@@ -2,14 +2,14 @@
     <KsDataTable
         ref="dataTable"
         :loadData="loadData"
-        :data="kvs"
+        :data="hasVisibleColumns ? kvs : []"
         :total="total"
         :currentPage="urlPage"
         :pageSize="urlSize"
         :defaultSort="{prop: 'key', order: 'ascending'}"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
-        :no-data-text="$t('no_results.kv_pairs')"
+        :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_data')"
         :fitHeight="!paneView"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
@@ -99,7 +99,7 @@
             </KsTableColumn>
         </template>
 
-        <KsTableColumn columnKey="copy" className="row-action">
+        <KsTableColumn v-if="hasVisibleColumns" columnKey="copy" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="scope.row.key !== undefined"
@@ -112,7 +112,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn v-if="!paneView" columnKey="view" className="row-action">
+        <KsTableColumn v-if="!paneView && hasVisibleColumns" columnKey="view" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="!canUpdate(scope.row) && canRead(scope.row)"
@@ -125,7 +125,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn v-if="!paneView" columnKey="update" className="row-action">
+        <KsTableColumn v-if="!paneView && hasVisibleColumns" columnKey="update" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="canUpdate(scope.row)"
@@ -139,7 +139,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn v-if="!paneView" columnKey="delete" className="row-action">
+        <KsTableColumn v-if="!paneView && hasVisibleColumns" columnKey="delete" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="canDelete(scope.row)"
@@ -492,6 +492,8 @@
         columns: optionalColumns.value,
         storageKey: storageKey,
     })
+
+    const hasVisibleColumns = computed(() => orderedVisibleColumns.value.length > 0)
 
     const selection = computed(() => dataTable.value?.selection ?? [])
     // queryBulkAction: reserved for future bulk action support

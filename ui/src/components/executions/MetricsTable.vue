@@ -4,8 +4,9 @@
         v-model:currentPage="currentPage"
         v-model:pageSize="pageSize"
         :loadData="loadData"
-        :data="metrics"
+        :data="hasVisibleColumns ? metrics : []"
         :total="metricsTotal"
+        :noDataText="hasVisibleColumns ? undefined : $t('no_data')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
     >
         <template #navbar>
@@ -83,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, useTemplateRef, watch} from "vue"
+    import {computed, ref, useTemplateRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
 
     import Timer from "vue-material-design-icons/Timer.vue"
@@ -125,6 +126,8 @@
         columns: localOptionalColumns.value,
         storageKey: "execution-metrics",
     })
+
+    const hasVisibleColumns = computed(() => displayColumns.value.length > 0)
 
     const executionsStore = useExecutionsStore()
 

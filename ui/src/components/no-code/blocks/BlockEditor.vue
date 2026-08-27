@@ -40,7 +40,7 @@
     >
         <KsSplitter class="block-editor-split">
             <KsSplitterPanel min="18%">
-                <div class="block-editor-main">
+                <div class="block-editor-main" data-test="block-editor-scrollport">
                     <div
                         class="block-editor-canvas"
                         data-test="block-editor-canvas"
@@ -725,6 +725,13 @@
         height: 100%;
         overflow: hidden;
         background: var(--ks-bg-base);
+
+        /* The height of the status bar painted over the bottom of the canvas.
+           Declared here rather than in BlockEditorStatusBar.vue so both that
+           component and the scroll container below derive their offsets from
+           one value — custom properties inherit through the DOM, so the scoped
+           styles of the child component still see it. */
+        --status-bar-height: 2.25rem;
     }
 
     .block-editor-split {
@@ -734,11 +741,11 @@
     .block-editor-main {
         height: 100%;
         overflow-y: auto;
-        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(2.25rem + var(--ks-spacing-6));
+        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(var(--status-bar-height, 2.25rem) + var(--ks-spacing-6));
         /* The status bar is painted over the bottom of this scroll container, so
            scrollIntoView has to stop short of it — otherwise a card scrolled to
            the bottom edge ends up underneath it. */
-        scroll-padding-bottom: calc(2.25rem + var(--ks-spacing-6));
+        scroll-padding-bottom: calc(var(--status-bar-height, 2.25rem) + var(--ks-spacing-6));
     }
 
     .block-editor-inline-edit {

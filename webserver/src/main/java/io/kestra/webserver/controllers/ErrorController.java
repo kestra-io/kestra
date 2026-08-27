@@ -90,7 +90,10 @@ public class ErrorController {
             }
         }
 
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Internal server error");
+        // A conversion error is always caused by bad client input, so it surfaces as a clean client error and the
+        // raw exception message is not sent back to the caller: it carries the target DTO's internal class name.
+        log.debug("Unable to convert request input", e);
+        return jsonError(request, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid request body");
     }
 
     @SuppressWarnings("unchecked")

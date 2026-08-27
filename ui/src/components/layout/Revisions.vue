@@ -116,7 +116,7 @@
     import Restore from "vue-material-design-icons/Restore.vue";
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue";
     import Editor from "../../components/inputs/Editor.vue";
-    import moment from "moment";
+    import {date as dateFilter} from "../../utils/filters";
 
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
@@ -230,7 +230,9 @@
     function formatTimestamp(updatedDate?: string): string {
         if (!updatedDate) return "";
 
-        return moment(updatedDate).format("YYYY-MM-DD HH:mm");
+        // Pinned format: the revision list has a fixed-width column, so it does not follow
+        // the date format from Settings — only the timezone.
+        return dateFilter(updatedDate, "YYYY-MM-DD HH:mm");
     }
 
     function formatRevisionText(revision: number): string {

@@ -2,47 +2,6 @@
   "it": {
     "loading": "Caricamento...",
     "more actions": "Altre azioni",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Usa solo lettere, cifre, punti, trattini e underscore, iniziando con una lettera o una cifra.",
-        "id_label": "ID del flow",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Utilizzare solo lettere minuscole, cifre, punti, trattini e underscore, iniziando con una lettera minuscola o una cifra.",
-        "namespace_placeholder": "Seleziona un namespace",
-        "namespaces_error": "Impossibile caricare i namespace. Digitare un namespace manualmente.",
-        "open_editor": "Apri editor",
-        "subtitle": "Inizia con un esempio \"hello-world\" e costruisci da zero.",
-        "title": "flow vuoto"
-      },
-      "blueprints": {
-        "subtitle": "Scegli un flow già pronto dal catalogo della community.",
-        "title": "Sfoglia i blueprint"
-      },
-      "import": {
-        "back": "Indietro",
-        "error": {
-          "empty": "Il contenuto YAML è vuoto.",
-          "invalid_mapping": "YAML del flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
-          "parse_error": "Impossibile analizzare il YAML.",
-          "too_large": "Il file è troppo grande. Incolla invece la definizione del flow o carica un file di dimensioni inferiori a 1 MB."
-        },
-        "paste_label": "Incolla YAML",
-        "read_error": "Impossibile leggere il file.",
-        "submit": "Importa flow",
-        "subtitle": "Incolla o carica una definizione di flow esistente.",
-        "title": "Importa YAML",
-        "upload_button": "Carica .yml / .yaml",
-        "upload_label": "O carica un file",
-        "upload_tip": "Accetta file .yml e .yaml."
-      },
-      "subtitle": "Inizia da una tela vuota, esplora i blueprint o importa un file YAML esistente.",
-      "system": {
-        "badge": "SISTEMA",
-        "subtitle": "Crea un flow di avviso o automazione per la tua piattaforma.",
-        "title": "Crea un system flow"
-      },
-      "title": "Crea un nuovo flow"
-    },
     "recipe": {
       "create_flow": "Crea flow",
       "email": "Email",
@@ -223,10 +182,12 @@
     "add_new_item": "Aggiungi nuovo elemento",
     "copy": "Copia",
     "copy_to_clipboard": "Copia negli appunti",
+    "copy_pebble_expression": "Copia espressione pebble",
     "new": "Nuovo",
     "edit": "Modifica",
     "back": "Indietro",
     "next": "Avanti",
+    "previous": "Precedente",
     "done": "Fatto",
     "review your inputs": "Rivedi i tuoi input",
     "edit flow": "Modifica flow",
@@ -407,7 +368,7 @@
     "unqueue done": "L'esecuzione è in coda",
     "force run": "Esegui forzatamente",
     "force run title": "Esegui forzatamente l'esecuzione <code>{id}</code>.",
-    "force run confirm": "Sei sicuro di voler forzare l'esecuzione <code>{id}</code>?<br/><br/>ATTENZIONE: l'esecuzione forzata non è garantita e potrebbe creare esecuzioni di task duplicate.<br/><br/>Verranno effettuate le seguenti transizioni:<br/><ul><li>I task CREATED verranno spostati nello stato RUNNING.</li><li>I task RUNNING verranno nuovamente inviati.</li><li>I task QUEUED verranno rimossi dalla coda.</li><li>I task PAUSED verranno ripresi.</li></ul>",
+    "force run confirm": "Sei sicuro di voler forzare l'esecuzione `{id}`?\n\nATTENZIONE: l'esecuzione forzata non è garantita e potrebbe creare Task Run duplicati.\n\nVerranno eseguite le seguenti transizioni:\n\n- I Task CREATED verranno spostati nello stato RUNNING.\n- I Task RUNNING verranno nuovamente inviati.\n- I Task QUEUED verranno rimossi dalla coda.\n- I Task PAUSED verranno ripresi.",
     "force run done": "L'esecuzione è stata forzata",
     "metrics": "Metriche",
     "no metrics available": "Nessuna metrica registrata per questa esecuzione del task.",
@@ -610,6 +571,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Nessun trigger trovato",
     "triggers_add_ee_tooltip": "Questo trigger richiede l'Enterprise Edition.",
+    "ee_feature_tooltip": "Questa funzionalità richiede l'Enterprise Edition.",
     "triggers_add_card_add": "Aggiungi",
     "triggers_add_modal_tab_form": "Modulo",
     "triggers_add_modal_tab_source": "Sorgente",
@@ -696,7 +658,7 @@
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
     "bulk resume": "Sei sicuro di voler riprendere <code>{executionCount}</code> esecuzione/i?",
     "bulk pause": "Sei sicuro di voler mettere in pausa l'esecuzione di <code>{executionCount}</code>?",
-    "bulk force run": "Sei sicuro di voler forzare l'esecuzione di <code>{executionCount}</code> esecuzione/i?<br/><br/>ATTENZIONE: l'esecuzione forzata di un'esecuzione non è garantita e potrebbe creare esecuzioni di task duplicate.<br/><br/>Verranno effettuate le seguenti transizioni:<br/><ul><li>I task CREATED verranno spostati nello stato RUNNING.</li><li>I task RUNNING verranno nuovamente inviati.</li><li>I task QUEUED verranno rimossi dalla coda.</li><li>I task PAUSED verranno ripresi.</li></ul>",
+    "bulk force run": "Sei sicuro di voler forzare l'esecuzione di `{executionCount}` esecuzione/i?\n\nATTENZIONE: l'esecuzione forzata di un'esecuzione non è garantita e potrebbe creare esecuzioni di task duplicate.\n\nVerranno effettuate le seguenti transizioni:\n\n- I task CREATED verranno spostati nello stato RUNNING.\n- I task RUNNING verranno nuovamente inviati.\n- I task QUEUED verranno rimossi dalla coda.\n- I task PAUSED verranno ripresi.",
     "bulk restart": "Sei sicuro di voler riavviare <code>{executionCount}</code> esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
     "cancel": "Annulla",
@@ -875,6 +837,7 @@
         "folder_error": "Si è verificato un errore durante la creazione della cartella"
       },
       "rename": {
+        "error": "Impossibile rinominare in \"{name}\". Potrebbe già esistere un file o una cartella con quel nome.",
         "label": "Rinomina",
         "file": "Rinomina file",
         "folder": "Rinomina cartella",
@@ -1019,7 +982,8 @@
             "triggers_default_tab": "Scheda Trigger Predefiniti",
             "playground": "Playground",
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
-            "task_edit_default_mode": "Modalità di Modifica Task Predefinita"
+            "task_edit_default_mode": "Modalità di Modifica Task Predefinita",
+            "flow_template": "Modello di flow predefinito"
           },
           "descriptions": {
             "default_namespace": "Utilizzato quando si creano nuovi flow senza un namespace.",
@@ -1032,11 +996,17 @@
             "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger.",
             "auto_refresh_interval": "Secondi tra gli aggiornamenti automatici dei dati nelle pagine elenco.",
             "playground": "Esegui i task singolarmente nel playground dell'editor.",
-            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code."
+            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code.",
+            "flow_template": "YAML aperto nell'editor quando crei un nuovo flow. L'id e il namespace possono essere omessi, poiché vengono generati automaticamente. Quando è vuoto, viene utilizzato il template configurato per l'istanza."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Scheda"
+          },
+          "flow_template_reset": "Ripristina predefiniti",
+          "flow_template_error": {
+            "invalid_mapping": "Modello di flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
+            "parse_error": "Impossibile analizzare il YAML. Il template è stato salvato, quindi l'editor potrebbe mostrare lo stesso errore quando crei un flow."
           }
         },
         "theme": {
@@ -1113,7 +1083,7 @@
       "contact_sales": "Contatta il reparto vendite",
       "secrets": {
         "title": "Aggiorna il tuo Secrets Management",
-        "message": "L'Enterprise Edition (EE) ti consente di aggiungere, modificare o eliminare i secret direttamente nell'interfaccia utente, senza bisogno di riavvii dell'istanza. Organizza i secret per namespace con permessi RBAC granulari e ereditale dai namespace padre a quelli figlio. L'EE si integra con i gestori di secret come HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager ed Elasticsearch. Configura backend dedicati per namespace, tenant o istanza per isolare i secret tra i team, o abilita i secret di sola lettura archiviati in vault esterni. I secret rimangono crittografati a riposo e in transito. La cache opzionale riduce le chiamate API e i log di audit registrano tutti gli accessi.",
+        "message": "L'Enterprise Edition ti consente di aggiungere, modificare ed eliminare i secret direttamente nell'interfaccia utente, di organizzarli per namespace con RBAC e di archiviarli in HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager o Elasticsearch.",
         "add_env": {
           "intro": "Crea un nuovo Secret",
           "first": "Codifica il <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valore segreto in Base64</a>",
@@ -1424,6 +1394,7 @@
       "key": "Nome",
       "keyPlaceholder": "Nome usato per fare riferimento a questo segreto, ad es. MY_API_TOKEN",
       "name": "Valore segreto",
+      "valuePlaceholder": "Inserisci il valore segreto",
       "description": "Descrizione",
       "descriptionPlaceholder": "Descrivi questo segreto",
       "tags": "Etichette",
@@ -1764,7 +1735,7 @@
         "content": "Esporre un flow come uno strumento MCP aggiungendo un <code>McpToolTrigger</code> ad esso. Leggi di più sul <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> nella nostra documentazione."
       },
       "versionPlugin": {
-        "title": "Non hai ancora un plugin versionato!",
+        "title": "Non hai ancora plugin versionati!",
         "content": "Qui puoi gestire tutti i plugin installati sulla tua istanza di Kestra. I plugin appena installati potrebbero non essere immediatamente disponibili in tutti i servizi di Kestra, a seconda della configurazione della tua istanza."
       },
       "panels": {
@@ -1920,6 +1891,7 @@
           "test": "Test"
         },
         "contextRemoved": "Rimosso {type} {id} dal contesto.",
+        "modelChanged": "Passato a {model}.",
         "toolResult": {
           "detail": "Dettagli",
           "error": "{tool} fallito",
@@ -1990,6 +1962,12 @@
           "Convergendo"
         ],
         "newChat": "Nuova chat",
+        "fixThread": {
+          "flow": "Correggi il Flow {id}",
+          "task": "Correggi il task {id}",
+          "execution": "Correggi l'esecuzione di {id}",
+          "generic": "Correggi gli errori del Flow"
+        },
         "draft": {
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",
@@ -2234,7 +2212,7 @@
       "next_match": "Prossima corrispondenza",
       "no_results_description": "Prova ad ampliare il namespace, a riportare lo scope su Tutte le sorgenti o a disattivare Maiuscole/minuscole e Corrispondenza parola intera.",
       "no_results_hidden_type": "Trovata {count} corrispondenza in {type}, che non hai selezionato. | Trovate {count} corrispondenze in {type}, che non hai selezionato.",
-      "no_results_in_types": "Nessuna corrispondenza per “{query}” in {types}",
+      "no_results_in_types": "Nessuna corrispondenza per {query} in {types}",
       "no_results_title": "Nessun risultato per \"{query}\"",
       "open_flow": "Apri flow",
       "open_in_editor": "Apri nell'editor",

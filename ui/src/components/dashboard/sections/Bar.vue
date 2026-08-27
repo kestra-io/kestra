@@ -19,6 +19,7 @@
             />
             <KsBar
                 ref="ksBarRef"
+                :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
                 class="canvas"
                 :data="seriesData"
                 :categories="categories"
@@ -51,7 +52,7 @@
     import {ChartFeature, KsBar, KsSkeleton, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"

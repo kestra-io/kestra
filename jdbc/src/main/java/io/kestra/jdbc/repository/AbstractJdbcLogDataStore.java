@@ -161,8 +161,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
         return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
@@ -200,8 +201,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());

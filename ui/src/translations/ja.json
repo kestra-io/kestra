@@ -2,47 +2,6 @@
   "ja": {
     "loading": "読み込み中...",
     "more actions": "その他のアクション",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "文字、数字、ドット、ダッシュ、アンダースコアのみを使用し、文字または数字で始めてください。",
-        "id_label": "flow id",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "小文字、数字、ドット、ダッシュ、アンダースコアのみを使用し、小文字または数字で始めてください。",
-        "namespace_placeholder": "namespaceを選択",
-        "namespaces_error": "namespaceを読み込めませんでした。namespaceを手動で入力してください。",
-        "open_editor": "エディターを開く",
-        "subtitle": "hello-worldスターターから始めて、ゼロから構築します。",
-        "title": "空のflow"
-      },
-      "blueprints": {
-        "subtitle": "コミュニティカタログから既製のflowを選択してください。",
-        "title": "ブループリントを参照"
-      },
-      "import": {
-        "back": "戻る",
-        "error": {
-          "empty": "YAMLコンテンツが空です。",
-          "invalid_mapping": "無効なflow YAML: リストまたはスカラーではなく、キーと値のマッピングが必要です。",
-          "parse_error": "YAMLをパースできませんでした。",
-          "too_large": "ファイルが大きすぎます。代わりにflow定義を貼り付けるか、1 MB未満のファイルをアップロードしてください。"
-        },
-        "paste_label": "YAMLを貼り付け",
-        "read_error": "ファイルを読み取れませんでした。",
-        "submit": "flowをインポート",
-        "subtitle": "既存のflow定義を貼り付けるか、アップロードしてください。",
-        "title": "YAMLをインポート",
-        "upload_button": ".yml / .yaml をアップロード",
-        "upload_label": "またはファイルをアップロード",
-        "upload_tip": ".yml および .yaml ファイルを受け入れます。"
-      },
-      "subtitle": "空白のキャンバスから開始するか、blueprintを探索するか、既存のYAMLをインポートします。",
-      "system": {
-        "badge": "システム",
-        "subtitle": "プラットフォームのアラートまたは自動化flowを構築します。",
-        "title": "システムflowを作成"
-      },
-      "title": "新しいflowを作成"
-    },
     "recipe": {
       "create_flow": "flowを作成",
       "email": "Eメール",
@@ -223,10 +182,12 @@
     "add_new_item": "新しいアイテムを追加",
     "copy": "コピー",
     "copy_to_clipboard": "クリップボードにコピー",
+    "copy_pebble_expression": "pebble 式をコピー",
     "new": "新規",
     "edit": "編集",
     "back": "戻る",
     "next": "次へ",
+    "previous": "前へ",
     "done": "完了",
     "review your inputs": "入力内容を確認してください",
     "edit flow": "Flowを編集",
@@ -407,7 +368,7 @@
     "unqueue done": "実行はキューから外されました",
     "force run": "強制実行",
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
-    "force run confirm": "実行 <code>{id}</code> を強制的に実行してもよろしいですか？<br/><br/>警告: 実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATED タスクは実行状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから削除されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run confirm": "実行 `{id}` を強制的に実行してもよろしいですか？\n\n警告: 実行の強制実行は保証されておらず、重複する Task Run が作成される可能性があります。\n\n以下の遷移が行われます。\n\n- CREATED Task は RUNNING 状態に移行します。\n- RUNNING Task は再送信されます。\n- QUEUED Task はキューから削除されます。\n- PAUSED Task は再開されます。",
     "force run done": "実行は強制的に実行されました",
     "metrics": "メトリクス",
     "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
@@ -610,6 +571,7 @@
     "triggers_add_filter_app": "アプリケーション",
     "triggers_add_empty_title": "トリガーが見つかりません",
     "triggers_add_ee_tooltip": "このtriggerはEnterprise Editionが必要です。",
+    "ee_feature_tooltip": "この機能にはEnterprise Editionが必要です。",
     "triggers_add_card_add": "追加",
     "triggers_add_modal_tab_form": "フォーム",
     "triggers_add_modal_tab_source": "ソース",
@@ -696,7 +658,7 @@
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
-    "bulk force run": "<code>{executionCount}</code>件の実行を強制的に実行してもよろしいですか？<br/><br/>警告：実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATEDタスクは実行状態に移行します。</li><li>RUNNINGタスクは再提出されます。</li><li>QUEUEDタスクはキューから削除されます。</li><li>PAUSEDタスクは再開されます。</li></ul>",
+    "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
     "bulk restart": "<code>{executionCount}</code>件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
     "cancel": "キャンセル",
@@ -875,6 +837,7 @@
         "folder_error": "フォルダーの作成中にエラーが発生しました"
       },
       "rename": {
+        "error": "\"{name}\" に名前を変更できませんでした。同じ名前のファイルまたはフォルダーが既に存在する可能性があります。",
         "label": "名前を変更",
         "file": "ファイルの名前を変更",
         "folder": "フォルダーの名前を変更",
@@ -1019,7 +982,8 @@
             "triggers_default_tab": "デフォルトトリガーのタブ",
             "playground": "プレイグラウンド",
             "auto_refresh_interval": "自動更新間隔",
-            "task_edit_default_mode": "デフォルトのTask編集モード"
+            "task_edit_default_mode": "デフォルトのTask編集モード",
+            "flow_template": "デフォルトのflowテンプレート"
           },
           "descriptions": {
             "default_namespace": "namespaceなしで新しいflowを作成する際に使用されます。",
@@ -1032,11 +996,17 @@
             "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。",
             "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
             "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
-            "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。"
+            "task_edit_default_mode": "ノーコードエディターからタスクがデフォルトで開く方法。",
+            "flow_template": "新しいflowを作成すると、エディターでYAMLが開きます。idとnamespaceは自動生成されるため、省略できます。これが空の場合、インスタンスに設定されているテンプレートが使用されます。"
           },
           "task_edit_default_mode_options": {
             "modal": "モーダル",
             "tab": "タブ"
+          },
+          "flow_template_reset": "デフォルトにリセット",
+          "flow_template_error": {
+            "invalid_mapping": "無効なflowテンプレート: リストまたはスカラーではなく、キーと値のマッピングが必要です。",
+            "parse_error": "YAMLを解析できませんでした。テンプレートは保存されたため、flowを作成する際にエディタに同じエラーが表示される可能性があります。"
           }
         },
         "theme": {
@@ -1113,7 +1083,7 @@
       "contact_sales": "営業に問い合わせる",
       "secrets": {
         "title": "シークレット管理をアップグレード",
-        "message": "Enterprise Edition (EE) では、UI で直接シークレットを追加、編集、削除できます。インスタンスの再起動は不要です。きめ細かな RBAC 権限で namespace ごとにシークレットを整理し、親 namespace から子 namespace に継承できます。EE は HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearch などのシークレットマネージャーと統合します。namespace、tenant、またはインスタンスごとに専用のバックエンドを設定してチーム間でシークレットを分離したり、外部 vault に保存されている読み取り専用シークレットを有効にしたりできます。シークレットは保存時も転送時も暗号化されたままです。オプションのキャッシュにより API 呼び出しが削減され、監査証跡によりすべてのアクセスがログに記録されます。",
+        "message": "Enterprise Edition では、UI で直接シークレットを追加、編集、削除し、RBAC で namespace ごとに整理し、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearch をバックエンドとして利用できます。",
         "add_env": {
           "intro": "新しいSecretを作成",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
@@ -1424,6 +1394,7 @@
       "key": "名前",
       "keyPlaceholder": "このシークレットを参照するために使用される名前。例: MY_API_TOKEN",
       "name": "秘密の値",
+      "valuePlaceholder": "秘密の値を入力",
       "description": "説明",
       "descriptionPlaceholder": "このシークレットの説明",
       "tags": "タグ",
@@ -1920,6 +1891,7 @@
           "test": "テスト"
         },
         "contextRemoved": "コンテキストから {type} {id} を削除しました。",
+        "modelChanged": "{model} に切り替えました。",
         "toolResult": {
           "detail": "詳細",
           "error": "{tool} が失敗しました",
@@ -1990,6 +1962,12 @@
           "収束中"
         ],
         "newChat": "新規チャット",
+        "fixThread": {
+          "flow": "Flow {id} を修正",
+          "task": "タスク {id} を修正",
+          "execution": "{id} の実行を修正",
+          "generic": "Flowのエラーを修正する"
+        },
         "draft": {
           "openInEditor": "エディターで開く",
           "apply": "適用",
@@ -2234,7 +2212,7 @@
       "next_match": "次の一致",
       "no_results_description": "namespaceを広げるか、スコープを「すべてのソース」に戻すか、「大文字と小文字を区別する」と「単語全体に一致」をオフにしてみてください。",
       "no_results_hidden_type": "選択していない{type}で{count}件の一致が見つかりました。 | 選択していない{type}で{count}件の一致が見つかりました。",
-      "no_results_in_types": "“{query}” に一致する結果は{types}にありません",
+      "no_results_in_types": "{query} に一致する結果は{types}にありません",
       "no_results_title": "「{query}」に一致する項目はありません",
       "open_flow": "flow を開く",
       "open_in_editor": "エディターで開く",

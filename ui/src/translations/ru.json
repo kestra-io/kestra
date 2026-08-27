@@ -2017,6 +2017,31 @@
         "clear_selection": "Очистить выбор",
         "fit_view": "По размеру экрана"
       },
+      "dag": {
+        "force": "Дерево",
+        "layered": "DAG",
+        "system": "Система",
+        "last_update": "Последнее обновление",
+        "status": {
+          "fresh": "Новый",
+          "stale": "Устаревший",
+          "failed": "Неудача",
+          "unknown": "Не отслеживается"
+        },
+        "summary": {
+          "fresh": "Все {n} Asset'ов обновлены",
+          "issues": "{n} устаревших",
+          "failed": "{n} не удалось",
+          "last_run": "последний запуск {ago}",
+          "unknown": "{n} не отслеживается"
+        },
+        "recent_runs": "Последние запуски",
+        "group_by": "Группировать по",
+        "groups": "Группы ({n})",
+        "group_none": "Без группировки",
+        "group_dataset": "Набор данных",
+        "ungrouped": "Без группы"
+      },
       "search": {
         "placeholders": {
           "default": "Поиск по flow или namespace...",

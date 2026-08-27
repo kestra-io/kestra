@@ -35,8 +35,8 @@ test.describe("Block editor — canvas scrolling", () => {
     }
 
     test("a Go to jump centres its destination in the canvas", async ({page}) => {
-        // The section has a block, so the jump lands on it rather than on the
-        // empty-section sentinel.
+        // Errors sits far enough down to need a scroll, and far enough from the
+        // end that there is content below it to centre against.
         await goToSectionViaPalette(page, "Errors")
         await expectRing(page, "err_handler")
 
@@ -47,40 +47,44 @@ test.describe("Block editor — canvas scrolling", () => {
         // a revert to `nearest` parks it at the edge, and `start` would pin it to
         // the top — both of which a one-sided bound would let through.
         //
-        // The tolerance is a quarter of the scrollport rather than something
-        // tighter because centring is bounded by the content below the target:
-        // once there is less than half a scrollport left, the browser cannot
-        // centre any further and stops short. A tighter bound here would go red
-        // on a viewport change rather than on a regression.
+        // A quarter of the scrollport rather than something tighter because
+        // centring is bounded by the content below the target: once there is
+        // less than half a scrollport left, the browser cannot centre any
+        // further. A tighter bound would go red on a viewport change rather than
+        // on a regression.
         const targetCentre = target.y + target.height / 2
         const scrollportCentre = scrollport.y + scrollport.height / 2
         expect(Math.abs(targetCentre - scrollportCentre)).toBeLessThan(scrollport.height * 0.25)
     })
 
-    test("a Go to jump to the last block scrolls as far as it can without clipping it", async ({page}) => {
-        // The boundary the centring cannot reach: with less than half a
-        // scrollport of content below it, the last block cannot be centred at
-        // all. What must still hold is that it is fully visible and clear of the
-        // status bar — the failure this PR exists to fix.
-        await goToSectionViaPalette(page, "Finally")
-        await expectRing(page, "cleanup")
+    test("a Go to jump to the final block scrolls as far as it can without clipping it", async ({page}) => {
+        // `notify` is the last stop on the canvas — afterExecution is the last
+        // lane buildSectionLanes emits — so there is nothing beneath it to
+        // centre against and the scroll stops at its maximum. What must still
+        // hold is that it is fully visible and clear of the status bar, which is
+        // the failure this PR exists to fix.
+        await goToSectionViaPalette(page, "After Execution")
+        await expectRing(page, "notify")
 
         const scrollport = await boxOf(page, "[data-test='block-editor-scrollport']")
         const statusBar = await boxOf(page, "[data-test='block-editor-footer']")
-        const target = await boxOf(page, "[data-block-id='cleanup']")
+        const target = await boxOf(page, "[data-block-id='notify']")
 
         expect(target.y).toBeGreaterThanOrEqual(scrollport.y)
         expect(target.y + target.height).toBeLessThanOrEqual(statusBar.y)
     })
 
-    test("arrow-stepping to a block near the bottom keeps it clear of the status bar", async ({page}) => {
-        // Stepping still uses `nearest`, which stops as soon as the card is
-        // technically inside the scrollport — including the strip the status bar
-        // is painted over. scroll-padding-bottom is what reserves that strip.
-        await walkTo(page, "err_handler")
-        await expectRing(page, "err_handler")
+    test("arrow-stepping to the final block keeps it clear of the status bar", async ({page}) => {
+        // The same block as above, reached the other way. Stepping stays on
+        // `nearest`, which stops as soon as the card is technically inside the
+        // scrollport — including the strip the status bar is painted over. Only
+        // the last block forces that case: anything higher has content below it
+        // that pushes it clear anyway, so the assertion would hold whether or not
+        // scroll-padding-bottom existed.
+        await walkTo(page, "notify")
+        await expectRing(page, "notify")
 
-        const target = await boxOf(page, "[data-block-id='err_handler']")
+        const target = await boxOf(page, "[data-block-id='notify']")
         const statusBar = await boxOf(page, "[data-test='block-editor-footer']")
 
         expect(target.y + target.height).toBeLessThanOrEqual(statusBar.y)

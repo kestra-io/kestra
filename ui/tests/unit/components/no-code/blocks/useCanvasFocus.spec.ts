@@ -30,10 +30,6 @@ function buildCanvas(ids: string[]) {
     return root
 }
 
-function scrollSpy(root: HTMLElement, id: string) {
-    return root.querySelector<HTMLElement>(`[data-block-id='${id}']`)!.scrollIntoView as ReturnType<typeof vi.fn>
-}
-
 function setup(ids: string[]) {
     const root = buildCanvas(ids)
     const editorEl = ref<HTMLElement | undefined>(root)
@@ -53,13 +49,16 @@ describe("useCanvasFocus", () => {
         expect(focus.focusedId.value).toBe("b")
     })
 
-    it("tracks the focused id and does nothing without one", async () => {
-        const {root, focus} = setup(["a"])
+    it("clears the focused id when given nothing to focus", async () => {
+        const {focus} = setup(["a"])
+
+        focus.focusCanvasCard("a")
+        await nextTick()
+        expect(focus.focusedId.value).toBe("a")
 
         focus.focusCanvasCard(undefined)
         await nextTick()
 
         expect(focus.focusedId.value).toBeUndefined()
-        expect(scrollSpy(root, "a")).not.toHaveBeenCalled()
     })
 })

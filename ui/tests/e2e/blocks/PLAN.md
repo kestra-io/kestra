@@ -23,18 +23,22 @@ canvas shape the suite needs to walk and mutate:
 - two top-level leaf tasks
 - empty top-level errors/finally sections (covers empty-state insertion)
 
-`tests/e2e/fixtures/flows/blocks-tall.yaml` — sixteen leaf tasks plus an
-errors and a finally block, used only by the scrolling spec. Scrolling
-behaviour only exists once the canvas overflows the viewport, and the
-finally block (`cleanup`) is the last stop on the canvas, which is the
-one that cannot be centred.
+`tests/e2e/fixtures/flows/blocks-tall.yaml` — sixteen leaf tasks plus one
+block in each of errors, finally and afterExecution, used only by the
+scrolling spec. Scrolling only exists once the canvas overflows the
+viewport. Every section is populated deliberately: `buildSectionLanes`
+emits triggers → tasks → errors → finally → afterExecution, and an empty
+section still renders a drop zone carrying a `data-block-id`, which counts
+as a navigable stop — so an empty section would sit below the block the
+scroll tests treat as last. With all of them filled, `notify` in
+afterExecution is the final stop.
 
 ## Files
 
 | File | Covers |
 |---|---|
 | `blocks-navigation.spec.ts` | Keyboard-only canvas navigation |
-| `blocks-canvas-scroll.spec.ts` | Scrolling: palette-jump centring, the max-scroll boundary, status-bar clearance |
+| `blocks-canvas-scroll.spec.ts` | Scrolling: palette-jump centring, the final-block boundary, status-bar clearance |
 | `blocks-insert.spec.ts` | Every insertion entry point |
 | `blocks-edit-forms.spec.ts` | Every generated-form input family |
 | `blocks-mutations.spec.ts` | Duplicate, delete, reorder, split view, command menu, save |
@@ -63,11 +67,12 @@ needs the tall fixture, and a describe block only gets one `beforeEach`:
 - A command-palette `Go to` jump centres its destination, asserted as a
   distance from the scrollport centre so neither `nearest` (parks it at the
   edge) nor `start` (pins it to the top) passes
-- The max-scroll boundary: jumping to the last block, which cannot be
-  centred because less than half a scrollport of content sits beneath it,
-  still leaves it fully visible and clear of the status bar
-- Arrow-stepping keeps a block near the bottom clear of the status bar —
-  stepping stays on `nearest`, so this pins `scroll-padding-bottom`
+- Jumping to the final block, which cannot be centred because nothing sits
+  beneath it, still leaves it fully visible and clear of the status bar
+- Arrow-stepping to that same final block keeps it clear of the status bar.
+  Stepping stays on `nearest`, and only the last block forces the case —
+  anything higher is pushed clear by the content below it, so the assertion
+  would hold with or without `scroll-padding-bottom`
 - Jumping back up leaves the destination fully within the scrollport
 
 **Insertion** (`blocks-insert.spec.ts`)
@@ -177,6 +182,11 @@ to.
   behind an overlay still looks visible to Playwright. `pickTask()` and
   `goToSectionViaPalette()` both scope their lookup to the picker's listbox
   and the command menu respectively.
+- **An empty section is still a navigable stop.** `BlockSectionLane` renders a
+  drop zone carrying a `data-block-id` when a section has no entries, and
+  `navigableCards()` counts it. Any test reasoning about "the last block"
+  has to account for every lane `buildSectionLanes` emits, not just the ones
+  the fixture happens to fill.
 
 ## Known gaps / follow-ups
 

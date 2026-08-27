@@ -3,6 +3,12 @@ namespace: company.team
 # Deliberately long: the canvas has to overflow the viewport for a jump to be
 # distinguishable from "already on screen". Kept short enough that walkTo() can
 # still reach the last block within its step bound.
+#
+# Every section carries at least one block on purpose. buildSectionLanes emits
+# triggers, tasks, errors, finally, afterExecution, and an empty section still
+# renders a drop zone carrying a data-block-id, which counts as a navigable
+# stop. Leaving one empty would put a stop below the block the scrolling tests
+# treat as last.
 tasks:
   - id: task_01
     type: io.kestra.plugin.core.log.Log
@@ -56,11 +62,14 @@ errors:
   - id: err_handler
     type: io.kestra.plugin.core.log.Log
     message: handled
-# Finally renders after Errors, so `cleanup` is the genuinely last stop on the
-# canvas — the one block with less than half a scrollport of content beneath it,
-# and therefore the one that cannot be centred. That is the boundary the
-# max-scroll case needs.
 finally:
   - id: cleanup
     type: io.kestra.plugin.core.log.Log
     message: cleaned up
+# afterExecution renders last, so `notify` is the final stop on the canvas: the
+# one block with nothing beneath it, and therefore the one that cannot be
+# centred however far the canvas scrolls.
+afterExecution:
+  - id: notify
+    type: io.kestra.plugin.core.log.Log
+    message: notified

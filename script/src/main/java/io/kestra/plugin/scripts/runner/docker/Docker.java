@@ -510,7 +510,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     logger.debug(
                         "Starting command with container id {} [{}]",
                         containerId,
-                        String.join(" ", renderedCommands)
+                        TaskLogLineMatcher.redactEncryptedOutputs(String.join(" ", renderedCommands))
                     );
                 }
             } else {

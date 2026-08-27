@@ -16,6 +16,28 @@ public interface SDK {
      */
     Optional<Auth> defaultAuthentication();
 
+    /**
+     * Same as {@link #defaultAuthentication()} but fails fast with an actionable error when no usable
+     * credentials are configured (an API token, or a username and password — a URL alone is not enough).
+     * <p>
+     * SDK-based tasks should call this instead of silently building an unauthenticated client, which
+     * surfaces to users as an opaque 401 Unauthorized at API-call time.
+     *
+     * @return the default authentication, guaranteed to carry an API token or a username/password pair.
+     * @throws IllegalArgumentException when no default credentials are configured.
+     */
+    default Auth defaultAuthenticationOrThrow() {
+        return defaultAuthentication()
+            .filter(auth -> auth.apiToken().isPresent() || (auth.username().isPresent() && auth.password().isPresent()))
+            .orElseThrow(
+                () -> new IllegalArgumentException(
+                    "No authentication method provided for the Kestra API. Set the `auth` property on the task " +
+                        "(apiToken or username/password), or configure default credentials via " +
+                        "`kestra.tasks.sdk.authentication` (api-token, or username and password) in the Kestra configuration."
+                )
+            );
+    }
+
     @ConfigurationProperties("kestra.tasks.sdk.authentication")
     record Auth(
         Optional<String> url,

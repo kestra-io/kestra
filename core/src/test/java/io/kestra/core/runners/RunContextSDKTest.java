@@ -7,6 +7,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest(rebuildContext = true)
 class RunContextSDKTest {
@@ -82,5 +83,32 @@ class RunContextSDKTest {
 
         assertThat(runContext.sdk().defaultAuthentication()).isPresent();
         assertThat(runContext.sdk().defaultAuthentication().get().url()).isEmpty();
+    }
+
+    @Test
+    void sdkAuthOrThrowShouldFailFastWhenNotSet() {
+        RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
+
+        assertThatThrownBy(() -> runContext.sdk().defaultAuthenticationOrThrow())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("No authentication method provided for the Kestra API");
+    }
+
+    @Test
+    @Property(name = "kestra.tasks.sdk.authentication.url", value = "https://my-instance.io")
+    void sdkAuthOrThrowShouldFailFastWhenUrlOnly() {
+        RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
+
+        assertThatThrownBy(() -> runContext.sdk().defaultAuthenticationOrThrow())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("No authentication method provided for the Kestra API");
+    }
+
+    @Test
+    @Property(name = "kestra.tasks.sdk.authentication.api-token", value = "test-key")
+    void sdkAuthOrThrowShouldReturnAuthWhenSet() {
+        RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
+
+        assertThat(runContext.sdk().defaultAuthenticationOrThrow().apiToken()).contains("test-key");
     }
 }

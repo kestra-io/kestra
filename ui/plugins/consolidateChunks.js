@@ -14,10 +14,10 @@ const isRealModule = (id) =>
     !id.includes("__loadShare__") &&
     !id.includes("@module-federation") &&
     !id.includes("?worker") &&
-    // Implementations of MF shared singletons (see federation() shared config)
-    // must keep their own chunks: consumers import them through MF loadShare
-    // wrappers, and merging them with wrapper consumers creates a
-    // wrapper <-> chunk evaluation cycle that crashes at boot.
+    // Implementations of MF shared singletons (see federation() shared config).
+    // Merging them with wrapper *consumers* creates a wrapper <-> chunk
+    // evaluation cycle that crashes at boot, so the eager groups may not have
+    // them; the mf-shared group claims them alongside their own shims.
     !/node_modules[\\/](vue|@vue)[\\/]/.test(id) &&
     // Both id forms: the bare-specifier resolution (@kestra-io/kestra-sdk) and
     // the workspace path (packages/kestra-sdk) it can resolve to.
@@ -32,6 +32,16 @@ const isRealModule = (id) =>
  * @returns {(id: string) => boolean}
  */
 const matches = (pattern) => (id) => isRealModule(id) && pattern.test(id)
+
+/**
+ * The shims MF generates per shared module: the async init wrapper, and the
+ * prebuild proxy re-exporting the same implementation.
+ */
+const isShareShim = (id) => id.includes("__loadShare__") || id.includes("__prebuild__")
+
+/** MF's own virtual modules: the shims, the share map, the remote entry. */
+const isMfInternal = (id) =>
+    id.startsWith("\0") || id.includes("virtual:") || id.includes("__mf") || id.includes("@module-federation")
 
 const MONACO_MODULES = /node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)|src[\\/](override[\\/])?composables[\\/]monaco[\\/]/
 // Entries that look like typos are real unified-ecosystem package names.
@@ -125,8 +135,56 @@ function collectLazySubtrees(ctx) {
 const matchesWithLazySubtree = (name, pattern) => (id) =>
     isRealModule(id) && (pattern.test(id) || lazySubtrees.get(name)?.has(id) === true)
 
+/**
+ * Every module imports the design-system barrel, so one static edge from it into
+ * a lazy group makes {@link collectLazyReach} tag the whole application.
+ * @param {import("rolldown").PluginContext} ctx
+ */
+function assertBarrelReachesNoToolchain(ctx) {
+    const barrel = [...ctx.getModuleIds()].find((id) => /design-system[\\/]src[\\/]index\.ts$/.test(id))
+    for (const {name, pattern} of LAZY_GROUPS) {
+        const leak = (ctx.getModuleInfo(barrel ?? "")?.importedIds ?? [])
+            .find((id) => pattern.test(id) || lazySubtrees.get(name)?.has(id) === true)
+        if (leak) {
+            ctx.error(`The design-system barrel statically imports '${leak}', which belongs to the lazy '${name}' chunk, so every page importing the barrel is tagged as reaching '${name}' and can be folded into a chunk that downloads it. Export it lazily (asyncComponent) or move it out of the '${name}' group's directory.`)
+        }
+    }
+}
+
+/**
+ * The shared singletons' own implementations: everything the share shims
+ * statically reach that no other group may claim. Filled during buildEnd.
+ *
+ * Unclaimed they get a chunk each beside the shim that is their only importer —
+ * vue and the SDK alone are ~360 kB over two eagerly preloaded files. Limiting
+ * the set to what {@link isRealModule} rejects is what makes the merge safe:
+ * nothing is taken out of another group, so an outside importer can only add an
+ * edge into mf-shared, never one back out of it.
+ * @type {Set<string>}
+ */
+const sharedImpls = new Set()
+
+/**
+ * @param {import("rolldown").PluginContext} ctx
+ */
+function collectSharedImpls(ctx) {
+    sharedImpls.clear()
+    for (const id of staticClosure(ctx, [...ctx.getModuleIds()].filter(isShareShim))) {
+        // The whole subtree, including modules the app also imports directly
+        // (@vue/shared): one left behind lands in a chunk that imports
+        // mf-shared while vue's own runtime in there imports it back.
+        if (isMfInternal(id) || isRealModule(id)) continue
+        sharedImpls.add(id)
+    }
+}
+
 const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]langs)[\\/]/
-const LANG_REGISTRY = /node_modules[\\/]shiki[\\/]dist[\\/]langs(-bundle-full-[^\\/]+)?\.mjs$/
+
+/**
+ * True for a grammar chunk, by bare name or hashed file.
+ * @param {string} name
+ */
+const isLangChunkName = (name) => /(^|[\\/])shiki-lang-/.test(name)
 
 /**
  * Grammars some module statically imports (shikiHighlighter.ts pre-registers a
@@ -365,13 +423,16 @@ const GROUPS = [
         priority: -10,
         includeDependenciesRecursively: false,
     },
-    // Every grammar that is not pre-registered, in one chunk fetched only when a
-    // code fence uses an exotic language (see loadLanguageOnDemand). Without
-    // this group Shiki's registry emits one chunk per language (~350 files).
+    // One chunk per non-pre-registered grammar, claimed here so the markdown
+    // group's @shikijs/langs pattern cannot swallow them all; the registry index
+    // is left to that group on purpose, since it reaches grammars only
+    // dynamically and riding along there saves an exotic fence a request.
     {
-        name: "shiki-langs",
-        test: (id) => isRealModule(id) &&
-            (LANG_REGISTRY.test(id) || (LANG_MODULE.test(id) && !staticLangs.has(id))),
+        name: (id) => {
+            if (!isRealModule(id)) return null
+            if (!LANG_MODULE.test(id) || staticLangs.has(id)) return null
+            return `shiki-lang-${(id.split(/[\\/]/).pop() ?? "").replace(/\.m?js$/, "")}`
+        },
         priority: -12,
         includeDependenciesRecursively: false,
     },
@@ -420,11 +481,12 @@ const GROUPS = [
         priority: -40,
         includeDependenciesRecursively: false,
     },
-    // One chunk for every module-federation share wrapper: alone they are
-    // forty-odd two-kilobyte requests, most of them on every page.
+    // One chunk for every module-federation share shim — alone they are
+    // forty-odd two-kilobyte requests, most of them on every page — plus the
+    // shared implementations behind them, which are on every page too.
     {
         name: "mf-shared",
-        test: (id) => id.includes("__loadShare__"),
+        test: (id) => isShareShim(id) || sharedImpls.has(id),
         priority: -44,
         includeDependenciesRecursively: false,
     },
@@ -469,6 +531,8 @@ export function consolidateChunks({pages = {}} = {}) {
         buildEnd() {
             collectStaticLangs(this)
             collectLazySubtrees(this)
+            assertBarrelReachesNoToolchain(this)
+            collectSharedImpls(this)
             planAsyncChunks(this)
         },
         generateBundle(_options, bundle) {
@@ -476,8 +540,9 @@ export function consolidateChunks({pages = {}} = {}) {
             // catch-all, or an untainted chunk reaching a lazy toolchain.
             const lazyNames = LAZY_GROUPS.map((group) => group.name)
             for (const chunk of Object.values(bundle)) {
-                // shiki-langs belongs to the markdown toolchain and may reach it.
-                if (chunk.type !== "chunk" || chunk.name === "shiki-langs" || lazyNames.includes(chunk.name)) continue
+                // A grammar chunk belongs to the markdown toolchain and may reach
+                // it: a non-pre-registered grammar can embed a pre-registered one.
+                if (chunk.type !== "chunk" || isLangChunkName(chunk.name) || lazyNames.includes(chunk.name)) continue
                 for (const dependency of (chunk.imports ?? []).map((file) => bundle[file]?.name ?? "")) {
                     if (lazyNames.includes(dependency) && !chunk.name.includes(dependency)) {
                         this.error(`Chunk '${chunk.name}' statically imports the lazy '${dependency}' chunk, so every page reaching '${chunk.name}' now downloads it. Its modules should be reported as reaching '${dependency}' by collectLazyReach.`)
@@ -507,14 +572,31 @@ export function consolidateChunks({pages = {}} = {}) {
                 }
             }
 
-            // A static edge into shiki-langs would make every markdown render
-            // fetch all ~350 grammars, which is exactly what this split avoids.
-            const isLangChunk = (name) => /(^|[\\/])shiki-langs-/.test(name)
+            // Folding the shared implementations in with their shims is only safe
+            // while nothing mf-shared imports imports it back.
+            const mfShared = Object.keys(bundle).find((file) => nameOf(file) === "mf-shared")
+            if (mfShared) {
+                const reached = new Set([mfShared])
+                const paths = deps(mfShared).map((file) => [file])
+                while (paths.length) {
+                    const path = /** @type {string[]} */ (paths.pop())
+                    const file = path[path.length - 1]
+                    if (file === mfShared) {
+                        this.error(`Chunks import each other: ${[mfShared, ...path].map(nameOf).join(" -> ")}. The shared singletons throw the first time any of these chunks loads; an implementation collectSharedImpls claimed reaches a chunk that consumes shares.`)
+                    }
+                    if (reached.has(file)) continue
+                    reached.add(file)
+                    paths.push(...deps(file).map((dep) => [...path, dep]))
+                }
+            }
+
+            // A static edge into a grammar chunk would make every markdown render
+            // fetch grammars it has no use for, which is what this split avoids.
             for (const [name, chunk] of Object.entries(bundle)) {
-                if (chunk.type !== "chunk" || isLangChunk(name)) continue
-                const leaked = (chunk.imports ?? []).filter(isLangChunk)
+                if (chunk.type !== "chunk" || isLangChunkName(name)) continue
+                const leaked = (chunk.imports ?? []).filter(isLangChunkName)
                 if (leaked.length) {
-                    this.error(`Chunk '${name}' statically imports the on-demand grammar bundle (${leaked.join(", ")}). A statically imported grammar likely gained a transitive import that collectStaticLangs failed to reach.`)
+                    this.error(`Chunk '${name}' statically imports the on-demand grammar chunks (${leaked.join(", ")}). A statically imported grammar likely gained a transitive import that collectStaticLangs failed to reach.`)
                 }
             }
         },

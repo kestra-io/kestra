@@ -473,6 +473,11 @@
         "title": "Limite de concorrência remanescente"
       }
     },
+    "docsPage": {
+      "notFound": "Esta página da documentação não existe. Ela pode ter sido movida ou renomeada.",
+      "loadError": "Não foi possível carregar esta página da documentação. Tente novamente.",
+      "backToDocs": "Voltar aos Docs"
+    },
     "documentation": {
       "documentation": "Documentação"
     },
@@ -779,6 +784,11 @@
     "expand_by_default": "Expandir logs estruturados por padrão",
     "similar lines": "linhas semelhantes",
     "download_logs_description": "Escolha quais logs exportar. Os filtros são padronizados para sua visualização atual.",
+    "logs_download_truncated": "Foram exportadas as {downloaded} linhas de log mais recentes. Outras {skipped} correspondiam aos seus filtros e foram omitidas.",
+    "logs_download_capped": "Foram exportadas as {downloaded} linhas de log mais recentes, o máximo para uma exportação. Podem ter existido mais linhas correspondentes aos seus filtros.",
+    "logs_download_partial": "A exportação parou em {downloaded} linhas de log porque este filtro não pode ser paginado além disso. Faltam algumas linhas correspondentes.",
+    "logs_download_failed": "A exportação de log falhou. Nenhum arquivo foi baixado.",
+    "logs_download_empty": "Nenhuma linha de log corresponde aos seus filtros, então nenhum arquivo foi baixado.",
     "display_settings": "Configurações de exibição",
     "density": "Densidade",
     "density_compact": "Compacto",
@@ -1807,6 +1817,7 @@
       "others": "Outros",
       "viewAll": "Ver tudo",
       "export": "Exportar",
+      "exportEmpty": "Este gráfico não tem dados para exportar.",
       "exportTo": {
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"

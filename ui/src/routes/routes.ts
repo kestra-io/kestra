@@ -1,4 +1,5 @@
 import type {RouteRecordRaw} from "vue-router"
+import * as NamespacesAPI from "@kestra-io/kestra-sdk/namespaces"
 // @ts-ignore - no type declarations available for this component
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
 import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
@@ -6,6 +7,7 @@ import Errors from "../components/errors/Errors.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
+import {withTenant, PROBE_REQUEST_OPTIONS} from "../utils/routeEntityGuard"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
@@ -69,6 +71,14 @@ const routes: KestraRouteRecord[] = [
         name: NAMESPACE_PARENT_ROUTE,
         path: "/:tenant?/namespaces/edit/:id",
         component: () => import("../components/namespaces/Namespace.vue"),
+        // Only Enterprise Edition 404s here: the OSS endpoint echoes any id back, since an OSS
+        // namespace is whatever its flows declare rather than a stored entity.
+        meta: {
+            entity: (to) => NamespacesAPI.loadNamespace(
+                withTenant(to, {id: String(to.params.id)}),
+                PROBE_REQUEST_OPTIONS,
+            ),
+        },
         // Resolve legacy deep-links `{name: "namespaces/update", params: {tab}}` and bare
         // `/:id` URLs to the matching child route, preserving params and query.
         redirect: (to) => {

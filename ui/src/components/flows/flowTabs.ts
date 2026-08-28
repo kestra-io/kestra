@@ -1,7 +1,9 @@
-import type {RouteRecordRaw} from "vue-router"
+import type {RouteMeta, RouteRecordRaw} from "vue-router"
+import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {resolveDefaultTab} from "../../utils/routeTabs"
+import {withTenant, PROBE_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Flows detail page. */
 export const FLOW_PARENT_ROUTE = "flows/update"
@@ -122,6 +124,19 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
 ]
 
 /**
+ * Resolves the flow the detail page is about, so an unknown one renders the not-found screen
+ * instead of a page that never gets its data (EE reuses it for its own route record).
+ * `allowDeleted`: a deleted flow still has a page, so only an unknown one is missing.
+ */
+export const FLOW_ENTITY_META: RouteMeta = {
+    entity: (to) => FlowsAPI.flow(withTenant(to, {
+        namespace: String(to.params.namespace),
+        id: String(to.params.id),
+        allowDeleted: true,
+    }), PROBE_REQUEST_OPTIONS),
+}
+
+/**
  * The Flows detail page's own route: parent + children, colocated with the tab
  * definitions above so this page owns its full routing structure end to end.
  */
@@ -129,6 +144,7 @@ export const FLOW_ROUTE: RouteRecordRaw = {
     name: FLOW_PARENT_ROUTE,
     path: "/:tenant?/flows/edit/:namespace/:id",
     component: () => import("./FlowRoot.vue"),
+    meta: FLOW_ENTITY_META,
     // Resolve legacy deep-links `{name: "flows/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {

@@ -1,5 +1,7 @@
-import type {RouteRecordRaw} from "vue-router"
+import type {RouteMeta, RouteRecordRaw} from "vue-router"
+import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import {resolveDefaultTab} from "../../utils/routeTabs"
+import {withTenant, PROBE_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
@@ -75,6 +77,18 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
 ]
 
 /**
+ * Resolves the execution the detail page is about (EE reuses it for its own route record).
+ * The page itself only learns of a missing execution when its SSE stream fails, which cannot
+ * tell "not found" from "connection lost".
+ */
+export const EXECUTION_ENTITY_META: RouteMeta = {
+    entity: (to) => ExecutionsAPI.execution(
+        withTenant(to, {executionId: String(to.params.id)}),
+        PROBE_REQUEST_OPTIONS,
+    ),
+}
+
+/**
  * The Executions detail page's own route: parent + children, colocated with the tab
  * definitions above so this page owns its full routing structure end to end.
  */
@@ -82,6 +96,7 @@ export const EXECUTION_ROUTE: RouteRecordRaw = {
     name: EXECUTION_PARENT_ROUTE,
     path: "/:tenant?/executions/:namespace/:flowId/:id",
     component: () => import("./ExecutionRoot.vue"),
+    meta: EXECUTION_ENTITY_META,
     // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {

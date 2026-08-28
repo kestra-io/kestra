@@ -12,9 +12,11 @@ import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Mono;
@@ -275,6 +277,48 @@ class AuthenticationFilterTest {
         );
 
         assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void webhookOpenUrlShouldNotOpenTheGeneralExecutionRoute() {
+        // GHSA-j5cv-8rw9-vv2p: "/api/v1/main/executions/webhook/" as an open-url prefix also matched
+        // "/api/v1/main/executions/{namespace}/{id}" for a namespace literally named "webhook",
+        // letting anyone create an execution anonymously.
+        TestAuthFilter.ENABLED = false;
+        try {
+            HttpClientResponseException httpClientResponseException = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(
+                        HttpRequest.POST(
+                            "/api/v1/main/executions/webhook/some-flow",
+                            MultipartBody.builder().addPart("string", "myString").build()
+                        ).contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+                    )
+            );
+            assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        } finally {
+            TestAuthFilter.ENABLED = true;
+        }
+    }
+
+    @Test
+    void webhookRouteShouldStayOpenWithAndWithoutTenant() {
+        TestAuthFilter.ENABLED = false;
+        try {
+            HttpClientResponseException tenantFul = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(HttpRequest.GET("/api/v1/main/executions/webhook/io.kestra.tests/unknown-flow/some-key"))
+            );
+            assertThat(tenantFul.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+
+            HttpClientResponseException tenantLess = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(HttpRequest.GET("/api/v1/executions/webhook/io.kestra.tests/unknown-flow/some-key"))
+            );
+            assertThat(tenantLess.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        } finally {
+            TestAuthFilter.ENABLED = true;
+        }
     }
 
     @Test

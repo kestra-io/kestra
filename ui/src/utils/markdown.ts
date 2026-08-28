@@ -1,4 +1,5 @@
 import {HighlighterCoreOptions, LanguageRegistration, RegexEngine, ThemeRegistrationRaw, HighlighterGeneric} from "shiki/core";
+import xss, {escapeAttrValue, friendlyAttrValue} from "xss";
 
 let highlighter: Promise<HighlighterGeneric<"yaml"| "python" | "javascript", "github-dark" | "github-light">> | null = null;
 
@@ -50,6 +51,87 @@ export function isSafeUrl(url: string): boolean {
     if (!scheme) return true;
 
     return ALLOWED_URL_SCHEMES.includes(scheme[1].toLowerCase() + ":") || ALLOWED_DATA_URL.test(compacted);
+}
+
+const IFRAME_ALLOWED_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com"];
+
+function isAllowedIframeSrc(value: string): boolean {
+    try {
+        const url = new URL(value);
+        return "https:" === url.protocol && IFRAME_ALLOWED_HOSTS.includes(url.hostname);
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Strips everything outside the tag and attribute whitelist from rendered markdown.
+ *
+ * Raw HTML is enabled by default, and the result is handed to `v-html`, so without this a
+ * description carrying `<img src=x onerror=…>` runs in the viewer's session (stored XSS). The
+ * whitelist mirrors the one the KsMarkdown design-system component uses on develop, widened with
+ * the attributes Shiki and the enhanced renderers below emit on their own markup.
+ */
+export function sanitizeHtml(html: string): string {
+    return xss(html, {
+        whiteList: {
+            a: ["href", "title", "target", "rel", "id", "class"],
+            abbr: ["title"],
+            article: ["class", "role"],
+            b: [], i: [], em: [], strong: [], del: [], s: [],
+            blockquote: ["class"],
+            br: [],
+            code: ["class", "style"],
+            dd: [], dl: [], dt: [],
+            details: ["open", "class"],
+            div: ["class", "id", "role", "style"],
+            h1: ["id", "class", "tabindex"], h2: ["id", "class", "tabindex"], h3: ["id", "class", "tabindex"],
+            h4: ["id", "class", "tabindex"], h5: ["id", "class", "tabindex"], h6: ["id", "class", "tabindex"],
+            hr: [],
+            iframe: ["src", "title", "width", "height", "allow", "allowfullscreen", "referrerpolicy", "frameborder", "class"],
+            img: ["src", "alt", "title", "width", "height", "class"],
+            kbd: [],
+            li: ["class"], ol: ["start", "class"], ul: ["class"],
+            mark: [],
+            p: ["class"],
+            pre: ["class", "id", "style", "tabindex"],
+            section: ["class"],
+            small: [],
+            span: ["class", "style"],
+            sub: [], sup: [],
+            summary: ["class"],
+            table: ["class"], thead: [], tbody: [], tr: [], th: ["class", "align", "style"], td: ["class", "align", "style"],
+            var: [],
+            "router-md": ["execution", "namespace", "flowId"],
+            video: ["src", "controls", "width", "height", "class"],
+            source: ["src", "type"],
+            button: ["type", "class", "aria-label"],
+        },
+        stripIgnoreTag: true,
+        stripIgnoreTagBody: ["script", "style"],
+        onTagAttr: (tag: string, name: string, value: string) => {
+            if ("href" !== name && "src" !== name) {
+                return undefined;
+            }
+
+            // Entities are decoded before the scheme is checked, otherwise `&#106;avascript:`
+            // passes it and the browser decodes it back into a live scheme afterwards. Taking the
+            // URL over from the library also keeps one policy for raw HTML and for markdown-native
+            // links, instead of the stricter built-in one that drops every bare relative URL.
+            const url = friendlyAttrValue(value);
+            if ("iframe" === tag ? !isAllowedIframeSrc(url) : !isSafeUrl(url)) {
+                return "";
+            }
+
+            return name + "=\"" + escapeAttrValue(url) + "\"";
+        },
+        onIgnoreTagAttr: (_tag: string, name: string, value: string) => {
+            if (name.startsWith("data-") || name.startsWith("aria-")) {
+                return name + "=\"" + escapeAttrValue(value) + "\"";
+            }
+            return undefined;
+        },
+    });
 }
 
 interface RenderOptions {
@@ -125,7 +207,7 @@ export async function render(markdown: string, options: RenderOptions = {}) {
     } else {
         md.renderer.rules.table_open = () => "<table class=\"table\">\n";
     }
-    return md.render(markdownWithAlerts);
+    return sanitizeHtml(md.render(markdownWithAlerts));
 }
 
 function applyEnhancedRenderers(md: any, showCopyButtons: boolean) {

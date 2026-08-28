@@ -7,23 +7,25 @@
                 </template>
             </MobileFilter>
             <template v-else>
-                <KsButton
-                    v-if="hasFilterKeys"
-                    :icon="CodeTags"
-                    size="default"
-                    class="code-toggle"
-                    :class="{'code-toggle--active': viewMode === 'raw'}"
-                    :disabled="readOnly || codeToggleDisabled"
-                    :aria-label="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
-                    :title="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
-                    @click="toggleViewMode"
-                />
-                <MainFilter v-if="viewMode === 'chip'" />
-                <RawFilter v-else>
-                    <template v-if="$slots.rawEditor" #rawEditor="slotProps">
-                        <slot name="rawEditor" v-bind="slotProps" />
-                    </template>
-                </RawFilter>
+                <div class="main-filters">
+                    <KsButton
+                        v-if="hasFilterKeys"
+                        :icon="CodeTags"
+                        size="default"
+                        class="code-toggle"
+                        :class="{'code-toggle--active': viewMode === 'raw'}"
+                        :disabled="readOnly || codeToggleDisabled"
+                        :aria-label="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
+                        :title="$t(viewMode === 'raw' ? 'filter.chip_view' : 'filter.raw_view')"
+                        @click="toggleViewMode"
+                    />
+                    <MainFilter v-if="viewMode === 'chip'" />
+                    <RawFilter v-else>
+                        <template v-if="$slots.rawEditor" #rawEditor="slotProps">
+                            <slot name="rawEditor" v-bind="slotProps" />
+                        </template>
+                    </RawFilter>
+                </div>
                 <RightFilter>
                     <template #extra>
                         <slot name="extra" />
@@ -293,6 +295,15 @@
         align-items: flex-start;
         flex-wrap: wrap;
         gap: var(--ks-spacing-2);
+    }
+
+    .main-filters {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+        flex: 1;
+        min-width: 14rem;
     }
 
     .code-toggle {

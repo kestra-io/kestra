@@ -192,7 +192,6 @@
     gap: var(--ks-spacing-2);
     flex-shrink: 0;
     min-width: fit-content;
-    margin-left: auto;
 
     &.filter-shrink {
         flex-shrink: 0;

@@ -80,7 +80,6 @@
                     :definitions="schema.definitions"
                     sectionName="Properties"
                     href="properties"
-                    labelColor="var(--ks-text-blue)"
                     :initiallyExpanded="propsInitiallyExpanded || compact"
                     :forceInclude="forceIncludeProperties"
                     :noUrlChange
@@ -106,7 +105,6 @@
                     :definitions="schema.definitions"
                     sectionName="Outputs"
                     href="outputs"
-                    labelColor="var(--ks-text-green)"
                     :showDynamic="false"
                     :initiallyExpanded="compact"
                     :noUrlChange

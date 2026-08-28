@@ -1,4 +1,4 @@
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 

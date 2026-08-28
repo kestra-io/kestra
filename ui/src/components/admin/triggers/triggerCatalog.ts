@@ -7,6 +7,11 @@ export const isMcpTrigger = (trigger: Pick<TriggerPluginDto, "type">): boolean =
     trigger.type === MCP_TOOL_TYPE || trigger.type.endsWith(".McpTool")
 
 export const triggerDisplayName = (trigger: Pick<TriggerPluginDto, "type" | "name" | "pluginTitle">): string => {
+    // Plugins conventionally name their realtime trigger class `RealtimeTrigger`, so dozens of
+    // cards would share that exact label; keep the `Realtime` suffix so the card also stays
+    // distinguishable from the same plugin's polling `Trigger` card.
+    if (trigger.name === "RealtimeTrigger" && trigger.pluginTitle) return `${trigger.pluginTitle} Realtime`
+
     if (trigger.name && trigger.name !== "Trigger") return trigger.name
 
     // Most plugins name their trigger class `Trigger`, so `trigger.name` above is useless for

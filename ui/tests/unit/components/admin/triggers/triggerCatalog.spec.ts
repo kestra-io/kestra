@@ -40,6 +40,35 @@ describe("triggerDisplayName", () => {
         expect(mongodb).not.toBe(debeziumMongodb)
     })
 
+    test("gives generic realtime trigger names plugin context, distinct from the polling trigger", () => {
+        // 20+ plugins name their realtime trigger class `RealtimeTrigger`, so the raw name renders
+        // dozens of identical cards. The label must carry the plugin title, and must not collapse
+        // into the same plugin's polling `Trigger` card label either.
+        expect(triggerDisplayName({
+            type: "io.kestra.plugin.kafka.RealtimeTrigger",
+            name: "RealtimeTrigger",
+            pluginTitle: "Kafka",
+        })).toBe("Kafka Realtime")
+        expect(triggerDisplayName({
+            type: "io.kestra.plugin.aws.sqs.RealtimeTrigger",
+            name: "RealtimeTrigger",
+            pluginTitle: "AWS SQS",
+        })).toBe("AWS SQS Realtime")
+        expect(triggerDisplayName({
+            type: "io.kestra.plugin.aws.sqs.Trigger",
+            name: "Trigger",
+            pluginTitle: "AWS SQS",
+        })).toBe("AWS SQS")
+    })
+
+    test("keeps the raw realtime name when pluginTitle is not usable", () => {
+        expect(triggerDisplayName({
+            type: "io.kestra.plugin.unknown.RealtimeTrigger",
+            name: "RealtimeTrigger",
+            pluginTitle: "",
+        })).toBe("RealtimeTrigger")
+    })
+
     test("falls back to the short class name when neither name nor pluginTitle is usable", () => {
         expect(triggerDisplayName({
             type: "io.kestra.plugin.unknown.Trigger",

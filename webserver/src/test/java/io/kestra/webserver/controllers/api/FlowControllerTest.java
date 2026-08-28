@@ -165,6 +165,37 @@ class FlowControllerTest {
     }
 
     @Test
+    void graphFromSource() {
+        String flowSource = generateFlowAsString(IdUtils.create(), TEST_NAMESPACE, "test");
+
+        FlowGraph result = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows/graph", flowSource).contentType(MediaType.APPLICATION_YAML),
+            FlowGraph.class
+        );
+
+        assertThat(result.getNodes()).isNotEmpty();
+        assertThat(result.getEdges()).isNotEmpty();
+    }
+
+    @Test
+    void graphFromSource_invalid() {
+        String flowSource = """
+            id: %s
+            namespace: %s
+            """.formatted(IdUtils.create(), TEST_NAMESPACE);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/flows/graph", flowSource).contentType(MediaType.APPLICATION_YAML),
+                FlowGraph.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(exception.getResponse().getBody(String.class).get()).contains("tasks");
+    }
+
+    @Test
     void idNotFound() {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
         {
@@ -1394,6 +1425,8 @@ class FlowControllerTest {
         body = response.body();
         assertThat(body.size()).isEqualTo(2);
         assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        // The unknown type is absent from the schema bundle (none in the test env), so even with
+        // auto-install enabled it stays a hard constraint.
         assertThat(body.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
 
@@ -1549,11 +1582,11 @@ class FlowControllerTest {
         assertNull(violations.getFirst().getWarnings());
         assertNull(violations.getFirst().getInfos());
 
-        // Second flow is also invalid, so most properties should be null or have default values
+        // Second flow references an unknown task type: it is absent from the schema bundle
+        // (none in the test env), so even with auto-install enabled it stays a hard constraint.
         assertEquals("invalidFlow2.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
         assertNull(violations.get(1).getDeprecationPaths());
-        assertNull(violations.get(1).getWarnings());
         assertNull(violations.get(1).getInfos());
 
         assertThat(violations.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");

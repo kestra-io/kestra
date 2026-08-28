@@ -6,6 +6,7 @@
         :state="state"
         :class="classes"
         :icons="icons"
+        :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
@@ -36,7 +37,7 @@
                 <component :is="statusStyle.icon" class="status-tag__icon" />
                 <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
                 <span v-else class="status-tag__text">
-                    <Duration :histories="histories" :interval="100" />
+                    <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
         </template>
@@ -142,6 +143,7 @@
         targetPosition?: Position;
         id: string;
         icons?: Record<string, unknown>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -153,6 +155,7 @@
         targetPosition: Position.Left,
         enableSubflowInteraction: true,
         icons: undefined,
+        loadIcon: undefined,
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),

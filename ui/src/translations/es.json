@@ -207,6 +207,7 @@
     "total_duration": "Duración total",
     "running duration": "Duración en ejecución",
     "queued duration": "Duración en cola",
+    "paused duration": "Duración en pausa",
     "executionProgress": {
       "title": "Progreso de la ejecución",
       "estimatedRemaining": "Tiempo restante estimado: {duration}",
@@ -299,6 +300,21 @@
     "to": "Hasta",
     "steps": "Pasos",
     "state": "Estado",
+    "state_history": {
+      "title": "Historial de estado",
+      "open": "Historial de estado",
+      "aria_open": "Mostrar el historial de estado",
+      "aria_open_for": "Mostrar el historial de estado de {subject}",
+      "started_at": "Iniciado {time}",
+      "failed_at": "Fallido a las {time}",
+      "skipped_at": "Omitido a las {time}",
+      "created_at": "Creado {time}",
+      "did_not_run": "Esta tarea no se ejecutó",
+      "waiting_to_start": "Esperando para iniciar",
+      "attempt_n": "Intento {index}",
+      "attempt_count": "{count} intentos",
+      "copy": "Copiar historial de estado"
+    },
     "search": "Buscar",
     "source search": "Búsqueda de fuente",
     "selected": "Seleccionado",
@@ -457,6 +473,11 @@
         "title": "Límite de concurrencia residual"
       }
     },
+    "docsPage": {
+      "notFound": "Esta página de documentación no existe. Puede que se haya movido o renombrado.",
+      "loadError": "No se pudo cargar esta página de documentación. Inténtalo de nuevo.",
+      "backToDocs": "Volver a Docs"
+    },
     "documentation": {
       "documentation": "Documentación"
     },
@@ -495,6 +516,15 @@
     },
     "use": "Usar",
     "plugins": {
+      "autoInstall": {
+        "failed": "Fallo en la instalación del plugin",
+        "failedHint": "El flow no se guardó. Corrige el problema o elimina el plugin del flow y vuelve a guardar.",
+        "preparing": "Preparando la instalación del plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin instalado correctamente | Plugins instalados correctamente",
+        "timeout": "La instalación del plugin está tardando más de lo esperado. El flow no se guardó, vuelve a guardar cuando la instalación termine.",
+        "title": "Instalando {count} plugin | Instalando {count} plugins"
+      },
       "names": "Plugins",
       "release": "Notas de la versión",
       "beta": "Beta",
@@ -534,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentación de flow",
+      "nav_definitions": "Definiciones",
       "nav_examples": "Ejemplos",
+      "nav_metrics": "Métricas",
       "nav_outputs": "Outputs",
       "nav_overview": "Resumen",
       "nav_properties": "Propiedades",
@@ -754,6 +786,11 @@
     "expand_by_default": "Expandir logs estructurados por defecto",
     "similar lines": "líneas similares",
     "download_logs_description": "Elige qué logs exportar. Los filtros se ajustan a tu vista actual.",
+    "logs_download_truncated": "Se exportaron las {downloaded} líneas de log más recientes. {skipped} más coincidían con tus filtros y se omitieron.",
+    "logs_download_capped": "Se exportaron las {downloaded} líneas de log más recientes, el máximo para una exportación. Puede que más coincidieran con tus filtros.",
+    "logs_download_partial": "La exportación se detuvo en {downloaded} líneas de log porque este filtro no se puede paginar más. Faltan algunas líneas coincidentes.",
+    "logs_download_failed": "La exportación de log falló. No se descargó ningún archivo.",
+    "logs_download_empty": "Ninguna línea de log coincidió con tus filtros, así que no se descargó ningún archivo.",
     "display_settings": "Configuración de visualización",
     "density": "Densidad",
     "density_compact": "Compacto",
@@ -1782,6 +1819,7 @@
       "others": "Otros",
       "viewAll": "Ver todo",
       "export": "Exportar",
+      "exportEmpty": "Este gráfico no tiene datos para exportar.",
       "exportTo": {
         "csv": "Exportar a CSV",
         "ion": "Exportar a ION"
@@ -2016,6 +2054,31 @@
         "zoom_out": "Alejar",
         "clear_selection": "Borrar selección",
         "fit_view": "Ajustar a la pantalla"
+      },
+      "dag": {
+        "force": "Árbol",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Última actualización",
+        "status": {
+          "fresh": "Nuevo",
+          "stale": "Obsoleto",
+          "failed": "Fallido",
+          "unknown": "No rastreado"
+        },
+        "summary": {
+          "fresh": "Todos los {n} Assets actualizados",
+          "issues": "{n} obsoleto",
+          "failed": "{n} fallido",
+          "last_run": "última ejecución {ago}",
+          "unknown": "{n} no rastreado"
+        },
+        "recent_runs": "Ejecuciones recientes",
+        "group_by": "Agrupar por",
+        "groups": "Grupos ({n})",
+        "group_none": "Sin agrupación",
+        "group_dataset": "Dataset",
+        "ungrouped": "Sin agrupar"
       },
       "search": {
         "placeholders": {

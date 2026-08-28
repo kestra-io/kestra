@@ -16,6 +16,7 @@
                         :cls="iconCls"
                         :icons="icons"
                         :loadIcon="loadIcon"
+                        variable="--ks-black"
                         onlyIcon
                     />
                 </slot>
@@ -161,7 +162,9 @@
             width: 2.625rem;
             height: 2.625rem;
             padding: var(--ks-spacing-1);
-            background-color: var(--ks-bg-tag);
+            background-color: var(--ks-bg-plugin-icon);
+            border: 1px solid var(--ks-border-default);
+            color: var(--ks-black);
             border-radius: var(--ks-radius-base);
         }
 

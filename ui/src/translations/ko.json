@@ -207,6 +207,7 @@
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
     "queued duration": "대기 중 지속 시간",
+    "paused duration": "일시 중지 시간",
     "executionProgress": {
       "title": "실행 진행률",
       "estimatedRemaining": "예상 남은 시간: {duration}",
@@ -299,6 +300,21 @@
     "to": "종료",
     "steps": "단계",
     "state": "상태",
+    "state_history": {
+      "title": "상태 기록",
+      "open": "상태 기록",
+      "aria_open": "상태 기록 표시",
+      "aria_open_for": "{subject}의 상태 기록 표시",
+      "started_at": "{time}에 시작됨",
+      "failed_at": "{time}에 실패함",
+      "skipped_at": "{time}에 건너뜀",
+      "created_at": "{time}에 생성됨",
+      "did_not_run": "이 태스크는 실행되지 않았습니다",
+      "waiting_to_start": "시작 대기 중",
+      "attempt_n": "시도 {index}",
+      "attempt_count": "{count}회 시도",
+      "copy": "상태 기록 복사"
+    },
     "search": "검색",
     "source search": "소스 검색",
     "selected": "선택됨",
@@ -457,6 +473,11 @@
         "title": "남아 있는 동시성 제한"
       }
     },
+    "docsPage": {
+      "notFound": "이 문서 페이지가 존재하지 않습니다. 이동되었거나 이름이 변경되었을 수 있습니다.",
+      "loadError": "이 문서 페이지를 불러올 수 없습니다. 다시 시도해 주세요.",
+      "backToDocs": "Docs로 돌아가기"
+    },
     "documentation": {
       "documentation": "문서"
     },
@@ -495,6 +516,15 @@
     },
     "use": "사용",
     "plugins": {
+      "autoInstall": {
+        "failed": "플러그인 설치에 실패했습니다",
+        "failedHint": "flow가 저장되지 않았습니다. 문제를 해결하거나 flow에서 plugin을 제거한 후 다시 저장하세요.",
+        "preparing": "플러그인 설치를 준비하는 중...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "플러그인이 성공적으로 설치되었습니다 | 플러그인이 성공적으로 설치되었습니다",
+        "timeout": "플러그인 설치가 예상보다 오래 걸리고 있습니다. flow가 저장되지 않았으므로 설치가 완료되면 다시 저장하세요.",
+        "title": "플러그인 {count}개 설치 중 | 플러그인 {count}개 설치 중"
+      },
       "names": "플러그인들",
       "release": "릴리스 노트",
       "beta": "베타",
@@ -534,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow 문서",
+      "nav_definitions": "정의",
       "nav_examples": "예시",
+      "nav_metrics": "메트릭",
       "nav_outputs": "Outputs",
       "nav_overview": "개요",
       "nav_properties": "속성",
@@ -754,6 +786,11 @@
     "expand_by_default": "기본적으로 구조화된 log 확장",
     "similar lines": "유사한 라인",
     "download_logs_description": "내보낼 log를 선택하세요. 필터는 현재 보기에 기본 설정됩니다.",
+    "logs_download_truncated": "가장 최근 {downloaded} 줄의 log를 내보냈습니다. {skipped} 줄이 더 필터와 일치했지만 제외되었습니다.",
+    "logs_download_capped": "한 번의 내보내기 최대치인 가장 최근 {downloaded} 줄의 log를 내보냈습니다. 필터와 일치하는 줄이 더 있었을 수 있습니다.",
+    "logs_download_partial": "이 필터는 더 이상 페이지를 넘길 수 없어 내보내기가 {downloaded} 줄의 log에서 중단되었습니다. 일치하는 일부 줄이 누락되었습니다.",
+    "logs_download_failed": "log 내보내기에 실패했습니다. 파일이 다운로드되지 않았습니다.",
+    "logs_download_empty": "필터와 일치하는 log 줄이 없어 파일이 다운로드되지 않았습니다.",
     "display_settings": "표시 설정",
     "density": "밀도",
     "density_compact": "압축",
@@ -1782,6 +1819,7 @@
       "others": "기타",
       "viewAll": "전체 보기",
       "export": "내보내기",
+      "exportEmpty": "이 차트에는 내보낼 데이터가 없습니다.",
       "exportTo": {
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"
@@ -2016,6 +2054,31 @@
         "zoom_out": "축소",
         "clear_selection": "선택 해제",
         "fit_view": "화면에 맞추기"
+      },
+      "dag": {
+        "force": "트리",
+        "layered": "DAG",
+        "system": "시스템",
+        "last_update": "마지막 업데이트",
+        "status": {
+          "fresh": "신규",
+          "stale": "오래됨",
+          "failed": "실패함",
+          "unknown": "추적되지 않음"
+        },
+        "summary": {
+          "fresh": "모든 {n} Asset이 최신입니다.",
+          "issues": "{n} 고정",
+          "failed": "{n} 실패함",
+          "last_run": "마지막 실행 {ago}",
+          "unknown": "{n} 추적되지 않음"
+        },
+        "recent_runs": "최근 실행",
+        "group_by": "그룹화 기준",
+        "groups": "그룹 ({n})",
+        "group_none": "그룹화 없음",
+        "group_dataset": "데이터셋",
+        "ungrouped": "그룹 해제됨"
       },
       "search": {
         "placeholders": {

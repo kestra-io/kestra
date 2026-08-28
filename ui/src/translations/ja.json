@@ -207,6 +207,7 @@
     "total_duration": "合計時間",
     "running duration": "実行期間",
     "queued duration": "キュー待ち期間",
+    "paused duration": "一時停止時間",
     "executionProgress": {
       "title": "実行の進行状況",
       "estimatedRemaining": "残り時間の目安: {duration}",
@@ -299,6 +300,21 @@
     "to": "まで",
     "steps": "ステップ",
     "state": "状態",
+    "state_history": {
+      "title": "状態履歴",
+      "open": "状態履歴",
+      "aria_open": "状態履歴を表示",
+      "aria_open_for": "{subject} の状態履歴を表示",
+      "started_at": "{time} に開始",
+      "failed_at": "{time} に失敗",
+      "skipped_at": "{time} にスキップ",
+      "created_at": "{time} に作成",
+      "did_not_run": "このタスクは実行されませんでした",
+      "waiting_to_start": "開始待ち",
+      "attempt_n": "試行 {index}",
+      "attempt_count": "{count} 回の試行",
+      "copy": "状態履歴をコピー"
+    },
     "search": "検索",
     "source search": "ソース検索",
     "selected": "選択済み",
@@ -457,6 +473,11 @@
         "title": "残存している同時実行制限"
       }
     },
+    "docsPage": {
+      "notFound": "このドキュメントページは存在しません。移動または名前が変更された可能性があります。",
+      "loadError": "このドキュメントページを読み込めませんでした。もう一度お試しください。",
+      "backToDocs": "Docs に戻る"
+    },
     "documentation": {
       "documentation": "ドキュメント"
     },
@@ -495,6 +516,15 @@
     },
     "use": "使用",
     "plugins": {
+      "autoInstall": {
+        "failed": "プラグインのインストールに失敗しました",
+        "failedHint": "flow は保存されませんでした。問題を修正するか、flow から plugin を削除してから再度保存してください。",
+        "preparing": "プラグインのインストールを準備しています...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "プラグインのインストールに成功しました | プラグインのインストールに成功しました",
+        "timeout": "プラグインのインストールに予想より時間がかかっています。flow は保存されませんでした。インストール完了後にもう一度保存してください。",
+        "title": "{count} 件のプラグインをインストール中 | {count} 件のプラグインをインストール中"
+      },
       "names": "プラグイン",
       "release": "リリースノート",
       "beta": "ベータ",
@@ -534,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flowドキュメント",
+      "nav_definitions": "定義",
       "nav_examples": "例",
+      "nav_metrics": "メトリクス",
       "nav_outputs": "Outputs",
       "nav_overview": "概要",
       "nav_properties": "プロパティ",
@@ -754,6 +786,11 @@
     "expand_by_default": "デフォルトで構造化ログを展開する",
     "similar lines": "類似の行",
     "download_logs_description": "エクスポートするログを選択します。フィルターは現在のビューにデフォルト設定されます。",
+    "logs_download_truncated": "最新の {downloaded} 行の log をエクスポートしました。さらに {skipped} 行がフィルターに一致しましたが、除外されました。",
+    "logs_download_capped": "1 回のエクスポートの上限である最新の {downloaded} 行の log をエクスポートしました。フィルターに一致する行がさらにあった可能性があります。",
+    "logs_download_partial": "このフィルターはこれ以上ページ送りできないため、エクスポートは {downloaded} 行の log で停止しました。一致する行の一部が欠けています。",
+    "logs_download_failed": "log のエクスポートに失敗しました。ファイルはダウンロードされていません。",
+    "logs_download_empty": "フィルターに一致する log 行がなかったため、ファイルはダウンロードされていません。",
     "display_settings": "表示設定",
     "density": "密度",
     "density_compact": "コンパクト",
@@ -1782,6 +1819,7 @@
       "others": "その他",
       "viewAll": "すべて表示",
       "export": "エクスポート",
+      "exportEmpty": "このチャートにエクスポートするデータはありません。",
       "exportTo": {
         "csv": "CSVにエクスポート",
         "ion": "ION にエクスポート"
@@ -2016,6 +2054,31 @@
         "zoom_out": "ズームアウト",
         "clear_selection": "選択をクリア",
         "fit_view": "画面に合わせる"
+      },
+      "dag": {
+        "force": "ツリー",
+        "layered": "DAG",
+        "system": "システム",
+        "last_update": "最終更新",
+        "status": {
+          "fresh": "新規",
+          "stale": "古い",
+          "failed": "失敗",
+          "unknown": "追跡されていません"
+        },
+        "summary": {
+          "fresh": "すべての {n} Asset は最新です",
+          "issues": "{n} ステーブル",
+          "failed": "{n} 失敗",
+          "last_run": "最終実行 {ago}",
+          "unknown": "{n} は追跡されていません"
+        },
+        "recent_runs": "最近の実行",
+        "group_by": "グループ化",
+        "groups": "グループ（{n}）",
+        "group_none": "グループ化なし",
+        "group_dataset": "データセット",
+        "ungrouped": "グループ化されていません"
       },
       "search": {
         "placeholders": {

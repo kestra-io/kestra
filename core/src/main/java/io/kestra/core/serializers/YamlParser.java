@@ -10,9 +10,11 @@ import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.yaml.snakeyaml.Yaml;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
@@ -37,6 +39,10 @@ public final class YamlParser {
 
     public static <T> T parse(String input, Class<T> cls) {
         return read(input, cls, type(cls));
+    }
+
+    public static <T> T parse(String input, TypeReference<T> typeReference) {
+        return read(input, typeReference, typeReference.getType().getTypeName());
     }
 
     public static <T> T parse(String input, Class<T> cls, Boolean strict) {
@@ -84,10 +90,37 @@ public final class YamlParser {
 
     private static <T> T read(String input, Class<T> objectClass, String resource) {
         try {
-            return STRICT_MAPPER.readValue(input, objectClass);
-        } catch (JsonProcessingException e) {
-            throw toConstraintViolationException(input, resource, e);
+            Object parsedYaml = parseAnchorAndAlias(input);
+            return STRICT_MAPPER.convertValue(parsedYaml, objectClass);
+        } catch (IllegalArgumentException e) {
+            if (e.getCause() instanceof JsonProcessingException je) {
+                throw toConstraintViolationException(input, resource, je);
+            }
+            throw e;
         }
+    }
+
+    private static <T> T read(String input, TypeReference<T> objectType, String resource) {
+        try {
+            Object parsedYaml = parseAnchorAndAlias(input);
+            return STRICT_MAPPER.convertValue(parsedYaml, objectType);
+        } catch (IllegalArgumentException e) {
+            if (e.getCause() instanceof JsonProcessingException je) {
+                throw toConstraintViolationException(input, resource, je);
+            }
+            throw e;
+        }
+    }
+
+    private static <T> T parseAnchorAndAlias(String input) {
+        if (input == null) {
+            return null;
+        }
+        if (input.isEmpty()) {
+            throw new IllegalArgumentException("The yaml flow cannot be an empty string");
+        }
+        Yaml SNAKE_YAML = new Yaml();
+        return SNAKE_YAML.load(input);
     }
 
     private static <T> T readNonStrict(String input, Class<T> objectClass, String resource) {

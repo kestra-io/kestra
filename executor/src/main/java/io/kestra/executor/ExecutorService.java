@@ -1511,12 +1511,25 @@ public class ExecutorService {
                             .build()
                     );
                 } catch (Exception e) {
-                    workerTaskResults.add(
-                        WorkerTaskResult.builder()
-                            .taskRun(workerTask.getTaskRun().fail())
-                            .build()
-                    );
-                    executor.withException(e, "handleExecutionUpdatingTasks");
+                    Task task = workerTask.getTask();
+                    // Log against the task run so the failure carries its taskId/taskRunId, not only the execution.
+                    executorTask.runContext().logger().error("Failed to process task: {}", e.getMessage(), e);
+
+                    if (task.isAllowFailure()) {
+                        // Honor allowFailure: end the task run WARNING (or SUCCESS with allowWarning) and let the execution continue.
+                        workerTaskResults.add(
+                            WorkerTaskResult.builder()
+                                .taskRun(workerTask.getTaskRun().fail().withState(State.Type.fail(task)))
+                                .build()
+                        );
+                    } else {
+                        workerTaskResults.add(
+                            WorkerTaskResult.builder()
+                                .taskRun(workerTask.getTaskRun().fail())
+                                .build()
+                        );
+                        executor.withException(e, "handleExecutionUpdatingTasks");
+                    }
                 }
                 return true;
             });

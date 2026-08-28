@@ -1,7 +1,7 @@
 import {computed, ref, watch, type Ref} from "vue"
 import {defineStore} from "pinia"
 import {useUrlSearchParams} from "@vueuse/core"
-import * as VueFlowUtils from "@kestra-io/topology/vue-flow-utils"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions"
 import {normalize} from "../utils/inputs"
 import {useRoute, useRouter} from "vue-router"
@@ -12,8 +12,12 @@ import {Flow, useFlowStore} from "./flow"
 import {useFileExplorerStore} from "./fileExplorer"
 import isEqual from "lodash/isEqual"
 
+// Loaded on demand: this store is reachable from the top nav bar, and statically
+// its graph helpers put Vue Flow and dagre in the bundle every page loads.
+const graphUtils = () => import("@kestra-io/topology/vue-flow-utils")
+
 export interface ExecutionWithGraph extends Execution {
-    graph?: VueFlowUtils.FlowGraph;
+    graph?: FlowGraph;
 }
 
 export const usePlaygroundStore = defineStore("playground", () => {
@@ -53,7 +57,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     const executions = ref([]) as Ref<ExecutionWithGraph[]>
-    function addExecution(execution: ExecutionWithGraph, graph: VueFlowUtils.FlowGraph) {
+    function addExecution(execution: ExecutionWithGraph, graph: FlowGraph) {
         execution.graph = graph
         executions.value.unshift(execution)
     }
@@ -118,7 +122,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // we can skip them and start the execution at the current task using replayExecution()
         if (lastExecution && taskId && graph
             && lastExecution.graph
-            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(lastExecution.graph, graph, taskId)
+            && (await graphUtils()).areTasksIdenticalInGraphUntilTask(lastExecution.graph, graph, taskId)
             && taskIdToTaskRunIdMap.has(taskId)) {
             return await executionsStore.replayExecution({
                 executionId: lastExecution.id,
@@ -151,7 +155,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // find the node uid of the task with the given taskId
         const taskNode = graph.nodes.find((node: any) => node?.task?.id === taskId)
 
-        const nextTasksNodes = VueFlowUtils.getNextTaskNodes(graph, taskNode)
+        const nextTasksNodes = (await graphUtils()).getNextTaskNodes(graph, taskNode)
 
         const nextTasksIds = nextTasksNodes.map((node: any) => node.task.id)
 

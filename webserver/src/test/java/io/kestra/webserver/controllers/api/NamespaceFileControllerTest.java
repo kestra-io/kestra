@@ -28,6 +28,7 @@ import io.kestra.plugin.core.flow.Subflow;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -225,6 +226,46 @@ class NamespaceFileControllerTest {
                     )
                 )
         );
+    }
+
+    @Test
+    void createNamespaceDirectoryWithOpaqueUriPathReturns422() {
+        String namespace = TestsUtils.randomNamespace();
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client
+                .toBlocking()
+                .exchange(
+                    HttpRequest.POST(
+                        "/api/v1/main/namespaces/" + namespace + "/files/directory?path=a:b",
+                        null
+                    )
+                )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("a non-hierarchical path is a validation error, not an unhandled 500")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void moveFileDirectoryWithOpaqueUriFromReturns422() {
+        String namespace = TestsUtils.randomNamespace();
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client
+                .toBlocking()
+                .exchange(
+                    HttpRequest.PUT(
+                        "/api/v1/main/namespaces/" + namespace + "/files?from=a:b&to=/x.txt",
+                        null
+                    )
+                )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("a non-hierarchical 'from' is a validation error, not an unhandled 500")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @Test

@@ -63,7 +63,7 @@
 </script>
 
 <style scoped lang="scss">
-$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
+$statusList: created, submitted, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
 
 .ks-execution-status {
     display: inline-flex;

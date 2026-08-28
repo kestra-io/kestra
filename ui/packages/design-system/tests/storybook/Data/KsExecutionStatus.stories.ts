@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import KsExecutionStatus from "../../../src/components/Data/KsExecutionStatus/KsExecutionStatus.vue"
 
 const statuses = [
-    "CREATED", "RESTARTED", "FAILED", "KILLED", "SUCCESS", "RETRIED", "RUNNING", "BREAKPOINT", 
+    "CREATED", "SUBMITTED", "RESTARTED", "FAILED", "KILLED", "SUCCESS", "RETRIED", "RUNNING", "BREAKPOINT",
     "WARNING", "PAUSED", "RETRYING", "KILLING", "CANCELLED", "SKIPPED", "QUEUED",
 ] as const
 

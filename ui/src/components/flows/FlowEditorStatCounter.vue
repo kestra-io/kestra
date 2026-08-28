@@ -75,13 +75,13 @@
         color: var(--ks-icon-muted);
     }
 
-    @media (max-width: 1600px) {
+    @container editor-header (max-width: 1300px) {
         .stat-label {
             display: none;
         }
     }
 
-    @media (max-width: 1260px) {
+    @container editor-header (max-width: 1050px) {
         .stat-count {
             display: none;
         }

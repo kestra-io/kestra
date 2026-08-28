@@ -187,12 +187,21 @@
     interface EChartsTooltipParam {
         seriesName?: string
         seriesType?: string
+        seriesIndex?: number
         name?: string
         value?: unknown
         color?: string
         marker?: string
         /** Present only for pie/donut chart items. */
         percent?: number
+    }
+
+    /** Resolves the standard ECharts per-series `tooltip.valueFormatter` option, honored by the external tooltip. */
+    function seriesValueFormatter(seriesIndex?: number): ((value: unknown) => string) | undefined {
+        if (seriesIndex === undefined) return undefined
+        const series = props.options.series
+        const tooltip = (Array.isArray(series) ? series[seriesIndex] : undefined)?.tooltip as Record<string, unknown> | undefined
+        return typeof tooltip?.valueFormatter === "function" ? tooltip.valueFormatter as (value: unknown) => string : undefined
     }
 
     function toCapitalCase(text: string): string {
@@ -213,10 +222,12 @@
         }
 
         for (const p of list) {
-            const value = Array.isArray(p.value) ? p.value[1] : p.value
-            if (value === 0 || value === undefined || value === null) {
+            const rawValue = Array.isArray(p.value) ? p.value[1] : p.value
+            if (rawValue === 0 || rawValue === undefined || rawValue === null) {
                 continue
             }
+            const valueFormatter = seriesValueFormatter(p.seriesIndex)
+            const value = valueFormatter ? valueFormatter(rawValue) : rawValue
             const swatch = p.seriesType === "line"
                 ? `<span style="display:inline-block;width:10px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
                 : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`

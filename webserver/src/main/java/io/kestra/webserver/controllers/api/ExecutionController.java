@@ -59,6 +59,7 @@ import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -142,6 +143,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -3035,6 +3037,9 @@ public class ExecutionController {
             {
                 try {
                     emit.accept(operationId);
+                } catch (MessageTooBigException e) {
+                    // Propagate the typed exception so the ErrorController handler maps it to 413.
+                    throw Exceptions.propagate(e);
                 } catch (QueueException e) {
                     throw new RuntimeException(e);
                 }

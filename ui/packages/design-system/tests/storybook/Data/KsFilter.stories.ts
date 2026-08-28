@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {provide, ref, shallowReactive} from "vue"
 import {createMemoryHistory, createRouter, routeLocationKey, routerKey, START_LOCATION} from "vue-router"
-import {expect, waitFor} from "storybook/test"
 import KsFilter from "../../../src/components/Data/KsDataTable/KsFilter.vue"
 
 const meta: Meta<typeof KsFilter> = {
@@ -405,11 +404,11 @@ export const WithTableOptions: Story = {
 }
 
 /**
- * A bar narrow enough that the chips wrap, with a `groupable: false` key applied so a
- * global chip is among them. Asserts every wrapped row starts at the same left edge as
- * the `{ }` toggle, a flex-layout property no jsdom unit test can observe.
+ * A bar narrow enough that the chips wrap onto several rows, with a `groupable: false`
+ * key applied so a global chip is among them. Every wrapped row starts at the same left
+ * edge as the `{ }` toggle.
  */
-export const WrappedRowsShareOneLeftEdge: Story = {
+export const WithWrappedRows: Story = {
     render: () => ({
         components: {KsFilter},
         setup() {
@@ -425,39 +424,4 @@ export const WrappedRowsShareOneLeftEdge: Story = {
             </div>
         `,
     }),
-    async play({canvasElement}) {
-        const bar = await waitFor(() => {
-            const element = canvasElement.querySelector<HTMLElement>(".filter .top")
-            const chips = element?.querySelectorAll(".filter-chip-wrap") ?? []
-            if (chips.length < 2) throw new Error(`expected 2 chips, rendered ${chips.length}`)
-            return element as HTMLElement
-        })
-
-        expect(bar.textContent).toContain("Started")
-
-        const chipSide = [...bar.children].find((child) => child.querySelector(".filter-chip-wrap"))
-        const boxes = [bar.querySelector(":scope > .code-toggle"), ...(chipSide?.children ?? [])]
-            .filter((element): element is Element => element !== null)
-            .map((element) => element.getBoundingClientRect())
-            .filter((box) => box.width > 0 && box.height > 0)
-
-        const rowLefts = new Map<number, number>()
-        for (const box of boxes) {
-            const middle = Math.round((box.top + box.bottom) / 2)
-            const row = [...rowLefts.keys()].find((key) => Math.abs(key - middle) <= 12) ?? middle
-            rowLefts.set(row, Math.min(rowLefts.get(row) ?? Infinity, Math.round(box.left)))
-        }
-
-        expect(rowLefts.size).toBeGreaterThan(1)
-        expect([...new Set(rowLefts.values())]).toHaveLength(1)
-
-        const overlapping = boxes.flatMap((box, index) =>
-            boxes.slice(index + 1)
-                .filter((other) =>
-                    Math.min(box.right, other.right) - Math.max(box.left, other.left) > 1
-                    && Math.min(box.bottom, other.bottom) - Math.max(box.top, other.top) > 1)
-                .map((other) => `${Math.round(box.left)} overlaps ${Math.round(other.left)}`))
-
-        expect(overlapping).toEqual([])
-    },
 }

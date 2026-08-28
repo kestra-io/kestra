@@ -5,6 +5,8 @@
         filterable
         :filterMethod="onFilter"
         clearable
+        fitInputWidth
+        :fallbackPlacements="['bottom-start', 'top-start']"
         @visible-change="onVisibleChange"
     >
         <KsOption
@@ -193,11 +195,10 @@
             gap: 0.25rem;
 
             .cls {
-                font-weight: 600;
+                font-weight: var(--ks-font-weight-semibold);
                 line-height: 1.2;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                white-space: normal;
+                overflow-wrap: anywhere;
             }
 
             .title {
@@ -210,4 +211,3 @@
     }
 
 </style>
-

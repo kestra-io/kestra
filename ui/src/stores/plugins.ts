@@ -156,9 +156,13 @@ function usePluginsIcons() {
         }
 
         iconsPromiseLocal.value =
-            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
+            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
                 pluginsIcons.value = toPluginIconDataMap(response.data)
                 iconsLoaded.value = true
+                return icons.value
+            }).catch(() => {
+                // rejected request -> try again
+                iconsPromiseLocal.value = undefined
                 return icons.value
             })
 
@@ -197,7 +201,7 @@ function usePluginsIcons() {
             return pending
         }
 
-        const localLookup = iconsLoaded.value
+        const localLookup = () => iconsLoaded.value
             ? Promise.resolve(undefined)
             : axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
                 .then(response => {
@@ -211,7 +215,11 @@ function usePluginsIcons() {
                 })
                 .catch(() => undefined)
 
-        const request = localLookup
+        // A bulk fetch in flight (the topology asks for one on mount) answers most classes, so
+        // wait for it instead of racing it with one request per rendered node.
+        const catalogPending = !iconsLoaded.value ? iconsPromiseLocal.value : undefined
+
+        const request = (catalogPending ? catalogPending.then(() => icons.value[cls] ?? localLookup()) : localLookup())
             .then(icon => icon ?? loadEcosystemIcon(cls))
             .finally(() => iconRequests.delete(cls))
 

@@ -74,6 +74,7 @@
                     compact
                     :activeSection="activeSection"
                     @section-counts="onSectionCounts"
+                    @definition-navigate="selectSection('definitions')"
                 >
                     <template #markdown="{content}">
                         <KsMarkdown
@@ -87,6 +88,7 @@
         <KsMarkdown
             v-else-if="overrideIntro"
             :content="overrideIntro"
+            class="dp-override-intro"
             :class="{'position-absolute': absolute}"
         />
 
@@ -310,7 +312,7 @@
     const miscStore = useMiscStore()
     const pluginsStore = usePluginsStore()
     const activeSection = ref("overview")
-    const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean}>({})
+    const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}>({})
     const introSection = ref("overview")
     const introSearch = ref("")
 
@@ -366,13 +368,19 @@
         if (sectionCounts.value.outputs !== undefined) {
             chips.push({id: "outputs", label: t("plugins.nav_outputs"), count: sectionCounts.value.outputs})
         }
+        if (sectionCounts.value.metrics !== undefined) {
+            chips.push({id: "metrics", label: t("plugins.nav_metrics"), count: sectionCounts.value.metrics})
+        }
         if (sectionCounts.value.examples) {
             chips.push({id: "examples", label: t("plugins.nav_examples")})
+        }
+        if (sectionCounts.value.definitions !== undefined) {
+            chips.push({id: "definitions", label: t("plugins.nav_definitions"), count: sectionCounts.value.definitions})
         }
         return chips
     })
 
-    const onSectionCounts = (counts: {properties?: number; outputs?: number; examples?: boolean}) => {
+    const onSectionCounts = (counts: {properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}) => {
         sectionCounts.value = counts
     }
 
@@ -571,6 +579,11 @@
 
   .plugin-schema {
     display: block;
+    padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-override-intro {
+    width: 100%;
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 

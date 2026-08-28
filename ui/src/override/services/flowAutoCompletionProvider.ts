@@ -1,7 +1,7 @@
 import {ComputedRef} from "vue"
 import type {JSONSchema} from "../../components/plugins/schema/utils/schemaUtils"
-import {YamlElement} from "@kestra-io/topology"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {QUOTE, YamlAutoCompletion, functionToSnippet, type RootCompletionContext} from "../../services/autoCompletionProvider"
 import RegexProvider from "../../utils/regex"
 import {State} from "@kestra-io/design-system"
@@ -62,6 +62,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "globals",
             "parent",
             "parents",
+            "item",
             "error",
             "kestra",
         ]
@@ -228,6 +229,16 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 return Promise.resolve(["id", "type"])
             case "taskrun":
                 return Promise.resolve(["id", "startDate", "attemptsCount", "parentId", "value", "iteration"])
+            case "parent":
+                return Promise.resolve(["task", "taskrun"])
+            case "parent.task":
+                return Promise.resolve(["id"])
+            case "parent.taskrun":
+                return Promise.resolve(["value"])
+            case "item":
+                return Promise.resolve(["value", "key", "index", "parent", "parents"])
+            case "item.parent":
+                return Promise.resolve(["value", "key", "index"])
             case "error":
                 return Promise.resolve(["taskId", "message", "stackTrace"])
             case "kestra":

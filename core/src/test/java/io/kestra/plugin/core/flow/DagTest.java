@@ -48,6 +48,13 @@ public class DagTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/dag-invalid-concurrent.yaml")
+    void dagWithNegativeConcurrentShouldFailExecution(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("dag").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     void dagCyclicDependencies() {
         Flow flow = this.parse("flows/invalids/dag-cyclicdependency.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);

@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
     import {KsNotification} from "@kestra-io/design-system"
+    import {useI18n} from "vue-i18n"
     import {pageFromRoute} from "../utils/eventsRouter"
     import {h, onUnmounted, watch, computed, ref} from "vue"
     import ErrorToastContainer from "./ErrorToastContainer.vue"
@@ -52,6 +53,7 @@
         noAutoHide: false,
     })
 
+    const {t} = useI18n()
     const route = useRoute()
     const apiStore = useApiStore()
     const notifications = ref<any>()
@@ -63,6 +65,8 @@
         }
     }
 
+    const isNotFound = computed(() => props.message.response?.status === 404)
+
     const title = computed(() => {
         if (props.message.title) {
             return props.message.title
@@ -72,11 +76,28 @@
             return "503 Service Unavailable"
         }
 
+        if (isNotFound.value) {
+            return t("errors.requestNotFound.title")
+        }
+
         if (props.message.content?.message && props.message.content.message.indexOf(":") > 0) {
             return props.message.content.message.substring(0, props.message.content.message.indexOf(":"))
         }
 
         return "Error"
+    })
+
+    // A 404 body rarely says what is missing, so the failing request is named instead.
+    const content = computed(() => {
+        if (!isNotFound.value) {
+            return props.message.content?.message ?? ""
+        }
+
+        const {method, url} = props.message.response?.config ?? {}
+        return t("errors.requestNotFound.message", {
+            method: (method ?? "GET").toUpperCase(),
+            url: url ?? "",
+        })
     })
 
     const items = computed(() => {
@@ -86,7 +107,7 @@
     })
 
     const isLargeNotification = computed(() => {
-        return items.value.length > 0 || (props.message.content?.message?.length ?? 0) > 100
+        return items.value.length > 0 || content.value.length > 100
     })
 
     watch(route, () => {
@@ -124,7 +145,7 @@
             message: h(ErrorToastContainer, {
                 message: {
                     message: props.message?.message,
-                    content: {message: props.message?.content?.message ?? ""},
+                    content: {message: content.value},
                 },
                 items: items.value,
                 onClose: () => close(),

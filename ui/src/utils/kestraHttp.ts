@@ -50,10 +50,10 @@ export interface KestraHttpError extends Error {
 
 export interface KestraHttpOptions {
     router?: Router
-    coreStore?: {message: unknown; error: unknown}
+    coreStore?: {message: unknown}
     beforeLogout?: () => void
     isLoggedIn?: () => boolean
-    onError?: (type: "message" | "error", error: unknown) => void
+    onError?: (error: unknown) => void
     onUnauthorized?: (navigateToLogin: () => void, error: KestraHttpError) => Promise<boolean> | boolean | void
 }
 
@@ -66,17 +66,13 @@ export function setupKestraHttp(
         coreStore,
         beforeLogout,
         isLoggedIn = () => false,
-        onError = (type: "message" | "error", error: unknown) => {
+        onError = (error: unknown) => {
             if (!coreStore) return
             const kestraError = error as KestraHttpError
-            if (type === "message") {
-                coreStore.message = {
-                    variant: "error",
-                    response: kestraError.response,
-                    content: kestraError.response?.data,
-                }
-            } else {
-                coreStore.error = kestraError.response?.status
+            coreStore.message = {
+                variant: "error",
+                response: kestraError.response,
+                content: kestraError.response?.data,
             }
         },
         onUnauthorized = (navigate: () => void) => {
@@ -97,15 +93,16 @@ export function setupKestraHttp(
 
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
         const status = error.status
+        if (error.config?.showMessageOnError === false) return error
+
         if (status === 404) {
-            /** Callers expecting a 404 can pass `showMessageOnError: false`
-             * to handle it locally instead of the global not-found page.
-            */
-            if (error.config?.ignoreNotFound !== true && error.config?.showMessageOnError !== false) {
-                onError("error", error)
-            }
-        } else if (status !== 401 && status !== 400 && error.response?.data && error.config?.showMessageOnError !== false) {
-            onError("message", error)
+            if (error.config?.ignoreNotFound === true) return error
+            // A 404 is reported where it happened rather than by swapping the page for the
+            // not-found screen: that hid which request failed and left no way back.
+            console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
+            onError(error)
+        } else if (status !== 401 && status !== 400 && error.response?.data) {
+            onError(error)
         }
         return error
     }

@@ -1063,7 +1063,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         } else if (field.getName().equals(START_DATE_FIELD.getName())) {
             return START_DATE_FIELD;
         } else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
-            return DSL.field("{0} / 1000", Long.class, field);
+            // divide by a decimal so Postgres does not integer-divide, which truncated sub-second durations to 0
+            return DSL.field("{0} / 1000.0", Double.class, field);
         }
         return field;
     }

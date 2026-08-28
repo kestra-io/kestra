@@ -59,6 +59,7 @@ import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
@@ -767,6 +768,54 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data).first().hasFieldOrProperty("count");
         assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
+    }
+
+    @Test
+    protected void dashboard_fetchData_durationAggregationInSeconds() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionCreateDate = Instant.now().minus(Duration.ofMinutes(5));
+
+        // sub-minute durations only: the Postgres state_duration column loses the minutes part of longer durations
+        executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(500)));
+        executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(1500)));
+
+        var now = ZonedDateTime.now();
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
+            tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(
+                    Map.of(
+                        "state", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.STATE).build(),
+                        "total", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                        "duration", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.DURATION).agg(AggregationType.SUM).build()
+                    )
+                ).build(),
+            now.minusHours(1),
+            now,
+            null
+        );
+
+        assertThat(data.getTotal()).isEqualTo(1L);
+        assertThat(data).first().extracting("total").hasToString("2");
+        // the DURATION column is exposed in seconds, keeping the sub-second part: 0.5s + 1.5s
+        assertThat(((Number) data.getFirst().get("duration")).doubleValue()).isCloseTo(2.0d, within(0.001d));
+    }
+
+    private Execution executionWithDuration(String tenantId, Instant createDate, Duration duration) {
+        return Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .state(
+                new State(
+                    Type.SUCCESS,
+                    List.of(new State.History(State.Type.CREATED, createDate), new State.History(Type.SUCCESS, createDate.plus(duration)))
+                )
+            )
+            .taskRunList(List.of())
+            .build();
     }
 
     @Test

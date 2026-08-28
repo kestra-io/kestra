@@ -292,9 +292,8 @@
         display: flex;
         align-items: flex-start;
         flex-wrap: wrap;
-        gap: 0.5rem;
-
-}
+        gap: var(--ks-spacing-2);
+    }
 
     .code-toggle {
         margin: 0 !important;

@@ -517,7 +517,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             e = this.transform(e);
 
             try {
-                String line = PATTERN_LAYOUT.doLayout(e);
+                String line = replaceSecret(PATTERN_LAYOUT.doLayout(e));
                 fileOS.write(line.getBytes());
             } catch (IOException ex) {
                 // silently do nothing, the message will still be forwarded to the server log

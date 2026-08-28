@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.junit.annotations.KestraTest;
 
+import io.micronaut.http.MediaType;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 
@@ -120,6 +121,18 @@ class UiControllerTest {
         assertThat(response.headers().firstValue("Content-Type").orElseThrow()).contains("text/html");
         assertThat(response.headers().firstValue("Cache-Control")).contains("no-cache, private");
         assertThat(html).contains("<div id=\"app\"></div>");
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        // Every extension the UI build emits. A resource served as application/octet-stream instead of
+        // its real type is fatal for a module script, a stylesheet or the PWA manifest, and invisible
+        // until the app fails to boot in a browser.
+        strings = {"js", "mjs", "css", "html", "png", "svg", "ico", "woff2", "ttf", "webmanifest"}
+    )
+    void shouldResolveAMediaTypeForEveryExtensionTheUiShips(String extension) {
+        assertThat(UiController.mediaTypeFor("file." + extension))
+            .isNotEqualTo(MediaType.APPLICATION_OCTET_STREAM_TYPE);
     }
 
     @ParameterizedTest

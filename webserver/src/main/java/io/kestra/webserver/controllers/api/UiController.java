@@ -4,10 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.JarURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 
 import io.kestra.core.utils.FileUtils;
@@ -46,6 +51,13 @@ public class UiController {
     private static final String HASHED_ASSETS_CACHE_CONTROL = "public, max-age=31536000, immutable";
     private static final String DEFAULT_CACHE_CONTROL = "public, max-age=86400";
     private static final String INDEX_HTML = "index.html";
+    private static final Map<String, Long> JAR_LAST_MODIFIED = new ConcurrentHashMap<>();
+    // Extensions the UI build emits that Micronaut has no media type for. Falling through to
+    // application/octet-stream would make the browser reject the resource, so they are named here;
+    // UiControllerTest fails if the build starts emitting another unmapped extension.
+    private static final Map<String, MediaType> EXTRA_MEDIA_TYPES = Map.of(
+        "webmanifest", MediaType.of("application/manifest+json")
+    );
 
     private final UiIndexService uiIndexService;
 
@@ -84,21 +96,30 @@ public class UiController {
     }
 
     private HttpResponse<?> respond(HttpRequest<?> request, String normalized, URL url) {
-        MediaType mediaType = MediaType
-            .forExtension(NameUtils.extension(normalized))
-            .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        MediaType mediaType = mediaTypeFor(normalized);
         String cacheControl = normalized.startsWith(HASHED_ASSETS_PREFIX) ? HASHED_ASSETS_CACHE_CONTROL : DEFAULT_CACHE_CONTROL;
 
-        ResourceMeta meta = metaOf(url);
+        // One connection per request: the metadata and, when the body is needed, the stream both come
+        // from it. Opening a second one to read the entity tag doubled the per-request cost.
+        URLConnection connection;
+        try {
+            connection = url.openConnection();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        ResourceMeta meta = metaOf(connection);
         String etag = meta == null ? null : HttpCacheUtils.etag(meta.tag());
 
         if (etag != null && HttpCacheUtils.anyEtagMatches(request.getHeaders().get(HttpHeaders.IF_NONE_MATCH), etag)) {
+            release(connection);
             return applyHeaders(HttpResponse.notModified(), etag, cacheControl);
         }
 
+        InputStream stream = openStream(connection);
         StreamedFile body = meta == null
-            ? new StreamedFile(openStream(url), mediaType)
-            : new StreamedFile(openStream(url), mediaType, meta.lastModified(), meta.size());
+            ? new StreamedFile(stream, mediaType)
+            : new StreamedFile(stream, mediaType, meta.lastModified(), meta.size());
         return applyHeaders(HttpResponse.ok(body), etag, cacheControl);
     }
 
@@ -113,6 +134,13 @@ public class UiController {
         return response;
     }
 
+    static MediaType mediaTypeFor(String path) {
+        String extension = NameUtils.extension(path).toLowerCase(Locale.ROOT);
+        return MediaType
+            .forExtension(extension)
+            .orElseGet(() -> EXTRA_MEDIA_TYPES.getOrDefault(extension, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+    }
+
     private static boolean isStaticResourceCandidate(String path) {
         if (path.isEmpty() || path.endsWith("/")) {
             return false;
@@ -121,46 +149,75 @@ public class UiController {
         return lastSegment.indexOf('.') > 0;
     }
 
-    private static InputStream openStream(URL url) {
+    private static InputStream openStream(URLConnection connection) {
         try {
-            return url.openStream();
+            return connection.getInputStream();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     /**
-     * Resolves size, last-modified and a content-identifying tag from the resource's metadata alone:
-     * the zip entry CRC for jar resources (entry timestamps are constant in reproducible builds, so
-     * they cannot identify content), length and mtime for plain files. Returns null when metadata
-     * cannot be read; the caller then streams without validators.
+     * Resolves size, last-modified and a content-identifying tag from the connection's metadata alone,
+     * without reading the resource: the zip entry CRC for jar resources, length and mtime for plain
+     * files. Returns null when metadata cannot be read; the caller then streams without validators.
      */
     @Nullable
-    private static ResourceMeta metaOf(URL url) {
+    private static ResourceMeta metaOf(URLConnection connection) {
         try {
-            URLConnection connection = url.openConnection();
             if (connection instanceof JarURLConnection jarConnection) {
                 JarEntry entry = jarConnection.getJarEntry();
                 if (entry == null) {
                     return null;
                 }
-                return new ResourceMeta(entry.getSize(), entry.getTime(), Long.toHexString(entry.getCrc()) + "-" + Long.toHexString(entry.getSize()));
+                // The entry timestamp is a fixed constant in a reproducible build, so it can neither
+                // identify the content nor serve as a meaningful Last-Modified: the tag comes from the
+                // CRC, and the enclosing archive's mtime is what actually moves when the build changes.
+                return new ResourceMeta(
+                    entry.getSize(),
+                    jarLastModified(jarConnection),
+                    Long.toHexString(entry.getCrc()) + "-" + Long.toHexString(entry.getSize())
+                );
             }
             long length = connection.getContentLengthLong();
             long lastModified = connection.getLastModified();
-            closeQuietly(connection);
             return new ResourceMeta(length, lastModified, Long.toHexString(length) + "-" + Long.toHexString(lastModified));
         } catch (IOException e) {
             return null;
         }
     }
 
-    // URLConnection has no close(); dropping the stream releases the underlying file handle for file: URLs.
-    private static void closeQuietly(URLConnection connection) {
+    /**
+     * @return the mtime of the archive the entry lives in, memoised per archive because every UI resource
+     *     resolves to the same one, or 0 when it cannot be read (Micronaut then omits Last-Modified).
+     */
+    private static long jarLastModified(JarURLConnection connection) {
+        URL jarUrl = connection.getJarFileURL();
+        String key = jarUrl.toString();
+        Long known = JAR_LAST_MODIFIED.get(key);
+        if (known != null) {
+            return known;
+        }
+        long resolved = 0L;
         try {
-            connection.getInputStream().close();
+            resolved = Path.of(jarUrl.toURI()).toFile().lastModified();
+        } catch (URISyntaxException | RuntimeException ignored) {
+            // a non-file archive (nested or remote) has no mtime to read; 0 drops the header
+        }
+        JAR_LAST_MODIFIED.putIfAbsent(key, resolved);
+        return resolved;
+    }
+
+    // A jar connection has opened no stream, so there is nothing to release; a file: connection opened
+    // one while reading its metadata, and closing it hands the file handle back.
+    private static void release(URLConnection connection) {
+        if (connection instanceof JarURLConnection) {
+            return;
+        }
+        try (InputStream ignored = connection.getInputStream()) {
+            // closing is the point
         } catch (IOException ignored) {
-            // metadata was already read; a failure to release the probe stream is inconsequential
+            // the metadata was already read; failing to release the probe stream is inconsequential
         }
     }
 

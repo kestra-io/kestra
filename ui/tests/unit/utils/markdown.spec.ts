@@ -53,3 +53,55 @@ describe("markdown url sanitization", () => {
         expect(await render(`![logo](${url})`)).toContain(`src="${url}"`);
     });
 });
+
+describe("markdown html sanitization", () => {
+    it("strips an event handler from a raw html image", async () => {
+        const html = await render("<img src=\"logo.png\" onerror=\"alert(1)\">", {html: true});
+
+        expect(html).toContain("<img src=\"logo.png\"");
+        expect(html).not.toContain("onerror");
+    });
+
+    it("drops a javascript: href from a raw html anchor", async () => {
+        expect(await render("<a href=\"javascript:alert(1)\">bad</a>", {html: true})).not.toContain("javascript:");
+    });
+
+    it("drops an entity-encoded javascript: href from a raw html anchor", async () => {
+        expect(await render("<a href=\"&#106;avascript:alert(1)\">bad</a>", {html: true})).not.toContain("avascript:");
+    });
+
+    it("removes a script tag along with its body", async () => {
+        const html = await render("before<script>alert(1)</script>after", {html: true});
+
+        expect(html).not.toContain("alert(1)");
+        expect(html).toContain("before");
+    });
+
+    it("keeps a youtube embed but drops any other iframe source", async () => {
+        const html = await render(
+            "<iframe src=\"https://www.youtube.com/embed/x\"></iframe><iframe src=\"https://evil.example/x\"></iframe>",
+            {html: true},
+        );
+
+        expect(html).toContain("https://www.youtube.com/embed/x");
+        expect(html).not.toContain("evil.example");
+    });
+
+    it("keeps data and aria attributes but not an inline handler", async () => {
+        const html = await render("<div data-foo=\"1\" aria-label=\"l\" onclick=\"alert(1)\">x</div>", {html: true});
+
+        expect(html).toContain("data-foo=\"1\"");
+        expect(html).toContain("aria-label=\"l\"");
+        expect(html).not.toContain("onclick");
+    });
+
+    it("keeps a bare relative href in raw html", async () => {
+        expect(await render("<a href=\"getting-started.md\">docs</a>", {html: true})).toContain("href=\"getting-started.md\"");
+    });
+
+    it("keeps the column alignment markdown-it puts on table cells", async () => {
+        const html = await render("| a |\n|:--|\n| 1 |");
+
+        expect(html).toContain("text-align:left");
+    });
+});

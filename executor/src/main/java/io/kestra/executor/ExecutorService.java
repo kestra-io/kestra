@@ -1517,29 +1517,17 @@ public class ExecutorService {
 
                     // State.Type.fail resolves the failure against allowFailure/allowWarning: FAILED, WARNING or SUCCESS.
                     State.Type failState = State.Type.fail(task);
+                    // Fail the execution only when the task itself ends FAILED; WARNING/SUCCESS let it continue.
                     if (failState == State.Type.FAILED) {
-                        // No allowFailure: the task fails and the execution fails with it.
-                        workerTaskResults.add(
-                            WorkerTaskResult.builder()
-                                .taskRun(workerTask.getTaskRun().fail())
-                                .build()
-                        );
                         executor.withException(e, "handleExecutionUpdatingTasks");
-                    } else if (task.isAllowWarning()) {
-                        // allowFailure + allowWarning: promote the failed task to SUCCESS and let the execution continue.
-                        workerTaskResults.add(
-                            WorkerTaskResult.builder()
-                                .taskRun(workerTask.getTaskRun().fail().withState(State.Type.SUCCESS))
-                                .build()
-                        );
-                    } else {
-                        // allowFailure: downgrade the failed task to WARNING and let the execution continue.
-                        workerTaskResults.add(
-                            WorkerTaskResult.builder()
-                                .taskRun(workerTask.getTaskRun().fail().withState(State.Type.WARNING))
-                                .build()
-                        );
                     }
+
+                    TaskRunAttempt failedAttempt = TaskRunAttempt.builder().state(new State().withState(failState)).build();
+                    workerTaskResults.add(
+                        WorkerTaskResult.builder()
+                            .taskRun(workerTask.getTaskRun().withAttempts(List.of(failedAttempt)).withState(failState))
+                            .build()
+                    );
                 }
                 return true;
             });

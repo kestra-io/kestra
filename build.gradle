@@ -239,6 +239,10 @@ subprojects {subProj ->
             t.timeout = java.time.Duration.ofMinutes(
                 (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
             )
+            // Bounds a single test method so it fails by itself, rather than a hung test consuming
+            // the module's whole Gradle-level timeout above and discarding every test's JUnit XML.
+            t.systemProperty 'junit.jupiter.execution.timeout.default',
+                System.getenv('JUNIT_TEST_TIMEOUT_MIN') ? "${System.getenv('JUNIT_TEST_TIMEOUT_MIN')} m" : '5 m'
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")

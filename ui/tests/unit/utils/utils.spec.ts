@@ -97,6 +97,25 @@ describe("flatten()", () => {
             .toEqual({"values.greeting": "hello", "values.count": "42", uri: "kestra:///x"})
     })
 
+    // An empty output used to vanish from the Outputs view: recursion found no leaves and
+    // contributed nothing, so the user could not tell an empty value from a missing one.
+    it("keeps an empty object as its own value instead of dropping the key", () => {
+        expect(flatten({data: "Code finished", outputFiles: {}}))
+            .toEqual({data: "Code finished", outputFiles: {}})
+    })
+
+    it("keeps an empty array as its own value instead of dropping the key", () => {
+        expect(flatten({data: "x", outputFiles: []})).toEqual({data: "x", outputFiles: []})
+    })
+
+    it("keeps a nested empty object at its dotted path", () => {
+        expect(flatten({a: {b: {}}})).toEqual({"a.b": {}})
+    })
+
+    it("still flattens a top-level empty object to an empty result", () => {
+        expect(flatten({})).toEqual({})
+    })
+
     it("flattens arrays with index keys and keeps nulls", () => {
         expect(flatten({list: ["a", "b"], empty: null}))
             .toEqual({"list.0": "a", "list.1": "b", empty: null})

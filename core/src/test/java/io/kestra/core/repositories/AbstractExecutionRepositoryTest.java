@@ -1435,6 +1435,60 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void findShouldSortByTotalDurationAcrossMinuteBoundary() {
+        // given - two terminated executions whose durations straddle the one-minute boundary.
+        // This guards against backends that only compare the sub-minute part of the duration
+        // (e.g. the former Postgres EXTRACT(MILLISECONDS FROM interval) generated column), which
+        // would sort the multi-minute execution below the sub-minute one.
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final Instant clock = Instant.now();
+
+        var longExecution = Execution.builder()
+            .id("longExecution__" + FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(
+                    new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.SUCCESS, clock.plus(Duration.ofMinutes(5)))
+                )
+            )).build();
+        executionRepository.save(longExecution);
+
+        var shortExecution = Execution.builder()
+            .id("shortExecution__" + FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(
+                    new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.SUCCESS, clock.plus(Duration.ofSeconds(20)))
+                )
+            )).build();
+        executionRepository.save(shortExecution);
+
+        // when / then
+        List<QueryFilter> emptyFilters = null;
+        var ascSort = createSortLikeInControllers(List.of("state.duration:asc"), executionRepository.sortMapping());
+        assertThat(executionRepository.find(Pageable.from(ascSort), tenant, emptyFilters).stream())
+            .as("shortest total duration first when sorting ascending")
+            .map(Execution::getId)
+            .containsExactly(shortExecution.getId(), longExecution.getId());
+
+        var descSort = createSortLikeInControllers(List.of("state.duration:desc"), executionRepository.sortMapping());
+        assertThat(executionRepository.find(Pageable.from(descSort), tenant, emptyFilters).stream())
+            .as("longest total duration first when sorting descending")
+            .map(Execution::getId)
+            .containsExactly(longExecution.getId(), shortExecution.getId());
+    }
+
+    @Test
     protected void findShouldOrderByStartDateAsc() {
         // given
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

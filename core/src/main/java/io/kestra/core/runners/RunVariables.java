@@ -69,7 +69,7 @@ public final class RunVariables {
         "flow.namespace",
         "flow.revision",
         "flow.tenantId",
-        // ForEach/EachParallel/EachSequential iteration context (item.*)
+        // Loop iteration context (item.*)
         "item",
         "item.index",
         "item.key",

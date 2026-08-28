@@ -15,7 +15,7 @@ function base(namespace: string) {
 }
 
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
-const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/")
+const safePath = (path: string) => encodeURIComponent(path).replace(/%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
 
 export const useBaseNamespacesStore = () => {
@@ -204,10 +204,10 @@ export const useBaseNamespacesStore = () => {
         return await FilesAPI.searchNamespaceFiles({namespace: payload.namespace, q: payload.query}) ?? []
     }
 
-    async function importFileDirectory(payload: {namespace: string; path: string; content: ArrayBuffer}) {
+    /** Sent as a File, not a Blob: the server unpacks only a part named `*.zip`, and a Blob arrives as `filename="blob"`. */
+    async function importFileDirectory(payload: {namespace: string; path: string; file: File}) {
         const DATA = new FormData()
-        const BLOB = new Blob([payload.content], {type: "text/plain"})
-        DATA.append("fileContent", BLOB)
+        DATA.append("fileContent", payload.file, payload.file.name)
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`
         // Don't set Content-Type - the browser must generate the multipart boundary itself.
@@ -218,8 +218,16 @@ export const useBaseNamespacesStore = () => {
         await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
     }
 
+    /**
+     * Unlike {@link moveFileDirectory}, this suppresses the global error toast: the rename caller
+     * reports the failure itself, and the two together left a persistent raw
+     * "Internal Server Error" alongside the friendly one.
+     */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory(
+            {namespace: payload.namespace, from: payload.old, to: payload.new},
+            {showMessageOnError: false} as Parameters<typeof FilesAPI.moveFileDirectory>[1],
+        )
     }
 
     async function deleteFileDirectory(payload: {namespace: string; path: string}) {

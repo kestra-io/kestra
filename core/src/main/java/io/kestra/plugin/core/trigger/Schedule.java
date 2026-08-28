@@ -26,6 +26,8 @@ import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -227,6 +229,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         description = "If the scheduled execution didn't start after this delay (e.g. due to infrastructure issues), the execution will be skipped."
     )
     @PluginProperty
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration lateMaximumDelay;
 
     @Getter(AccessLevel.NONE)

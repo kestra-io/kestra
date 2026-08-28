@@ -9,6 +9,9 @@ import java.time.temporal.ChronoUnit;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.validations.DurationMax;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 import io.kestra.core.validations.TimeWindowValidation;
 import io.kestra.core.validations.TimezoneId;
 
@@ -48,6 +51,8 @@ public class TimeWindow {
     )
     @PluginProperty
     @With
+    @DurationMax
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration window;
 
     @Schema(
@@ -60,6 +65,8 @@ public class TimeWindow {
     )
     @PluginProperty
     @With
+    @DurationMax
+    @DurationMin(message = "must not be negative")
     private Duration windowAdvance;
 
     @Schema(

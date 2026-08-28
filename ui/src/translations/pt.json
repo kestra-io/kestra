@@ -182,6 +182,7 @@
     "add_new_item": "Adicionar novo item",
     "copy": "Copiar",
     "copy_to_clipboard": "Copiar para a área de transferência",
+    "copy_pebble_expression": "Copiar expressão pebble",
     "new": "Novo",
     "edit": "Editar",
     "back": "Voltar",
@@ -206,6 +207,7 @@
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
     "queued duration": "Duração na fila",
+    "paused duration": "Duração em pausa",
     "executionProgress": {
       "title": "Progresso da execução",
       "estimatedRemaining": "Tempo restante estimado: {duration}",
@@ -298,6 +300,21 @@
     "to": "Para",
     "steps": "Passos",
     "state": "Estado",
+    "state_history": {
+      "title": "Histórico de estado",
+      "open": "Histórico de estado",
+      "aria_open": "Mostrar o histórico de estado",
+      "aria_open_for": "Mostrar o histórico de estado de {subject}",
+      "started_at": "Iniciado às {time}",
+      "failed_at": "Falhou às {time}",
+      "skipped_at": "Ignorado às {time}",
+      "created_at": "Criado às {time}",
+      "did_not_run": "Esta tarefa não foi executada",
+      "waiting_to_start": "A aguardar início",
+      "attempt_n": "Tentativa {index}",
+      "attempt_count": "{count} tentativas",
+      "copy": "Copiar histórico de estado"
+    },
     "search": "Buscar",
     "source search": "Busca de fonte",
     "selected": "Selecionado",
@@ -367,7 +384,7 @@
     "unqueue done": "A execução está fora da fila",
     "force run": "Executar forçadamente",
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
-    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "force run confirm": "Tem certeza de que deseja forçar a execução `{id}`?\n\nAVISO: forçar a execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "force run done": "A execução foi forçada",
     "metrics": "Métricas",
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
@@ -456,6 +473,11 @@
         "title": "Limite de concorrência remanescente"
       }
     },
+    "docsPage": {
+      "notFound": "Esta página da documentação não existe. Pode ter sido movida ou renomeada.",
+      "loadError": "Não foi possível carregar esta página da documentação. Tente novamente.",
+      "backToDocs": "Voltar aos Docs"
+    },
     "documentation": {
       "documentation": "Documentação"
     },
@@ -494,6 +516,15 @@
     },
     "use": "Usar",
     "plugins": {
+      "autoInstall": {
+        "failed": "Falha na instalação do plugin",
+        "failedHint": "O flow não foi salvo. Corrija o problema ou remova o plugin do flow e salve novamente.",
+        "preparing": "Preparando a instalação do plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin instalado com sucesso | Plugins instalados com sucesso",
+        "timeout": "A instalação do plugin está demorando mais do que o esperado. O flow não foi salvo, salve novamente quando a instalação terminar.",
+        "title": "Instalando {count} plugin | Instalando {count} plugins"
+      },
       "names": "Plugins",
       "release": "Notas de lançamento",
       "beta": "Beta",
@@ -533,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentação do flow",
+      "nav_definitions": "Definições",
       "nav_examples": "Exemplos",
+      "nav_metrics": "Métricas",
       "nav_outputs": "Outputs",
       "nav_overview": "Visão geral",
       "nav_properties": "Propriedades",
@@ -570,6 +603,7 @@
     "triggers_add_filter_app": "Aplicativo",
     "triggers_add_empty_title": "Nenhum trigger encontrado",
     "triggers_add_ee_tooltip": "Este trigger requer a Enterprise Edition.",
+    "ee_feature_tooltip": "Este recurso requer a Enterprise Edition.",
     "triggers_add_card_add": "Adicionar",
     "triggers_add_modal_tab_form": "Formulário",
     "triggers_add_modal_tab_source": "Fonte",
@@ -656,7 +690,7 @@
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",
     "bulk pause": "Tem certeza de que deseja pausar a(s) execução(ões) <code>{executionCount}</code>?",
-    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "bulk force run": "Tem certeza de que deseja forçar a execução de `{executionCount}` execução(ões)?\n\nAVISO: forçar a execução de uma execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
@@ -752,6 +786,11 @@
     "expand_by_default": "Expandir logs estruturados por padrão",
     "similar lines": "linhas semelhantes",
     "download_logs_description": "Escolha quais logs exportar. Os filtros são padronizados para sua visualização atual.",
+    "logs_download_truncated": "Foram exportadas as {downloaded} linhas de log mais recentes. Outras {skipped} correspondiam aos seus filtros e foram omitidas.",
+    "logs_download_capped": "Foram exportadas as {downloaded} linhas de log mais recentes, o máximo para uma exportação. Podem ter existido mais linhas correspondentes aos seus filtros.",
+    "logs_download_partial": "A exportação parou nas {downloaded} linhas de log porque este filtro não pode ser paginado além disso. Faltam algumas linhas correspondentes.",
+    "logs_download_failed": "A exportação de log falhou. Nenhum ficheiro foi descarregado.",
+    "logs_download_empty": "Nenhuma linha de log corresponde aos seus filtros, pelo que nenhum ficheiro foi descarregado.",
     "display_settings": "Definições de exibição",
     "density": "Densidade",
     "density_compact": "Compacto",
@@ -835,6 +874,7 @@
         "folder_error": "Ocorreu um erro ao criar a pasta"
       },
       "rename": {
+        "error": "Não foi possível renomear para \"{name}\". Já pode existir um ficheiro ou uma pasta com esse nome.",
         "label": "Renomear",
         "file": "Renomear arquivo",
         "folder": "Renomear pasta",
@@ -1391,6 +1431,7 @@
       "key": "Nome",
       "keyPlaceholder": "Nome usado para referenciar este segredo, por exemplo, MY_API_TOKEN",
       "name": "Valor secreto",
+      "valuePlaceholder": "Insira o valor secreto",
       "description": "Descrição",
       "descriptionPlaceholder": "Descreva este segredo",
       "tags": "Tags",
@@ -1661,7 +1702,7 @@
         "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente."
       },
       "apps": {
-        "title": "Você ainda não tem apps!",
+        "title": "Você ainda não tem Apps!",
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo."
       },
       "testSuites": {
@@ -1731,7 +1772,7 @@
         "content": "Exponha um flow como uma ferramenta MCP adicionando um <code>McpToolTrigger</code> a ele. Leia mais sobre o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> em nossa documentação."
       },
       "versionPlugin": {
-        "title": "Você ainda não tem um plugin versionado!",
+        "title": "Você ainda não tem plugins versionados!",
         "content": "Aqui você pode gerenciar todos os plugins instalados na sua instância do Kestra. Plugins recém-instalados podem não estar imediatamente disponíveis em todos os serviços do Kestra, dependendo da configuração da sua instância."
       },
       "panels": {
@@ -1778,6 +1819,7 @@
       "others": "Outros",
       "viewAll": "Ver tudo",
       "export": "Exportar",
+      "exportEmpty": "Este gráfico não tem dados para exportar.",
       "exportTo": {
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"
@@ -1887,6 +1929,7 @@
           "test": "teste"
         },
         "contextRemoved": "Removido {type} {id} do contexto.",
+        "modelChanged": "Mudou para {model}.",
         "toolResult": {
           "detail": "Detalhes",
           "error": "{tool} falhou",
@@ -1957,6 +2000,12 @@
           "Convergindo"
         ],
         "newChat": "Novo chat",
+        "fixThread": {
+          "flow": "Corrigir Flow {id}",
+          "task": "Corrigir Task {id}",
+          "execution": "Corrigir execução de {id}",
+          "generic": "Corrigir erros do Flow"
+        },
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",
@@ -2005,6 +2054,31 @@
         "zoom_out": "Reduzir zoom",
         "clear_selection": "Limpar seleção",
         "fit_view": "Ajustar à tela"
+      },
+      "dag": {
+        "force": "Árvore",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Última atualização",
+        "status": {
+          "fresh": "Novo",
+          "stale": "Obsoleto",
+          "failed": "Falhou",
+          "unknown": "Não rastreado"
+        },
+        "summary": {
+          "fresh": "Todos os {n} assets atualizados",
+          "issues": "{n} obsoleto",
+          "failed": "{n} falhou",
+          "last_run": "última execução {ago}",
+          "unknown": "{n} não rastreado"
+        },
+        "recent_runs": "Execuções recentes",
+        "group_by": "Agrupar por",
+        "groups": "Grupos ({n})",
+        "group_none": "Sem agrupamento",
+        "group_dataset": "Dataset",
+        "ungrouped": "Não agrupado"
       },
       "search": {
         "placeholders": {
@@ -2201,7 +2275,7 @@
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, mudar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
       "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
-      "no_results_in_types": "Sem correspondências para “{query}” em {types}",
+      "no_results_in_types": "Sem correspondências para {query} em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",

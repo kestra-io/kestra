@@ -1,7 +1,7 @@
 import {computed, ComputedRef, h, markRaw, Ref, Suspense} from "vue"
 import {useI18n} from "vue-i18n"
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 import {useFlowStore} from "../../stores/flow"
 import {NoCodeProps} from "./noCodeTypes"
@@ -178,7 +178,10 @@ export function setupInitialNoCodeTab(Comp: any, tab: string, handlers: Handlers
 
 export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: string) => void, actions: ReturnType<typeof useNoCodePanels>) {
     const noCodeHandlers: Handlers = {
-        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
+        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position = "after"){
+            // Must match openAddTaskTab's own "after" default (below) exactly, or a caller that
+            // omits position (like the createTrigger route-query handler) computes a dedup key
+            // that never matches the tab actually created, and duplicates it every time.
             const createTabId = getCreateTabKey({
                 parentPath,
                 refPath,
@@ -361,6 +364,7 @@ export function useNoCodePanelsFull(options: {
 
     return {
         actions,
+        noCodeHandlers,
         openTabs,
         focusTab,
         panels,

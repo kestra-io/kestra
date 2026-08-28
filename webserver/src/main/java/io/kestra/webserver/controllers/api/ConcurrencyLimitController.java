@@ -34,6 +34,15 @@ public class ConcurrencyLimitController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{namespace}/{flowId}")
+    @Operation(tags = { "Flows" }, summary = "Get the concurrency limit of a flow")
+    public HttpResponse<ConcurrencyLimit> getConcurrencyLimit(String namespace, String flowId) {
+        return concurrencyLimitRepository.findById(tenantService.resolveTenant(), namespace, flowId)
+            .map(HttpResponse::ok)
+            .orElseGet(HttpResponse::notFound);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Put("/{namespace}/{flowId}")
     @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
     public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body @Valid ConcurrencyLimit concurrencyLimit) {

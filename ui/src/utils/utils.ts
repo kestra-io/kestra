@@ -39,8 +39,15 @@ export function flatten(object: Record<string, any>) {
             return [{[path.join(".")]: null}]
         }
 
-        return ([] as Record<string, any>[]).concat(...Object
-            .keys(child)
+        const keys = Object.keys(child)
+
+        // An empty container has no leaves, so recursing dropped the key entirely. The `path`
+        // guard keeps a top-level `{}` flattening to `{}` rather than gaining a blank key.
+        if (path.length > 0 && keys.length === 0) {
+            return [{[path.join(".")]: child}]
+        }
+
+        return ([] as Record<string, any>[]).concat(...keys
             .map(key => typeof child[key] === "object" ?
                 _flatten(child[key], path.concat([key])) :
                 [{[path.concat([key]).join(".")]: child[key]}],

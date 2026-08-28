@@ -142,7 +142,7 @@
 
     import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
     import {displayTaskOf, taskEditPathFor} from "../../../utils/flowableBlockOps"
-    import {flowYamlUtils} from "@kestra-io/topology"
+    import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
     import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY} from "../injectionKeys"
 
     const BranchLane = defineAsyncComponent(() => import("./BranchLane.vue"))

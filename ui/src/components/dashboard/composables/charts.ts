@@ -16,6 +16,12 @@ export interface RankedStackedBars {
 
 export const DEFAULT_BAR_CATEGORY_LIMIT = 8
 
+/**
+ * Dashboards hold many charts at once, so their canvases render at a capped pixel ratio rather than the full device
+ * resolution. Canvas memory grows with the square of that ratio, and flat fills and thin lines lose next to nothing.
+ */
+export const DASHBOARD_CHART_MAX_PIXEL_RATIO = 1.5
+
 export function rankStackedBars(
     rows: Record<string, unknown>[],
     opts: {categoryKey: string; stackKeys: string[]; valueKey: string; limit?: number},

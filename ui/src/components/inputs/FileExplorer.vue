@@ -383,6 +383,7 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
+    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
     import {
@@ -512,8 +513,8 @@
         const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
         const foldersCount = folders?.length ?? 0
         const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: folders?.[0].fileName})
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: files?.[0].fileName})
+        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escape(folders?.[0].fileName)})
+        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escape(files?.[0].fileName)})
         else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
         else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
         else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})

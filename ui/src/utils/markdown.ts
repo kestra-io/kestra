@@ -20,6 +20,38 @@ async function getHighlighter(
 
 type RenderVariant = "default" | "enhanced";
 
+const ALLOWED_URL_SCHEMES = ["http:", "https:", "mailto:", "tel:", "ftp:"];
+
+// markdown-it's own denylist let these through, so inline images already embedded in descriptions
+// keep rendering. It deliberately excludes svg+xml, which can carry script.
+const ALLOWED_DATA_URL = /^data:image\/(?:gif|png|jpeg|webp);/i;
+
+/**
+ * Decides whether a Markdown-native link or image URL may keep its target.
+ *
+ * markdown-it only denies a handful of schemes, so anything it has not heard of — and any scheme
+ * split by a control character, such as {@code java<tab>script:} — reaches the DOM as a live
+ * anchor and runs in the viewer's session. Only the schemes above, base64 raster images, and
+ * relative URLs, fragments and query-only links are kept; everything else is rejected, which
+ * makes markdown-it fall back to literal text so no anchor or image is rendered at all.
+ */
+export function isSafeUrl(url: string): boolean {
+    const value = url.trim();
+    if (!value) return true;
+
+    // markdown-it validates the already-normalized URL, so a smuggled control character arrives
+    // percent-encoded; both forms are dropped before the scheme is matched.
+    const compacted = Array.from(value)
+        .filter((char) => char.charCodeAt(0) > 0x20)
+        .join("")
+        .replace(/%(?:0[0-9a-f]|1[0-9a-f]|20)/gi, "");
+
+    const scheme = compacted.match(/^([a-z][a-z0-9+.-]*):/i);
+    if (!scheme) return true;
+
+    return ALLOWED_URL_SCHEMES.includes(scheme[1].toLowerCase() + ":") || ALLOWED_DATA_URL.test(compacted);
+}
+
 interface RenderOptions {
     onlyLink?: boolean;
     permalink?: boolean;
@@ -75,6 +107,8 @@ export async function render(markdown: string, options: RenderOptions = {}) {
         .use(container, "tip")
         .use(fromHighlighter(highlighter, {theme: darkTheme ? "github-dark" : "github-light"}))
         .use(linkTag);
+
+    md.validateLink = isSafeUrl;
 
     md.set({
         html: options.html,

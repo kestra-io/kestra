@@ -211,9 +211,5 @@
 
 :deep(.kel-input__inner) {
     font-size: var(--ks-font-size-sm);
-
-    &::placeholder {
-        color: var(--ks-text-dim);
-    }
 }
 </style>

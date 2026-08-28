@@ -128,7 +128,7 @@
     import {useRouter} from "vue-router"
 
     import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 

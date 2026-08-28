@@ -207,6 +207,7 @@
     "total_duration": "Total duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",
+    "paused duration": "Paused duration",
     "executionProgress": {
       "title": "Execution progress",
       "estimatedRemaining": "Est. remaining: {duration}",
@@ -299,6 +300,21 @@
     "to": "To",
     "steps": "Steps",
     "state": "State",
+    "state_history": {
+        "title": "State history",
+        "open": "State history",
+        "aria_open": "Show the state history",
+        "aria_open_for": "Show the state history for {subject}",
+        "started_at": "Started {time}",
+        "failed_at": "Failed at {time}",
+        "skipped_at": "Skipped at {time}",
+        "created_at": "Created {time}",
+        "did_not_run": "This task did not run",
+        "waiting_to_start": "Waiting to start",
+        "attempt_n": "Attempt {index}",
+        "attempt_count": "{count} attempts",
+        "copy": "Copy state history"
+    },
     "search": "Search",
     "source search": "Source search",
     "selected": "Selected",
@@ -457,6 +473,11 @@
         "title": "Leftover concurrency limit"
       }
     },
+    "docsPage": {
+      "notFound": "This documentation page does not exist. It may have been moved or renamed.",
+      "loadError": "Could not load this documentation page. Please try again.",
+      "backToDocs": "Back to docs"
+    },
     "documentation": {
       "documentation": "Documentation"
     },
@@ -495,6 +516,15 @@
     },
     "use": "Use",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin installation failed",
+        "failedHint": "The flow was not saved. Fix the issue or remove the plugin from the flow, then save again.",
+        "preparing": "Preparing plugin installation...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installed successfully | Plugins installed successfully",
+        "timeout": "Plugin installation is taking longer than expected. The flow was not saved, save again once the installation completes.",
+        "title": "Installing {count} plugin | Installing {count} plugins"
+      },
       "names": "Plugins",
       "release": "Release notes",
       "beta": "Beta",
@@ -754,6 +784,11 @@
     "expand_by_default": "Expand structured logs by default",
     "similar lines": "similar lines",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",
+    "logs_download_truncated": "Exported the most recent {downloaded} log lines. {skipped} more matched your filters and were left out.",
+    "logs_download_capped": "Exported the most recent {downloaded} log lines, the maximum for one export. More may have matched your filters.",
+    "logs_download_partial": "The export stopped at {downloaded} log lines because this filter cannot be paged any further. Some matching lines are missing.",
+    "logs_download_failed": "The log export failed. No file was downloaded.",
+    "logs_download_empty": "No log lines matched your filters, so no file was downloaded.",
     "display_settings": "Display settings",
     "density": "Density",
     "density_compact": "Compact",
@@ -1782,6 +1817,7 @@
       "others": "Others",
       "viewAll": "View all",
       "export": "Export",
+      "exportEmpty": "This chart has no data to export.",
       "exportTo": {
         "csv": "Export to CSV",
         "ion": "Export to ION"
@@ -2016,6 +2052,31 @@
         "zoom_out": "Zoom out",
         "clear_selection": "Clear selection",
         "fit_view": "Fit to screen"
+      },
+      "dag": {
+        "force": "Tree",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Last update",
+        "status": {
+          "fresh": "Fresh",
+          "stale": "Stale",
+          "failed": "Failed",
+          "unknown": "Not tracked"
+        },
+        "summary": {
+          "fresh": "All {n} assets fresh",
+          "issues": "{n} stale",
+          "failed": "{n} failed",
+          "last_run": "last run {ago}",
+          "unknown": "{n} not tracked"
+        },
+        "recent_runs": "Recent runs",
+        "group_by": "Group by",
+        "groups": "Groups ({n})",
+        "group_none": "No grouping",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungrouped"
       },
       "search": {
         "placeholders": {

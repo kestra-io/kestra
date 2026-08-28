@@ -207,6 +207,7 @@
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
     "queued duration": "Duração na fila",
+    "paused duration": "Duração em pausa",
     "executionProgress": {
       "title": "Progresso da execução",
       "estimatedRemaining": "Tempo restante estimado: {duration}",
@@ -299,6 +300,21 @@
     "to": "Para",
     "steps": "Passos",
     "state": "Estado",
+    "state_history": {
+      "title": "Histórico de estado",
+      "open": "Histórico de estado",
+      "aria_open": "Mostrar o histórico de estado",
+      "aria_open_for": "Mostrar o histórico de estado de {subject}",
+      "started_at": "Iniciado às {time}",
+      "failed_at": "Falhou às {time}",
+      "skipped_at": "Ignorado às {time}",
+      "created_at": "Criado às {time}",
+      "did_not_run": "Esta tarefa não foi executada",
+      "waiting_to_start": "A aguardar início",
+      "attempt_n": "Tentativa {index}",
+      "attempt_count": "{count} tentativas",
+      "copy": "Copiar histórico de estado"
+    },
     "search": "Buscar",
     "source search": "Busca de fonte",
     "selected": "Selecionado",
@@ -457,6 +473,11 @@
         "title": "Limite de concorrência remanescente"
       }
     },
+    "docsPage": {
+      "notFound": "Esta página da documentação não existe. Pode ter sido movida ou renomeada.",
+      "loadError": "Não foi possível carregar esta página da documentação. Tente novamente.",
+      "backToDocs": "Voltar aos Docs"
+    },
     "documentation": {
       "documentation": "Documentação"
     },
@@ -495,6 +516,15 @@
     },
     "use": "Usar",
     "plugins": {
+      "autoInstall": {
+        "failed": "Falha na instalação do plugin",
+        "failedHint": "O flow não foi salvo. Corrija o problema ou remova o plugin do flow e salve novamente.",
+        "preparing": "Preparando a instalação do plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin instalado com sucesso | Plugins instalados com sucesso",
+        "timeout": "A instalação do plugin está demorando mais do que o esperado. O flow não foi salvo, salve novamente quando a instalação terminar.",
+        "title": "Instalando {count} plugin | Instalando {count} plugins"
+      },
       "names": "Plugins",
       "release": "Notas de lançamento",
       "beta": "Beta",
@@ -754,6 +784,11 @@
     "expand_by_default": "Expandir logs estruturados por padrão",
     "similar lines": "linhas semelhantes",
     "download_logs_description": "Escolha quais logs exportar. Os filtros são padronizados para sua visualização atual.",
+    "logs_download_truncated": "Foram exportadas as {downloaded} linhas de log mais recentes. Outras {skipped} correspondiam aos seus filtros e foram omitidas.",
+    "logs_download_capped": "Foram exportadas as {downloaded} linhas de log mais recentes, o máximo para uma exportação. Podem ter existido mais linhas correspondentes aos seus filtros.",
+    "logs_download_partial": "A exportação parou nas {downloaded} linhas de log porque este filtro não pode ser paginado além disso. Faltam algumas linhas correspondentes.",
+    "logs_download_failed": "A exportação de log falhou. Nenhum ficheiro foi descarregado.",
+    "logs_download_empty": "Nenhuma linha de log corresponde aos seus filtros, pelo que nenhum ficheiro foi descarregado.",
     "display_settings": "Definições de exibição",
     "density": "Densidade",
     "density_compact": "Compacto",
@@ -1782,6 +1817,7 @@
       "others": "Outros",
       "viewAll": "Ver tudo",
       "export": "Exportar",
+      "exportEmpty": "Este gráfico não tem dados para exportar.",
       "exportTo": {
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"
@@ -2016,6 +2052,31 @@
         "zoom_out": "Reduzir zoom",
         "clear_selection": "Limpar seleção",
         "fit_view": "Ajustar à tela"
+      },
+      "dag": {
+        "force": "Árvore",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Última atualização",
+        "status": {
+          "fresh": "Novo",
+          "stale": "Obsoleto",
+          "failed": "Falhou",
+          "unknown": "Não rastreado"
+        },
+        "summary": {
+          "fresh": "Todos os {n} assets atualizados",
+          "issues": "{n} obsoleto",
+          "failed": "{n} falhou",
+          "last_run": "última execução {ago}",
+          "unknown": "{n} não rastreado"
+        },
+        "recent_runs": "Execuções recentes",
+        "group_by": "Agrupar por",
+        "groups": "Grupos ({n})",
+        "group_none": "Sem agrupamento",
+        "group_dataset": "Dataset",
+        "ungrouped": "Não agrupado"
       },
       "search": {
         "placeholders": {

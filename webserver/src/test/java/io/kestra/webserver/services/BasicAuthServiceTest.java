@@ -472,6 +472,30 @@ class BasicAuthServiceTest {
     }
 
     @Test
+    void shouldRejectRevokedCredential_onPeerNodeSharingSameSettingsStore() {
+        // Given – two BasicAuthService instances simulate two webserver nodes in an HA
+        // deployment sharing one settings store, each with its own in-process cache.
+        var sharedSettingsRepo = new InMemorySettingRepository();
+        var nodeA = new BasicAuthService(sharedSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        var nodeB = new BasicAuthService(sharedSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        nodeA.init();
+
+        HttpRequest<?> oldPasswordRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+
+        // nodeB caches a positive verification for the soon-to-be-revoked password
+        assertThat(nodeB.isAuthenticated(oldPasswordRequest)).isTrue();
+
+        // When – the password is rotated through nodeA only; nodeB's cache is never told
+        nodeA.save(new BasicAuthCredentials(null, "admin@kestra.io", "NewPassword1"));
+
+        // Then – nodeB must not keep accepting the revoked credential from its stale cache
+        assertThat(nodeB.isAuthenticated(oldPasswordRequest))
+            .as("a credential revoked on one node must not remain valid on a peer sharing the same settings store")
+            .isFalse();
+    }
+
+    @Test
     void shouldRejectAuthentication_withUnmigratedSha512StoredPassword() {
         // Given – simulate a pre-migration row where the password is stored as plain SHA-512
         // (as it would be before V2_0_04BasicAuthPasswordMigration runs).
@@ -538,6 +562,50 @@ class BasicAuthServiceTest {
         var basicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
 
         assertThat(basicAuthService.validateCredentials("admin@kestra.io", "Kestra123")).isFalse();
+    }
+
+    @Test
+    void shouldValidateCurrentPassword_withCorrectPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCurrentPassword("Kestra123")).isTrue();
+    }
+
+    @Test
+    void shouldNotValidateCurrentPassword_withWrongPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCurrentPassword("WrongPassword1")).isFalse();
+        assertThat(basicAuthService.validateCurrentPassword(null)).isFalse();
+    }
+
+    @Test
+    void shouldNotValidateCurrentPassword_whenNotInitialized() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
+
+        assertThat(basicAuthService.validateCurrentPassword("Kestra123")).isFalse();
+    }
+
+    @Test
+    void shouldNotValidateCurrentPassword_forARevokedPassword_evenIfCachedByIsAuthenticated() {
+        // A password already rotated away from must never pass as "current", even though
+        // isAuthenticated() cached it as valid moments earlier: validateCurrentPassword always
+        // re-checks the live stored credentials rather than that cache.
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        HttpRequest<?> oldRequest = HttpRequest.GET("/test").basicAuth("admin@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(oldRequest)).isTrue();
+
+        basicAuthService.save(new BasicAuthCredentials(null, "admin@kestra.io", "NewPassword1"));
+
+        assertThat(basicAuthService.validateCurrentPassword("Kestra123")).isFalse();
     }
 
     @Test

@@ -1,8 +1,8 @@
-import {describe, it, expect, beforeEach} from "vitest"
+import {describe, it, expect, beforeEach, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import type {RouteLocationNormalized, RouteRecordNormalized} from "vue-router"
 
-import {entityNotFoundGuard, withTenant, type EntityResolver} from "../../../src/utils/routeEntityGuard"
+import {entityNotFoundGuard, type EntityResolver} from "../../../src/utils/routeEntityGuard"
 import {useCoreStore} from "../../../src/stores/core"
 
 const next = () => {}
@@ -15,7 +15,10 @@ function location(entity: EntityResolver | undefined, params: Record<string, str
 const elsewhere = location(undefined, {})
 
 describe("entityNotFoundGuard", () => {
-    beforeEach(() => setActivePinia(createPinia()))
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        vi.spyOn(console, "error").mockImplementation(() => {})
+    })
 
     it("renders the not-found screen at the requested URL when the entity 404s", async () => {
         const to = location(() => Promise.reject(Object.assign(new Error("404 Not Found"), {status: 404})))
@@ -72,14 +75,5 @@ describe("entityNotFoundGuard", () => {
         await entityNotFoundGuard(to, to, next)
 
         expect(resolved).toBe(1)
-    })
-})
-
-describe("withTenant", () => {
-    // An explicit `tenant: undefined` would override the SDK's own default and build a
-    // request against /api/v1/undefined/...
-    it("omits the tenant entirely when the route has none", () => {
-        expect(withTenant(location(undefined, {}), {id: "x"})).toEqual({id: "x"})
-        expect(withTenant(location(undefined), {id: "x"})).toEqual({id: "x", tenant: "main"})
     })
 })

@@ -20,6 +20,7 @@ import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 const textYamlHeader = {
     headers: {
@@ -433,7 +434,10 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean }) {
+    async function loadFlow(
+        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
+        requestOptions?: KestraRequestOptions,
+    ) {
         let data: Flow & {exception?: string}
         try {
             data = await FlowsAPI.flow({
@@ -442,7 +446,7 @@ export const useFlowStore = defineStore("flow", () => {
                 revision: options.revision ? Number(options.revision) : undefined,
                 allowDeleted: options.allowDeleted,
                 source: true,
-            }) as Flow & {exception?: string}
+            }, requestOptions) as Flow & {exception?: string}
         } catch (e: any) {
             if (options.deleted && e.status === 404) {
                 return e.body ?? {}

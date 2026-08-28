@@ -1,9 +1,9 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
-import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {resolveDefaultTab} from "../../utils/routeTabs"
-import {withTenant, PROBE_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
+import {useFlowStore} from "../../stores/flow"
+import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Flows detail page. */
 export const FLOW_PARENT_ROUTE = "flows/update"
@@ -124,16 +124,18 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
 ]
 
 /**
- * Resolves the flow the detail page is about, so an unknown one renders the not-found screen
- * instead of a page that never gets its data (EE reuses it for its own route record).
+ * Loads the flow the detail page is about into the store, so an unknown one renders the
+ * not-found screen and a known one is already there when the page mounts — `useFlowRoot`
+ * fetches only what the store does not already hold (EE reuses this for its own route record).
  * `allowDeleted`: a deleted flow still has a page, so only an unknown one is missing.
  */
 export const FLOW_ENTITY_META: RouteMeta = {
-    entity: (to) => FlowsAPI.flow(withTenant(to, {
+    entity: (to) => useFlowStore().loadFlow({
         namespace: String(to.params.namespace),
         id: String(to.params.id),
+        revision: to.query.revision ? String(to.query.revision) : undefined,
         allowDeleted: true,
-    }), PROBE_REQUEST_OPTIONS),
+    }, ENTITY_REQUEST_OPTIONS),
 }
 
 /**

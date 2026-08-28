@@ -17,6 +17,7 @@ import {InputType} from "../utils/inputs"
 import {Optional} from "../utils/utils"
 import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 export interface Check {
     message: string
@@ -273,8 +274,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
-    const loadExecution = (options: { id: string }) => {
-        return ExecutionsAPI.execution({executionId: options.id}).then(data => {
+    const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
+        return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
             execution.value = data
             return execution.value
         })
@@ -502,7 +503,11 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const followExecution = (options: { id: string }, translate: (itn: string) => string) => {
-        execution.value = undefined
+        // Keep an execution the route guard already loaded: clearing it would send the page back to
+        // its loading state, and cost a second fetch of what the store is already holding.
+        if (execution.value?.id !== options.id) {
+            execution.value = undefined
+        }
         closeSSE()
 
         executionSubscription.value = subscribeToExecution(options.id, {

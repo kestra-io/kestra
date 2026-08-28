@@ -1,11 +1,13 @@
 import type {NavigationGuard, RouteLocationNormalized, RouteRecordNormalized} from "vue-router"
 import {useCoreStore} from "../stores/core"
+import type {KestraRequestOptions} from "./kestraHttp"
 
 /**
- * The not-found screen is the report, so the global interceptor keeps quiet: a toast on
- * top of that screen would say the same thing twice.
+ * A 404 is what this guard is looking for and it reports it as the not-found screen, so the
+ * interceptor keeps quiet rather than toasting the same thing twice. Every other failure is
+ * left to toast as usual.
  */
-export const PROBE_REQUEST_OPTIONS = {ignoreNotFound: true, showMessageOnError: false}
+export const ENTITY_REQUEST_OPTIONS: KestraRequestOptions = {ignoreNotFound: true}
 
 /** Resolves the one entity a detail page is about. A 404, or a falsy resolution, means it is missing. */
 export type EntityResolver = (to: RouteLocationNormalized) => Promise<unknown>
@@ -15,15 +17,6 @@ declare module "vue-router" {
         /** Declared by a detail page whose whole content is one entity; see {@link entityNotFoundGuard}. */
         entity?: EntityResolver
     }
-}
-
-/**
- * Copies the target route's tenant into an entity probe's parameters. Passing
- * `tenant: undefined` instead would blank out the SDK's own default and build a
- * request against `/api/v1/undefined/...`.
- */
-export function withTenant<T extends Record<string, unknown>>(to: RouteLocationNormalized, parameters: T): T & {tenant?: string} {
-    return to.params.tenant ? {...parameters, tenant: String(to.params.tenant)} : parameters
 }
 
 function resolverOf(record: RouteRecordNormalized): EntityResolver | undefined {
@@ -37,19 +30,28 @@ function hasSameParams(to: RouteLocationNormalized, from: RouteLocationNormalize
 }
 
 async function probe(resolve: EntityResolver, to: RouteLocationNormalized): Promise<404 | undefined> {
+    let error: unknown
     try {
-        return (await resolve(to)) ? undefined : 404
-    } catch (error) {
+        if (await resolve(to)) return undefined
+    } catch (thrown) {
         // Only a missing entity is this guard's business: any other failure is left to the page,
         // which the interceptor has already reported with a toast.
-        return (error as {status?: number})?.status === 404 ? 404 : undefined
+        if ((thrown as {status?: number})?.status !== 404) return undefined
+        error = thrown
     }
+
+    // The not-found screen is the only report here, and it does not say which entity is missing.
+    console.error(`No entity behind ${to.fullPath}, showing the not-found screen instead.`, error)
+
+    return 404
 }
 
 /**
  * Resolves a detail page's entity before the page mounts, so a missing one renders the
  * not-found screen at the requested URL instead of letting the page mount and half-render
- * around data it never got. Declared per page as `meta.entity`.
+ * around data it never got. Declared per page as `meta.entity`, which resolves through the same
+ * store loader the page itself uses, so the entity is fetched once and the page renders from
+ * what the guard put in the store.
  *
  * Global rather than a per-record `beforeEnter`, which vue-router skips when only the params
  * change — navigating straight from one flow to another would otherwise go unchecked.

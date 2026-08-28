@@ -1,7 +1,7 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
-import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import {resolveDefaultTab} from "../../utils/routeTabs"
-import {withTenant, PROBE_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
+import {useExecutionsStore} from "../../stores/executions"
+import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
@@ -77,15 +77,13 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
 ]
 
 /**
- * Resolves the execution the detail page is about (EE reuses it for its own route record).
- * The page itself only learns of a missing execution when its SSE stream fails, which cannot
- * tell "not found" from "connection lost".
+ * Loads the execution the detail page is about into the store (EE reuses this for its own route
+ * record). The page itself only learns of a missing execution when its SSE stream fails, which
+ * cannot tell "not found" from "connection lost"; and what the guard loads is what the overview
+ * tab would have fetched, so the page renders from the store instead of fetching it again.
  */
 export const EXECUTION_ENTITY_META: RouteMeta = {
-    entity: (to) => ExecutionsAPI.execution(
-        withTenant(to, {executionId: String(to.params.id)}),
-        PROBE_REQUEST_OPTIONS,
-    ),
+    entity: (to) => useExecutionsStore().loadExecution({id: String(to.params.id)}, ENTITY_REQUEST_OPTIONS),
 }
 
 /**

@@ -48,6 +48,17 @@ export interface KestraHttpError extends Error {
     config?: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
 }
 
+/**
+ * Per-request options the interceptors above read. Declared here rather than derived from the
+ * SDK's own option type, which is bound to one edition's generated client.
+ */
+export interface KestraRequestOptions {
+    /** `false` silences the error toast, leaving the caller to report the failure. */
+    showMessageOnError?: boolean
+    /** Marks a 404 as an expected outcome the caller handles itself. */
+    ignoreNotFound?: boolean
+}
+
 export interface KestraHttpOptions {
     router?: Router
     coreStore?: {message: unknown}

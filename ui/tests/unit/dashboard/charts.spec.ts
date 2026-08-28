@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {chartSegmentDrillDown, registerDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
-import {DEFAULT_BAR_CATEGORY_LIMIT, rankStackedBars} from "../../../src/components/dashboard/composables/charts"
+import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars} from "../../../src/components/dashboard/composables/charts"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
 const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"
@@ -258,5 +258,58 @@ describe("rankStackedBars", () => {
         const successSeries = result.series.find((s) => s.name === "SUCCESS")!
         expect(successSeries.data[0]).toBe(100)
         expect(successSeries.data[1]).toBe(1)
+    })
+})
+
+describe("fillTimeBucketLabels", () => {
+    const HOURLY = {format: "yyyy-MM-DD HH:00", unit: "hour"} as const
+
+    it("fills the hourly buckets between the earliest and latest dates", () => {
+        const labels = fillTimeBucketLabels(
+            ["2026-08-19 20:00:00", "2026-08-19 23:00:00", "2026-08-20 01:00:00"],
+            HOURLY,
+        )
+        expect(labels).toEqual([
+            "2026-08-19 20:00",
+            "2026-08-19 21:00",
+            "2026-08-19 22:00",
+            "2026-08-19 23:00",
+            "2026-08-20 00:00",
+            "2026-08-20 01:00",
+        ])
+    })
+
+    it("returns a single label when all dates share one bucket", () => {
+        const labels = fillTimeBucketLabels(
+            ["2026-08-19 20:00:00", "2026-08-19 20:00:00"],
+            HOURLY,
+        )
+        expect(labels).toEqual(["2026-08-19 20:00"])
+    })
+
+    it("fills day buckets across a month boundary", () => {
+        const labels = fillTimeBucketLabels(
+            ["2026-08-30 10:00:00", "2026-09-02 08:00:00"],
+            {format: "yyyy-MM-DD", unit: "day"},
+        )
+        expect(labels).toEqual(["2026-08-30", "2026-08-31", "2026-09-01", "2026-09-02"])
+    })
+
+    it("keeps values that are not valid dates as labels verbatim", () => {
+        const labels = fillTimeBucketLabels(["not-a-date"], HOURLY)
+        expect(labels).toEqual(["not-a-date"])
+    })
+
+    it("returns an empty array for empty input", () => {
+        expect(fillTimeBucketLabels([], HOURLY)).toEqual([])
+    })
+
+    it("stops filling at the bucket cap but keeps every data label", () => {
+        const labels = fillTimeBucketLabels(
+            ["2026-01-01 00:00:00", "2026-08-19 20:00:00"],
+            {format: "yyyy-MM-DD HH:mm", unit: "minute"},
+        )
+        expect(labels.length).toBe(MAX_FILLED_TIME_BUCKETS + 1)
+        expect(labels).toContain("2026-08-19 20:00")
     })
 })

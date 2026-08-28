@@ -62,6 +62,10 @@ export interface TriggerPluginDto {
     // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
     // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
     pluginTitle: string;
+    // The owning plugin artifact's manifest title (for example "NATS" for every NATS subgroup) -
+    // the disambiguation fallback for when pluginTitle itself resolves to a bare package segment;
+    // optional because older backends do not send it.
+    pluginGroupTitle?: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;

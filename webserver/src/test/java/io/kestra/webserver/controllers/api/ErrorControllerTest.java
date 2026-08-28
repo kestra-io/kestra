@@ -122,6 +122,24 @@ class ErrorControllerTest {
     }
 
     @Test
+    void malformedBodyDoesNotLeakInternalClassNames() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/triggers/backfill/delete", "\"hello\"").contentType(MediaType.APPLICATION_JSON),
+                Argument.of(String.class),
+                Argument.of(JsonError.class)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+
+        String response = exception.getResponse().getBody(String.class).get();
+        assertThat(response).contains("Invalid request body");
+        assertThat(response).doesNotContain("Internal server error");
+        assertThat(response).doesNotContain("ApiTriggerId");
+    }
+
+    @Test
     void clientError400() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(

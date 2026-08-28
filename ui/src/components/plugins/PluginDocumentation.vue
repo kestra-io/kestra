@@ -47,13 +47,14 @@
                     <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
                 </div>
 
-                <nav class="dp-nav" aria-label="Documentation sections">
+                <nav class="dp-nav" aria-label="Documentation sections" data-test="plugin-doc-nav">
                     <button
                         type="button"
                         v-for="chip in navChips"
                         :key="chip.id"
                         class="dp-navchip"
                         :class="{active: activeSection === chip.id}"
+                        :data-test="`plugin-doc-navchip-${chip.id}`"
                         @click="selectSection(chip.id)"
                     >
                         {{ chip.label }}
@@ -86,6 +87,7 @@
         <KsMarkdown
             v-else-if="overrideIntro"
             :content="overrideIntro"
+            class="dp-override-intro"
             :class="{'position-absolute': absolute}"
         />
 
@@ -375,9 +377,8 @@
         sectionCounts.value = counts
     }
 
-    watch(currentPlugin, () => {
+    watch([() => currentPlugin.value?.cls, () => currentPlugin.value?.version], () => {
         activeSection.value = "overview"
-        sectionCounts.value = {}
     })
 
     const selectSection = (id: string) => {
@@ -571,6 +572,11 @@
 
   .plugin-schema {
     display: block;
+    padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-override-intro {
+    width: 100%;
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 

@@ -189,11 +189,6 @@
 }
 
 :deep(.kel-date-editor) {
-    .kel-input__inner::placeholder {
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-sm);
-    }
-
     .kel-input__prefix .kel-input__icon {
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);

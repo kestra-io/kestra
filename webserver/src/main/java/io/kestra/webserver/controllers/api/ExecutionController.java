@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -55,7 +54,7 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -80,7 +79,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.*;
-import io.kestra.plugin.core.preview.TextFileRenderer;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
@@ -92,6 +90,7 @@ import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.services.WebhookBodyService;
@@ -258,7 +257,10 @@ public class ExecutionController {
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
     @Inject
-    private PluginRegistry pluginRegistry;
+    private ModelValidator modelValidator;
+
+    @Inject
+    private FileRendererService fileRendererService;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -1154,6 +1156,8 @@ public class ExecutionController {
             : RequestUtils.toMap(labels).entrySet().stream()
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
+
+        parsedLabels.forEach(modelValidator::validate);
 
         // system labels can only be set by Kestra itself; the only exceptions accepted from a
         // client are system.correlationId and system.from=ui (sent by the UI). Any other
@@ -2319,12 +2323,7 @@ public class ExecutionController {
         }
 
         String extension = FilenameUtils.getExtension(path.toString());
-        FileRenderer renderer = pluginRegistry.plugins().stream()
-            .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
-            .map(this::instantiate)
-            .filter(fileRenderer -> fileRenderer.supports(extension))
-            .findFirst()
-            .orElseGet(TextFileRenderer::new);
+        FileRenderer renderer = fileRendererService.resolve(extension);
 
         InputStream fileStream = switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME ->
@@ -2346,14 +2345,6 @@ public class ExecutionController {
             );
 
             return HttpResponse.ok(preview);
-        }
-    }
-
-    private FileRenderer instantiate(Class<? extends FileRenderer> fileRenderer) {
-        try {
-            return fileRenderer.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -2417,7 +2408,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByIds(
-        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
+        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body @Valid SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -2458,17 +2449,22 @@ public class ExecutionController {
             );
         }
 
+        // merge and validate every execution's labels before emitting anything, so a rejected
+        // batch (e.g. a system label in the payload) never applies to some executions but not others
+        Map<String, List<Label>> mergedLabelsByExecutionId = new HashMap<>(executions.size());
+        for (Execution execution : executions) {
+            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
+            mergedLabelsByExecutionId.put(execution.getId(), mergeSystemLabels(execution, deduplicated));
+        }
+
         this.updateLabelsCounter.increment(executions.size());
 
         return submitBatchAction(executions, (execution, opId) ->
-        {
-            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
-            List<Label> merged = mergeSystemLabels(execution, deduplicated);
-            executionCommandQueue.emit(UpdateLabels.from(execution, merged).withOperationId(opId));
-        });
+            executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId))
+        );
     }
 
-    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull @Valid List<Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)

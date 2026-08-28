@@ -2,6 +2,10 @@ import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "
 import {App, h} from "vue"
 import {useI18n} from "vue-i18n"
 
+// Module-scoped so repeated Ctrl+S collapses earlier "saved" toasts without dismissing
+// unrelated notifications (e.g. the plugin auto-install progress toast).
+let savedNotificationHandles: {close: () => void}[] = []
+
 
 export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => {
     function wrapMessage(message:string) {
@@ -39,17 +43,17 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 })
         },
         saved: function(name:string, title?:string, options?: Record<string, any>) {
-            KsNotification.closeAll()
+            savedNotificationHandles.forEach((handle) => handle.close())
             const message = options?.multiple
                 ? t("multiple saved done", {name})
                 : t("saved done", {name: name})
-            KsNotification({
+            savedNotificationHandles = [KsNotification({
                     title: title || t("saved"),
                     message: wrapMessage(message),
                     position: "bottom-right",
                     type: "success",
                 ...options,
-            })
+            })]
         },
         deleted: function(name:string, title?:string, options?: Record<string, any>) {
             KsNotification({

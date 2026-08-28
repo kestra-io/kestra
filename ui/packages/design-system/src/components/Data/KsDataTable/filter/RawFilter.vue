@@ -115,7 +115,9 @@
     color: var(--ks-text-primary);
 
     &::placeholder {
-        color: var(--ks-text-secondary);
+        color: var(--ks-placeholder-color);
+        font-size: var(--ks-placeholder-font-size);
+        font-weight: var(--ks-placeholder-font-weight);
     }
 
     &[readonly] {

@@ -2,7 +2,7 @@ import {describe, test, expect, vi, afterAll, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
 import {ref} from "vue"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
-import {ChartFeature} from "../../../src/components/Charts/ksChartUtils"
+import {ChartFeature} from "../../../src/utils/chart"
 
 // jsdom has no layout — force non-zero dimensions so KsEchart's canRender
 // latch flips and <VChart> mounts.

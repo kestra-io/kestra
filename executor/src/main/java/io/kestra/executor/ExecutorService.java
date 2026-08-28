@@ -1522,7 +1522,7 @@ public class ExecutorService {
                         executor.withException(e, "handleExecutionUpdatingTasks");
                     }
 
-                    TaskRunAttempt failedAttempt = TaskRunAttempt.builder().state(new State().withState(failState)).build();
+                    TaskRunAttempt failedAttempt = TaskRunAttempt.builder().state(new State(failState)).build();
                     workerTaskResults.add(
                         WorkerTaskResult.builder()
                             .taskRun(workerTask.getTaskRun().withAttempts(List.of(failedAttempt)).withState(failState))

@@ -49,7 +49,7 @@
     import {vKsLoading} from "../Feedback/KsLoading"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
-    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     defineOptions({inheritAttrs: false})
 

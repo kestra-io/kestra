@@ -53,7 +53,8 @@ public class MultipleConditionEventMessageHandler implements MessageHandler<Mult
                         .withKind(exec.getKind())
                         .withTrigger(exec.getTrigger())
                         .withLabels(exec.getLabels())
-                        .withInputs(exec.getInputs());
+                        .withInputs(exec.getInputs())
+                        .withExecutionDepth(exec.getMetadata().getExecutionDepth());
                     // Preserve terminal state (e.g. FAILED when trigger input rendering fails).
                     if (exec.getState().isTerminated()) {
                         cmd = cmd.withStateType(exec.getState().getCurrent());

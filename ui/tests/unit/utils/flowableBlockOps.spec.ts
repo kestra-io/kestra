@@ -1,5 +1,5 @@
 import {describe, it, expect} from "vitest"
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {
     addBlock,
     addBlockAtPath,

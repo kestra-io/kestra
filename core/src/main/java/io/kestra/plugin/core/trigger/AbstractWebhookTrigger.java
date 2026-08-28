@@ -7,6 +7,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.triggers.AbstractTrigger;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -31,6 +32,7 @@ import reactor.core.publisher.Mono;
 public abstract class AbstractWebhookTrigger extends AbstractTrigger {
     @Size(max = 256)
     @NotNull
+    @NotBlank
     @Schema(
         title = "The unique key that will be part of the URL.",
         description = "The key is used for generating the webhook URL.\n" +

@@ -3,7 +3,7 @@ import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
@@ -11,7 +11,7 @@ import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {makeToast} from "../utils/toast"
 import {InputType} from "../utils/inputs"
 import {globalI18n} from "../translations/i18n"
-import {transformResponse} from "../components/dependencies/composables/useDependencies"
+import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
 import type {FlowWithSource,  AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
@@ -903,7 +903,7 @@ function deleteFlowAndDependencies() {
                 : []
 
         const constraintsError =
-            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
+            flowValidation.value?.constraints?.split(/, ?/) ?? []
 
         const errors = [...flowExistsError, ...constraintsError]
 

@@ -119,7 +119,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
             if (renderedValue instanceof String renderedValueStr) {
                 renderedValue = switch (renderedKvType) {
                     case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
-                    case BOOLEAN -> TypeConverter.toBoolean(renderedValueStr);
+                    case BOOLEAN -> parseBoolean(renderedValueStr);
                     case DATETIME -> TypeConverter.toInstant(renderedValueStr);
                     case DATE -> parseDate(renderedValueStr);
                     // We parse duration to make sure it's valid but we store it as a raw duration string
@@ -161,5 +161,20 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         } catch (DateTimeParseException e) {
             return LocalDate.ofInstant(Instant.parse(value), ZoneOffset.UTC);
         }
+    }
+
+    /**
+     * Parses a {@code BOOLEAN}-typed KV value, failing the task on anything but {@code true}/{@code false}
+     * (case-insensitive) so a typo is not silently coerced to {@code false}, matching how the other typed values reject
+     * invalid input.
+     */
+    private static Boolean parseBoolean(String value) {
+        if ("true".equalsIgnoreCase(value)) {
+            return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(value)) {
+            return Boolean.FALSE;
+        }
+        throw new IllegalArgumentException("Cannot parse '%s' as a BOOLEAN value: expected 'true' or 'false'.".formatted(value));
     }
 }

@@ -147,7 +147,8 @@ class AuthenticationFilterTest {
                     "/api/v1/basicAuth", new BasicAuthCredentials(
                         IdUtils.create(),
                         "anonymous@hacker",
-                        "hackerPassword1"
+                        "hackerPassword1",
+                        basicAuthConfiguration.getPassword()
                     )
                 ).basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
             );

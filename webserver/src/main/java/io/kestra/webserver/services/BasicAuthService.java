@@ -218,7 +218,7 @@ public class BasicAuthService {
         if (credentials == null || username == null || password == null) {
             return false;
         }
-        return username.equals(credentials.getUsername()) && AuthUtils.matches(credentials.getSalt(), password, credentials.getPassword());
+        return matchesConfiguredCredentials(credentials, username, password);
     }
 
     /**
@@ -252,14 +252,8 @@ public class BasicAuthService {
             String tokenSha256 = sha256Hex(token);
 
             // Fast path: same token as last verified — skip bcrypt entirely.
-            // compare via MessageDigest.isEqual to prevent timing attacks
             String cachedTokenSha256 = lastVerifiedTokenSha256.get();
-            if (
-                cachedTokenSha256 != null && MessageDigest.isEqual(
-                    tokenSha256.getBytes(StandardCharsets.UTF_8),
-                    cachedTokenSha256.getBytes(StandardCharsets.UTF_8)
-                )
-            ) {
+            if (AuthUtils.constantTimeEquals(tokenSha256, cachedTokenSha256)) {
                 return true;
             }
 
@@ -271,10 +265,9 @@ public class BasicAuthService {
             String username = decoded.substring(0, colonIdx);
             String password = decoded.substring(colonIdx + 1);
 
-            boolean valid = username.equals(credentials.getUsername())
-                && AuthUtils.matches(credentials.getSalt(), password, credentials.getPassword());
+            boolean valid = matchesConfiguredCredentials(credentials, username, password);
 
-            // Wrong passwords always pay the full bcrypt cost; only cache successes.
+            // Every failure now pays the full bcrypt cost; only cache successes.
             if (valid) {
                 lastVerifiedTokenSha256.set(tokenSha256);
             }
@@ -282,6 +275,17 @@ public class BasicAuthService {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * Compares {@code username}/{@code password} against {@code credentials} without short-circuiting: bcrypt runs
+     * even when the username does not match, so a wrong username cannot be distinguished from a wrong password by
+     * response time (GHSA-38rc-2jxj-2h75).
+     */
+    private static boolean matchesConfiguredCredentials(SaltedBasicAuthCredentials credentials, String username, String password) {
+        boolean usernameMatches = AuthUtils.constantTimeEquals(username, credentials.getUsername());
+        boolean passwordMatches = AuthUtils.matches(credentials.getSalt(), password, credentials.getPassword());
+        return usernameMatches & passwordMatches;
     }
 
     private Optional<String> extractFromCookie(HttpRequest<?> request) {

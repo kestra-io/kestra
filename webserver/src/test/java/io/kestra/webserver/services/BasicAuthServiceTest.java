@@ -398,6 +398,55 @@ class BasicAuthServiceTest {
     }
 
     @Test
+    void shouldNotAuthenticate_withUnknownUsername() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When / Then – unknown username rejected
+        HttpRequest<?> badRequest = HttpRequest.GET("/test")
+            .basicAuth("nobody@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(badRequest)).isFalse();
+    }
+
+    @Test
+    void shouldPayBcryptCost_whenUsernameIsUnknown() {
+        // Regression guard for GHSA-38rc-2jxj-2h75: a wrong username used to short-circuit before bcrypt,
+        // making an unknown username roughly 2 orders of magnitude faster to reject than a known username
+        // with a wrong password. Both must now cost roughly the same.
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        HttpRequest<?> knownUsernameWrongPassword = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "WrongPassword1");
+        HttpRequest<?> unknownUsername = HttpRequest.GET("/test")
+            .basicAuth("nobody@kestra.io", "WrongPassword1");
+
+        // Warm up the JIT before measuring.
+        basicAuthService.isAuthenticated(knownUsernameWrongPassword);
+        basicAuthService.isAuthenticated(unknownUsername);
+
+        long baselineNanos = fastestOf(3, () -> basicAuthService.isAuthenticated(knownUsernameWrongPassword));
+        long subjectNanos = fastestOf(3, () -> basicAuthService.isAuthenticated(unknownUsername));
+
+        assertThat(subjectNanos)
+            .as("rejecting an unknown username must pay at least half the bcrypt cost paid for a known username with a wrong password")
+            .isGreaterThanOrEqualTo(baselineNanos / 2);
+    }
+
+    private static long fastestOf(int runs, Runnable action) {
+        long fastest = Long.MAX_VALUE;
+        for (int i = 0; i < runs; i++) {
+            long start = System.nanoTime();
+            action.run();
+            fastest = Math.min(fastest, System.nanoTime() - start);
+        }
+        return fastest;
+    }
+
+    @Test
     void shouldInvalidateCache_whenPasswordChanges() {
         // Given – initialised with password "Kestra123"
         var tmpSettingsRepo = new InMemorySettingRepository();

@@ -1515,20 +1515,22 @@ public class ExecutorService {
                     // Log against the task run so the failure carries its taskId/taskRunId, not only the execution.
                     executorTask.runContext().logger().error("Failed to process task: {}", e.getMessage(), e);
 
-                    if (task.isAllowFailure()) {
-                        // Honor allowFailure: end the task run WARNING (or SUCCESS with allowWarning) and let the execution continue.
-                        workerTaskResults.add(
-                            WorkerTaskResult.builder()
-                                .taskRun(workerTask.getTaskRun().fail().withState(State.Type.fail(task)))
-                                .build()
-                        );
-                    } else {
+                    // State.Type.fail resolves the failure against allowFailure/allowWarning: FAILED, WARNING or SUCCESS.
+                    State.Type failState = State.Type.fail(task);
+                    if (failState == State.Type.FAILED) {
                         workerTaskResults.add(
                             WorkerTaskResult.builder()
                                 .taskRun(workerTask.getTaskRun().fail())
                                 .build()
                         );
                         executor.withException(e, "handleExecutionUpdatingTasks");
+                    } else {
+                        // allowFailure (WARNING) or allowFailure + allowWarning (SUCCESS): let the execution continue.
+                        workerTaskResults.add(
+                            WorkerTaskResult.builder()
+                                .taskRun(workerTask.getTaskRun().fail().withState(failState))
+                                .build()
+                        );
                     }
                 }
                 return true;

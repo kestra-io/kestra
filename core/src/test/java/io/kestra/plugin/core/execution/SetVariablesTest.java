@@ -50,6 +50,15 @@ class SetVariablesTest {
         assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @ExecuteFlow("flows/valids/set-variables-allow-warning.yaml")
+    @Test
+    void shouldSucceedWhenAllowFailureAndAllowWarningAreSet(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.findTaskRunsByTaskId("set-vars").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     @Test
     void shouldRenderVariablesForEachExecution() throws Exception {
         // the executor calls update() on the task instance of its cached flow, so the same task

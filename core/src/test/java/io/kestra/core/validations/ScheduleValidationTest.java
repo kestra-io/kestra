@@ -1,6 +1,7 @@
 package io.kestra.core.validations;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +36,35 @@ class ScheduleValidationTest {
 
         assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid cron expression");
+    }
+
+    @Test
+    void shouldRejectUnsatisfiableCronExpressions() {
+        for (String cron : List.of("0 0 30 2 *", "0 0 31 4 *", "0 0 31 6 *")) {
+            Schedule schedule = Schedule.builder()
+                .id(IdUtils.create())
+                .type(Schedule.class.getName())
+                .cron(cron)
+                .build();
+
+            var violation = modelValidator.isValid(schedule);
+
+            assertThat(violation).isPresent();
+            assertThat(violation.get().getMessage()).contains("invalid cron expression", cron);
+        }
+    }
+
+    @Test
+    void shouldAcceptSatisfiableCalendarCronExpressions() {
+        for (String cron : List.of("0 0 29 2 *", "0 0 31 1 *", "0 0 30 4 *")) {
+            Schedule schedule = Schedule.builder()
+                .id(IdUtils.create())
+                .type(Schedule.class.getName())
+                .cron(cron)
+                .build();
+
+            assertThat(modelValidator.isValid(schedule)).isEmpty();
+        }
     }
 
     @Test

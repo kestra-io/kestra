@@ -101,6 +101,8 @@ export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
     tenantId?: string;
     taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
+    // Only the list endpoints return this: they map to ApiLightExecution, which carries a last-task-run summary instead of the whole taskRunList.
+    lastTaskRun?: {taskId: string; attempts: number};
     inputs?: Record<string, any>;
     variables?: Record<string, any>;
 }

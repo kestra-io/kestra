@@ -1127,7 +1127,7 @@
             "log_level": "默认日志级别",
             "log_display": "默认日志显示",
             "editor_type": "默认编辑器类型",
-            "topology_orientation": "Default Topology Orientation",
+            "topology_orientation": "默认拓扑方向",
             "execute_flow": "执行流程",
             "execute_default_tab": "默认执行选项卡",
             "flow_default_tab": "默认 Flow 标签页",
@@ -1142,7 +1142,7 @@
             "log_level": "执行日志中显示的最低日志级别。",
             "log_display": "打开执行时日志的呈现方式。",
             "editor_type": "首次打开flow时显示的编辑器。",
-            "topology_orientation": "Default orientation of the Topology panel in the flow editor.",
+            "topology_orientation": "流程编辑器中拓扑面板的默认方向。",
             "execute_flow": "触发运行后执行结果打开的位置。",
             "execute_default_tab": "导航到执行时选择的选项卡。",
             "flow_default_tab": "导航到flow时选择的选项卡。",
@@ -1157,8 +1157,8 @@
             "tab": "选项卡"
           },
           "topology_orientation_options": {
-            "vertical": "Vertical",
-            "horizontal": "Horizontal"
+            "vertical": "垂直",
+            "horizontal": "水平"
           },
           "flow_template_reset": "重置为默认值",
           "flow_template_error": {

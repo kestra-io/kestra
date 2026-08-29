@@ -1127,7 +1127,7 @@
             "log_level": "デフォルトLogレベル",
             "log_display": "デフォルトLog表示",
             "editor_type": "デフォルトエディタータイプ",
-            "topology_orientation": "Default Topology Orientation",
+            "topology_orientation": "デフォルトのトポロジーの向き",
             "execute_flow": "Flowを実行",
             "execute_default_tab": "デフォルト実行タブ",
             "flow_default_tab": "デフォルト Flow タブ",
@@ -1142,7 +1142,7 @@
             "log_level": "実行ログに表示される最小のLogレベル。",
             "log_display": "実行を開いたときにログが表示される方法。",
             "editor_type": "初めてflowを開くときに表示されるエディター。",
-            "topology_orientation": "Default orientation of the Topology panel in the flow editor.",
+            "topology_orientation": "フロー エディタのトポロジー パネルのデフォルトの向き。",
             "execute_flow": "実行結果がトリガーされた後に開く場所。",
             "execute_default_tab": "実行に移動するときに選択されたタブ。",
             "flow_default_tab": "フローに移動するときに選択されたタブ。",
@@ -1157,8 +1157,8 @@
             "tab": "タブ"
           },
           "topology_orientation_options": {
-            "vertical": "Vertical",
-            "horizontal": "Horizontal"
+            "vertical": "垂直",
+            "horizontal": "水平"
           },
           "flow_template_reset": "デフォルトにリセット",
           "flow_template_error": {

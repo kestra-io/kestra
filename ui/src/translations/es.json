@@ -1127,6 +1127,7 @@
             "log_level": "Nivel de Log Predeterminado",
             "log_display": "Visualización de Log Predeterminada",
             "editor_type": "Tipo de Editor Predeterminado",
+            "topology_orientation": "Default Topology Orientation",
             "execute_flow": "Ejecutar el Flow",
             "execute_default_tab": "Pestaña de Ejecución Predeterminada",
             "flow_default_tab": "Pestaña de Flow Predeterminada",
@@ -1141,6 +1142,7 @@
             "log_level": "Nivel mínimo de log mostrado en los logs de ejecución.",
             "log_display": "Cómo se presentan los logs al abrir una ejecución.",
             "editor_type": "Editor mostrado al abrir un flow por primera vez.",
+            "topology_orientation": "Default orientation of the Topology panel in the flow editor.",
             "execute_flow": "Dónde se abren los resultados de ejecución después de activar una ejecución.",
             "execute_default_tab": "Pestaña seleccionada al navegar a una ejecución.",
             "flow_default_tab": "Pestaña seleccionada al navegar a un flow.",
@@ -1153,6 +1155,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Pestaña"
+          },
+          "topology_orientation_options": {
+            "vertical": "Vertical",
+            "horizontal": "Horizontal"
           },
           "flow_template_reset": "Restablecer a valores predeterminados",
           "flow_template_error": {

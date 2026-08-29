@@ -1127,6 +1127,7 @@
             "log_level": "Niveau d'affichage des journaux par défaut",
             "log_display": "Affichage des journaux par défaut",
             "editor_type": "Type d'Éditeur par Défaut",
+            "topology_orientation": "Default Topology Orientation",
             "execute_flow": "Exécuter le flow",
             "execute_default_tab": "Onglet d'exécution par défaut",
             "flow_default_tab": "Onglet Flow par Défaut",
@@ -1141,6 +1142,7 @@
             "log_level": "Niveau de log minimum affiché dans les logs d'exécution.",
             "log_display": "Comment les logs sont présentés lors de l'ouverture d'une exécution.",
             "editor_type": "Éditeur affiché lors de l'ouverture d'un flow pour la première fois.",
+            "topology_orientation": "Default orientation of the Topology panel in the flow editor.",
             "execute_flow": "Où les résultats d'exécution s'ouvrent après le déclenchement d'un run.",
             "execute_default_tab": "Onglet sélectionné lors de la navigation vers une exécution.",
             "flow_default_tab": "Onglet sélectionné lors de la navigation vers un flow.",
@@ -1153,6 +1155,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Onglet"
+          },
+          "topology_orientation_options": {
+            "vertical": "Vertical",
+            "horizontal": "Horizontal"
           },
           "flow_template_reset": "Réinitialiser par défaut",
           "flow_template_error": {

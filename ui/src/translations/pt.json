@@ -1127,6 +1127,7 @@
             "log_level": "Nível de Log Padrão",
             "log_display": "Exibição de Log Padrão",
             "editor_type": "Tipo de Editor Padrão",
+            "topology_orientation": "Default Topology Orientation",
             "execute_flow": "Executar o Flow",
             "execute_default_tab": "Aba de Execução Padrão",
             "flow_default_tab": "Aba Padrão do Flow",
@@ -1141,6 +1142,7 @@
             "log_level": "Nível mínimo de log mostrado nos logs de execução.",
             "log_display": "Como os logs são apresentados ao abrir uma execução.",
             "editor_type": "Editor mostrado ao abrir um flow pela primeira vez.",
+            "topology_orientation": "Default orientation of the Topology panel in the flow editor.",
             "execute_flow": "Onde os resultados da execução abrem após acionar uma execução.",
             "execute_default_tab": "Aba selecionada ao navegar para uma execução.",
             "flow_default_tab": "Aba selecionada ao navegar para um flow.",
@@ -1153,6 +1155,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Separador"
+          },
+          "topology_orientation_options": {
+            "vertical": "Vertical",
+            "horizontal": "Horizontal"
           },
           "flow_template_reset": "Redefinir para o padrão",
           "flow_template_error": {

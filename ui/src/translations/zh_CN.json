@@ -660,6 +660,10 @@
         "title": "页面未找到",
         "content": "请求的URL未在此服务器上找到。<br />这就是我们所知道的。",
         "flow or execution": "你正在寻找的流程或执行不存在。"
+      },
+      "requestNotFound": {
+        "title": "未找到",
+        "message": "请求 {method} {url} 返回 404 Not Found。"
       }
     },
     "back_to_dashboard": "返回仪表板",

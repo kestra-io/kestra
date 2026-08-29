@@ -660,6 +660,10 @@
         "title": "페이지를 찾을 수 없음",
         "content": "요청한 URL을 이 서버에서 찾을 수 없습니다.<br />알고 있는 전부입니다.",
         "flow or execution": "찾고 있는 flow 또는 실행이 존재하지 않습니다."
+      },
+      "requestNotFound": {
+        "title": "찾을 수 없음",
+        "message": "요청 {method} {url}이(가) 404 Not Found를 반환했습니다."
       }
     },
     "back_to_dashboard": "대시보드로 돌아가기",

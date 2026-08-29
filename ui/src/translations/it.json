@@ -660,6 +660,10 @@
         "title": "Pagina non trovata",
         "content": "L'URL richiesto non è stato trovato su questo server.<br />Questo è tutto ciò che sappiamo.",
         "flow or execution": "Il flow o l'esecuzione che stai cercando non esiste."
+      },
+      "requestNotFound": {
+        "title": "Non trovato",
+        "message": "La richiesta {method} {url} ha restituito 404 Not Found."
       }
     },
     "back_to_dashboard": "Torna alla dashboard",

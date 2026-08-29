@@ -660,6 +660,10 @@
         "title": "पृष्ठ नहीं मिला",
         "content": "अनुरोधित URL इस सर्वर पर नहीं मिला।<br />यही सब हमें पता है।",
         "flow or execution": "वह flow या निष्पादन जिसे आप ढूंढ रहे हैं, मौजूद नहीं है।"
+      },
+      "requestNotFound": {
+        "title": "नहीं मिला",
+        "message": "अनुरोध {method} {url} ने 404 Not Found लौटाया।"
       }
     },
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",

@@ -660,6 +660,10 @@
         "title": "ページが見つかりません",
         "content": "リクエストされたURLはこのサーバー上に見つかりませんでした。<br />これが私たちの知っているすべてです。",
         "flow or execution": "探しているflowまたは実行は存在しません。"
+      },
+      "requestNotFound": {
+        "title": "見つかりません",
+        "message": "リクエスト {method} {url} は 404 Not Found を返しました。"
       }
     },
     "back_to_dashboard": "ダッシュボードに戻る",

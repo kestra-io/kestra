@@ -33,7 +33,7 @@ jobs:
             exit 1;
           fi
       # Checkout
-      - uses: kestra-io/actions/composite/checkout-and-auth@main
+      - uses: kestra-io/actions/composite/checkout-and-auth@propose-parallel-composite-actions
         with:
           gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -41,7 +41,7 @@ jobs:
           path: kestra
 
       # Setup build
-      - uses: kestra-io/actions/composite/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@propose-parallel-composite-actions
         id: build
         with:
           java-enabled: true

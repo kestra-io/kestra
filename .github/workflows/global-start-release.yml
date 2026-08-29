@@ -39,7 +39,7 @@ jobs:
 
       # Checkout
       - name: Checkout
-        uses: kestra-io/actions/composite/checkout-and-auth@main
+        uses: kestra-io/actions/composite/checkout-and-auth@propose-parallel-composite-actions
         with:
           gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}

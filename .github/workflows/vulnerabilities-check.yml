@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       # Setup build
-      - uses: kestra-io/actions/composite/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@propose-parallel-composite-actions
         id: build
         with:
           java-enabled: true
@@ -64,7 +64,7 @@ jobs:
           fetch-depth: 0
 
       # Setup build
-      - uses: kestra-io/actions/composite/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@propose-parallel-composite-actions
         id: build
         with:
           java-enabled: false
@@ -102,7 +102,7 @@ jobs:
           fetch-depth: 0
 
       # Setup build
-      - uses: kestra-io/actions/composite/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@propose-parallel-composite-actions
         id: build
         with:
           java-enabled: false

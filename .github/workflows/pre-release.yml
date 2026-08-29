@@ -18,7 +18,7 @@ on:
 jobs:
   build-artifacts:
     name: Build Artifacts
-    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@propose-parallel-composite-actions
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
@@ -32,7 +32,7 @@ jobs:
 
   backend-tests:
     name: Backend tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@propose-parallel-composite-actions
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +44,7 @@ jobs:
 
   frontend-tests:
     name: Frontend tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@propose-parallel-composite-actions
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,7 +52,7 @@ jobs:
 
   design-system-frontend-tests:
     name: Design System Frontend tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@propose-parallel-composite-actions
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -61,7 +61,7 @@ jobs:
     name: Publish Maven
     needs: [ backend-tests, frontend-tests, design-system-frontend-tests ]
     if: "!failure() && !cancelled()"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@propose-parallel-composite-actions
     secrets:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
@@ -90,7 +90,7 @@ jobs:
         run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
 
       - name: Generate and publish schema
-        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
+        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@propose-parallel-composite-actions
         with:
           kestra-version: ${{ github.ref_name }}
           executable-path: build/executable/kestra
@@ -100,7 +100,7 @@ jobs:
 
       - name: Slack - Schema generation failure
         if: failure()
-        uses: kestra-io/actions/composite/slack-status@main
+        uses: kestra-io/actions/composite/slack-status@propose-parallel-composite-actions
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: 'C09FF36GKE1'
@@ -109,7 +109,7 @@ jobs:
     name: Github Release
     needs: [build-artifacts, backend-tests, frontend-tests]
     if: "!failure() && !cancelled()"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@propose-parallel-composite-actions
     secrets: inherit
 
   otel-export-trace:
@@ -121,7 +121,7 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-collect@propose-parallel-composite-actions
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

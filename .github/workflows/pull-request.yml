@@ -227,7 +227,7 @@ jobs:
     name: Frontend - Tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@propose-parallel-composite-actions
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -236,7 +236,7 @@ jobs:
     name: Frontend - Design System tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui-design-system == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@propose-parallel-composite-actions
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -244,7 +244,7 @@ jobs:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@propose-parallel-composite-actions
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -264,7 +264,7 @@ jobs:
     # share artifacts (their runs hold no repo write token), so they keep
     # the E2E build-from-source fallback below.
     if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@propose-parallel-composite-actions
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
@@ -277,7 +277,7 @@ jobs:
     # Runs when build-artifacts succeeded (prebuilt exe) or was skipped for a
     # fork (falls back to building from source); not when the build failed.
     if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@propose-parallel-composite-actions
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
@@ -294,7 +294,7 @@ jobs:
     # otherwise let the reusable workflow build it from source itself.
     # Dependabot runs get a read-only GITHUB_TOKEN so it cannot publish an image : skip the job.
     if: "!cancelled() && needs.build-artifacts.result != 'failure' && github.actor != 'dependabot[bot]'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@propose-parallel-composite-actions
     with:
       java-version: 25
       skip-build: ${{ needs.build-artifacts.result == 'success' }}
@@ -308,7 +308,7 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-collect@propose-parallel-composite-actions
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

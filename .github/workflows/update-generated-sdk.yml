@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'kestra-io/kestra'
     steps:
-      - uses: kestra-io/actions/composite/checkout-and-auth@main
+      - uses: kestra-io/actions/composite/checkout-and-auth@propose-parallel-composite-actions
         name: Checkout
         with:
           gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: echo "message=$(git log -1 --format=%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: kestra-io/actions/composite/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@propose-parallel-composite-actions
         name: Setup - Build
         with:
           java-enabled: true

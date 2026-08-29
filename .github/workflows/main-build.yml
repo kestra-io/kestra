@@ -17,6 +17,7 @@ on:
           - "true"
           - "false"
 
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
@@ -30,7 +31,7 @@ jobs:
       # Targeting develop branch from develop — async, fire-and-forget full EE CI
       - name: Trigger EE Workflow (develop push, no payload)
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
-        uses: kestra-io/actions/composite/repository-dispatch@main
+        uses: kestra-io/actions/composite/repository-dispatch@propose-parallel-composite-actions
         with:
           gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -56,7 +57,7 @@ jobs:
   backend-tests:
     name: Backend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@propose-parallel-composite-actions
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -71,7 +72,7 @@ jobs:
   frontend-tests:
     name: Frontend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@propose-parallel-composite-actions
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,7 +82,7 @@ jobs:
   design-system-frontend-tests:
     name: Design System Frontend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@propose-parallel-composite-actions
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -91,7 +92,7 @@ jobs:
     name: Publish Docker
     needs: [backend-tests, frontend-tests, design-system-frontend-tests]
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@propose-parallel-composite-actions
     with:
       java-version: 25
       notify-in-slack-release-channel: false
@@ -103,7 +104,7 @@ jobs:
     name: Publish develop Maven
     needs: [ backend-tests, frontend-tests ]
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@propose-parallel-composite-actions
     secrets:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
@@ -132,7 +133,7 @@ jobs:
         run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
 
       - name: Generate and publish schema
-        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
+        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@propose-parallel-composite-actions
         with:
           kestra-version: develop
           executable-path: build/executable/kestra
@@ -142,7 +143,7 @@ jobs:
 
       - name: Slack - Schema generation failure
         if: failure()
-        uses: kestra-io/actions/composite/slack-status@main
+        uses: kestra-io/actions/composite/slack-status@propose-parallel-composite-actions
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: 'C09FF36GKE1'
@@ -159,7 +160,7 @@ jobs:
         if: ${{ contains(needs.*.result, 'failure') }}
       - name: Slack - Notification
         if: ${{ always() && contains(needs.*.result, 'failure') }}
-        uses: kestra-io/actions/composite/slack-status@main
+        uses: kestra-io/actions/composite/slack-status@propose-parallel-composite-actions
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: 'C09FF36GKE1'
@@ -174,7 +175,7 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-collect@propose-parallel-composite-actions
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

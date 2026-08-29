@@ -49,7 +49,7 @@ jobs:
 
       - name: Update PR comment
         if: steps.body.outputs.body != ''
-        uses: kestra-io/actions/actions/comment-update@main
+        uses: kestra-io/actions/actions/comment-update@propose-parallel-composite-actions
         env:
           BODY: ${{ steps.body.outputs.body }}
         with:

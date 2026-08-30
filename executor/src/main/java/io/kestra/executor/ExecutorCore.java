@@ -50,6 +50,7 @@ import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.services.ExecutionService;
@@ -64,6 +65,7 @@ import io.kestra.executor.handler.SubflowExecutionEndMessageHandler;
 import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 import io.kestra.plugin.core.flow.Loop;
+import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micrometer.core.instrument.Timer;
@@ -283,7 +285,7 @@ public class ExecutorCore {
                         (execution.getState().isFailed() || execution.getState().getCurrent().isKilled() || execution.getState().getCurrent().isCancelled()) &&
                         ListUtils.isEmpty(execution.getTaskRunList())
                 ) {
-                    sendTriggerExecutionTerminated(execution);
+                    sendTriggerExecutionTerminated(executor.getFlow(), execution);
                     this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                     emitExecutionStatistic(execution);
                     notifyExecutionTerminated(execution);
@@ -396,7 +398,7 @@ public class ExecutorCore {
 
                 // purge the trigger: reset scheduler trigger at end
                 if (execution.getTrigger() != null && !isRealtimeTriggerExecution(executor.getFlow(), execution)) {
-                    sendTriggerExecutionTerminated(execution);
+                    sendTriggerExecutionTerminated(executor.getFlow(), execution);
                 }
 
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED);
@@ -493,8 +495,16 @@ public class ExecutorCore {
         }
     }
 
-    private void sendTriggerExecutionTerminated(Execution execution) {
-        TriggerExecutionTerminated.of(execution).ifPresent(triggerEventQueue::send);
+    /**
+     * Sends {@link TriggerExecutionTerminated}, unless the scheduler does not evaluate the trigger: those hold a
+     * state but take no lock to release, so the termination would only apply {@code stopAfter} and disable them.
+     * A trigger the flow no longer declares resolves to none, as does a subflow, which records the parent task
+     * rather than a trigger.
+     */
+    private void sendTriggerExecutionTerminated(FlowWithSource flow, Execution execution) {
+        if (shouldReleaseTriggerLock(flow, execution)) {
+            TriggerExecutionTerminated.of(execution).ifPresent(triggerEventQueue::send);
+        }
     }
 
     /**
@@ -515,6 +525,26 @@ public class ExecutorCore {
         return false;
     }
 
+    /**
+     * Returns whether the termination of this execution should release its trigger's lock.
+     * <p>
+     * Only the triggers the scheduler evaluates take one. A trigger that resolves to one it does not evaluate is
+     * skipped, since the termination would only apply that trigger's {@code stopAfter}; a subflow records the
+     * parent task rather than a trigger, so it has no state at all. A trigger that cannot be resolved falls back
+     * to releasing — a flow that no longer parses carries no triggers, and a lock left held would stop the
+     * trigger from ever being scheduled again.
+     */
+    static boolean shouldReleaseTriggerLock(FlowWithSource flow, Execution execution) {
+        if (Subflow.class.getName().equals(execution.getTrigger().getType())) {
+            return false;
+        }
+        return ListUtils.emptyOnNull(flow == null ? null : flow.getTriggers()).stream()
+            .filter(trigger -> trigger.getId().equals(execution.getTrigger().getId()))
+            .findFirst()
+            .map(trigger -> TriggerType.isEvaluatedByScheduler(TriggerType.from(trigger)))
+            .orElse(true);
+    }
+
     private void processFlowTriggers(Flow flow, Execution execution) throws QueueException {
         flowTriggerProcessingTimer.record(throwRunnable(() ->
         {
@@ -530,6 +560,7 @@ public class ExecutorCore {
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
                 .toList();
             executionQueue.emit(executions);
+            executions.forEach(exec -> triggerEventQueue.send(UnscheduledTriggerFired.of(exec)));
 
             // send multiple conditions to the multiple condition queue for later processing
             List<MultipleConditionEvent> multipleConditionEvents = flowTriggerService.withFlowTriggersOnly(allFlows.stream())

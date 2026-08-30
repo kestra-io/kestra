@@ -55,6 +55,23 @@ class ScheduleValidationTest {
     }
 
     @Test
+    void shouldNotReportCronValidationForInvalidTimezone() {
+        Schedule schedule = Schedule.builder()
+            .id(IdUtils.create())
+            .type(Schedule.class.getName())
+            .cron("* * * * *")
+            .timezone("Not/AZone")
+            .build();
+
+        var violation = modelValidator.isValid(schedule);
+
+        assertThat(violation).isPresent();
+        assertThat(violation.get().getMessage())
+            .contains("not a valid time-zone ID")
+            .doesNotContain("invalid cron expression");
+    }
+
+    @Test
     void shouldAcceptSatisfiableCalendarCronExpressions() {
         for (String cron : List.of("0 0 29 2 *", "0 0 31 1 *", "0 0 30 4 *")) {
             Schedule schedule = Schedule.builder()

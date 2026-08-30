@@ -1,5 +1,9 @@
 package io.kestra.core.validations.validator;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 import com.cronutils.model.Cron;
 import com.cronutils.model.time.ExecutionTime;
 
@@ -28,7 +32,17 @@ public class ScheduleValidator implements ConstraintValidator<ScheduleValidation
         if (value.getCron() != null) { // if null, the standard @NotNull will do its job
             try {
                 Cron parsed = value.parseCron();
-                if (ExecutionTime.forCron(parsed).nextExecution(SchedulerClock.now()).isEmpty()) {
+                ZonedDateTime referenceDate = SchedulerClock.now();
+                if (value.getTimezone() != null) {
+                    try {
+                        referenceDate = referenceDate.withZoneSameInstant(ZoneId.of(value.getTimezone()));
+                    } catch (DateTimeException ignored) {
+                        // Invalid timezones are reported by @TimezoneId.
+                        return true;
+                    }
+                }
+
+                if (ExecutionTime.forCron(parsed).nextExecution(referenceDate).isEmpty()) {
                     context.disableDefaultConstraintViolation();
                     context.buildConstraintViolationWithTemplate(
                         "invalid cron expression '%s': no valid execution date exists".formatted(value.getCron())

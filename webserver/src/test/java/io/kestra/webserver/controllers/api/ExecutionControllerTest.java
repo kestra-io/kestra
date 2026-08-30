@@ -29,11 +29,15 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -64,6 +68,9 @@ class ExecutionControllerTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private AbstractJdbcTriggerRepository jdbcTriggerRepository;
 
     @Inject
     @Client("/")
@@ -194,6 +201,24 @@ class ExecutionControllerTest {
                 Execution.class
             )
         );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(exception.getMessage()).contains("the trigger 'webhook' is disabled");
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/webhook.yaml"})
+    void webhookDisabledInTriggerState() {
+        TriggerId triggerId = TriggerId.of(MAIN_TENANT, TESTS_FLOW_NS, "webhook", "webhook");
+        jdbcTriggerRepository.save(TriggerState.of(triggerId, TriggerType.UNSCHEDULED, null, true, 0));
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/a-secret-key", null),
+                Execution.class
+            )
+        );
+
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(exception.getMessage()).contains("the trigger 'webhook' is disabled");
     }

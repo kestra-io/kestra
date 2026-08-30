@@ -478,6 +478,35 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(results.stream().map(TriggerState::getTriggerId).toList()).containsExactlyInAnyOrder("A", "C", "D");
     }
 
+    @Test
+    void shouldExcludeUnscheduledTriggersFromFindTriggersEligibleForScheduling() {
+        // GIVEN a trigger the scheduler never evaluates, and one whose state predates TriggerType.UNSCHEDULED
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerStateStore.save(trigger(tenant).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).type(TriggerType.SCHEDULE).build());
+        triggerStateStore.save(trigger(tenant).triggerId("B").locked(false).vnode(0).nextEvaluationDate(null).type(TriggerType.UNSCHEDULED).build());
+        triggerStateStore.save(trigger(tenant).triggerId("C").locked(false).vnode(0).nextEvaluationDate(null).type(null).build());
+
+        // WHEN
+        List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(0), false)
+            .stream().filter(it -> tenant.equals(it.getTenantId())).toList();
+
+        // THEN
+        assertThat(results.stream().map(TriggerState::getTriggerId).toList()).containsExactlyInAnyOrder("A", "C");
+    }
+
+    @Test
+    void shouldReadTheDisabledFlagWithoutTheState() {
+        // GIVEN
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TriggerState disabled = triggerStateStore.save(trigger(tenant).disabled(true).build());
+        TriggerState enabled = triggerStateStore.save(trigger(tenant).disabled(false).build());
+
+        // WHEN - THEN a state the scheduler has not initialized yet is never a disable
+        assertThat(triggerRepository.isDisabled(TriggerId.of(disabled))).isTrue();
+        assertThat(triggerRepository.isDisabled(TriggerId.of(enabled))).isFalse();
+        assertThat(triggerRepository.isDisabled(TriggerId.of(tenant, TEST_NAMESPACE, "unknown-flow", "unknown-trigger"))).isFalse();
+    }
+
     // -------------------------------------------------------------------------
     // FiltersTestCase fixtures and parameterized tests
     // -------------------------------------------------------------------------

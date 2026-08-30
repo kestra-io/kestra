@@ -14,9 +14,11 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FlowMetaStores;
 import io.kestra.core.runners.RunContext;
@@ -44,16 +46,19 @@ public class FlowTriggerService {
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionOutputService executionOutputService;
     private final ExecutionDepthConfiguration executionDepthConfiguration;
+    private final TriggerRepositoryInterface triggerRepository;
 
     public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore,
         ExecutionOutputService executionOutputService,
-        ExecutionDepthConfiguration executionDepthConfiguration) {
+        ExecutionDepthConfiguration executionDepthConfiguration,
+        TriggerRepositoryInterface triggerRepository) {
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
         this.flowService = flowService;
         this.flowMetaStore = flowMetaStore;
         this.executionOutputService = executionOutputService;
         this.executionDepthConfiguration = executionDepthConfiguration;
+        this.triggerRepository = triggerRepository;
     }
 
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
@@ -281,7 +286,16 @@ public class FlowTriggerService {
                     flowWithFlowTrigger.getFlow(),
                     runContext
                 )
-            ).toList();
+            )
+            // Read last, once the conditions have narrowed the candidates down to the triggers this execution
+            // would actually fire: it is the only enforcement point for a flow trigger's stored disabled flag,
+            // and it costs a lookup per candidate.
+            .filter(
+                flowWithFlowTrigger -> !triggerRepository.isDisabled(
+                    TriggerId.of(flowWithFlowTrigger.getFlow(), flowWithFlowTrigger.getTrigger())
+                )
+            )
+            .toList();
     }
 
     @AllArgsConstructor

@@ -21,6 +21,7 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -28,10 +29,13 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FlowMetaStores;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionStreamingService;
 import io.kestra.core.services.LabelService;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
+import io.kestra.webserver.services.TriggerStateService;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -56,11 +60,18 @@ public class McpToolService {
     private final FlowInputOutput flowInputOutput;
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionOutputService executionOutputService;
+    private final TriggerStateService triggerStateService;
+    private final TriggerEventQueue triggerEventQueue;
     private final Cache<ToolHandlerCacheKey, McpServerFeatures.AsyncToolSpecification> asyncToolSpecificationCache;
 
     private static final McpSchema.CallToolResult FLOW_ERROR_CALL_TOOL_RESULT = McpSchema.CallToolResult.builder()
         .isError(true)
         .addTextContent("Failed to execute flow")
+        .build();
+
+    private static final McpSchema.CallToolResult DISABLED_TRIGGER_CALL_TOOL_RESULT = McpSchema.CallToolResult.builder()
+        .isError(true)
+        .addTextContent("The trigger exposing this tool is disabled")
         .build();
 
     public McpToolService(
@@ -71,7 +82,9 @@ public class McpToolService {
         McpConfig mcpConfig,
         FlowInputOutput flowInputOutput,
         FlowMetaStoreInterface flowMetaStore,
-        ExecutionOutputService executionOutputService) {
+        ExecutionOutputService executionOutputService,
+        TriggerStateService triggerStateService,
+        TriggerEventQueue triggerEventQueue) {
         this.executionCommandQueue = executionCommandQueue;
         this.flowRepositoryInterface = flowRepositoryInterface;
         this.flowToolSchemaMapper = flowToolSchemaMapper;
@@ -81,6 +94,8 @@ public class McpToolService {
         this.flowInputOutput = flowInputOutput;
         this.flowMetaStore = flowMetaStore;
         this.executionOutputService = executionOutputService;
+        this.triggerStateService = triggerStateService;
+        this.triggerEventQueue = triggerEventQueue;
         asyncToolSpecificationCache = Caffeine.newBuilder()
             .maximumSize(mcpConfig.toolCacheConfig().maximumSize())
             .expireAfterAccess(mcpConfig.toolCacheConfig().expireAfterAccess())
@@ -96,6 +111,7 @@ public class McpToolService {
                         Objects.requireNonNullElse(((McpToolTrigger) trigger).getMcpServer(), McpToolTrigger.DEFAULT_SERVER_ID)
                     )
                 )
+                .filter(trigger -> !isDisabledInTriggerState(flow, trigger))
                 .map(trigger -> getAsyncToolSpecification(flow, (McpToolTrigger) trigger))
         ).toList();
     }
@@ -124,6 +140,12 @@ public class McpToolService {
 
         return (exchange, request) ->
         {
+            // Re-checked on every call: the tool specification is cached and its list is only refreshed on a
+            // flow change, so a trigger state disabled in between would otherwise leave the tool callable.
+            if (isDisabledInTriggerState(flow, toolTrigger)) {
+                return Mono.just(DISABLED_TRIGGER_CALL_TOOL_RESULT);
+            }
+
             Map<String, Object> input = request.arguments().entrySet().stream()
                 .filter(entry -> defaultsInputs.contains(entry.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -217,6 +239,7 @@ public class McpToolService {
                     .withLabels(execution.getLabels())
                     .withInputs(execution.getInputs())
             );
+            triggerEventQueue.send(UnscheduledTriggerFired.of(execution));
             eventPublisher.publishEvent(CrudEvent.create(execution));
 
             String subscriberId = UUID.randomUUID().toString();
@@ -255,6 +278,10 @@ public class McpToolService {
 
     private static Predicate<AbstractTrigger> isMcpTriggerTypeAndEnabledPredicate() {
         return trigger -> trigger.getClass().equals(McpToolTrigger.class) && !trigger.isDisabled();
+    }
+
+    private boolean isDisabledInTriggerState(Flow flow, AbstractTrigger trigger) {
+        return triggerStateService.isDisabledByState(TriggerId.of(flow, trigger));
     }
 
     private record ToolHandlerCacheKey(

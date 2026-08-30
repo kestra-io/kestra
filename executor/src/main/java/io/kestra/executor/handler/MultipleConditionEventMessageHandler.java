@@ -11,6 +11,8 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.MessageHandler;
 
@@ -24,15 +26,18 @@ public class MultipleConditionEventMessageHandler implements MessageHandler<Mult
     private final FlowTriggerService flowTriggerService;
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+    private final TriggerEventQueue triggerEventQueue;
 
     @Inject
     public MultipleConditionEventMessageHandler(
         FlowTriggerService flowTriggerService,
         MultipleConditionStateStore multipleConditionStateStore,
-        DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
+        TriggerEventQueue triggerEventQueue) {
         this.flowTriggerService = flowTriggerService;
         this.multipleConditionStateStore = multipleConditionStateStore;
         this.executionCommandQueue = executionCommandQueue;
+        this.triggerEventQueue = triggerEventQueue;
     }
 
     @Override
@@ -60,6 +65,7 @@ public class MultipleConditionEventMessageHandler implements MessageHandler<Mult
                         cmd = cmd.withStateType(exec.getState().getCurrent());
                     }
                     executionCommandQueue.emit(cmd);
+                    triggerEventQueue.send(UnscheduledTriggerFired.of(exec));
                 } catch (QueueException e) {
                     log.error("Unable to emit the execution {}", exec.getId(), e);
                 }

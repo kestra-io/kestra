@@ -179,11 +179,15 @@ public class TriggerStateService {
      * @throws ValidationErrorException if the backfill window is empty, which the scheduler would otherwise
      *                                  accept and then immediately discard.
      * @throws NotFoundException if the trigger does not exist.
-     * @throws ConflictException if the backfill cannot be created.
+     * @throws ConflictException if the trigger is one the scheduler does not evaluate, or if the backfill
+     *         cannot be created.
      */
     public TriggerState createBackfill(TriggerId triggerId, CreateBackfillTrigger.Backfill backfill) throws NotFoundException, ConflictException {
         validateBackfillWindow(backfill);
-        getTriggerState(triggerId);
+        TriggerState state = getTriggerState(triggerId);
+        if (!TriggerType.isEvaluatedByScheduler(state.getType())) {
+            throw new ConflictException("trigger %s is not evaluated by the scheduler, it cannot be backfilled".formatted(triggerId));
+        }
         awaitBlockingAction(
             triggerId.uid(),
             operationId -> triggerEventQueue.send(new CreateBackfillTrigger(triggerId, backfill).withOperationId(operationId)),
@@ -334,15 +338,7 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         List<TriggerId> toggleable = triggers.stream()
-            .filter(id ->
-            {
-                try {
-                    validateToggleable(id);
-                    return true;
-                } catch (NotFoundException e) {
-                    return false;
-                }
-            })
+            .filter(this::isFlowBackedTrigger)
             .toList();
         return submitBatch(
             toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId))

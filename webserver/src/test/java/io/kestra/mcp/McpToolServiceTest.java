@@ -21,8 +21,12 @@ import io.kestra.core.models.flows.input.DateInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -71,6 +75,9 @@ class McpToolServiceTest {
 
     @Inject
     FlowRepositoryInterface flowRepository;
+
+    @Inject
+    AbstractJdbcTriggerRepository jdbcTriggerRepository;
 
     @BeforeEach
     void beforeEach() {
@@ -192,6 +199,43 @@ class McpToolServiceTest {
 
         // Then
         assertThat(tools).isEmpty();
+    }
+
+    @Test
+    void shouldReturnNoToolSpecsWhenMcpToolTriggerIsDisabledInTriggerState() {
+        // Given a trigger enabled in the flow source but disabled in its trigger state
+        FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
+        jdbcTriggerRepository.save(
+            TriggerState.of(TriggerId.of(savedFlow, MCP_TRIGGER_ONE), TriggerType.UNSCHEDULED, null, true, 0)
+        );
+
+        // When
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+
+        // Then
+        assertThat(tools).isEmpty();
+    }
+
+    @Test
+    void shouldRejectToolCallWhenMcpToolTriggerIsDisabledInTriggerState() {
+        // Given a tool whose specification was built and cached while the trigger was enabled
+        FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
+        McpServerFeatures.AsyncToolSpecification tool = mcpToolService
+            .listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE)
+            .getFirst();
+
+        // When the trigger state is disabled, which does not refresh the tool cache
+        jdbcTriggerRepository.save(
+            TriggerState.of(TriggerId.of(savedFlow, MCP_TRIGGER_ONE), TriggerType.UNSCHEDULED, null, true, 0)
+        );
+
+        // Then the cached handler refuses the call instead of creating an execution
+        McpSchema.CallToolResult result = tool.callHandler()
+            .apply(null, new McpSchema.CallToolRequest(MCP_TRIGGER_ONE.getToolName(), Map.of(), null))
+            .block();
+
+        assertThat(result).isNotNull();
+        assertThat(result.isError()).isTrue();
     }
 
     @Test

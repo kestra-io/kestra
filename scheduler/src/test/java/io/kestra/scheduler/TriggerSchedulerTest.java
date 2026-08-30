@@ -33,6 +33,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
@@ -112,6 +113,28 @@ class TriggerSchedulerTest {
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
+    }
+
+    @Test
+    void shouldCreateUnscheduledTriggerStateOnStartGivenWebhookTrigger() {
+        // region [GIVEN]
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            Webhook.builder().id("webhook").type(Webhook.class.getName()).key("some-key").build()
+        );
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN the triggers API can list it, and the scheduler leaves it alone
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("webhook")).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.getType()).isEqualTo(TriggerType.UNSCHEDULED);
+        assertThat(state.getNextEvaluationDate()).isNull();
+        assertThat(state.getEvaluatedAt()).isNull();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
 
     @Test

@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.reactivestreams.Publisher;
 
+import io.kestra.core.utils.AuthUtils;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.*;
@@ -53,8 +54,11 @@ public class BasicAuthEndpointsFilter implements HttpServerFilter {
 
             final String[] values = credentials.split(":", 2);
             if (values.length == 2) {
-                return this.endpointBasicAuthConfiguration.getUsername().equals(values[0]) &&
-                    this.endpointBasicAuthConfiguration.getPassword().equals(values[1]);
+                // Compare both operands without short-circuiting so a wrong username cannot be
+                // distinguished from a wrong password by response time (GHSA-38rc-2jxj-2h75).
+                boolean usernameMatches = AuthUtils.constantTimeEquals(this.endpointBasicAuthConfiguration.getUsername(), values[0]);
+                boolean passwordMatches = AuthUtils.constantTimeEquals(this.endpointBasicAuthConfiguration.getPassword(), values[1]);
+                return usernameMatches & passwordMatches;
             }
         }
 

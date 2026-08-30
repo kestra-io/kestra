@@ -135,7 +135,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, onUnmounted} from "vue";
-    import moment from "moment";
+    import {date as dateFilter} from "../../utils/filters";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     // @ts-expect-error no types yet
@@ -165,6 +165,9 @@
     } from "../filter/utils/logLevelQuery";
     import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
     import {useExecutionsStore, type Execution} from "../../stores/executions";
+
+    // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
+    const TICK_FORMAT = "HH:mm:ss";
 
     interface TaskRun {
         id: string;
@@ -397,15 +400,13 @@
 
     const startTime = computed<string>(() => {
         if (!execution.value) return "";
-        return moment(execution.value.state.histories![0].date).format("HH:mm:ss");
+        return dateFilter(execution.value.state.histories![0].date, TICK_FORMAT);
     });
 
     const endTime = computed<string>(() => {
-        if (!execution.value) return "";
-        const endDate = State.isRunning(execution.value.state.current)
-            ? new Date()
-            : new Date(stop());
-        return moment(endDate).format("HH:mm:ss");
+        if (!execution.value || !hasValidDate.value) return "";
+        const endDate = State.isRunning(execution.value.state.current) ? Date.now() : stop();
+        return dateFilter(endDate, TICK_FORMAT);
     });
 
     // Methods
@@ -507,8 +508,15 @@
     }
 
     function computeDates(): void {
+        // An execution cancelled or failed before any task started has no span to divide, so
+        // `delta()` is non-finite and every tick would be an unusable placeholder.
+        if (!hasValidDate.value) {
+            dates.value = [];
+            return;
+        }
+
         const ticks = 5;
-        const formatDate = (timestamp: number): string => moment(timestamp).format("h:mm:ss");
+        const formatDate = (timestamp: number): string => dateFilter(timestamp, TICK_FORMAT);
         const startVal = start.value;
         const deltaVal = delta() / ticks;
         const newDates: string[] = [];

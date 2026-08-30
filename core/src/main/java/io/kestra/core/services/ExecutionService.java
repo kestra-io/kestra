@@ -227,8 +227,9 @@ public class ExecutionService {
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException(
-                "Execution must be terminated or paused and not killed to be restarted, " +
-                    "current state is '" + execution.getState().getCurrent() + "' !"
+                "Execution must be terminated and not killed to be restarted, " +
+                    "current state is '" + execution.getState().getCurrent() + "' ! " +
+                    "A paused execution can only be resumed or killed."
             );
         }
 

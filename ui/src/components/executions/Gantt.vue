@@ -97,6 +97,7 @@
     import {State} from "@kestra-io/ui-libs"
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
+    import {date as dateFilter} from "../../utils/filters";
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
@@ -109,6 +110,8 @@
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50;
+    // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
+    const TICK_FORMAT = "HH:mm:ss";
     export default {
         components: {
             DynamicScroller,
@@ -315,7 +318,7 @@
             },
             computeDates() {
                 const ticks = 5;
-                const date = ts => this.$moment(ts).format("h:mm:ss");
+                const date = ts => dateFilter(ts, TICK_FORMAT);
                 const start = this.start;
                 const delta = this.delta() / ticks;
                 const dates = [];

@@ -34,7 +34,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -319,35 +318,21 @@ public class FlowService {
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
-            FlowService.findUpdatedTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-            FlowService.findNewTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-            FlowService.findUnchangedTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerFlowRevisionUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
+            FlowService.findUpdatedTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
+            FlowService.findNewTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
+            FlowService.findUnchangedTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerFlowRevisionUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+            );
             return;
         }
 
-        if (flow.getTriggers() != null) {
-            flow.getTriggers()
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-        }
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(
+            trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+        );
     }
 
     private void updateConcurrencyLimit(FlowWithSource flow) {

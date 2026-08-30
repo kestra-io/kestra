@@ -158,11 +158,11 @@ public class TriggerScheduler {
             .map(this::parseForTriggerOrSkip)
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
-            .flatMap(
-                flow -> flow.getTriggers().stream()
-                    .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                    .map(trigger -> Pair.of(flow, trigger))
-            )
+            // Every trigger, not only the ones the scheduler evaluates: a state is also what makes a trigger
+            // listable and toggleable, and this is the only path that creates one for a flow that already
+            // existed. An unscheduled trigger gets a state with no next evaluation date, so the scheduling
+            // loop never picks it up.
+            .flatMap(flow -> flow.getTriggers().stream().map(trigger -> Pair.of(flow, trigger)))
             .distinct()
             .forEach(flowAndTrigger ->
             {

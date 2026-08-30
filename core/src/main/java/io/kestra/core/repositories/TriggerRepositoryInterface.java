@@ -26,6 +26,20 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
     Optional<TriggerState> findById(TriggerId trigger);
 
     /**
+     * Returns whether the given trigger is disabled in its persisted {@link TriggerState}.
+     * <p>
+     * This is the disabled flag the scheduler owns, as opposed to the one the flow source declares. The
+     * scheduler enforces it for the triggers it evaluates; a trigger it does not evaluate is only stopped by it
+     * where it fires, so its consumer has to check it there. A missing state means the scheduler has not
+     * initialized it yet, which is never a disable.
+     *
+     * @param trigger the identifier.
+     */
+    default boolean isDisabled(TriggerId trigger) {
+        return findById(trigger).map(TriggerState::isDisabled).orElse(false);
+    }
+
+    /**
      * Finds all trigger states for the given tenant id
      *
      * @param tenantId the tenant identifier - cannot be {@code null}

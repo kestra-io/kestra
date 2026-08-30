@@ -46,6 +46,7 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
+import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
@@ -125,6 +126,7 @@ public class TriggerEventHandler {
             case TriggerFlowRevisionUpdated evt -> onTriggerFlowRevisionUpdated(evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
+            case UnscheduledTriggerFired evt -> onUnscheduledTriggerFired(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
             case TriggerWorkerLost evt -> onTriggerWorkerLost(clock, evt);
             // Commands
@@ -239,7 +241,7 @@ public class TriggerEventHandler {
                 .disabled(clock, event.disabled());
             // if the trigger is re-enabled, re-compute the next evaluation date so missed schedules
             // are not backfilled, unless the event requests a specific recovery behavior.
-            if (wasDisabled && !event.disabled()) {
+            if (wasDisabled && !event.disabled() && TriggerType.isEvaluatedByScheduler(state.getType())) {
                 Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
                 if (data.getRight() != null) {
                     state = updateForReEnabledTrigger(clock, state, data.getLeft(), data.getRight(), event.recoverMissedSchedules());
@@ -417,6 +419,26 @@ public class TriggerEventHandler {
     }
 
     /**
+     * Handler method for {@link UnscheduledTriggerFired}.
+     * <p>
+     * Records the execution a trigger the scheduler does not evaluate has just created. Unlike a scheduled
+     * trigger, whose execution id is cleared by {@link TriggerExecutionTerminated} when the execution holding
+     * its lock ends, this one takes no lock: the id stays as the last execution the trigger created.
+     *
+     * @param event the event.
+     */
+    void onUnscheduledTriggerFired(Clock clock, UnscheduledTriggerFired event) {
+        findTriggerState(event).ifPresent(
+            state -> triggerStateStore.save(
+                state
+                    .lastEventId(clock, event.eventId())
+                    .lastTriggeredDate(clock)
+                    .executionId(clock, event.executionId())
+            )
+        );
+    }
+
+    /**
      * Handler method for {@link TriggerReceived}.
      *
      * @param event the event.
@@ -506,8 +528,10 @@ public class TriggerEventHandler {
                 maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight())
-                    .updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
+                    .update(clock, data.getRight());
+                if (TriggerType.isEvaluatedByScheduler(state.getType())) {
+                    state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
+                }
                 triggerStateStore.save(state);
             }
         });
@@ -581,7 +605,9 @@ public class TriggerEventHandler {
             TriggerState state = TriggerState
                 .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
                 .lastEventId(clock, event.eventId());
-            state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
+            if (TriggerType.isEvaluatedByScheduler(state.getType())) {
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
+            }
             triggerStateStore.save(state);
         }
     }

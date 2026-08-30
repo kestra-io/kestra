@@ -182,6 +182,29 @@ class ErrorControllerTest {
     }
 
     @Test
+    void shouldNotLeakTheQueryWhenAnErrorComesFromTheDatabase() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/test-utils/failing-with-sql-error")
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(INTERNAL_SERVER_ERROR.getCode());
+
+        String response = exception.getResponse().getBody(String.class).get();
+        assertThat(response).contains("Internal server error");
+        assertThat(response).doesNotContain("queues");
+        assertThat(response).doesNotContain("OFFSET must not be negative");
+
+        boolean foundAMatchingErrorLog = appender.getLogs().stream()
+            .anyMatch(
+                log -> log.getLevel() == Level.ERROR &&
+                    log.getFormattedMessage().contains("OFFSET must not be negative")
+            );
+        assertThat(foundAMatchingErrorLog).withFailMessage("Expected the query to be logged for a server error").isEqualTo(true);
+    }
+
+    @Test
     void clientError500_withNoErrorMessage() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(

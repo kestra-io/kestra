@@ -1,7 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import java.sql.SQLException;
-
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -27,18 +25,6 @@ public class TestUtilsController {
     public String failingWith500ServerError() {
         if (true) {
             throw new RuntimeException("an unhandled server error message");
-        }
-        return "";
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/failing-with-sql-error", produces = "application/json")
-    public String failingWithSqlError() {
-        if (true) {
-            throw new RuntimeException(
-                "SQL [select \"queues\".\"value\" from \"queues\"]; OFFSET must not be negative",
-                new SQLException("OFFSET must not be negative")
-            );
         }
         return "";
     }

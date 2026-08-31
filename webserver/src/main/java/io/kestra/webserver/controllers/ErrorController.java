@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -264,28 +263,9 @@ public class ErrorController {
             log.debug("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         }
 
-        String message = isCausedBySql(e) ? null : e.getMessage();
-
-        JsonError error = new JsonError(reason + (message != null ? ": " + message : ""))
+        JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))
             .link(Link.SELF, Link.of(request.getUri()));
 
         return jsonError(error, status, reason);
-    }
-
-    /**
-     * A failed query surfaces as an exception whose message embeds the statement that failed, so the message is
-     * dropped from the response and only logged: it exposes table and column names to the caller.
-     */
-    private static boolean isCausedBySql(Throwable throwable) {
-        Throwable current = throwable;
-
-        while (current != null) {
-            if (current instanceof SQLException) {
-                return true;
-            }
-            current = current.getCause() == current ? null : current.getCause();
-        }
-
-        return false;
     }
 }

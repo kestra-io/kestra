@@ -152,6 +152,7 @@
     import FilterChip from "./layout/FilterChip.vue"
 
     import {buildNewFilter} from "./utils/filterChipFactory"
+    import {SAME_ROW_TOLERANCE_PX} from "./utils/constants"
     import {type AppliedFilter, type FilterKeyConfig} from "./utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
@@ -264,21 +265,27 @@
     const isLastConditional = (index: number) =>
         globalFilters.value.length > 0 && index === conditionalFilters.value.length - 1
 
-    const SAME_ROW_TOLERANCE = 4
+    const chipElement = (id?: string): HTMLElement | undefined =>
+        id ? chipRefs.value[id]?.$el : undefined
+
+    const centreOf = (element: HTMLElement) => {
+        const box = element.getBoundingClientRect()
+        return (box.top + box.bottom) / 2
+    }
 
     const measureGroupSeparator = () => {
-        const root = tokensRef.value
-        const before = root?.querySelector(".ends-conditional-group")
-        const after = before?.nextElementSibling
+        const before = chipElement(conditionalFilters.value.at(-1)?.id)
+        const after = chipElement(globalFilters.value[0]?.id)
         if (!before || !after) {
             isGroupSeparatorVisible.value = false
             return
         }
-        const beforeBox = before.getBoundingClientRect()
-        const afterBox = after.getBoundingClientRect()
-        const centre = (box: DOMRect) => (box.top + box.bottom) / 2
-        isGroupSeparatorVisible.value = Math.abs(centre(beforeBox) - centre(afterBox)) <= SAME_ROW_TOLERANCE
+        isGroupSeparatorVisible.value = Math.abs(centreOf(before) - centreOf(after)) <= SAME_ROW_TOLERANCE_PX
     }
+
+    const separatorPair = computed(() =>
+        `${conditionalFilters.value.at(-1)?.id ?? ""}|${globalFilters.value[0]?.id ?? ""}|${isComplex.value}`,
+    )
 
     let separatorObserver: ResizeObserver | undefined
     onMounted(() => {
@@ -290,7 +297,7 @@
         nextTick(measureGroupSeparator)
     })
     onBeforeUnmount(() => separatorObserver?.disconnect())
-    watch([globalFilters, conditionalFilters, isComplex], () => nextTick(measureGroupSeparator))
+    watch(separatorPair, () => nextTick(measureGroupSeparator))
 </script>
 
 <style lang="scss" scoped>
@@ -304,6 +311,8 @@
     flex-shrink: 0;
 }
 
+/* The border box is always present and only its colour toggles, so drawing the rule cannot
+   change the layout that decides whether to draw it. */
 .filter-chip-wrap.ends-conditional-group {
     padding-right: var(--ks-spacing-2);
     border-right: 1px solid transparent;

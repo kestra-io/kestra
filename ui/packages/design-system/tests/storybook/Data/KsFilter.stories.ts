@@ -3,6 +3,7 @@ import {provide, ref, shallowReactive} from "vue"
 import {createMemoryHistory, createRouter, routeLocationKey, routerKey, START_LOCATION} from "vue-router"
 import {expect, waitFor} from "storybook/test"
 import KsFilter from "../../../src/components/Data/KsDataTable/KsFilter.vue"
+import {SAME_ROW_TOLERANCE_PX} from "../../../src/components/Data/KsDataTable/filter/utils/constants"
 
 const meta: Meta<typeof KsFilter> = {
     title: "Components/Data/KsFilter",
@@ -404,6 +405,21 @@ export const WithTableOptions: Story = {
     }),
 }
 
+const TRANSPARENT = "rgba(0, 0, 0, 0)"
+
+/** The element that carries the rule between the conditional and the global chips. */
+const groupSeparator = (canvasElement: HTMLElement) => {
+    const element = canvasElement.querySelector<HTMLElement>(".filter .ends-conditional-group")
+    if (!element) throw new Error("nothing carries the group separator yet")
+    return element
+}
+
+const chipCentres = (canvasElement: HTMLElement) =>
+    [...canvasElement.querySelectorAll<HTMLElement>(".filter .filter-chip-wrap")].map((wrap) => {
+        const box = wrap.getBoundingClientRect()
+        return (box.top + box.bottom) / 2
+    })
+
 /**
  * A bar narrow enough that the chips wrap onto several rows, with a `groupable: false`
  * key applied so a global chip is among them. Every wrapped row starts at the same left
@@ -451,6 +467,53 @@ export const WithWrappedRows: Story = {
 
         expect(leftPerRow.size).toBeGreaterThan(1)
         expect([...new Set(leftPerRow.values())]).toHaveLength(1)
+
+        // The global chip is on its own row here, so the group rule must not be drawn.
+        const [conditional, global] = chipCentres(canvasElement)
+        expect(Math.abs(conditional - global)).toBeGreaterThan(SAME_ROW_TOLERANCE_PX)
+        await waitFor(() =>
+            expect(getComputedStyle(groupSeparator(canvasElement)).borderRightColor).toBe(TRANSPARENT),
+        )
+    },
+}
+
+/**
+ * The same filters on a bar wide enough to keep the conditional and the global chip on one row,
+ * which is the only case where the rule between the two groups is drawn.
+ */
+export const WithGlobalSeparator: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[namespace][STARTS_WITH]": "company",
+                "filters[timeRange][EQUALS]": "PT24H",
+            })
+            const buttons = {savedFilters: {shown: false}, tableOptions: {shown: false}}
+            const tableOptions = {columns: {shown: false}, refresh: {shown: false}}
+            return {ready, configuration: GLOBAL_KEY_CONFIGURATION, buttons, tableOptions}
+        },
+        template: `
+            <div style="padding: 24px; width: 1000px">
+                <KsFilter
+                    v-if="ready"
+                    :configuration="configuration"
+                    :buttons="buttons"
+                    :tableOptions="tableOptions"
+                />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        await waitFor(() => {
+            const centres = chipCentres(canvasElement)
+            if (centres.length < 2) throw new Error(`expected 2 chips, rendered ${centres.length}`)
+            expect(Math.abs(centres[0] - centres[1])).toBeLessThanOrEqual(SAME_ROW_TOLERANCE_PX)
+        })
+
+        await waitFor(() =>
+            expect(getComputedStyle(groupSeparator(canvasElement)).borderRightColor).not.toBe(TRANSPARENT),
+        )
     },
 }
 

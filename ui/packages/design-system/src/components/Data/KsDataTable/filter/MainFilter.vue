@@ -1,5 +1,5 @@
 <template>
-    <div ref="containerRef" class="filter-container">
+    <div ref="tokensRef" class="filter-tokens">
         <KsPopover
             v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
@@ -157,7 +157,7 @@
 
     const {t} = useI18n({useScope: "global"})
 
-    const containerRef = ref<HTMLElement | null>(null)
+    const tokensRef = ref<HTMLElement | null>(null)
     const isGroupSeparatorVisible = ref(false)
 
     const isCustomizeFiltersVisible = ref(false)
@@ -267,7 +267,7 @@
     const SAME_ROW_TOLERANCE = 4
 
     const measureGroupSeparator = () => {
-        const root = containerRef.value
+        const root = tokensRef.value
         const before = root?.querySelector(".ends-conditional-group")
         const after = before?.nextElementSibling
         if (!before || !after) {
@@ -282,7 +282,7 @@
 
     let separatorObserver: ResizeObserver | undefined
     onMounted(() => {
-        const observed = containerRef.value?.parentElement
+        const observed = tokensRef.value?.parentElement
         if (observed && typeof ResizeObserver !== "undefined") {
             separatorObserver = new ResizeObserver(() => measureGroupSeparator())
             separatorObserver.observe(observed)
@@ -294,7 +294,7 @@
 </script>
 
 <style lang="scss" scoped>
-.filter-container {
+.filter-tokens {
     --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     display: contents;

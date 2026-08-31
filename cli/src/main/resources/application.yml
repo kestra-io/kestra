@@ -9,10 +9,6 @@ micronaut:
       swagger:
         paths: classpath:META-INF/swagger
         mapping: /swagger/**
-      ui:
-        paths: classpath:ui
-        mapping: /ui/**
-        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**
@@ -177,7 +173,6 @@ kestra:
         - "/api/v1/executions/webhook/"
         - "/api/v1/main/executions/webhook/"
         - "/api/v1/*/executions/webhook/"
-        - "/api/v1/basicAuthValidationErrors"
 
     preview:
       initial-rows: 100

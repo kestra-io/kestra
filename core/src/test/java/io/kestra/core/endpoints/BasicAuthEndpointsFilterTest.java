@@ -75,6 +75,16 @@ class BasicAuthEndpointsFilterTest {
 
             assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
         });
+
+        test(true, (client, httpRequest) ->
+        {
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+            {
+                client.toBlocking().exchange(httpRequest.basicAuth("wrongUser", "bar"));
+            });
+
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        });
     }
 
     @Test

@@ -1585,7 +1585,9 @@
       "raw": "Visualização temporal",
       "raw_details": "Mostrar logs de task e logs de flow completos em um formato bruto e ordenado por timestamp",
       "compact": "Visualização padrão",
-      "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task"
+      "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task",
+      "fullscreen": "Logs em ecrã inteiro",
+      "exit_fullscreen": "Sair do modo de tela cheia"
     },
     "execution_deletion": {
       "logs": "Excluir logs",

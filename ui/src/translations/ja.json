@@ -1585,7 +1585,9 @@
       "raw": "Temporalビュー",
       "raw_details": "Task logsとflow logsを、タイムスタンプ順の生の形式で表示します",
       "compact": "デフォルトビュー",
-      "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示"
+      "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示",
+      "fullscreen": "Logsを全画面表示",
+      "exit_fullscreen": "フルスクリーンを終了"
     },
     "execution_deletion": {
       "logs": "ログを削除",

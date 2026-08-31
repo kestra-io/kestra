@@ -1585,7 +1585,9 @@
       "raw": "Vue temporelle",
       "raw_details": "Afficher les logs complets des tasks et des flows dans un format brut, trié par horodatage",
       "compact": "Vue par défaut",
-      "compact_details": "Affiche les logs dans un format compacte regroupé par tâche"
+      "compact_details": "Affiche les logs dans un format compacte regroupé par tâche",
+      "fullscreen": "Logs en plein écran",
+      "exit_fullscreen": "Quitter le mode plein écran"
     },
     "execution_deletion": {
       "logs": "Supprimer les journaux",

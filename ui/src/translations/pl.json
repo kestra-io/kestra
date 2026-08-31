@@ -1585,7 +1585,9 @@
       "raw": "Widok czasowy",
       "raw_details": "Pokaż pełne logi Tasków i logi Flow w surowym formacie, uporządkowane po znaczniku czasu",
       "compact": "Widok domyślny",
-      "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska"
+      "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska",
+      "fullscreen": "Logs na pełnym ekranie",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
     },
     "execution_deletion": {
       "logs": "Usuń logi",

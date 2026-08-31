@@ -1585,7 +1585,9 @@
       "raw": "Temporal 보기",
       "raw_details": "원시 타임스탬프 순서 형식으로 전체 task log 및 flow log를 표시합니다.",
       "compact": "기본 보기",
-      "compact_details": "각 task별로 그룹화된 간결한 보기로 task logs 표시"
+      "compact_details": "각 task별로 그룹화된 간결한 보기로 task logs 표시",
+      "fullscreen": "Logs 전체 화면으로 보기",
+      "exit_fullscreen": "전체 화면 종료"
     },
     "execution_deletion": {
       "logs": "Logs 삭제",

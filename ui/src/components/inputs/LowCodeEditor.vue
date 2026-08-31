@@ -331,13 +331,16 @@
         return result
     })
 
-    // A graph node's task comes from forExecution(), which keeps only id, type, version and
-    // children. Source fills those stripped properties back in without overwriting the ones the
-    // node carries: it is the flow's latest revision, or an unsaved draft, so it must not restate
-    // what an older revision actually ran with.
+    // A graph node's task comes from forExecution(), so source fills back in what it drops without
+    // overwriting what the executed revision carried — the source is the flow's latest revision, or
+    // an unsaved draft. The exception is the two keys forExecution() REDUCES rather than drops:
+    // `tasks` is the children flattened to id and type, and `taskRunner` is re-injected into the
+    // node with only its type, so the node's copy of either is a skeleton and source keeps them.
     const taskWithSource = (task: Record<string, any> | undefined) => {
         const fromSource = task?.id ? sourceTaskById.value[task.id] : undefined
-        return fromSource ? {...fromSource, ...task} : task
+        if (!task || !fromSource) return task
+        const {tasks: _tasks, taskRunner: _taskRunner, ...executed} = task
+        return {...fromSource, ...executed}
     }
 
     const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")

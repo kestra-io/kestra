@@ -900,6 +900,7 @@
       },
       "export": "Exporter les fichiers de l'espace de noms",
       "export_single": "Exporter le fichier",
+      "export_error": "Impossible d'exporter \"{name}\". Son chemin n'a pas pu être résolu.",
       "dialog": {
         "name": {
           "file": "Nom avec extension :",

@@ -900,6 +900,7 @@
       },
       "export": "Export namespace files",
       "export_single": "Export file",
+      "export_error": "Could not export \"{name}\". Its path could not be resolved.",
       "dialog": {
         "name": {
           "file": "Name with extension:",

@@ -22,6 +22,7 @@
                 :readOnly="readOnly"
                 :filterType="filterType"
                 wrap
+                class="labels-popover"
                 data-test="labels-overflow-content"
             />
             <template #reference>
@@ -67,8 +68,9 @@
         },
     )
 
-    const visibleLabels = computed(() => (props.max > 0 ? props.labels.slice(0, props.max) : props.labels))
-    const hiddenLabels = computed(() => (props.max > 0 ? props.labels.slice(props.max) : []))
+    const overflows = computed(() => props.max > 0 && props.labels.length > props.max + 1)
+    const visibleLabels = computed(() => (overflows.value ? props.labels.slice(0, props.max) : props.labels))
+    const hiddenLabels = computed(() => (overflows.value ? props.labels.slice(props.max) : []))
 
     const text = (label: Label) => {
         const value = label.display ?? label.value
@@ -175,7 +177,7 @@
     cursor: pointer;
 }
 
-.labels-container.wrap .label.kel-check-tag {
+.labels-popover .label.kel-check-tag {
     max-width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;

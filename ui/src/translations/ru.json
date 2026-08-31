@@ -677,6 +677,7 @@
     "label": "Метка",
     "labels": "Метки",
     "execution labels": "Метки выполнения",
+    "show more labels": "Показать еще {count} меток",
     "wrong labels": "Пустой key или value не допускается в метках",
     "feeds": {
       "heading": "Все о Kestra.",
@@ -900,6 +901,7 @@
       },
       "export": "Экспортировать файлы namespace",
       "export_single": "Экспортировать файл",
+      "export_error": "Не удалось экспортировать \"{name}\". Не удалось определить путь.",
       "dialog": {
         "name": {
           "file": "Имя с расширением:",
@@ -1448,7 +1450,8 @@
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
       },
-      "inherited": "Наследуемые KV пары"
+      "inherited": "Наследуемые KV пары",
+      "expiration_hint": "Срок действия истекает {date}. Оставьте поле без изменений, чтобы сохранить этот срок действия; выбор продолжительности пересчитывает его с текущего момента, а очистка удаляет его."
     },
     "expiration": "Срок действия",
     "page": {
@@ -2141,7 +2144,7 @@
     },
     "mcp": {
       "your_servers": "Ваши серверы",
-      "servers_count": "{count} MCP Серверов",
+      "servers_count": "{count} сервер MCP | {count} сервера MCP | {count} серверов MCP",
       "managed_by_kestra": "Управляется Kestra",
       "servers": "Серверы MCP",
       "client_setup": "Настройка клиента",

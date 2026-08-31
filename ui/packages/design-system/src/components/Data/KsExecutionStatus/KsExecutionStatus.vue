@@ -71,7 +71,6 @@ $statusList: created, submitted, restarted, success, running, killing, killed, w
     align-items: center;
     line-height: 1;
     white-space: nowrap;
-    cursor: default;
     text-align: center;
     box-sizing: border-box;
     outline: none;
@@ -117,6 +116,15 @@ $statusList: created, submitted, restarted, success, running, killing, killed, w
         padding: 0 var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         gap: 0.25rem;
+    }
+
+    /* Bootstrap's reboot puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties
+       with this scoped block's `.ks-execution-status[data-v-hash]` at (0,2,0) and wins on source
+       order — so the badge advertised a click it does not handle. The extra `:not()` breaks the
+       tie. `inherit` rather than `default`: a badge is often the target inside a clickable row,
+       and pinning `default` would leave a dead patch in the middle of it. */
+    &:not(.ks-execution-status--clickable) {
+        cursor: inherit;
     }
 
     &.ks-execution-status--clickable {

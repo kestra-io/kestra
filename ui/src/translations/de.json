@@ -677,6 +677,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Execution-Labels",
+    "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
     "feeds": {
       "heading": "Alles rund um Kestra.",
@@ -900,6 +901,7 @@
       },
       "export": "Namespace-Dateien exportieren",
       "export_single": "Datei exportieren",
+      "export_error": "\"{name}\" konnte nicht exportiert werden. Der Pfad konnte nicht aufgelöst werden.",
       "dialog": {
         "name": {
           "file": "Name mit Erweiterung:",
@@ -1448,7 +1450,8 @@
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
         "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
-      "inherited": "Geerbte KV-Paare"
+      "inherited": "Geerbte KV-Paare",
+      "expiration_hint": "Läuft derzeit am {date} ab. Lasse das Feld unberührt, um dieses Ablaufdatum beizubehalten; die Auswahl einer Dauer berechnet es ab jetzt neu, und das Löschen entfernt es."
     },
     "expiration": "Ablauf",
     "page": {
@@ -2141,7 +2144,7 @@
     },
     "mcp": {
       "your_servers": "Deine Server",
-      "servers_count": "{count} MCP-Server",
+      "servers_count": "{count} MCP Server | {count} MCP Server",
       "managed_by_kestra": "Verwaltet von Kestra",
       "servers": "MCP-Server",
       "client_setup": "Client-Einrichtung",

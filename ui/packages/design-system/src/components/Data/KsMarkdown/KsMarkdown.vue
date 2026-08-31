@@ -234,22 +234,20 @@
             const highlightedHtml = codeHighlights.value.get(key)
 
             return h("div", {class: "ks-markdown__code-block"}, [
-                h("div", {class: "ks-markdown__code-header"}, [
-                    lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
-                    h("button", {
-                        class: "ks-markdown__copy-btn",
-                        type: "button",
-                        title: "Copy to clipboard",
-                        onClick: (e: MouseEvent) => {
-                            const btn = e.currentTarget as HTMLButtonElement
-                            copyToClipboard(value).then(() => {
-                                // Swap the copy glyph for the check (not overlay it) for the confirm window.
-                                btn.classList.add("is-copied")
-                                setTimeout(() => btn.classList.remove("is-copied"), 2000)
-                            }).catch(() => { /* clipboard unavailable */ })
-                        },
-                    }, [h(Check, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy, {class: "ks-markdown__copy-btn-icon"})]),
-                ]),
+                lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
+                h("button", {
+                    class: "ks-markdown__copy-btn",
+                    type: "button",
+                    title: "Copy to clipboard",
+                    onClick: (e: MouseEvent) => {
+                        const btn = e.currentTarget as HTMLButtonElement
+                        copyToClipboard(value).then(() => {
+                            // Swap the copy glyph for the check (not overlay it) for the confirm window.
+                            btn.classList.add("is-copied")
+                            setTimeout(() => btn.classList.remove("is-copied"), 2000)
+                        }).catch(() => { /* clipboard unavailable */ })
+                    },
+                }, [h(Check, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy, {class: "ks-markdown__copy-btn-icon"})]),
                 highlightedHtml
                     ? h("div", {class: "ks-markdown__code-shiki", innerHTML: highlightedHtml})
                     : h("pre", {class: "ks-markdown__code-plain"}, [
@@ -482,7 +480,7 @@
     .ks-markdown__code-shiki {
         .shiki {
             margin: 0;
-            padding: 2rem;
+            padding: 1rem;
             overflow-x: auto;
             background-color: var(--kel-bg-color-overlay);
             border-radius: var(--kel-border-radius-base);
@@ -501,6 +499,7 @@
 
     .ks-markdown {
         color: var(--ks-text-primary);
+        line-height: var(--ks-line-height-loose);
 
         h1, h2, h3, h4, h5, h6 {
             &.ks-markdown__heading {
@@ -546,60 +545,69 @@
             overflow: hidden;
             position: relative;
 
-            .ks-markdown__code-header {
+            .ks-markdown__code-lang {
                 position: absolute;
-                display: flex;
-                width: 100%;
-                align-items: center;
-                justify-content: flex-end;
-                padding: 4px 8px;
-                background-color: var(--ks-bg-elevated);
-                gap: 8px;
+                top: var(--ks-spacing-1);
+                right: var(--ks-spacing-1);
+                padding: var(--ks-spacing-1);
                 font-size: var(--ks-font-size-xs);
                 font-family: var(--kel-font-family-monospace), monospace;
                 color: var(--kel-text-color-placeholder);
+                transition: opacity 0.15s ease;
+            }
 
-                .ks-markdown__code-lang {
-                    flex: 1;
+            .ks-markdown__copy-btn {
+                position: absolute;
+                top: var(--ks-spacing-1);
+                right: var(--ks-spacing-1);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.15s ease;
+                padding: var(--ks-spacing-1);
+                border: 0;
+                border-radius: var(--kel-border-radius-base);
+                background: var(--ks-bg-base);
+                cursor: pointer;
+                color: var(--kel-text-color-placeholder);
+                display: grid;
+                place-items: center;
+
+                &:hover {
+                    color: var(--kel-text-color-primary);
                 }
 
-                .ks-markdown__copy-btn {
-                    padding: var(--ks-spacing-1);
-                    right: -2px;
-                    top: 2px;
-                    position: relative;
-                    border: 0;
-                    background: var(--ks-bg-base);
-                    cursor: pointer;
-                    color: var(--kel-text-color-placeholder);
-                    display: grid;
-                    place-items: center;
+                /* The copy glyph and the confirm check occupy the same cell; only one is
+                   visible at a time (swapped via the .is-copied state), never overlaid. */
+                > * {
+                    grid-area: 1 / 1;
+                    transition: opacity 0.15s ease;
+                }
 
-                    &:hover {
-                        color: var(--kel-text-color-primary);
-                    }
+                .ks-markdown__copy-btn-ok {
+                    color: var(--ks-text-success);
+                    opacity: 0;
+                }
 
-                    /* The copy glyph and the confirm check occupy the same cell; only one is
-                       visible at a time (swapped via the .is-copied state), never overlaid. */
-                    > * {
-                        grid-area: 1 / 1;
-                        transition: opacity 0.15s ease;
-                    }
-
-                    .ks-markdown__copy-btn-ok {
-                        color: var(--ks-text-success);
+                &.is-copied {
+                    .ks-markdown__copy-btn-icon {
                         opacity: 0;
                     }
 
-                    &.is-copied {
-                        .ks-markdown__copy-btn-icon {
-                            opacity: 0;
-                        }
-
-                        .ks-markdown__copy-btn-ok {
-                            opacity: 1;
-                        }
+                    .ks-markdown__copy-btn-ok {
+                        opacity: 1;
                     }
+                }
+            }
+
+            &:hover,
+            &:focus-within {
+                .ks-markdown__code-lang {
+                    opacity: 0;
+                }
+
+                .ks-markdown__copy-btn {
+                    opacity: 1;
+                    pointer-events: auto;
                 }
             }
 

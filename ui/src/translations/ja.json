@@ -2141,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "あなたのサーバー",
-      "servers_count": "{count} MCPサーバー",
+      "servers_count": "{count} MCPサーバー | {count} MCPサーバー",
       "managed_by_kestra": "Kestraによって管理されています",
       "servers": "MCPサーバー",
       "client_setup": "クライアント設定",

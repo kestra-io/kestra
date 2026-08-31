@@ -548,22 +548,28 @@
 
             .ks-markdown__code-header {
                 position: absolute;
-                display: flex;
+                display: grid;
                 width: 100%;
                 align-items: center;
-                justify-content: flex-end;
+                justify-content: end;
                 padding: 4px 8px;
                 background-color: var(--ks-bg-elevated);
-                gap: 8px;
                 font-size: var(--ks-font-size-xs);
                 font-family: var(--kel-font-family-monospace), monospace;
                 color: var(--kel-text-color-placeholder);
 
                 .ks-markdown__code-lang {
-                    flex: 1;
+                    grid-area: 1 / 1;
+                    justify-self: end;
+                    transition: opacity 0.15s ease;
                 }
 
                 .ks-markdown__copy-btn {
+                    grid-area: 1 / 1;
+                    justify-self: end;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.15s ease;
                     padding: var(--ks-spacing-1);
                     right: -2px;
                     top: 2px;
@@ -600,6 +606,18 @@
                             opacity: 1;
                         }
                     }
+                }
+            }
+
+            &:hover,
+            &:focus-within {
+                .ks-markdown__code-lang {
+                    opacity: 0;
+                }
+
+                .ks-markdown__copy-btn {
+                    opacity: 1;
+                    pointer-events: auto;
                 }
             }
 

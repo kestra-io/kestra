@@ -45,13 +45,22 @@ public abstract class AbstractGraph {
         return this;
     }
 
+    protected AbstractGraph nodeIdentity() {
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof AbstractGraph))
+        if (!(o instanceof AbstractGraph other))
             return false;
-        return o.hashCode() == this.hashCode();
+        return this.nodeIdentity() == other.nodeIdentity();
+    }
+
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this.nodeIdentity());
     }
 
     public enum BranchType {

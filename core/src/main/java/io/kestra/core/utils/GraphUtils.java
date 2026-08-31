@@ -21,6 +21,9 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.plugin.core.flow.Dag;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class GraphUtils {
     public static FlowGraph flowGraph(Flow flow, Execution execution) throws IllegalVariableEvaluationException {
         return GraphUtils.flowGraph(flow, execution, null);
@@ -643,9 +646,29 @@ public class GraphUtils {
             return Collections.singletonList(null);
         }
 
-        return taskRuns
+        List<TaskRun> ofParent = taskRuns
             .stream()
             .filter(taskRun -> parent == null || (taskRun.getParentTaskRunId().equals(parent.getId())))
             .toList();
+
+        Map<List<String>, TaskRun> byValues = new LinkedHashMap<>();
+        List<TaskRun> duplicates = new ArrayList<>();
+        for (TaskRun taskRun : ofParent) {
+            if (byValues.putIfAbsent(execution.findParentsValues(taskRun, true), taskRun) != null) {
+                duplicates.add(taskRun);
+            }
+        }
+
+        if (!duplicates.isEmpty()) {
+            log.warn(
+                "Execution '{}' has {} duplicated task run(s) for task '{}': {}. Only the first one of each value is kept in the topology.",
+                execution.getId(),
+                duplicates.size(),
+                task.getId(),
+                duplicates.stream().map(TaskRun::getId).toList()
+            );
+        }
+
+        return List.copyOf(byValues.values());
     }
 }

@@ -69,6 +69,8 @@
         },
     )
 
+    // Collapsing a single extra label costs more room than showing it, so `max` is a soft cap:
+    // the popover only appears once it hides at least two.
     const overflows = computed(() => props.max > 0 && props.labels.length > props.max + 1)
     const visibleLabels = computed(() => (overflows.value ? props.labels.slice(0, props.max) : props.labels))
     const hiddenLabels = computed(() => (overflows.value ? props.labels.slice(props.max) : []))

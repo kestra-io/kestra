@@ -1,6 +1,6 @@
 import Labels from "../../../../src/components/layout/Labels.vue";
 import {Meta, StoryFn} from "@storybook/vue3";
-import {expect} from "storybook/test";
+import {expect, userEvent, waitFor} from "storybook/test";
 
 export default {
   title: "Components/Layout/Labels",
@@ -51,4 +51,39 @@ Uncapped.play = async ({canvasElement}) => {
 
   await expect(chips.length).toBe(LABELS.length);
   await expect(overflow).toBeUndefined();
+};
+
+const openedPopover = async () => waitFor(() => {
+  const content = document.querySelector("[data-test=\"labels-overflow-content\"]") as HTMLElement;
+  expect(content).not.toBeNull();
+  return content;
+});
+
+export const OverflowOpensOnClick = Template.bind({});
+OverflowOpensOnClick.args = {labels: LABELS, max: 3};
+OverflowOpensOnClick.play = async ({canvasElement}) => {
+  const overflow = canvasElement.querySelector("[data-test=\"labels-overflow\"]") as HTMLElement;
+
+  await userEvent.click(overflow);
+  const content = await openedPopover();
+
+  await expect([...content.querySelectorAll("[data-test=\"label\"]")].map((el) => el.textContent?.trim()))
+    .toEqual(["jira:KESTRA-18825", "owner:core"]);
+};
+
+// The chip is a real button so it activates on Enter, which is the only way in without a mouse.
+export const OverflowOpensOnEnter = Template.bind({});
+OverflowOpensOnEnter.args = {labels: LABELS, max: 3};
+OverflowOpensOnEnter.play = async ({canvasElement}) => {
+  const overflow = canvasElement.querySelector("[data-test=\"labels-overflow\"]") as HTMLElement;
+
+  overflow.focus();
+  await expect(document.activeElement).toBe(overflow);
+
+  await userEvent.keyboard("{Enter}");
+  const content = await openedPopover();
+
+  // Scoped to the popover, the long value wraps instead of bleeding out of it.
+  const long = [...content.querySelectorAll("[data-test=\"label\"]")].at(-1) as HTMLElement;
+  await expect(long.getBoundingClientRect().right).toBeLessThanOrEqual(content.getBoundingClientRect().right);
 };

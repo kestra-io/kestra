@@ -677,6 +677,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Execution-Labels",
+    "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
     "feeds": {
       "heading": "Alles rund um Kestra.",

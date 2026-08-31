@@ -677,6 +677,7 @@
     "label": "Label",
     "labels": "라벨",
     "execution labels": "실행 라벨",
+    "show more labels": "라벨 {count}개 더 보기",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
     "feeds": {
       "heading": "Kestra의 모든 것.",

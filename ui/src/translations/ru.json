@@ -677,6 +677,7 @@
     "label": "Метка",
     "labels": "Метки",
     "execution labels": "Метки выполнения",
+    "show more labels": "Показать еще {count} меток",
     "wrong labels": "Пустой key или value не допускается в метках",
     "feeds": {
       "heading": "Все о Kestra.",

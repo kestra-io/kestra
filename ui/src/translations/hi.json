@@ -677,6 +677,7 @@
     "label": "Label",
     "labels": "labels",
     "execution labels": "निष्पादन labels",
+    "show more labels": "{count} और लेबल दिखाएं",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
     "feeds": {
       "heading": "सभी चीजें Kestra।",

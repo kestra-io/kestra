@@ -32,7 +32,9 @@ import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.condition.Expression;
+import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.templating.TemplatedTask;
 import io.kestra.plugin.core.trigger.Schedule;
 
 import ch.qos.logback.classic.Logger;
@@ -48,6 +50,7 @@ import lombok.experimental.SuperBuilder;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
@@ -82,6 +85,40 @@ class PluginDefaultServiceTest {
         // Then
         Log task = (Log) result.getTasks().getFirst();
         assertThat(task.getMessage(), is("This is a default message"));
+    }
+
+    @Test
+    void shouldCarryResolvedDefaultsWhenInjectingDefaultsGivenNestedTemplatedTask() throws FlowProcessingException {
+        // Given: a templated task nested in a flowable — its spec is a plain string, so the injection walk
+        // cannot reach the plugin it templates.
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowInterface flow = GenericFlow.fromYaml(tenant, """
+            id: test
+            namespace: io.kestra.unittest
+            pluginDefaults:
+              - type: io.kestra.plugin.core.debug.Return
+                values:
+                  format: This is a default format
+            tasks:
+              - id: parent
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: templated
+                    type: io.kestra.plugin.core.templating.TemplatedTask
+                    spec: |
+                      type: io.kestra.plugin.core.debug.Return
+            """);
+
+        // When
+        FlowWithSource result = pluginDefaultService.injectAllDefaults(flow, true);
+
+        // Then: the resolved defaults are carried on the task, to be applied once its spec is rendered.
+        Sequential parent = (Sequential) result.getTasks().getFirst();
+        TemplatedTask templated = (TemplatedTask) parent.getTasks().getFirst();
+        assertThat(
+            templated.getResolvedPluginDefaults().stream().map(PluginDefault::getType).toList(),
+            hasItem("io.kestra.plugin.core.debug.Return")
+        );
     }
 
     @Test

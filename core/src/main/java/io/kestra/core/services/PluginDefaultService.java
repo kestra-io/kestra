@@ -34,6 +34,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -41,9 +42,11 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Template;
+import io.kestra.plugin.core.templating.TemplatedTask;
 
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
@@ -384,7 +387,7 @@ public class PluginDefaultService {
     public Map<String, Object> injectVersionDefaults(@Nullable final String tenantId,
         final String namespace,
         final Map<String, Object> mapFlow) throws FlowProcessingException {
-        return innerInjectDefault(tenantId, namespace, mapFlow, true);
+        return innerInjectDefault(tenantId, namespace, mapFlow, true).flow();
     }
 
     /**
@@ -448,9 +451,9 @@ public class PluginDefaultService {
         namespace = namespace == null ? (String) mapFlow.get("namespace") : namespace;
         revision = revision == null ? (Integer) mapFlow.get("revision") : revision;
 
-        mapFlow = innerInjectDefault(tenant, namespace, mapFlow, onlyVersions);
+        InjectedDefaults injected = innerInjectDefault(tenant, namespace, mapFlow, onlyVersions);
 
-        FlowWithSource withDefault = YamlParser.parse(mapFlow, FlowWithSource.class, strictParsing);
+        FlowWithSource withDefault = YamlParser.parse(injected.flow(), FlowWithSource.class, strictParsing);
 
         // revision, tenants, and deleted are not in the 'source', so we copy them manually
         FlowWithSource full = withDefault.toBuilder()
@@ -460,19 +463,31 @@ public class PluginDefaultService {
             .source(source)
             .build();
 
-        if (templatesEnabled && tenant != null) {
-            // This is a hack to set the tenant in template tasks.
-            // When using the Template task, we need the tenant to fetch the Template from the database.
-            // However, as the task is executed on the Executor we cannot retrieve it from the tenant service and have no other options.
-            // So we save it at flow creation/updating time.
-            full.allTasksWithChilds().stream().filter(task -> task instanceof Template).forEach(task -> ((Template) task).setTenantId(tenant));
+        boolean setTemplateTenant = templatesEnabled && tenant != null;
+        if (!onlyVersions || setTemplateTenant) {
+            for (Task task : full.allTasksWithChilds()) {
+                if (!onlyVersions && task instanceof TemplatedTask templatedTask) {
+                    // A TemplatedTask only knows which plugin it runs once its spec is rendered, so the map walk
+                    // above cannot inject defaults into it. Carry the resolved defaults on the task instead: the
+                    // worker running it cannot resolve them itself, as namespace-level defaults are not reachable
+                    // from a worker node. Always set, so a value written in the flow source is never honoured.
+                    templatedTask.setResolvedPluginDefaults(injected.defaults().isEmpty() ? null : injected.defaults());
+                }
+
+                if (setTemplateTenant && task instanceof Template template) {
+                    // This is a hack to set the tenant in template tasks.
+                    // When using the Template task, we need the tenant to fetch the Template from the database.
+                    // However, as the task is executed on the Executor we cannot retrieve it from the tenant service and have no other options.
+                    // So we save it at flow creation/updating time.
+                    template.setTenantId(tenant);
+                }
+            }
         }
 
         return full;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> innerInjectDefault(final String tenantId, final String namespace, Map<String, Object> flowAsMap, final boolean onlyVersions) {
+    private InjectedDefaults innerInjectDefault(final String tenantId, final String namespace, Map<String, Object> flowAsMap, final boolean onlyVersions) {
         List<PluginDefault> allDefaults = getAllDefaults(tenantId, namespace, flowAsMap);
 
         if (onlyVersions) {
@@ -491,13 +506,29 @@ public class PluginDefaultService {
 
         if (allDefaults.isEmpty()) {
             // no defaults to inject - return immediately.
-            return flowAsMap;
+            return new InjectedDefaults(flowAsMap, List.of());
         }
 
         // alias-canonicalize all defaults (type-matched and named) so a default declared with a plugin alias
         // also matches the canonical plugin type.
         addAliases(allDefaults);
 
+        return new InjectedDefaults(applyDefaults(flowAsMap, allDefaults, onlyVersions), allDefaults);
+    }
+
+    /**
+     * Applies the given already-resolved defaults to an arbitrary plugin tree: either a whole flow, or a single
+     * plugin definition as done for {@link TemplatedTask}.
+     *
+     * <p>
+     * The defaults must already be alias-canonicalized (see {@code addAliases}); this method is otherwise pure,
+     * so it can run on a node that cannot resolve defaults itself.
+     * </p>
+     *
+     * @param allDefaults the resolved defaults, ordered most-important-first (flow, namespace, global)
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> applyDefaults(Map<String, Object> pluginTree, final List<PluginDefault> allDefaults, final boolean onlyVersions) {
         // split named (ref) defaults from type-matched defaults: a 'ref' default is applied only to plugins
         // that explicitly opt in via 'pluginDefaultsRef', never by type matching.
         Map<Boolean, List<PluginDefault>> byHasRef = allDefaults
@@ -524,42 +555,71 @@ public class PluginDefaultService {
         // forced defaults stamp over the result, so the last (admin-most) entry wins — global beats namespace beats flow.
         Map<String, List<PluginDefault>> forced = pluginDefaultsToMap(allDefaultsGroup.getOrDefault(true, Collections.emptyList()));
 
-        Object pluginDefaults = flowAsMap.get(PLUGIN_DEFAULTS_FIELD);
+        Object pluginDefaults = pluginTree.get(PLUGIN_DEFAULTS_FIELD);
         if (pluginDefaults != null) {
-            flowAsMap.remove(PLUGIN_DEFAULTS_FIELD);
+            pluginTree.remove(PLUGIN_DEFAULTS_FIELD);
         }
 
         // 1. non-forced type-matched defaults — suppressed for plugins that opted into a named (ref) default
         if (!defaults.isEmpty()) {
-            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, defaults, false);
+            pluginTree = (Map<String, Object>) recursiveDefaults(pluginTree, defaults, false);
         }
 
         // 2. named (ref) defaults — applied to plugins declaring a matching 'pluginDefaultsRef', UNLESS a forced
         // type-matched default also applies to that plugin: enforcement takes over entirely and the ref is ignored
         // (it must not stack on top of enforced values). Skipped when only injecting version defaults.
         if (!onlyVersions && !refMatches.isEmpty()) {
-            flowAsMap = (Map<String, Object>) recursiveRefDefaults(flowAsMap, refMatches, forced.keySet());
+            pluginTree = (Map<String, Object>) recursiveRefDefaults(pluginTree, refMatches, forced.keySet());
         }
 
         // 3. forced type-matched defaults are admin enforcement and applied LAST so they win over everything,
         // including a forced ref default — otherwise a flow could bypass enforcement via a forced ref.
         // A WARN is logged when enforced onto a plugin that declared a 'pluginDefaultsRef'.
         if (!forced.isEmpty()) {
-            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, forced, true);
+            pluginTree = (Map<String, Object>) recursiveDefaults(pluginTree, forced, true);
         }
 
         // 4. consume the 'pluginDefaultsRef' marker for refs that were actually applied (resolved + type match);
         // a surviving marker therefore unambiguously means "unresolved or inapplicable" (validation error + runtime failure).
         if (!onlyVersions && !refMatches.isEmpty()) {
-            flowAsMap = (Map<String, Object>) stripAppliedRefMarkers(flowAsMap, refMatches);
+            pluginTree = (Map<String, Object>) stripAppliedRefMarkers(pluginTree, refMatches);
         }
 
         if (pluginDefaults != null) {
-            flowAsMap.put(PLUGIN_DEFAULTS_FIELD, pluginDefaults);
+            pluginTree.put(PLUGIN_DEFAULTS_FIELD, pluginDefaults);
         }
 
-        return flowAsMap;
+        return pluginTree;
+    }
 
+    /**
+     * The result of resolving and injecting defaults into a flow: the defaulted flow, and the defaults that were
+     * resolved for it. The resolved defaults are carried further for plugins that build their definition at
+     * runtime and must apply the defaults themselves — see {@link #applyResolvedDefaults(Map, List)}.
+     */
+    private record InjectedDefaults(Map<String, Object> flow, List<PluginDefault> defaults) {
+    }
+
+    /**
+     * Applies already-resolved defaults to a single plugin definition.
+     *
+     * <p>
+     * Defaults are normally injected while parsing the flow, but a {@link TemplatedTask} only knows the plugin it
+     * runs once its spec has been rendered, at which point the flow is long parsed and the defaults can no longer
+     * be resolved: namespace-level defaults are not reachable from a worker. It therefore carries the defaults
+     * resolved for its flow and applies them itself through this method.
+     * </p>
+     *
+     * @param plugin the plugin definition, as a map
+     * @param resolvedDefaults the defaults resolved for the flow the plugin belongs to
+     * @return the plugin definition with the matching defaults applied
+     */
+    public Map<String, Object> applyResolvedDefaults(final Map<String, Object> plugin, final List<PluginDefault> resolvedDefaults) {
+        if (ListUtils.isEmpty(resolvedDefaults)) {
+            return plugin;
+        }
+
+        return applyDefaults(plugin, resolvedDefaults, false);
     }
 
     /**
@@ -963,7 +1023,7 @@ public class PluginDefaultService {
         }
 
         Map<String, Object> mapFlow = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
-        mapFlow = innerInjectDefault(flow.getTenantId(), flow.getNamespace(), mapFlow, false);
+        mapFlow = innerInjectDefault(flow.getTenantId(), flow.getNamespace(), mapFlow, false).flow();
         return YamlParser.parse(mapFlow, Flow.class, false);
     }
 }

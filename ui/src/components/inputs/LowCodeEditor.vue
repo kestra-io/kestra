@@ -298,12 +298,23 @@
         return result
     }
 
-    const sourceTaskById = computed((): Record<string, any> => {
-        const byId = indexTasks(flowSource.value)
-        if (Object.values(byId).some((task) => task?.taskRunner?.type)) return byId
-        // In execution view flowYaml can be a stale draft with the taskRunner gone while
-        // props.source still has it, and the graph nodes are augmented from this index.
-        return flowSource.value === props.source ? byId : indexTasks(props.source)
+    // The same document the `source` prop carries, so an artifact's `task` and `source` never
+    // disagree.
+    const sourceTaskById = computed(() => indexTasks(flowSource.value))
+
+    const runnersOf = (byId: Record<string, any>): Record<string, any> =>
+        Object.fromEntries(
+            Object.entries(byId)
+                .filter(([, task]) => task?.taskRunner?.type)
+                .map(([id, task]) => [id, task.taskRunner]),
+        )
+
+    // Runner-specific fallback, needed by the graph augmentation alone: in execution view flowYaml
+    // can be a stale draft whose taskRunner is gone while props.source still has it.
+    const taskRunnerById = computed((): Record<string, any> => {
+        const fromFlowSource = runnersOf(sourceTaskById.value)
+        if (Object.keys(fromFlowSource).length || flowSource.value === props.source) return fromFlowSource
+        return runnersOf(indexTasks(props.source))
     })
 
     // forExecution() strips taskRunner from graph nodes. Re-inject the task's own runner, whole,
@@ -313,10 +324,10 @@
     const augmentedFlowGraph = computed(() => {
         const graph = effectiveFlowGraph.value
         if (!graph) return graph
-        const byId = sourceTaskById.value
+        const byId = taskRunnerById.value
         let injected = false
         const nodes = (graph.nodes ?? []).map((n: any) => {
-            const taskRunner = n.task?.id ? byId[n.task.id]?.taskRunner : undefined
+            const taskRunner = n.task?.id ? byId[n.task.id] : undefined
             if (!taskRunner?.type || n.task?.taskRunner?.type) return n
             injected = true
             return {...n, task: {...n.task, taskRunner}}
@@ -328,12 +339,15 @@
     // overwriting what the executed revision carried — the source is the flow's latest revision, or
     // an unsaved draft. The exception is the two keys forExecution() REDUCES rather than drops:
     // `tasks` is the children flattened to id and type, and `taskRunner` is re-injected into the
-    // node, so the node's copy of either is derived rather than executed and source keeps them.
+    // node, so the node's copy of either is derived rather than executed and source wins — but only
+    // where source has them, otherwise the node's reduced copy is all there is.
     const taskWithSource = (task: Record<string, any> | undefined) => {
         const fromSource = task?.id ? sourceTaskById.value[task.id] : undefined
         if (!task || !fromSource) return task
-        const {tasks: _tasks, taskRunner: _taskRunner, ...executed} = task
-        return {...fromSource, ...executed}
+        const merged = {...fromSource, ...task}
+        if (fromSource.tasks !== undefined) merged.tasks = fromSource.tasks
+        if (fromSource.taskRunner !== undefined) merged.taskRunner = fromSource.taskRunner
+        return merged
     }
 
     const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")

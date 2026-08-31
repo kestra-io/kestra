@@ -900,6 +900,7 @@
       },
       "export": "Export namespace files",
       "export_single": "Export file",
+      "export_error": "Could not export \"{name}\". Its path could not be resolved.",
       "dialog": {
         "name": {
           "file": "Name with extension:",
@@ -1448,7 +1449,8 @@
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
       },
-      "inherited": "Inherited KV pairs"
+      "inherited": "Inherited KV pairs",
+      "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."
     },
     "expiration": "Expiration",
     "page": {

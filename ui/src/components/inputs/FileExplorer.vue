@@ -375,6 +375,7 @@
     import {useRoute} from "vue-router"
     import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {safePath} from "../../composables/useBaseNamespaces"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -1073,7 +1074,7 @@
             return
         }
 
-        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=${encodeURI(`/${path}`)}`, file.fileName)
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=/${safePath(path)}`, file.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {

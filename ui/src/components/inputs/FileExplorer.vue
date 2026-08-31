@@ -1,5 +1,6 @@
 <template>
     <div
+        ref="sidebar"
         class="p-2 sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
@@ -105,6 +106,7 @@
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
+            :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
@@ -385,6 +387,7 @@
     import TypeIcon from "../utils/icons/Type.vue"
     import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
+    import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
     import {
         ElTreeNode,
@@ -469,6 +472,8 @@
     const dialog = ref<Dialog>({...DIALOG_DEFAULTS})
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
     const isRenaming = ref(false)
+    const sidebar = ref<HTMLElement>()
+    const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
     const tree = ref<any>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
@@ -849,6 +854,8 @@
     }
 
     function onNodeDragStart(draggingNode: FileExplorerNode) {
+        startRestrictDrop()
+
         nodeBeforeDrag.value = {
             parent: draggingNode.parent.data.id,
             path: filesStore.getPath(draggingNode.data.id) ?? "",

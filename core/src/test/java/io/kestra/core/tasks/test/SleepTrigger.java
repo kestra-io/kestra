@@ -32,6 +32,7 @@ public class SleepTrigger extends AbstractTrigger implements PollingTriggerInter
     private Long duration;
 
     @Override
+    @SuppressWarnings("removal")
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
         // Try catch to avoid flakky test
         try {

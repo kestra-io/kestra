@@ -360,6 +360,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = { "Flows" }, summary = "Create a flow from yaml source")
+    @SuppressWarnings("unchecked")
     public HttpResponse<FlowWithSource> createFlow(
         @RequestBody(description = "The flow source code") @Body String flow,
         @Parameter(description = "Save the flow as a draft. Drafts are not picked up by webhooks, schedules or subflows and are not validated for constraint violations.")

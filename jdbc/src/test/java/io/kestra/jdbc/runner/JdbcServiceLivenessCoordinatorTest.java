@@ -12,9 +12,9 @@ public abstract class JdbcServiceLivenessCoordinatorTest extends AbstractService
     private JdbcTestUtils jdbcTestUtils;
 
     @BeforeAll
+    @SuppressWarnings("deprecation")
     void initSchema() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 
     @Inject

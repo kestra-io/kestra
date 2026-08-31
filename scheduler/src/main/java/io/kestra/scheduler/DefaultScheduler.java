@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Default {@link Scheduler} implementation.
  */
+@SuppressWarnings("this-escape")
 @Slf4j
 @Singleton
 @Primary

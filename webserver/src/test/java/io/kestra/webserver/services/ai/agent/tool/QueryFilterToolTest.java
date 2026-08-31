@@ -63,7 +63,7 @@ class QueryFilterToolTest {
         ToolSpecification spec = AiToolSpecifications.toolSpecificationFrom(readMethod());
 
         // Then — the generic "filters" array is gone; each LOG field is its own {operator,value} object
-        JsonObjectSchema params = (JsonObjectSchema) spec.parameters();
+        JsonObjectSchema params = spec.parameters();
         assertThat(params.properties()).containsKey("executionId");
         assertThat(params.properties()).doesNotContainKey("filters");
         assertThat(params.properties()).containsKeys("TASK_ID", "LEVEL", "NAMESPACE");

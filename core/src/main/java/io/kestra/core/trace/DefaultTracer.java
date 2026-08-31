@@ -85,6 +85,8 @@ class DefaultTracer implements Tracer {
         return inNewContext(spanName, attributesBuilder.build(), callable);
     }
 
+    // The Scope resources below are only used for their close() side effect (restoring the previous context/span), never read in the body.
+    @SuppressWarnings("try")
     private <V> V inCurrentContext(Context context, String spanName, Attributes attributes, Callable<V> callable) {
         try (Scope ignored = context.makeCurrent()) {
             var span = tracer.spanBuilder(spanNamePrefix + " - " + spanName)
@@ -105,6 +107,8 @@ class DefaultTracer implements Tracer {
         }
     }
 
+    // The Scope resource below is only used for its close() side effect (restoring the previous span), never read in the body.
+    @SuppressWarnings("try")
     private <V> V inNewContext(String spanName, Attributes attributes, Callable<V> callable) {
         var span = tracer.spanBuilder(spanNamePrefix + " - " + spanName)
             .setAllAttributes(attributes)

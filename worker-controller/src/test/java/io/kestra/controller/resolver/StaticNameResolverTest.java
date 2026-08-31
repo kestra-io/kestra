@@ -31,7 +31,7 @@ class StaticNameResolverTest {
         resolver.start(new TestListener(result));
 
         assertThat(result.get()).isNotNull();
-        assertThat(result.get().getAddresses()).hasSize(2);
+        assertThat(result.get().getAddressesOrError().getValue()).hasSize(2);
     }
 
     @Test
@@ -52,7 +52,7 @@ class StaticNameResolverTest {
         resolver.refresh();
 
         assertThat(result.get()).isNotNull();
-        assertThat(result.get().getAddresses()).hasSize(1);
+        assertThat(result.get().getAddressesOrError().getValue()).hasSize(1);
     }
 
     @Test
@@ -73,7 +73,7 @@ class StaticNameResolverTest {
 
         AtomicReference<NameResolver.ResolutionResult> result = new AtomicReference<>();
         resolver.start(new TestListener(result));
-        assertThat(result.get().getAddresses()).containsExactly(
+        assertThat(result.get().getAddressesOrError().getValue()).containsExactly(
             new EquivalentAddressGroup(new InetSocketAddress("localhost", 9096))
         );
     }
@@ -95,7 +95,7 @@ class StaticNameResolverTest {
         NameResolver resolver = new StaticNameResolverProvider().newNameResolver(URI.create(target), null);
         AtomicReference<NameResolver.ResolutionResult> result = new AtomicReference<>();
         resolver.start(new TestListener(result));
-        assertThat(result.get().getAddresses()).containsExactly(
+        assertThat(result.get().getAddressesOrError().getValue()).containsExactly(
             new EquivalentAddressGroup(new InetSocketAddress("controller-1.example.com", 9096)),
             new EquivalentAddressGroup(new InetSocketAddress("controller-2.example.com", 9097))
         );
@@ -112,7 +112,7 @@ class StaticNameResolverTest {
         NameResolver resolver = new StaticNameResolverProvider().newNameResolver(URI.create(target), null);
         AtomicReference<NameResolver.ResolutionResult> result = new AtomicReference<>();
         resolver.start(new TestListener(result));
-        assertThat(result.get().getAddresses()).containsExactly(
+        assertThat(result.get().getAddressesOrError().getValue()).containsExactly(
             new EquivalentAddressGroup(new InetSocketAddress("::1", 9096))
         );
     }

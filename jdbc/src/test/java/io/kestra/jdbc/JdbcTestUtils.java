@@ -64,12 +64,4 @@ public class JdbcTestUtils {
             this.tables.forEach(t -> dslContext.delete(t).execute());
         });
     }
-
-    /**
-     * No-op. Migrations are now automatically applied at context startup via
-     * {@code MigrationRunner.@PostConstruct}.
-     */
-    @Deprecated
-    public void migrate() {
-    }
 }

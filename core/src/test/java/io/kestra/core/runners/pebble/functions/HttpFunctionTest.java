@@ -64,6 +64,7 @@ class HttpFunctionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void getWithQueryHttpCall() throws IllegalVariableEvaluationException, JsonProcessingException {
         String rendered = variableRenderer.render(
             """

@@ -65,6 +65,7 @@ public class SecretService<META> {
         return new SecretObject(findSecret(tenantId, namespace, key));
     }
 
+    @SuppressWarnings("unchecked")
     public ArrayListTotal<META> list(Pageable pageable, String tenantId, List<QueryFilter> filters) throws IOException {
         final Predicate<String> queryPredicate = filters.stream()
             .filter(filter -> QueryFilter.Field.QUERY.equals(filter.field()) && filter.value() != null)
@@ -81,7 +82,6 @@ public class SecretService<META> {
             })
             .orElse(s -> true);
 
-        //noinspection unchecked
         return ArrayListTotal.of(
             pageable,
             decodedSecrets.keySet().stream().filter(queryPredicate).map(s -> (META) s).toList()

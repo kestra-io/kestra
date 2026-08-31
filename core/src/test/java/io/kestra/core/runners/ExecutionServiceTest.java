@@ -479,7 +479,10 @@ class ExecutionServiceTest {
     @ExecuteFlow(value = "flows/valids/logs.yaml", tenantId = TENANT_2)
     void deleteExecution(Execution execution) throws IOException, TimeoutException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Await.until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5, Duration.ofMillis(10), Duration.ofSeconds(5));
+        Await.await()
+            .pollDelay(Duration.ofMillis(10))
+            .atMost(Duration.ofSeconds(5))
+            .until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5);
 
         executionService.delete(execution, true, true, true);
 
@@ -491,7 +494,10 @@ class ExecutionServiceTest {
     @ExecuteFlow(value = "flows/valids/logs.yaml", tenantId = TENANT_3)
     void deleteExecutionKeepLogs(Execution execution) throws IOException, TimeoutException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Await.until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5, Duration.ofMillis(10), Duration.ofSeconds(5));
+        Await.await()
+            .pollDelay(Duration.ofMillis(10))
+            .atMost(Duration.ofSeconds(5))
+            .until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5);
 
         executionService.delete(execution, false, false, false);
 

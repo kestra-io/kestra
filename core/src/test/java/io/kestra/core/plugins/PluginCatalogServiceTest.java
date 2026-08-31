@@ -50,6 +50,7 @@ class PluginCatalogServiceTest {
     // -- get() contract --
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnPluginManifests() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -74,6 +75,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldFilterCoreAndEEPluginsWhenCommunityOnly() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -98,6 +100,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldIncludeEEPluginsWhenNotCommunityOnly() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -120,6 +123,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnEmptyListWhenApiCallFails() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -137,6 +141,7 @@ class PluginCatalogServiceTest {
     // -- resolveVersions() contract --
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldResolveLatestVersionForKnownArtifact() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -162,6 +167,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldResolveSpecificVersionWhenAvailable() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -186,6 +192,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldNotResolveUnknownArtifact() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -217,6 +224,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldResolveIconLazilyForKnownArtifact() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -253,6 +261,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnEmptyIconForUnknownArtifact() {
         // Given
         when(blockingClient.exchange(any(), any(Argument.class)))
@@ -274,6 +283,7 @@ class PluginCatalogServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldResolveIconLazilyByGroup() {
         // Given
         when(blockingClient.exchange(any(HttpRequest.class), eq(String.class)))

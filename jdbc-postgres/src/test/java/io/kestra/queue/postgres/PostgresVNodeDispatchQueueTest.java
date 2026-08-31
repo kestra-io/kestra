@@ -17,8 +17,8 @@ class PostgresVNodeDispatchQueueTest extends AbstractVNodeDispatchQueueTest {
     JdbcTestUtils jdbcTestUtils;
 
     @BeforeEach
+    @SuppressWarnings("deprecation")
     protected void init() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 }

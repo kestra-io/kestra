@@ -47,6 +47,7 @@ public class SearchPluginsTool implements AiPlatformTool {
         value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get-plugin-schema. "
             + "Returns an object { plugins } where `plugins` is an array of { type, title } (empty when nothing matches); `type` is the fully-qualified plugin class and `title` may be null."
     )
+    @SuppressWarnings("rawtypes")
     public Result searchPlugins(
         @P(name = "query", value = "Keyword matched case-insensitively against the plugin class name and title") String query) {
         String needle = query == null ? "" : query.toLowerCase(Locale.ROOT).trim();

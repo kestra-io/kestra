@@ -19,8 +19,6 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
  * Useful to disable caching but still use a cache to avoid if/else chains
  */
 public class NoopCache<K, V> implements Cache<K, V> {
-    private static final ConcurrentMap<?, ?> EMPTY_MAP = new ConcurrentHashMap<>(0);
-
     @Override
     public @Nullable V getIfPresent(K key) {
         return null;
@@ -78,7 +76,7 @@ public class NoopCache<K, V> implements Cache<K, V> {
 
     @Override
     public ConcurrentMap<K, @NonNull V> asMap() {
-        return (ConcurrentMap<K, V>) EMPTY_MAP;
+        return new ConcurrentHashMap<>(0);
     }
 
     @Override

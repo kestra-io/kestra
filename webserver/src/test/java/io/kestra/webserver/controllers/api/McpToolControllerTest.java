@@ -205,7 +205,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void shouldCreateSessionWithServerInfoWhenInitializingServerWithInstructions() {
         // Given
         String instructions = "You are a helpful Kestra assistant.";

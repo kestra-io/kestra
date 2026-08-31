@@ -170,6 +170,7 @@ public class WorkerJobDispatcher {
     private final RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
+    @SuppressWarnings("this-escape")
     public WorkerJobDispatcher(
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         WorkerJobRunningStateStore workerJobRunningStateStore,

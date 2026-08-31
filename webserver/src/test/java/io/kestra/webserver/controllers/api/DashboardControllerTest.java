@@ -65,6 +65,7 @@ class DashboardControllerTest {
     @Inject
     DashboardRepositoryInterface dashboardRepository;
 
+    @SuppressWarnings("rawtypes")
     @Test
     void shouldSupportFullDashboardLifecycle() throws JsonProcessingException {
         String dashboardYaml = """
@@ -597,6 +598,7 @@ class DashboardControllerTest {
         assertThat(httpClientResponseException.getMessage()).isEqualTo("Illegal argument: Dashboard id is mandatory");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldExportASavedDashboardTableChartToCsvAndIon() {
         var uuid = IdUtils.create();
@@ -678,6 +680,7 @@ class DashboardControllerTest {
         assertThat(ion).contains(fakeNamespace).contains(fakeExecutionId);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldExportAnAdHocPreviewChartToCsv() {
         var uuid = IdUtils.create();
@@ -909,6 +912,7 @@ class DashboardControllerTest {
         assertThat(csv).contains("date").contains("level").contains("total");
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     void shouldTreatNullFiltersAsNoFiltersOnChartData() {
         // Raw JSON body with an explicit "filters":null, matching the reported repro exactly -
@@ -993,6 +997,7 @@ class DashboardControllerTest {
         assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: Dashboard id '_default' is reserved");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldPreviewChartFilteredByLabels() {
         String namespace = TestsUtils.randomNamespace();
@@ -1084,6 +1089,7 @@ class DashboardControllerTest {
         assertThat(httpClientResponseException.getMessage()).contains("catastrophic backtracking");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldProcessDashboardIntervalRangeGreaterThanYear() {
         String namespace = TestsUtils.randomNamespace();

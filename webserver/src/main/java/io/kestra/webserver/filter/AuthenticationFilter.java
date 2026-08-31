@@ -18,8 +18,8 @@ import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.web.router.MethodBasedRouteMatch;
+import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteMatch;
-import io.micronaut.web.router.RouteMatchUtils;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -30,6 +30,7 @@ import reactor.core.scheduler.Schedulers;
 public class AuthenticationFilter implements HttpServerFilter {
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
     /** @deprecated Use {@link BasicAuthService#BASIC_AUTH_COOKIE_NAME} */
+    @Deprecated
     public static final String BASIC_AUTH_COOKIE_NAME = BasicAuthService.BASIC_AUTH_COOKIE_NAME;
 
     @Inject
@@ -85,9 +86,8 @@ public class AuthenticationFilter implements HttpServerFilter {
         return path.replaceAll("/+", "/");
     }
 
-    @SuppressWarnings("rawtypes")
     private boolean isManagementEndpoint(HttpRequest<?> request) {
-        Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
+        Optional<RouteMatch<?>> routeMatch = RouteAttributes.getRouteMatch(request);
         if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {
             return method.getAnnotation(Endpoint.class) != null;
         }

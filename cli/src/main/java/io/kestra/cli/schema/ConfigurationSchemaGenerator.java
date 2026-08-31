@@ -302,6 +302,7 @@ final class ConfigurationSchemaGenerator {
         return false;
     }
 
+    @SuppressWarnings("rawtypes") // BeanDefinitionReference.class is necessarily raw, class literals cannot carry a type argument
     private void discoverConfigClasses() {
         SoftServiceLoader<BeanDefinitionReference> loader = SoftServiceLoader.load(BeanDefinitionReference.class);
 

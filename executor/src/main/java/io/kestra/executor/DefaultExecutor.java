@@ -59,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.*;
 
+@SuppressWarnings("this-escape")
 @Singleton
 @Slf4j
 public class DefaultExecutor extends AbstractService implements Executor {

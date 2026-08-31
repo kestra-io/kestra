@@ -59,6 +59,7 @@ public class HttpFunction<T> implements KestraFunction {
     @Inject
     private Provider<RunContextFactory> runContextFactoryProvider;
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         throwIfMissingArgs(args, self, lineNumber);
@@ -116,12 +117,14 @@ public class HttpFunction<T> implements KestraFunction {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, List<String>> singleValueToListForHeaders(Map<String, Object> m) {
         return m.entrySet().stream()
             .map(e -> Map.entry(e.getKey(), e.getValue() instanceof String valueStr ? List.of(valueStr) : (List<String>) e.getValue()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    @SuppressWarnings("unchecked")
     private HttpRequest.RequestBody toRequestBody(Map<String, Object> args, PebbleTemplate self, int lineNumber, String contentType) {
         HttpRequest.RequestBody body;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

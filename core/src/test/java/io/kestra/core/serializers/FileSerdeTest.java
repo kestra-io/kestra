@@ -21,6 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 
+@SuppressWarnings("removal") // these tests intentionally exercise the deprecated Reader/Writer-based API before its removal
 class FileSerdeTest {
     static Stream<Arguments> source() {
         return Stream.of(

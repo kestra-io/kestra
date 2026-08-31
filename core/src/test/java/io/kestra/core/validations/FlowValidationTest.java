@@ -43,6 +43,8 @@ class FlowValidationTest {
 
     // Helper class to create JsonProcessingException with location
     private static class TestJsonProcessingException extends JsonProcessingException {
+        private static final long serialVersionUID = 1L;
+
         public TestJsonProcessingException(String msg, JsonLocation location) {
             super(msg, location);
         }

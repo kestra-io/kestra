@@ -520,7 +520,7 @@ class ExecutionControllerRunnerTest {
         triggerExecutionExecution(tenantId, namespace, flowId, MultipartBody.builder().addPart("string", "myString").build(), false);
 
         // Wait for execution indexation
-        Await.until(() -> executionRepositoryInterface.findByFlowId(tenantId, namespace, flowId, Pageable.from(1)).size() == 1, Duration.ofMillis(100), Duration.ofMillis(10));
+        Await.await().pollDelay(Duration.ofMillis(100)).atMost(Duration.ofMillis(10)).until(() -> executionRepositoryInterface.findByFlowId(tenantId, namespace, flowId, Pageable.from(1)).size() == 1);
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
             GET("/api/v1/" + tenantId + "/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)
@@ -633,6 +633,7 @@ class ExecutionControllerRunnerTest {
         assertThat(resultMap.get("value")).isNotEqualTo(inputs.get("secret"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @LoadFlows(value = { "flows/valids/webhook-plugin.yaml" }, tenantId = "triggerencrypted")
     void triggerEncrypted() throws InterruptedException, InternalException {
@@ -1085,6 +1086,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getMessage()).contains("using encoding 'foo'");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "previewlocalfilefromexecution")
     void previewLocalFileFromExecution() throws TimeoutException, QueueException, IOException {
@@ -1128,6 +1130,7 @@ class ExecutionControllerRunnerTest {
         assertThat(content).isEqualTo("Hello World");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" })
     void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException, URISyntaxException {
@@ -2020,6 +2023,7 @@ class ExecutionControllerRunnerTest {
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldReturn202WhenReplayExecutionsByQueryCalled(String tenantId) throws TimeoutException, QueueException {

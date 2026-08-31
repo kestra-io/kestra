@@ -61,6 +61,7 @@ public class NamespaceController<N extends Namespace> {
             .orElse(Sort.Order.Direction.ASC) == Sort.Order.Direction.ASC ? Comparator.naturalOrder() : Comparator.reverseOrder();
     }
 
+    @SuppressWarnings("unchecked")
     protected ArrayListTotal<N> getNamespaces(Pageable pageable, @Nullable String q, List<String> forceIncludeIds, boolean existingOnly) {
         // We separate the namespaces into two groups: those that are force included and those that are not.
         // Force included namespaces are always returned, while the others are filtered + trimmed based on the query + pageable.
@@ -126,6 +127,7 @@ public class NamespaceController<N extends Namespace> {
     @Get(uri = "{id}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Namespaces" }, summary = "Get a namespace")
+    @SuppressWarnings("unchecked")
     public N getNamespace(
         @Parameter(description = "The namespace id") @PathVariable String id) {
         return (N) Namespace.builder().id(id).build();

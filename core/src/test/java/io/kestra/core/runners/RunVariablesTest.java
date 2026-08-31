@@ -145,6 +145,7 @@ class RunVariablesTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldGetVariablesGivenTrigger() {
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withTrigger(new AbstractTrigger() {

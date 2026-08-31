@@ -900,6 +900,7 @@
       },
       "export": "Exporter les fichiers de l'espace de noms",
       "export_single": "Exporter le fichier",
+      "export_error": "Impossible d'exporter \"{name}\". Son chemin n'a pas pu être résolu.",
       "dialog": {
         "name": {
           "file": "Nom avec extension :",
@@ -1448,7 +1449,8 @@
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
       },
-      "inherited": "Paires KV héritées"
+      "inherited": "Paires KV héritées",
+      "expiration_hint": "Expire actuellement le {date}. Laissez le champ intact pour conserver cette expiration ; choisir une durée la recalcule à partir de maintenant, et la vider la supprime."
     },
     "expiration": "Expiration",
     "page": {

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
 import io.kestra.core.exceptions.*;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.utils.RegexUtils;
 import io.kestra.libs.copilot.exceptions.AiException;
 
@@ -194,6 +195,12 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, HttpStatusException e) {
         return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, MessageTooBigException e) {
+        // The request exceeds the queue message-size limit, which is a client-input problem: surface it as 413.
+        return jsonError(request, e, HttpStatus.REQUEST_ENTITY_TOO_LARGE, "Request entity too large");
     }
 
     @Error(global = true)

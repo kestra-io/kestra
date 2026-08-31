@@ -677,6 +677,7 @@
     "label": "标签",
     "labels": "标签",
     "execution labels": "执行标签",
+    "show more labels": "显示另外 {count} 个 label",
     "wrong labels": "标签中不允许空键或值",
     "feeds": {
       "heading": "所有关于Kestra的内容。",
@@ -900,6 +901,7 @@
       },
       "export": "导出命名空间文件",
       "export_single": "导出文件",
+      "export_error": "无法导出 \"{name}\"。无法解析其路径。",
       "dialog": {
         "name": {
           "file": "文件名（带扩展名）：",
@@ -1448,7 +1450,8 @@
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
-      "inherited": "继承的KV对"
+      "inherited": "继承的KV对",
+      "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"
     },
     "expiration": "过期",
     "page": {

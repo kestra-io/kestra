@@ -677,6 +677,7 @@
     "label": "Label",
     "labels": "라벨",
     "execution labels": "실행 라벨",
+    "show more labels": "라벨 {count}개 더 보기",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
     "feeds": {
       "heading": "Kestra의 모든 것.",
@@ -900,6 +901,7 @@
       },
       "export": "namespace 파일 내보내기",
       "export_single": "파일 내보내기",
+      "export_error": "\"{name}\"을(를) 내보낼 수 없습니다. 경로를 확인할 수 없습니다.",
       "dialog": {
         "name": {
           "file": "확장자를 포함한 이름:",
@@ -1448,7 +1450,8 @@
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
       },
-      "inherited": "상속된 KV 쌍"
+      "inherited": "상속된 KV 쌍",
+      "expiration_hint": "현재 {date}에 만료됩니다. 이 만료를 유지하려면 필드를 그대로 두십시오. 기간을 선택하면 지금부터 다시 계산되고, 지우면 제거됩니다."
     },
     "expiration": "만료",
     "page": {

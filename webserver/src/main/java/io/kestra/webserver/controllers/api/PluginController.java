@@ -507,6 +507,7 @@ public class PluginController {
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),
                     plugin.getAppBlocks().stream(),
+                    plugin.getRules().stream(),
                     plugin.getAdditionalPlugins().stream()
                 )
                     .flatMap(i -> i)

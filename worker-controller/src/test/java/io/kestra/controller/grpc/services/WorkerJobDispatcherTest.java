@@ -240,7 +240,7 @@ class WorkerJobDispatcherTest {
                     .build()
             )
             .task(Log.builder().id("task-1").type(Log.class.getName()).build())
-            .data(new WorkerTaskData(Map.of(), List.of(), null, null))
+            .data(new WorkerTaskData(Map.of(), null))
             .build();
     }
 
@@ -250,7 +250,7 @@ class WorkerJobDispatcherTest {
             .data(
                 new WorkerTriggerData(
                     "main", "io.kestra.test", "flow-1", null, 1, null, null,
-                    Map.of(), List.of(), null, Map.of()
+                    Map.of(), null, Map.of()
                 )
             )
             .build();

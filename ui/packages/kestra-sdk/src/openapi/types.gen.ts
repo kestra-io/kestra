@@ -1755,6 +1755,10 @@ export type PluginControllerApiTriggerPlugin = {
      */
     pluginTitle?: string;
     /**
+     * the owning plugin artifact's manifest title (for example `"NATS"` for every subgroup of the NATS plugin) - coarser than `pluginTitle`, which falls back to a bare package segment (such as `"core"`) when a subgroup declares no title; the UI escalates to this when `pluginTitle` alone still collides
+     */
+    pluginGroupTitle?: string;
+    /**
      * one-line description from the plugin
      */
     description?: string;
@@ -7023,7 +7027,7 @@ export type ListMcpsData = {
          */
         sort?: Array<string> | null;
     };
-    url: '/api/v1/{tenant}/mcp/servers';
+    url: '/api/v1/{tenant}/mcp-servers';
 };
 
 export type ListMcpsResponses = {
@@ -7044,7 +7048,7 @@ export type CreateMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers';
+    url: '/api/v1/{tenant}/mcp-servers';
 };
 
 export type CreateMcpResponses = {
@@ -7066,7 +7070,7 @@ export type DeleteMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
 
 export type DeleteMcpResponses = {
@@ -7086,7 +7090,7 @@ export type GetMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
 
 export type GetMcpResponses = {
@@ -7111,7 +7115,7 @@ export type UpdateMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
 
 export type UpdateMcpResponses = {
@@ -7133,7 +7137,7 @@ export type ToggleMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}/toggle';
+    url: '/api/v1/{tenant}/mcp-servers/{id}/toggle';
 };
 
 export type ToggleMcpResponses = {
@@ -7155,7 +7159,7 @@ export type ListToolsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}/tools';
+    url: '/api/v1/{tenant}/mcp-servers/{id}/tools';
 };
 
 export type ListToolsResponses = {

@@ -13,30 +13,58 @@ jobs:
     name: Sync contracts to kestra-io/artifact-sdk
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      CHANGESET_FILE: .changeset/sync-slot-contracts.md
     steps:
       - name: Checkout kestra
         uses: actions/checkout@v7
+
+      # The branch, the commit and the PR in artifact-sdk are all attributed to whoever owns the
+      # token this job pushes with, so mint kestrabot's instead of using a maintainer's own.
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: artifact-sdk
 
       - name: Checkout artifact-sdk
         uses: actions/checkout@v7
         with:
           repository: kestra-io/artifact-sdk
-          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: artifact-sdk
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: 24.x
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
 
+      # Installing from ui/packages/slot-contracts would install that workspace alone while still
+      # running ui's root postinstall (patch-package), which then fails on the root-only packages
+      # that install never brought in.
+      - name: Install UI dependencies
+        working-directory: ui
+        run: npm ci
+
+      # slot-contracts emits a flat .d.ts naming types imported from @kestra-io/kestra-sdk, whose
+      # declarations only exist once the committed SDK source is bundled.
       - name: Build slot-contracts
-        working-directory: ui/packages/slot-contracts
-        run: npm install && npm run build
+        working-directory: ui
+        run: |
+          npm run build:sdk
+          npm run build --workspace @kestra-io/slot-contracts
 
       - name: Set up Git
         run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "actions@github.com"
+          # The number is kestrabot[bot]'s own user id: without it GitHub renders the commit
+          # author as plain text rather than linking it to the bot.
+          git config --global user.name "kestrabot[bot]"
+          git config --global user.email "173464359+kestrabot[bot]@users.noreply.github.com"
 
       - name: Create or reset chore/contracts branch
         working-directory: artifact-sdk
@@ -52,15 +80,16 @@ jobs:
       - name: Sync contract files
         run: |
           DEST="artifact-sdk/packages/artifact-sdk/src/contracts"
-          rm -rf "$DEST"
           mkdir -p "$DEST"
+          # Prunes the previous sync's output only: the directory also holds artifact-sdk's own
+          # Readme.md, which nothing here regenerates.
+          find "$DEST" -maxdepth 1 -type f ! -name "*.md" -delete
           cp -r ui/packages/slot-contracts/dist/. "$DEST/"
 
       - name: Add changeset
         working-directory: artifact-sdk
         run: |
           mkdir -p .changeset
-          CHANGESET_FILE=".changeset/sync-slot-contracts.md"
           TODAY=$(date -u +%Y-%m-%d)
           if [ -f "$CHANGESET_FILE" ]; then
             # Update the date line in-place (line starting with "Last synced:")
@@ -81,21 +110,33 @@ jobs:
           EOF
           fi
 
+      # artifact-sdk's CI checks formatting repo-wide, so run the pinned oxfmt from its own root
+      # devDependencies (--workspaces=false keeps the install to those) over what we just wrote.
+      - name: Format the synced files
+        working-directory: artifact-sdk
+        run: |
+          npm ci --workspaces=false --ignore-scripts
+          npx oxfmt --write packages/artifact-sdk/src/contracts "$CHANGESET_FILE"
+
       - name: Commit and push
+        id: commit
         working-directory: artifact-sdk
         run: |
           git add packages/artifact-sdk/src/contracts .changeset
           if git diff --cached --quiet; then
             echo "No changes to sync. Exiting."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore: sync slot contracts from kestra-io/kestra $(date +%s)"
           git push --force-with-lease origin chore/contracts
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create or update PR
+        if: steps.commit.outputs.pushed == 'true'
         working-directory: artifact-sdk
         env:
-          GH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           PR_EXISTS=$(gh pr list --repo kestra-io/artifact-sdk --head chore/contracts --base main --json number --jq '.[0].number')
           if [ -n "$PR_EXISTS" ]; then

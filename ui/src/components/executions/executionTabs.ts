@@ -7,7 +7,10 @@ import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 export const EXECUTION_PARENT_ROUTE = "executions/update"
 
 /** localStorage key remembering the last tab the user viewed, used as the redirect fallback below. */
-const DEFAULT_TAB_STORAGE_KEY = "executeDefaultTab"
+export const DEFAULT_TAB_STORAGE_KEY = "executeDefaultTab"
+
+/** Where an execution opens with no preference set. Shared by the redirect, `submitTask` and Settings. */
+export const DEFAULT_EXECUTION_TAB = "gantt"
 
 /**
  * Single source of truth for the Executions detail tabs.
@@ -99,7 +102,7 @@ export const EXECUTION_ROUTE: RouteRecordRaw = {
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {
         const requested = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY)
-        const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, requested, "overview")
+        const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, requested, DEFAULT_EXECUTION_TAB)
         return {name: `${EXECUTION_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
     },
     children: EXECUTION_TAB_ROUTES,

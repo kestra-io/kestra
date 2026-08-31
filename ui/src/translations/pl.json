@@ -681,6 +681,7 @@
     "label": "Etykieta",
     "labels": "Etykiety",
     "execution labels": "Etykiety egzekucji",
+    "show more labels": "Pokaż {count} więcej etykiet",
     "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
     "feeds": {
       "heading": "Wszystko o Kestra.",
@@ -904,6 +905,7 @@
       },
       "export": "Eksportuj pliki namespace'u",
       "export_single": "Eksportuj plik",
+      "export_error": "Nie udało się wyeksportować \"{name}\". Nie można było ustalić ścieżki.",
       "dialog": {
         "name": {
           "file": "Nazwa z rozszerzeniem:",
@@ -1452,7 +1454,8 @@
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
         "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>"
       },
-      "inherited": "Odziedziczone pary KV"
+      "inherited": "Odziedziczone pary KV",
+      "expiration_hint": "Obecnie wygasa {date}. Pozostaw pole bez zmian, aby zachować to wygaśnięcie; wybranie czasu trwania przelicza go od teraz, a wyczyszczenie usuwa go."
     },
     "expiration": "Wygaśnięcie",
     "page": {
@@ -2145,7 +2148,7 @@
     },
     "mcp": {
       "your_servers": "Twoje Serwery",
-      "servers_count": "{count} Serwerów MCP",
+      "servers_count": "{count} serwer MCP | {count} serwery MCP | {count} serwerów MCP",
       "managed_by_kestra": "Zarządzane przez Kestra",
       "servers": "Serwery MCP",
       "client_setup": "Konfiguracja klienta",

@@ -1,7 +1,6 @@
 <template>
     <SchemaSection
         :class="['section-collapsible', {nested, compact}]"
-        :style="labelColor ? {'--property-label-color': labelColor} : undefined"
         :clickableText="sectionName"
         :href="href"
         :arrow="!compact"
@@ -208,7 +207,6 @@
         description?: string;
         examples?: SchemaExample[];
         nested?: boolean;
-        labelColor?: string;
         showFilter?: boolean;
         compact?: boolean;
     }>(), {
@@ -222,7 +220,6 @@
         description: undefined,
         examples: undefined,
         nested: false,
-        labelColor: undefined,
         showFilter: false,
         compact: false,
     })
@@ -393,7 +390,7 @@
         }
 
         :deep(> .collapse-button > .collapse-button__label) {
-            color: var(--property-label-color, inherit);
+            color: var(--ks-text-primary);
         }
 
         :deep(> .collapse-button) {

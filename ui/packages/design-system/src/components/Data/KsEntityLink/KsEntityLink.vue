@@ -1,7 +1,7 @@
 <template>
     <KsTooltip :content="value">
         <RouterLink :to="to" class="ks-entity-link" @click.stop>
-            <component :is="icon" aria-hidden="true" class="ks-entity-link__icon" />
+            <component :is="icon" v-if="!noIcon" aria-hidden="true" class="ks-entity-link__icon" />
             <span class="ks-entity-link__value">{{ value }}</span>
         </RouterLink>
     </KsTooltip>
@@ -23,11 +23,15 @@
         flow: FileTreeOutline,
     }
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         entity: KsEntityLinkEntity
         value: string
         to: RouteLocationRaw
-    }>()
+        /** Drops the leading entity icon, for dense tables where the column is too narrow to spend 20px on it. */
+        noIcon?: boolean
+    }>(), {
+        noIcon: false,
+    })
 
     const icon = computed(() => ENTITY_ICONS[props.entity])
 </script>

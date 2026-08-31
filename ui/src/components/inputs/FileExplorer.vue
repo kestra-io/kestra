@@ -1,5 +1,6 @@
 <template>
     <div
+        ref="sidebar"
         class="p-2 sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
@@ -105,6 +106,7 @@
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
+            :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
@@ -167,7 +169,7 @@
                             <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(data)">
                                 {{ $t("namespace files.export_single") }}
                             </KsDropdownItem>
                             <KsDropdownItem
@@ -375,6 +377,7 @@
     import {useRoute} from "vue-router"
     import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {safePath} from "../../composables/useBaseNamespaces"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -385,6 +388,7 @@
     import TypeIcon from "../utils/icons/Type.vue"
     import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
+    import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
     import {
         ElTreeNode,
@@ -469,6 +473,8 @@
     const dialog = ref<Dialog>({...DIALOG_DEFAULTS})
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
     const isRenaming = ref(false)
+    const sidebar = ref<HTMLElement>()
+    const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
     const tree = ref<any>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
@@ -849,6 +855,8 @@
     }
 
     function onNodeDragStart(draggingNode: FileExplorerNode) {
+        startRestrictDrop()
+
         nodeBeforeDrag.value = {
             parent: draggingNode.parent.data.id,
             path: filesStore.getPath(draggingNode.data.id) ?? "",
@@ -1063,9 +1071,17 @@
         }
     }
 
-    function exportFile(node: TreeNode, data: {fileName: string}) {
-        const path = filesStore.getPath(node.id) ?? ""
-        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=${encodeURI(`/${path}`)}`, data.fileName)
+    function exportFile(file: TreeNode) {
+        // `getPath` resolves the tree's own uid; it used to be handed Element Plus's numeric
+        // internal node id, which never matched, so the request asked for the namespace root
+        // and silently downloaded nothing.
+        const path = filesStore.getPath(file.id)
+        if (!path) {
+            toast.error(t("namespace files.export_error", {name: file.fileName}))
+            return
+        }
+
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=/${safePath(path)}`, file.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {

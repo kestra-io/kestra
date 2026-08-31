@@ -677,6 +677,7 @@
     "label": "标签",
     "labels": "标签",
     "execution labels": "执行标签",
+    "show more labels": "显示另外 {count} 个 label",
     "wrong labels": "标签中不允许空键或值",
     "feeds": {
       "heading": "所有关于Kestra的内容。",

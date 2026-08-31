@@ -677,6 +677,7 @@
     "label": "ラベル",
     "labels": "ラベル",
     "execution labels": "実行ラベル",
+    "show more labels": "他 {count} 件のラベルを表示",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
     "feeds": {
       "heading": "すべてのKestraに関すること。",

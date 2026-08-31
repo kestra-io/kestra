@@ -622,13 +622,13 @@
         ...getExtraColumns().map(col => ({...col, label: t(col.label)})),
     ])
 
-    const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
+    const {visibleColumns: displayColumns, orderedVisibleColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: allColumns.value,
         storageKey: storageKey.value,
     })
 
     const visibleColumns = computed(() =>
-        displayColumns.value
+        orderedVisibleColumns.value
             .map(prop => allColumns.value.find(c => c.prop === prop))
             .filter(c => {
                 const condition = (c as {condition?: () => boolean})?.condition

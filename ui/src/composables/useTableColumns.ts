@@ -17,7 +17,7 @@ export interface UseTableColumnsOptions {
 }
 
 export function useTableColumns({columns, storageKey, initialVisibleColumns = []}: UseTableColumnsOptions) {
-    const orderStorageKey = `ks-column-order-${storageKey}`
+    const orderStorageKey = `ks-column-order-v2-${storageKey}`
     const visibilityStorageKey = `columns_${storageKey}`
     const defaultOrder = columns.map(c => c.prop)
 
@@ -25,6 +25,7 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
         orderStorageKey,
         defaultOrder,
         {
+            writeDefaults: false,
             serializer: {
                 read: (v: string) => {
                     try {

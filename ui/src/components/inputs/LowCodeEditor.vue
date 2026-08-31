@@ -273,39 +273,6 @@
         playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
-    // forExecution() on the server strips taskRunner from graph nodes. Re-inject
-    // the runner type from the parsed flow YAML so topology-details and the
-    // burger-menu "Show Details" item work correctly in execution view too.
-    const runnerTypeByTaskId = computed((): Record<string, string> => {
-        const result: Record<string, string> = {}
-        const flowParsed = flowStore.flowParsed
-        const flowParsedHasRunners = (flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
-        // When flowParsed has no runner types, fall back to props.source (has taskRunner intact;
-        // execution view may have stale flowYaml without taskRunner, or forExecution() strips it)
-        const parsed = flowParsedHasRunners ? flowParsed : (props.source ? YAML_UTILS.parse(props.source) : flowParsed)
-        for (const task of [...(parsed?.tasks ?? []), ...(parsed?.errors ?? []), ...(parsed?.finally ?? [])]) {
-            if (task?.id && task?.taskRunner?.type) {
-                result[task.id] = task.taskRunner.type
-            }
-        }
-        return result
-    })
-
-    const augmentedFlowGraph = computed(() => {
-        const graph = effectiveFlowGraph.value
-        const byId = runnerTypeByTaskId.value
-        if (!graph || !Object.keys(byId).length) return graph
-        return {
-            ...graph,
-            nodes: (graph.nodes ?? []).map((n: any) => {
-                const taskId = n.task?.id
-                const runnerType = taskId ? byId[taskId] : undefined
-                if (!runnerType || n.task?.taskRunner?.type) return n
-                return {...n, task: {...n.task, taskRunner: {type: runnerType}}}
-            }),
-        }
-    })
-
     const collectTasksById = (node: unknown, into: Record<string, any>) => {
         if (Array.isArray(node)) {
             node.forEach((item) => collectTasksById(item, into))
@@ -324,18 +291,44 @@
     // shares its id.
     const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
 
-    const sourceTaskById = computed((): Record<string, any> => {
-        const parsed = YAML_UTILS.parse(flowSource.value, false)
+    const indexTasks = (source: string | undefined): Record<string, any> => {
+        const parsed = YAML_UTILS.parse(source, false)
         const result: Record<string, any> = {}
         TASK_SECTIONS.forEach((section) => collectTasksById(parsed?.[section], result))
         return result
+    }
+
+    const sourceTaskById = computed((): Record<string, any> => {
+        const byId = indexTasks(flowSource.value)
+        if (Object.values(byId).some((task) => task?.taskRunner?.type)) return byId
+        // In execution view flowYaml can be a stale draft with the taskRunner gone while
+        // props.source still has it, and the graph nodes are augmented from this index.
+        return flowSource.value === props.source ? byId : indexTasks(props.source)
+    })
+
+    // forExecution() strips taskRunner from graph nodes. Re-inject the task's own runner, whole,
+    // from the source index so topology-details and the burger-menu "Show Details" item work in
+    // execution view too. Same object identity back when there is nothing to inject: the topology
+    // regenerates its whole graph on any change of this prop.
+    const augmentedFlowGraph = computed(() => {
+        const graph = effectiveFlowGraph.value
+        if (!graph) return graph
+        const byId = sourceTaskById.value
+        let injected = false
+        const nodes = (graph.nodes ?? []).map((n: any) => {
+            const taskRunner = n.task?.id ? byId[n.task.id]?.taskRunner : undefined
+            if (!taskRunner?.type || n.task?.taskRunner?.type) return n
+            injected = true
+            return {...n, task: {...n.task, taskRunner}}
+        })
+        return injected ? {...graph, nodes} : graph
     })
 
     // A graph node's task comes from forExecution(), so source fills back in what it drops without
     // overwriting what the executed revision carried — the source is the flow's latest revision, or
     // an unsaved draft. The exception is the two keys forExecution() REDUCES rather than drops:
     // `tasks` is the children flattened to id and type, and `taskRunner` is re-injected into the
-    // node with only its type, so the node's copy of either is a skeleton and source keeps them.
+    // node, so the node's copy of either is derived rather than executed and source keeps them.
     const taskWithSource = (task: Record<string, any> | undefined) => {
         const fromSource = task?.id ? sourceTaskById.value[task.id] : undefined
         if (!task || !fromSource) return task

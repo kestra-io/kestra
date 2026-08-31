@@ -13,15 +13,28 @@ jobs:
     name: Sync contracts to kestra-io/artifact-sdk
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      CHANGESET_FILE: .changeset/sync-slot-contracts.md
     steps:
       - name: Checkout kestra
         uses: actions/checkout@v7
+
+      # The branch, the commit and the PR in artifact-sdk are all attributed to whoever owns the
+      # token this job pushes with, so mint kestrabot's instead of using a maintainer's own.
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: artifact-sdk
 
       - name: Checkout artifact-sdk
         uses: actions/checkout@v7
         with:
           repository: kestra-io/artifact-sdk
-          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: artifact-sdk
 
       - name: Set up Node.js
@@ -48,8 +61,10 @@ jobs:
 
       - name: Set up Git
         run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "actions@github.com"
+          # The number is kestrabot[bot]'s own user id: without it GitHub renders the commit
+          # author as plain text rather than linking it to the bot.
+          git config --global user.name "kestrabot[bot]"
+          git config --global user.email "173464359+kestrabot[bot]@users.noreply.github.com"
 
       - name: Create or reset chore/contracts branch
         working-directory: artifact-sdk
@@ -75,7 +90,6 @@ jobs:
         working-directory: artifact-sdk
         run: |
           mkdir -p .changeset
-          CHANGESET_FILE=".changeset/sync-slot-contracts.md"
           TODAY=$(date -u +%Y-%m-%d)
           if [ -f "$CHANGESET_FILE" ]; then
             # Update the date line in-place (line starting with "Last synced:")
@@ -96,6 +110,14 @@ jobs:
           EOF
           fi
 
+      # artifact-sdk's CI checks formatting repo-wide, so run the pinned oxfmt from its own root
+      # devDependencies (--workspaces=false keeps the install to those) over what we just wrote.
+      - name: Format the synced files
+        working-directory: artifact-sdk
+        run: |
+          npm ci --workspaces=false --ignore-scripts
+          npx oxfmt --write packages/artifact-sdk/src/contracts "$CHANGESET_FILE"
+
       - name: Commit and push
         id: commit
         working-directory: artifact-sdk
@@ -114,7 +136,7 @@ jobs:
         if: steps.commit.outputs.pushed == 'true'
         working-directory: artifact-sdk
         env:
-          GH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           PR_EXISTS=$(gh pr list --repo kestra-io/artifact-sdk --head chore/contracts --base main --json number --jq '.[0].number')
           if [ -n "$PR_EXISTS" ]; then

@@ -6,7 +6,6 @@ import Errors from "../components/errors/Errors.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
-import {useNamespacesStore} from "override/stores/namespaces"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
@@ -72,7 +71,12 @@ const routes: KestraRouteRecord[] = [
         component: () => import("../components/namespaces/Namespace.vue"),
         // Only Enterprise Edition reports a missing namespace: the OSS endpoint echoes any id back,
         // since an OSS namespace is whatever its flows declare rather than a stored entity.
-        meta: {entity: (to) => useNamespacesStore().load(String(to.params.id))},
+        meta: {
+            entity: async (to) => {
+                const {useNamespacesStore} = await import("override/stores/namespaces")
+                return useNamespacesStore().load(String(to.params.id))
+            },
+        },
         // Resolve legacy deep-links `{name: "namespaces/update", params: {tab}}` and bare
         // `/:id` URLs to the matching child route, preserving params and query.
         redirect: (to) => {

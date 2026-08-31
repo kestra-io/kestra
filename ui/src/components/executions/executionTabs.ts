@@ -1,6 +1,5 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
 import {resolveDefaultTab} from "../../utils/routeTabs"
-import {useExecutionsStore} from "../../stores/executions"
 import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Executions detail page. */
@@ -86,7 +85,10 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
  * tab would have fetched, so the page renders from the store instead of fetching it again.
  */
 export const EXECUTION_ENTITY_META: RouteMeta = {
-    entity: (to) => useExecutionsStore().loadExecution({id: String(to.params.id)}, ENTITY_REQUEST_OPTIONS),
+    entity: async (to) => {
+        const {useExecutionsStore} = await import("../../stores/executions")
+        return useExecutionsStore().loadExecution({id: String(to.params.id)}, ENTITY_REQUEST_OPTIONS)
+    },
 }
 
 /**

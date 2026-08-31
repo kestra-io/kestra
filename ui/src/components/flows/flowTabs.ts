@@ -2,7 +2,6 @@ import type {RouteMeta, RouteRecordRaw} from "vue-router"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {resolveDefaultTab} from "../../utils/routeTabs"
-import {useFlowStore} from "../../stores/flow"
 import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Flows detail page. */
@@ -130,12 +129,15 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
  * `allowDeleted`: a deleted flow still has a page, so only an unknown one is missing.
  */
 export const FLOW_ENTITY_META: RouteMeta = {
-    entity: (to) => useFlowStore().loadFlow({
-        namespace: String(to.params.namespace),
-        id: String(to.params.id),
-        revision: to.query.revision ? String(to.query.revision) : undefined,
-        allowDeleted: true,
-    }, ENTITY_REQUEST_OPTIONS),
+    entity: async (to) => {
+        const {useFlowStore} = await import("../../stores/flow")
+        return useFlowStore().loadFlow({
+            namespace: String(to.params.namespace),
+            id: String(to.params.id),
+            revision: to.query.revision ? String(to.query.revision) : undefined,
+            allowDeleted: true,
+        }, ENTITY_REQUEST_OPTIONS)
+    },
 }
 
 /**

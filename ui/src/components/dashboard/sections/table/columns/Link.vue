@@ -4,6 +4,7 @@
         entity="flow"
         :value="label"
         :to="{name: 'flows/update', params: {namespace: linkData.NAMESPACE, id: linkData.FLOW_ID}}"
+        noIcon
     />
 
     <RouterLink

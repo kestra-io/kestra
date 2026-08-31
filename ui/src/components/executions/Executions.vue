@@ -538,6 +538,12 @@
 
     const optionalColumns = ref([
         {
+            label: t("state"),
+            prop: "state.current",
+            default: true,
+            description: t("filter.table_column.executions.state"),
+        },
+        {
             label: t("start date"),
             prop: "state.startDate",
             default: true,
@@ -572,12 +578,6 @@
             prop: "labels",
             default: true,
             description: t("filter.table_column.executions.labels"),
-        },
-        {
-            label: t("state"),
-            prop: "state.current",
-            default: true,
-            description: t("filter.table_column.executions.state"),
         },
         {
             label: t("revision"),

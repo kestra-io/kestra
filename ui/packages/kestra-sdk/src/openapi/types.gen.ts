@@ -432,7 +432,7 @@ export type Asset = {
 export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
 
 export type AssetIdentifier = {
-    id?: string;
+    id: string;
     type?: string;
 };
 

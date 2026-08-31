@@ -648,6 +648,10 @@
     "open full page": "打开完整页面",
     "drill down preview": "预览",
     "errors": {
+      "400": {
+        "title": "错误请求",
+        "content": "服务器无法理解该请求。"
+      },
       "401": {
         "title": "未授权",
         "content": "你需要认证才能访问此页面。"
@@ -661,9 +665,113 @@
         "content": "请求的URL未在此服务器上找到。<br />这就是我们所知道的。",
         "flow or execution": "你正在寻找的流程或执行不存在。"
       },
-      "requestNotFound": {
-        "title": "未找到",
-        "message": "请求 {method} {url} 返回 404 Not Found。"
+      "409": {
+        "title": "冲突",
+        "content": "请求与资源的当前状态冲突。"
+      },
+      "422": {
+        "title": "无效实体",
+        "content": "提交的内容无法处理。"
+      },
+      "500": {
+        "title": "内部服务器错误",
+        "content": "我们这边出了点问题。请稍后再试。"
+      },
+      "503": {
+        "title": "服务不可用",
+        "content": "服务器暂时不可用。请稍后重试。"
+      },
+      "generic": {
+        "title": "出错了",
+        "content": "发生意外错误。请重试。"
+      },
+      "trace id": "追踪 ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI 请求失败"
+        },
+        "bad-request": {
+          "title": "错误请求"
+        },
+        "bulk-validation-failed": {
+          "title": "部分项目无法处理"
+        },
+        "conflict": {
+          "title": "冲突"
+        },
+        "entity-already-exists": {
+          "title": "实体已存在"
+        },
+        "forbidden": {
+          "title": "访问被拒绝"
+        },
+        "internal-error": {
+          "title": "内部服务器错误"
+        },
+        "invalid-argument": {
+          "title": "无效参数"
+        },
+        "invalid-entity": {
+          "title": "无效实体"
+        },
+        "invalid-format": {
+          "title": "无效值格式"
+        },
+        "invalid-json": {
+          "title": "无效 JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "无效的 plugin 类型"
+        },
+        "invalid-query-filters": {
+          "title": "无效查询过滤器"
+        },
+        "invalid-query-parameter": {
+          "title": "无效查询参数"
+        },
+        "invalid-request-body": {
+          "title": "无效的请求正文"
+        },
+        "locked": {
+          "title": "资源已锁定"
+        },
+        "method-not-allowed": {
+          "title": "方法不允许"
+        },
+        "migration-required": {
+          "title": "需要迁移"
+        },
+        "not-acceptable": {
+          "title": "不可接受"
+        },
+        "not-found": {
+          "title": "未找到资源"
+        },
+        "payload-too-large": {
+          "title": "Payload 过大"
+        },
+        "resource-expired": {
+          "title": "资源已过期"
+        },
+        "service-unavailable": {
+          "title": "服务不可用",
+          "detail": "服务器暂时不可用。请稍后重试。"
+        },
+        "timeout": {
+          "title": "操作超时"
+        },
+        "too-many-requests": {
+          "title": "请求过多"
+        },
+        "unauthenticated": {
+          "title": "需要身份验证"
+        },
+        "unsupported-media-type": {
+          "title": "不支持的媒体类型"
+        },
+        "validation-failed": {
+          "title": "验证失败"
+        }
       }
     },
     "back_to_dashboard": "返回仪表板",

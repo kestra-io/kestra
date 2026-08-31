@@ -661,9 +661,117 @@
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
       },
-      "requestNotFound": {
-        "title": "Not found",
-        "message": "The request {method} {url} returned 404 Not Found."
+      "400": {
+        "title": "Bad request",
+        "content": "The request could not be understood by the server."
+      },
+      "409": {
+        "title": "Conflict",
+        "content": "The request conflicts with the current state of the resource."
+      },
+      "422": {
+        "title": "Invalid entity",
+        "content": "The submitted content could not be processed."
+      },
+      "500": {
+        "title": "Internal server error",
+        "content": "Something went wrong on our side. Please try again later."
+      },
+      "503": {
+        "title": "Service unavailable",
+        "content": "The server is temporarily unavailable. Please try again later."
+      },
+      "generic": {
+        "title": "Something went wrong",
+        "content": "An unexpected error occurred. Please try again."
+      },
+      "trace id": "Trace ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI request failed"
+        },
+        "bad-request": {
+          "title": "Bad request"
+        },
+        "bulk-validation-failed": {
+          "title": "Some items could not be processed"
+        },
+        "conflict": {
+          "title": "Conflict"
+        },
+        "entity-already-exists": {
+          "title": "Entity already exists"
+        },
+        "forbidden": {
+          "title": "Access denied"
+        },
+        "internal-error": {
+          "title": "Internal server error"
+        },
+        "invalid-argument": {
+          "title": "Invalid argument"
+        },
+        "invalid-entity": {
+          "title": "Invalid entity"
+        },
+        "invalid-format": {
+          "title": "Invalid value format"
+        },
+        "invalid-json": {
+          "title": "Invalid JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Invalid plugin type"
+        },
+        "invalid-query-filters": {
+          "title": "Invalid query filters"
+        },
+        "invalid-query-parameter": {
+          "title": "Invalid query parameter"
+        },
+        "invalid-request-body": {
+          "title": "Invalid request body"
+        },
+        "locked": {
+          "title": "Resource is locked"
+        },
+        "method-not-allowed": {
+          "title": "Method not allowed"
+        },
+        "migration-required": {
+          "title": "Migration required"
+        },
+        "not-acceptable": {
+          "title": "Not acceptable"
+        },
+        "not-found": {
+          "title": "Resource not found"
+        },
+        "payload-too-large": {
+          "title": "Payload too large"
+        },
+        "resource-expired": {
+          "title": "Resource has expired"
+        },
+        "service-unavailable": {
+          "title": "Service unavailable",
+          "detail": "The server is temporarily unavailable. Please try again later."
+        },
+        "timeout": {
+          "title": "Operation timed out"
+        },
+        "too-many-requests": {
+          "title": "Too many requests"
+        },
+        "unauthenticated": {
+          "title": "Authentication required"
+        },
+        "unsupported-media-type": {
+          "title": "Unsupported media type"
+        },
+        "validation-failed": {
+          "title": "Validation failed"
+        }
       }
     },
     "back_to_dashboard": "Back to dashboard",

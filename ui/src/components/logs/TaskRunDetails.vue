@@ -888,7 +888,7 @@
                 coreStore.message = {
                     variant: "error",
                     title: t("error"),
-                    message: t(
+                    content: t(
                         "something_went_wrong.loading_execution",
                     ),
                 }

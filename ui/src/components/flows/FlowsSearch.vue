@@ -351,7 +351,7 @@
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
 
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
-    import type {SourceSearchReplacePreviewResponse, SourceSearchReplaceApplyResponse, SourceSearchScope} from "@kestra-io/kestra-sdk"
+    import {asProblem, type SourceSearchReplacePreviewResponse, type SourceSearchReplaceApplyResponse, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
     const {loadInit} = useRestoreUrl()
 
@@ -649,7 +649,7 @@
                 replacement: replacement.value,
             })
         } catch (e: any) {
-            toast.error(e?.response?.data?.message ?? t("source_search.replace_preview_failed"))
+            toast.error(asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
         } finally {
             previewLoading.value = false
         }
@@ -679,7 +679,7 @@
                 flows,
             }))
         } catch (e: any) {
-            toast.error(e?.response?.data?.message ?? t("source_search.replace_apply_failed"))
+            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
 
@@ -698,7 +698,7 @@
                 column: value.column,
             }))
         } catch (e: any) {
-            toast.error(e?.response?.data?.message ?? t("source_search.replace_apply_failed"))
+            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
 

@@ -15,6 +15,7 @@ import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
 import type {FlowWithSource,  AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
+import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
@@ -221,7 +222,7 @@ export const useFlowStore = defineStore("flow", () => {
                         coreStore.message = {
                             variant: "warning",
                             title: t("readonly property"),
-                            message: t("namespace and id readonly"),
+                            content: t("namespace and id readonly"),
                         }
                     }
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
@@ -283,7 +284,7 @@ export const useFlowStore = defineStore("flow", () => {
             coreStore.message = {
                 variant: "error",
                 title: t("invalid flow"),
-                message: t("invalid yaml"),
+                content: t("invalid yaml"),
             }
 
             return "blocked"
@@ -321,8 +322,10 @@ export const useFlowStore = defineStore("flow", () => {
                 const response = await createFlow({flow: flowSource ?? "", draft})
                 notifySaved(response.id, draft)
                 isCreating.value = false
-            } catch (error: any) {
-                if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
+            } catch (error: unknown) {
+                // Branch on the problem type alone. The status is deliberately not checked, so this keeps
+                // working if the type's status is ever revised.
+                if (isProblemType(error, ProblemTypes.ENTITY_ALREADY_EXISTS)) {
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
                         message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value?.id ?? "", namespace: flowParsed.value?.namespace ?? ""})}),
@@ -338,12 +341,9 @@ export const useFlowStore = defineStore("flow", () => {
                     return shouldRedirect ? "redirect_to_update" : "blocked"
                 }
 
-                if (error.response?.data) {
-                    coreStore.message = {
-                        variant: "error",
-                        response: error.response,
-                        content: error.response.data,
-                    }
+                const problem = asProblem(error)
+                if (problem) {
+                    coreStore.message = {variant: "error", problem, status: problem.status}
                 }
 
                 throw error
@@ -461,7 +461,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
-                message: data.exception,
+                content: data.exception,
                 variant: "error",
             }
 
@@ -704,7 +704,7 @@ function deleteFlowAndDependencies() {
                 if ([404, 422].includes(error.status) && subflows && subflows.length > 0) {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
-                        message: error.response?.data?.message,
+                        content: asProblem(error)?.detail,
                         variant: "error",
                     }
                 }

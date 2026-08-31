@@ -20,6 +20,10 @@ const {fakeClient, fakeAxiosClient, nprogressStart, nprogressSet, nprogressDone}
 vi.mock("@kestra-io/kestra-sdk", () => ({
     configureClient: vi.fn(() => fakeClient),
     useClient: vi.fn(() => fakeAxiosClient),
+    // Stands in for the real helper: recognises a problem document the SDK flattened onto the Error.
+    asProblem: (error: any) => (error?.type
+        ? {type: error.type, title: error.title, detail: error.detail, status: error.status}
+        : undefined),
 }))
 
 vi.mock("nprogress", () => ({
@@ -80,7 +84,13 @@ describe("setupKestraHttp central 404 handling", () => {
         setupKestraHttp({}, {coreStore})
         const onErrorInterceptor = fakeClient.interceptors.error.use.mock.calls.at(-1)![0]
 
-        onErrorInterceptor(Object.assign(new Error("404 Not Found"), {status: 404}), notFoundResponse, request, opts)
+        const notFound = Object.assign(new Error("404 Not Found"), {
+            status: 404,
+            type: "https://kestra.io/problems/not-found",
+            title: "Resource not found",
+            detail: "Flow io.kestra.missing not found",
+        })
+        onErrorInterceptor(notFound, notFoundResponse, request, opts)
 
         return coreStore
     }
@@ -94,7 +104,9 @@ describe("setupKestraHttp central 404 handling", () => {
 
         expect(coreStore.message).toMatchObject({
             variant: "error",
-            response: {status: 404, config: {method: "get", url: "/api/v1/main/flows/io.kestra/missing"}},
+            status: 404,
+            request: {method: "get", url: "/api/v1/main/flows/io.kestra/missing"},
+            problem: {type: "https://kestra.io/problems/not-found", detail: "Flow io.kestra.missing not found"},
         })
         // The full-page error screen is driven by coreStore.error - a 404 must not reach it.
         expect(coreStore.error).toBeUndefined()

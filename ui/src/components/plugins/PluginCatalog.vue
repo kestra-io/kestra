@@ -404,6 +404,7 @@
     }
 
     .plugins-pagination {
+        justify-content: flex-end;
         padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
     }
 

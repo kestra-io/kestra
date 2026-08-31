@@ -96,18 +96,18 @@
             </KsTooltip>
         </section>
 
-        <KsPagination
-            v-if="pluginsList.length > 0"
-            class="plugins-pagination"
-            :currentPage
-            :pageSize
-            :total="pluginsList.length"
-            :pageSizes="PAGE_SIZES"
-            layout="sizes, prev, pager, next, total"
-            size="small"
-            @current-change="currentPage = $event"
-            @size-change="onSizeChange"
-        />
+        <div v-if="pluginsList.length > 0" class="plugins-pagination">
+            <KsPagination
+                :currentPage
+                :pageSize
+                :total="pluginsList.length"
+                :pageSizes="PAGE_SIZES"
+                layout="sizes, prev, pager, next, total"
+                size="small"
+                @current-change="currentPage = $event"
+                @size-change="onSizeChange"
+            />
+        </div>
     </template>
 </template>
 
@@ -404,6 +404,7 @@
     }
 
     .plugins-pagination {
+        display: flex;
         justify-content: flex-end;
         padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
     }

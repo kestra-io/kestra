@@ -293,17 +293,6 @@ public class NamespaceFileController {
                     }
                 }));
 
-            flowService.findByNamespaceWithSource(tenantId, namespace).forEach(throwConsumer(flowWithSource ->
-            {
-                try {
-                    archive.putNextEntry(new ZipEntry(FLOWS_FOLDER + "/" + flowWithSource.getId() + ".yml"));
-                    archive.write(flowWithSource.getSource().getBytes());
-                    archive.closeEntry();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }));
-
             archive.finish();
 
             return HttpResponse.ok(bos.toByteArray()).header("Content-Disposition", "attachment; filename=\"" + namespace + "_files.zip\"");

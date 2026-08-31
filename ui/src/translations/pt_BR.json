@@ -2141,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "Seus Servidores",
-      "servers_count": "{count} Servidores MCP",
+      "servers_count": "{count} Servidor MCP | {count} Servidores MCP",
       "managed_by_kestra": "Gerenciado por Kestra",
       "servers": "Servidores MCP",
       "client_setup": "Configuração do cliente",

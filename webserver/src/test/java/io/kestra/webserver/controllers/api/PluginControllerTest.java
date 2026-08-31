@@ -526,6 +526,7 @@ class PluginControllerTest {
         assertThat(mongodbTrigger.pluginTitle()).isEqualTo("MongoDB");
         assertThat(debeziumMongodbTrigger.pluginTitle()).isEqualTo("Debezium MongoDB");
         assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
+        assertThat(mongodbTrigger.pluginGroupTitle()).isEqualTo("MongoDB");
     }
 
     private static RegisteredPlugin pluginWithTitle(String title) {

@@ -9,7 +9,7 @@
             class="me-0 label"
             data-test="label"
         >
-            <span class="label-text" :title="text(label)">{{ text(label) }}</span>
+            <span class="label-text" :title="wrap ? undefined : text(label)">{{ text(label) }}</span>
         </KsCheckTag>
         <KsPopover
             v-if="hiddenLabels.length"
@@ -29,6 +29,7 @@
                 <button
                     type="button"
                     class="label-more"
+                    :aria-label="$t('show more labels', {count: hiddenLabels.length})"
                     data-test="labels-overflow"
                 >
                     +{{ hiddenLabels.length }}

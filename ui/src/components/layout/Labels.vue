@@ -13,9 +13,8 @@
         </KsCheckTag>
         <KsPopover
             v-if="hiddenLabels.length"
-            trigger="hover"
+            trigger="click"
             placement="top"
-            :hideAfter="150"
             :width="360"
         >
             <Labels
@@ -26,7 +25,13 @@
                 data-test="labels-overflow-content"
             />
             <template #reference>
-                <KsTag size="small" data-test="labels-overflow">+{{ hiddenLabels.length }}</KsTag>
+                <button
+                    type="button"
+                    class="label-more"
+                    data-test="labels-overflow"
+                >
+                    +{{ hiddenLabels.length }}
+                </button>
             </template>
         </KsPopover>
     </span>
@@ -114,7 +119,8 @@
 </script>
 
 <style scoped lang="scss">
-.label.kel-check-tag {
+.label.kel-check-tag,
+.label-more {
     --ks-bg-tag: #7b7b7e45;
 ;
     --ks-bg-tag-active: #414557;
@@ -130,6 +136,7 @@
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);
     font-size: var(--ks-font-size-xs);
+    line-height: 1;
     padding: 4px 6px;
     border-radius: 6px;
     font-weight: 400;
@@ -155,6 +162,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: bottom;
+}
+
+.labels-container:not(.wrap) .label.kel-check-tag {
+    min-width: 0;
+}
+
+.label-more {
+    flex-shrink: 0;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
 }
 
 .labels-container.wrap .label.kel-check-tag {

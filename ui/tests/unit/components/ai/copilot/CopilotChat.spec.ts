@@ -45,6 +45,10 @@ const miscStore = reactive({
     promptCopilot: vi.fn(),
 })
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
+// CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
+// create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419).
+const flowStore = reactive({flowYaml: ""})
+vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
@@ -77,6 +81,7 @@ describe("CopilotChat", () => {
         miscStore.copilotNewThread = false
         miscStore.configs = {isAiApiKeyConfigured: true}
         miscStore.loadConfigs.mockReset()
+        flowStore.flowYaml = ""
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -152,6 +157,43 @@ describe("CopilotChat", () => {
         expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
             prompt: "why did this fail?",
             additionalContext: {currentView: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}},
+        }))
+    })
+
+    // kestra-io/kestra-ee#10419: a flow pasted on the create page was never saved, so the agent
+    // has nothing to read — the turn must carry the editor buffer itself.
+    it("sends the editor buffer as flowSource on the flow create page", async () => {
+        routeStub = {name: "flows/create", params: {}}
+        flowStore.flowYaml = "id: repro\nnamespace: company.team"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "fix this error")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", flowSource: "id: repro\nnamespace: company.team"}},
+        }))
+    })
+
+    it("sends the editor buffer alongside the flow ids on a flow detail route", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "what does this flow do?")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team", flowId: "my-flow", flowSource: "id: my-flow"}},
+        }))
+    })
+
+    it("drops the editor buffer when the flow context pill is dismissed", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotContextChip"}).vm.$emit("remove", "flowId")
+        await flushPromises()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no flow please")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team"}},
         }))
     })
 

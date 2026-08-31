@@ -40,10 +40,8 @@ public class InMemoryExecutionQueuedStateStore implements ExecutionQueuedStateSt
         });
     }
 
-    /**
-     * Every queued execution, in insertion order.
-     */
-    public List<ExecutionQueued> queued() {
-        return List.copyOf(queued);
+    @Override
+    public List<ExecutionQueued> getAllForAllTenants() {
+        return queued.stream().sorted(Comparator.comparing(ExecutionQueued::getDate)).toList();
     }
 }

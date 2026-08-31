@@ -1,7 +1,9 @@
 dependencies {
+    annotationProcessor project(":processor")
     implementation project(':core')
     implementation project(':queue')
 
+    testAnnotationProcessor project(":processor")
     implementation project(':jdbc')
     implementation("io.micronaut.sql:micronaut-jooq")
 }

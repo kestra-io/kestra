@@ -104,6 +104,38 @@ export const Default: Story = {
     decorators: makeDecorators(),
 };
 
+export const Fullscreen: Story = {
+    decorators: makeDecorators(),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const iframeBody = canvasElement.ownerDocument.body;
+        const fullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']");
+        if (!fullscreenButton) throw new Error("fullscreen logs button not found");
+
+        await userEvent.click(fullscreenButton);
+
+        const dialog = await waitFor(() => {
+            const element = iframeBody.querySelector<HTMLElement>("[data-test='logs-fullscreen-dialog']");
+            if (!element) throw new Error("fullscreen logs dialog not found");
+            return element;
+        });
+
+        const exitFullscreenButton = within(dialog).getByRole("button", {name: /exit fullscreen/i});
+        expect(exitFullscreenButton).toHaveAttribute("aria-pressed", "true");
+        expect(dialog.querySelector("[data-test='logs-toolbar']")).toBeInTheDocument();
+        expect(dialog.querySelector("[data-test='logs-scroller']")).toBeInTheDocument();
+
+        await userEvent.click(exitFullscreenButton);
+
+        await waitFor(() => expect(dialog).not.toBeVisible());
+        const reopenFullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']");
+        if (!reopenFullscreenButton) throw new Error("fullscreen logs button not found after closing the dialog");
+        expect(reopenFullscreenButton).toHaveAttribute("aria-pressed", "false");
+
+        await userEvent.click(reopenFullscreenButton);
+        await waitFor(() => expect(dialog).toBeVisible());
+    },
+};
+
 /**
  * Selects WARN from the level filter chip and asserts the full chain fires:
  * chip label updates, loadLogs is called with minLevel=WARN, and the store

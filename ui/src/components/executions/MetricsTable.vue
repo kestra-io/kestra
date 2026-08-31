@@ -96,10 +96,8 @@
     import type {Execution} from "../../stores/executions"
     import {humanizeDuration, humanizeNumber} from "../../utils/filters"
 
-    import {useExecutionsStore} from "../../stores/executions"
 
     import {useTableColumns} from "@kestra-io/design-system"
-    import {useTableColumns} from "../../composables/useTableColumns"
 
     const {t} = useI18n()
 

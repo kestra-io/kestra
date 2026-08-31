@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {provide, ref, shallowReactive} from "vue"
 import {createMemoryHistory, createRouter, routeLocationKey, routerKey, START_LOCATION} from "vue-router"
+import {expect, waitFor} from "storybook/test"
 import KsFilter from "../../../src/components/Data/KsDataTable/KsFilter.vue"
 
 const meta: Meta<typeof KsFilter> = {
@@ -424,4 +425,31 @@ export const WithWrappedRows: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const main = await waitFor(() => {
+            const element = canvasElement.querySelector<HTMLElement>(".filter .top > .main-filters")
+            if (!element) throw new Error("no .filter .top > .main-filters: the bar is no longer one wrapping group")
+            const chips = element.querySelectorAll(".filter-chip-wrap")
+            if (chips.length < 2) throw new Error(`expected 2 chips, rendered ${chips.length}`)
+            return element
+        })
+
+        // MainFilter's root is display: contents, so the items actually laid out are its children.
+        const boxes = [...main.children]
+            .flatMap((child) => getComputedStyle(child).display === "contents" ? [...child.children] : [child])
+            .map((element) => element.getBoundingClientRect())
+            .filter((box) => box.width > 0 && box.height > 0)
+
+        // Rows group by vertical centre rather than by top: the 18px reset link and the 32px
+        // chips beside it share a row without sharing a top.
+        const leftPerRow = new Map<number, number>()
+        for (const box of boxes) {
+            const centre = (box.top + box.bottom) / 2
+            const row = [...leftPerRow.keys()].find((key) => Math.abs(key - centre) <= 4) ?? centre
+            leftPerRow.set(row, Math.min(leftPerRow.get(row) ?? Infinity, Math.round(box.left)))
+        }
+
+        expect(leftPerRow.size).toBeGreaterThan(1)
+        expect([...new Set(leftPerRow.values())]).toHaveLength(1)
+    },
 }

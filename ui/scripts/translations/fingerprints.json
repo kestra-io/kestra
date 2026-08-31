@@ -844,6 +844,7 @@
   "kv|delete multiple|confirm": "6e131eec46b5",
   "kv|delete multiple|warning": "8f1b702384c2",
   "kv|duplicate": "31f70cb8b6a3",
+  "kv|expiration_hint": "8dd012aff671",
   "kv|inherited": "18e8d0624e66",
   "kv|name": "1b90a1ca69bf",
   "kv|type": "baaddf70fb5d",

@@ -1449,7 +1449,8 @@
         "confirm": "Sei sicuro di voler eliminare: <code>{name}</code> KV?",
         "warning": "Non hai i permessi per quei namespace, quindi verranno omessi: <code>{namespaces}</code>"
       },
-      "inherited": "Coppie KV ereditate"
+      "inherited": "Coppie KV ereditate",
+      "expiration_hint": "Attualmente scade il {date}. Lascia il campo intatto per mantenere questa scadenza; la selezione di una durata la ricalcola da ora, e la sua cancellazione la rimuove."
     },
     "expiration": "Scadenza",
     "page": {

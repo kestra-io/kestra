@@ -13,6 +13,19 @@ living **in the same repo, on the same commit** as the backend it describes.
 The package keeps the name `@kestra-io/kestra-sdk` because it is the module-federation-shared client:
 the app and plugins must resolve one client instance (shared auth + routing).
 
+## Entry points
+
+| Import | Contents |
+| --- | --- |
+| `@kestra-io/kestra-sdk` | `useClient` / `configureClient` / `setMockClient`, and every generated **type** |
+| `@kestra-io/kestra-sdk/<tag>` | the operations of one tag, e.g. `/flows`, `/executions` |
+| `@kestra-io/kestra-sdk/all` | every operation at once — named exports, plus the namespace as `default` |
+
+The root entry exports **no operations**. It is a module-federation share, so whatever it exports is
+pinned for remotes and can never be tree-shaken — re-exporting the generated operations there put all
+of them in the app's initial graph and made the per-tag shares unsplittable. Reach an operation
+through its tag, or through `/all` if one import is preferable to several.
+
 ## Regenerating the SDK
 
 Only needed when the OSS API changes. From `ui/`:

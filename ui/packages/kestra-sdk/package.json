@@ -8,6 +8,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./ai": "./dist/ai.js",
+    "./all": "./dist/all.js",
     "./blueprint-tags": "./dist/blueprint-tags.js",
     "./blueprints": "./dist/blueprints.js",
     "./client": "./dist/client.js",

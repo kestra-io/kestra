@@ -1448,7 +1448,8 @@
         "confirm": "Tem certeza de que deseja excluir: <code>{name}</code> KV(s)?",
         "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>"
       },
-      "inherited": "Pares KV herdados"
+      "inherited": "Pares KV herdados",
+      "expiration_hint": "Atualmente expira em {date}. Deixe o campo intocado para manter esta expiração; escolher uma duração a recalcula a partir de agora, e limpá-la a remove."
     },
     "expiration": "Expiração",
     "page": {

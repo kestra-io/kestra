@@ -1448,7 +1448,8 @@
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
         "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
-      "inherited": "Geerbte KV-Paare"
+      "inherited": "Geerbte KV-Paare",
+      "expiration_hint": "Läuft derzeit am {date} ab. Lasse das Feld unberührt, um dieses Ablaufdatum beizubehalten; die Auswahl einer Dauer berechnet es ab jetzt neu, und das Löschen entfernt es."
     },
     "expiration": "Ablauf",
     "page": {

@@ -1448,7 +1448,8 @@
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
         "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>"
       },
-      "inherited": "Odziedziczone pary KV"
+      "inherited": "Odziedziczone pary KV",
+      "expiration_hint": "Obecnie wygasa {date}. Pozostaw pole bez zmian, aby zachować to wygaśnięcie; wybranie czasu trwania przelicza go od teraz, a wyczyszczenie usuwa go."
     },
     "expiration": "Wygaśnięcie",
     "page": {

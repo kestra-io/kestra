@@ -1448,7 +1448,8 @@
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
-      "inherited": "继承的KV对"
+      "inherited": "继承的KV对",
+      "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"
     },
     "expiration": "过期",
     "page": {

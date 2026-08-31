@@ -453,3 +453,31 @@ export const WithWrappedRows: Story = {
         expect([...new Set(leftPerRow.values())]).toHaveLength(1)
     },
 }
+
+/**
+ * What `BlueprintsFilterBar` renders: `searchInputFullWidth` with a configuration that has
+ * no keys, so the search is the only control and stretches to fill the bar.
+ */
+export const WithFullWidthSearch: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter()
+            const configuration = {searchPlaceholder: "Search blueprints...", keys: []}
+            const buttons = {savedFilters: {shown: false}, tableOptions: {shown: false}}
+            const tableOptions = {chart: {shown: false}, columns: {shown: false}, refresh: {shown: false}}
+            return {ready, configuration, buttons, tableOptions}
+        },
+        template: `
+            <div style="padding: 24px; width: 620px">
+                <KsFilter
+                    v-if="ready"
+                    :configuration="configuration"
+                    :buttons="buttons"
+                    :tableOptions="tableOptions"
+                    searchInputFullWidth
+                />
+            </div>
+        `,
+    }),
+}

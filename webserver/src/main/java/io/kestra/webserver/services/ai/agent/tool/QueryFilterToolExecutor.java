@@ -102,7 +102,7 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
             String operatorName = String.valueOf(entry.get("operator"));
             QueryFilter.Op op;
             try {
-                op = QueryFilter.Op.valueOf(operatorName);
+                op = QueryFilter.Op.fromString(operatorName);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Unknown operator '%s' for field '%s'".formatted(operatorName, field.name()));
             }

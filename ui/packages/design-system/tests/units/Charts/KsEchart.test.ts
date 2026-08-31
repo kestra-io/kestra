@@ -2,7 +2,7 @@ import {describe, test, expect, vi, afterAll, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
 import {ref} from "vue"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
-import {ChartFeature} from "../../../src/components/Charts/ksChartUtils"
+import {ChartFeature} from "../../../src/utils/chart"
 
 // jsdom has no layout — force non-zero dimensions so KsEchart's canRender
 // latch flips and <VChart> mounts.
@@ -137,6 +137,29 @@ describe("KsEchart", () => {
         const wrapper = mountChart({tooltipType: "external"})
         const tooltip = wrapper.findComponent({name: "KsTooltip"})
         expect(tooltip.props("trigger")).toBe("manual")
+    })
+
+    test("external tooltip honors the per-series tooltip.valueFormatter option", async () => {
+        const options = {
+            ...BASE_OPTIONS,
+            series: [
+                {name: "Executions", type: "bar", data: [10, 20, 30]},
+                {name: "Duration", type: "line", data: [1.5, 2, 3], tooltip: {valueFormatter: (value: unknown) => `${value}s`}},
+            ],
+        }
+        const wrapper = mount(KsEchart, {props: {options, tooltipType: "external"}, global: globalConfig})
+
+        const vChart = wrapper.findComponent({name: "VChart"})
+        const opt = vChart.props("option") as {tooltip: {formatter: (params: unknown) => string}}
+        opt.tooltip.formatter([
+            {seriesName: "Executions", seriesType: "bar", seriesIndex: 0, name: "Jan", value: 10, color: "#0f0"},
+            {seriesName: "Duration", seriesType: "line", seriesIndex: 1, name: "Jan", value: 1.5, color: "#00f"},
+        ])
+        await wrapper.vm.$nextTick()
+
+        const content = wrapper.findComponent({name: "KsTooltip"}).props("content") as string
+        expect(content).toContain(">10<")
+        expect(content).toContain(">1.5s<")
     })
 
     // ── loading ────────────────────────────────────────────────────────────────
@@ -353,5 +376,32 @@ describe("KsEchart", () => {
         const vChart = wrapper.findComponent({name: "VChart"})
         const initOptions = vChart.props("initOptions") as {renderer: string}
         expect(initOptions.renderer).toBe("canvas")
+    })
+
+    // ── maxPixelRatio ──────────────────────────────────────────────────────────
+
+    function initOptionsOf(props: Record<string, unknown>) {
+        const vChart = mountChart(props).findComponent({name: "VChart"})
+        return vChart.props("initOptions") as {renderer: string; devicePixelRatio?: number}
+    }
+
+    test("leaves devicePixelRatio to ECharts when maxPixelRatio is not set", () => {
+        vi.stubGlobal("devicePixelRatio", 3)
+        expect(initOptionsOf({})).not.toHaveProperty("devicePixelRatio")
+    })
+
+    test("caps devicePixelRatio at maxPixelRatio on a high-DPI screen", () => {
+        vi.stubGlobal("devicePixelRatio", 3)
+        expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1.5)
+    })
+
+    test("keeps the device pixel ratio when it is already below maxPixelRatio", () => {
+        vi.stubGlobal("devicePixelRatio", 1)
+        expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1)
+    })
+
+    test("falls back to a ratio of 1 when the browser reports none", () => {
+        vi.stubGlobal("devicePixelRatio", undefined)
+        expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1)
     })
 })

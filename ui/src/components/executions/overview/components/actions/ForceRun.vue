@@ -80,7 +80,7 @@
         if (
             !user?.isAllowed(
                 resource.EXECUTION,
-                action.UPDATE,
+                action.FORCE_RUN,
                 props.execution.namespace,
             )
         ) {

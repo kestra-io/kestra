@@ -273,7 +273,14 @@
             <Vars :data="detailsData" />
         </KsDrawer>
 
-        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose" scrollable>
+        <KsDialog
+            v-model="isBackfillOpen"
+            destroyOnClose
+            :appendToBody="true"
+            :beforeClose="beforeBackfillClose"
+            scrollable
+            large
+        >
             <template #header>
                 <span v-html="$t('backfill executions')" />
             </template>
@@ -392,8 +399,8 @@
     const detailsTriggerId = ref<string | undefined>()
     const selectedTrigger = ref<SelectedTrigger | undefined>()
 
-    const DATE_COLUMNS: readonly string[] = ["lastTriggeredDate", "nextEvaluationDate", "evaluatedAt", "updatedAt"]
-    const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", ...DATE_COLUMNS]
+    // evaluatedAt/updatedAt are TriggerState JSON fields with no backing column on the triggers table, so they're excluded here.
+    const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", "lastTriggeredDate", "nextEvaluationDate"]
     const DATE_TOOLTIP_KEYS: Record<string, string> = {
         lastTriggeredDate: "last trigger date tooltip",
         updatedAt: "context updated date tooltip",
@@ -735,17 +742,22 @@
     }
 
     const doSetDisabled = (trigger: any, disabled: boolean, recoverMissedSchedules?: boolean) => {
+        const isTargetRow = (tr: any) => {
+            const {namespace, flowId, triggerId} = tr.state ?? tr.trigger ?? {}
+            return namespace === trigger.namespace
+                && flowId === trigger.flowId
+                && triggerId === trigger.triggerId
+        }
+        // Flip the row before the API call so the knob animates on click instead of after the roundtrip.
+        const previousRow = triggers.value?.find(isTargetRow)
+        triggers.value = triggers.value?.map((tr: any) => isTargetRow(tr) ? {...tr, state: {...tr.state, disabled}} : tr)
         TriggersAPI.disableTriggerById({...trigger, disabled, recoverMissedSchedules})
             .then((updatedTrigger: any) => {
                 toast.saved(updatedTrigger.triggerId)
-                triggers.value = triggers.value?.map((tr: any) => {
-                    const {namespace, flowId, triggerId} = tr.state ?? tr.trigger ?? {}
-                    return namespace === updatedTrigger.namespace
-                        && flowId === updatedTrigger.flowId
-                        && triggerId === updatedTrigger.triggerId
-                        ? {...tr, state: updatedTrigger}
-                        : tr
-                })
+                triggers.value = triggers.value?.map((tr: any) => isTargetRow(tr) ? {...tr, state: updatedTrigger} : tr)
+            })
+            .catch(() => {
+                triggers.value = triggers.value?.map((tr: any) => isTargetRow(tr) ? previousRow : tr)
             })
     }
 

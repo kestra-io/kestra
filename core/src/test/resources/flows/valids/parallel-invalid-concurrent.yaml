@@ -1,0 +1,11 @@
+id: parallel-invalid-concurrent
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    concurrent: "{{ 0 - 1 }}"
+    tasks:
+      - id: a
+        type: io.kestra.plugin.core.log.Log
+        message: hello

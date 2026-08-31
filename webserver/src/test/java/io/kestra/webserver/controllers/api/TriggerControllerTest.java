@@ -142,6 +142,38 @@ class TriggerControllerTest {
             );
     }
 
+    @Test
+    void searchTriggersWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET(TRIGGER_PATH + "/search?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchTriggersSortsByNextExecutionDateAlias() throws FlowProcessingException, QueueException {
+        // nextExecutionDate is a pre-2.0 alias of the real column next_evaluation_date
+        Flow flow = generateFlow();
+        flowService.create(GenericFlow.of(flow));
+        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET(TRIGGER_PATH + "/search?filters[namespace][STARTS_WITH]=%s&sort=nextExecutionDate:asc".formatted(flow.getNamespace())),
+            Argument.of(PagedResults.class, ApiTriggerAndState.class)
+        );
+
+        assertThat(triggers.getTotal()).isGreaterThanOrEqualTo(2L);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void shouldFindTriggersGivenFilterOnNamespace() throws FlowProcessingException, QueueException {

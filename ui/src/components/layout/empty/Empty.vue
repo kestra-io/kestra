@@ -4,7 +4,7 @@
             <KsEmptyState
                 :title="resolvedTitle"
                 :description="resolvedDescription"
-                :image="artwork"
+                :image="images[type] ?? generic"
                 :learnMore="resolvedLearnMore"
             >
                 <template v-if="$slots.description || $slots.message" #description>
@@ -36,7 +36,8 @@
     import {useI18n} from "vue-i18n"
     import {KsButton, KsEmptyState} from "@kestra-io/design-system"
 
-    import artwork from "../../../assets/empty_visuals/generic.svg"
+    import generic from "../../../assets/empty_visuals/generic.svg"
+    import {images} from "./images"
     import {links} from "./links"
 
     const props = withDefaults(

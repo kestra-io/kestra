@@ -20,11 +20,29 @@ const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
     Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
-import KsEchart from "./components/Charts/KsEchart.vue"
-import KsGraph from "./components/Charts/KsGraph.vue"
-import KsLine from "./components/Charts/KsLine.vue"
-import KsBar from "./components/Charts/KsBar.vue"
-import KsPie from "./components/Charts/KsPie.vue"
+// Async on purpose: every chart statically pulls ECharts, which the barrel would
+// otherwise put in the app's eager bundle on behalf of consumers that never
+// render a chart.
+import type KsEchartSfc from "./components/Charts/KsEchart.vue"
+import type KsGraphSfc from "./components/Charts/KsGraph.vue"
+import type KsLineSfc from "./components/Charts/KsLine.vue"
+import type KsBarSfc from "./components/Charts/KsBar.vue"
+import type KsPieSfc from "./components/Charts/KsPie.vue"
+const KsEchart = asyncComponent("KsEchart",
+    () => import("./components/Charts/KsEchart.vue"),
+) as unknown as typeof KsEchartSfc
+const KsGraph = asyncComponent("KsGraph",
+    () => import("./components/Charts/KsGraph.vue"),
+) as unknown as typeof KsGraphSfc
+const KsLine = asyncComponent("KsLine",
+    () => import("./components/Charts/KsLine.vue"),
+) as unknown as typeof KsLineSfc
+const KsBar = asyncComponent("KsBar",
+    () => import("./components/Charts/KsBar.vue"),
+) as unknown as typeof KsBarSfc
+const KsPie = asyncComponent("KsPie",
+    () => import("./components/Charts/KsPie.vue"),
+) as unknown as typeof KsPieSfc
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
@@ -168,7 +186,7 @@ export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
-export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
+export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"

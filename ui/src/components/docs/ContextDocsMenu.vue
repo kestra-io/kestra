@@ -44,7 +44,7 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {useDocStore} from "../../stores/doc"
-    import {SECTIONS} from "./docsUtils"
+    import {buildDocsSections, buildDocsToc} from "./docsUtils"
 
     import Menu from "vue-material-design-icons/Menu.vue"
 
@@ -86,52 +86,7 @@
         rawStructure.value = await docStore.children()
     })
 
-    const toc = computed(() => {
-        if (rawStructure.value === undefined) {
-            return undefined
-        }
-
-        const childrenWithMetadata = Object.entries(rawStructure.value)
-            .filter(([p]) => p.startsWith("docs/") && !p.endsWith(".png") && !p.endsWith(".svg"))
-            .reduce((acc: Record<string, any>, [url, metadata]) => {
-                if(!metadata || metadata.hideSidebar){
-                    return acc
-                }
-
-                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "")
-
-                acc[cleanUrl] = {
-                    ...metadata,
-                    path: cleanUrl,
-                }
-
-                return acc
-            }, {})
-
-        for(const url in childrenWithMetadata){
-            const metadata = childrenWithMetadata[url]
-            const split = url.split("/")
-            const parentUrl = split.slice(0, split.length - 1).join("/")
-            const parent = childrenWithMetadata[parentUrl]
-            if (parent !== undefined) {
-                parent.children = [...(parent.children ?? []), metadata]
-            }
-        }
-
-        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[]
-    })
-
-    const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
-        .map(([section, childrenTitles]) =>({
-
-            section,
-            children: childrenTitles
-                .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
-                    path.split("/").length === 2 && (sidebarTitle === name || title === name),
-                ))
-                .filter((item): item is NonNullable<typeof item> => !!item),
-        })),
-    )
+    const sectionsWithChildren = computed(() => buildDocsSections(buildDocsToc(rawStructure.value)))
 </script>
 
 <style scoped lang="scss">

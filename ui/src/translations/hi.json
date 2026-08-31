@@ -182,6 +182,7 @@
     "add_new_item": "नया आइटम जोड़ें",
     "copy": "कॉपी करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
+    "copy_pebble_expression": "pebble एक्सप्रेशन कॉपी करें",
     "new": "नया",
     "edit": "संपादित करें",
     "back": "वापस",
@@ -206,6 +207,7 @@
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
     "queued duration": "कतारबद्ध अवधि",
+    "paused duration": "रुकी हुई अवधि",
     "executionProgress": {
       "title": "निष्पादन प्रगति",
       "estimatedRemaining": "अनुमानित शेष समय: {duration}",
@@ -298,6 +300,21 @@
     "to": "तक",
     "steps": "चरण",
     "state": "स्थिति",
+    "state_history": {
+      "title": "स्थिति इतिहास",
+      "open": "स्थिति इतिहास",
+      "aria_open": "स्थिति इतिहास दिखाएं",
+      "aria_open_for": "{subject} का स्थिति इतिहास दिखाएं",
+      "started_at": "{time} पर शुरू हुआ",
+      "failed_at": "{time} पर विफल",
+      "skipped_at": "{time} पर छोड़ा गया",
+      "created_at": "{time} पर बनाया गया",
+      "did_not_run": "यह टास्क नहीं चला",
+      "waiting_to_start": "शुरू होने की प्रतीक्षा में",
+      "attempt_n": "प्रयास {index}",
+      "attempt_count": "{count} प्रयास",
+      "copy": "स्थिति इतिहास कॉपी करें"
+    },
     "search": "खोजें",
     "source search": "स्रोत खोज",
     "selected": "चयनित",
@@ -367,7 +384,7 @@
     "unqueue done": "निष्पादन कतार से बाहर है",
     "force run": "फोर्स रन",
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
-    "force run confirm": "क्या आप वाकई execution <code>{id}</code> को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task runs बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queue किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "force run confirm": "क्या आप वाकई execution `{id}` को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट task run बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED tasks को running स्थिति में ले जाया जाएगा।\n- RUNNING tasks को फिर से सबमिट किया जाएगा।\n- QUEUED tasks को un-queue किया जाएगा।\n- PAUSED tasks को फिर से शुरू किया जाएगा।",
     "force run done": "Execution को जबरन चलाया गया",
     "metrics": "मेट्रिक्स",
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
@@ -456,6 +473,11 @@
         "title": "बची हुई समवर्तीता सीमा"
       }
     },
+    "docsPage": {
+      "notFound": "यह डॉक्युमेंटेशन पेज मौजूद नहीं है। इसे हटाया या इसका नाम बदला गया हो सकता है।",
+      "loadError": "यह डॉक्युमेंटेशन पेज लोड नहीं हो सका। कृपया फिर से प्रयास करें।",
+      "backToDocs": "Docs पर वापस जाएँ"
+    },
     "documentation": {
       "documentation": "दस्तावेज़ीकरण"
     },
@@ -494,6 +516,15 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "autoInstall": {
+        "failed": "plugin इंस्टॉलेशन विफल रहा",
+        "failedHint": "flow सेव नहीं हुआ। समस्या ठीक करें या flow से plugin हटाएं, फिर दोबारा सेव करें।",
+        "preparing": "plugin इंस्टॉलेशन की तैयारी हो रही है...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "plugin सफलतापूर्वक इंस्टॉल हो गया | plugins सफलतापूर्वक इंस्टॉल हो गए",
+        "timeout": "plugin इंस्टॉलेशन में अपेक्षा से अधिक समय लग रहा है। flow सेव नहीं हुआ, इंस्टॉलेशन पूरा होने पर दोबारा सेव करें।",
+        "title": "{count} plugin इंस्टॉल हो रहा है | {count} plugins इंस्टॉल हो रहे हैं"
+      },
       "names": "plugins",
       "release": "रिलीज़ नोट्स",
       "beta": "बीटा",
@@ -533,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
+      "nav_definitions": "परिभाषाएँ",
       "nav_examples": "उदाहरण",
+      "nav_metrics": "Metrics",
       "nav_outputs": "Outputs",
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
@@ -644,6 +677,7 @@
     "label": "Label",
     "labels": "labels",
     "execution labels": "निष्पादन labels",
+    "show more labels": "{count} और लेबल दिखाएं",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
     "feeds": {
       "heading": "सभी चीजें Kestra।",
@@ -657,7 +691,7 @@
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
-    "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task executions बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queued किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
     "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
@@ -753,6 +787,11 @@
     "expand_by_default": "संरचित logs को डिफ़ॉल्ट रूप से विस्तृत करें",
     "similar lines": "समान लाइनें",
     "download_logs_description": "निर्यात करने के लिए logs चुनें। फ़िल्टर आपकी वर्तमान दृश्य के अनुसार डिफ़ॉल्ट होते हैं।",
+    "logs_download_truncated": "सबसे नई {downloaded} log पंक्तियाँ निर्यात की गईं। {skipped} और आपके फ़िल्टर से मेल खाती थीं और छोड़ दी गईं।",
+    "logs_download_capped": "सबसे नई {downloaded} log पंक्तियाँ निर्यात की गईं, जो एक निर्यात की अधिकतम सीमा है। आपके फ़िल्टर से और भी मेल खा सकती थीं।",
+    "logs_download_partial": "यह फ़िल्टर इससे आगे पेज नहीं किया जा सकता, इसलिए निर्यात {downloaded} log पंक्तियों पर रुक गया। कुछ मेल खाती पंक्तियाँ अनुपस्थित हैं।",
+    "logs_download_failed": "log निर्यात विफल रहा। कोई फ़ाइल डाउनलोड नहीं हुई।",
+    "logs_download_empty": "आपके फ़िल्टर से कोई log पंक्ति मेल नहीं खाई, इसलिए कोई फ़ाइल डाउनलोड नहीं हुई।",
     "display_settings": "सेटिंग्स दिखाएँ",
     "density": "घनत्व",
     "density_compact": "कॉम्पैक्ट",
@@ -836,6 +875,7 @@
         "folder_error": "फ़ोल्डर बनाते समय त्रुटि हुई"
       },
       "rename": {
+        "error": "\"{name}\" में नाम बदला नहीं जा सका। इस नाम की फ़ाइल या फ़ोल्डर पहले से मौजूद हो सकता है।",
         "label": "नाम बदलें",
         "file": "फ़ाइल का नाम बदलें",
         "folder": "फ़ोल्डर का नाम बदलें",
@@ -861,6 +901,7 @@
       },
       "export": "Namespace फ़ाइलें निर्यात करें",
       "export_single": "फ़ाइल निर्यात करें",
+      "export_error": "\"{name}\" निर्यात नहीं किया जा सका। इसका पथ हल नहीं हो सका।",
       "dialog": {
         "name": {
           "file": "एक्सटेंशन के साथ नाम:",
@@ -1409,7 +1450,8 @@
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
       },
-      "inherited": "विरासत में मिले KV जोड़े"
+      "inherited": "विरासत में मिले KV जोड़े",
+      "expiration_hint": "वर्तमान में {date} को समाप्त होता है। इस समाप्ति को बनाए रखने के लिए फ़ील्ड को अछूता छोड़ दें; अवधि चुनने से यह अब से पुनर्गणना करता है, और इसे साफ़ करने से यह हट जाता है।"
     },
     "expiration": "समाप्ति",
     "page": {
@@ -1780,6 +1822,7 @@
       "others": "अन्य",
       "viewAll": "सभी देखें",
       "export": "एक्सपोर्ट करें",
+      "exportEmpty": "इस चार्ट में निर्यात करने के लिए कोई डेटा नहीं है।",
       "exportTo": {
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"
@@ -1889,6 +1932,7 @@
           "test": "परीक्षण"
         },
         "contextRemoved": "संदर्भ से {type} {id} हटा दिया गया।",
+        "modelChanged": "{model} पर स्विच किया गया।",
         "toolResult": {
           "detail": "विवरण",
           "error": "{tool} विफल रहा",
@@ -1959,6 +2003,12 @@
           "अभिसरण हो रहा है"
         ],
         "newChat": "नया चैट",
+        "fixThread": {
+          "flow": "फ्लो {id} को ठीक करें",
+          "task": "टास्क {id} को ठीक करें",
+          "execution": "{id} के निष्पादन को ठीक करें",
+          "generic": "फ्लो त्रुटियों को ठीक करें"
+        },
         "draft": {
           "openInEditor": "संपादक में खोलें",
           "apply": "लागू करें",
@@ -2007,6 +2057,31 @@
         "zoom_out": "ज़ूम आउट",
         "clear_selection": "चयन साफ़ करें",
         "fit_view": "स्क्रीन के अनुसार फिट करें"
+      },
+      "dag": {
+        "force": "ट्री",
+        "layered": "DAG",
+        "system": "सिस्टम",
+        "last_update": "अंतिम अपडेट",
+        "status": {
+          "fresh": "ताज़ा",
+          "stale": "बासी",
+          "failed": "असफल",
+          "unknown": "ट्रैक नहीं किया गया"
+        },
+        "summary": {
+          "fresh": "सभी {n} एसेट नए हैं",
+          "issues": "{n} बासी",
+          "failed": "{n} विफल",
+          "last_run": "अंतिम रन {ago}",
+          "unknown": "{n} ट्रैक नहीं किया गया"
+        },
+        "recent_runs": "हाल की रन",
+        "group_by": "द्वारा समूहबद्ध करें",
+        "groups": "समूह ({n})",
+        "group_none": "कोई ग्रुपिंग नहीं",
+        "group_dataset": "डेटासेट",
+        "ungrouped": "असमूहित"
       },
       "search": {
         "placeholders": {
@@ -2069,7 +2144,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{count} MCP सर्वर",
+      "servers_count": "{count} MCP सर्वर | {count} MCP सर्वर",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",
@@ -2203,7 +2278,7 @@
       "next_match": "अगला मिलान",
       "no_results_description": "namespace को विस्तृत करने का प्रयास करें, स्कोप को वापस All source पर स्विच करें, या Match case और Match whole word को बंद करें।",
       "no_results_hidden_type": "आपके द्वारा न चुने गए {type} में {count} मिलान मिला। | आपके द्वारा न चुने गए {type} में {count} मिलान मिले।",
-      "no_results_in_types": "{types} में “{query}” के लिए कोई मिलान नहीं",
+      "no_results_in_types": "{types} में {query} के लिए कोई मिलान नहीं",
       "no_results_title": "“{query}” के लिए कोई मिलान नहीं मिला",
       "open_flow": "flow खोलें",
       "open_in_editor": "एडिटर में खोलें",

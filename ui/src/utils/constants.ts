@@ -19,6 +19,7 @@ export const storageKeys = {
     DISPLAY_FLOW_EXECUTIONS_COLUMNS: "displayFlowExecutionsColumns",
     DISPLAY_KV_COLUMNS: "displayKvColumns",
     DISPLAY_SECRETS_COLUMNS: "displaySecretsColumns",
+    DISPLAY_NAMESPACE_SECRETS_COLUMNS: "displayNamespaceSecretsColumns",
     DISPLAY_TRIGGERS_COLUMNS: "displayTriggersColumns",
     DISPLAY_MCP_TOOLS_COLUMNS: "displayMcpToolsColumns",
     DISPLAY_ASSETS_COLUMNS: "displayAssetsColumns",

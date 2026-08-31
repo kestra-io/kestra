@@ -1,7 +1,10 @@
 <template>
     <div v-if="message.role === 'USER'" class="copilot-msg copilot-msg-user">
         <div class="copilot-bubble copilot-bubble-user">
-            <KsText size="small" class="copilot-bubble-text">{{ message.content }}</KsText>
+            <template v-for="(segment, index) in userSegments" :key="index">
+                <pre v-if="segment.code" class="copilot-user-code" data-test="copilot-user-code">{{ segment.content }}</pre>
+                <KsText v-else size="small" class="copilot-bubble-text">{{ segment.content }}</KsText>
+            </template>
         </div>
     </div>
 
@@ -17,6 +20,14 @@
                 <template #type>{{ $t(message.context.noun) }}</template>
                 <template #id><code class="copilot-context-id">{{ message.context.id }}</code></template>
             </i18n-t>
+        </KsText>
+    </div>
+
+    <!-- A display-only line noting the AI provider/model was switched mid-conversation; same quiet
+         centred treatment as the context notice above. -->
+    <div v-else-if="message.type === 'MODEL_CHANGED' && message.modelChange" class="copilot-msg copilot-context-notice" data-test="copilot-model-notice">
+        <KsText size="small" class="copilot-context-notice-text">
+            {{ $t("ai.copilot.modelChanged", {model: message.modelChange.label}) }}
         </KsText>
     </div>
 
@@ -107,6 +118,26 @@
         /** True when this TOOL_CALL is still executing (no result yet) — drives the running spinner. */
         isRunning?: boolean
     }>()
+
+    // The user prompt rendered literally, split on ``` fences only — full markdown would mangle
+    // pasted code (a YAML `# comment` must not become a heading) (kestra-io/kestra-ee#10420).
+    const userSegments = computed<{code: boolean; content: string}[]>(() => {
+        const content = props.message.content ?? ""
+        const segments: {code: boolean; content: string}[] = []
+        const push = (code: boolean, text: string) => {
+            const value = code ? text : text.trim()
+            if (value.trim()) segments.push({code, content: value})
+        }
+        const fence = /```[^\n]*\n([\s\S]*?)(?:\n?```|$)/g
+        let cursor = 0
+        for (const match of content.matchAll(fence)) {
+            push(false, content.slice(cursor, match.index))
+            push(true, match[1])
+            cursor = (match.index ?? 0) + match[0].length
+        }
+        push(false, content.slice(cursor))
+        return segments
+    })
 
     // Display-only proposal for a historical PROPOSED_ACTION message: the live event carries the full
     // proposal; a reloaded one carries the summary as `content` and the held tool as `toolCall`.
@@ -207,6 +238,28 @@
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         border-radius: var(--ks-radius-lg);
         background: var(--ks-bg-elevated);
+    }
+
+    /* Pasted multi-line text keeps its line breaks and indentation instead of collapsing into
+       one long line (kestra-io/kestra-ee#10420). */
+    .copilot-bubble-text {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /* A ``` fenced segment of the user prompt, shown as a literal code block. Wraps instead of
+       scrolling so the whole snippet stays readable inside the narrow bubble. */
+    .copilot-user-code {
+        margin: var(--ks-spacing-1) 0;
+        padding: var(--ks-spacing-2);
+        border: 1px solid var(--ks-border-subtle);
+        border-radius: var(--ks-radius-sm);
+        background: var(--ks-bg-base);
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
     }
 
     /* Assistant replies get their own left-aligned bubble (surface fill) so they read as

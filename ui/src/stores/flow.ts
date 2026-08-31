@@ -998,6 +998,7 @@ function deleteFlowAndDependencies() {
         deleteFlow,
         loadGraph,
         loadGraphFromSource,
+        fetchGraph,
         getGraphFromSourceResponse,
         loadRevisions,
         loadFlowStats,

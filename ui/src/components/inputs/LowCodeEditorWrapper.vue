@@ -48,8 +48,16 @@
         isLoading.value = loading
     }
 
-    const onExpandSubflow = (subflows: string[]) => {
+    const onExpandSubflow = async (subflows: string[]) => {
+        isLoading.value = true
         flowStore.expandedSubflows = subflows
+        try {
+            await flowStore.fetchGraph()
+        } catch (error) {
+            console.error("Failed to fetch expanded subflow graph:", error)
+        } finally {
+            isLoading.value = false
+        }
     }
 
     const onEdit = async (source: string, currentIsFlow = false) => {

@@ -26,7 +26,7 @@ const FORMAT =
 // Splits `a: T; b: U` on its top-level `;`. The `>` of an arrow (`=>`) closes
 // nothing — without that exception a function-typed prop leaves the depth
 // counter negative and every member after it is swallowed into one line.
-const splitTopLevelMembers = (raw: string): string[] => {
+export const splitTopLevelMembers = (raw: string): string[] => {
     const trimmed = raw.trim().replace(/^\{\s*/, "").replace(/;?\s*\}$/, "")
     if (trimmed === "") return []
 

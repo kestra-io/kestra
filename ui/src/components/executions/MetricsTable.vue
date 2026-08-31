@@ -142,7 +142,7 @@
             sort: [sort ?? "name:asc"],
         })
         metrics.value = response.results
-        metricsTotal.value = response.total ?? 0
+        metricsTotal.value = response.total
     }
 
     watch(() => props.taskRunId, () => {

@@ -319,18 +319,25 @@
         Object.values(candidate).forEach((value) => collectTasksById(value, into))
     }
 
+    // Only the root task collections: an `inputs`, `outputs`, `sla` or `triggers` entry carries an
+    // `id` and a `type` too, and walking from the document root would let one shadow a task that
+    // shares its id.
+    const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
+
     const sourceTaskById = computed((): Record<string, any> => {
+        const parsed = YAML_UTILS.parse(flowSource.value, false)
         const result: Record<string, any> = {}
-        collectTasksById(YAML_UTILS.parse(flowSource.value, false), result)
+        TASK_SECTIONS.forEach((section) => collectTasksById(parsed?.[section], result))
         return result
     })
 
-    // A graph node's task comes from forExecution(), which strips properties an artifact renders
-    // (taskRunner, and anything the plugin's own UI reads). Hand out the source definition merged
-    // over it so a plugin gets the raw task without parsing the flow itself.
+    // A graph node's task comes from forExecution(), which keeps only id, type, version and
+    // children. Source fills those stripped properties back in without overwriting the ones the
+    // node carries: it is the flow's latest revision, or an unsaved draft, so it must not restate
+    // what an older revision actually ran with.
     const taskWithSource = (task: Record<string, any> | undefined) => {
         const fromSource = task?.id ? sourceTaskById.value[task.id] : undefined
-        return fromSource ? {...task, ...fromSource} : task
+        return fromSource ? {...fromSource, ...task} : task
     }
 
     const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
@@ -377,11 +384,11 @@
     // Both fetchers resolve the execution when CALLED, not when bound: an artifact is handed its
     // props once, when the graph is generated, and the execution (or the task run it should read)
     // may only come into existence later (a playground run, a replay).
-    const fetchTaskOutputs = (taskId: string | undefined) => () => {
+    const fetchTaskOutputs = (taskId: string | undefined) => ({taskRunId}: {taskRunId?: string} = {}) => {
         const executionId = exec.value?.id
-        const taskRunId = currentTaskRunId(taskId)
-        if (!executionId || !taskRunId) return Promise.resolve({})
-        return loadTaskRunOutputs(executionId, taskRunId)
+        const runId = taskRunId ?? currentTaskRunId(taskId)
+        if (!executionId || !runId) return Promise.resolve({})
+        return loadTaskRunOutputs(executionId, runId)
     }
 
     const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}) => {

@@ -1,5 +1,6 @@
 <template>
     <div
+        ref="rootRef"
         :class="classes"
         class="task-icon"
     >
@@ -19,6 +20,7 @@
     import {computed, ref, watch} from "vue"
     import {KsTooltip, cssVar} from "@kestra-io/design-system"
     import fallbackIcon from "../../assets/plugins/plugin-icon-fallback.svg"
+    import {useOnScreenOnce} from "../../composables/useOnScreenOnce"
 
     defineOptions({
         name: "TaskIcon",
@@ -57,10 +59,13 @@
 
     const lazyIcon = ref<TaskIconData>()
 
-    watch(() => props.cls, cls => {
+    const rootRef = ref<HTMLElement>()
+    const isOnScreen = useOnScreenOnce(rootRef)
+
+    watch([() => props.cls, isOnScreen], ([cls, onScreen]) => {
         lazyIcon.value = undefined
 
-        if (!cls || providedIcon.value || !props.loadIcon) {
+        if (!cls || !onScreen || providedIcon.value || !props.loadIcon) {
             return
         }
 
@@ -111,11 +116,14 @@
         return icon.value?.hasIcon ? localIconUrl.value : fallbackIcon
     })
 
-    const maskStyle = computed(() => ({
-        maskImage: `url(${iconSrc.value})`,
-        WebkitMaskImage: `url(${iconSrc.value})`,
-        backgroundColor: (props.variable ? cssVar(props.variable) : "") || cssVar("--ks-text-primary"),
-    }))
+    // The masked variant cannot use `loading="lazy"`, so it holds its `mask-image` back until the icon is on screen.
+    const maskStyle = computed(() => isOnScreen.value
+        ? {
+            maskImage: `url(${iconSrc.value})`,
+            WebkitMaskImage: `url(${iconSrc.value})`,
+            backgroundColor: (props.variable ? cssVar(props.variable) : "") || cssVar("--ks-text-primary"),
+        }
+        : undefined)
 </script>
 
 <style lang="scss" scoped>

@@ -62,23 +62,22 @@
                     </KsTag>
                 </template>
             </KsTableColumn>
-
-
-            <KsTableColumn className="row-action">
-                <template #default="scope">
-                    <router-link
-                        :to="{name: 'flows/update/metrics',
-                              params: {namespace: scope.row.namespace, id: scope.row.flowId, tenant: scope.row.tenant},
-                              query: {'filters[q][EQUALS]': scope.row.name}
-                        }"
-                    >
-                        <KsIconButton :tooltip="$t('view metrics')">
-                            <ChartAreaspline />
-                        </KsIconButton>
-                    </router-link>
-                </template>
-            </KsTableColumn>
         </template>
+
+        <KsTableColumn className="row-action">
+            <template #default="scope">
+                <router-link
+                    :to="{name: 'flows/update/metrics',
+                          params: {namespace: scope.row.namespace, id: scope.row.flowId, tenant: scope.row.tenant},
+                          query: {'filters[q][EQUALS]': scope.row.name}
+                    }"
+                >
+                    <KsIconButton :tooltip="$t('view metrics')">
+                        <ChartAreaspline />
+                    </KsIconButton>
+                </router-link>
+            </template>
+        </KsTableColumn>
     </KsDataTable>
 </template>
 

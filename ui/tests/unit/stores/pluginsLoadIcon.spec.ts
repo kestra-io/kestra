@@ -150,6 +150,26 @@ describe("plugins store loadIcon", () => {
         expect(firstResult).toEqual(secondResult)
     })
 
+    it("waits for an in-flight catalog fetch instead of issuing its own per-class request", async () => {
+        // Given a catalog fetch in flight that will carry the class
+        let resolveCatalog: (value: any) => void = () => {}
+        getMock.mockReturnValueOnce(new Promise(resolve => {
+            resolveCatalog = resolve
+        }))
+        const catalog = store.fetchIcons()
+
+        // When a node asks for an icon while that fetch is still pending
+        const pending = store.loadIcon("io.kestra.plugin.core.log.Log")
+        resolveCatalog({data: {"io.kestra.plugin.core.log.Log": {icon: "base64svg", flowable: false, monochrome: false}}})
+        await catalog
+        const result = await pending
+
+        // Then it was served from the catalog — no second request, no ecosystem probe
+        expect(getMock).toHaveBeenCalledTimes(1)
+        expect(lastImageSrc).toBeUndefined()
+        expect(result).toEqual({flowable: false, monochrome: false, hasIcon: true})
+    })
+
     it("skips the local per-class lookup and goes straight to the ecosystem catalog once the full local catalog is loaded", async () => {
         getMock.mockResolvedValueOnce({data: {}})
         await store.fetchIcons()

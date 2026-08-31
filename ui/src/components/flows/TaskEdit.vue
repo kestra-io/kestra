@@ -341,6 +341,8 @@
             taskrun: ["id", "startDate", "attemptsCount", "parentId", "value", "iteration"],
             task: ["id", "type"],
             trigger: ["id", "date", "type"],
+            item: ["value", "key", "index"],
+            "item.parent": ["value", "key", "index"],
             error: ["taskId", "message", "stackTrace"],
             kestra: ["environment", "url"],
         }
@@ -348,7 +350,7 @@
         for (const [root, fields] of Object.entries(CONTEXT_FIELDS)) {
             for (const field of fields) ctx.push({label: `${root}.${field}`, expr: `{{ ${root}.${field} }}`})
         }
-        for (const root of ["labels", "envs", "globals", "parent", "parents"]) {
+        for (const root of ["labels", "envs", "globals", "parent", "parents", "item.parents"]) {
             ctx.push({label: root, expr: `{{ ${root} }}`})
         }
         ctx.push({label: "now()", expr: "{{ now() }}"})

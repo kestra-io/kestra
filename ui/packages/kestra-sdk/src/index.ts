@@ -1,11 +1,12 @@
 import {client} from "./openapi/client.gen"
 import {formDataBodySerializer} from "./openapi/client"
-import {OPENAPI_SPEC_HASH} from "./openapi/index"
-import type {NamespaceLight} from "./openapi/index"
+import {OPENAPI_SPEC_HASH} from "./openapi/sdk/shared.gen"
+import type {NamespaceLight} from "./openapi/types.gen"
 import {createConfigureClient} from "@kestra-io/hey-api-plugin/runtime"
 import {createClientFacade} from "./client-facade"
 
-export * from "./openapi/index"
+// Types only: the operations live on their per-tag subpaths, or all together on `./all`.
+export type * from "./openapi/types.gen"
 export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient, StreamConfig} from "./client-facade"
 
 // The OSS spec models a namespace as `NamespaceLight` ({ id }); the UI consumes a slightly richer

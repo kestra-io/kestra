@@ -357,6 +357,118 @@ class FlowValidationTest {
     }
 
     @Test
+    void inputDefaultOutsideSelectValues_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: color
+                type: SELECT
+                values: [red, green, blue]
+                defaults: purple
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Invalid default for input 'color'");
+        assertThat(validate.get().getMessage()).contains("it must match the values");
+    }
+
+    @Test
+    void inputDefaultNotMatchingType_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: count
+                type: INT
+                defaults: notanumber
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Invalid default for input 'count'");
+        assertThat(validate.get().getMessage()).contains("is not a valid INT value");
+    }
+
+    @Test
+    void inputDefaultAsExpression_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: count
+                type: INT
+                defaults: "{{ 1 + 1 }}"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void triggerInputNotMatchingType_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: num
+                type: INT
+                required: true
+            triggers:
+              - id: every_minute
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "* * * * *"
+                inputs:
+                  num: abc
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: "n={{ inputs.num }}"
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Invalid value for input 'num' supplied by Schedule Trigger 'every_minute'");
+        assertThat(validate.get().getMessage()).contains("is not a valid INT value");
+    }
+
+    @Test
+    void webhookBlankKey_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: hook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: "   "
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("must not be blank");
+    }
+
+    @Test
     void eeAllowsDefiningAssets() {
         Flow flow = Flow.builder()
             .id(TestsUtils.randomString())

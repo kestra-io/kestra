@@ -40,7 +40,7 @@
             <KsTableColumn v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
                 <template #default="scope">
                     <span v-if="scope.row.type === 'timer'">
-                        {{ humanizeDuration((scope.row.value / 1000).toString()) }}
+                        {{ humanizeDuration(scope.row.value / 1000) }}
                     </span>
                     <span v-else>
                         {{ humanizeNumber(scope.row.value) }}

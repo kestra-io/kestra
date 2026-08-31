@@ -15,6 +15,7 @@
             :namespace="namespace"
             :expandedSubflows="props.expandedSubflows"
             :icons="pluginsStore.icons"
+            :loadIcon="pluginsStore.loadIcon"
             :execution="executionsStore.execution"
             :subflowsExecutions="executionsStore.subflowsExecutions"
             :playgroundEnabled="playgroundStore.enabled"

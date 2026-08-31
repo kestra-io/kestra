@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.reactivestreams.Publisher;
 
+import io.kestra.webserver.annotation.AnonymousAccess;
 import io.kestra.webserver.services.BasicAuthService;
 
 import io.micronaut.context.annotation.Requires;
@@ -52,10 +53,13 @@ public class AuthenticationFilter implements HttpServerFilter {
                     || ((normalizedPath.matches("/api/v1(/[^/]+)?/basicAuth") || "/api/v1/basicAuthValidationErrors".equals(normalizedPath))
                         && !basicAuthService.isBasicAuthInitialized());
 
-                boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.openUrls())
-                    .map(Collection::stream)
-                    .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
-                    .orElse(false);
+                // A path prefix is not an identity: the router resolves it, so the route it picked must
+                // itself opt into anonymous access (GHSA-j5cv-8rw9-vv2p).
+                boolean isOpenUrl = isAnonymousRoute(request)
+                    && Optional.ofNullable(basicAuthConfiguration.openUrls())
+                        .map(Collection::stream)
+                        .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
+                        .orElse(false);
 
                 boolean mcpAuthHandled = request.getAttribute(McpServerAuthenticationFilter.MCP_AUTH_HANDLED, Boolean.class)
                     .orElse(false);
@@ -86,6 +90,15 @@ public class AuthenticationFilter implements HttpServerFilter {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
         if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {
             return method.getAnnotation(Endpoint.class) != null;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private boolean isAnonymousRoute(HttpRequest<?> request) {
+        Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
+        if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {
+            return method.getAnnotation(AnonymousAccess.class) != null;
         }
         return false;
     }

@@ -187,11 +187,11 @@ const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]lan
 const isLangChunkName = (name) => /(^|[\\/])shiki-lang-/.test(name)
 
 /**
- * Grammars some module statically imports (shikiHighlighter.ts pre-registers a
- * set, shikiToolset.ts another), plus the ones those pull in transitively — html
- * embeds css and javascript, and so on. Filled during buildEnd: derived from the
- * graph rather than a hardcoded list, because one missed grammar turns the whole
- * on-demand bundle into a static import of whichever chunk needed it.
+ * Grammars shikiHighlighter.ts statically pre-registers, plus the ones those pull
+ * in transitively — html embeds css and javascript, and so on. Filled during
+ * buildEnd: derived from the graph rather than a hardcoded list, because one
+ * missed grammar turns the whole on-demand bundle into a static import of
+ * whichever chunk needed it.
  * @type {Set<string>}
  */
 const staticLangs = new Set()

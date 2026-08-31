@@ -337,7 +337,7 @@ public class DashboardController {
             return null;
         }
 
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters != null ? filters : List.of());
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
         ZonedDateTime endDate = timeLineSearch.getEndDate();

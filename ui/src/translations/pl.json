@@ -648,6 +648,10 @@
     "open full page": "Otwórz pełną stronę",
     "drill down preview": "Podgląd",
     "errors": {
+      "400": {
+        "title": "Nieprawidłowe żądanie",
+        "content": "Żądanie nie mogło zostać zrozumiane przez serwer."
+      },
       "401": {
         "title": "Brak autoryzacji",
         "content": "Musisz być uwierzytelniony, aby uzyskać dostęp do tej strony."
@@ -660,6 +664,114 @@
         "title": "Strona nie znaleziona",
         "content": "Żądany URL nie został znaleziony na tym serwerze.<br />To wszystko, co wiemy.",
         "flow or execution": "Flow lub egzekucja, której szukasz, nie istnieje."
+      },
+      "409": {
+        "title": "Konflikt",
+        "content": "Żądanie jest sprzeczne z bieżącym stanem zasobu."
+      },
+      "422": {
+        "title": "Nieprawidłowa encja",
+        "content": "Przesłana zawartość nie mogła zostać przetworzona."
+      },
+      "500": {
+        "title": "Wewnętrzny błąd serwera",
+        "content": "Coś poszło nie tak po naszej stronie. Spróbuj ponownie później."
+      },
+      "503": {
+        "title": "Usługa niedostępna",
+        "content": "Serwer jest tymczasowo niedostępny. Spróbuj ponownie później."
+      },
+      "generic": {
+        "title": "Coś poszło nie tak",
+        "content": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+      },
+      "trace id": "ID śledzenia",
+      "problems": {
+        "ai-request-failed": {
+          "title": "Żądanie AI nie powiodło się"
+        },
+        "bad-request": {
+          "title": "Nieprawidłowe żądanie"
+        },
+        "bulk-validation-failed": {
+          "title": "Niektóre elementy nie mogły zostać przetworzone"
+        },
+        "conflict": {
+          "title": "Konflikt"
+        },
+        "entity-already-exists": {
+          "title": "Encja już istnieje"
+        },
+        "forbidden": {
+          "title": "Odmowa dostępu"
+        },
+        "internal-error": {
+          "title": "Wewnętrzny błąd serwera"
+        },
+        "invalid-argument": {
+          "title": "Nieprawidłowy argument"
+        },
+        "invalid-entity": {
+          "title": "Nieprawidłowa encja"
+        },
+        "invalid-format": {
+          "title": "Nieprawidłowy format wartości"
+        },
+        "invalid-json": {
+          "title": "Nieprawidłowy JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Nieprawidłowy typ pluginu"
+        },
+        "invalid-query-filters": {
+          "title": "Nieprawidłowe filtry zapytania"
+        },
+        "invalid-query-parameter": {
+          "title": "Nieprawidłowy parametr zapytania"
+        },
+        "invalid-request-body": {
+          "title": "Nieprawidłowy body żądania"
+        },
+        "locked": {
+          "title": "Zasób jest zablokowany"
+        },
+        "method-not-allowed": {
+          "title": "Metoda niedozwolona"
+        },
+        "migration-required": {
+          "title": "Wymagana migracja"
+        },
+        "not-acceptable": {
+          "title": "Niedopuszczalne"
+        },
+        "not-found": {
+          "title": "Zasób nie znaleziono"
+        },
+        "payload-too-large": {
+          "title": "Payload zbyt duży"
+        },
+        "resource-expired": {
+          "title": "Zasób wygasł"
+        },
+        "service-unavailable": {
+          "title": "Usługa niedostępna",
+          "detail": "Serwer jest tymczasowo niedostępny. Spróbuj ponownie później."
+        },
+        "timeout": {
+          "title": "Operacja przekroczyła limit czasu"
+        },
+        "too-many-requests": {
+          "title": "Zbyt wiele żądań"
+        },
+        "unauthenticated": {
+          "title": "Wymagane uwierzytelnienie"
+        },
+        "unsupported-media-type": {
+          "title": "Nieobsługiwany typ nośnika"
+        },
+        "validation-failed": {
+          "title": "Walidacja nie powiodła się"
+        }
       }
     },
     "back_to_dashboard": "Powrót do Dashboardu",

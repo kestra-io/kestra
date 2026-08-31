@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flowドキュメント",
+      "nav_definitions": "定義",
       "nav_examples": "例",
+      "nav_metrics": "メトリクス",
       "nav_outputs": "Outputs",
       "nav_overview": "概要",
       "nav_properties": "プロパティ",
@@ -2139,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "あなたのサーバー",
-      "servers_count": "{count} MCPサーバー",
+      "servers_count": "{count} MCPサーバー | {count} MCPサーバー",
       "managed_by_kestra": "Kestraによって管理されています",
       "servers": "MCPサーバー",
       "client_setup": "クライアント設定",

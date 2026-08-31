@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentazione del flow",
+      "nav_definitions": "Definizioni",
       "nav_examples": "Esempi",
+      "nav_metrics": "Metriche",
       "nav_outputs": "Outputs",
       "nav_overview": "Panoramica",
       "nav_properties": "Proprietà",
@@ -2139,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "I tuoi server",
-      "servers_count": "{count} Server MCP",
+      "servers_count": "{count} server MCP | {count} server MCP",
       "managed_by_kestra": "Gestito da Kestra",
       "servers": "Server MCP",
       "client_setup": "Configurazione Client",

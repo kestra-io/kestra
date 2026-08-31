@@ -62,6 +62,10 @@ export interface TriggerPluginDto {
     // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
     // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
     pluginTitle: string;
+    // The owning plugin artifact's manifest title (for example "NATS" for every NATS subgroup) -
+    // the disambiguation fallback for when pluginTitle itself resolves to a bare package segment;
+    // optional because older backends do not send it.
+    pluginGroupTitle?: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;
@@ -367,12 +371,16 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls
-        const cacheKey = options.hash ? options.hash + id : id
+        // `all` returns a superset of the properties, so it gets its own key and never satisfies (or
+        // gets satisfied by) a request that did not ask for it.
+        const cacheKey = (options.all ? "all:" : "") + (options.hash ? options.hash + id : id)
         const cachedPluginDoc = pluginsDocumentation.value[cacheKey]
-        if (!options.all && cachedPluginDoc) {
-            nextTick(() => {
-                plugin.value = cachedPluginDoc
-            })
+        if (cachedPluginDoc) {
+            if (options.all !== true) {
+                nextTick(() => {
+                    plugin.value = cachedPluginDoc
+                })
+            }
             return cachedPluginDoc
         }
 
@@ -388,9 +396,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             plugin.value = data
         }
 
-        if (!options.all) {
-            pluginsDocumentation.value[cacheKey] = data
-        }
+        pluginsDocumentation.value[cacheKey] = data
 
         return data
     }

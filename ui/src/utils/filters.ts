@@ -3,7 +3,7 @@ import {storageKeys} from "../utils/constants"
 import moment from "moment-timezone"
 import {durationUtils} from "@kestra-io/design-system"
 
-export function humanizeDuration (value:string, options?:any) {
+export function humanizeDuration (value:number | string, options?:any) {
     return durationUtils.humanDuration(value, options)
 }
 export function humanizeNumber (value:string) {

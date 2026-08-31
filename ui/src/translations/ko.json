@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow 문서",
+      "nav_definitions": "정의",
       "nav_examples": "예시",
+      "nav_metrics": "메트릭",
       "nav_outputs": "Outputs",
       "nav_overview": "개요",
       "nav_properties": "속성",
@@ -2139,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "내 서버",
-      "servers_count": "{count} MCP 서버",
+      "servers_count": "{count} MCP 서버 | {count} MCP 서버",
       "managed_by_kestra": "Kestra에서 관리",
       "servers": "MCP 서버",
       "client_setup": "클라이언트 설정",

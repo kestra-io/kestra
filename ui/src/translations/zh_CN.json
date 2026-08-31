@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow文档",
+      "nav_definitions": "定义",
       "nav_examples": "示例",
+      "nav_metrics": "指标",
       "nav_outputs": "Outputs",
       "nav_overview": "概览",
       "nav_properties": "属性",
@@ -2139,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "您的服务器",
-      "servers_count": "{count} MCP 服务器",
+      "servers_count": "{count} 个 MCP Server",
       "managed_by_kestra": "由 Kestra 管理",
       "servers": "MCP 服务器",
       "client_setup": "客户端设置",

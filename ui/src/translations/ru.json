@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Документация flow",
+      "nav_definitions": "Определения",
       "nav_examples": "Примеры",
+      "nav_metrics": "Метрики",
       "nav_outputs": "Outputs",
       "nav_overview": "Обзор",
       "nav_properties": "Свойства",
@@ -2139,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "Ваши серверы",
-      "servers_count": "{count} MCP Серверов",
+      "servers_count": "{count} сервер MCP | {count} сервера MCP | {count} серверов MCP",
       "managed_by_kestra": "Управляется Kestra",
       "servers": "Серверы MCP",
       "client_setup": "Настройка клиента",

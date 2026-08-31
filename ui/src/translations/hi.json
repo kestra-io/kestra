@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
+      "nav_definitions": "परिभाषाएँ",
       "nav_examples": "उदाहरण",
+      "nav_metrics": "Metrics",
       "nav_outputs": "Outputs",
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
@@ -2139,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{count} MCP सर्वर",
+      "servers_count": "{count} MCP सर्वर | {count} MCP सर्वर",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",

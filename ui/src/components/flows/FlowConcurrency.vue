@@ -11,7 +11,7 @@
         {{ $t('flowConcurrency.loadError') }}
     </KsAlert>
     <div v-else-if="concurrencyLimit && flowStore.flow?.concurrency" data-test="concurrency-limit">
-        <KsCard class="mb-3">
+        <KsCard class="concurrency-summary mb-3">
             <div class="row mb-3">
                 <span class="col d-flex align-items-center">
                     <h5 class="m-3">RUNNING</h5> {{ concurrencyLimit.running }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
@@ -24,15 +24,13 @@
                 <KsProgress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
             </div>
         </KsCard>
-        <KsCard>
-            <Executions
-                :restoreUrl="false"
-                :topbar="false"
-                :namespace="flowStore.flow?.namespace"
-                :flowId="flowStore.flow?.id"
-                filter
-            />
-        </KsCard>
+        <Executions
+            :restoreUrl="false"
+            :topbar="false"
+            :namespace="flowStore.flow?.namespace"
+            :flowId="flowStore.flow?.id"
+            filter
+        />
     </div>
     <!-- A limit record still counting slots for a flow that no longer declares a concurrency
          block: it cannot be rendered as a ratio, but we should display it anyway. -->
@@ -135,6 +133,10 @@
 
     :deep(.kel-card) {
         background-color: var(--ks-bg-surface);
+    }
+
+    .concurrency-summary {
+        margin-inline: var(--ks-spacing-6);
     }
 
     .text-center {

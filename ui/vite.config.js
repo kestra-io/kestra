@@ -110,13 +110,16 @@ export default defineConfig(({mode}) => {
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
                     },
-                    // add all exports of @kestra-io/kestra-sdk as shared singletons
+                    // every @kestra-io/kestra-sdk export as a shared singleton, "./all" included:
+                    // a plugin importing it must get the host's shared.gen, not a second tenant state
                     ...Object.fromEntries(Object.keys(kestraSdkExports)
                         .filter((key) => key !== "." && !key.endsWith(".json"))
                         .map((key) => {
                             const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
                             return [`@kestra-io/kestra-sdk/${name}`, {
                                 singleton: true,
+                                // every operation imports shared.gen's tenant state statically
+                                eager: name === "shared",
                             }]
                         }),
                     ),

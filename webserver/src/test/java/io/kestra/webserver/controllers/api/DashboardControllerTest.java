@@ -39,6 +39,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -457,8 +459,8 @@ class DashboardControllerTest {
                 DashboardController.DashboardResponse.class
             )
         );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Dashboard id already exists");
+        // An id clash is a conflict, so 409 — not a validation failure.
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.ENTITY_ALREADY_EXISTS);
     }
 
     @Test
@@ -538,7 +540,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpStatusException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpStatusException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Illegal dashboard id update");
+        assertThat(Problems.detail(httpStatusException)).contains("Illegal dashboard id update");
 
         get = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/" + dashboard.getId()),
@@ -594,7 +596,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Illegal argument: Dashboard id is mandatory");
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("Dashboard id is mandatory");
     }
 
     @Test
@@ -960,7 +962,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid Dashboard: Dashboard id '_default' is reserved");
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("Dashboard id '_default' is reserved");
     }
 
     @Test
@@ -990,7 +992,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: Dashboard id '_default' is reserved");
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("Dashboard id '_default' is reserved");
     }
 
     @Test

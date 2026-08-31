@@ -6,7 +6,7 @@ import {useTableColumns, type ColumnConfig} from "../../../src/components/Data/K
 const COLUMNS: ColumnConfig[] = [
     {label: "A", prop: "a", default: true},
     {label: "B", prop: "b", default: true},
-    {label: "C", prop: "c", default: false},
+    {label: "C", prop: "c", default: true},
 ]
 
 // useTableColumns calls onMounted internally, so it needs a real component

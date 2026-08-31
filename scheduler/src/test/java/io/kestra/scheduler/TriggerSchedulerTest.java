@@ -706,6 +706,52 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldNotScheduleExecutionWhenBackfillIsPausedGivenScheduleOnDatesTrigger() {
+        assertNoExecutionScheduledWhileBackfillIsPaused(
+            Fixtures.flowWithScheduleOnDate(
+                TEST_TZ,
+                List.of(
+                    SchedulerClock.now().minusHours(2),
+                    SchedulerClock.now().minusHours(1),
+                    SchedulerClock.now().plusHours(1)
+                )
+            )
+        );
+    }
+
+    @Test
+    void shouldNotScheduleExecutionWhenBackfillIsPausedGivenScheduleTrigger() {
+        assertNoExecutionScheduledWhileBackfillIsPaused(Fixtures.flowWithSchedulePT15M(TEST_TZ));
+    }
+
+    private void assertNoExecutionScheduledWhileBackfillIsPaused(FlowWithSource flow) {
+        // region [GIVEN]
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(2));
+        TriggerState triggerState = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).paused(true).build())
+        );
+        // endregion [GIVEN]
+
+        // WHEN
+        for (int i = 0; i < 5; i++) {
+            scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+            completeExecution();
+            SchedulerClock.offset(Duration.ofSeconds(1));
+        }
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        assertThat(state.getBackfill().getCurrentDate()).isEqualTo(backfillStart);
+    }
+
+    @Test
     void shouldFailInitMissingScheduleTriggerGivenInvalidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M("Asia/Delhi");

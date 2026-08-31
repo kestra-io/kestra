@@ -648,6 +648,10 @@
     "open full page": "Abrir Página Completa",
     "drill down preview": "Pré-visualização",
     "errors": {
+      "400": {
+        "title": "Requisição inválida",
+        "content": "A requisição não pôde ser compreendida pelo servidor."
+      },
       "401": {
         "title": "Não autorizado",
         "content": "Você precisa estar autenticado para acessar esta página."
@@ -660,6 +664,114 @@
         "title": "Página não encontrada",
         "content": "A URL solicitada não foi encontrada neste servidor.<br />Isso é tudo que sabemos.",
         "flow or execution": "O flow ou execução que você está procurando não existe."
+      },
+      "409": {
+        "title": "Conflito",
+        "content": "A requisição conflita com o estado atual do recurso."
+      },
+      "422": {
+        "title": "Entidade inválida",
+        "content": "O conteúdo enviado não pôde ser processado."
+      },
+      "500": {
+        "title": "Erro interno do servidor",
+        "content": "Algo deu errado do nosso lado. Por favor, tente novamente mais tarde."
+      },
+      "503": {
+        "title": "Serviço indisponível",
+        "content": "O servidor está temporariamente indisponível. Por favor, tente novamente mais tarde."
+      },
+      "generic": {
+        "title": "Algo deu errado",
+        "content": "Ocorreu um erro inesperado. Por favor, tente novamente."
+      },
+      "trace id": "ID de rastreamento",
+      "problems": {
+        "ai-request-failed": {
+          "title": "A solicitação de AI falhou"
+        },
+        "bad-request": {
+          "title": "Requisição inválida"
+        },
+        "bulk-validation-failed": {
+          "title": "Alguns itens não puderam ser processados"
+        },
+        "conflict": {
+          "title": "Conflito"
+        },
+        "entity-already-exists": {
+          "title": "A entidade já existe"
+        },
+        "forbidden": {
+          "title": "Acesso negado"
+        },
+        "internal-error": {
+          "title": "Erro interno do servidor"
+        },
+        "invalid-argument": {
+          "title": "Argumento inválido"
+        },
+        "invalid-entity": {
+          "title": "Entidade inválida"
+        },
+        "invalid-format": {
+          "title": "Formato de valor inválido"
+        },
+        "invalid-json": {
+          "title": "JSON inválido"
+        },
+        "invalid-plugin-type": {
+          "title": "Tipo de plugin inválido"
+        },
+        "invalid-query-filters": {
+          "title": "Filtros de consulta inválidos"
+        },
+        "invalid-query-parameter": {
+          "title": "Parâmetro de consulta inválido"
+        },
+        "invalid-request-body": {
+          "title": "Corpo da requisição inválido"
+        },
+        "locked": {
+          "title": "Recurso bloqueado"
+        },
+        "method-not-allowed": {
+          "title": "Método não permitido"
+        },
+        "migration-required": {
+          "title": "Migração necessária"
+        },
+        "not-acceptable": {
+          "title": "Não aceitável"
+        },
+        "not-found": {
+          "title": "Recurso não encontrado"
+        },
+        "payload-too-large": {
+          "title": "Payload muito grande"
+        },
+        "resource-expired": {
+          "title": "O recurso expirou"
+        },
+        "service-unavailable": {
+          "title": "Serviço indisponível",
+          "detail": "O servidor está temporariamente indisponível. Por favor, tente novamente mais tarde."
+        },
+        "timeout": {
+          "title": "A operação excedeu o tempo limite"
+        },
+        "too-many-requests": {
+          "title": "Muitas requisições"
+        },
+        "unauthenticated": {
+          "title": "Autenticação necessária"
+        },
+        "unsupported-media-type": {
+          "title": "Tipo de mídia não suportado"
+        },
+        "validation-failed": {
+          "title": "A validação falhou"
+        }
       }
     },
     "back_to_dashboard": "Voltar ao dashboard",

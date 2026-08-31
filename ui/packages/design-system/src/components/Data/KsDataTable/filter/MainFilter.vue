@@ -1,5 +1,5 @@
 <template>
-    <div class="filter-container">
+    <div ref="containerRef" class="filter-container">
         <KsPopover
             v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
@@ -71,10 +71,14 @@
         </KsButton>
 
         <div
-            v-for="cf in conditionalFilters"
+            v-for="(cf, index) in conditionalFilters"
             v-else
             :key="cf.id"
             class="filter-chip-wrap"
+            :class="{
+                'ends-conditional-group': isLastConditional(index),
+                'shows-group-separator': isLastConditional(index) && isGroupSeparatorVisible,
+            }"
         >
             <FilterChip
                 :ref="(el: any) => setChipRef(cf.id, el)"
@@ -137,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed, watch} from "vue"
+    import {ref, inject, nextTick, computed, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import {useDebounceFn} from "@vueuse/core"
 
@@ -152,6 +156,9 @@
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
     const {t} = useI18n({useScope: "global"})
+
+    const containerRef = ref<HTMLElement | null>(null)
+    const isGroupSeparatorVisible = ref(false)
 
     const isCustomizeFiltersVisible = ref(false)
     const isAdvancedOpen = ref(false)
@@ -254,6 +261,36 @@
         filter.searchQuery.value = value
     }, 700)
 
+    const isLastConditional = (index: number) =>
+        globalFilters.value.length > 0 && index === conditionalFilters.value.length - 1
+
+    const SAME_ROW_TOLERANCE = 4
+
+    const measureGroupSeparator = () => {
+        const root = containerRef.value
+        const before = root?.querySelector(".ends-conditional-group")
+        const after = before?.nextElementSibling
+        if (!before || !after) {
+            isGroupSeparatorVisible.value = false
+            return
+        }
+        const beforeBox = before.getBoundingClientRect()
+        const afterBox = after.getBoundingClientRect()
+        const centre = (box: DOMRect) => (box.top + box.bottom) / 2
+        isGroupSeparatorVisible.value = Math.abs(centre(beforeBox) - centre(afterBox)) <= SAME_ROW_TOLERANCE
+    }
+
+    let separatorObserver: ResizeObserver | undefined
+    onMounted(() => {
+        const observed = containerRef.value?.parentElement
+        if (observed && typeof ResizeObserver !== "undefined") {
+            separatorObserver = new ResizeObserver(() => measureGroupSeparator())
+            separatorObserver.observe(observed)
+        }
+        nextTick(measureGroupSeparator)
+    })
+    onBeforeUnmount(() => separatorObserver?.disconnect())
+    watch([globalFilters, conditionalFilters, isComplex], () => nextTick(measureGroupSeparator))
 </script>
 
 <style lang="scss" scoped>
@@ -265,6 +302,15 @@
 
 .filter-chip-wrap {
     flex-shrink: 0;
+}
+
+.filter-chip-wrap.ends-conditional-group {
+    padding-right: var(--ks-spacing-2);
+    border-right: 1px solid transparent;
+}
+
+.filter-chip-wrap.ends-conditional-group.shows-group-separator {
+    border-right-color: var(--ks-border-default);
 }
 
 .filter-chip {

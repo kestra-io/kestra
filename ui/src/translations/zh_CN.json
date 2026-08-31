@@ -1973,8 +1973,8 @@
         },
         "unavailable": {
           "title": "AI Copilot 不可用",
-          "detail": "未配置 AI 提供商。请管理员设置，然后重试。",
-          "retry": "重试"
+          "detail": "未配置 AI 提供商。请联系管理员进行设置。",
+          "docs": "查看文档"
         },
         "thinkingWords": [
           "编排",

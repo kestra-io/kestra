@@ -1973,8 +1973,8 @@
         },
         "unavailable": {
           "title": "AI Copilot nie jest dostępny",
-          "detail": "Nie skonfigurowano żadnego dostawcy AI. Poproś administratora o jego konfigurację, a potem spróbuj ponownie.",
-          "retry": "Spróbuj ponownie"
+          "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego ustawienie.",
+          "docs": "Wyświetl dokumentację"
         },
         "thinkingWords": [
           "Orchestrowanie",

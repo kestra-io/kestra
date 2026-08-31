@@ -8,7 +8,7 @@ vi.mock("@kestra-io/kestra-sdk/logs", () => ({
     deleteLogsFromFlow: vi.fn().mockResolvedValue({}),
 }))
 
-describe("logs store cursor pagination", {timeout: 15_000}, () => {
+describe("logs store cursor pagination", () => {
     beforeEach(() => {
         vi.resetModules()
         searchLogs.mockReset()

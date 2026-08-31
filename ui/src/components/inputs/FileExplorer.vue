@@ -106,7 +106,7 @@
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
-            :class="{'is-drop-not-allow': restrictDropToSidebar.isOutside.value}"
+            :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
@@ -473,7 +473,7 @@
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
     const isRenaming = ref(false)
     const sidebar = ref<HTMLElement>()
-    const restrictDropToSidebar = useRestrictDropTo(sidebar)
+    const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
     const tree = ref<any>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
@@ -854,8 +854,7 @@
     }
 
     function onNodeDragStart(draggingNode: FileExplorerNode) {
-        // Files only ever move within this sidebar, so nothing outside it may advertise a drop (#9497)
-        restrictDropToSidebar.start()
+        startRestrictDrop()
 
         nodeBeforeDrag.value = {
             parent: draggingNode.parent.data.id,

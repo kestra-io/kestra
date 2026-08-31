@@ -495,6 +495,7 @@ export type BasicAuthCredentials = {
     uid?: string;
     username?: string;
     password?: string;
+    currentPassword?: string;
 };
 
 export type BlueprintControllerApiBlueprintItem = {

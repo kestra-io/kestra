@@ -10,7 +10,7 @@ plugins {
 // no duration awareness, so without this the light modules — which become dependency-ready first —
 // grab every worker slot and the multi-minute modules start late and set the critical path.
 kestraTestScheduling {
-    priority = [':jdbc-postgres', ':jdbc-h2', ':jdbc-mysql', ':webserver', ':core', ':scheduler']
+    priority = [':jdbc-mysql', ':jdbc-postgres', ':jdbc-h2', ':webserver', ':core', ':scheduler']
 }
 
 rootProject.name = "kestra"

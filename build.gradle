@@ -261,12 +261,7 @@ subprojects {subProj ->
             t.systemProperty 'junit.jupiter.execution.timeout.default',
                 System.getenv('JUNIT_TEST_TIMEOUT_MIN') ? "${System.getenv('JUNIT_TEST_TIMEOUT_MIN')} m" : '5 m'
             t.finalizedBy jacocoTestReport
-            t.doFirst {
-                logger.lifecycle("[TASK START] ${t.path}")
-            }
-            t.doLast {
-                logger.lifecycle("[TASK END]   ${t.path}")
-            }
+
 
             // -PprofileHeap: raise the ceiling so no module is heap-starved, and log real GC
             // occupancy per module so per-module maxHeapSize can be set from measurements

@@ -1,21 +1,39 @@
 <template>
     <span v-if="props.labels.length" class="d-flex gap-1 labels-container" :class="{wrap}">
         <KsCheckTag
-            v-for="(label, index) in props.labels"
+            v-for="(label, index) in visibleLabels"
             :key="index"
             :disabled="readOnly"
             :checked="isChecked(label)"
             @change="updateLabel(label)"
             class="me-0 label"
+            data-test="label"
         >
-            <template v-if="!label.key">{{ label.display ?? label.value }}</template>
-            <template v-else>{{ label.key }}:{{ label.display ?? label.value }}</template>
+            <span :title="text(label)">{{ text(label) }}</span>
         </KsCheckTag>
+        <KsPopover
+            v-if="hiddenLabels.length"
+            trigger="hover"
+            placement="top"
+            :hideAfter="150"
+            :width="360"
+        >
+            <Labels
+                :labels="hiddenLabels"
+                :readOnly="readOnly"
+                :filterType="filterType"
+                wrap
+                data-test="labels-overflow-content"
+            />
+            <template #reference>
+                <KsTag size="small" data-test="labels-overflow">+{{ hiddenLabels.length }}</KsTag>
+            </template>
+        </KsPopover>
     </span>
 </template>
 
 <script setup lang="ts">
-    import {watch} from "vue"
+    import {computed, watch} from "vue"
 
     import {useRouter, useRoute} from "vue-router"
     const router = useRouter()
@@ -33,14 +51,24 @@
             readOnly?: boolean;
             filterType?: "labels" | "metadata" | "type" | "details";
             wrap?: boolean;
+            max?: number;
         }>(),
         {
             labels: () => [],
             readOnly: false,
             filterType: "labels",
             wrap: false,
+            max: 0,
         },
     )
+
+    const visibleLabels = computed(() => (props.max > 0 ? props.labels.slice(0, props.max) : props.labels))
+    const hiddenLabels = computed(() => (props.max > 0 ? props.labels.slice(props.max) : []))
+
+    const text = (label: Label) => {
+        const value = label.display ?? label.value
+        return label.key ? `${label.key}:${value}` : value
+    }
 
     import {decodeSearchParams} from "@kestra-io/design-system"
     let query: any[] = []
@@ -119,6 +147,12 @@
         flex-wrap: wrap;
         overflow: visible;
     }
+}
+
+.labels-container.wrap .label.kel-check-tag {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .label.kel-check-tag.is-checked {

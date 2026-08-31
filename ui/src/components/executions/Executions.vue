@@ -217,7 +217,7 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
+                        <Labels :labels="filteredLabels(scope.row?.labels)" :max="3" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus

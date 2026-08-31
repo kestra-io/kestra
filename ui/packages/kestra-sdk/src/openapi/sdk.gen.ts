@@ -506,7 +506,7 @@ export const _38B0E6C0 = <ThrowOnError extends boolean = true>(parameters: {
 /**
  * Configure basic authentication for the instance.
  *
- * Sets up basic authentication credentials.
+ * Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password.
  */
 export const _435C395a = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
@@ -3302,7 +3302,7 @@ export const _5031B3D7 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'sort' }
             ] }]);
     return (options?.client ?? client).get<ListMcpsResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/mcp/servers',
+        url: '/api/v1/{tenant}/mcp-servers',
         ...options,
         ...params
     });
@@ -3317,7 +3317,7 @@ export const _23Aa1Afe = <ThrowOnError extends boolean = true>(parameters: {
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'apiMcpServerWritable', map: 'body' }] }]);
     return (options?.client ?? client).post<CreateMcpResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/mcp/servers',
+        url: '/api/v1/{tenant}/mcp-servers',
         ...options,
         ...params,
         headers: {
@@ -3337,7 +3337,7 @@ export const _01561Bc11 = <ThrowOnError extends boolean = true>(parameters: {
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
     return (options?.client ?? client).delete<DeleteMcpResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/mcp/servers/{id}',
+        url: '/api/v1/{tenant}/mcp-servers/{id}',
         ...options,
         ...params
     });
@@ -3352,7 +3352,7 @@ export const _04A77A99c = <ThrowOnError extends boolean = true>(parameters: {
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
     return (options?.client ?? client).get<GetMcpResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/mcp/servers/{id}',
+        url: '/api/v1/{tenant}/mcp-servers/{id}',
         ...options,
         ...params
     });
@@ -3372,7 +3372,7 @@ export const _0742Eabef = <ThrowOnError extends boolean = true>(parameters: {
                 { key: 'apiMcpServerWritable', map: 'body' }
             ] }]);
     return (options?.client ?? client).put<UpdateMcpResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/mcp/servers/{id}',
+        url: '/api/v1/{tenant}/mcp-servers/{id}',
         ...options,
         ...params,
         headers: {
@@ -3392,7 +3392,7 @@ export const _382Ac1A6 = <ThrowOnError extends boolean = true>(parameters: {
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
     return (options?.client ?? client).patch<ToggleMcpResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/mcp/servers/{id}/toggle',
+        url: '/api/v1/{tenant}/mcp-servers/{id}/toggle',
         ...options,
         ...params
     });
@@ -3407,7 +3407,7 @@ export const _049932423 = <ThrowOnError extends boolean = true>(parameters: {
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
     return (options?.client ?? client).get<ListToolsResponses, unknown, ThrowOnError>({
-        url: '/api/v1/{tenant}/mcp/servers/{id}/tools',
+        url: '/api/v1/{tenant}/mcp-servers/{id}/tools',
         ...options,
         ...params
     });

@@ -28,10 +28,23 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24.x
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
 
+      # Installing from ui/packages/slot-contracts would install that workspace alone while still
+      # running ui's root postinstall (patch-package), which then fails on the root-only packages
+      # that install never brought in.
+      - name: Install UI dependencies
+        working-directory: ui
+        run: npm ci
+
+      # slot-contracts emits a flat .d.ts naming types imported from @kestra-io/kestra-sdk, whose
+      # declarations only exist once the committed SDK source is bundled.
       - name: Build slot-contracts
-        working-directory: ui/packages/slot-contracts
-        run: npm install && npm run build
+        working-directory: ui
+        run: |
+          npm run build:sdk
+          npm run build --workspace @kestra-io/slot-contracts
 
       - name: Set up Git
         run: |
@@ -52,8 +65,10 @@ jobs:
       - name: Sync contract files
         run: |
           DEST="artifact-sdk/packages/artifact-sdk/src/contracts"
-          rm -rf "$DEST"
           mkdir -p "$DEST"
+          # Prunes the previous sync's output only: the directory also holds artifact-sdk's own
+          # Readme.md, which nothing here regenerates.
+          find "$DEST" -maxdepth 1 -type f ! -name "*.md" -delete
           cp -r ui/packages/slot-contracts/dist/. "$DEST/"
 
       - name: Add changeset
@@ -82,17 +97,21 @@ jobs:
           fi
 
       - name: Commit and push
+        id: commit
         working-directory: artifact-sdk
         run: |
           git add packages/artifact-sdk/src/contracts .changeset
           if git diff --cached --quiet; then
             echo "No changes to sync. Exiting."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore: sync slot contracts from kestra-io/kestra $(date +%s)"
           git push --force-with-lease origin chore/contracts
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create or update PR
+        if: steps.commit.outputs.pushed == 'true'
         working-directory: artifact-sdk
         env:
           GH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}

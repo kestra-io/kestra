@@ -10,7 +10,6 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {TaskRun, useClient, type Execution as SDKExecution, type StateType} from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
-import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import * as ExecutionUtils from "../utils/executionUtils"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
@@ -116,7 +115,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         total: 0,
         results: [],
     })
-    const metrics = ref<any[]>([])
     const subflowsExecutions = ref<Record<string, any>>({})
     // live lifecycle-step progress reported by plugins mid-run (see RunContext#emitProgress),
     // read off the follow-logs SSE stream; taskRunId is globally unique so this is safe to
@@ -566,23 +564,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const loadMetrics = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
-        const {page, size, sort, taskRunId, taskId} = options.params ?? {}
-        return MetricsAPI.searchByExecution({
-            executionId: options.executionId,
-            page, size,
-            sort: sort ? [sort] : undefined,
-            taskRunId, taskId,
-        }).then(data => {
-            if (options.store === false) {
-                return data
-            }
-            metrics.value = data.results
-            total.value = data.total ?? 0
-            return data
-        })
-    }
-
     const downloadLogs = (options: { executionId: string; params?: Record<string, any> }) => {
         return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})}) as unknown as Promise<string>
     }
@@ -813,9 +794,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         // from an earlier attempt, not be dropped. Idempotent for genuine SSE reconnect replay
         // since that resends the identical timestamp.
         //
-        // Reassign the array (like `metrics` does on every loadMetrics()) rather than push/splice
-        // in place: consumers watching this ref shallowly (e.g. to know when to re-render a
-        // topology node) only see a change on reference reassignment, not on in-place mutation.
+        // Reassign the array rather than push/splice in place: consumers watching this ref
+        // shallowly (e.g. to know when to re-render a topology node) only see a change on
+        // reference reassignment, not on in-place mutation.
         const existingIndex = progressEvents.value.findIndex(e => e.taskRunId === event.taskRunId && e.step === event.step)
         if (existingIndex === -1) {
             progressEvents.value = [...progressEvents.value, event]
@@ -867,7 +848,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         execution,
         total,
         logs,
-        metrics,
         subflowsExecutions,
         progressEvents,
         flow,
@@ -912,7 +892,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         followExecutionDependencies,
         followLogs,
         loadLogs,
-        loadMetrics,
         downloadLogs,
         downloadLogsFile,
         deleteLogs,

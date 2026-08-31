@@ -18,9 +18,6 @@ public sealed interface WorkerRunContextData permits WorkerTaskData, WorkerTrigg
     /** The variables map, stripped of worker-reconstructed keys. */
     Map<String, Object> variables();
 
-    /** List of input keys that are secrets (for log masking). */
-    List<String> secretInputs();
-
     /** OpenTelemetry trace parent for distributed tracing. */
     @Nullable
     String traceParent();
@@ -38,13 +35,19 @@ public sealed interface WorkerRunContextData permits WorkerTaskData, WorkerTrigg
 
     /**
      * Filters a {@link RunContext}'s variables by removing the given reconstructed keys.
+     * <p>
+     * Reads the variables in their pre-decryption form, so a secret is never serialized in cleartext onto a queue;
+     * the receiving side decrypts it when it reads the variables back.
      *
      * @param runContext the RunContext whose variables to filter
      * @param keysToRemove keys to strip from the variables map
      * @return a mutable copy of the variables with the specified keys removed
      */
     static Map<String, Object> filterVariables(RunContext runContext, Set<String> keysToRemove) {
-        Map<String, Object> filtered = new HashMap<>(runContext.getVariables());
+        Map<String, Object> variables = runContext instanceof DefaultRunContext defaultRunContext
+            ? defaultRunContext.rawVariables()
+            : runContext.getVariables();
+        Map<String, Object> filtered = new HashMap<>(variables);
         filtered.keySet().removeAll(keysToRemove);
         return filtered;
     }

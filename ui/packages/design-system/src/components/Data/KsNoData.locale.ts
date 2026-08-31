@@ -8,8 +8,8 @@ export default {
     },
     "de": {
         "ks_no_data": {
-            "no_results": "Es gibt keine Ergebnisse anzuzeigen.",
-            "nothing_here": "Hier ist anscheinend noch nichts …",
+            "no_results": "Es gibt keine Ergebnisse.",
+            "nothing_here": "Sieht aus, als wäre hier noch nichts…",
             "will_appear": "Sobald es etwas anzuzeigen gibt, erscheint es hier.",
         },
     },
@@ -57,8 +57,8 @@ export default {
     },
     "pl": {
         "ks_no_data": {
-            "no_results": "Nie ma wyników do wyświetlenia.",
-            "nothing_here": "Wygląda na to, że nic tu jeszcze nie ma…!",
+            "no_results": "Brak wyników.",
+            "nothing_here": "Wygląda na to, że nic tu jeszcze nie ma.",
             "will_appear": "Pojawi się tutaj, gdy będzie coś do wyświetlenia.",
         },
     },

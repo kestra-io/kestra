@@ -29,16 +29,18 @@
     import * as Utils from "../../utils/utils"
     import {usePlaygroundStore} from "../../stores/playground"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import FlowPlayground from "./FlowPlayground.vue"
     import FlowEditorStats from "override/components/flows/FlowEditorStats.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"
     import NoCode from "../no-code/NoCode.vue"
+    import BlockEditor from "../no-code/blocks/BlockEditor.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
     import {useTopologyPanels} from "./useTopologyPanels"
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
+    import {storageKeys} from "../../utils/constants"
 
     import {useNoCodePanelsFull} from "./useNoCodePanels"
     import {useFlowStore} from "../../stores/flow"
@@ -49,11 +51,10 @@
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.uid)
-            // when the flow file is dirty all the nocode tabs get splashed
             || element.uid.startsWith("nocode-")
     }
 
-    const RawNoCode = markRaw(NoCode)
+    const RawNoCode = markRaw(localStorage.getItem(storageKeys.NOCODE_ENGINE) === "legacy" ? NoCode : BlockEditor)
 
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
@@ -72,7 +73,6 @@
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
 
     onMounted(async () => {
-        // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
             if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
             else editorView.value?.focusTab("code")
@@ -109,7 +109,7 @@
                     "triggers",
                     "items",
                 ].join("/")
-                actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
+                noCodeHandlers.onCreateTask({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
             }
         }
     })
@@ -149,7 +149,6 @@
     })
 
     function setTabValue(tabValue: string) {
-        // Show dialog instead of creating panel
         if(tabValue === "keyshortcuts"){
             showKeyShortcuts()
             return false
@@ -159,7 +158,6 @@
     useInitialFilesTabs(EDITOR_ELEMENTS)
 
     function cleanupNoCodeTabKey(key: string): string {
-        // remove the number for "nocode-1234-" prefix from the key
         return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key
     }
 
@@ -171,7 +169,7 @@
         }))
     }
 
-    const {panels, actions} = useNoCodePanelsFull({
+    const {panels, actions, noCodeHandlers} = useNoCodePanelsFull({
         RawNoCode,
         editorView,
         editorElements: EDITOR_ELEMENTS,
@@ -199,7 +197,6 @@
         }
     })
 
-    // Track initial tabs opened while editing or creating flow.
     let hasTrackedInitialTabs = false
     watch(panels, (newPanels) => {
         if (!hasTrackedInitialTabs && newPanels && newPanels.length > 0) {

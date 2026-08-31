@@ -5,14 +5,17 @@ import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
 
 const response: AxiosLikeConfig = {responseType: "blob" as const}
 const validateStatus = (status: number) => status === 200 || status === 404
-const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string) => {
+/** Returns false when the export carried no rows: the backend answers 200 with an empty body,
+ *  and writing that out hands the user a 0 byte file with no clue anything went wrong. */
+const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string): boolean => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
-    const url = window.URL.createObjectURL(blob)
+    if (blob.size === 0) return false
 
-    Utils.downloadUrl(url, `${filename}.${extension}`)
+    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${extension}`)
+    return true
 }
 
-import {apiUrl} from "override/utils/route"
+import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
 import {routeFamily} from "../utils/routeFamily"
@@ -20,11 +23,11 @@ import {routeFamily} from "../utils/routeFamily"
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
 import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
-import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import _throttle from "lodash/throttle"
 import {useUnsavedChangesStore} from "./unsavedChanges"
+import {useBookmarksStore} from "./bookmarks"
 import {RouteLocation} from "vue-router"
 
 export const DEFAULT_DASHBOARD = {
@@ -122,10 +125,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const loadedDef = await loadDefaults()
         const def = {...loadedDef, ...defaultDashboardsRequest}
 
-        // TenantController is hardcoded to the "main" tenant (this OSS build is single-tenant),
-        // and its `id` path param isn't the SDK's auto-filled `tenant` param, so it must be passed
-        // explicitly here to match.
-        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboard({id: "main", ...def} as Parameters<typeof TenantsAPI.setTenantDefaultDashboard>[0])
+        const tenantId = basePath().split("/").filter(Boolean)[2]
+        if (!tenantId) {
+            throw new Error("Cannot save the default dashboards: no tenant is selected.")
+        }
+
+        const {data} = await axios.post<DashboardSettings>(`${apiUrlWithoutTenants()}/tenants/${tenantId}/settings/default-dashboards`, def)
+        defaultDashboards.value = data
     }
 
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
@@ -235,7 +241,17 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        return DashboardsAPI.deleteDashboard({id})
+        const deleted = await DashboardsAPI.deleteDashboard({id})
+
+        const bookmarksStore = useBookmarksStore()
+        const encodedId = encodeURIComponent(id)
+        bookmarksStore.updateAll(bookmarksStore.pages.filter(({path}) => {
+            const segments = path.split(/[?#]/)[0].split("/")
+            const index = segments.indexOf("dashboards")
+            return index === -1 || segments[index + 1] !== encodedId
+        }))
+
+        return deleted
     }
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
@@ -264,7 +280,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV") {
+    /** Resolves to false when the chart had nothing to export, so the caller can tell the user
+     *  instead of silently downloading an empty file. */
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV"): Promise<boolean> {
         const isDefault = dashboard.id === "default"
 
         const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`

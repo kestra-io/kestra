@@ -57,6 +57,7 @@ import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest(transactional = false)
@@ -404,11 +405,45 @@ public abstract class AbstractFlowRepositoryTest {
                 .extracting(Flow::getId)
                 .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
 
+            QueryFilter containsKeyValueFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.CONTAINS)
+                .value(Map.of("foo", "ar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(containsKeyValueFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label");
+
+            QueryFilter notContainsKeyValueFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_CONTAINS)
+                .value(Map.of("foo", "ar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(notContainsKeyValueFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
+
         } finally {
             deleteFlow(flowWithLabel);
             deleteFlow(flowWithoutLabel);
             deleteFlow(flowWithDifferentLabel);
         }
+    }
+
+    @Test
+    void shouldThrowExceptionWhenLabelsOperationRequiresKeyButValueIsScalar() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        QueryFilter filter = QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("x")
+            .build();
+
+        assertThatThrownBy(() -> flowRepository.find(Pageable.UNPAGED, tenant, List.of(filter)))
+            .isInstanceOf(InvalidQueryFiltersException.class);
     }
 
     @Test
@@ -1220,7 +1255,7 @@ public abstract class AbstractFlowRepositoryTest {
         try {
             // When — filter by namespace only
             ArrayListTotal<SearchResult<Flow>> byNamespaceA = flowRepository.findSourceCode(
-                Pageable.UNPAGED, null, tenant, namespaceA
+                Pageable.UNPAGED, null, false, false, false, SourceSearchScope.ALL, tenant, namespaceA
             );
 
             // Then — only the flow in namespaceA is returned
@@ -1234,7 +1269,7 @@ public abstract class AbstractFlowRepositoryTest {
 
             // When — filter by query using a token unique to flow-beta's source
             ArrayListTotal<SearchResult<Flow>> byQuery = flowRepository.findSourceCode(
-                Pageable.UNPAGED, "beta", tenant, null
+                Pageable.UNPAGED, "beta", false, false, false, SourceSearchScope.ALL, tenant, null
             );
 
             // Then — only the flow whose source contains "beta" is returned
@@ -1248,6 +1283,75 @@ public abstract class AbstractFlowRepositoryTest {
         } finally {
             deleteFlow(flowA);
             deleteFlow(flowB);
+        }
+    }
+
+    @Test
+    void shouldFilterSourceCodeWithCaseSensitiveWholeWordAndRegexOptions() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource upper = builder(tenant, "source-flow-upper", TEST_FLOW_ID)
+            .description("marker MARKERWORD end")
+            .build();
+        FlowWithSource lower = builder(tenant, "source-flow-lower", TEST_FLOW_ID)
+            .description("marker markerword end")
+            .build();
+        FlowWithSource longer = builder(tenant, "source-flow-longer", TEST_FLOW_ID)
+            .description("marker markerwordish end")
+            .build();
+        FlowWithSource taskScoped = builder(tenant, "source-flow-task-scoped", TEST_FLOW_ID)
+            .description("marker markerword end")
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue("markerword")).build()))
+            .build();
+
+        upper = flowRepository.create(GenericFlow.of(upper));
+        lower = flowRepository.create(GenericFlow.of(lower));
+        longer = flowRepository.create(GenericFlow.of(longer));
+        taskScoped = flowRepository.create(GenericFlow.of(taskScoped));
+
+        try {
+            ArrayListTotal<SearchResult<Flow>> caseSensitive = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "MARKERWORD", true, false, false, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(caseSensitive.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactly("source-flow-upper");
+
+            ArrayListTotal<SearchResult<Flow>> wholeWord = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword", false, true, false, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(wholeWord.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactlyInAnyOrder("source-flow-upper", "source-flow-lower", "source-flow-task-scoped");
+
+            ArrayListTotal<SearchResult<Flow>> substring = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword", false, false, false, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(substring.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactlyInAnyOrder("source-flow-upper", "source-flow-lower", "source-flow-longer", "source-flow-task-scoped");
+
+            ArrayListTotal<SearchResult<Flow>> regex = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword\\w*ish", false, false, true, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(regex.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactly("source-flow-longer");
+            assertThat(regex.getFirst().getMatches()).hasSize(1);
+            assertThat(regex.getFirst().getMatches().getFirst().snippet()).contains("[mark]markerwordish[/mark]");
+
+            ArrayListTotal<SearchResult<Flow>> tasksScope = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword", false, false, false, SourceSearchScope.TASKS, tenant, null
+            );
+
+            assertThat(tasksScope.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactly("source-flow-task-scoped");
+            assertThat(tasksScope.getFirst().getMatches()).hasSize(1);
+        } finally {
+            deleteFlow(upper);
+            deleteFlow(lower);
+            deleteFlow(longer);
+            deleteFlow(taskScoped);
         }
     }
 
@@ -1537,7 +1641,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             ArrayListTotal<SearchResult<Flow>> results = flowRepository.findSourceCode(
-                Pageable.UNPAGED, "unique-searchable-string", tenant, TEST_NAMESPACE
+                Pageable.UNPAGED, "unique-searchable-string", false, false, false, SourceSearchScope.ALL, tenant, TEST_NAMESPACE
             );
 
             assertThat(results.getTotal()).isGreaterThanOrEqualTo(1);
@@ -1886,7 +1990,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             ArrayListTotal<SearchResult<Flow>> results = flowRepository.findSourceCode(
-                Pageable.UNPAGED, null, tenant, null
+                Pageable.UNPAGED, null, false, false, false, SourceSearchScope.ALL, tenant, null
             );
             assertThat(results).isNotEmpty();
         } finally {

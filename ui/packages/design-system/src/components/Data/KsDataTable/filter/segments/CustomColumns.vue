@@ -10,21 +10,23 @@
 
         <div class="list">
             <DraggableTableColumns
+                v-if="columns.length"
                 :columns="columns"
                 :visibleColumns="currentVisibleColumns"
                 :storageKey="storageKey"
+                @resolved="currentVisibleColumns = $event"
                 @update-columns="handleUpdateColumns"
             />
         </div>
 
         <div class="footer">
-            <small>{{ visibleCount }} of {{ totalCount }} columns visible</small>
+            <small data-test="visible-columns-count">{{ visibleCount }} of {{ totalCount }} columns visible</small>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {Close} from "../utils/icons"
     import type {ColumnConfig} from "../composables/useTableColumns"
     import DraggableTableColumns from "../DraggableTableColumns.vue"
@@ -40,10 +42,18 @@
         updateColumns: [columns: string[]];
     }>()
 
+    // `useTableColumns` captures its column list at setup, so building the list before the page's
+    // columns arrive leaves it resolving against nothing; the `v-if` above defers that.
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
 
-    const totalCount = computed(() => props.columns.length)
-    const visibleCount = computed(() => currentVisibleColumns.value.length)
+    watch(() => props.visibleColumns, (columns) => {
+        currentVisibleColumns.value = columns
+    })
+
+    const selectableColumns = computed(() => props.columns.filter(c => !c.condition || c.condition()))
+
+    const totalCount = computed(() => selectableColumns.value.length)
+    const visibleCount = computed(() => selectableColumns.value.filter(c => currentVisibleColumns.value.includes(c.prop)).length)
 
     const handleUpdateColumns = (newColumns: string[]) => {
         currentVisibleColumns.value = newColumns

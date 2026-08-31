@@ -1,5 +1,5 @@
 import moment from "moment/moment"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {storageKeys} from "./constants"
 
 export type InputType = "STRING"
@@ -12,6 +12,7 @@ export type InputType = "STRING"
     | "ARRAY"
     | "MULTISELECT"
     | "JSON"
+    | "ION"
     | "YAML"
     | "SECRET"
     | "FILE"
@@ -178,7 +179,7 @@ export function normalize(type: InputType | undefined, value: any) {
         res = moment(res).toISOString()
     } else if (type === "TIME") {
         res = moment().startOf("day").add(res, "seconds").toString()
-    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON") {
+    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }

@@ -103,7 +103,7 @@
             <template #default="scope">
                 <KsIconButton
                     v-if="scope.row.key !== undefined"
-                    :tooltip="$t('copy_to_clipboard')"
+                    :tooltip="$t('copy_pebble_expression')"
                     placement="left"
                     @click="copyKey(scope.row.key)"
                 >
@@ -129,6 +129,7 @@
             <template #default="scope">
                 <KsIconButton
                     v-if="canUpdate(scope.row)"
+                    data-test="kv-edit"
                     :tooltip="$t('edit')"
                     placement="left"
                     @click="updateKvModal(scope.row)"
@@ -159,7 +160,7 @@
         :beforeClose="beforeKvClose"
     >
         <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
-            <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
+            <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required data-test="kv-namespace">
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readOnly="kv.update"
@@ -168,13 +169,14 @@
                 />
             </KsFormItem>
 
-            <KsFormItem :label="$t('key')" prop="key" required>
+            <KsFormItem :label="$t('key')" prop="key" required data-test="kv-key">
                 <KsInput v-model="kv.key" :disabled="kv.update" />
             </KsFormItem>
 
             <KsFormItem :label="$t('kv.type')" prop="type" required>
                 <KsSelect
                     v-model="kv.type"
+                    data-test="kv-type"
                     :disabled="kv.update"
                     @change="kv.value = undefined"
                 >
@@ -188,7 +190,7 @@
                 </KsSelect>
             </KsFormItem>
 
-            <KsFormItem :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'">
+            <KsFormItem :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'" data-test="kv-value">
                 <KsInput v-if="kv.type === 'STRING'" type="textarea" :rows="5" v-model="kv.value" />
                 <KsInput v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
                 <KsSwitch
@@ -226,11 +228,11 @@
                 />
             </KsFormItem>
 
-            <KsFormItem :label="$t('description')" prop="description">
+            <KsFormItem :label="$t('description')" prop="description" data-test="kv-description">
                 <KsInput v-model="kv.description" />
             </KsFormItem>
 
-            <KsFormItem :label="$t('expiration')" prop="ttl">
+            <KsFormItem :label="$t('expiration')" prop="ttl" data-test="kv-ttl">
                 <TimeSelect
                     :fromNow="false"
                     allowInfinite
@@ -241,11 +243,14 @@
                     includeNever
                     @update:model-value="onTtlChange"
                 />
+                <span v-if="currentExpiration" class="expiration-hint" data-test="kv-expiration-hint">
+                    {{ $t("kv.expiration_hint", {date: currentExpiration}) }}
+                </span>
             </KsFormItem>
         </KsForm>
 
         <template #footer>
-            <KsButton :icon="ContentSave" @click="saveKv(formRef)" type="primary">
+            <KsButton :icon="ContentSave" data-test="kv-save" @click="saveKv(formRef)" type="primary">
                 {{ $t('save') }}
             </KsButton>
         </template>
@@ -298,10 +303,11 @@
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
+    import {date as formatDate} from "../../utils/filters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
-    import {formatKvValueForDisplay} from "./kvValueDisplay"
+    import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave} from "./kvValue"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -417,6 +423,7 @@
         ttl?: string;
         update?: boolean;
         description?: string;
+        expirationDate?: string;
     }
 
     const kv = ref<KvItem>({
@@ -428,6 +435,8 @@
         update: undefined,
         description: undefined,
     })
+
+    const ttlTouched = ref(false)
 
     const kvBaseline = ref("")
     const {guardedClose: guardKvClose} = useDiscardGuard(() => JSON.stringify(kv.value) !== kvBaseline.value)
@@ -585,37 +594,36 @@
         kv.value.type = type
         // Force the type reset before setting the value
         await nextTick()
-        if (type === "JSON") {
-            kv.value.value = JSON.stringify(value)
-        } else if (type === "BOOLEAN") {
-            kv.value.value = value
-        } else if (type === "DATETIME") {
-            // Follow Timezone from Settings to display KV of type DATETIME (issue #9428)
-            // Convert the datetime value to the user's timezone for proper display in the date picker
-            const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
-            kv.value.value = moment(value).tz(userTimezone).toDate()
-        } else {
-            kv.value.value = value.toString()
-        }
+        kv.value.value = hydrateKvValueForForm(type, value, localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? undefined)
         kv.value.update = true
         kv.value.description = entry.description
-
-        if (entry.expirationDate) {
-            const expirationMoment = moment(entry.expirationDate)
-            const now = moment()
-
-            if (expirationMoment.isValid() && expirationMoment.isAfter(now)) {
-                const remainingMilliseconds = Math.round(expirationMoment.diff(now) / 1000) * 1000
-                kv.value.ttl = moment.duration(remainingMilliseconds).toISOString()
-            } else {
-                kv.value.ttl = undefined
-            }
-        } else {
-            kv.value.ttl = undefined
-        }
+        kv.value.expirationDate = entry.expirationDate
+        kv.value.ttl = entry.expirationDate ? remainingTtl(entry.expirationDate) : undefined
+        ttlTouched.value = false
 
         addKvDrawerVisible.value = true
     }
+
+    function remainingTtl(expirationDate: string): string | undefined {
+        const expiration = moment(expirationDate)
+        const now = moment()
+
+        if (!expiration.isValid() || !expiration.isAfter(now)) {
+            return undefined
+        }
+
+        return moment.duration(Math.round(expiration.diff(now) / 1000) * 1000).toISOString()
+    }
+
+    const currentExpiration = computed(() => {
+        if (!kv.value.update || !kv.value.expirationDate) {
+            return undefined
+        }
+
+        const expiration = moment(kv.value.expirationDate)
+
+        return expiration.isValid() && expiration.isAfter(moment()) ? formatDate(kv.value.expirationDate) : undefined
+    })
 
     const viewKvDrawerVisible = ref(false)
     const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({})
@@ -677,26 +685,19 @@
             }
 
             const type = kv.value.type
-            let value: any = kv.value.value
-
-            if (type === "STRING") {
-                value = JSON.stringify(value)
-            } else if (["DURATION", "JSON"].includes(type)) {
-                value = value || ""
-            } else if (type === "DATETIME") {
-                value = new Date(value!).toISOString()
-            } else if (type === "DATE") {
-                value = new Date(value!).toISOString().split("T")[0]
-            } else {
-                value = String(value)
-            }
+            const value = serializeKvValueForSave(type, kv.value.value)
 
             const contentType =  "text/plain"
 
             const namespace = kv.value.namespace!
             const key = kv.value.key!
             const description = kv.value.description || ""
-            const ttl = kv.value.ttl
+            // An untouched TTL is recomputed from the stored expiration at save time, so that
+            // saving other fields keeps the expiration instead of shifting it by the drawer-open time.
+            const preservedTtl = kv.value.update && !ttlTouched.value && kv.value.expirationDate
+                ? remainingTtl(kv.value.expirationDate)
+                : undefined
+            const ttl = preservedTtl ?? kv.value.ttl
 
             const payload = {
                 namespace,
@@ -739,6 +740,9 @@
     }
 
     function onTtlChange(value: any) {
+        if (value.timeRange !== kv.value.ttl) {
+            ttlTouched.value = true
+        }
         kv.value.ttl = value.timeRange
     }
 
@@ -763,3 +767,12 @@
         updateVisibleColumns,
     })
 </script>
+
+<style lang="scss" scoped>
+    .expiration-hint {
+        display: block;
+        margin-top: var(--ks-spacing-1);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-secondary);
+    }
+</style>

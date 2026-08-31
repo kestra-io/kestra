@@ -3,6 +3,7 @@
         v-model="isOpen"
         appendToBody
         width="min(660px, 92vw)"
+        scrollable
     >
         <template #header>
             <p class="tour-kicker">
@@ -33,7 +34,8 @@
         <p class="resources-title">
             {{ $t("onboarding.tour.finale.keep_going") }}
         </p>
-        <OnboardingResourceList :items="resources" />
+        <!-- An in-app link navigated the page underneath while this dialog stayed on top of it. -->
+        <OnboardingResourceList :items="resources" @navigate="isOpen = false" />
 
         <template #footer>
             <KsButton @click="emit('restart')">

@@ -11,9 +11,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
@@ -25,6 +24,8 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.NonSortableFields;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.data.model.Pageable;
@@ -38,7 +39,16 @@ import static io.kestra.core.utils.CaseUtils.camelToSnake;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
 
 public abstract class AbstractJdbcRepository<T> {
-    protected static final ObjectMapper MAPPER = JdbcMapper.of();
+    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
+    /**
+     * Columns never exposed as a sort key, on top of whatever the metadata check in {@link #sort} rejects because
+     * it does not exist. Derived from {@link NonSortableFields#DEFAULT}, converted to the snake_case column names
+     * this backend compares against, so the JDBC and Elasticsearch backends refuse the same sort fields.
+     */
+    private static final Set<String> NON_SORTABLE_COLUMNS = NonSortableFields.DEFAULT.stream()
+        .map(field -> camelToSnake(field).toLowerCase())
+        .collect(Collectors.toUnmodifiableSet());
 
     protected final Class<T> cls;
 
@@ -50,6 +60,9 @@ public abstract class AbstractJdbcRepository<T> {
 
     @Getter
     protected Table<Record> table;
+
+    /** Lazily loaded and cached by {@link #sortableColumns()}: the schema does not change at runtime. */
+    private volatile Map<String, String> sortableColumns;
 
     @SuppressWarnings("unchecked")
     public AbstractJdbcRepository(
@@ -387,38 +400,10 @@ public abstract class AbstractJdbcRepository<T> {
             .where(DSL.noCondition());
     }
 
-    @SneakyThrows
-    public List<String> fragments(String query, String yaml) {
-        List<String> split = Arrays.asList(StringUtils.split(yaml, "\n"));
-
-        int first = IntStream.range(0, split.size())
-            .filter(index -> StringUtils.indexOfIgnoreCase(split.get(index), query) >= 0)
-            .findFirst()
-            .orElse(0);
-
-        int min = Math.max(0, first - 1);
-        int max = Math.min(split.size(), min + 4);
-
-        List<String> fragments = split
-            .subList(min, max)
-            .stream()
-            .map(r ->
-            {
-                int i = StringUtils.indexOfIgnoreCase(r, query);
-
-                if (i < 0) {
-                    return r;
-                } else {
-                    return r.substring(0, i) + "[mark]" + r.substring(i, i + query.length()) + "[/mark]" + r.substring(i + query.length());
-                }
-            })
-            .toList();
-
-        return Collections.singletonList(String.join("\n", fragments));
-    }
-
     public <R extends Record> SelectConditionStep<R> sort(SelectConditionStep<R> select, Pageable pageable) {
         if (pageable != null && pageable.getSort().isSorted()) {
+            Map<String, String> sortableColumns = this.sortableColumns();
+
             pageable
                 .getSort()
                 .getOrderBy()
@@ -428,7 +413,15 @@ public abstract class AbstractJdbcRepository<T> {
                     if (property == null || property.isBlank()) {
                         throw new IllegalArgumentException("Invalid sort field");
                     }
-                    String column = camelToSnake(property);
+
+                    String column = sortableColumns.get(camelToSnake(property).toLowerCase());
+                    if (column == null) {
+                        column = sortableColumns.get(property.toLowerCase());
+                    }
+                    if (column == null) {
+                        throw new IllegalArgumentException("The sort field '%s' does not exist on this resource.".formatted(property));
+                    }
+
                     Field<Object> field = DSL.field(DSL.name(column));
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());
@@ -436,6 +429,48 @@ public abstract class AbstractJdbcRepository<T> {
         }
 
         return select;
+    }
+
+    /**
+     * The columns of {@link #table} that a client may sort on, keyed by their lowercased name, excluding {@link #NON_SORTABLE_COLUMNS}.
+     */
+    private Map<String, String> sortableColumns() {
+        Map<String, String> columns = this.sortableColumns;
+        if (columns == null) {
+            synchronized (this) {
+                columns = this.sortableColumns;
+                if (columns == null) {
+                    columns = this.sortableColumns = this.loadSortableColumns();
+                }
+            }
+        }
+
+        return columns;
+    }
+
+    private Map<String, String> loadSortableColumns() {
+        return this.dslContextWrapper.transactionResult(configuration ->
+        {
+            String tableName = this.table.getName();
+            Map<String, String> columns = new HashMap<>();
+            // Matching by name ourselves, case-insensitively, rather than relying on Meta#getTables(String) —
+            // dialects disagree on the case a bare (unquoted) table name is reported back in, e.g. H2 reports
+            // "FLOWS" for a table created as "flows".
+            for (Table<?> metaTable : DSL.using(configuration).meta().getTables()) {
+                if (!metaTable.getName().equalsIgnoreCase(tableName)) {
+                    continue;
+                }
+
+                for (Field<?> field : metaTable.fields()) {
+                    String name = field.getName();
+                    if (!NON_SORTABLE_COLUMNS.contains(name.toLowerCase())) {
+                        columns.put(name.toLowerCase(), name);
+                    }
+                }
+            }
+
+            return columns;
+        });
     }
 
     protected <R extends Record> Select<R> limit(SelectConditionStep<R> select, Pageable pageable) {

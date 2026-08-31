@@ -1,40 +1,125 @@
-# A GitHub Action to automatically welcome and encourage first-time contributors
-# https://github.com/marketplace/actions/first-contribution
+# Welcomes first-time contributors when they open their first pull request, and congratulates them once it is merged.
 
 name: Contributor Onboarding
 
 on:
   pull_request_target:
-    types: [opened]
+    types: [opened, closed]
 
 
 permissions: {}
 
 jobs:
   welcome:
+    # author_association misses organization members with private membership, so the permission lookup below is the authoritative check.
+    if: ${{ github.event.pull_request.user.type != 'Bot' && !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) && (github.event.action == 'opened' || github.event.pull_request.merged) }}
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
-      - uses: plbstl/first-contribution@v4
-        env:
-          GH_PAT_READ_ORG: ${{ secrets.GH_READ_ORG_TOKEN }}
+      - name: Generate a bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v3
         with:
-          skip-internal-contributors: true
-          # The action defaults to false, which turns a broken GH_READ_ORG_TOKEN into a green job that silently welcomes nobody.
-          fail-on-error: true
-          pr-opened-msg: |
-            ### Hey @{fc-author} :wave: 
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
 
-            Thanks for raising your first pull request - we really appreciate it! :heart:
+      - name: Check the author's repository permission
+        id: permission
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ steps.bot-token.outputs.token }}
+          script: |
+            const username = context.payload.pull_request.user.login;
+            // The organization membership endpoint answers 404 for this repository-scoped token, which is
+            // indistinguishable from a genuine non-member, so read the author's repository permission instead:
+            // organization members inherit write access, outside contributors only ever get 'read'.
+            const {data} = await github.rest.repos.getCollaboratorPermissionLevel({...context.repo, username});
+            core.info(`@${username} has '${data.permission}' permission on ${context.repo.repo}.`);
+            core.setOutput('has-write-access', String(data.permission === 'admin' || data.permission === 'write'));
 
-            Make sure you've checked our [contribution guide](https://kestra.io/docs/contribute-to-kestra/contributing), and don't forget to give us a star! :star:
+      - name: Welcome a first pull request
+        if: github.event.action == 'opened' && steps.permission.outputs.has-write-access == 'false'
+        uses: actions/github-script@v9
+        env:
+          # Kept out of the script itself: interpolated there, a backtick or ${ would break out and run as JS.
+          OPENED_MESSAGE: |
+            ### Welcome to Kestra 👋
 
-            If you're looking for more issues to contribute to, we'd suggest checking our [curated list of good first issues](https://go.kestra.io/contributing) to see if there's something you find interesting and feel comfortable tackling independently. You can further filter the list by labels to narrow down the results (we recommend `area/backend`, `area/frontend`, or `area/plugin`, depending on your preferences).
-          pr-merged-msg: |
-            ### 🎉 Congrats @{fc-author}!
+            Hey @{author}, thanks for opening your first pull request in this repository - we really appreciate it! ❤️
 
-            Your first pull request has been merged - thanks a lot for your contribution, we really appreciate it! :heart:
+            Questions along the way? Ask us on [Slack](https://kestra.io/slack).
 
-            If you'd like to keep contributing, feel free to check out our [good first issues](https://go.kestra.io/contributing). And don't forget to give us a star! :star:
-          pr-reactions: +1, heart, hooray, rocket, eyes
+            Thanks for all the efforts so far! 🍀
+        with:
+          github-token: ${{ steps.bot-token.outputs.token }}
+          script: |
+            const author = context.payload.pull_request.user.login;
+            const issue_number = context.payload.pull_request.number;
+
+            const {data: commits} = await github.rest.repos.listCommits({...context.repo, author, per_page: 1});
+            if (commits.length > 0) {
+              core.info(`@${author} has already committed to this repository. Exiting..`);
+              return;
+            }
+
+            const contributions = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo,
+              creator: author,
+              state: 'all',
+              per_page: 100
+            });
+            const pullRequests = contributions.filter(contribution => contribution.pull_request);
+            core.info(`Author's pr_count: ${pullRequests.length}`);
+            if (pullRequests.length > 1) {
+              core.info(`@${author} has opened a pull request before. Exiting..`);
+              return;
+            }
+
+            for (const reaction of ['+1', 'heart', 'hooray', 'rocket', 'eyes']) {
+              await github.rest.reactions.createForIssue({...context.repo, issue_number, content: reaction});
+            }
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number,
+              body: process.env.OPENED_MESSAGE.replaceAll('{author}', author)
+            });
+
+      - name: Congratulate on a first merged pull request
+        if: github.event.action == 'closed' && steps.permission.outputs.has-write-access == 'false'
+        uses: actions/github-script@v9
+        env:
+          # Kept out of the script itself for the same reason as above: a backtick or ${ interpolated there would break out and run as JS.
+          MERGED_MESSAGE: |
+            ### First PR merged 🎉
+
+            Great work @{author}! Your change is now part of Kestra. ❤️
+
+            Up for another? Our [curated list of good first issues](https://go.kestra.io/contributing) is the best place to look, and you can filter it by `area/backend`, `area/frontend` or `area/plugin` depending on what you enjoy. Just comment on the one you pick and wait until we assign it to you before starting.
+
+            Thanks again for making Kestra better - and don't forget to ⭐ the repo!
+        with:
+          github-token: ${{ steps.bot-token.outputs.token }}
+          script: |
+            const author = context.payload.pull_request.user.login;
+
+            const contributions = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo,
+              creator: author,
+              state: 'closed',
+              per_page: 100
+            });
+            // The pull request that triggered this run is part of the list, so a single merged one means it is the author's first.
+            const merged = contributions.filter(contribution => contribution.pull_request?.merged_at);
+            core.info(`Author's merged_pr_count: ${merged.length}`);
+            if (merged.length > 1) {
+              core.info(`@${author} already had a pull request merged. Exiting..`);
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              body: process.env.MERGED_MESSAGE.replaceAll('{author}', author)
+            });

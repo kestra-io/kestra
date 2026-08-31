@@ -15,6 +15,11 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -342,7 +347,7 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -490,6 +495,7 @@ export type BasicAuthCredentials = {
     uid?: string;
     username?: string;
     password?: string;
+    currentPassword?: string;
 };
 
 export type BlueprintControllerApiBlueprintItem = {
@@ -825,6 +831,7 @@ export type ExecutionMetadata = {
     attemptNumber?: number;
     originalCreatedDate: string;
     concurrencyScopes?: Array<string>;
+    executionDepth?: number;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';
@@ -932,6 +939,11 @@ export type Flow = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -955,6 +967,11 @@ export type Flow = AbstractFlow & {
      * Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition.
      */
     policyRefs?: Array<string>;
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -993,8 +1010,6 @@ export type FlowControllerFlowWithDeprecatedTasks = {
     deprecatedTasks?: Array<FlowServiceTaskDeprecation>;
 };
 
-export type FlowControllerTaskValidationType = 'TASKS' | 'TRIGGERS';
-
 export type FlowForExecution = AbstractFlow & {
     id: string;
     namespace: string;
@@ -1002,6 +1017,11 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1168,6 +1188,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1180,6 +1205,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     variables?: {};
+    /**
+     * Concurrency
+     *
+     * Limits the number of concurrent executions of the flow.
+     */
     concurrency?: Concurrency;
     /**
      * Output values available and exposes to other flows.
@@ -1469,6 +1499,7 @@ export type MiscControllerConfiguration = {
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
     pluginsHash?: number;
+    isPluginAutoInstallEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1639,8 +1670,8 @@ export type PagedResultsPlugin = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsSearchResultFlow = {
-    results: Array<SearchResultFlow>;
+export type PagedResultsSourceSearchResult = {
+    results: Array<SourceSearchResult>;
     total: number;
 };
 
@@ -1693,6 +1724,15 @@ export type PluginPluginElementMetadata = {
     description?: string;
 };
 
+export type PluginArtifact = {
+    groupId?: string;
+    artifactId?: string;
+    extension?: string;
+    classifier?: string;
+    version?: string;
+    uri?: string;
+};
+
 export type PluginControllerApiPluginVersions = {
     type?: string;
     versions?: Array<string>;
@@ -1710,6 +1750,14 @@ export type PluginControllerApiTriggerPlugin = {
      * human-readable name (Schema#title if set, otherwise simple class name)
      */
     name?: string;
+    /**
+     * the owning plugin's (or subgroup's) human-readable, correctly-cased title (for example `"MongoDB"` or `"Debezium MongoDB"`), resolved from its own declared metadata rather than guessed from the class package --- used by the UI to disambiguate triggers from different plugins that otherwise share the same last Java package segment (see io.kestra.core.docs.Plugin#titleFor)
+     */
+    pluginTitle?: string;
+    /**
+     * the owning plugin artifact's manifest title (for example `"NATS"` for every subgroup of the NATS plugin) - coarser than `pluginTitle`, which falls back to a bare package segment (such as `"core"`) when a subgroup declares no title; the UI escalates to this when `pluginTitle` alone still collides
+     */
+    pluginGroupTitle?: string;
     /**
      * one-line description from the plugin
      */
@@ -1745,6 +1793,29 @@ export type PluginIcon = {
     monochrome?: boolean;
     hash?: string;
 };
+
+export type PluginInstallJob = {
+    id?: string;
+    status?: PluginInstallJobStatus;
+    artifacts?: Array<PluginArtifact>;
+    progress?: {
+        [key: string]: PluginInstallJobArtifactProgress;
+    };
+    startedAt?: string;
+    finishedAt?: string;
+    error?: string;
+};
+
+export type PluginInstallJobArtifactProgress = {
+    resource?: string;
+    transferred?: number;
+    total?: number;
+    state?: PluginInstallJobArtifactState;
+};
+
+export type PluginInstallJobArtifactState = 'STARTED' | 'PROGRESSING' | 'SUCCEEDED' | 'FAILED';
+
+export type PluginInstallJobStatus = 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
 
 export type PluginSchema = {
     properties?: {
@@ -1844,7 +1915,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'super_admin' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -1877,11 +1948,6 @@ export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
-
-export type SearchResultFlow = {
-    model?: Flow;
-    fragments?: Array<string>;
-};
 
 export type ServerInstance = {
     id: string;
@@ -1924,11 +1990,104 @@ export type ServiceInstanceTimestampedEvent = {
     state?: ServiceServiceState;
 };
 
-export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'CONTROLLER' | 'INVALID';
+export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'SYSTEM_WORKER' | 'CONTROLLER' | 'INVALID';
 
 export type SoftDeletableFlowInterface = {
     deleted?: boolean;
 };
+
+export type SourceMatch = {
+    line?: number;
+    column?: number;
+    snippet?: string;
+};
+
+export type SourceSearchReplaceApplyRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+    flows: Array<IdWithNamespace>;
+};
+
+export type SourceSearchReplaceApplyResponse = {
+    /**
+     * The flows that were rewritten, with their new revision.
+     */
+    updated?: Array<FlowWithSource>;
+    /**
+     * The flows that were left untouched, each with the reason it was skipped.
+     */
+    skipped?: Array<SourceSearchReplaceApplyResponseSkippedFlow>;
+};
+
+export type SourceSearchReplaceApplyResponseSkipReason = 'NOT_FOUND' | 'READ_ONLY' | 'NO_CHANGE' | 'NO_MATCH' | 'INVALID_FLOW' | 'UNKNOWN';
+
+/**
+ * A flow that the replace operation did not modify, and why.
+ */
+export type SourceSearchReplaceApplyResponseSkippedFlow = {
+    namespace?: string;
+    id?: string;
+    reason?: SourceSearchReplaceApplyResponseSkipReason;
+    /**
+     * The underlying validation error, when the reason is INVALID_FLOW.
+     */
+    message?: string | null;
+};
+
+export type SourceSearchReplaceLineRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    replacement: string;
+    namespace: string;
+    id: string;
+    line?: number;
+    column?: number;
+};
+
+export type SourceSearchReplacePreviewRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    namespace?: string | null;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+};
+
+export type SourceSearchReplacePreviewResponse = {
+    totalMatches?: number;
+    totalFlows?: number;
+    editableFlowCount?: number;
+    flows?: Array<SourceSearchReplacePreviewResponseFlowMatches>;
+};
+
+export type SourceSearchReplacePreviewResponseFlowMatches = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceSearchReplacePreviewResponseMatch>;
+};
+
+export type SourceSearchReplacePreviewResponseMatch = {
+    line?: number;
+    before?: string;
+    after?: string;
+};
+
+export type SourceSearchResult = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceMatch>;
+};
+
+export type SourceSearchScope = 'ALL' | 'TASKS' | 'TRIGGERS' | 'INPUTS';
 
 export type State = {
     readonly duration?: string | null;
@@ -2033,6 +2192,10 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2041,7 +2204,7 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2128,7 +2291,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
     index: number;
@@ -2265,7 +2428,7 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2354,6 +2517,10 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2362,7 +2529,7 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2590,6 +2757,31 @@ export type ListPluginsResponses = {
 
 export type ListPluginsResponse = ListPluginsResponses[keyof ListPluginsResponses];
 
+export type DetectMissingPluginsData = {
+    body: string;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/auto-install/detect';
+};
+
+export type DetectMissingPluginsErrors = {
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: unknown;
+};
+
+export type DetectMissingPluginsResponses = {
+    /**
+     * Detection result
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DetectMissingPluginsResponse = DetectMissingPluginsResponses[keyof DetectMissingPluginsResponses];
+
 export type GetPluginBySubgroupsData = {
     body?: never;
     path?: never;
@@ -2721,6 +2913,60 @@ export type GetSchemaFromInputTypeResponses = {
 
 export type GetSchemaFromInputTypeResponse = GetSchemaFromInputTypeResponses[keyof GetSchemaFromInputTypeResponses];
 
+export type InstallPluginsData = {
+    body: Array<PluginArtifact>;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/install';
+};
+
+export type InstallPluginsErrors = {
+    /**
+     * An artifact is not part of the plugin catalog
+     */
+    400: unknown;
+    /**
+     * Auto-install feature is disabled on this instance
+     */
+    403: unknown;
+    /**
+     * Too many install jobs are already pending or running
+     */
+    429: unknown;
+};
+
+export type InstallPluginsResponses = {
+    /**
+     * Installation job accepted
+     */
+    202: unknown;
+};
+
+export type GetInstallJobData = {
+    body?: never;
+    path: {
+        jobId: string;
+    };
+    query?: never;
+    url: '/api/v1/plugins/install/{jobId}';
+};
+
+export type GetInstallJobErrors = {
+    /**
+     * Job not found
+     */
+    404: unknown;
+};
+
+export type GetInstallJobResponses = {
+    /**
+     * Job snapshot
+     */
+    200: PluginInstallJob;
+};
+
+export type GetInstallJobResponse = GetInstallJobResponses[keyof GetInstallJobResponses];
+
 export type GetPluginUiManifestData = {
     body: Array<TaskWithVersion>;
     path?: never;
@@ -2775,6 +3021,10 @@ export type GetSchemasFromTypeData = {
          * If schema should be an array of requested type
          */
         arrayOf?: boolean | null;
+        /**
+         * Whether to merge the pre-baked plugin schema bundle for un-installed types
+         */
+        includeCatalog?: boolean | null;
     };
     url: '/api/v1/plugins/schemas/{type}';
 };
@@ -3225,6 +3475,26 @@ export type SearchConcurrencyLimitsResponses = {
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
+
+export type GetConcurrencyLimitData = {
+    body?: never;
+    path: {
+        namespace: string;
+        flowId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
+};
+
+export type GetConcurrencyLimitResponses = {
+    /**
+     * getConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type GetConcurrencyLimitResponse = GetConcurrencyLimitResponses[keyof GetConcurrencyLimitResponses];
 
 export type UpdateConcurrencyLimitData = {
     body: ConcurrencyLimit;
@@ -4533,7 +4803,10 @@ export type TriggerExecutionByGetWebhookResponses = {
 export type TriggerExecutionByGetWebhookResponse = TriggerExecutionByGetWebhookResponses[keyof TriggerExecutionByGetWebhookResponses];
 
 export type TriggerExecutionByPostWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4563,7 +4836,10 @@ export type TriggerExecutionByPostWebhookResponses = {
 export type TriggerExecutionByPostWebhookResponse = TriggerExecutionByPostWebhookResponses[keyof TriggerExecutionByPostWebhookResponses];
 
 export type TriggerExecutionByPutWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4627,7 +4903,10 @@ export type TriggerExecutionByGetWebhookWithPathResponses = {
 export type TriggerExecutionByGetWebhookWithPathResponse = TriggerExecutionByGetWebhookWithPathResponses[keyof TriggerExecutionByGetWebhookWithPathResponses];
 
 export type TriggerExecutionByPostWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4661,7 +4940,10 @@ export type TriggerExecutionByPostWebhookWithPathResponses = {
 export type TriggerExecutionByPostWebhookWithPathResponse = TriggerExecutionByPostWebhookWithPathResponses[keyof TriggerExecutionByPostWebhookWithPathResponses];
 
 export type TriggerExecutionByPutWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -6027,6 +6309,22 @@ export type SearchFlowsBySourceCodeData = {
          * A namespace filter prefix
          */
         namespace?: string | null;
+        /**
+         * Whether the query must match with exact case
+         */
+        caseSensitive?: boolean;
+        /**
+         * Whether the query must match on word boundaries only
+         */
+        wholeWord?: boolean;
+        /**
+         * Whether the query is a regular expression rather than a literal string
+         */
+        regex?: boolean;
+        /**
+         * Restricts matches to a top-level section of the flow YAML
+         */
+        scope?: SourceSearchScope;
     };
     url: '/api/v1/{tenant}/flows/source';
 };
@@ -6035,10 +6333,73 @@ export type SearchFlowsBySourceCodeResponses = {
     /**
      * searchFlowsBySourceCode 200 response
      */
-    200: PagedResultsSearchResultFlow;
+    200: PagedResultsSourceSearchResult;
 };
 
 export type SearchFlowsBySourceCodeResponse = SearchFlowsBySourceCodeResponses[keyof SearchFlowsBySourceCodeResponses];
+
+export type ApplyReplaceBySourceCodeData = {
+    /**
+     * The search query, replacement and target flows
+     */
+    body: SourceSearchReplaceApplyRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/apply';
+};
+
+export type ApplyReplaceBySourceCodeResponses = {
+    /**
+     * applyReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ApplyReplaceBySourceCodeResponse = ApplyReplaceBySourceCodeResponses[keyof ApplyReplaceBySourceCodeResponses];
+
+export type ReplaceLineBySourceCodeData = {
+    /**
+     * The search query, replacement and target match line
+     */
+    body: SourceSearchReplaceLineRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/line';
+};
+
+export type ReplaceLineBySourceCodeResponses = {
+    /**
+     * replaceLineBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ReplaceLineBySourceCodeResponse = ReplaceLineBySourceCodeResponses[keyof ReplaceLineBySourceCodeResponses];
+
+export type PreviewReplaceBySourceCodeData = {
+    /**
+     * The search query and replacement
+     */
+    body: SourceSearchReplacePreviewRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/preview';
+};
+
+export type PreviewReplaceBySourceCodeResponses = {
+    /**
+     * previewReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplacePreviewResponse;
+};
+
+export type PreviewReplaceBySourceCodeResponse = PreviewReplaceBySourceCodeResponses[keyof PreviewReplaceBySourceCodeResponses];
 
 export type ValidateFlowsData = {
     /**
@@ -6073,9 +6434,9 @@ export type ValidateTaskData = {
     };
     query: {
         /**
-         * The type of task
+         * The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)
          */
-        section: FlowControllerTaskValidationType;
+        section: string;
     };
     url: '/api/v1/{tenant}/flows/validate/task';
 };
@@ -6666,7 +7027,7 @@ export type ListMcpsData = {
          */
         sort?: Array<string> | null;
     };
-    url: '/api/v1/{tenant}/mcp/servers';
+    url: '/api/v1/{tenant}/mcp-servers';
 };
 
 export type ListMcpsResponses = {
@@ -6687,7 +7048,7 @@ export type CreateMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers';
+    url: '/api/v1/{tenant}/mcp-servers';
 };
 
 export type CreateMcpResponses = {
@@ -6709,7 +7070,7 @@ export type DeleteMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
 
 export type DeleteMcpResponses = {
@@ -6729,7 +7090,7 @@ export type GetMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
 
 export type GetMcpResponses = {
@@ -6754,7 +7115,7 @@ export type UpdateMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}';
+    url: '/api/v1/{tenant}/mcp-servers/{id}';
 };
 
 export type UpdateMcpResponses = {
@@ -6776,7 +7137,7 @@ export type ToggleMcpData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}/toggle';
+    url: '/api/v1/{tenant}/mcp-servers/{id}/toggle';
 };
 
 export type ToggleMcpResponses = {
@@ -6798,7 +7159,7 @@ export type ListToolsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/mcp/servers/{id}/tools';
+    url: '/api/v1/{tenant}/mcp-servers/{id}/tools';
 };
 
 export type ListToolsResponses = {
@@ -7614,6 +7975,30 @@ export type SetKeyValueResponses = {
     200: unknown;
 };
 
+export type GetExecutionOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/outputs/executions/{executionId}';
+};
+
+export type GetExecutionOutputsResponses = {
+    /**
+     * The execution outputs as a map of output names to their values
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
+
 export type GetTaskOutputsInformationData = {
     body?: never;
     path: {
@@ -7624,7 +8009,7 @@ export type GetTaskOutputsInformationData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}';
 };
 
 export type GetTaskOutputsInformationResponses = {
@@ -7650,7 +8035,7 @@ export type GetTaskRunOutputsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}/{taskRunId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}';
 };
 
 export type GetTaskRunOutputsResponses = {

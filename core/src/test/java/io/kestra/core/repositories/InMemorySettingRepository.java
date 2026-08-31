@@ -6,13 +6,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.models.Setting;
-import io.kestra.jdbc.JdbcMapper;
+import io.kestra.core.serializers.JacksonMapper;
 
 import jakarta.validation.ConstraintViolationException;
 
 public class InMemorySettingRepository implements SettingRepositoryInterface {
     private final Map<String, String> settings = new HashMap<>();
-    private static final ObjectMapper MAPPER = JdbcMapper.of();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Override
     public Optional<Setting> findByKey(String key) {

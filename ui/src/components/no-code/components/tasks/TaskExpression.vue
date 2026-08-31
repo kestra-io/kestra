@@ -6,14 +6,15 @@
         :options="{fullHeight: false, largeSuggestions: false}"
         :inline="true"
         lang="yaml"
-        :placeholder="`Your ${root || 'value'} here...`"
+        :placeholder="$t('no_code.expression_placeholder', {field: root || 'value'})"
         @update:model-value="editorInput"
     />
 </template>
+
 <script setup lang="ts">
     import {collapseEmptyValues} from "./MixinTask"
     import {KsEditor} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
     import {computed, ref} from "vue"
 
@@ -60,4 +61,3 @@
         return YAML_UTILS.parse(value)
     }
 </script>
-

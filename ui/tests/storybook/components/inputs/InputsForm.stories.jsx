@@ -64,11 +64,12 @@ export const InputTypes = {
         const can = within(canvasElement);
         const popups = within(window.document);
 
+        // KsEditor is an async component: the form paints once Monaco's chunk has loaded.
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
             const editor = can.getByTestId("input-form-email").querySelector(".ks-monaco-editor");
             expect(editor).toBeTruthy();
             return editor;
-        }, {timeout: 5000, interval: 100});
+        }, {timeout: 15000, interval: 100});
         // wait for the setup to finish
         await waitFor(() => expect(typeof MonacoEditor.__setValueInTests).toBe("function"));
         MonacoEditor.__setValueInTests("foo@example.com");
@@ -76,7 +77,7 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent).to.include("foo@example.com");
         });
 
-        const input = await waitFor(() => can.getByLabelText("Single select input"), {timeout: 4000, interval: 500});
+        const input = await waitFor(() => within(can.getByTestId("input-form-resource_type")).getByRole("combobox"), {timeout: 4000, interval: 500});
 
         await userEvent.click(input);
         await userEvent.click(popups.getByText("Second value"));
@@ -85,7 +86,7 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent).to.include("Second value");
         });
 
-        await userEvent.click(can.getByLabelText("Multi select input"));
+        await userEvent.click(within(can.getByTestId("input-form-resource_type_multi")).getByRole("combobox"));
         await userEvent.click(popups.getByText("Fifth value"));
         await userEvent.click(popups.getByText("Seventh value"));
 
@@ -191,7 +192,8 @@ export const Wizard = {
         const can = within(canvasElement);
 
         // Step 1 (plain "name"): Next visible, Back hidden, not on recap yet.
-        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy());
+        // The form waits on the async KsEditor, so give the first paint room.
+        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy(), {timeout: 15000});
         expect(can.queryByTestId("wizard-back")).toBeNull();
         expect(can.queryByTestId("inputs-wizard-recap")).toBeNull();
         expect(can.getByTestId("on-recap")).toHaveTextContent("false");
@@ -291,8 +293,9 @@ export const AppsWizard = {
     async play({canvasElement}) {
         const can = within(canvasElement);
 
-        // Step 1 (plain "name") renders from the seeded skeleton before any validate resolves.
-        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy());
+        // Step 1 (plain "name") renders from the seeded skeleton before any validate resolves,
+        // but still behind the async KsEditor's first paint.
+        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy(), {timeout: 15000});
         // Drain the initial mount validate so metadata is populated and its signature recorded.
         await waitFor(() => expect(window.__appsWizardPending()).toBeGreaterThan(0));
         window.__appsWizardFlush();
@@ -454,6 +457,115 @@ export const PrefillFromExecution = {
                 api_key: {value: "abc123cipher", type: "io.kestra.datatype:aes_encrypted"}
             }}
         />;
+    }
+};
+
+// Clearing harness: answers the validate round-trip the way FlowInputOutput does, resolving `defaults`
+// ONLY when the form submitted no value and echoing a submitted one back with `isDefault: false`.
+// Clearing a field submits nothing at all (normalizeInputValues drops empty strings), which is what
+// made the round-trip report the input as un-set and write the default back over the user's edit.
+// Takes the emit("validation") branch so the FormData arrives here directly, no HTTP in the middle.
+const ClearedDefaultSut = defineComponent((props) => {
+    const values = ref({})
+    const roundTrips = ref(0)
+
+    function onValidation(event) {
+        roundTrips.value++
+        const submitted = event.formData?.get(props.inputId) ?? null
+        event.callback({
+            checks: [],
+            inputs: [{
+                enabled: true,
+                isDefault: submitted === null,
+                value: submitted ?? props.defaults,
+                errors: [],
+                input: {id: props.inputId, type: "STRING", required: false, defaults: props.defaults},
+            }],
+        })
+    }
+
+    return () => (<>
+        <KsForm label-position="top" model={values.value}>
+            <InputsForm initialInputs={[{
+                id: props.inputId,
+                type: "STRING",
+                required: false,
+                defaults: props.defaults,
+                displayName: "My string",
+            }]}
+                        modelValue={values.value}
+                        onValidation={onValidation}
+                        onUpdate:modelValue={(value) => values.value = value}
+            />
+        </KsForm>
+        <pre data-testid="test-content">{JSON.stringify(values.value, null, 2)}</pre>
+        <pre data-testid="round-trips">{String(roundTrips.value)}</pre>
+    </>);
+}, {
+    props: {
+        "inputId": {type: String, required: true},
+        "defaults": {type: String, required: true},
+    }
+});
+
+/**
+ * Clearing an input must leave it cleared: the validate round-trip answers `isDefault: true` for a
+ * field that submitted nothing, and the resolved default used to land back in it.
+ * https://github.com/kestra-io/kestra/issues/17897
+ *
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
+ */
+export const ClearedDefault = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+
+        // KsEditor is async: the form paints once Monaco's chunk has loaded.
+        const editor = await waitFor(function MonacoEditorReady() {
+            const found = can.getByTestId("input-form-mystring").querySelector(".ks-monaco-editor");
+            expect(found).toBeTruthy();
+            return found;
+        }, {timeout: 15000, interval: 100});
+        await waitFor(() => expect(typeof editor.__setValueInTests).toBe("function"));
+
+        const roundTrips = () => Number(can.getByTestId("round-trips").textContent);
+
+        // The default is prefilled, and the mount's validate has landed.
+        await waitFor(function testDefaultPrefilled() {
+            expect(can.getByTestId("test-content").textContent).to.include("hello");
+            expect(roundTrips()).toBeGreaterThan(0);
+        });
+
+        // Typing first is what puts a value on the wire, so that emptying the field is a payload
+        // change the round-trip acts on rather than a no-op its signature check dedupes away. Each
+        // step then has to reach the server before the next one: validation is debounced by 500ms, so
+        // typing and clearing back to back coalesces into a single validate of the empty payload,
+        // whose signature matches the mount's and is skipped entirely.
+        const beforeTyping = roundTrips();
+        editor.__setValueInTests("world");
+        await waitFor(function testTypedValueValidated() {
+            expect(can.getByTestId("test-content").textContent).to.include("world");
+            expect(roundTrips()).toBeGreaterThan(beforeTyping);
+        }, {timeout: 5000, interval: 50});
+
+        const beforeClear = roundTrips();
+        editor.__setValueInTests("");
+
+        // The clear has to actually reach the round-trip for this to prove anything — an empty field
+        // submits nothing, so without a validate landing there is no default to write back.
+        await waitFor(function testClearWasValidated() {
+            expect(roundTrips()).toBeGreaterThan(beforeClear);
+        }, {timeout: 5000, interval: 50});
+
+        // The refill happened a tick after the response (metadataCallback awaits nextTick before
+        // updateDefaults), so settle past it rather than asserting on a value that is empty only
+        // because the default has not been written yet.
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        expect(can.getByTestId("test-content").textContent).to.include("\"mystring\": \"\"");
+        expect(can.getByTestId("test-content").textContent).not.to.include("hello");
+    },
+    render() {
+        return <ClearedDefaultSut inputId="mystring" defaults="hello" />;
     }
 };
 

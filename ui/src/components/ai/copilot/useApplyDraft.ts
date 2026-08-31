@@ -1,11 +1,13 @@
-import {ref} from "vue"
+import {computed, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox} from "@kestra-io/design-system"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
+import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
 import type {ArtefactDraftEvent} from "./types"
 
@@ -14,8 +16,9 @@ import type {ArtefactDraftEvent} from "./types"
  *   - `openInEditor` — hand the drafted YAML to the matching creation editor to review + save there.
  *   - `apply` — create (or update) the artefact directly, behind a confirm.
  *
- * Handles flow and dashboard drafts (both OSS features today). Apps are EE-only — they have no OSS
- * editor/API, and app drafts only ever occur in EE, so that path is added in `ui-ee`.
+ * Handles flow and dashboard drafts. Custom dashboards are EE-only: in OSS `dashboards/create`
+ * resolves to the Enterprise demo page and the CRUD API is locked, so dashboard drafts only ever
+ * occur in EE. Apps are EE-only too; they have no OSS editor/API, so that path is added in `ui-ee`.
  */
 export function useApplyDraft() {
     const route = useRoute()
@@ -28,6 +31,12 @@ export function useApplyDraft() {
     // App drafts are EE-only; OSS reports them unsupported (no-op). EE shadows this via `override/`.
     const appActions = useAppDraftActions()
     const appSupported = appActions.supported
+
+    // Dashboard drafts are only actionable when the backend can serve custom dashboards
+    // (`GET /configs` capability flag, false once custom dashboards are locked in OSS).
+    // The store is resolved lazily inside the computed for the same reason as the flow
+    // store below: merely rendering a draft card must not require Pinia to be set up.
+    const dashboardSupported = computed(() => useMiscStore().configs?.isCustomDashboardsEnabled !== false)
 
     const tenantParam = (): Record<string, string | string[]> => (route.params.tenant ? {tenant: route.params.tenant} : {})
 
@@ -157,8 +166,8 @@ export function useApplyDraft() {
     }
 
     async function alertError(e: unknown, fallback: string, title: string): Promise<void> {
-        const err = e as {response?: {data?: {message?: string}}; message?: string}
-        await KsMessageBox.alert(err?.response?.data?.message ?? err?.message ?? fallback, title, {type: "error"})
+        const message = asProblem(e)?.detail ?? (e instanceof Error ? e.message : undefined) ?? fallback
+        await KsMessageBox.alert(message, title, {type: "error"})
     }
 
     /** Parse an artefact's namespace + id out of its YAML; empty strings when they can't be read. */
@@ -171,19 +180,10 @@ export function useApplyDraft() {
         }
     }
 
-    /**
-     * A create failed because the artefact already exists (→ update instead). The SDK throws the
-     * parsed error body with a `.response = {status, data}` attached; the "already exists" text can
-     * sit at `data.message` or nested in the validation errors (`_embedded.errors[].message`), so
-     * match against the whole serialized body rather than a single field.
-     */
+    /** A create failed because the artefact already exists, so update it instead. */
     function isAlreadyExists(e: unknown): boolean {
-        const err = e as {status?: number; response?: {status?: number; data?: unknown}}
-        const status = err?.response?.status ?? err?.status
-        if (status !== 422) return false
-        const body = err?.response?.data ?? err
-        return /already exists/i.test(typeof body === "string" ? body : JSON.stringify(body ?? ""))
+        return isProblemType(e, ProblemTypes.ENTITY_ALREADY_EXISTS)
     }
 
-    return {applying, appSupported, openInEditor, apply}
+    return {applying, appSupported, dashboardSupported, openInEditor, apply}
 }

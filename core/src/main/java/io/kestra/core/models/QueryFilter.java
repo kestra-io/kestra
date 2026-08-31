@@ -110,7 +110,12 @@ public record QueryFilter(
         IS_NULL,
         IS_NOT_NULL,
         REGEX,
-        PREFIX
+        PREFIX;
+
+        @JsonCreator
+        public static Op fromString(String value) {
+            return Enums.getForNameIgnoreCase(value, Op.class);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -496,8 +501,8 @@ public record QueryFilter(
                 return List.of();
             }
         },
-        @JsonProperty("super_admin")
-        SUPER_ADMIN("super_admin") {
+        @JsonProperty("instance_owner")
+        INSTANCE_OWNER("instance_owner") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
@@ -622,7 +627,7 @@ public record QueryFilter(
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.SUPER_ADMIN);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME, Field.TYPE, Field.INSTANCE_OWNER);
             }
         },
         ROLE {
@@ -634,7 +639,7 @@ public record QueryFilter(
         INVITATION {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT, Field.SUPER_ADMIN);
+                return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT, Field.INSTANCE_OWNER);
             }
 
             @Override
@@ -763,6 +768,15 @@ public record QueryFilter(
                     Field.ID,
                     Field.NAMESPACE,
                     Field.TYPE
+                );
+            }
+        },
+        PROMOTION_TARGETS {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.ID
                 );
             }
         },
@@ -912,14 +926,16 @@ public record QueryFilter(
                 )
             );
         }
-        if (
-            filter.operation() == Op.REGEX
-                && filter.value() instanceof String pattern
-                && !RegexUtils.isSafeUserRegex(pattern)
-        ) {
-            errors.add(
-                "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
-            );
+        if (filter.operation() == Op.REGEX && filter.value() instanceof String pattern) {
+            if (!RegexUtils.isSafeUserRegex(pattern)) {
+                errors.add(
+                    "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
+                );
+            } else {
+                RegexUtils.syntaxError(pattern).ifPresent(error -> errors.add(
+                    "REGEX pattern '%s' for field %s is not a valid regular expression: %s".formatted(pattern, filter.field().name(), error)
+                ));
+            }
         }
     }
 

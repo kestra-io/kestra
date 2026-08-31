@@ -41,6 +41,13 @@ class ParallelTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/parallel-invalid-concurrent.yaml")
+    void parallelWithNegativeConcurrentShouldFailExecution(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/finally-parallel.yaml" })
     void errors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
@@ -79,5 +86,74 @@ class ParallelTest {
     void parallelDisabledTasks(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(7);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-cancelled.yaml" })
+    void parallelFailFastCancelled() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            "io.kestra.tests", "parallel-fail-fast-cancelled", null, null, Duration.ofSeconds(20),
+            this::allTaskRunsTerminated
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("fails_fast").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // the sibling must be cancelled quickly instead of running its full PT10S duration
+        assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-failed.yaml" })
+    void parallelFailFastFailed() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            "io.kestra.tests", "parallel-fail-fast-failed", null, null, Duration.ofSeconds(20),
+            this::allTaskRunsTerminated
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-errors.yaml" })
+    void parallelFailFastErrors() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            "io.kestra.tests", "parallel-fail-fast-errors", null, null, Duration.ofSeconds(20),
+            this::allTaskRunsTerminated
+        );
+
+        // fail-fast cancellation must not turn into an execution-level KILL: errors/finally still run
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("f1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-nested.yaml" })
+    void parallelFailFastNested() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            "io.kestra.tests", "parallel-fail-fast-nested", null, null, Duration.ofSeconds(20),
+            this::allTaskRunsTerminated
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("sequence").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        // sleep2 must never start: the nested Sequential must not proceed to its next task once
+        // its own task run is KILLING, even though sleep1 (if it started at all) ends CANCELLED,
+        // not FAILED
+        assertThat(execution.findTaskRunsByTaskId("sleep2")).isEmpty();
+    }
+
+    private boolean allTaskRunsTerminated(Execution execution) {
+        return execution.getState().isTerminated()
+            && execution.getTaskRunList() != null
+            && execution.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated());
     }
 }

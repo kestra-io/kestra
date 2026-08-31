@@ -17,9 +17,25 @@
 // dependency (no axios, no @hey-api/*).
 
 import {EnterpriseFeatureError, type EnterpriseFeatureConfig} from "./errors"
+import {KestraProblemError, isProblemDetail, type ProblemDetail} from "./problem"
 
 export {EnterpriseFeatureError} from "./errors"
 export type {EnterpriseFeatureConfig, EnterpriseFeatureMatch} from "./errors"
+
+// Re-exported from the runtime entry (not the package root, which also pulls in the codegen-time
+// config/patch modules) so each SDK can surface problem handling without bundling the generator.
+export {
+    PROBLEM_TYPE_BASE,
+    KestraProblemError,
+    isProblemDetail,
+    parseProblem,
+    asProblem,
+    problemSlug,
+    isProblemType,
+} from "./problem"
+export type {ProblemDetail, ProblemFieldError} from "./problem"
+export {ProblemTypes} from "./problem-types"
+export type {ProblemType} from "./problem-types"
 
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
 interface FetchInterceptor {
@@ -51,21 +67,13 @@ interface FormDataBodySerializer {
     bodySerializer: (...args: any[]) => any;
 }
 
-function canBeJsonified(str: any): boolean {
-    if (typeof str !== "string" && typeof str !== "object") return false
-    try {
-        const type = str.toString()
-        return type === "[object Object]" || type === "[object Array]"
-    } catch {
-        return false
-    }
-}
-
 function serializeQueryValue(val: unknown): string | undefined {
-    if (canBeJsonified(val)) {
+    if (val == null) return undefined
+    const serialized = val.toString()
+    if (serialized === "[object Object]" || serialized === "[object Array]") {
         return JSON.stringify(val)
     }
-    return val?.toString()
+    return serialized
 }
 
 /**
@@ -104,45 +112,148 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             },
             querySerializer(query: Record<string, any>) {
                 const queryParameters = new URLSearchParams()
+
+                const isObjectRecord = (input: object): boolean => {
+                    const prototype = Object.getPrototypeOf(input)
+                    return prototype === null || prototype === Object.prototype || !Object.getOwnPropertyDescriptor(prototype, "constructor")
+                }
+
+                const snapshotQueryValue = (
+                    input: any,
+                    seen = new WeakMap<object, any>(),
+                    active = new WeakSet<object>(),
+                    snapshotCustomObject = false,
+                ): any => {
+                    if (input == null || typeof input !== "object") return input
+
+                    const prototype = Object.getPrototypeOf(input)
+                    if (!snapshotCustomObject && !Array.isArray(input) && !isObjectRecord(input)) return input
+                    if (active.has(input)) throw new TypeError("Invalid QueryFilter array")
+
+                    const existing = seen.get(input)
+                    if (existing) return existing
+
+                    active.add(input)
+                    try {
+                        if (Array.isArray(input)) {
+                            const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length")
+                            const length = lengthDescriptor && "value" in lengthDescriptor ? lengthDescriptor.value : undefined
+                            if (!Number.isSafeInteger(length) || length < 0) throw new TypeError("Invalid QueryFilter array")
+
+                            const snapshot = new Array(length)
+                            seen.set(input, snapshot)
+                            for (let index = 0; index < length; index++) {
+                                const descriptor = Object.getOwnPropertyDescriptor(input, String(index))
+                                if (!descriptor || !("value" in descriptor) || !descriptor.enumerable) throw new TypeError("Invalid QueryFilter array")
+                                snapshot[index] = snapshotQueryValue(descriptor.value, seen, active, snapshotCustomObject)
+                            }
+                            return snapshot
+                        }
+
+                        const snapshot = Object.create(snapshotCustomObject ? null : prototype)
+                        seen.set(input, snapshot)
+                        for (const key of Object.keys(input)) {
+                            const descriptor = Object.getOwnPropertyDescriptor(input, key)
+                            if (!descriptor || !("value" in descriptor)) throw new TypeError("Invalid QueryFilter array")
+                            Object.defineProperty(snapshot, key, {
+                                value: snapshotQueryValue(
+                                    descriptor.value,
+                                    seen,
+                                    active,
+                                    snapshotCustomObject && key === "children",
+                                ),
+                                enumerable: true,
+                                configurable: true,
+                                writable: true,
+                            })
+                        }
+                        return snapshot
+                    } finally {
+                        active.delete(input)
+                    }
+                }
+
+                const serializeQueryFilterArray = (filters: any[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
+                    if (filters.length === 0) return undefined
+                    const parameters: Array<[string, string]> = []
+                    for (let index = 0; index < filters.length; index++) {
+                        if (!(index in filters)) return undefined
+                        const serialized = serializeQueryFilter(filters[index], indexed ? `${prefix}[${index}]` : prefix)
+                        if (!serialized) return undefined
+                        parameters.push(...serialized)
+                    }
+                    return parameters
+                }
+
+                const serializeQueryFilter = (filter: any, prefix: string): Array<[string, string]> | undefined => {
+                    if (filter == null || typeof filter !== "object") return undefined
+
+                    const {field, operation, value, logical, children} = filter
+                    if (logical === "and" || logical === "or") {
+                        if (field !== undefined || operation !== undefined || value !== undefined || !Array.isArray(children)) return undefined
+                        return serializeQueryFilterArray(children, `${prefix}[${logical}]`, true)
+                    }
+
+                    if (typeof field !== "string" || typeof operation !== "string" || logical !== undefined || children !== undefined) return undefined
+                    if (Array.isArray(value)) {
+                        if (value.length === 0) return undefined
+                        const serializedValues: string[] = []
+                        for (let index = 0; index < value.length; index++) {
+                            if (!(index in value)) return undefined
+                            const serialized = serializeQueryValue(value[index])
+                            if (serialized === undefined || serialized === "") return undefined
+                            serializedValues.push(serialized)
+                        }
+                        return [[`${prefix}[${field}][${operation}]`, serializedValues.join(",")]]
+                    }
+                    if (typeof value === "object" && value != null && !Array.isArray(value) && isObjectRecord(value)) {
+                        const entries = Object.entries(value)
+                        if (entries.length === 0) return undefined
+                        const parameters: Array<[string, string]> = []
+                        for (const [key, entryValue] of entries) {
+                            const serialized = serializeQueryValue(entryValue)
+                            if (serialized === undefined) return undefined
+                            parameters.push([`${prefix}[${field}][${operation}][${key}]`, serialized])
+                        }
+                        return parameters
+                    }
+
+                    const serialized = serializeQueryValue(value)
+                    const isValueOptional = operation === "IS_NULL" || operation === "IS_NOT_NULL"
+                    if (serialized === undefined && !isValueOptional) return undefined
+                    return [[`${prefix}[${field}][${operation}]`, serialized ?? ""]]
+                }
+
                 for (const key in query) {
                     const param = query[key]
                     if (param === undefined) {
                         continue
                     }
-                    const looksLikeQueryFilterArray =
-                        Array.isArray(param) &&
-                        param.length > 0 &&
-                        typeof param[0] === "object" &&
-                        param[0] != null &&
-                        "field" in param[0] &&
-                        "operation" in param[0] &&
-                        "value" in param[0]
-
-                    if (looksLikeQueryFilterArray) {
-                        for (const qf of param) {
-                            const keyField = String(qf.field)
-                            const op = String(qf.operation)
-
-                            if (
-                                typeof qf.value === "object" &&
-                                qf.value != null &&
-                                !Array.isArray(qf.value)
-                            ) {
-                                for (const [k, v] of Object.entries(qf.value)) {
-                                    const ser = serializeQueryValue(v)
-                                    if (ser !== undefined) {
-                                        queryParameters.append(`filters[${keyField}][${op}][${k}]`, ser)
-                                    }
-                                }
-                            } else {
-                                const ser = serializeQueryValue(qf.value)
-                                if (ser !== undefined) {
-                                    queryParameters.append(`filters[${keyField}][${op}]`, ser)
-                                }
-                            }
+                    if (key === "filters" && param !== null && !Array.isArray(param)) {
+                        throw new TypeError("Invalid QueryFilter array")
+                    }
+                    let serializedFilters: Array<[string, string]> | undefined
+                    let fallbackParam = param
+                    if (key === "filters" && Array.isArray(param)) {
+                        fallbackParam = snapshotQueryValue(param, new WeakMap(), new WeakSet(), true)
+                        try {
+                            structuredClone(param)
+                        } catch {
+                            throw new TypeError("Invalid QueryFilter array")
                         }
-                    } else if (param instanceof Array) {
-                        param.forEach((value: any) => {
+                        try {
+                            serializedFilters = serializeQueryFilterArray(fallbackParam)
+                        } catch {
+                            serializedFilters = undefined
+                        }
+                    }
+
+                    if (serializedFilters) {
+                        for (const [filterKey, filterValue] of serializedFilters) queryParameters.append(filterKey, filterValue)
+                    } else if (key === "filters" && Array.isArray(param) && fallbackParam.length > 0) {
+                        throw new TypeError("Invalid QueryFilter array")
+                    } else if (fallbackParam instanceof Array) {
+                        fallbackParam.forEach((value: any) => {
                             const ser = serializeQueryValue(value)
                             if (ser !== undefined) {
                                 queryParameters.append(key, ser)
@@ -179,14 +290,19 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             }
 
             if (!headers.has("accept")) {
+                // Every list below must include application/problem+json: errors are served as that type, and
+                // Kestra content-negotiation returns 403 when Accept excludes the produced type — so omitting
+                // it turns any error on these endpoints into a confusing 403.
                 if (opts.parseAs === "blob") {
-                    headers.set("accept", "application/octet-stream")
+                    headers.set("accept", "application/octet-stream, application/problem+json")
                     modified = true
                 } else if (opts.parseAs === "text") {
                     // Include application/octet-stream: some endpoints (e.g. exportPluginDefaults)
                     // advertise octet-stream in the OpenAPI spec but actually return text.
-                    // Kestra content-negotiation returns 403 when Accept excludes the produced type.
-                    headers.set("accept", "text/csv, text/plain, text/json, application/json, application/octet-stream")
+                    headers.set(
+                        "accept",
+                        "text/csv, text/plain, text/json, application/json, application/octet-stream, application/problem+json",
+                    )
                     modified = true
                 }
             }
@@ -222,6 +338,15 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                 }
             }
 
+            // RFC 9457 problem document — the shape every Kestra error response uses. Content type is the
+            // primary signal; the structural check covers a proxy that rewrote it, and test fixtures.
+            const contentType = response.headers.get("content-type")
+            if (contentType?.includes("application/problem+json") || isProblemDetail(error)) {
+                return new KestraProblemError(error as ProblemDetail & Record<string, unknown>, status)
+            }
+
+            // Anything else: a body from outside the API surface — Micronaut's own non-API responses, the
+            // Apps runtime error layout, plain text. Flatten it onto an Error as before.
             const asObject = error !== null && typeof error === "object" ? error as Record<string, unknown> : undefined
             const rawMessage =
                 (error instanceof Error && error.message) ||

@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
 import org.apache.commons.io.FileUtils;
 
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.serializers.JacksonMapper;
@@ -292,12 +292,22 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException {
+        Path sourcePath = getLocalPath(tenantId, from);
+        Path destinationPath = getLocalPath(tenantId, to);
+
         try {
-            Files.move(
-                getLocalPath(tenantId, from),
-                getLocalPath(tenantId, to),
-                StandardCopyOption.ATOMIC_MOVE
-            );
+            // The destination parent directory may not exist yet (e.g. moving kestra:///input.csv to
+            // kestra:///archive/2026/08/input.csv): without creating it first, Files.move throws
+            // NoSuchFileException which would be misreported as a missing source file (see issue #18435).
+            Files.createDirectories(destinationPath.getParent());
+            Files.move(sourcePath, destinationPath, StandardCopyOption.ATOMIC_MOVE);
+
+            // The companion .metadata file (written by putFile) must follow the object, otherwise the
+            // metadata is silently lost after the move and the source .metadata file is left orphaned.
+            Path sourceMetadataPath = Path.of(sourcePath + ".metadata");
+            if (Files.exists(sourceMetadataPath)) {
+                Files.move(sourceMetadataPath, Path.of(destinationPath + ".metadata"), StandardCopyOption.ATOMIC_MOVE);
+            }
         } catch (NoSuchFileException e) {
             throw newFileNotFound(from, e);
         }
@@ -322,7 +332,13 @@ public class LocalStorage implements StorageInterface {
             return true;
         }
 
-        return Files.deleteIfExists(path);
+        boolean deleted = Files.deleteIfExists(path);
+        if (deleted) {
+            // Remove the companion .metadata file as well, otherwise orphaned .metadata files
+            // accumulate on disk over time (see issue #18435).
+            Files.deleteIfExists(Path.of(path + ".metadata"));
+        }
+        return deleted;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

@@ -5,17 +5,24 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.storage.StorageTestSuite;
+import io.kestra.core.storages.StorageObject;
 import io.kestra.core.utils.IdUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LocalStorageTest extends StorageTestSuite {
@@ -91,5 +98,61 @@ class LocalStorageTest extends StorageTestSuite {
             )
         );
         assertTrue(exception.getMessage().contains("blocking"));
+    }
+
+    // Issue #18435: moving to a destination whose parent directory does not exist yet used to throw
+    // NoSuchFileException, which was then misreported as a missing source file. The destination
+    // parent directory must be created before the move.
+    @Test
+    void shouldMoveToDestinationWithUncreatedParentDirectory() throws URISyntaxException, IOException {
+        String tenantId = IdUtils.create();
+        storageInterface.put(tenantId, null, new URI("/input.csv"), new ByteArrayInputStream("data".getBytes()));
+
+        storageInterface.move(tenantId, null, new URI("/input.csv"), new URI("/archive/2026/08/input.csv"));
+
+        assertTrue(storageInterface.exists(tenantId, null, new URI("/archive/2026/08/input.csv")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/input.csv")));
+    }
+
+    // Issue #18435: moving an object used to leave its companion .metadata file behind, silently
+    // losing the metadata. The .metadata file must follow the object.
+    @Test
+    void shouldMoveObjectWithCompanionMetadata() throws URISyntaxException, IOException {
+        String tenantId = IdUtils.create();
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/source.csv"),
+            new StorageObject(Map.of("someMetadata", "someValue"), new ByteArrayInputStream("data".getBytes()))
+        );
+
+        storageInterface.move(tenantId, null, new URI("/source.csv"), new URI("/dest.csv"));
+
+        StorageObject moved = storageInterface.getWithMetadata(tenantId, null, new URI("/dest.csv"));
+        assertThat(moved.metadata(), notNullValue());
+        assertThat(moved.metadata(), hasEntry("someMetadata", "someValue"));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/source.csv")));
+    }
+
+    // Issue #18435: deleting an object used to leave an orphaned .metadata file on disk.
+    @Test
+    void shouldDeleteObjectWithCompanionMetadata() throws URISyntaxException, IOException {
+        String tenantId = IdUtils.create();
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/file.txt"),
+            new StorageObject(Map.of("someMetadata", "someValue"), new ByteArrayInputStream("data".getBytes()))
+        );
+
+        assertTrue(storageInterface.delete(tenantId, null, new URI("/file.txt")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/file.txt")));
+
+        // list() filters .metadata files out, so check the file system directly for the orphan.
+        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
+        Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
+            .resolve(tenantId)
+            .resolve("file.txt.metadata");
+        assertFalse(Files.exists(orphanMetadataPath));
     }
 }

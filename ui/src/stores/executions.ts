@@ -514,16 +514,12 @@ export const useExecutionsStore = defineStore("executions", () => {
                     ? {
                         variant: "error",
                         title: translate("error"),
-                        content: {
-                            message: translate("errors.404.flow or execution"),
-                        },
+                        content: translate("errors.404.flow or execution"),
                     }
                     : {
                         variant: "error",
                         title: translate("something_went_wrong.connection_lost.title"),
-                        content: {
-                            message: translate("something_went_wrong.connection_lost.message"),
-                        },
+                        content: translate("something_went_wrong.connection_lost.message"),
                     }
             },
             onEnd: () => {

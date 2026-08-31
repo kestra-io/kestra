@@ -33,6 +33,7 @@ import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -46,6 +47,10 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemType;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
@@ -53,7 +58,6 @@ import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
@@ -87,7 +91,6 @@ import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
 import io.kestra.webserver.models.api.ApiLightExecution;
-import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
@@ -497,7 +500,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete a list of executions")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<?> deleteExecutionsByIds(
         @RequestBody(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
@@ -505,7 +508,7 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
@@ -513,25 +516,12 @@ public class ExecutionController {
                 executions.add(execution.get());
             } else {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             }
         }
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest()
-                .body(
-                    BulkErrorResponse
-                        .builder()
-                        .message("invalid bulk delete")
-                        .invalids(invalids)
-                        .build()
-                );
+            throw new BulkValidationException("One or more executions could not be deleted.", invalids);
         }
 
         executions
@@ -544,7 +534,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete executions filter by query parameters")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1376,49 +1366,31 @@ public class ExecutionController {
     @Post(uri = "/restart/by-ids")
     @Operation(tags = { "Executions" }, summary = "Restart a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
-                            "current state is '" + execution.get().getState().getCurrent() + "' !",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
+                            "current state is '" + execution.get().getState().getCurrent() + "' !", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk restart")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be restarted.", invalids);
         }
 
         this.restartCounter.increment(executions.size());
@@ -1441,7 +1413,7 @@ public class ExecutionController {
     @Post(uri = "/restart/by-query")
     @Operation(tags = { "Executions" }, summary = "Restart executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1676,7 +1648,7 @@ public class ExecutionController {
     @Post(uri = "/change-status/by-ids")
     @Operation(tags = { "Executions" }, summary = "Change executions state by id asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
@@ -1685,29 +1657,17 @@ public class ExecutionController {
         }
 
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in a terminated state or is killed",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in a terminated state or is killed", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -1715,13 +1675,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk change executions state")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not have their state changed.", invalids);
         }
 
         this.changeStatusCounter.increment(executions.size());
@@ -1736,7 +1690,7 @@ public class ExecutionController {
     @Post(uri = "/change-status/by-query")
     @Operation(tags = { "Executions" }, summary = "Change executions state by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1799,43 +1753,25 @@ public class ExecutionController {
     @Delete(uri = "/kill/by-ids")
     @Operation(tags = { "Executions" }, summary = "Kill a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws QueueException {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && execution.get().getState().isTerminated()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution already finished",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution already finished", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else if (!validateExecutionACL(execution.get())) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "user don't have the authorisation to kill this execution",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "user don't have the authorisation to kill this execution", ProblemTypes.FORBIDDEN)
                 );
             } else {
                 executions.add(execution.get());
@@ -1843,13 +1779,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk kill")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be killed.", invalids);
         }
 
         this.killCounter.increment(executions.size());
@@ -1957,43 +1887,25 @@ public class ExecutionController {
     @Post(uri = "/resume/by-ids")
     @Operation(tags = { "Executions" }, summary = "Resume a list of paused executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().isPaused()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in state PAUSED",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in state PAUSED", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else if (!validateExecutionACL(execution.get())) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "user don't have the authorisation to resume this execution",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
                 );
             } else {
                 executions.add(execution.get());
@@ -2001,13 +1913,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk resume")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be resumed.", invalids);
         }
 
         this.resumeCounter.increment(executions.size());
@@ -2022,7 +1928,7 @@ public class ExecutionController {
     @Post(uri = "/resume/by-query")
     @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2057,33 +1963,21 @@ public class ExecutionController {
     @Post(uri = "/pause/by-ids")
     @Operation(tags = { "Executions" }, summary = "Pause a list of running executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().isRunning()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in state RUNNING",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in state RUNNING", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -2091,13 +1985,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk pause")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be paused.", invalids);
         }
 
         this.pauseCounter.increment(executions.size());
@@ -2112,7 +2000,7 @@ public class ExecutionController {
     @Post(uri = "/pause/by-query")
     @Operation(tags = { "Executions" }, summary = "Pause executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2127,7 +2015,7 @@ public class ExecutionController {
     @Delete(uri = "/kill/by-query")
     @Operation(tags = { "Executions" }, summary = "Kill executions filter by query parameters")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2142,7 +2030,7 @@ public class ExecutionController {
     @Post(uri = "/replay/by-query")
     @Operation(tags = { "Executions" }, summary = "Create new executions from old ones filter by query parameters asynchronously. Keep the flow revision")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2159,24 +2047,18 @@ public class ExecutionController {
     @Post(uri = "/replay/by-ids")
     @Operation(tags = { "Executions" }, summary = "Create new executions from old ones asynchronously. Keep the flow revision")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -2184,13 +2066,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk replay")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be replayed.", invalids);
         }
 
         this.replayCounter.increment(executions.size());
@@ -2365,14 +2241,14 @@ public class ExecutionController {
     public Mono<HttpResponse<?>> setLabelsOnTerminatedExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels) throws QueueException {
-        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (maybeExecution.isEmpty()) {
-            return Mono.just(HttpResponse.notFound());
-        }
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
+            .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution '%s' was not found.".formatted(executionId)));
 
-        Execution execution = maybeExecution.get();
         if (!execution.getState().getCurrent().isTerminated()) {
-            return Mono.just(HttpResponse.badRequest("The execution is not terminated"));
+            throw new ConflictException(
+                "Labels can only be set on a terminated execution. Execution '%s' is in state '%s'."
+                    .formatted(executionId, execution.getState().getCurrent())
+            );
         }
 
         List<Label> mergedLabels = mergeSystemLabels(execution, labels);
@@ -2413,33 +2289,21 @@ public class ExecutionController {
     @Post(uri = "/labels/by-ids")
     @Operation(tags = { "Executions" }, summary = "Set labels on a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByIds(
         @RequestBody(description = "The request containing a list of labels and a list of executions") @Body @Valid SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : setLabelsByIds.executionsId()) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().isTerminated()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution is not terminated",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution is not terminated", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -2447,13 +2311,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk set labels")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not have their labels set.", invalids);
         }
 
         // merge and validate every execution's labels before emitting anything, so a rejected
@@ -2478,7 +2336,7 @@ public class ExecutionController {
     @Post(uri = "/labels/by-query")
     @Operation(tags = { "Executions" }, summary = "Set label on executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2517,48 +2375,30 @@ public class ExecutionController {
     @Post(uri = "/unqueue/by-ids")
     @Operation(tags = { "Executions" }, summary = "Unqueue a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type state) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
             if (execution.isPresent() && execution.get().getState().getCurrent() != State.Type.QUEUED) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in state QUEUED",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in state QUEUED", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk unqueue")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be unqueued.", invalids);
         }
 
         this.unqueueCounter.increment(executions.size());
@@ -2573,7 +2413,7 @@ public class ExecutionController {
     @Post(uri = "/unqueue/by-query")
     @Operation(tags = { "Executions" }, summary = "Unqueue executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2611,57 +2451,33 @@ public class ExecutionController {
     @Post(uri = "/force-run/by-ids")
     @Operation(tags = { "Executions" }, summary = "Force run a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> forceRunByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
             if (execution.isPresent() && execution.get().getState().isTerminated()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution in a terminated state",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution in a terminated state", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else if (!validateExecutionACL(execution.get())) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "user don't have the authorisation to force run this execution",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "user don't have the authorisation to force run this execution", ProblemTypes.FORBIDDEN)
                 );
             } else {
                 executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk force run")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be force-run.", invalids);
         }
 
         this.forceRunCounter.increment(executions.size());
@@ -2676,7 +2492,7 @@ public class ExecutionController {
     @Post(uri = "/force-run/by-query")
     @Operation(tags = { "Executions" }, summary = "Force run executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -3073,12 +2889,11 @@ public class ExecutionController {
     }
 
     /**
-     * Returns an HTTP 400 response typed as {@code MutableHttpResponse<T>} so callers with a
-     * specific return type do not need to declare a wildcard. The cast is safe at runtime.
+     * One rejected item of a bulk operation. The execution id goes in the path rather than the message so a
+     * client can localise the text, and the type lets it tell a missing execution from a forbidden one.
      */
-    @SuppressWarnings("unchecked")
-    private static <T> MutableHttpResponse<T> bulkValidationError(BulkErrorResponse errorResponse) {
-        return (MutableHttpResponse<T>) HttpResponse.badRequest(errorResponse);
+    private static ProblemError executionProblem(String executionId, String detail, ProblemType type) {
+        return ProblemError.ofItem(detail, "executions[" + executionId + "]", type);
     }
 
     /**

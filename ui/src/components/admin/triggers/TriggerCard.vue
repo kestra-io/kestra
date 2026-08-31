@@ -65,9 +65,8 @@
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
-    import {triggerDisplayName} from "./triggerCatalog"
 
-    const props = defineProps<{ trigger: TriggerPluginDto }>()
+    const props = defineProps<{ trigger: TriggerPluginDto; displayName: string }>()
     defineEmits<{ add: [trigger: TriggerPluginDto] }>()
 
     const TOOLTIP_POPPER_STYLE = {
@@ -79,7 +78,6 @@
     }
 
     const pluginsStore = usePluginsStore()
-    const displayName = computed(() => triggerDisplayName(props.trigger))
     const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g))
 </script>
 

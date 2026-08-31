@@ -980,7 +980,7 @@
     line-height: var(--ks-line-height-base);
     color: var(--ks-text-secondary);
 
-    :global(code) {
+    :deep(code) {
         padding: 0 var(--ks-spacing-1);
         background: var(--ks-bg-base);
         border: 1px solid var(--ks-border-default);

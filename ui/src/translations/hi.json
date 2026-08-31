@@ -2141,7 +2141,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{count} MCP सर्वर",
+      "servers_count": "{count} MCP सर्वर | {count} MCP सर्वर",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",

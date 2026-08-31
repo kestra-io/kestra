@@ -677,6 +677,7 @@
     "label": "Etykieta",
     "labels": "Etykiety",
     "execution labels": "Etykiety egzekucji",
+    "show more labels": "Pokaż {count} więcej etykiet",
     "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
     "feeds": {
       "heading": "Wszystko o Kestra.",

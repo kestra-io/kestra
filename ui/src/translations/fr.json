@@ -677,6 +677,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Labels d'exécution",
+    "show more labels": "Afficher {count} étiquettes supplémentaires",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",
     "feeds": {
       "heading": "Tout sur Kestra.",

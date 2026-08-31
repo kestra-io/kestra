@@ -23,7 +23,6 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FlowMetaStores;
@@ -236,11 +235,10 @@ public class WebhookService {
                 try {
                     executionCommandQueue.emit(command.withOperationId(operationId));
                     eventPublisher.publishEvent(CrudEvent.create(execution));
-                } catch (MessageTooBigException e) {
-                    // Propagate the typed exception so the ErrorController handler maps it to 413.
-                    throw Exceptions.propagate(e);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    // Exceptions.propagate rethrows a runtime as-is and wraps a checked one, so a MessageTooBigException
+                    // stays its real type and the ErrorController handler can map it to 413.
+                    throw Exceptions.propagate(e);
                 }
             },
             asyncOperationsConfiguration.waitTimeout()

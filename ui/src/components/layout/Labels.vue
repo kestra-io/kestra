@@ -9,7 +9,7 @@
             class="me-0 label"
             data-test="label"
         >
-            <span :title="text(label)">{{ text(label) }}</span>
+            <span class="label-text" :title="text(label)">{{ text(label) }}</span>
         </KsCheckTag>
         <KsPopover
             v-if="hiddenLabels.length"
@@ -147,6 +147,14 @@
         flex-wrap: wrap;
         overflow: visible;
     }
+}
+
+.labels-container:not(.wrap) .label-text {
+    display: inline-block;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
 }
 
 .labels-container.wrap .label.kel-check-tag {

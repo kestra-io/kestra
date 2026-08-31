@@ -501,7 +501,7 @@ public class InternalNamespace implements Namespace {
             (maybeParentPath = Optional.ofNullable(NamespaceFileMetadata.parentPath(maybeParentPath.map(Path::toString).orElse(path))).map(Path::of)).isPresent()
                 && !this.exists(maybeParentPath.get())
         ) {
-            this.createDirectory(maybeParentPath.get());
+            this.createDirectoryEntry(NamespaceFile.normalize(maybeParentPath.get()));
             createdDirs.add(NamespaceFile.of(namespace, maybeParentPath.get().toString().endsWith("/") ? maybeParentPath.get().toString() : maybeParentPath.get() + "/", 1));
         }
 
@@ -517,6 +517,12 @@ public class InternalNamespace implements Namespace {
 
         ensureNoFileInHierarchy(normalizedPath);
 
+        mkDirs(normalizedPath.toString());
+
+        return createDirectoryEntry(normalizedPath);
+    }
+
+    private NamespaceFile createDirectoryEntry(Path normalizedPath) throws IOException {
         discardConflictingEntry(findByPath(normalizedPath, true), true, normalizedPath);
 
         NamespaceFileMetadata nsFileMetadata = stateStore.save(

@@ -296,6 +296,22 @@ class InternalNamespaceTest {
     }
 
     @Test
+    void shouldCreateParentDirectoriesWhenCreatingNestedDirectory() throws IOException {
+        // Given
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        // When
+        namespace.createDirectory(Path.of("/parent/child/leaf"));
+
+        // Then
+        assertThat(namespace.exists(Path.of("/parent"))).isTrue();
+        assertThat(namespace.exists(Path.of("/parent/child"))).isTrue();
+        assertThat(namespace.exists(Path.of("/parent/child/leaf"))).isTrue();
+        assertThat(namespace.children("/", false)).extracting(metadata -> metadata.path(false)).containsExactly("/parent");
+    }
+
+    @Test
     void shouldServeLatestAvailableRevisionWhenLatestRevisionObjectIsMissing() throws IOException, URISyntaxException {
         // Given a file with two revisions whose latest-revision object has been removed from storage
         // out-of-band, leaving the metadata index ahead of storage (the drift that produced 404s).

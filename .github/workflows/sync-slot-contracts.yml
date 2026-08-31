@@ -13,6 +13,8 @@ jobs:
     name: Sync contracts to kestra-io/artifact-sdk
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      CHANGESET_FILE: .changeset/sync-slot-contracts.md
     steps:
       - name: Checkout kestra
         uses: actions/checkout@v7
@@ -88,7 +90,6 @@ jobs:
         working-directory: artifact-sdk
         run: |
           mkdir -p .changeset
-          CHANGESET_FILE=".changeset/sync-slot-contracts.md"
           TODAY=$(date -u +%Y-%m-%d)
           if [ -f "$CHANGESET_FILE" ]; then
             # Update the date line in-place (line starting with "Last synced:")
@@ -108,6 +109,14 @@ jobs:
           Last synced: $TODAY
           EOF
           fi
+
+      # artifact-sdk's CI checks formatting repo-wide, so run the pinned oxfmt from its own root
+      # devDependencies (--workspaces=false keeps the install to those) over what we just wrote.
+      - name: Format the synced files
+        working-directory: artifact-sdk
+        run: |
+          npm ci --workspaces=false --ignore-scripts
+          npx oxfmt --write packages/artifact-sdk/src/contracts "$CHANGESET_FILE"
 
       - name: Commit and push
         id: commit

@@ -32,7 +32,6 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -75,33 +74,40 @@ class TriggerControllerTest {
     AbstractJdbcTriggerRepository jdbcTriggerRepository;
 
     @Inject
-    JdbcTestUtils jdbcTestUtils;
-
-    @Inject
     Scheduler scheduler;
 
     @Inject
     SchedulerConfiguration schedulerConfiguration;
 
+    // Every test here scopes itself to a namespace of its own, so the tables are deliberately not
+    // truncated between tests: this class starts the runner, and truncating QUEUES underneath a
+    // running executor deadlocks on the table lock as soon as any test drives a real execution.
     @BeforeEach
     protected void setup() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void shouldFindTriggersGivenQueryOnIdPrefix() throws FlowProcessingException, QueueException {
-        // GIVEN
+        // GIVEN two triggers whose ids share the queried prefix, and one in the same namespace whose
+        // id does not: the namespace filter isolates this test from the rest of the class, the extra
+        // trigger keeps the assertion below a test of `q` rather than of the namespace filter alone.
         Flow flow = generateFlow();
         flowService.create(GenericFlow.of(flow));
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
+        Flow unmatched = generateFlowWithTrigger(flow.getNamespace());
+        TriggerState unmatchedState = createTriggerFromFlow(unmatched, false);
+        flowService.create(GenericFlow.of(unmatched));
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(unmatchedState).isPresent());
+
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
-                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"
+                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec&filters[namespace][EQUALS]=%s"
+                    .formatted(flow.getNamespace())
             ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
@@ -1047,7 +1053,9 @@ class TriggerControllerTest {
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         byte[] csvBytes = client.toBlocking().retrieve(
-            HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),
+            HttpRequest.GET(
+                TRIGGER_PATH + "/export/by-query/csv?filters[namespace][EQUALS]=%s".formatted(flow.getNamespace())
+            ),
             Argument.of(byte[].class)
         );
 

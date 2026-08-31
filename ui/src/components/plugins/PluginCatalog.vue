@@ -55,7 +55,7 @@
 
         <section v-else class="plugins-container">
             <KsTooltip
-                v-for="plugin in pluginsList"
+                v-for="plugin in pagedPlugins"
                 :showAfter="1000"
                 :key="`${plugin.name}-${plugin.subGroup ?? ''}`"
             >
@@ -95,6 +95,19 @@
                 />
             </KsTooltip>
         </section>
+
+        <KsPagination
+            v-if="pluginsList.length > 0"
+            class="plugins-pagination"
+            :currentPage
+            :pageSize
+            :total="pluginsList.length"
+            :pageSizes="PAGE_SIZES"
+            layout="sizes, prev, pager, next, total"
+            size="small"
+            @current-change="currentPage = $event"
+            @size-change="onSizeChange"
+        />
     </template>
 </template>
 
@@ -102,7 +115,7 @@
     import {ref, computed, markRaw, onMounted, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsSearch, KsAlert, KsSkeleton} from "@kestra-io/design-system"
+    import {KsSearch, KsAlert, KsPagination, KsSkeleton} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
     import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
@@ -143,6 +156,10 @@
 
     type SortKey = "nameAsc" | "nameDesc" | "newest" | "mostUsed"
     const sortBy = ref<SortKey>("nameAsc")
+
+    const PAGE_SIZES = [25, 50, 100]
+    const currentPage = ref(1)
+    const pageSize = ref(50)
 
     const sortOptions = computed<{value: SortKey, label: string}[]>(() => [
         {value: "nameAsc", label: t("pluginPage.sort.nameAsc")},
@@ -237,6 +254,24 @@
             .filter(plugin => matchesSelectedCategories(plugin))
             .slice()
             .sort(comparators[sortBy.value] ?? nameAsc)
+    })
+
+    const pagedPlugins = computed<Plugin[]>(() => {
+        const start = (currentPage.value - 1) * pageSize.value
+        return pluginsList.value.slice(start, start + pageSize.value)
+    })
+
+    const onSizeChange = (size: number) => {
+        pageSize.value = size
+        currentPage.value = 1
+    }
+
+    // A string rather than the filters themselves, so the watcher fires on a content change instead of on every
+    // fresh object reference and bounces the user back to page one only when the filtering actually moved.
+    const filterKey = computed(() => JSON.stringify([searchInput.value, [...selectedCategories.value].sort(), sortBy.value]))
+
+    watch(filterKey, () => {
+        currentPage.value = 1
     })
 
     const loadPluginIcons = async () => {
@@ -361,11 +396,15 @@
         display: grid;
         gap: var(--ks-spacing-4);
         grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
-        padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
+        padding: 0 var(--ks-spacing-6) var(--ks-spacing-4) var(--ks-spacing-6);
 
         &--loading {
             margin-top: var(--ks-spacing-4);
         }
+    }
+
+    .plugins-pagination {
+        padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
     }
 
     .plugin-skeleton {
@@ -386,7 +425,8 @@
             padding: var(--ks-spacing-3);
         }
 
-        .plugins-container {
+        .plugins-container,
+        .plugins-pagination {
             padding-left: var(--ks-spacing-3);
             padding-right: var(--ks-spacing-3);
         }

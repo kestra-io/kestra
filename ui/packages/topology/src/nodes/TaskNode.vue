@@ -380,7 +380,7 @@
                 onClick: () => emit(EVENTS.EXPAND, expandData.value),
             })
         }
-        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors) {
+        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors?.length) {
             list.push({
                 key: "add-error",
                 label: t("add error handler"),

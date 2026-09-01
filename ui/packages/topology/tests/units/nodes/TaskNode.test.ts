@@ -155,6 +155,16 @@ describe("TaskNode actions", () => {
         expect(actionKeys(wrapper)).toContain("add-error")
     })
 
+    it("should offer add-error when the errors list exists but is empty", () => {
+        const wrapper = mountTaskNode({
+            isReadOnly: false,
+            isFlowable: true,
+            task: {...TASK, errors: []},
+        })
+
+        expect(actionKeys(wrapper)).toContain("add-error")
+    })
+
     it("should not offer add-error when the task already has error handlers", () => {
         const wrapper = mountTaskNode({
             isReadOnly: false,

@@ -272,8 +272,16 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
+    let latestExecutionLoad = 0
+
     const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
+        const load = ++latestExecutionLoad
         return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
+            // A load the user has navigated away from must neither become the execution on screen
+            // nor drop the pending update for the one that is, the same way a superseded search is
+            // dropped in `stores/logs.ts`.
+            if (load !== latestExecutionLoad) return data
+
             // A trailing event from the previous execution's stream, still open until the page
             // mounts and follows this one, would otherwise land on top of this load.
             throttledExecutionUpdate.cancel()

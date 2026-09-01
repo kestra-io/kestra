@@ -64,6 +64,21 @@ describe("entityNotFoundGuard", () => {
         expect(useCoreStore().error).toBeUndefined()
     })
 
+    it("lets a tab change invalidate a verdict still resolving for another entity", async () => {
+        let rejectMissing: (error: unknown) => void = () => {}
+        const missing = location(() => new Promise((_, reject) => {
+            rejectMissing = reject
+        }), {tenant: "main", id: "missing"})
+        const current = location(() => Promise.resolve({id: "io.kestra.current"}), {tenant: "main", id: "current"})
+
+        const superseded = entityNotFoundGuard(missing, current, next)
+        await entityNotFoundGuard(current, current, next)
+        rejectMissing(Object.assign(new Error("404 Not Found"), {status: 404}))
+        await superseded
+
+        expect(useCoreStore().error).toBeUndefined()
+    })
+
     it("re-resolves when only the params change, since vue-router reuses the record", async () => {
         let resolved = 0
         const entity = () => {

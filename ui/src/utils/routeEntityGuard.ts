@@ -59,12 +59,14 @@ let latestNavigation = 0
  * change — navigating straight from one flow to another would otherwise go unchecked.
  */
 export const entityNotFoundGuard: NavigationGuard = async (to, from) => {
+    // Before the early return below: a navigation that resolves nothing still invalidates one that
+    // is resolving, or a tab change would let an older flow's verdict land on the current page.
+    const navigation = ++latestNavigation
     const record = to.matched.find(resolverOf)
 
     // A tab or filter change within the same entity has nothing new to resolve.
     if (record && from.matched.includes(record) && hasSameParams(to, from)) return true
 
-    const navigation = ++latestNavigation
     const verdict = record ? await probe(resolverOf(record)!, to) : undefined
 
     // The user has navigated again while this one was resolving, so its verdict is about a page

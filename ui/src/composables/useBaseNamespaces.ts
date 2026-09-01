@@ -46,17 +46,28 @@ export const useBaseNamespacesStore = () => {
     // A missing namespace is reported through `existing` below, so it must not also toast.
     const expectNotFound: KestraRequestOptions = {ignoreNotFound: true}
 
+    let latestLoad = 0
+
     async function load(id: string) {
+        const current = ++latestLoad
+        let data: any
         try{
-            namespace.value = await NamespaceAPI.loadNamespace({id}, expectNotFound)
-            existing.value = true
+            data = await NamespaceAPI.loadNamespace({id}, expectNotFound)
         }catch (e: any) {
             if (e.status === 404) {
-                existing.value = false
+                // A load the user has navigated away from must not report its absence for the
+                // namespace they are on, the same way a superseded search is dropped in
+                // `stores/logs.ts`.
+                if (current === latestLoad) existing.value = false
                 return null
             }
             throw e
         }
+
+        if (current !== latestLoad) return data
+
+        namespace.value = data
+        existing.value = true
 
         return namespace.value
     }

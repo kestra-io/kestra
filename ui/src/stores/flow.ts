@@ -434,10 +434,13 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
+    let latestFlowLoad = 0
+
     async function loadFlow(
         options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
         requestOptions?: KestraRequestOptions,
     ) {
+        const load = options.store === false ? undefined : ++latestFlowLoad
         let data: Flow & {exception?: string}
         try {
             data = await FlowsAPI.flow({
@@ -454,7 +457,9 @@ export const useFlowStore = defineStore("flow", () => {
             throw e
         }
 
-        if (options.store === false) {
+        // A load the user has navigated away from must not become the flow on screen, the same way a
+        // superseded search is dropped in `stores/logs.ts`.
+        if (options.store === false || load !== latestFlowLoad) {
             return data
         }
 

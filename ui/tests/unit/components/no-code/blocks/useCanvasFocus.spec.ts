@@ -9,10 +9,10 @@ afterEach(() => {
     mounted.splice(0).forEach((root) => root.remove())
 })
 
-// jsdom reports every element as having no offsetParent and has no layout, so the
-// two things the composable relies on — visibility filtering and scrollIntoView —
-// are stubbed per element. Layout being absent is also why alignment itself is
-// asserted in the e2e spec rather than here.
+// jsdom has no layout and reports every element as having no offsetParent, so
+// visibility filtering and scrollIntoView are stubbed per element. Where the
+// scroll ends up is asserted in the e2e spec; which alignment is asked for needs
+// no layout and is asserted here.
 function buildCanvas(ids: string[]) {
     const root = document.createElement("div")
 
@@ -30,6 +30,10 @@ function buildCanvas(ids: string[]) {
     return root
 }
 
+function scrollSpy(root: HTMLElement, id: string) {
+    return root.querySelector<HTMLElement>(`[data-block-id='${id}']`)!.scrollIntoView as ReturnType<typeof vi.fn>
+}
+
 function setup(ids: string[]) {
     const root = buildCanvas(ids)
     const editorEl = ref<HTMLElement | undefined>(root)
@@ -38,27 +42,41 @@ function setup(ids: string[]) {
 }
 
 describe("useCanvasFocus", () => {
-    it("advances the focused id when stepping", async () => {
-        const {focus} = setup(["a", "b", "c"])
+    it("scrolls the minimum distance by default", async () => {
+        const {root, focus} = setup(["a", "b"])
+
+        focus.focusCanvasCard("b")
+        await nextTick()
+
+        expect(scrollSpy(root, "b")).toHaveBeenCalledWith({block: "nearest"})
+    })
+
+    it("centres the card when asked to", async () => {
+        const {root, focus} = setup(["a", "b"])
+
+        focus.focusCanvasCard("b", {align: "center"})
+        await nextTick()
+
+        expect(scrollSpy(root, "b")).toHaveBeenCalledWith({block: "center"})
+    })
+
+    it("keeps arrow-key stepping on the minimum distance", async () => {
+        const {root, focus} = setup(["a", "b", "c"])
 
         focus.focusCanvasCard("a")
         await nextTick()
         focus.moveFocus(1)
         await nextTick()
 
-        expect(focus.focusedId.value).toBe("b")
+        expect(scrollSpy(root, "b")).toHaveBeenCalledWith({block: "nearest"})
     })
 
-    it("clears the focused id when given nothing to focus", async () => {
-        const {focus} = setup(["a"])
-
-        focus.focusCanvasCard("a")
-        await nextTick()
-        expect(focus.focusedId.value).toBe("a")
+    it("does not scroll when there is nothing to focus", async () => {
+        const {root, focus} = setup(["a"])
 
         focus.focusCanvasCard(undefined)
         await nextTick()
 
-        expect(focus.focusedId.value).toBeUndefined()
+        expect(scrollSpy(root, "a")).not.toHaveBeenCalled()
     })
 })

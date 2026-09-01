@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,13 +19,11 @@ import org.junit.jupiter.api.function.Executable;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.flow.Subflow;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
@@ -31,6 +31,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -290,6 +292,46 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void getFileContentOnDirectoryReturnsCleanNotFound() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Is a directory");
+    }
+
+    @Test
+    void createFileUnderAnExistingFileReturnsCleanConflict() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "child.txt", "Hello".getBytes())
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/t.txt/child.txt", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Internal server error");
+    }
+
+    @Test
     void createFileWithTooLongNameReturnsCleanError() {
         String namespace = TestsUtils.randomNamespace();
         String longName = "x".repeat(300) + ".txt";
@@ -373,22 +415,28 @@ class NamespaceFileControllerTest {
     @LoadFlows({ "flows/valids/task-flow.yaml" })
     void createGetFileContent_ExtractZip() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
         String namespaceToExport = "io.kestra.tests";
+        Namespace exportedStorage = namespaceFactory.of(TENANT_ID, namespaceToExport, storageInterface);
 
-        namespaceStorage.putFile(Path.of("/file.txt"), new ByteArrayInputStream("file".getBytes()));
-        namespaceStorage.putFile(Path.of("/another_file.txt"), new ByteArrayInputStream("another_file".getBytes()));
-        namespaceStorage.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("folder_file".getBytes()));
-        storageInterface.createDirectory(TENANT_ID, namespace, toNamespacedStorageUri(namespaceToExport, URI.create("/empty_folder")));
+        exportedStorage.putFile(Path.of("/file.txt"), new ByteArrayInputStream("file".getBytes()));
+        exportedStorage.putFile(Path.of("/another_file.txt"), new ByteArrayInputStream("another_file".getBytes()));
+        exportedStorage.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("folder_file".getBytes()));
+        storageInterface.createDirectory(TENANT_ID, namespaceToExport, toNamespacedStorageUri(namespaceToExport, URI.create("/empty_folder")));
 
         byte[] zip = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/" + namespaceToExport + "/files/export"),
             Argument.of(byte[].class)
         );
+
+        try (ZipInputStream archive = new ZipInputStream(new ByteArrayInputStream(zip))) {
+            ZipEntry entry;
+            while ((entry = archive.getNextEntry()) != null) {
+                assertThat(entry.getName()).doesNotStartWith("_flows/");
+            }
+        }
+
         File temp = File.createTempFile("files", ".zip");
         Files.write(temp.toPath(), zip);
-
-        assertThat(flowRepository.findById(TENANT_ID, namespace, "task-flow").isEmpty()).isTrue();
 
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "files.zip", temp)
@@ -405,9 +453,7 @@ class NamespaceFileControllerTest {
         // Highlights the fact that we currently don't export / import empty folders (would require adding a method to storages to also retrieve folders)
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/empty_folder")))).isFalse();
 
-        Flow retrievedFlow = flowRepository.findById(TENANT_ID, namespace, "task-flow").get();
-        assertThat(retrievedFlow.getNamespace()).isEqualTo(namespace);
-        assertThat(((Subflow) retrievedFlow.getTasks().getFirst()).getNamespace()).isEqualTo(namespaceToExport);
+        assertThat(flowRepository.findById(TENANT_ID, namespace, "task-flow").isEmpty()).isTrue();
     }
 
     private void assertNamespaceGetFileContentContent(String namespace, URI fileUri, String expectedContent) throws IOException {
@@ -570,7 +616,7 @@ class NamespaceFileControllerTest {
 
     private void assertForbiddenErrorThrown(Executable executable) {
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, executable);
-        assertThat(httpClientResponseException.getMessage()).startsWith("Illegal argument: Forbidden path: ");
+        assertThat(Problems.detail(httpClientResponseException)).startsWith("Forbidden path: ");
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {

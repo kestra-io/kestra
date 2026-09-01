@@ -648,6 +648,10 @@
     "open full page": "フルページを開く",
     "drill down preview": "プレビュー",
     "errors": {
+      "400": {
+        "title": "不正なリクエスト",
+        "content": "サーバーはリクエストを理解できませんでした。"
+      },
       "401": {
         "title": "認証されていません",
         "content": "このページにアクセスするには認証が必要です。"
@@ -660,6 +664,114 @@
         "title": "ページが見つかりません",
         "content": "リクエストされたURLはこのサーバー上に見つかりませんでした。<br />これが私たちの知っているすべてです。",
         "flow or execution": "探しているflowまたは実行は存在しません。"
+      },
+      "409": {
+        "title": "競合",
+        "content": "リクエストはリソースの現在の状態と競合しています。"
+      },
+      "422": {
+        "title": "無効なエンティティ",
+        "content": "送信されたコンテンツを処理できませんでした。"
+      },
+      "500": {
+        "title": "内部サーバーエラー",
+        "content": "システム側で問題が発生しました。後でもう一度お試しください。"
+      },
+      "503": {
+        "title": "サービス利用不可",
+        "content": "サーバーは一時的に利用できません。後でもう一度お試しください。"
+      },
+      "generic": {
+        "title": "問題が発生しました",
+        "content": "予期せぬエラーが発生しました。もう一度お試しください。"
+      },
+      "trace id": "トレース ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AIリクエストに失敗しました"
+        },
+        "bad-request": {
+          "title": "不正なリクエスト"
+        },
+        "bulk-validation-failed": {
+          "title": "一部のアイテムを処理できませんでした"
+        },
+        "conflict": {
+          "title": "競合"
+        },
+        "entity-already-exists": {
+          "title": "エンティティはすでに存在します"
+        },
+        "forbidden": {
+          "title": "アクセスが拒否されました"
+        },
+        "internal-error": {
+          "title": "内部サーバーエラー"
+        },
+        "invalid-argument": {
+          "title": "無効な引数"
+        },
+        "invalid-entity": {
+          "title": "無効なエンティティ"
+        },
+        "invalid-format": {
+          "title": "無効な値の形式"
+        },
+        "invalid-json": {
+          "title": "無効なJSON"
+        },
+        "invalid-plugin-type": {
+          "title": "無効なプラグインタイプ"
+        },
+        "invalid-query-filters": {
+          "title": "無効なクエリフィルター"
+        },
+        "invalid-query-parameter": {
+          "title": "無効なクエリパラメータ"
+        },
+        "invalid-request-body": {
+          "title": "無効なリクエストボディ"
+        },
+        "locked": {
+          "title": "リソースはロックされています"
+        },
+        "method-not-allowed": {
+          "title": "許可されていないメソッド"
+        },
+        "migration-required": {
+          "title": "移行が必要です"
+        },
+        "not-acceptable": {
+          "title": "許可されていません"
+        },
+        "not-found": {
+          "title": "リソースが見つかりません"
+        },
+        "payload-too-large": {
+          "title": "Payloadが大きすぎます"
+        },
+        "resource-expired": {
+          "title": "リソースの有効期限が切れました"
+        },
+        "service-unavailable": {
+          "title": "サービス利用不可",
+          "detail": "サーバーは一時的に利用できません。後でもう一度お試しください。"
+        },
+        "timeout": {
+          "title": "操作がタイムアウトしました"
+        },
+        "too-many-requests": {
+          "title": "リクエストが多すぎます"
+        },
+        "unauthenticated": {
+          "title": "認証が必要です"
+        },
+        "unsupported-media-type": {
+          "title": "サポートされていないメディアタイプ"
+        },
+        "validation-failed": {
+          "title": "検証に失敗しました"
+        }
       }
     },
     "back_to_dashboard": "ダッシュボードに戻る",
@@ -677,6 +789,7 @@
     "label": "ラベル",
     "labels": "ラベル",
     "execution labels": "実行ラベル",
+    "show more labels": "他 {count} 件のラベルを表示",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
     "feeds": {
       "heading": "すべてのKestraに関すること。",
@@ -900,6 +1013,7 @@
       },
       "export": "namespaceファイルをエクスポート",
       "export_single": "ファイルをエクスポート",
+      "export_error": "\"{name}\" をエクスポートできませんでした。パスを解決できませんでした。",
       "dialog": {
         "name": {
           "file": "拡張子付きの名前:",
@@ -1448,7 +1562,8 @@
         "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
         "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
       },
-      "inherited": "継承されたKVペア"
+      "inherited": "継承されたKVペア",
+      "expiration_hint": "現在、{date}に期限切れになります。この期限を維持するには、フィールドをそのままにしておきます。期間を選択すると、現在から再計算され、クリアすると削除されます。"
     },
     "expiration": "有効期限",
     "page": {
@@ -2141,7 +2256,7 @@
     },
     "mcp": {
       "your_servers": "あなたのサーバー",
-      "servers_count": "{count} MCPサーバー",
+      "servers_count": "{count} MCPサーバー | {count} MCPサーバー",
       "managed_by_kestra": "Kestraによって管理されています",
       "servers": "MCPサーバー",
       "client_setup": "クライアント設定",

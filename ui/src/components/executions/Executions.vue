@@ -217,7 +217,7 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
+                        <Labels :labels="filteredLabels(scope.row?.labels)" :max="3" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus
@@ -410,8 +410,9 @@
 
 <script setup lang="ts">
     import _merge from "lodash/merge"
-    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
+    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
@@ -473,7 +474,7 @@
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -538,6 +539,12 @@
 
     const optionalColumns = ref([
         {
+            label: t("state"),
+            prop: "state.current",
+            default: true,
+            description: t("filter.table_column.executions.state"),
+        },
+        {
             label: t("start date"),
             prop: "state.startDate",
             default: true,
@@ -572,12 +579,6 @@
             prop: "labels",
             default: true,
             description: t("filter.table_column.executions.labels"),
-        },
-        {
-            label: t("state"),
-            prop: "state.current",
-            default: true,
-            description: t("filter.table_column.executions.state"),
         },
         {
             label: t("revision"),
@@ -622,13 +623,13 @@
         ...getExtraColumns().map(col => ({...col, label: t(col.label)})),
     ])
 
-    const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
+    const {visibleColumns: displayColumns, orderedVisibleColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: allColumns.value,
         storageKey: storageKey.value,
     })
 
     const visibleColumns = computed(() =>
-        displayColumns.value
+        orderedVisibleColumns.value
             .map(prop => allColumns.value.find(c => c.prop === prop))
             .filter(c => {
                 const condition = (c as {condition?: () => boolean})?.condition
@@ -908,10 +909,12 @@
                     toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
-                }).catch((e: any) => {
-                    toast.error(e?.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message))
+                }).catch((e: unknown) => {
+                    const problem = asProblem(e)
+                    toast.error(
+                        problemBulkBody(problem, t, te),
+                        problemTitle(problem, t, te),
+                    )
                 })
         }
     }
@@ -1105,9 +1108,13 @@
                         toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message)))
+                    }).catch((e: unknown) => {
+                        const problem = asProblem(e)
+                        toast.error(
+                            problemBulkBody(problem, t, te),
+                            problemTitle(problem, t, te),
+                        )
+                    })
             }
         },
         )

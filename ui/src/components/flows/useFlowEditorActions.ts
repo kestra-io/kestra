@@ -12,6 +12,7 @@ import {useMiscStore} from "override/stores/misc"
 import {useCoreStore} from "../../stores/core"
 import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
+import {asProblem} from "@kestra-io/kestra-sdk"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
 export function useFlowEditorActions() {
@@ -161,7 +162,7 @@ export function useFlowEditorActions() {
         if (error?.status === 401) {
             toast.error("401 Unauthorized", undefined, {duration: 2000})
         } else {
-            toast.error(error?.response?.data?.message ?? t("error"))
+            toast.error(asProblem(error)?.detail ?? t("error"))
         }
     }
 

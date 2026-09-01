@@ -648,6 +648,10 @@
     "open full page": "Abrir página completa",
     "drill down preview": "Vista previa",
     "errors": {
+      "400": {
+        "title": "Solicitud incorrecta",
+        "content": "La solicitud no pudo ser entendida por el servidor."
+      },
       "401": {
         "title": "No autorizado",
         "content": "Necesitas estar autenticado para acceder a esta página."
@@ -660,6 +664,114 @@
         "title": "Página no encontrada",
         "content": "La URL solicitada no fue encontrada en este servidor.<br />Eso es todo lo que sabemos.",
         "flow or execution": "El flujo o la ejecución que estás buscando no existe."
+      },
+      "409": {
+        "title": "Conflicto",
+        "content": "La solicitud entra en conflicto con el estado actual del recurso."
+      },
+      "422": {
+        "title": "Entidad no válida",
+        "content": "El contenido enviado no pudo ser procesado."
+      },
+      "500": {
+        "title": "Error interno del servidor",
+        "content": "Algo salió mal de nuestro lado. Por favor, inténtalo de nuevo más tarde."
+      },
+      "503": {
+        "title": "Servicio no disponible",
+        "content": "El servidor no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde."
+      },
+      "generic": {
+        "title": "Algo salió mal",
+        "content": "Se ha producido un error inesperado. Por favor, inténtalo de nuevo."
+      },
+      "trace id": "ID de Trace",
+      "problems": {
+        "ai-request-failed": {
+          "title": "La solicitud de AI falló"
+        },
+        "bad-request": {
+          "title": "Solicitud incorrecta"
+        },
+        "bulk-validation-failed": {
+          "title": "Algunos elementos no pudieron ser procesados"
+        },
+        "conflict": {
+          "title": "Conflicto"
+        },
+        "entity-already-exists": {
+          "title": "La entidad ya existe"
+        },
+        "forbidden": {
+          "title": "Acceso denegado"
+        },
+        "internal-error": {
+          "title": "Error interno del servidor"
+        },
+        "invalid-argument": {
+          "title": "Argumento no válido"
+        },
+        "invalid-entity": {
+          "title": "Entidad no válida"
+        },
+        "invalid-format": {
+          "title": "Formato de valor no válido"
+        },
+        "invalid-json": {
+          "title": "JSON inválido"
+        },
+        "invalid-plugin-type": {
+          "title": "Tipo de plugin inválido"
+        },
+        "invalid-query-filters": {
+          "title": "Filtros de consulta inválidos"
+        },
+        "invalid-query-parameter": {
+          "title": "Parámetro de consulta inválido"
+        },
+        "invalid-request-body": {
+          "title": "Cuerpo de solicitud no válido"
+        },
+        "locked": {
+          "title": "El recurso está bloqueado"
+        },
+        "method-not-allowed": {
+          "title": "Método no permitido"
+        },
+        "migration-required": {
+          "title": "Migración requerida"
+        },
+        "not-acceptable": {
+          "title": "No aceptable"
+        },
+        "not-found": {
+          "title": "Recurso no encontrado"
+        },
+        "payload-too-large": {
+          "title": "Payload demasiado grande"
+        },
+        "resource-expired": {
+          "title": "El recurso ha expirado"
+        },
+        "service-unavailable": {
+          "title": "Servicio no disponible",
+          "detail": "El servidor no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde."
+        },
+        "timeout": {
+          "title": "La operación ha excedido el tiempo de espera"
+        },
+        "too-many-requests": {
+          "title": "Demasiadas solicitudes"
+        },
+        "unauthenticated": {
+          "title": "Autenticación requerida"
+        },
+        "unsupported-media-type": {
+          "title": "Tipo de medio no compatible"
+        },
+        "validation-failed": {
+          "title": "La validación falló"
+        }
       }
     },
     "back_to_dashboard": "Volver al panel de control",
@@ -677,6 +789,7 @@
     "label": "Label",
     "labels": "Etiquetas",
     "execution labels": "Etiquetas de ejecución",
+    "show more labels": "Mostrar {count} etiquetas más",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",
     "feeds": {
       "heading": "Todo sobre Kestra.",
@@ -900,6 +1013,7 @@
       },
       "export": "Exportar archivos del namespace",
       "export_single": "Exportar archivo",
+      "export_error": "No se pudo exportar \"{name}\". No se pudo resolver su ruta.",
       "dialog": {
         "name": {
           "file": "Nombre con extensión:",
@@ -1448,7 +1562,8 @@
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
       },
-      "inherited": "Pares KV heredados"
+      "inherited": "Pares KV heredados",
+      "expiration_hint": "Actualmente expira el {date}. Deja el campo sin tocar para mantener esta expiración; seleccionar una duración la recalcula a partir de ahora, y borrarla la elimina."
     },
     "expiration": "Expiración",
     "page": {
@@ -2141,7 +2256,7 @@
     },
     "mcp": {
       "your_servers": "Sus Servidores",
-      "servers_count": "{count} Servidores MCP",
+      "servers_count": "{count} servidor MCP | {count} servidores MCP",
       "managed_by_kestra": "Gestionado por Kestra",
       "servers": "Servidores MCP",
       "client_setup": "Configuración del cliente",

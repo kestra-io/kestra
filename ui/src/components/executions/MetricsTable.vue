@@ -92,10 +92,10 @@
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
 
 
+    import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
+
     import type {Execution} from "../../stores/executions"
     import {humanizeDuration, humanizeNumber} from "../../utils/filters"
-
-    import {useExecutionsStore} from "../../stores/executions"
 
     import {useTableColumns} from "../../composables/useTableColumns"
 
@@ -129,8 +129,6 @@
 
     const hasVisibleColumns = computed(() => displayColumns.value.length > 0)
 
-    const executionsStore = useExecutionsStore()
-
     const metrics = ref<any[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)
     const currentPage = ref(1)
@@ -139,26 +137,12 @@
     const dataTable = useTemplateRef("dataTable")
 
     const loadData = async ({page, size, sort}: {page?: number; size?: number; sort?: string} = {}) => {
-        let params: Record<string, any> = {}
-
-        if (props.taskRunId) {
-            params.taskRunId = props.taskRunId
-        }
-
-        if (page) {
-            params.page = page
-        }
-
-        if (size) {
-            params.size = size
-        }
-
-        params.sort = sort ?? "name:asc"
-
-        const response: any = await executionsStore.loadMetrics({
+        const response = await MetricsAPI.searchByExecution({
             executionId: props.execution?.id ?? "",
-            params: params,
-            store: false,
+            taskRunId: props.taskRunId,
+            page,
+            size,
+            sort: [sort ?? "name:asc"],
         })
         metrics.value = response.results
         metricsTotal.value = response.total

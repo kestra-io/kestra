@@ -15,7 +15,7 @@ function base(namespace: string) {
 }
 
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
-const safePath = (path: string) => encodeURIComponent(path).replace(/%2F/g, "/")
+export const safePath = (path: string) => encodeURIComponent(path).replace(/%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
 
 export const useBaseNamespacesStore = () => {

@@ -133,7 +133,7 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="scope.row.labels" @click.prevent.stop />
+                        <Labels :labels="scope.row.labels" :max="3" @click.prevent.stop />
                     </template>
                 </KsTableColumn>
 

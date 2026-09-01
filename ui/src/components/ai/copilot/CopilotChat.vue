@@ -145,6 +145,7 @@
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
     import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
+    import {useFlowStore} from "../../../stores/flow"
 
     const props = withDefaults(defineProps<{
         /** Initial mode; defaults to EDIT. */
@@ -158,6 +159,7 @@
     const {t} = useI18n()
     const route = useRoute()
     const miscStore = useMiscStore()
+    const flowStore = useFlowStore()
 
     const mode = ref<AgentMode>(props.initialMode ?? "EDIT")
 
@@ -204,6 +206,14 @@
             previousFocus = current
         },
     )
+
+    // The flow editor's buffer is the only place a new (flows/create) or edited-but-unsaved flow
+    // exists, and no tool can read it, so a turn focused on a flow carries it (kestra-io/kestra-ee#10419).
+    // Dismissing the flow pill drops it along with the flow id.
+    const editorFlowSource = computed<string | undefined>(() => {
+        if (routeInFocus.value?.kind !== "FLOW" || dismissedParts.value.has("flowId")) return undefined
+        return flowStore.flowYaml || undefined
+    })
 
     /** Dismiss a single context pill and note its removal in the transcript. */
     function removeContext(part: ContextPart): void {
@@ -342,7 +352,12 @@
     )
 
     function onSubmit(prompt: string): void {
-        sendChat({prompt, mode: mode.value, additionalContext: scopeToContext(activeScope.value), providerId: selectedProvider.value})
+        sendChat({
+            prompt,
+            mode: mode.value,
+            additionalContext: scopeToContext(activeScope.value, editorFlowSource.value),
+            providerId: selectedProvider.value,
+        })
     }
 
     // Keep the transcript pinned to the bottom as content arrives: new messages, streamed

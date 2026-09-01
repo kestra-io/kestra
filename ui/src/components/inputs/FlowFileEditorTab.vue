@@ -286,7 +286,7 @@
             ? {id: flowStore.flow?.id, namespace: flowStore.flow?.namespace}
             : {}),
         enabled: metadataGuarded,
-        hoverMessage: computed(() => t("namespace and id readonly hint")),
+        hoverMessage: computed(() => t("flow metadata locked")),
         // Reverting the whole document is the one correction that discards what
         // the user just did, and metadataGuarded has already told the store to
         // drop its warning, so this is all that is left to say it happened.
@@ -431,14 +431,5 @@
         opacity: 0.4;
         cursor: not-allowed;
         pointer-events: none;
-    }
-</style>
-
-<style lang="scss">
-    /* Deliberately not scoped: Monaco renders its own DOM, which Vue's scope
-       attribute never reaches. The tint is theme-neutral so it reads as "locked"
-       on both the light and dark editor themes. */
-    .monaco-editor .ks-readonly-yaml-line {
-        background-color: rgba(128, 128, 128, 0.14);
     }
 </style>

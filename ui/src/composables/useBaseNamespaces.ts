@@ -49,6 +49,7 @@ export const useBaseNamespacesStore = () => {
     async function load(id: string) {
         try{
             namespace.value = await NamespaceAPI.loadNamespace({id}, expectNotFound)
+            existing.value = true
         }catch (e: any) {
             if (e.status === 404) {
                 existing.value = false

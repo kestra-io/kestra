@@ -274,6 +274,9 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
         return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
+            // A trailing event from the previous execution's stream, still open until the page
+            // mounts and follows this one, would otherwise land on top of this load.
+            throttledExecutionUpdate.cancel()
             execution.value = data
             return execution.value
         })

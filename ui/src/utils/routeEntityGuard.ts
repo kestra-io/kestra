@@ -46,6 +46,8 @@ async function probe(resolve: EntityResolver, to: RouteLocationNormalized): Prom
     return 404
 }
 
+let latestNavigation = 0
+
 /**
  * Resolves a detail page's entity before the page mounts, so a missing one renders the
  * not-found screen at the requested URL instead of letting the page mount and half-render
@@ -62,8 +64,14 @@ export const entityNotFoundGuard: NavigationGuard = async (to, from) => {
     // A tab or filter change within the same entity has nothing new to resolve.
     if (record && from.matched.includes(record) && hasSameParams(to, from)) return true
 
-    const coreStore = useCoreStore()
-    coreStore.error = record ? await probe(resolverOf(record)!, to) : undefined
+    const navigation = ++latestNavigation
+    const verdict = record ? await probe(resolverOf(record)!, to) : undefined
+
+    // The user has navigated again while this one was resolving, so its verdict is about a page
+    // they are no longer on: applying it would show the not-found screen over the newer one.
+    if (navigation !== latestNavigation) return true
+
+    useCoreStore().error = verdict
 
     return true
 }

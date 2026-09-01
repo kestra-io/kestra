@@ -3,14 +3,7 @@ import {ALL_SECTIONS, findNestedPath} from "./blockSections"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
 
 export interface FocusCanvasCardOptions {
-    /**
-     * How to align the card in the scrollport.
-     *
-     * `nearest` (the default) scrolls the minimum distance, which is what makes
-     * arrow-key stepping between neighbours feel steady. A jump across the whole
-     * canvas needs `center`, otherwise the destination stops at the very edge of
-     * the viewport and the move is easy to miss.
-     */
+    /** Defaults to `nearest`, which keeps arrow-key stepping between neighbours steady. */
     align?: ScrollLogicalPosition
 }
 

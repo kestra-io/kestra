@@ -1916,7 +1916,9 @@
       "triggers": "Nessun Trigger Trovato",
       "flows": "Nessun Flow Trovato",
       "kv_pairs": "Nessuna coppia Key-Value trovata",
-      "secrets": "Nessun Secret Trovato"
+      "secrets": "Nessun Secret Trovato",
+      "all_columns_hidden": "Tutte le colonne sono nascoste",
+      "all_columns_hidden_description": "Riattiva almeno una colonna in Personalizza colonne della tabella per visualizzare nuovamente i dati."
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {

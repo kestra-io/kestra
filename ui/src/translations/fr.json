@@ -1916,7 +1916,9 @@
       "triggers": "Aucun Trigger trouvé",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
-      "secrets": "Aucun secret trouvé"
+      "secrets": "Aucun secret trouvé",
+      "all_columns_hidden": "Toutes les colonnes sont masquées",
+      "all_columns_hidden_description": "Réactivez au moins une colonne dans Personnaliser les colonnes du tableau pour revoir les données."
     },
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "dashboards": {

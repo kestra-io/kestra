@@ -1916,7 +1916,9 @@
       "triggers": "No se encontraron Triggers",
       "flows": "No se encontraron Flows",
       "kv_pairs": "No se encontraron pares Key-Value",
-      "secrets": "No se encontraron Secrets"
+      "secrets": "No se encontraron Secrets",
+      "all_columns_hidden": "Todas las columnas están ocultas",
+      "all_columns_hidden_description": "Vuelve a activar al menos una columna en Personalizar columnas de tabla para ver los datos de nuevo."
     },
     "duplicate-pair": "{label} \"{key}\" está duplicado, se ignora la primera clave.",
     "dashboards": {

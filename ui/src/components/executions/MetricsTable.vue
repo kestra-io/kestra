@@ -5,15 +5,16 @@
         v-model:pageSize="pageSize"
         :loadData="loadData"
         :data="hasVisibleColumns ? metrics : []"
-        :total="metricsTotal"
-        :noDataText="hasVisibleColumns ? undefined : $t('no_data')"
+        :total="hasVisibleColumns ? metricsTotal : 0"
+        :noDataText="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden')"
+        :noDataDescription="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
     >
         <template #navbar>
             <slot name="navbar" />
         </template>
 
-        <template v-if="$slots.empty" #empty>
+        <template v-if="$slots.empty && hasVisibleColumns" #empty>
             <slot name="empty" />
         </template>
 

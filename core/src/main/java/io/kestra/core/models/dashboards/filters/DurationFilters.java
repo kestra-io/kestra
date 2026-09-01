@@ -1,5 +1,6 @@
 package io.kestra.core.models.dashboards.filters;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,8 +8,8 @@ import java.util.Set;
 import java.util.function.Function;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.TypeConverter;
 
 /**
  * Rewrites the filters set on a duration field so that their values are expressed in the unit the store persists.
@@ -104,24 +105,27 @@ public final class DurationFilters {
         };
     }
 
-    private static Duration parse(Object value) {
-        if (value instanceof Duration duration) {
-            return duration;
-        }
-
+    private static Duration toDuration(Object value) {
         if (value == null) {
             throw new InvalidQueryFiltersException("a duration filter requires a value.");
         }
 
         try {
-            return JacksonMapper.ofJson().convertValue(value, Duration.class);
-        } catch (IllegalArgumentException e) {
+            // TypeConverter parses ISO-8601 only, a plain number is the number of seconds a duration is authored as elsewhere
+            return value instanceof Number seconds ? ofSeconds(seconds) : TypeConverter.toDuration(value);
+        } catch (IllegalArgumentException | ArithmeticException e) {
             throw new InvalidQueryFiltersException("`%s` is not a valid duration, use an ISO-8601 duration such as `PT1S` or a number of seconds.".formatted(value), e);
         }
     }
 
+    private static Duration ofSeconds(Number seconds) {
+        BigDecimal value = new BigDecimal(seconds.toString());
+
+        return Duration.ofSeconds(value.longValue(), value.remainder(BigDecimal.ONE).movePointRight(9).longValue());
+    }
+
     private static Number value(Object value, Function<Duration, Number> toStoreUnit) {
-        return toStoreUnit.apply(parse(value));
+        return toStoreUnit.apply(toDuration(value));
     }
 
     private static List<Object> values(List<Object> values, Function<Duration, Number> toStoreUnit) {

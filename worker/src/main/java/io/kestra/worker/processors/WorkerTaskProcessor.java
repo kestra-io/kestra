@@ -531,14 +531,16 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
      */
     private static List<AssetsInOut> withDefaultNamespace(List<AssetsInOut> bundles, String namespace) {
         return bundles.stream()
-            .map(bundle -> new AssetsInOut(
-                bundle.getInputs().stream()
-                    .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
-                    .toList(),
-                bundle.getOutputs().stream()
-                    .map(output -> output.getNamespace() == null ? output.withNamespace(namespace) : output)
-                    .toList()
-            ))
+            .map(
+                bundle -> new AssetsInOut(
+                    bundle.getInputs().stream()
+                        .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
+                        .toList(),
+                    bundle.getOutputs().stream()
+                        .map(output -> output.getNamespace() == null ? output.withNamespace(namespace) : output)
+                        .toList()
+                )
+            )
             .toList();
     }
 

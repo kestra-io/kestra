@@ -18,7 +18,7 @@ public final class AssetDeserializer extends PluginDeserializer<Asset> {
 
     /**
      * An asset declared by its id alone is external, as for the assets referenced in {@code assets.inputs}.
-     * An asset that already exists keeps its stored type, see {@link Asset#toUpdated(Asset)}.
+     * An asset that already exists keeps its stored type, see {@link Asset#toUpdated(Asset, boolean)}.
      */
     @Override
     protected Class<? extends Plugin> defaultClass() {

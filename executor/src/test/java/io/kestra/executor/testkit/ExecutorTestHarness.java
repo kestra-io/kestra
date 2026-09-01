@@ -31,6 +31,7 @@ import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
@@ -200,6 +201,9 @@ public final class ExecutorTestHarness {
                 }
                 if (FlowInputOutput.class.equals(beanType)) {
                     return flowInputOutput;
+                }
+                if (ExecutionDepthConfiguration.class.equals(beanType)) {
+                    return new ExecutionDepthConfiguration(100);
                 }
                 if (Validator.class.equals(beanType)) {
                     return validator;

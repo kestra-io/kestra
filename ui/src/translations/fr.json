@@ -882,6 +882,7 @@
     "metric": "Métrique",
     "aggregation": "Agrégation",
     "metric choice": "Aucune métrique disponible pour ce flow",
+    "metric filter no match": "Aucune métrique ne correspond à \"{term}\"",
     "of": "de",
     "title": "Titre",
     "api": "API",

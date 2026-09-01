@@ -882,6 +882,7 @@
     "metric": "メトリック",
     "aggregation": "集計",
     "metric choice": "このflowには利用可能なメトリクスがありません",
+    "metric filter no match": "\"{term}\" に一致するメトリックはありません",
     "of": "の",
     "title": "タイトル",
     "api": "API",

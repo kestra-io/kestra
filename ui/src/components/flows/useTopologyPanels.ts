@@ -99,7 +99,16 @@ export function useTopologyPanels(
 
         const blockSchemaPath = [pluginsStore.flowSchema?.$ref, "properties", params.section, "items"].join("/")
 
-        if (action === "create"){
+        if (action === "addErrorHandler") {
+            const errorsPath = `${path}.errors`
+            const existingErrors = YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
+                source: flowStore.flowYaml ?? "",
+                path: errorsPath,
+            }))
+            const errorsRefPath = Array.isArray(existingErrors) && existingErrors.length > 0 ? existingErrors.length - 1 : -1
+            const errorsBlockSchemaPath = [pluginsStore.flowSchema?.$ref, "properties", "errors", "items"].join("/")
+            openAddTaskTab(target, errorsPath, errorsBlockSchemaPath, errorsRefPath, "after", undefined, newPanelIndex)
+        } else if (action === "create"){
             const refLength = (refPath.toString().length + 2)
                 + (fieldName ? fieldName.length + 1 : 0) // -2 for the [ and ] characters an 1 for the .
 

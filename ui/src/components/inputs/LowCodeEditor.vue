@@ -573,8 +573,6 @@
     })
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
-    const taskEditData = ref()
-    const taskEditDomElement = ref()
     const logFilter = ref("")
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
     const isDrawerOpen = ref(false)
@@ -707,12 +705,14 @@
         }
     }
 
-    const onAddFlowableError = (event: any) => {
-        taskEditData.value = {
-            action: "add_flowable_error",
-            taskId: event.task.id,
+    const onAddFlowableError = (event: {task: Record<string, any>}) => {
+        topologyClick.value = {
+            action: "addErrorHandler",
+            params: {
+                section: SECTIONS.TASKS.toLowerCase() as any,
+                id: event.task.id,
+            },
         }
-        taskEditDomElement.value.$refs.taskEdit.click()
     }
 
     const fitViewOrientation = () => {

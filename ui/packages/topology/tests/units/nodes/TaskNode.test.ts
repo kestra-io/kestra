@@ -38,10 +38,13 @@ function taskRun(outputs?: Record<string, unknown>) {
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false}: {
+function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false}: {
     execution?: Record<string, unknown>,
     taskRuns?: Record<string, unknown>[],
     replayEnabled?: boolean,
+    task?: typeof TASK & {errors?: unknown[]},
+    isReadOnly?: boolean,
+    isFlowable?: boolean,
 }) {
     return mount(TaskNode, {
         props: {
@@ -50,11 +53,12 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false}: {
                 node: {
                     uid: "root.my-task",
                     type: "io.kestra.core.models.hierarchies.GraphTask",
-                    task: TASK,
+                    task,
                     taskRun: taskRuns[0],
                 },
                 executionId: execution ? EXECUTION_ID : undefined,
-                isReadOnly: true,
+                isReadOnly,
+                isFlowable,
             },
             playgroundEnabled: false,
             playgroundReadyToStart: false,
@@ -143,6 +147,22 @@ describe("TaskNode actions", () => {
         const emitted = wrapper.emitted("showOutputs")
         expect(emitted).toHaveLength(1)
         expect(emitted![0][0]).toMatchObject({id: "my-task"})
+    })
+
+    it("should offer add-error for an editable flowable task without error handlers", () => {
+        const wrapper = mountTaskNode({isReadOnly: false, isFlowable: true})
+
+        expect(actionKeys(wrapper)).toContain("add-error")
+    })
+
+    it("should not offer add-error when the task already has error handlers", () => {
+        const wrapper = mountTaskNode({
+            isReadOnly: false,
+            isFlowable: true,
+            task: {...TASK, errors: [{id: "handler", type: "io.kestra.plugin.core.log.Log"}]},
+        })
+
+        expect(actionKeys(wrapper)).not.toContain("add-error")
     })
 
     it("should emit replayTask with the task runs on replay click", () => {

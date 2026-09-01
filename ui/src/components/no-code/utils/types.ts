@@ -94,7 +94,8 @@ type CreationParams = BasicParams & {
 
 export type TopologyClickParams =
   | { action: "edit"; params: BasicParams }
-  | { action: "create"; params: CreationParams };
+  | { action: "create"; params: CreationParams }
+  | { action: "addErrorHandler"; params: BasicParams };
 
 export type BlockType = "tasks"
     |    "triggers"

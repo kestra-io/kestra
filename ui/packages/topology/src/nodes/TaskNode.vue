@@ -86,6 +86,7 @@
         default: null;
         description?: string;
         runIf?: unknown;
+        errors?: unknown[];
         taskRunner?: {
             type?: string;
         };
@@ -379,7 +380,7 @@
                 onClick: () => emit(EVENTS.EXPAND, expandData.value),
             })
         }
-        if (!taskExecution.value && !readOnly && props.data.isFlowable) {
+        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors) {
             list.push({
                 key: "add-error",
                 label: t("add error handler"),

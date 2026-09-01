@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards"
     import {processFlowYaml} from "./composables/useDashboards"
@@ -184,6 +184,7 @@
                 coreStore.message = {
                     variant: "error",
                     title: err,
+                    content: err,
                 }
                 await useDefaultDashboardBundledInUI()
             }

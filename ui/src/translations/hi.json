@@ -2,47 +2,6 @@
   "hi": {
     "loading": "लोड हो रहा है...",
     "more actions": "अधिक क्रियाएँ",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "केवल अक्षर, अंक, बिंदु, डैश और अंडरस्कोर का उपयोग करें, जो अक्षर या अंक से शुरू होते हों।",
-        "id_label": "flow id",
-        "id_placeholder": "मेरा-flow",
-        "namespace_invalid": "केवल छोटे अक्षरों, अंकों, बिंदुओं, डैश और अंडरस्कोर का उपयोग करें, जिनकी शुरुआत छोटे अक्षर या अंक से हो।",
-        "namespace_placeholder": "एक namespace चुनें",
-        "namespaces_error": "namespace लोड नहीं किए जा सके। मैन्युअल रूप से एक namespace टाइप करें।",
-        "open_editor": "एडिटर खोलें",
-        "subtitle": "हैलो-वर्ल्ड स्टार्टर से शुरू करें और स्क्रैच से बनाएं।",
-        "title": "खाली flow"
-      },
-      "blueprints": {
-        "subtitle": "समुदाय कैटलॉग से एक तैयार flow चुनें।",
-        "title": "ब्लूप्रिंट्स ब्राउज़ करें"
-      },
-      "import": {
-        "back": "वापस",
-        "error": {
-          "empty": "YAML सामग्री खाली है।",
-          "invalid_mapping": "अमान्य flow YAML: एक key-value मैपिंग अपेक्षित थी, न कि एक सूची या स्केलर।",
-          "parse_error": "YAML पार्स नहीं किया जा सका।",
-          "too_large": "वह फ़ाइल बहुत बड़ी है। इसके बजाय flow परिभाषा पेस्ट करें, या 1 MB से कम की फ़ाइल अपलोड करें।"
-        },
-        "paste_label": "YAML पेस्ट करें",
-        "read_error": "फ़ाइल पढ़ी नहीं जा सकी।",
-        "submit": "flow इम्पोर्ट करें",
-        "subtitle": "मौजूदा flow परिभाषा पेस्ट या अपलोड करें।",
-        "title": "YAML इम्पोर्ट करें",
-        "upload_button": ".yml / .yaml अपलोड करें",
-        "upload_label": "या एक फ़ाइल अपलोड करें",
-        "upload_tip": ".yml और .yaml फ़ाइलें स्वीकार करता है।"
-      },
-      "subtitle": "एक खाली कैनवास से शुरू करें, blueprints एक्सप्लोर करें, या मौजूदा YAML इम्पोर्ट करें।",
-      "system": {
-        "badge": "सिस्टम",
-        "subtitle": "अपने प्लेटफ़ॉर्म के लिए एक अलर्ट या ऑटोमेशन flow बनाएँ।",
-        "title": "एक सिस्टम flow बनाएँ"
-      },
-      "title": "नया flow बनाएँ"
-    },
     "recipe": {
       "create_flow": "flow बनाएँ",
       "email": "ईमेल",
@@ -223,10 +182,12 @@
     "add_new_item": "नया आइटम जोड़ें",
     "copy": "कॉपी करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
+    "copy_pebble_expression": "pebble एक्सप्रेशन कॉपी करें",
     "new": "नया",
     "edit": "संपादित करें",
     "back": "वापस",
     "next": "अगला",
+    "previous": "पिछला",
     "done": "पूर्ण",
     "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "edit flow": "Flow संपादित करें",
@@ -246,6 +207,7 @@
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
     "queued duration": "कतारबद्ध अवधि",
+    "paused duration": "रुकी हुई अवधि",
     "executionProgress": {
       "title": "निष्पादन प्रगति",
       "estimatedRemaining": "अनुमानित शेष समय: {duration}",
@@ -338,6 +300,21 @@
     "to": "तक",
     "steps": "चरण",
     "state": "स्थिति",
+    "state_history": {
+      "title": "स्थिति इतिहास",
+      "open": "स्थिति इतिहास",
+      "aria_open": "स्थिति इतिहास दिखाएं",
+      "aria_open_for": "{subject} का स्थिति इतिहास दिखाएं",
+      "started_at": "{time} पर शुरू हुआ",
+      "failed_at": "{time} पर विफल",
+      "skipped_at": "{time} पर छोड़ा गया",
+      "created_at": "{time} पर बनाया गया",
+      "did_not_run": "यह टास्क नहीं चला",
+      "waiting_to_start": "शुरू होने की प्रतीक्षा में",
+      "attempt_n": "प्रयास {index}",
+      "attempt_count": "{count} प्रयास",
+      "copy": "स्थिति इतिहास कॉपी करें"
+    },
     "search": "खोजें",
     "source search": "स्रोत खोज",
     "selected": "चयनित",
@@ -407,7 +384,7 @@
     "unqueue done": "निष्पादन कतार से बाहर है",
     "force run": "फोर्स रन",
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
-    "force run confirm": "क्या आप वाकई execution <code>{id}</code> को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task runs बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queue किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "force run confirm": "क्या आप वाकई execution `{id}` को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट task run बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED tasks को running स्थिति में ले जाया जाएगा।\n- RUNNING tasks को फिर से सबमिट किया जाएगा।\n- QUEUED tasks को un-queue किया जाएगा।\n- PAUSED tasks को फिर से शुरू किया जाएगा।",
     "force run done": "Execution को जबरन चलाया गया",
     "metrics": "मेट्रिक्स",
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
@@ -496,6 +473,11 @@
         "title": "बची हुई समवर्तीता सीमा"
       }
     },
+    "docsPage": {
+      "notFound": "यह डॉक्युमेंटेशन पेज मौजूद नहीं है। इसे हटाया या इसका नाम बदला गया हो सकता है।",
+      "loadError": "यह डॉक्युमेंटेशन पेज लोड नहीं हो सका। कृपया फिर से प्रयास करें।",
+      "backToDocs": "Docs पर वापस जाएँ"
+    },
     "documentation": {
       "documentation": "दस्तावेज़ीकरण"
     },
@@ -534,6 +516,15 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "autoInstall": {
+        "failed": "plugin इंस्टॉलेशन विफल रहा",
+        "failedHint": "flow सेव नहीं हुआ। समस्या ठीक करें या flow से plugin हटाएं, फिर दोबारा सेव करें।",
+        "preparing": "plugin इंस्टॉलेशन की तैयारी हो रही है...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "plugin सफलतापूर्वक इंस्टॉल हो गया | plugins सफलतापूर्वक इंस्टॉल हो गए",
+        "timeout": "plugin इंस्टॉलेशन में अपेक्षा से अधिक समय लग रहा है। flow सेव नहीं हुआ, इंस्टॉलेशन पूरा होने पर दोबारा सेव करें।",
+        "title": "{count} plugin इंस्टॉल हो रहा है | {count} plugins इंस्टॉल हो रहे हैं"
+      },
       "names": "plugins",
       "release": "रिलीज़ नोट्स",
       "beta": "बीटा",
@@ -573,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
+      "nav_definitions": "परिभाषाएँ",
       "nav_examples": "उदाहरण",
+      "nav_metrics": "Metrics",
       "nav_outputs": "Outputs",
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
@@ -610,6 +603,7 @@
     "triggers_add_filter_app": "ऐप",
     "triggers_add_empty_title": "कोई triggers नहीं मिले",
     "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
+    "ee_feature_tooltip": "इस सुविधा के लिए एंटरप्राइज़ एडिशन की आवश्यकता है।",
     "triggers_add_card_add": "जोड़ें",
     "triggers_add_modal_tab_form": "फॉर्म",
     "triggers_add_modal_tab_source": "स्रोत",
@@ -654,6 +648,10 @@
     "open full page": "पूरा पेज खोलें",
     "drill down preview": "पूर्वावलोकन",
     "errors": {
+      "400": {
+        "title": "खराब अनुरोध",
+        "content": "सर्वर अनुरोध को समझ नहीं सका।"
+      },
       "401": {
         "title": "अनधिकृत",
         "content": "इस पृष्ठ तक पहुँचने के लिए आपको प्रमाणित होना आवश्यक है।"
@@ -666,6 +664,114 @@
         "title": "पृष्ठ नहीं मिला",
         "content": "अनुरोधित URL इस सर्वर पर नहीं मिला।<br />यही सब हमें पता है।",
         "flow or execution": "वह flow या निष्पादन जिसे आप ढूंढ रहे हैं, मौजूद नहीं है।"
+      },
+      "409": {
+        "title": "टकराव",
+        "content": "अनुरोध संसाधन की वर्तमान स्थिति से विरोधाभास करता है।"
+      },
+      "422": {
+        "title": "अमान्य इकाई",
+        "content": "सबमिट की गई सामग्री को प्रोसेस नहीं किया जा सका।"
+      },
+      "500": {
+        "title": "आंतरिक सर्वर त्रुटि",
+        "content": "हमारी तरफ से कुछ गलत हो गया। कृपया बाद में फिर से प्रयास करें।"
+      },
+      "503": {
+        "title": "सेवा अनुपलब्ध है",
+        "content": "सर्वर अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।"
+      },
+      "generic": {
+        "title": "कुछ गलत हो गया",
+        "content": "एक अप्रत्याशित त्रुटि हुई। कृपया पुनः प्रयास करें।"
+      },
+      "trace id": "ट्रेस ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI अनुरोध विफल रहा"
+        },
+        "bad-request": {
+          "title": "खराब अनुरोध"
+        },
+        "bulk-validation-failed": {
+          "title": "कुछ आइटम संसाधित नहीं किए जा सके"
+        },
+        "conflict": {
+          "title": "टकराव"
+        },
+        "entity-already-exists": {
+          "title": "एंटिटी पहले से मौजूद है"
+        },
+        "forbidden": {
+          "title": "पहुँच अस्वीकृत"
+        },
+        "internal-error": {
+          "title": "आंतरिक सर्वर त्रुटि"
+        },
+        "invalid-argument": {
+          "title": "अमान्य तर्क"
+        },
+        "invalid-entity": {
+          "title": "अमान्य इकाई"
+        },
+        "invalid-format": {
+          "title": "अमान्य मान प्रारूप"
+        },
+        "invalid-json": {
+          "title": "अमान्य JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "अमान्य प्लगइन प्रकार"
+        },
+        "invalid-query-filters": {
+          "title": "अमान्य क्वेरी फ़िल्टर"
+        },
+        "invalid-query-parameter": {
+          "title": "अमान्य क्वेरी पैरामीटर"
+        },
+        "invalid-request-body": {
+          "title": "अमान्य अनुरोध बॉडी"
+        },
+        "locked": {
+          "title": "संसाधन लॉक है"
+        },
+        "method-not-allowed": {
+          "title": "तरीका अनुमत नहीं है"
+        },
+        "migration-required": {
+          "title": "माइग्रेशन आवश्यक है"
+        },
+        "not-acceptable": {
+          "title": "स्वीकार्य नहीं"
+        },
+        "not-found": {
+          "title": "संसाधन नहीं मिला"
+        },
+        "payload-too-large": {
+          "title": "Payload बहुत बड़ा है"
+        },
+        "resource-expired": {
+          "title": "संसाधन की समय-सीमा समाप्त हो गई है"
+        },
+        "service-unavailable": {
+          "title": "सेवा अनुपलब्ध है",
+          "detail": "सर्वर अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।"
+        },
+        "timeout": {
+          "title": "ऑपरेशन का समय समाप्त हो गया"
+        },
+        "too-many-requests": {
+          "title": "बहुत ज़्यादा अनुरोध"
+        },
+        "unauthenticated": {
+          "title": "प्रमाणीकरण आवश्यक है"
+        },
+        "unsupported-media-type": {
+          "title": "असमर्थित मीडिया प्रकार"
+        },
+        "validation-failed": {
+          "title": "सत्यापन विफल रहा"
+        }
       }
     },
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
@@ -683,6 +789,7 @@
     "label": "Label",
     "labels": "labels",
     "execution labels": "निष्पादन labels",
+    "show more labels": "{count} और लेबल दिखाएं",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
     "feeds": {
       "heading": "सभी चीजें Kestra।",
@@ -696,7 +803,7 @@
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
-    "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task executions बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queued किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
     "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
@@ -792,6 +899,11 @@
     "expand_by_default": "संरचित logs को डिफ़ॉल्ट रूप से विस्तृत करें",
     "similar lines": "समान लाइनें",
     "download_logs_description": "निर्यात करने के लिए logs चुनें। फ़िल्टर आपकी वर्तमान दृश्य के अनुसार डिफ़ॉल्ट होते हैं।",
+    "logs_download_truncated": "सबसे नई {downloaded} log पंक्तियाँ निर्यात की गईं। {skipped} और आपके फ़िल्टर से मेल खाती थीं और छोड़ दी गईं।",
+    "logs_download_capped": "सबसे नई {downloaded} log पंक्तियाँ निर्यात की गईं, जो एक निर्यात की अधिकतम सीमा है। आपके फ़िल्टर से और भी मेल खा सकती थीं।",
+    "logs_download_partial": "यह फ़िल्टर इससे आगे पेज नहीं किया जा सकता, इसलिए निर्यात {downloaded} log पंक्तियों पर रुक गया। कुछ मेल खाती पंक्तियाँ अनुपस्थित हैं।",
+    "logs_download_failed": "log निर्यात विफल रहा। कोई फ़ाइल डाउनलोड नहीं हुई।",
+    "logs_download_empty": "आपके फ़िल्टर से कोई log पंक्ति मेल नहीं खाई, इसलिए कोई फ़ाइल डाउनलोड नहीं हुई।",
     "display_settings": "सेटिंग्स दिखाएँ",
     "density": "घनत्व",
     "density_compact": "कॉम्पैक्ट",
@@ -875,6 +987,7 @@
         "folder_error": "फ़ोल्डर बनाते समय त्रुटि हुई"
       },
       "rename": {
+        "error": "\"{name}\" में नाम बदला नहीं जा सका। इस नाम की फ़ाइल या फ़ोल्डर पहले से मौजूद हो सकता है।",
         "label": "नाम बदलें",
         "file": "फ़ाइल का नाम बदलें",
         "folder": "फ़ोल्डर का नाम बदलें",
@@ -900,6 +1013,7 @@
       },
       "export": "Namespace फ़ाइलें निर्यात करें",
       "export_single": "फ़ाइल निर्यात करें",
+      "export_error": "\"{name}\" निर्यात नहीं किया जा सका। इसका पथ हल नहीं हो सका।",
       "dialog": {
         "name": {
           "file": "एक्सटेंशन के साथ नाम:",
@@ -1019,7 +1133,8 @@
             "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब",
             "playground": "प्लेग्राउंड",
             "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
-            "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड"
+            "task_edit_default_mode": "डिफ़ॉल्ट Task संपादन मोड",
+            "flow_template": "डिफ़ॉल्ट flow टेम्पलेट"
           },
           "descriptions": {
             "default_namespace": "नए flows को बिना namespace के बनाते समय उपयोग किया जाता है।",
@@ -1032,11 +1147,17 @@
             "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।",
             "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
             "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
-            "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।"
+            "task_edit_default_mode": "नो-कोड एडिटर से कोई task डिफ़ॉल्ट रूप से कैसे खुलता है।",
+            "flow_template": "जब आप एक नया flow बनाते हैं तो YAML एडिटर में खुलता है। id और namespace को छोड़ा जा सकता है, क्योंकि वे आपके लिए जनरेट किए जाते हैं। जब यह खाली होता है, तो इंस्टेंस के लिए कॉन्फ़िगर किया गया टेम्पलेट उपयोग किया जाता है।"
           },
           "task_edit_default_mode_options": {
             "modal": "मॉडल",
             "tab": "टैब"
+          },
+          "flow_template_reset": "डिफ़ॉल्ट पर रीसेट करें",
+          "flow_template_error": {
+            "invalid_mapping": "अमान्य flow टेम्पलेट: एक key-value मैपिंग अपेक्षित थी, सूची या स्केलर नहीं।",
+            "parse_error": "YAML पार्स नहीं किया जा सका। टेम्पलेट सहेज लिया गया था, इसलिए जब आप कोई flow बनाते हैं तो एडिटर वही त्रुटि दिखा सकता है।"
           }
         },
         "theme": {
@@ -1113,7 +1234,7 @@
       "contact_sales": "सेल्स से संपर्क करें",
       "secrets": {
         "title": "अपने Secrets Management को अपग्रेड करें",
-        "message": "एंटरप्राइज़ एडिशन (EE) आपको सीधे UI में सीक्रेट्स जोड़ने, संपादित करने या हटाने की सुविधा देता है - किसी इंस्टेंस रीस्टार्ट की आवश्यकता नहीं है। ग्रेन्युलर RBAC परमिशन के साथ namespace द्वारा सीक्रेट्स को व्यवस्थित करें, और उन्हें पैरेंट से चाइल्ड namespaces में इनहेरिट करें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे सीक्रेट्स मैनेजर के साथ इंटीग्रेट होता है। टीमों में सीक्रेट्स को अलग करने के लिए प्रति namespace, tenant, या इंस्टेंस के लिए डेडिकेटेड बैकएंड सेट करें, या बाहरी वॉल्ट में संग्रहीत रीड-ओनली सीक्रेट्स को सक्षम करें। सीक्रेट्स रेस्ट और ट्रांजिट में एन्क्रिप्टेड रहते हैं। वैकल्पिक कैशिंग API कॉल को कम करती है, और ऑडिट ट्रेल सभी एक्सेस को लॉग करते हैं।",
+        "message": "एंटरप्राइज़ एडिशन आपको UI में सीधे सीक्रेट्स जोड़ने, संपादित करने और हटाने, उन्हें RBAC के साथ namespace के अनुसार व्यवस्थित करने, और HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager या Elasticsearch में संग्रहीत करने की सुविधा देता है।",
         "add_env": {
           "intro": "एक नया Secret बनाएँ",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
@@ -1424,6 +1545,7 @@
       "key": "नाम",
       "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
       "name": "गुप्त मान",
+      "valuePlaceholder": "गुप्त मान दर्ज करें",
       "description": "विवरण",
       "descriptionPlaceholder": "इस secret का वर्णन करें",
       "tags": "टैग",
@@ -1440,7 +1562,8 @@
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
       },
-      "inherited": "विरासत में मिले KV जोड़े"
+      "inherited": "विरासत में मिले KV जोड़े",
+      "expiration_hint": "वर्तमान में {date} को समाप्त होता है। इस समाप्ति को बनाए रखने के लिए फ़ील्ड को अछूता छोड़ दें; अवधि चुनने से यह अब से पुनर्गणना करता है, और इसे साफ़ करने से यह हट जाता है।"
     },
     "expiration": "समाप्ति",
     "page": {
@@ -1793,7 +1916,9 @@
       "triggers": "कोई Triggers नहीं मिले",
       "flows": "कोई Flows नहीं मिला",
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
-      "secrets": "कोई Secrets नहीं मिले"
+      "secrets": "कोई Secrets नहीं मिले",
+      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
+      "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
@@ -1811,6 +1936,7 @@
       "others": "अन्य",
       "viewAll": "सभी देखें",
       "export": "एक्सपोर्ट करें",
+      "exportEmpty": "इस चार्ट में निर्यात करने के लिए कोई डेटा नहीं है।",
       "exportTo": {
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"
@@ -1920,6 +2046,7 @@
           "test": "परीक्षण"
         },
         "contextRemoved": "संदर्भ से {type} {id} हटा दिया गया।",
+        "modelChanged": "{model} पर स्विच किया गया।",
         "toolResult": {
           "detail": "विवरण",
           "error": "{tool} विफल रहा",
@@ -1990,6 +2117,12 @@
           "अभिसरण हो रहा है"
         ],
         "newChat": "नया चैट",
+        "fixThread": {
+          "flow": "फ्लो {id} को ठीक करें",
+          "task": "टास्क {id} को ठीक करें",
+          "execution": "{id} के निष्पादन को ठीक करें",
+          "generic": "फ्लो त्रुटियों को ठीक करें"
+        },
         "draft": {
           "openInEditor": "संपादक में खोलें",
           "apply": "लागू करें",
@@ -2038,6 +2171,31 @@
         "zoom_out": "ज़ूम आउट",
         "clear_selection": "चयन साफ़ करें",
         "fit_view": "स्क्रीन के अनुसार फिट करें"
+      },
+      "dag": {
+        "force": "ट्री",
+        "layered": "DAG",
+        "system": "सिस्टम",
+        "last_update": "अंतिम अपडेट",
+        "status": {
+          "fresh": "ताज़ा",
+          "stale": "बासी",
+          "failed": "असफल",
+          "unknown": "ट्रैक नहीं किया गया"
+        },
+        "summary": {
+          "fresh": "सभी {n} एसेट नए हैं",
+          "issues": "{n} बासी",
+          "failed": "{n} विफल",
+          "last_run": "अंतिम रन {ago}",
+          "unknown": "{n} ट्रैक नहीं किया गया"
+        },
+        "recent_runs": "हाल की रन",
+        "group_by": "द्वारा समूहबद्ध करें",
+        "groups": "समूह ({n})",
+        "group_none": "कोई ग्रुपिंग नहीं",
+        "group_dataset": "डेटासेट",
+        "ungrouped": "असमूहित"
       },
       "search": {
         "placeholders": {
@@ -2100,7 +2258,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{count} MCP सर्वर",
+      "servers_count": "{count} MCP सर्वर | {count} MCP सर्वर",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",
@@ -2234,7 +2392,7 @@
       "next_match": "अगला मिलान",
       "no_results_description": "namespace को विस्तृत करने का प्रयास करें, स्कोप को वापस All source पर स्विच करें, या Match case और Match whole word को बंद करें।",
       "no_results_hidden_type": "आपके द्वारा न चुने गए {type} में {count} मिलान मिला। | आपके द्वारा न चुने गए {type} में {count} मिलान मिले।",
-      "no_results_in_types": "{types} में “{query}” के लिए कोई मिलान नहीं",
+      "no_results_in_types": "{types} में {query} के लिए कोई मिलान नहीं",
       "no_results_title": "“{query}” के लिए कोई मिलान नहीं मिला",
       "open_flow": "flow खोलें",
       "open_in_editor": "एडिटर में खोलें",

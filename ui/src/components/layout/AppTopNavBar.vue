@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import GlobalSearch from "./GlobalSearch.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
@@ -134,18 +134,48 @@
         bookmarksStore.pages.some((page) => page.path === currentFavURI.value),
     )
 
+    const derivedBookmarkLabel = computed(() =>
+        store.bookmarkLabel || (store.breadcrumb.length
+            ? `${store.breadcrumb[store.breadcrumb.length - 1].label}: ${store.title}`
+            : store.title),
+    )
+
     const onStarClick = () => {
         if (bookmarked.value) {
             bookmarksStore.remove({path: currentFavURI.value})
         } else {
             bookmarksStore.add({
                 path: currentFavURI.value,
-                label: store.breadcrumb.length
-                    ? `${store.breadcrumb[store.breadcrumb.length - 1].label}: ${store.title}`
-                    : store.title,
+                label: derivedBookmarkLabel.value,
             })
         }
     }
+
+    // Which path the store's label was last written for. The store is filled by the visited page's
+    // own TopNavBar, which lands a flush after the route — and on a route that mounts none, never:
+    // ownership is released only on the tick after the previous bar unmounts, so a non-null owner
+    // is not proof the label describes where we are now.
+    const labelledPath = ref<string | null>(null)
+
+    watch(
+        [() => store.ownerId, derivedBookmarkLabel],
+        ([ownerId]) => {
+            labelledPath.value = ownerId === null ? null : currentFavURI.value
+        },
+        {immediate: true, flush: "post"},
+    )
+
+    // Bookmark labels are stored as resolved text, so one created in another language keeps it.
+    // Visiting the page is the only moment a freshly translated label exists, so refresh it here;
+    // the store leaves a label the user typed alone.
+    watch(
+        [bookmarked, derivedBookmarkLabel, labelledPath],
+        ([isBookmarked, label, writtenFor]) => {
+            if (!isBookmarked || !label || writtenFor !== currentFavURI.value) return
+            bookmarksStore.refreshLabel({path: currentFavURI.value, label})
+        },
+        {immediate: true, flush: "post"},
+    )
 </script>
 
 <style scoped lang="scss">

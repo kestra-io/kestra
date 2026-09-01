@@ -71,6 +71,10 @@ main {
         transition: padding 0.3s ease;
         padding: 0 2rem;
 
+        &:has(section.empty) {
+            transition: none;
+        }
+
         &.full-height {
             flex: 1;
             display: flex;
@@ -98,15 +102,16 @@ main {
             flex: 1;
             min-height: 0;
 
-            :has(.ks-data-table-wrapper) {
+            // Every ancestor of the table is matched here, so keep the stretch out of
+            // collapsible sections, which have to hug their summary when closed.
+            :has(.ks-data-table-wrapper):not(details, details *) {
                 height: 100%;
             }
         }
     }
 
-    // fitHeight pages pin the pagination footer, so override main-container's own top/bottom padding to match plain full-container pages
     section.main-container.full-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
-        padding-top: 1rem;
+        padding-top: 2rem;
         padding-bottom: 0;
     }
 

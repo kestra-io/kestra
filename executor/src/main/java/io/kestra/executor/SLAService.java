@@ -29,8 +29,8 @@ public class SLAService {
                     try {
                         return sla.evaluate(runContext, execution);
                     } catch (Exception e) {
-                        runContext.logger().error("Ignoring SLA '{}' because of the error: {}", sla.getId(), e.getMessage(), e);
-                        return Optional.<Violation> empty();
+                        runContext.logger().error("SLA '{}' could not be evaluated and is treated as violated: {}", sla.getId(), e.getMessage(), e);
+                        return Optional.of(new Violation(sla.getId(), sla.getBehavior(), sla.getLabels(), "SLA could not be evaluated: " + e.getMessage()));
                     }
                 }
             )
@@ -49,8 +49,8 @@ public class SLAService {
             maybeViolation.ifPresent(violation -> runContext.logger().warn("SLA '{}' violated: {}", violation.slaId(), violation.reason()));
             return maybeViolation;
         } catch (Exception e) {
-            runContext.logger().error("Ignoring SLA '{}' because of the error: {}", sla.getId(), e.getMessage(), e);
-            return Optional.empty();
+            runContext.logger().error("SLA '{}' could not be evaluated and is treated as violated: {}", sla.getId(), e.getMessage(), e);
+            return Optional.of(new Violation(sla.getId(), sla.getBehavior(), sla.getLabels(), "SLA could not be evaluated: " + e.getMessage()));
         }
     }
 }

@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, waitFor, within} from "storybook/test"
 import KsJsonTree from "../../../src/components/Data/KsJsonTree.vue"
 import {KsCard} from "@kestra-io/design-system"
 
@@ -134,4 +135,65 @@ export const RowsWithGutter: Story = {
             )
         },
     }),
+}
+
+/** Empty containers used to render as `[object Object]` and as a blank. */
+export const EmptyContainers: Story = {
+    args: {
+        value: {outputFiles: {}, tags: [], nested: {inner: {}}, populated: {a: 1}},
+        defaultExpanded: true,
+    },
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+
+        // Keys render quoted, so match the quoted form the component actually writes.
+        await waitFor(() => expect(canvas.getByText("\"outputFiles\"")).toBeTruthy())
+        expect(canvasElement.textContent).not.toContain("[object Object]")
+
+        // One `{}` per empty object, and the empty array reads as `[]` rather than as a blank.
+        expect(canvas.getAllByText("{}")).toHaveLength(2)
+        expect(canvas.getByText("[]")).toBeTruthy()
+    },
+}
+
+/** An empty root rendered nothing at all, which hid a log line whose message was `{}`. */
+export const EmptyRoot: Story = {
+    args: {value: {}, defaultExpanded: true},
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        await waitFor(() => expect(within(canvasElement).getByText("{}")).toBeTruthy())
+    },
+}
+
+export const EmptyRootArray: Story = {
+    args: {value: [], defaultExpanded: true},
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        await waitFor(() => expect(within(canvasElement).getByText("[]")).toBeTruthy())
+    },
 }

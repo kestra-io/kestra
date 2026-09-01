@@ -14,6 +14,34 @@ describe("CopilotMessage", () => {
         expect(w.text()).toContain("hello there")
     })
 
+    it("renders a ``` fenced segment of the user prompt as a literal code block", () => {
+        const w = mountMessage({
+            id: "1a", role: "USER", type: "TEXT",
+            content: "Fix this flow:\n```yaml\nid: demo\nnamespace: company.team\n```\nIt fails on start.",
+        })
+        const code = w.find("[data-test=\"copilot-user-code\"]")
+        expect(code.exists()).toBe(true)
+        expect(code.element.textContent).toBe("id: demo\nnamespace: company.team")
+        const texts = w.findAll(".copilot-bubble-text")
+        expect(texts[0].text()).toBe("Fix this flow:")
+        expect(texts[1].text()).toBe("It fails on start.")
+    })
+
+    it("treats an unclosed ``` fence as a code block running to the end of the prompt", () => {
+        const w = mountMessage({
+            id: "1b", role: "USER", type: "TEXT",
+            content: "Why is this wrong?\n```yaml\nid: demo\ntasks: []",
+        })
+        expect(w.find("[data-test=\"copilot-user-code\"]").element.textContent).toBe("id: demo\ntasks: []")
+    })
+
+    it("renders a plain user prompt without any code block", () => {
+        const w = mountMessage({id: "1c", role: "USER", type: "TEXT", content: "id: demo\nnamespace: company.team"})
+        expect(w.find("[data-test=\"copilot-user-code\"]").exists()).toBe(false)
+        // Line breaks survive into the DOM; `white-space: pre-wrap` renders them.
+        expect(w.find(".copilot-bubble-text").element.textContent).toBe("id: demo\nnamespace: company.team")
+    })
+
     it("renders assistant text as a styled bubble through the markdown renderer", () => {
         const w = mountMessage({id: "2", role: "ASSISTANT", type: "TEXT", content: "**bold** answer"})
         expect(w.find(".copilot-bubble-assistant").exists()).toBe(true)

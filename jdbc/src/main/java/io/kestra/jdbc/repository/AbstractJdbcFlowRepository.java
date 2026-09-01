@@ -18,6 +18,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.AlreadyExistsException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
@@ -29,7 +30,6 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.flows.*;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -923,17 +923,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     public FlowWithSource create(GenericFlow flow) throws ConstraintViolationException {
         if (this.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()) {
-            throw new ConstraintViolationException(
-                Collections.singleton(
-                    ManualConstraintViolation.of(
-                        "Flow id already exists",
-                        flow,
-                        GenericFlow.class,
-                        "flow.id",
-                        flow.getId()
-                    )
-                )
-            );
+            throw AlreadyExistsException.of("Flow", flow.getId(), flow.getNamespace());
         }
         return this.save(flow, CrudEventType.CREATE);
     }

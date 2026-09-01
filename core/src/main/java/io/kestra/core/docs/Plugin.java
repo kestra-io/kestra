@@ -8,10 +8,10 @@ import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.plugins.RegisteredPlugin;
 
 import io.micronaut.core.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import static java.util.function.Predicate.not;
 
@@ -122,7 +122,9 @@ public class Plugin {
      * is written relative to it: {@code io.kestra.plugin.aws.sqs} declares "SQS", which only reads
      * as "AWS SQS", and several plugins have a subgroup named {@code core}. Plugins that instead
      * write their subgroup title absolutely ({@code io.kestra.plugin.azure.eventhubs} declares
-     * "Azure Event Hubs") keep it as is rather than stuttering.
+     * "Azure Event Hubs") keep it as is rather than stuttering, and one that only repeats the tail
+     * of the plugin title ("Cloud Storage (GCS)" under "Google Cloud") is joined on those words.
+     * The UI applies the same join between this title and the trigger's class name.
      *
      * @param registeredPlugin the plugin the element belongs to
      * @param cls the plugin element's class
@@ -147,11 +149,39 @@ public class Plugin {
                 .map(StringUtils::capitalize)
                 .collect(Collectors.joining(" "));
 
-        // Sub-group titles are increasingly written absolutely ("Azure Event Hubs" under the Azure
-        // plugin), so prefix the plugin title only when the sub-group does not already lead with it.
-        return subGroupTitle.toLowerCase(Locale.ROOT).startsWith(title.toLowerCase(Locale.ROOT))
-            ? subGroupTitle
-            : "%s %s".formatted(title, subGroupTitle);
+        // "Grafana-loki" repeats "Grafana" inside a single word, which the word-level join below
+        // cannot see, so drop a plugin title the sub-group already spells out as its own prefix.
+        if (subGroupTitle.toLowerCase(Locale.ROOT).startsWith(title.toLowerCase(Locale.ROOT))) {
+            return subGroupTitle;
+        }
+
+        return joinWithoutRepeating(title, subGroupTitle);
+    }
+
+    /**
+     * Joins a plugin title with one of its sub-group titles, dropping from the end of the plugin
+     * title the words the sub-group already opens with, so that "Google Cloud" and "Cloud Storage
+     * (GCS)" read as "Google Cloud Storage (GCS)" rather than stuttering. The repeated words are
+     * kept as the sub-group cased them, since a sub-group title spells out what the plugin title
+     * may abbreviate or lowercase.
+     */
+    private static String joinWithoutRepeating(String title, String subGroupTitle) {
+        String[] titleWords = title.split(" ");
+        String[] subGroupWords = subGroupTitle.split(" ");
+
+        for (int overlap = Math.min(titleWords.length, subGroupWords.length); overlap > 0; overlap--) {
+            boolean repeated = true;
+            for (int i = 0; i < overlap && repeated; i++) {
+                repeated = titleWords[titleWords.length - overlap + i].equalsIgnoreCase(subGroupWords[i]);
+            }
+
+            if (repeated) {
+                String remaining = String.join(" ", Arrays.copyOf(titleWords, titleWords.length - overlap));
+                return remaining.isEmpty() ? subGroupTitle : "%s %s".formatted(remaining, subGroupTitle);
+            }
+        }
+
+        return "%s %s".formatted(title, subGroupTitle);
     }
 
     /**

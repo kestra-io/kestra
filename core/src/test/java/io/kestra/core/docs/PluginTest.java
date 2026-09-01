@@ -62,6 +62,16 @@ class PluginTest {
     }
 
     @Test
+    void titleForJoinsOnTheWordsASubGroupRepeatsFromTheEndOfThePluginTitle() {
+        // io.kestra.plugin.gcp.gcs declares "Cloud Storage (GCS)" under the "Google Cloud" plugin,
+        // which would otherwise read "Google Cloud Cloud Storage (GCS)". Same shape here, with the
+        // core plugin's "Data Filter" sub-group behind a plugin title ending in "Data".
+        RegisteredPlugin plugin = pluginWithTitleAndGroup("Kestra Data", "io.kestra.plugin.core");
+
+        assertThat(Plugin.titleFor(plugin, Flows.class)).isEqualTo("Kestra Data Filter");
+    }
+
+    @Test
     void titleForIgnoresSubGroupsOfAClassThatLivesOutsideThePluginsGroup() {
         // EE plugins ship classes under io.kestra.plugin.core.*, so a plugin's own title must win
         // over the sub-group annotation of a package it does not own.

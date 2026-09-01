@@ -67,6 +67,17 @@ describe("buildTriggerDisplayNames", () => {
         expect(label(triggers, "io.kestra.plugin.github.IssueCreatedTrigger")).toBe("GitHub Issue Created")
     })
 
+    test("does not repeat the word the plugin title and the class name meet on", () => {
+        // Two plugins ship a `MailReceivedTrigger`, so both labels get their plugin title in front —
+        // titles that themselves end in "Mail", which would read "Notifications Mail Mail Received".
+        const triggers = [
+            {type: "io.kestra.plugin.notifications.mail.MailReceivedTrigger", name: "MailReceivedTrigger", pluginTitle: "Notifications Mail", pluginGroupTitle: "Notifications"},
+            {type: "io.kestra.plugin.googleworkspace.mail.MailReceivedTrigger", name: "MailReceivedTrigger", pluginTitle: "Google Workspace Mail", pluginGroupTitle: "Google Workspace"},
+        ]
+        expect(label(triggers, "io.kestra.plugin.notifications.mail.MailReceivedTrigger")).toBe("Notifications Mail Received")
+        expect(label(triggers, "io.kestra.plugin.googleworkspace.mail.MailReceivedTrigger")).toBe("Google Workspace Mail Received")
+    })
+
     test("escalates to the plugin artifact's title when the subgroup title itself collides", () => {
         // Two subgroups of unrelated plugins can still declare the same title, so pluginTitle
         // alone renders two identical "core Realtime" cards (review round 2).

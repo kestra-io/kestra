@@ -414,7 +414,8 @@
       "zoom-reset": "Zoom zurücksetzen",
       "zoom-fit": "Anpassen",
       "invalid": "Graph-Fehler",
-      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler."
+      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
+      "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut."
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",

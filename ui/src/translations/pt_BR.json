@@ -414,7 +414,8 @@
       "zoom-reset": "Redefinir zoom",
       "zoom-fit": "Ajustar",
       "invalid": "Erro no gráfico",
-      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros."
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
+      "load_error": "Não foi possível carregar o gráfico de topologia. Tente novamente."
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Exibir condição da task",

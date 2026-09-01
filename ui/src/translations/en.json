@@ -414,7 +414,8 @@
       "zoom-reset": "Reset zoom",
       "zoom-fit": "Fit",
       "invalid": "Graph error",
-      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors."
+      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
+      "load_error": "Could not load the topology graph. Please try again."
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",

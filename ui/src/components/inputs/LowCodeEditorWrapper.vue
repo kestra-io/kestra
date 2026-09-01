@@ -28,10 +28,14 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
     import LowCodeEditor from "./LowCodeEditor.vue"
     import {useFlowStore} from "../../stores/flow"
+    import {useToast} from "../../utils/toast"
 
     const flowStore = useFlowStore()
+    const toast = useToast()
+    const {t} = useI18n()
 
     const flowYaml = computed(() => flowStore.flowYaml)
     const flowGraph = computed(() => flowStore.flowGraph)
@@ -49,11 +53,17 @@
     }
 
     const onExpandSubflow = async (subflows: string[]) => {
+        const previousExpandedSubflows = flowStore.expandedSubflows
         isLoading.value = true
         flowStore.expandedSubflows = subflows
         try {
             await flowStore.fetchGraph()
         } catch (error) {
+            flowStore.expandedSubflows = previousExpandedSubflows
+            const status = (error as {status?: number}).status
+            if (![404, 422].includes(status ?? 0)) {
+                toast.error(t("topology-graph.load_error"))
+            }
             console.error("Failed to fetch expanded subflow graph:", error)
         } finally {
             isLoading.value = false

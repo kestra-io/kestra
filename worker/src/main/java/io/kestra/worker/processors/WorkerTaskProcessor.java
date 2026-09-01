@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -48,6 +49,7 @@ import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.models.flows.State.Type.*;
@@ -289,13 +291,23 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 state = WARNING;
             }
 
-            if (taskRunWithOutput.assetEmissionFailed()) {
+            if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.DECLARATION_INVALID) {
+                // never rewrite a state that already terminated in error, mirroring AssetFailureBehavior.apply
+                if (!state.isTerminatedInError()) {
+                    runContext.logger().error(
+                        "Task state changed from {} to {} because its asset declaration is invalid, which assetFailureBehavior does not soften",
+                        state, FAILED
+                    );
+                    state = FAILED;
+                }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
                 AssetFailureBehavior assetFailureBehavior = AssetFailureBehavior.WARN;
                 if (assetsDeclaration != null) {
                     try {
                         assetFailureBehavior = runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
-                    } catch (IllegalVariableEvaluationException e) {
+                    } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
+                        // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
                         runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
                     }
                 }
@@ -451,7 +463,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
 
-        boolean assetEmissionFailed = false;
+        TaskRunWithOutput.AssetEmission assetEmission = TaskRunWithOutput.AssetEmission.OK;
         try {
             if (workerTask.getTask().getAssets() != null) {
                 // We need to have the task outputs injected before rendering the assets
@@ -463,17 +475,17 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 List<AssetIdentifier> declaredInputs = List.of();
                 try {
                     declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
-                } catch (Exception e) {
+                } catch (IllegalVariableEvaluationException e) {
                     logger.warn("Unable to render the declared asset inputs of task '{}'", taskRun.getTaskId(), e);
-                    assetEmissionFailed = true;
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
                 }
 
                 List<Asset> declaredOutputs = List.of();
                 try {
                     declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
-                } catch (Exception e) {
+                } catch (IllegalVariableEvaluationException e) {
                     logger.warn("Unable to render the declared asset outputs of task '{}'", taskRun.getTaskId(), e);
-                    assetEmissionFailed = true;
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
                 }
 
                 // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
@@ -488,12 +500,29 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     taskRun = taskRun.withAssetEmits(withDefaultNamespace(bundles, taskRun.getNamespace()));
                 }
             }
+        } catch (ConstraintViolationException e) {
+            // validate() re-checks the whole task bean, so only an assets-scoped violation is the declaration's fault
+            String assetViolations = violationsUnder("assets", e);
+            if (assetViolations.isEmpty()) {
+                logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
+                assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+            } else {
+                logger.error("Invalid asset declaration for taskRun '{}': {}", taskRun.getId(), assetViolations);
+                assetEmission = TaskRunWithOutput.AssetEmission.DECLARATION_INVALID;
+            }
         } catch (Exception e) {
             logger.warn("Unable to emit the assets of task '{}'", taskRun.getTaskId(), e);
-            assetEmissionFailed = true;
+            assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
         }
 
-        return new TaskRunWithOutput(taskRun, outputs, assetEmissionFailed);
+        return new TaskRunWithOutput(taskRun, outputs, assetEmission);
+    }
+
+    private static String violationsUnder(String propertyPathPrefix, ConstraintViolationException e) {
+        return e.getConstraintViolations().stream()
+            .filter(violation -> violation.getPropertyPath().toString().startsWith(propertyPathPrefix))
+            .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
+            .collect(Collectors.joining(", "));
     }
 
     /**

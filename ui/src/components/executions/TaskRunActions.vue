@@ -188,7 +188,7 @@
                 coreStore.message = {
                     variant: "success",
                     title: t("success"),
-                    message: t("copied_logs_to_clipboard"),
+                    content: t("copied_logs_to_clipboard"),
                 }
             })
         })
@@ -228,7 +228,7 @@
             return last?.message ?? ""
         })()
         const prompt = `Fix the task ${props.taskRun.taskId} as it generated the following error:\n${errorLines}`
-        miscStore.promptCopilot(prompt)
+        miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: props.taskRun.taskId}), newThread: true})
     }
 </script>
 

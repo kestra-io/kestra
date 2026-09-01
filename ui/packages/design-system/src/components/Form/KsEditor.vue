@@ -247,7 +247,7 @@
                 padding-right: inherit;
                 cursor: text;
                 user-select: none;
-                color: var(--ks-text-inactive);
+                color: var(--ks-placeholder-color);
             }
 
             .editor-wrapper {
@@ -377,7 +377,7 @@
                 }
             }
 
-            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+            .monaco-list-row[aria-label^="_DATE_PICKER_"] {
                 display: none;
             }
         }

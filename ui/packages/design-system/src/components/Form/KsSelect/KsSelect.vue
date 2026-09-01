@@ -225,9 +225,9 @@
         }
 
         .kel-select__placeholder.is-transparent {
-            color: var(--ks-text-inactive);
-            font-size: var(--ks-font-size-xs);
-            font-weight: var(--ks-font-weight-regular);
+            color: var(--ks-placeholder-color);
+            font-size: var(--ks-placeholder-font-size);
+            font-weight: var(--ks-placeholder-font-weight);
         }
 
         .kel-select__wrapper {

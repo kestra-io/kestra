@@ -1,5 +1,7 @@
 package io.kestra.core.models.assets;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -28,43 +30,100 @@ class AssetTest {
     }
 
     @Test
-    void shouldKeepPreviousTypeAndNamespaceWhenNotDeclared() {
-        Asset previous = Custom.builder()
+    void shouldKeepPreviousTypeWhenTypeChangeIsNotAllowed() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("VM").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getType()).isEqualTo("EC2");
+    }
+
+    @Test
+    void shouldReplaceTypeWhenTypeChangeIsAllowed() {
+        // Given
+        Custom previous = Custom.builder()
             .namespace("io.kestra")
             .id("my-asset")
-            .type("MY_OWN_ASSET_TYPE")
-            .displayName("My asset")
-            .description("This is my asset")
+            .type("VM")
+            .metadata(Map.of("provider", "aws"))
             .build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
 
-        Asset updated = External.builder()
-            .id("my-asset")
-            .metadata(Map.of("owner", "infra-team"))
-            .build()
-            .toUpdated(previous);
+        // When
+        Custom updated = incoming.toUpdated(previous, true);
 
-        assertThat(updated.getType()).isEqualTo("MY_OWN_ASSET_TYPE");
+        // Then
+        assertThat(updated.getType()).isEqualTo("EC2");
+        assertThat(updated.getMetadata()).containsEntry("provider", "aws");
+    }
+
+    @Test
+    void shouldFallBackToPreviousTypeWhenIncomingTypeIsNull() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, true);
+
+        // Then
+        assertThat(updated.getType()).isEqualTo("EC2");
+    }
+
+    @Test
+    void shouldKeepCreationDateWhenUpdating() {
+        // Given
+        Instant createdAt = Instant.now().minus(3, ChronoUnit.DAYS);
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").created(createdAt).updated(createdAt).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getCreated()).isEqualTo(createdAt);
+        assertThat(updated.getUpdated()).isAfter(createdAt);
+    }
+
+    @Test
+    void shouldKeepIncomingTypeWhenThereIsNoPreviousAsset() {
+        // Given
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+
+        // When creating, no previous asset can supply a type whatever the flag
+        Custom created = incoming.toUpdated(null, false);
+
+        // Then
+        assertThat(created.getType()).isEqualTo("EC2");
+    }
+
+    @Test
+    void shouldKeepPreviousNamespaceWhenNotDeclared() {
+        // Given an existing asset referenced by its id alone, so deserialized as External
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        External incoming = External.builder().id("my-asset").build();
+
+        // When
+        Asset updated = incoming.toUpdated(previous, false);
+
+        // Then
         assertThat(updated.getNamespace()).isEqualTo("io.kestra");
-        assertThat(updated.getDisplayName()).isEqualTo("My asset");
-        assertThat(updated.getDescription()).isEqualTo("This is my asset");
-        assertThat(updated.getMetadata()).containsEntry("owner", "infra-team");
     }
 
     @Test
     void shouldKeepPreviousNamespaceWhenAnotherOneIsDeclared() {
-        Asset previous = Custom.builder()
-            .namespace("io.kestra")
-            .id("my-asset")
-            .type("MY_OWN_ASSET_TYPE")
-            .build();
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
 
-        Asset updated = Custom.builder()
-            .namespace("io.kestra.other")
-            .id("my-asset")
-            .type("MY_OWN_ASSET_TYPE")
-            .build()
-            .toUpdated(previous);
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
 
+        // Then
         assertThat(updated.getNamespace()).isEqualTo("io.kestra");
     }
 }

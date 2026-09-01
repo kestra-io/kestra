@@ -45,15 +45,18 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref} from "vue"
+    import {computed, defineAsyncComponent, ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import get from "lodash/get"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import LogsWrapper from "../logs/LogsWrapper.vue"
     import {useDrillDownStore} from "../../stores/drillDown"
     import {getDrillDownPreview} from "./composables/drillDownPreview"
     import {buildFullQuery} from "./composables/chartDrillDown"
+
+    // Only rendered for the logs preview mode, and it reaches the dashboard chart
+    // stack: a static import would put it in the chunk App.vue loads on every page.
+    const LogsWrapper = defineAsyncComponent(() => import("../logs/LogsWrapper.vue"))
 
     const route = useRoute()
     const router = useRouter()

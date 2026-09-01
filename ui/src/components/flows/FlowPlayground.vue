@@ -69,6 +69,32 @@
                 <HistoryIcon v-else />
             </button>
         </div>
+        <KsDialog
+            v-if="playgroundStore.showInputPrompt"
+            v-model="playgroundStore.showInputPrompt"
+            destroyOnClose
+            :appendToBody="true"
+            scrollable
+            large
+            :title="$t('execute')"
+        >
+            <KsForm labelPosition="top">
+                <KsFormItem :label="$t('inputs')">
+                    <div class="w-100">
+                        <FlowRun 
+                            ref="playgroundFlowRunRef" 
+                            :embed="true" 
+                            :redirect="false"
+                            :autoPrefill="true"
+                            @execution-trigger="playgroundStore.showInputPrompt = false" 
+                        />
+                    </div>
+                </KsFormItem>
+            </KsForm>
+            <template #footer>
+                <FlowRunActions :flowRun="playgroundFlowRunRef" />
+            </template>
+        </KsDialog>
     </section>
 </template>
 
@@ -89,8 +115,12 @@
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.png"
     import {useExecutionsStore} from "../../stores/executions"
     import Kill from "../executions/overview/components/actions/Kill.vue"
+    import FlowRun from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
 
     const {t} = useI18n()
+
+    const playgroundFlowRunRef = ref()
 
     const tabs = computed(() => ([
         {

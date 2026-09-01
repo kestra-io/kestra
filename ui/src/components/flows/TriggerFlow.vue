@@ -212,14 +212,7 @@
 
     function runAction() {
         if (playgroundStore.enabled) {
-            const hasMissingRequiredInputs = (flowStore.flow?.inputs || []).some(
-                (input) => input.required && input.defaults === undefined,
-            )
-            if (hasMissingRequiredInputs) {
-                onClick()
-            } else {
-                playgroundStore.runUntilTask()
-            }
+            playgroundStore.runUntilTask()
         } else {
             onClick()
         }

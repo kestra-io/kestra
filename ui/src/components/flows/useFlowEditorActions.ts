@@ -45,7 +45,10 @@ export function useFlowEditorActions() {
                     namespace: flowStore.flow?.namespace,
                     tenant: tenant.value,
                 },
-                query: route.query,
+                query: {
+                    ...route.query,
+                    playground: playgroundStore.enabled ? "on" : undefined,
+                },
             })
         }
 
@@ -134,7 +137,10 @@ export function useFlowEditorActions() {
                         namespace: flowStore.flow?.namespace,
                         tenant: tenant.value,
                     },
-                    query: route.query,
+                    query: {
+                        ...route.query,
+                        playground: playgroundStore.enabled ? "on" : undefined,
+                    },
                 })
             }
 

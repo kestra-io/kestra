@@ -421,7 +421,13 @@
                         if (flow.value) {
                             if (playgroundStore.enabled) {
                                 const formData = normalizeInputValues(submitor, flattenInputs(flow.value.inputs), mergedInputs)
-                                await playgroundStore.runUntilTask(undefined, false, formData)
+                                await playgroundStore.runUntilTask(
+                                    playgroundStore.actionOptions?.taskId, 
+                                    playgroundStore.actionOptions?.runDownstreamTasks || false, 
+                                    formData,
+                                )
+                                playgroundStore.showInputPrompt = false
+                                playgroundStore.actionOptions = undefined
                             } else {
                                 await executeTask(submitor, flow.value, mergedInputs, {
                                     redirect: props.redirect,

@@ -100,11 +100,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
         })
     }
 
-    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any, customFormData?: Record<string, any>) {
+    async function checkCanReplay(taskId?: string, graph?: any) {
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
-        // check that the inputs and labels have not changed between the last execution and the current flow
-        // if they have changed, we cannot replay the execution and must trigger a new one
         if(lastExecution && lastExecution.flowRevision && flowStore.flow?.revision
             && lastExecution.flowRevision < flowStore.flow.revision){
             const lastExecutionFlow = await flowStore.loadFlow({
@@ -116,17 +114,25 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
             if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
                 || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
-                return await triggerExecution(flowStore.flow, breakpoints, customFormData)
+                return false
             };
         }
 
-        // if all tasks prior to current task in the graph are identical
-        // to the previous execution's revision,
-        // we can skip them and start the execution at the current task using replayExecution()
         if (lastExecution && taskId && graph
             && lastExecution.graph
             && (await graphUtils()).areTasksIdenticalInGraphUntilTask(lastExecution.graph, graph, taskId)
             && taskIdToTaskRunIdMap.has(taskId)) {
+            return true
+        }
+
+        return false
+    }
+
+    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any, customFormData?: Record<string, any>) {
+        const canReplay = await checkCanReplay(taskId, graph)
+        const lastExecution = executions.value.length ? executions.value[0] : undefined
+
+        if (canReplay && lastExecution && taskId) {
             return await executionsStore.replayExecution({
                 executionId: lastExecution.id,
                 taskRunId: taskIdToTaskRunIdMap.get(taskId),
@@ -195,6 +201,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     })
 
+    const showInputPrompt = ref(false)
+    const actionOptions = ref<{taskId?: string, runDownstreamTasks?: boolean}>()
+
     const toast = useToast()
 
     // Ensure Files panel reflects changes after Playground executions (e.g., Namespace/Tenant sync tasks)
@@ -259,14 +268,38 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {}
 
+        const willReplay = await checkCanReplay(taskId, graph)
+        if (!willReplay && !customFormData && flowStore.flow) {
+            // Check if we need to prompt for inputs
+            let hasMissing = false
+            for (const input of (flowStore.flow.inputs || [])) {
+                if (input.required && input.defaults === undefined) {
+                    const lastExecution = executions.value.length ? executions.value[0] : undefined
+                    if (!lastExecution || lastExecution.inputs?.[input.id] === undefined) {
+                        hasMissing = true
+                        break
+                    }
+                }
+            }
+            if (hasMissing) {
+                readyToStart.value = true
+                actionOptions.value = {taskId, runDownstreamTasks}
+                showInputPrompt.value = true
+                return
+            }
+        }
+
         let execution: Execution | undefined = undefined
         try {
             execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
         } catch (error: any) {
             if (error?.response?.status === 422) {
-                // Invalid entity, most likely due to invalid inputs - allow triggering the task again
-                // See: https://github.com/kestra-io/kestra/issues/11109
                 readyToStart.value = true
+                if (!customFormData && flowStore.flow && flowStore.flow.inputs?.length) {
+                    actionOptions.value = {taskId, runDownstreamTasks}
+                    showInputPrompt.value = true
+                    return
+                }
             }
 
             throw error
@@ -309,6 +342,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
     return {
         enabled,
         dropdownOpened,
+        showInputPrompt,
+        actionOptions,
         readyToStart,
         executions,
         latestExecution,

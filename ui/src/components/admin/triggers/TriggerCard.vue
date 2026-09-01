@@ -134,7 +134,7 @@
 
                 .header {
                     display: flex;
-                    align-items: center;
+                    align-items: flex-start;
                     gap: var(--ks-spacing-2);
                     min-width: 0;
 

@@ -52,6 +52,16 @@ class PluginTest {
     }
 
     @Test
+    void titleForDoesNotRepeatThePluginTitleASubGroupAlreadyLeadsWith() {
+        // Plugins increasingly declare their subgroup title absolutely - io.kestra.plugin.azure
+        // .eventhubs declares "Azure Event Hubs" under the "Azure" plugin - which would otherwise
+        // read "Azure Azure Event Hubs". Same shape here with the core plugin's "Data Filter".
+        RegisteredPlugin data = pluginWithTitleAndGroup("Data", "io.kestra.plugin.core");
+
+        assertThat(Plugin.titleFor(data, Flows.class)).isEqualTo("Data Filter");
+    }
+
+    @Test
     void titleForIgnoresSubGroupsOfAClassThatLivesOutsideThePluginsGroup() {
         // EE plugins ship classes under io.kestra.plugin.core.*, so a plugin's own title must win
         // over the sub-group annotation of a package it does not own.

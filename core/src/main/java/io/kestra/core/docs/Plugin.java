@@ -4,12 +4,11 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.plugins.RegisteredPlugin;
 
 import io.micronaut.core.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -121,7 +120,9 @@ public class Plugin {
      * {@code io.kestra.plugin.mongodb} and {@code io.kestra.plugin.debezium.mongodb}) never collide
      * on the same derived label. The plugin stays in front of the subgroup because a subgroup title
      * is written relative to it: {@code io.kestra.plugin.aws.sqs} declares "SQS", which only reads
-     * as "AWS SQS", and several plugins have a subgroup named {@code core}.
+     * as "AWS SQS", and several plugins have a subgroup named {@code core}. Plugins that instead
+     * write their subgroup title absolutely ({@code io.kestra.plugin.azure.eventhubs} declares
+     * "Azure Event Hubs") keep it as is rather than stuttering.
      *
      * @param registeredPlugin the plugin the element belongs to
      * @param cls the plugin element's class
@@ -146,7 +147,11 @@ public class Plugin {
                 .map(StringUtils::capitalize)
                 .collect(Collectors.joining(" "));
 
-        return "%s %s".formatted(title, subGroupTitle);
+        // Sub-group titles are increasingly written absolutely ("Azure Event Hubs" under the Azure
+        // plugin), so prefix the plugin title only when the sub-group does not already lead with it.
+        return subGroupTitle.toLowerCase(Locale.ROOT).startsWith(title.toLowerCase(Locale.ROOT))
+            ? subGroupTitle
+            : "%s %s".formatted(title, subGroupTitle);
     }
 
     /**

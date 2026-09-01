@@ -30,7 +30,7 @@ vi.mock("nprogress", () => ({
     default: {start: nprogressStart, set: nprogressSet, done: nprogressDone},
 }))
 
-import {setupKestraHttp} from "../../../src/utils/kestraHttp"
+import {isReportedCentrally, setupKestraHttp} from "../../../src/utils/kestraHttp"
 
 describe("setupKestraHttp router NProgress hooks", () => {
     let beforeEachCb: () => void
@@ -119,5 +119,26 @@ describe("setupKestraHttp central 404 handling", () => {
     it("stays silent for callers that opted out with ignoreNotFound or showMessageOnError", () => {
         expect(triggerNotFound({ignoreNotFound: true}).message).toBeUndefined()
         expect(triggerNotFound({showMessageOnError: false}).message).toBeUndefined()
+    })
+})
+
+describe("isReportedCentrally", () => {
+    const failure = (status: number, config?: Record<string, unknown>) => ({
+        status,
+        response: {data: {title: "problem"}},
+        config: {method: "put", url: "/api/v1/main/flows/io.kestra/gone", ...config},
+    }) as any
+
+    // What a caller reporting its own failures asks before adding a toast of its own: the flow
+    // editor's save handler would otherwise duplicate the global toast on a deleted flow.
+    it("claims the failures the interceptor toasts and leaves the caller the rest", () => {
+        expect(isReportedCentrally(failure(404))).toBe(true)
+        expect(isReportedCentrally(failure(500))).toBe(true)
+
+        expect(isReportedCentrally(failure(400))).toBe(false)
+        expect(isReportedCentrally(failure(401))).toBe(false)
+        expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
+        expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
+        expect(isReportedCentrally({status: 0} as any)).toBe(false)
     })
 })

@@ -1916,7 +1916,9 @@
       "triggers": "No Triggers Found",
       "flows": "No Flows Found",
       "kv_pairs": "No Key-Value pairs Found",
-      "secrets": "No Secrets Found"
+      "secrets": "No Secrets Found",
+      "all_columns_hidden": "All columns are hidden",
+      "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again."
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {

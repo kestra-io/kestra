@@ -1916,7 +1916,9 @@
       "triggers": "トリガーが見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
-      "secrets": "シークレットが見つかりません"
+      "secrets": "シークレットが見つかりません",
+      "all_columns_hidden": "すべての列が非表示です",
+      "all_columns_hidden_description": "データを再度表示するには、テーブル列のカスタマイズで少なくとも1つの列を再度オンにしてください。"
     },
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {

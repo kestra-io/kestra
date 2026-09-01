@@ -55,20 +55,29 @@
             />
         </div>
 
-        <KsButton
+        <div
             v-if="isComplex"
-            size="default"
-            class="rules-pill"
-            :disabled="filter.readOnly?.value"
-            @click="openAdvanced('.rules-pill')"
+            ref="pillWrapRef"
+            class="filter-chip-wrap"
+            :class="{
+                'ends-conditional-group': globalFilters.length > 0,
+                'shows-group-separator': globalFilters.length > 0 && isGroupSeparatorVisible,
+            }"
         >
-            <span class="rules-pill-content">
-                <KsIcon class="rules-pill-icon"><FilterVariant /></KsIcon>
-                <span class="rules-pill-label">{{ ruleLabel }}</span>
-                <KsIcon class="rules-pill-chevron"><ChevronDown /></KsIcon>
-            </span>
-            <span class="rules-pill-dot" />
-        </KsButton>
+            <KsButton
+                size="default"
+                class="rules-pill"
+                :disabled="filter.readOnly?.value"
+                @click="openAdvanced('.rules-pill')"
+            >
+                <span class="rules-pill-content">
+                    <KsIcon class="rules-pill-icon"><FilterVariant /></KsIcon>
+                    <span class="rules-pill-label">{{ ruleLabel }}</span>
+                    <KsIcon class="rules-pill-chevron"><ChevronDown /></KsIcon>
+                </span>
+                <span class="rules-pill-dot" />
+            </KsButton>
+        </div>
 
         <div
             v-for="(cf, index) in conditionalFilters"
@@ -141,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed, watch, onMounted, onBeforeUnmount} from "vue"
+    import {ref, inject, nextTick, computed, watch, onMounted, onUpdated, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import {useDebounceFn} from "@vueuse/core"
 
@@ -159,6 +168,7 @@
     const {t} = useI18n({useScope: "global"})
 
     const tokensRef = ref<HTMLElement | null>(null)
+    const pillWrapRef = ref<HTMLElement | null>(null)
     const isGroupSeparatorVisible = ref(false)
 
     const isCustomizeFiltersVisible = ref(false)
@@ -273,8 +283,11 @@
         return (box.top + box.bottom) / 2
     }
 
+    const conditionalGroupEnd = (): HTMLElement | undefined =>
+        isComplex.value ? pillWrapRef.value ?? undefined : chipElement(conditionalFilters.value.at(-1)?.id)
+
     const measureGroupSeparator = () => {
-        const before = chipElement(conditionalFilters.value.at(-1)?.id)
+        const before = conditionalGroupEnd()
         const after = chipElement(globalFilters.value[0]?.id)
         if (!before || !after) {
             isGroupSeparatorVisible.value = false
@@ -283,21 +296,28 @@
         isGroupSeparatorVisible.value = Math.abs(centreOf(before) - centreOf(after)) <= SAME_ROW_TOLERANCE_PX
     }
 
-    const separatorPair = computed(() =>
-        `${conditionalFilters.value.at(-1)?.id ?? ""}|${globalFilters.value[0]?.id ?? ""}|${isComplex.value}`,
-    )
-
     let separatorObserver: ResizeObserver | undefined
+
+    const observeSeparatorInputs = () => {
+        const bar = tokensRef.value?.parentElement
+        if (!separatorObserver || !bar) return
+        separatorObserver.disconnect()
+        separatorObserver.observe(bar)
+        bar.querySelectorAll(".filter-chip-wrap").forEach((wrap) => separatorObserver?.observe(wrap))
+    }
+
     onMounted(() => {
-        const observed = tokensRef.value?.parentElement
-        if (observed && typeof ResizeObserver !== "undefined") {
+        if (typeof ResizeObserver !== "undefined") {
             separatorObserver = new ResizeObserver(() => measureGroupSeparator())
-            separatorObserver.observe(observed)
+            observeSeparatorInputs()
         }
         nextTick(measureGroupSeparator)
     })
     onBeforeUnmount(() => separatorObserver?.disconnect())
-    watch(separatorPair, () => nextTick(measureGroupSeparator))
+    onUpdated(() => {
+        observeSeparatorInputs()
+        measureGroupSeparator()
+    })
 </script>
 
 <style lang="scss" scoped>

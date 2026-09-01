@@ -303,8 +303,9 @@
         flex-wrap: wrap;
         gap: var(--ks-spacing-2);
         flex: 1;
-        /* Wider than a chip, so this group is never squeezed narrower than its own content and
-           the actions wrap instead. It was 7rem while the group was a nested box. */
+        /* Keeps the group usable instead of letting it collapse and the chips overflow; it was
+           7rem while the group was a nested box. A chip at FilterChip's 300px cap still
+           overflows a group this narrow. */
         min-width: 14rem;
     }
 

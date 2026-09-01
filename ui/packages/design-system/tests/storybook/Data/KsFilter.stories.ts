@@ -518,6 +518,49 @@ export const WithGlobalSeparator: Story = {
 }
 
 /**
+ * Two applied filters fold the conditional chips into the rules pill, which is the common case on
+ * every list page since `timeRange` is a global key everywhere. The pill carries the group rule
+ * just as a chip would.
+ */
+export const WithFoldedRulesSeparator: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[namespace][STARTS_WITH]": "company",
+                "filters[state][IN]": "FAILED",
+                "filters[timeRange][EQUALS]": "PT24H",
+            })
+            const buttons = {savedFilters: {shown: false}, tableOptions: {shown: false}}
+            const tableOptions = {columns: {shown: false}, refresh: {shown: false}}
+            return {ready, configuration: GLOBAL_KEY_CONFIGURATION, buttons, tableOptions}
+        },
+        template: `
+            <div style="padding: 24px; width: 1000px">
+                <KsFilter
+                    v-if="ready"
+                    :configuration="configuration"
+                    :buttons="buttons"
+                    :tableOptions="tableOptions"
+                />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        await waitFor(() => {
+            if (!canvasElement.querySelector(".filter .rules-pill")) throw new Error("the pill has not folded yet")
+            const centres = chipCentres(canvasElement)
+            if (centres.length < 2) throw new Error(`expected the pill and one chip, found ${centres.length}`)
+            expect(Math.abs(centres[0] - centres[1])).toBeLessThanOrEqual(SAME_ROW_TOLERANCE_PX)
+        })
+
+        await waitFor(() =>
+            expect(getComputedStyle(groupSeparator(canvasElement)).borderRightColor).not.toBe(TRANSPARENT),
+        )
+    },
+}
+
+/**
  * What `BlueprintsFilterBar` renders: `searchInputFullWidth` with a configuration that has
  * no keys, so the search is the only control and stretches to fill the bar.
  */

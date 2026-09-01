@@ -759,7 +759,7 @@
     "flow creation denied in namespace": "You don't have permission to create flows in the namespace `{namespace}`.",
     "readonly property": "Read-only property",
     "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
-    "namespace and id readonly hint": "`namespace` and `id` are fixed once a flow has been created. To rename a flow or move it to another namespace, create a new flow and delete this one.",
+    "flow metadata locked": "`id` and `namespace` cannot be changed after a flow is created.",
     "avg": "Average",
     "sum": "Sum",
     "min": "Min",

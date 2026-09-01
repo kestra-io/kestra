@@ -58,7 +58,7 @@
             </template>
         </Topology>
 
-        <BlockTaskPicker :picker="taskPicker" />
+        <BlockTaskPicker :picker="taskPicker" modal />
 
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
@@ -756,10 +756,7 @@
     const onAddFlowableError = (event: {task: Record<string, any>}) => {
         const target = errorsLaneTarget(props.source ?? "", event.task.id)
         if (!target) return
-        const nodeEl = vueFlow.value?.querySelector<HTMLElement>(
-            `.vue-flow__node[data-id="${CSS.escape(event.task.id)}"], .vue-flow__node[data-id$="${CSS.escape(`.${event.task.id}`)}"]`,
-        ) ?? undefined
-        taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex, undefined, "after", nodeEl)
+        taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }
 
     const fitViewOrientation = () => {

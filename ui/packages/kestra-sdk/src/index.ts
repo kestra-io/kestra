@@ -9,6 +9,20 @@ import {createClientFacade} from "./client-facade"
 export type * from "./openapi/types.gen"
 export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient, StreamConfig} from "./client-facade"
 
+// RFC 9457 problem details — the API's single error shape. Re-exported here so app code imports error
+// handling from the SDK it already depends on, rather than reaching into the shared runtime package.
+export {
+    PROBLEM_TYPE_BASE,
+    KestraProblemError,
+    isProblemDetail,
+    parseProblem,
+    asProblem,
+    problemSlug,
+    isProblemType,
+    ProblemTypes,
+} from "@kestra-io/hey-api-plugin/runtime"
+export type {ProblemDetail, ProblemFieldError, ProblemType} from "@kestra-io/hey-api-plugin/runtime"
+
 // The OSS spec models a namespace as `NamespaceLight` ({ id }); the UI consumes a slightly richer
 // shape (an optional `description`, populated on EE). Exposed here as the compatibility name the
 // shared app imports (`Namespace`) so the app compiles against the OSS SDK unchanged — the EE SDK

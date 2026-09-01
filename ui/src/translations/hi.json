@@ -648,6 +648,10 @@
     "open full page": "पूरा पेज खोलें",
     "drill down preview": "पूर्वावलोकन",
     "errors": {
+      "400": {
+        "title": "खराब अनुरोध",
+        "content": "सर्वर अनुरोध को समझ नहीं सका।"
+      },
       "401": {
         "title": "अनधिकृत",
         "content": "इस पृष्ठ तक पहुँचने के लिए आपको प्रमाणित होना आवश्यक है।"
@@ -660,6 +664,114 @@
         "title": "पृष्ठ नहीं मिला",
         "content": "अनुरोधित URL इस सर्वर पर नहीं मिला।<br />यही सब हमें पता है।",
         "flow or execution": "वह flow या निष्पादन जिसे आप ढूंढ रहे हैं, मौजूद नहीं है।"
+      },
+      "409": {
+        "title": "टकराव",
+        "content": "अनुरोध संसाधन की वर्तमान स्थिति से विरोधाभास करता है।"
+      },
+      "422": {
+        "title": "अमान्य इकाई",
+        "content": "सबमिट की गई सामग्री को प्रोसेस नहीं किया जा सका।"
+      },
+      "500": {
+        "title": "आंतरिक सर्वर त्रुटि",
+        "content": "हमारी तरफ से कुछ गलत हो गया। कृपया बाद में फिर से प्रयास करें।"
+      },
+      "503": {
+        "title": "सेवा अनुपलब्ध है",
+        "content": "सर्वर अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।"
+      },
+      "generic": {
+        "title": "कुछ गलत हो गया",
+        "content": "एक अप्रत्याशित त्रुटि हुई। कृपया पुनः प्रयास करें।"
+      },
+      "trace id": "ट्रेस ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI अनुरोध विफल रहा"
+        },
+        "bad-request": {
+          "title": "खराब अनुरोध"
+        },
+        "bulk-validation-failed": {
+          "title": "कुछ आइटम संसाधित नहीं किए जा सके"
+        },
+        "conflict": {
+          "title": "टकराव"
+        },
+        "entity-already-exists": {
+          "title": "एंटिटी पहले से मौजूद है"
+        },
+        "forbidden": {
+          "title": "पहुँच अस्वीकृत"
+        },
+        "internal-error": {
+          "title": "आंतरिक सर्वर त्रुटि"
+        },
+        "invalid-argument": {
+          "title": "अमान्य तर्क"
+        },
+        "invalid-entity": {
+          "title": "अमान्य इकाई"
+        },
+        "invalid-format": {
+          "title": "अमान्य मान प्रारूप"
+        },
+        "invalid-json": {
+          "title": "अमान्य JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "अमान्य प्लगइन प्रकार"
+        },
+        "invalid-query-filters": {
+          "title": "अमान्य क्वेरी फ़िल्टर"
+        },
+        "invalid-query-parameter": {
+          "title": "अमान्य क्वेरी पैरामीटर"
+        },
+        "invalid-request-body": {
+          "title": "अमान्य अनुरोध बॉडी"
+        },
+        "locked": {
+          "title": "संसाधन लॉक है"
+        },
+        "method-not-allowed": {
+          "title": "तरीका अनुमत नहीं है"
+        },
+        "migration-required": {
+          "title": "माइग्रेशन आवश्यक है"
+        },
+        "not-acceptable": {
+          "title": "स्वीकार्य नहीं"
+        },
+        "not-found": {
+          "title": "संसाधन नहीं मिला"
+        },
+        "payload-too-large": {
+          "title": "Payload बहुत बड़ा है"
+        },
+        "resource-expired": {
+          "title": "संसाधन की समय-सीमा समाप्त हो गई है"
+        },
+        "service-unavailable": {
+          "title": "सेवा अनुपलब्ध है",
+          "detail": "सर्वर अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।"
+        },
+        "timeout": {
+          "title": "ऑपरेशन का समय समाप्त हो गया"
+        },
+        "too-many-requests": {
+          "title": "बहुत ज़्यादा अनुरोध"
+        },
+        "unauthenticated": {
+          "title": "प्रमाणीकरण आवश्यक है"
+        },
+        "unsupported-media-type": {
+          "title": "असमर्थित मीडिया प्रकार"
+        },
+        "validation-failed": {
+          "title": "सत्यापन विफल रहा"
+        }
       }
     },
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",

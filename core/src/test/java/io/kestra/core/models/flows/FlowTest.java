@@ -81,7 +81,7 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage()).contains("impossible: No task defined, neither cases or default have any tasks");
+        assertThat(validate.get().getMessage()).contains("tasks[impossible]: No task defined, neither cases or default have any tasks");
     }
 
     @Test
@@ -92,7 +92,7 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage()).contains("impossible: Only runnable tasks are allowed as children of a WorkingDirectory task");
+        assertThat(validate.get().getMessage()).contains("tasks[impossible]: Only runnable tasks are allowed as children of a WorkingDirectory task");
     }
 
     @Test
@@ -103,7 +103,7 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
-        assertThat(validate.get().getMessage()).contains("impossible: The 'tasks' property cannot be empty");
+        assertThat(validate.get().getMessage()).contains("tasks[impossible]: The 'tasks' property cannot be empty");
     }
 
     @Test
@@ -122,15 +122,15 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(9);
 
-        assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
-        assertThat(validate.get().getMessage()).contains("array1: `itemType` cannot be ARRAY");
-        assertThat(validate.get().getMessage()).contains("array2: `itemType` cannot be SECRET");
-        assertThat(validate.get().getMessage()).contains("array3: `itemType` cannot be MULTISELECT");
-        assertThat(validate.get().getMessage()).contains("array4: `itemType` cannot be SELECT");
-        assertThat(validate.get().getMessage()).contains("multiselect1: `itemType` cannot be ARRAY");
-        assertThat(validate.get().getMessage()).contains("multiselect2: `itemType` cannot be SECRET");
-        assertThat(validate.get().getMessage()).contains("multiselect3: `itemType` cannot be MULTISELECT");
-        assertThat(validate.get().getMessage()).contains("multiselect4: `itemType` cannot be SELECT");
+        assertThat(validate.get().getMessage()).contains("inputs[file]: inputs of type 'FILE' only support `defaults` as local files using a file URI");
+        assertThat(validate.get().getMessage()).contains("inputs[array1]: `itemType` cannot be ARRAY");
+        assertThat(validate.get().getMessage()).contains("inputs[array2]: `itemType` cannot be SECRET");
+        assertThat(validate.get().getMessage()).contains("inputs[array3]: `itemType` cannot be MULTISELECT");
+        assertThat(validate.get().getMessage()).contains("inputs[array4]: `itemType` cannot be SELECT");
+        assertThat(validate.get().getMessage()).contains("inputs[multiselect1]: `itemType` cannot be ARRAY");
+        assertThat(validate.get().getMessage()).contains("inputs[multiselect2]: `itemType` cannot be SECRET");
+        assertThat(validate.get().getMessage()).contains("inputs[multiselect3]: `itemType` cannot be MULTISELECT");
+        assertThat(validate.get().getMessage()).contains("inputs[multiselect4]: `itemType` cannot be SELECT");
     }
 
     // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.

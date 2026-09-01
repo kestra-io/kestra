@@ -22,6 +22,9 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.errors.ProblemError;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -147,12 +150,14 @@ class MiscControllerTest {
                 )
             )
         );
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getResponse().getBody(JsonError.class)).isPresent();
-        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
-        assertThat(jsonError.getMessage()).isEqualTo(
-            "Invalid username for Basic Authentication. Please provide a valid email address., Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number: Resource fails validation"
-        );
+        // Each rejected rule is now a separate errors[] entry instead of one comma-joined string.
+        Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+        Problems.assertErrors(e)
+            .extracting(ProblemError::detail)
+            .containsExactlyInAnyOrder(
+                "Invalid username for Basic Authentication. Please provide a valid email address.",
+                "Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number"
+            );
     }
 
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
@@ -172,7 +177,7 @@ class MiscControllerTest {
                     HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, "WrongCurrentPassword1"))
                 )
             );
-            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+            Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
 
             // the rejected attempt must not have changed anything
             assertThatCode(

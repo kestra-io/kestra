@@ -885,6 +885,7 @@
     "metric": "메트릭",
     "aggregation": "집계",
     "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
+    "metric filter no match": "\"{term}\"과 일치하는 메트릭이 없습니다.",
     "of": "의",
     "title": "제목",
     "api": "API",

@@ -885,6 +885,7 @@
     "metric": "Метрика",
     "aggregation": "Агрегация",
     "metric choice": "Для этого flow метрики недоступны",
+    "metric filter no match": "Нет метрик, соответствующих \"{term}\"",
     "of": "из",
     "title": "Заголовок",
     "api": "API",

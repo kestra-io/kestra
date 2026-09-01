@@ -25,6 +25,8 @@
         </template>
 
         <template v-if="canManageDashboards || isAllowedFlow" #actions>
+            <!-- NavBarActionsDropdown directly, not NavBarActions: its MAX_INLINE_ACTIONS=1 would
+                 render the default-dashboard case (a single Create item) as an inline button, dropping the kebab. -->
             <NavBarActionsDropdown v-if="canManageDashboards">
                 <NavBarAction
                     v-if="isNonDefaultDashboard"
@@ -90,7 +92,12 @@
         miscStore.configs?.isCustomDashboardsEnabled === false,
     )
 
-    const canManageDashboards = computed(() => isAllowedDashboard.value && !isCustomDashboardsDisabled.value)
+    const isOSS = computed(() => miscStore.configs?.edition === "OSS")
+
+    // Custom dashboard create/edit is EE-only: in OSS those routes are Enterprise upsell stubs,
+    // so the actions must not appear there. isCustomDashboardsEnabled is a backend-capability flag
+    // (hardcoded true), not an edition signal, so it cannot gate this.
+    const canManageDashboards = computed(() => isAllowedDashboard.value && !isOSS.value)
 
     const isNonDefaultDashboard = computed(() =>
         !!props.dashboard?.id && props.dashboard.id !== "default",

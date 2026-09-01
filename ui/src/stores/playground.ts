@@ -75,16 +75,21 @@ export const usePlaygroundStore = defineStore("playground", () => {
         let formData = customFormData
         if (!formData) {
             formData = {}
+            const lastExecution = executions.value.length ? executions.value[0] : undefined
+            const lastInputs = lastExecution?.inputs || {}
+
             for (const input of (flow.inputs || [])) {
-                const {type, defaults} = input
+                const {type, defaults, id} = input
+                const valueToUse = lastInputs[id] !== undefined ? lastInputs[id] : defaults
+
                 // for dates and times, no need to normalize the value
                 // https://github.com/kestra-io/kestra/issues/10576
                 const safeDef = (type === "DATE" || type === "TIME")
-                    ? defaults
-                    : normalize(type, defaults)
+                    ? valueToUse
+                    : normalize(type, valueToUse)
 
                 if(safeDef !== undefined) {
-                    formData[input.id] = safeDef
+                    formData[id] = safeDef
                 }
             }
         }

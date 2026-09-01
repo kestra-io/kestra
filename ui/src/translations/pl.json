@@ -1916,7 +1916,9 @@
       "triggers": "Nie znaleziono Triggerów",
       "flows": "Nie znaleziono Flowów",
       "kv_pairs": "Nie znaleziono par KV",
-      "secrets": "Nie znaleziono sekretów"
+      "secrets": "Nie znaleziono sekretów",
+      "all_columns_hidden": "Wszystkie kolumny są ukryte",
+      "all_columns_hidden_description": "Włącz co najmniej jedną kolumnę w Dostosuj kolumny tabeli, aby ponownie zobaczyć dane."
     },
     "duplicate-pair": "{label} „{key}” jest zduplikowany, pierwszy Key został zignorowany.",
     "dashboards": {

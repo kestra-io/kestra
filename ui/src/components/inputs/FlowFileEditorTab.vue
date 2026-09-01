@@ -286,7 +286,7 @@
             ? {id: flowStore.flow?.id, namespace: flowStore.flow?.namespace}
             : {}),
         enabled: metadataGuarded,
-        hoverMessage: computed(() => t("namespace and id readonly")),
+        hoverMessage: computed(() => t("namespace and id readonly hint")),
         // Reverting the whole document is the one correction that discards what
         // the user just did, and metadataGuarded has already told the store to
         // drop its warning, so this is all that is left to say it happened.

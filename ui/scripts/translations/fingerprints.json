@@ -965,6 +965,7 @@
   "name": "dcd1d5223f73",
   "namespace": "c4e4e7abda20",
   "namespace and id readonly": "ad875da251ee",
+  "namespace and id readonly hint": "d2bcbee11530",
   "namespace files|create|file": "6990d3217b77",
   "namespace files|create|file_already_exists": "92ae2922d9a6",
   "namespace files|create|file_conflicts_with_folder": "f49da179c055",

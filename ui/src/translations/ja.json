@@ -759,6 +759,7 @@
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "readonly property": "読み取り専用プロパティ",
     "namespace and id readonly": "プロパティの`namespace`と`id`は変更できません。これらは初期値に設定されています。flowの名前を変更したり、namespaceを変更したい場合は、新しいflowを作成して古いflowを削除してください。",
+    "namespace and id readonly hint": "`namespace`と`id`は、flowを作成した後は変更できません。flowの名前を変更したり、別のnamespaceに移動したい場合は、新しいflowを作成してこのflowを削除してください。",
     "avg": "平均",
     "sum": "合計",
     "min": "Min",

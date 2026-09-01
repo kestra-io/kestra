@@ -759,6 +759,7 @@
     "flow creation denied in namespace": "У вас нет разрешения на создание flows в namespace `{namespace}`.",
     "readonly property": "Свойство только для чтения",
     "namespace and id readonly": "Свойства `namespace` и `id` не могут быть изменены — они теперь установлены на свои начальные значения. Если вы хотите переименовать flow или изменить его namespace, вы можете создать новый flow и удалить старый.",
+    "namespace and id readonly hint": "`namespace` и `id` фиксируются после создания flow. Если вы хотите переименовать flow или переместить его в другой namespace, создайте новый flow и удалите этот.",
     "avg": "Среднее",
     "sum": "Сумма",
     "min": "Мин",

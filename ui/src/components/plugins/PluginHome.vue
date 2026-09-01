@@ -115,9 +115,10 @@
             return acc;
         }, {});
 
-        const filtered = Object.values(grouped).flatMap(group =>
-            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup)
-        );
+        const filtered = Object.values(grouped).flatMap(group => {
+            const subGroups = group.filter((p: any) => p.subGroup && isVisible(p));
+            return subGroups.length ? subGroups : group.filter((p: any) => !p.subGroup);
+        });
 
         return filtered
             .filter((plugin, index, self) =>

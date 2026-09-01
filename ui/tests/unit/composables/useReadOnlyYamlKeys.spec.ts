@@ -119,12 +119,8 @@ describe("violatedKeys", () => {
         expect(violatedKeys(commented, expected)).toEqual([])
     })
 
-    it("reports a changed id", () => {
+    it("reports a locked value that changed", () => {
         expect(violatedKeys(FLOW.replace("id: my_flow", "id: my_flowX"), expected)).toEqual(["id"])
-    })
-
-    it("reports a changed namespace", () => {
-        expect(violatedKeys(FLOW.replace("company.team", "other.team"), expected)).toEqual(["namespace"])
     })
 
     it("reports a deleted key", () => {
@@ -409,6 +405,18 @@ describe("useReadOnlyYamlKeys", () => {
         expect(double.current()).toContain("id: my_flow # theirs")
     })
 
+    it.each(["\"", "'"])("keeps the %s quoting the user wrote on a corrected line", (q) => {
+        const quoted = FLOW.replace("id: my_flow", `id: ${q}my_flow${q}`)
+        const double = editorDouble(quoted)
+        guard(double)
+
+        double.type(quoted.replace(`${q}my_flow${q}`, `${q}my_flowX${q}`))
+
+        // The value snaps back inside the quotes the user typed, rather than being
+        // silently rewritten as a bare scalar.
+        expect(double.current()).toBe(quoted)
+    })
+
     it("does not provoke a correction for an edit elsewhere in a commented document", () => {
         const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
         const double = editorDouble(commented)
@@ -499,6 +507,25 @@ describe("useReadOnlyYamlKeys", () => {
         await new Promise((resolve) => setTimeout(resolve))
 
         expect(double.attachCount()).toBe(attached)
+    })
+
+    it("accepts a whole-document replacement when the expectations change with it", async () => {
+        const double = editorDouble(FLOW)
+        const expected = ref<Record<string, string | undefined>>({
+            id: "my_flow",
+            namespace: "company.team",
+        })
+        guardWith(double, expected)
+
+        // Navigating to another flow, or restoring a revision: the store swaps the flow
+        // and its YAML together. Comparing against the expectations rather than the
+        // previous text is what stops this being read as a rename of the old flow.
+        const other = "id: other_flow\nnamespace: other.team\n\ntasks: []\n"
+        expected.value = {id: "other_flow", namespace: "other.team"}
+        await new Promise((resolve) => setTimeout(resolve))
+        double.type(other)
+
+        expect(double.current()).toBe(other)
     })
 
     it("does re-attach when a locked value actually changes", async () => {

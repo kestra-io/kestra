@@ -102,7 +102,9 @@ main {
             flex: 1;
             min-height: 0;
 
-            :has(.ks-data-table-wrapper) {
+            // Every ancestor of the table is matched here, so keep the stretch out of
+            // collapsible sections, which have to hug their summary when closed.
+            :has(.ks-data-table-wrapper):not(details, details *) {
                 height: 100%;
             }
         }

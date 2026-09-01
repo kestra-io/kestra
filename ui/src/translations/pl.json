@@ -1377,7 +1377,8 @@
       "kv_pairs": "Nie znaleziono par klucz-wartość",
       "secrets": "Nie znaleziono sekretów",
       "templates": "Nie znaleziono szablonów",
-      "triggers": "Nie znaleziono Triggerów"
+      "triggers": "Nie znaleziono Triggerów",
+      "all_columns_hidden": "Wszystkie kolumny są ukryte"
     },
     "no_results_found": "Nie znaleziono wyników",
     "no_tasks_running": "Jeszcze nie ma uruchomionych tasków.",

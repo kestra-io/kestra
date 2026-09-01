@@ -1377,7 +1377,8 @@
       "kv_pairs": "Aucune paire clé-valeur trouvée",
       "secrets": "Aucun secret trouvé",
       "templates": "Aucun modèle trouvé",
-      "triggers": "Aucun Trigger trouvé"
+      "triggers": "Aucun Trigger trouvé",
+      "all_columns_hidden": "Toutes les colonnes sont masquées"
     },
     "no_results_found": "Aucun résultat trouvé",
     "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",

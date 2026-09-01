@@ -1377,7 +1377,8 @@
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "templates": "Nessun Template Trovato",
-      "triggers": "Nessun Trigger Trovato"
+      "triggers": "Nessun Trigger Trovato",
+      "all_columns_hidden": "Tutte le colonne sono nascoste"
     },
     "no_results_found": "Nessun risultato trovato",
     "no_tasks_running": "Nessun task è ancora in esecuzione.",

@@ -1377,7 +1377,8 @@
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
       "secrets": "कोई Secrets नहीं मिले",
       "templates": "कोई टेम्पलेट नहीं मिला",
-      "triggers": "कोई Triggers नहीं मिले"
+      "triggers": "कोई Triggers नहीं मिले",
+      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं"
     },
     "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",

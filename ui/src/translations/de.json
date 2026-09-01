@@ -1377,7 +1377,8 @@
       "kv_pairs": "Keine Key-Value-Paare gefunden",
       "secrets": "Keine Secrets gefunden",
       "templates": "Keine Vorlagen gefunden",
-      "triggers": "Keine Trigger gefunden"
+      "triggers": "Keine Trigger gefunden",
+      "all_columns_hidden": "Alle Spalten sind ausgeblendet"
     },
     "no_results_found": "Keine Ergebnisse gefunden",
     "no_tasks_running": "Noch keine Tasks laufen.",

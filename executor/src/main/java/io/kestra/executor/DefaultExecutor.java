@@ -21,12 +21,9 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
-import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -82,13 +79,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final ExecutorService executorService;
     private final ExecutionService executionService;
     private final FlowTriggerService flowTriggerService;
-    private final SLAService slaService;
     private final MaintenanceService maintenanceService;
     private final FlowMetaStoreInterface flowMetaStore;
 
     private final ExecutionStateStore executionStateStore;
-    private final ExecutionDelayStateStore executionDelayStateStore;
+    private final ExecutionDelayProcessor executionDelayProcessor;
     private final SLAMonitorStateStore slaMonitorStateStore;
+    private final SLAMonitorProcessor slaMonitorProcessor;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final TriggerEventQueue triggerEventQueue;
 
@@ -150,12 +147,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ExecutorService executorService,
         ExecutionService executionService,
         FlowTriggerService flowTriggerService,
-        SLAService slaService,
         MaintenanceService maintenanceService,
         FlowMetaStoreInterface flowMetaStore,
         ExecutionStateStore executionStateStore,
-        ExecutionDelayStateStore executionDelayStateStore,
+        ExecutionDelayProcessor executionDelayProcessor,
         SLAMonitorStateStore slaMonitorStateStore,
+        SLAMonitorProcessor slaMonitorProcessor,
         ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor,
         TriggerEventQueue triggerEventQueue,
         MetricRegistry metricRegistry,
@@ -188,12 +185,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.executorService = executorService;
         this.executionService = executionService;
         this.flowTriggerService = flowTriggerService;
-        this.slaService = slaService;
         this.maintenanceService = maintenanceService;
         this.flowMetaStore = flowMetaStore;
         this.executionStateStore = executionStateStore;
-        this.executionDelayStateStore = executionDelayStateStore;
+        this.executionDelayProcessor = executionDelayProcessor;
         this.slaMonitorStateStore = slaMonitorStateStore;
+        this.slaMonitorProcessor = slaMonitorProcessor;
         this.concurrencySlotReleaseProcessor = concurrencySlotReleaseProcessor;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
@@ -515,91 +512,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         executionDelayLoopTimer.record(() ->
         {
-            // Collect the resulting executors during the transaction and emit them only AFTER
-            // processExpired() commits. Emitting inside the transaction races the queue consumer:
-            // on a non-transactional queue (Kafka) a new execution created by replay
-            // (CREATE_NEW_EXECUTION / RESTART_FAILED_FLOW) can be consumed before its INSERT is
-            // visible, so the executor's lock finds no row, silently skips it ("not ready for now"),
-            // and the new execution is dropped — the retry chain never runs.
-            List<ExecutorContext> toEmit = new ArrayList<>();
-            executionDelayStateStore.processExpired(Instant.now(), executionDelay ->
-            {
-                Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution ->
-                {
-                    ExecutorContext executor = new ExecutorContext(execution);
-
-                    metricRegistry
-                        .counter(
-                            MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION,
-                            metricRegistry.tags(executor.getExecution())
-                        )
-                        .increment();
-
-                    try {
-                        // Handle paused tasks and scheduledAt
-                        // Also skip if the execution is being killed (KILLING is not yet terminated but must not be resumed).
-                        if (
-                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)
-                                && !execution.getState().isTerminated()
-                                && execution.getState().getCurrent() != State.Type.KILLING
-                        ) {
-                            if (executionDelay.getTaskRunId() == null) {
-                                // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
-                                Execution markAsExecution = execution.withState(executionDelay.getState());
-                                executor = executor.withExecution(markAsExecution, "pausedRestart");
-                            } else {
-                                // if there is a taskRun it means we restart a paused task
-                                FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
-                                Execution markAsExecution = executionService.markAs(
-                                    execution,
-                                    flow,
-                                    executionDelay.getTaskRunId(),
-                                    executionDelay.getState()
-                                );
-
-                                executor = executor.withExecution(markAsExecution, "pausedRestart");
-                            }
-                        }
-                        // Handle failed task retries — skip if the execution is being killed so the retry does not race the kill
-                        else if (
-                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
-                                && execution.getState().getCurrent() != State.Type.KILLING
-                        ) {
-                            FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                            Execution newAttempt = executionService.retryTask(
-                                execution,
-                                flow,
-                                executionDelay.getTaskRunId()
-                            );
-                            executor = executor.withExecution(newAttempt, "retryFailedTask");
-                        }
-                        // Handle failed flow retries — skip if the execution is being killed so the retry does not race the kill
-                        else if (
-                            executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)
-                                && execution.getState().getCurrent() != State.Type.KILLING
-                        ) {
-                            FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                            Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
-                            executor = executor.withExecution(newExecution, "retryFailedFlow");
-                        }
-                        // Handle WaitFor
-                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
-                            Execution newExecution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
-                            executor = executor.withExecution(newExecution, "continueLoop");
-                        }
-                    } catch (Exception e) {
-                        executor = executorService.handleFailedExecutionFromExecutor(executor, e);
-                    }
-
-                    return executor;
-                });
-
-                maybeExecutor.ifPresent(toEmit::add);
-            });
-
-            // Transaction has committed here: the new/updated executions are now durably visible,
-            // so emitting their events cannot be consumed before the state store can see them.
-            toEmit.forEach(this::toExecution);
+            // Transactional outbox: the processor collects the contexts inside the state-store
+            // transaction; events are emitted only here, after processExpired() has committed.
+            // Emitting inside the transaction lets brokers with their own transactionality (Kafka)
+            // deliver an event before its execution row is committed, and the consumer drops it.
+            executionDelayProcessor.processExpired(Instant.now()).forEach(this::toExecution);
         });
     }
 
@@ -610,52 +527,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         slaMonitorLoopTimer.record(() ->
         {
-            slaMonitorStateStore.processExpired(Instant.now(), slaMonitor ->
-            {
-                Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution ->
-                {
-                    FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                    Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
-                    if (sla.isEmpty()) {
-                        // this can happen in case the flow has been updated and the SLA removed
-                        log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                        return null;
-                    }
-
-                    // There can be a race: a monitor can be found, but the execution terminated.
-                    // This particularly could occur in ElasticSearch due to refresh.
-                    if (executionService.isTerminated(flow, execution)) {
-                        return null;
-                    }
-
-                    metricRegistry
-                        .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
-                        .increment();
-
-                    ExecutorContext executor = new ExecutorContext(execution, flow);
-                    try {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
-                        if (violation.isPresent()) { // should always be true
-                            log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                            executor = executorService.processViolation(runContext, executor, violation.get());
-
-                            metricRegistry
-                                .counter(
-                                    MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION,
-                                    metricRegistry.tags(executor.getExecution())
-                                )
-                                .increment();
-                        }
-                    } catch (Exception e) {
-                        executor = executorService.handleFailedExecutionFromExecutor(executor, e);
-                    }
-
-                    return executor;
-                });
-
-                maybeExecutor.ifPresent(this::toExecution);
-            });
+            // Transactional outbox: the processor evaluates the violations inside the SLA-monitor
+            // state-store transaction; events are emitted only here, after processExpired() has
+            // committed (same rule as executionDelayLoop).
+            slaMonitorProcessor.processExpired(Instant.now()).forEach(this::toExecution);
         });
     }
 

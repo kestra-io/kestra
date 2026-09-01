@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
 import io.kestra.core.metrics.MetricRegistry;
@@ -185,6 +187,22 @@ class ConcurrencySlotReleaseProcessorTest {
         // Then
         assertThat(popped).isEmpty();
         verifyNotReleased();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = State.Type.class, names = { "FAILED", "CANCELLED" })
+    void shouldReleaseSlotWhenFormerlyQueuedExecutionTerminatesInError(State.Type errorState) {
+        // Given: an execution that was queued, then popped (stamping its claim) and now holds the
+        // slot — its history is CREATED → QUEUED → RUNNING, one step away from the short-circuit
+        // shape (CREATED → FAILED/CANCELLED) that must not release
+        Execution running = stamped(created().withState(State.Type.QUEUED).withState(State.Type.RUNNING));
+
+        // When: it terminates in error during its actual run
+        processor.release(cycle(running, running.withState(errorState)), true);
+
+        // Then: a genuine run failure releases the slot like any termination — the short-circuit
+        // guard only holds when the error state follows CREATED directly
+        verifyReleased();
     }
 
     @Test

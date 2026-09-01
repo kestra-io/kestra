@@ -1903,7 +1903,8 @@
       "close_all_tabs": "Fechar todas as abas",
       "close_all_panels": "Fechar todos os painéis",
       "exit_fullscreen": "Sair do modo de tela cheia",
-      "fullscreen": "Tela Cheia"
+      "fullscreen": "Tela Cheia",
+      "split_panel": "Dividir painel"
     },
     "search_docs": "Pesquisar",
     "no_results_found": "Nenhum resultado encontrado",

@@ -115,7 +115,8 @@
                             v-if="panel.tabs.filter(t => !t.potential).length > 1"
                             @click="splitPanel(panelIndex)"
                             class="split_right"
-                            title="Split panel"
+                            :title="$t('multi_panel_editor.split_panel')"
+                            :aria-label="$t('multi_panel_editor.split_panel')"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -622,6 +623,10 @@
             size: defaultSize.value,
         }
         panels.value.splice(panelIndex + 1, 0, newPanel)
+
+        // Moving the only tab out left the source panel with no tabs and an undefined activeTab,
+        // so the split rendered an empty panel and the button looked inert.
+        if (panel.tabs.length <= 1) return
 
         const activeTabIndex = panel.tabs.findIndex((tab) => tab.uid === panel.activeTab.uid)
 

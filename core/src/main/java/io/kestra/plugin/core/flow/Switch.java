@@ -201,14 +201,10 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
 
     @Override
     public Switch.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
+        final String value = rendererValue(runContext);
         return Output.builder()
-            .value(rendererValue(runContext))
-            .defaults(
-                MapUtils.isEmpty(this.cases) || this.cases
-                    .entrySet()
-                    .stream()
-                    .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
-            )
+            .value(value)
+            .defaults(MapUtils.emptyOnNull(this.cases).keySet().stream().noneMatch(value::equals))
             .build();
     }
 

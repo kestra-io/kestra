@@ -2571,6 +2571,7 @@
         "message": "保存する前にエラーを修正してください。",
         "title": "flowを保存できません"
       },
+      "schema_default_tooltip": "フィールドが設定されていない場合に使用されるデフォルト値",
       "search_task_placeholder": "タスクを検索または記述…",
       "shortcuts": {
         "add_after": "選択後にブロックを挿入",

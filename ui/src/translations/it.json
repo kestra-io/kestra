@@ -2571,6 +2571,7 @@
         "message": "Correggi gli errori prima di salvare.",
         "title": "Impossibile salvare il flow"
       },
+      "schema_default_tooltip": "Valore predefinito usato quando il campo non è impostato",
       "search_task_placeholder": "Cerca o descrivi un task...",
       "shortcuts": {
         "add_after": "Inserisci un blocco dopo la selezione",

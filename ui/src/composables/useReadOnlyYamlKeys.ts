@@ -1,11 +1,11 @@
 import {onBeforeUnmount, watch, type Ref} from "vue"
 import type * as monaco from "monaco-editor/editor/editor.api"
 
-// Anchored at column 0: YAML block-scalar content is always indented, so an
-// unindented `id:` can never be part of a multi-line string value.
+// Anchored at column 0: block-scalar content is always indented, so an unindented
+// `id:` can never be part of a multi-line string value.
 const TOP_LEVEL_KEY = /^([A-Za-z0-9_-]+)[ \t]*:(.*)$/
 
-/** The class placed on each locked line; styled by the consuming component. */
+/** The class placed on each locked line; styled by KsEditor in the design system. */
 export const READ_ONLY_LINE_CLASS = "ks-readonly-yaml-line"
 
 export interface ReadOnlyKeyLine {
@@ -14,9 +14,17 @@ export interface ReadOnlyKeyLine {
     lineNumber: number
 }
 
-// Quotes and inline comments are stripped from the value because neither changes
-// it, and kept as the suffix so a correction does not discard them.
-function splitScalar(raw: string): {value: string; suffix: string} {
+interface Scalar {
+    value: string
+    /** The quote the value was written with, or "" if it was bare. */
+    quote: string
+    /** Whatever trailed the value, in practice an inline comment. */
+    suffix: string
+}
+
+// Quotes and comments are split off rather than discarded, so a correction can put
+// back the ones the user wrote.
+function splitScalar(raw: string): Scalar {
     const trimmed = raw.trim()
     const quote = trimmed[0]
 
@@ -24,20 +32,16 @@ function splitScalar(raw: string): {value: string; suffix: string} {
         const closing = trimmed.indexOf(quote, 1)
         // A quote still being typed has no closing partner yet.
         return closing === -1
-            ? {value: trimmed.slice(1), suffix: ""}
-            : {value: trimmed.slice(1, closing), suffix: trimmed.slice(closing + 1)}
+            ? {value: trimmed.slice(1), quote, suffix: ""}
+            : {value: trimmed.slice(1, closing), quote, suffix: trimmed.slice(closing + 1)}
     }
 
-    // YAML only opens an inline comment on a `#` preceded by whitespace, so a
-    // `#` inside a bare scalar (`id: a#b`) is part of the value.
+    // YAML only opens an inline comment on a `#` preceded by whitespace, so the `#`
+    // in `id: a#b` belongs to the value.
     const comment = trimmed.search(/\s#/)
     return comment === -1
-        ? {value: trimmed, suffix: ""}
-        : {value: trimmed.slice(0, comment).trim(), suffix: trimmed.slice(comment)}
-}
-
-function scalarOf(raw: string): string {
-    return splitScalar(raw).value
+        ? {value: trimmed, quote: "", suffix: ""}
+        : {value: trimmed.slice(0, comment).trim(), quote: "", suffix: trimmed.slice(comment)}
 }
 
 /** Whatever trails the scalar on a `key:` line — an inline comment, or "". */
@@ -50,7 +54,7 @@ export function readTopLevelValue(source: string, key: string): string | undefin
     for (const rawLine of source.split("\n")) {
         const match = TOP_LEVEL_KEY.exec(rawLine.replace(/\r$/, ""))
         if (match?.[1] !== key) continue
-        return scalarOf(match[2])
+        return splitScalar(match[2]).value
     }
     return undefined
 }
@@ -71,10 +75,9 @@ export function findReadOnlyLines(source: string, keys: readonly string[]): Read
     return lines
 }
 
-// Compared against the expected values rather than the previous text, so that a
-// legitimate whole-document replacement — another flow, a restored revision,
-// where source and expectations change together — is not read as a violation.
-// An expectation of `undefined` means "not known yet" and never fails.
+// Compared against the expected values rather than the previous text, so a legitimate
+// whole-document replacement — another flow, a restored revision — is not read as a
+// violation; an expectation of `undefined` is not known yet and never fails.
 export function violatedKeys(
     source: string,
     expected: Record<string, string | undefined>,
@@ -96,40 +99,36 @@ export interface ReadOnlyYamlKeysOptions {
     enabled: Ref<boolean>
     /** Tooltip shown when hovering a locked line. */
     hoverMessage?: Ref<string | undefined>
-    /**
-     * Called with the offending keys when a change was reverted wholesale rather
-     * than corrected in place, which is the only case where the user loses work
-     * and so the only one worth reporting.
-     */
+    /** Called with the offending keys when a change was reverted wholesale rather than corrected in place. */
     onReverted?: (keys: string[]) => void
 }
 
 /**
  * Keep the given top-level YAML keys read-only inside a Monaco editor.
  *
- * Monaco ships no read-only-range API of its own, so the guard undoes an
- * offending change on the tick it arrives — the character never appears, unlike
- * correcting after a debounce, which shows the edit landing and then being taken
- * away. Only the locked lines are rewritten, so an edit spanning them keeps
- * everything else. Locked lines are decorated but never made unselectable, so
- * their values stay selectable and copyable.
+ * Monaco has no read-only-range API, so the guard refuses an offending change on the
+ * tick it arrives rather than letting it land and undoing it a moment later, and it
+ * rewrites only the locked lines so the rest of an edit spanning them survives.
+ *
+ * Known dead end: when the buffer already violates as the guard attaches there is no
+ * good content to fall back to, so an edit that removes a locked key outright then
+ * stands, unreported, until the next clean edit gives the guard something to keep.
  */
 export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
     let changeListener: monaco.IDisposable | undefined
     let decorations: monaco.editor.IEditorDecorationsCollection | undefined
-    /** Last content known to satisfy every expectation; the whole-document fallback. */
+    // Last content known to satisfy every expectation; what the fallback restores.
     let lastValid: string | undefined
-    /** Guards against reacting to our own corrective edit. */
+    // Guards against reacting to our own corrective edit.
     let correcting = false
 
     function keys(): string[] {
         return Object.keys(options.expected.value)
     }
 
-    // pushEditOperations with no intervening pushStackElement() joins the undo
-    // element Monaco still has open for the user's keystroke, so one undo reverts
-    // both halves. executeEdits would open a second element, and undoing that
-    // would restore the violating text and re-enter this listener.
+    // pushEditOperations joins the undo element Monaco still has open for the user's
+    // keystroke, so one undo reverts both halves; executeEdits would open a second
+    // element, and undoing that would restore the violating text.
     function applyCorrection(
         editor: monaco.editor.IStandaloneCodeEditor,
         model: monaco.editor.ITextModel,
@@ -162,8 +161,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         })))
     }
 
-    // Returns false when a locked key is absent altogether, which cannot be
-    // corrected line by line. Anything trailing the value is carried over.
+    // False when a locked key is gone altogether, which cannot be corrected line by line.
     function restoreLines(
         editor: monaco.editor.IStandaloneCodeEditor,
         model: monaco.editor.ITextModel,
@@ -179,6 +177,8 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
 
             const rawLine = sourceLines[line.lineNumber - 1] ?? ""
             const afterKey = TOP_LEVEL_KEY.exec(rawLine.replace(/\r$/, ""))?.[2] ?? ""
+            // The quotes and comment came from the user, so only the value is replaced.
+            const {quote, suffix} = splitScalar(afterKey)
 
             edits.push({
                 range: {
@@ -187,7 +187,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
                     endLineNumber: line.lineNumber,
                     endColumn: model.getLineMaxColumn(line.lineNumber),
                 },
-                text: `${key}: ${options.expected.value[key]}${commentOf(afterKey)}`,
+                text: `${key}: ${quote}${options.expected.value[key]}${quote}${suffix}`,
             })
         }
 
@@ -208,9 +208,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         detach()
 
         const initial = editor.getModel()?.getValue() ?? ""
-        // Known dead end: a buffer that already violates leaves lastValid unset,
-        // so a later edit removing a locked key outright cannot be recovered and
-        // passes unreported. It resolves itself on the next clean edit.
+        // Left unset by an already-violating buffer — the dead end noted above.
         lastValid = violatedKeys(initial, options.expected.value).length ? undefined : initial
         paint(editor, initial)
 
@@ -237,9 +235,8 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
             correcting = true
             const selection = editor.getSelection()
 
-            // Correcting the lines in place keeps the rest of the edit; the
-            // whole-document fallback does not, which is why only that branch is
-            // reported below.
+            // Correcting in place keeps the rest of the edit; the fallback throws it
+            // away, which is why only that branch is reported.
             const fallback = restoreLines(editor, model, violations) ? undefined : lastValid
 
             if (fallback !== undefined) {
@@ -257,11 +254,9 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         })
     }
 
-    // Keyed on the serialised expectations, not on `expected` itself: the call
-    // site rebuilds that object whenever the flow store replaces the flow, which
-    // is far more often than the locked values change, and each new identity
-    // would re-run attach(). This is the deep-watch / computed-spread trap in
-    // ui/AGENTS.md; a deep watch would walk the Monaco editor's object graph.
+    // Keyed on the serialised expectations, not on the object: the call site rebuilds
+    // that object whenever the flow store replaces the flow, and each new identity
+    // would otherwise re-run attach().
     watch(
         [options.editor, options.enabled, () => JSON.stringify(options.expected.value)],
         ([editor]) => {

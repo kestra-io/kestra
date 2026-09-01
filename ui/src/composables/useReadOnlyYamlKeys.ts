@@ -1,13 +1,8 @@
 import {onBeforeUnmount, watch, type Ref} from "vue"
 import type * as monaco from "monaco-editor/editor/editor.api"
 
-/**
- * Matches a top-level YAML key, i.e. one written at column 0.
- *
- * Anchoring at column 0 is what makes this safe without a full parse: YAML
- * block-scalar content is always indented, so an unindented `id:` can never be
- * part of a multi-line string value, and `# id: x` is not matched at all.
- */
+// Anchored at column 0: YAML block-scalar content is always indented, so an
+// unindented `id:` can never be part of a multi-line string value.
 const TOP_LEVEL_KEY = /^([A-Za-z0-9_-]+)[ \t]*:(.*)$/
 
 /** The class placed on each locked line; styled by the consuming component. */
@@ -19,16 +14,8 @@ export interface ReadOnlyKeyLine {
     lineNumber: number
 }
 
-/**
- * Split everything after `key:` into the scalar and whatever trails it.
- *
- * The two halves exist for opposite reasons. The scalar is what gets compared,
- * so quotes and inline comments are stripped: treating `id: my-flow # note` as
- * the literal `my-flow # note` would make it permanently unequal to the saved
- * id, and every later keystroke would read as an attempt to change it. The
- * suffix is what gets preserved, so that correcting a line does not throw away a
- * comment the user was entitled to write.
- */
+// Quotes and inline comments are stripped from the value because neither changes
+// it, and kept as the suffix so a correction does not discard them.
 function splitScalar(raw: string): {value: string; suffix: string} {
     const trimmed = raw.trim()
     const quote = trimmed[0]
@@ -49,25 +36,16 @@ function splitScalar(raw: string): {value: string; suffix: string} {
         : {value: trimmed.slice(0, comment).trim(), suffix: trimmed.slice(comment)}
 }
 
-/** The scalar carried by everything after `key:`. */
 function scalarOf(raw: string): string {
     return splitScalar(raw).value
 }
 
-/**
- * Whatever trails the scalar on a `key:` line — an inline comment, or "" when
- * there is none. Exported for the test that pins comment preservation.
- */
+/** Whatever trails the scalar on a `key:` line — an inline comment, or "". */
 export function commentOf(raw: string): string {
     return splitScalar(raw).suffix
 }
 
-/**
- * Read the scalar value of a top-level key, or undefined when the key is absent.
- *
- * Only the first occurrence counts — a duplicate top-level key is invalid YAML,
- * and the parser would reject the document long before this matters.
- */
+// Only the first occurrence counts: a duplicate top-level key is invalid YAML.
 export function readTopLevelValue(source: string, key: string): string | undefined {
     for (const rawLine of source.split("\n")) {
         const match = TOP_LEVEL_KEY.exec(rawLine.replace(/\r$/, ""))
@@ -77,10 +55,7 @@ export function readTopLevelValue(source: string, key: string): string | undefin
     return undefined
 }
 
-/**
- * Locate the lines holding the given keys, so they can be decorated as locked.
- * Keys missing from the document are simply not returned.
- */
+/** Locate the lines holding the given keys. Keys not present are not returned. */
 export function findReadOnlyLines(source: string, keys: readonly string[]): ReadOnlyKeyLine[] {
     const wanted = new Set(keys)
     const seen = new Set<string>()
@@ -96,16 +71,10 @@ export function findReadOnlyLines(source: string, keys: readonly string[]): Read
     return lines
 }
 
-/**
- * The keys whose value in `source` no longer matches the saved resource.
- *
- * Comparing against the expected values — rather than against the previous
- * revision of the text — is what keeps a legitimate whole-document replacement
- * (loading another flow, restoring a revision) from looking like a violation:
- * there, source and expectations change together.
- *
- * An expectation of `undefined` means "not known yet", and never fails.
- */
+// Compared against the expected values rather than the previous text, so that a
+// legitimate whole-document replacement — another flow, a restored revision,
+// where source and expectations change together — is not read as a violation.
+// An expectation of `undefined` means "not known yet" and never fails.
 export function violatedKeys(
     source: string,
     expected: Record<string, string | undefined>,
@@ -113,21 +82,13 @@ export function violatedKeys(
     return Object.entries(expected)
         .filter(([key, value]) => {
             if (value === undefined) return false
-            const actual = readTopLevelValue(source, key)
-            // A key the user has not finished retyping yet is still a violation;
-            // only an unchanged value is accepted.
-            return actual !== value
+            return readTopLevelValue(source, key) !== value
         })
         .map(([key]) => key)
 }
 
 export interface ReadOnlyYamlKeysOptions {
-    /**
-     * The Monaco editor to guard; undefined until it mounts.
-     *
-     * Must be a shallowRef: a plain ref() would wrap the editor in a deep
-     * reactive proxy and break it.
-     */
+    /** Must be a shallowRef: a deep reactive proxy around the editor breaks it. */
     editor: Ref<monaco.editor.IStandaloneCodeEditor | undefined>
     /** Expected value per locked key. Undefined values disable the guard for that key. */
     expected: Ref<Record<string, string | undefined>>
@@ -135,28 +96,28 @@ export interface ReadOnlyYamlKeysOptions {
     enabled: Ref<boolean>
     /** Tooltip shown when hovering a locked line. */
     hoverMessage?: Ref<string | undefined>
+    /**
+     * Called with the offending keys when a change was reverted wholesale rather
+     * than corrected in place, which is the only case where the user loses work
+     * and so the only one worth reporting.
+     */
+    onReverted?: (keys: string[]) => void
 }
 
 /**
  * Keep the given top-level YAML keys read-only inside a Monaco editor.
  *
- * Monaco ships no read-only-range API of its own — the constrained-editor
- * pattern the issue mentions comes from a third-party plugin — so the guard
- * undoes an offending change
- * on the same tick it arrives. That is invisible to the user — the character
- * never appears — unlike correcting it after a debounce, which shows the edit
- * being accepted and then taken away.
- *
- * Only the locked lines are rewritten, so an edit that spans them (select-all
- * and paste, find-and-replace) keeps everything else the user did.
- *
- * Locked lines are only decorated, never made unselectable, so their values stay
- * selectable and copyable.
+ * Monaco ships no read-only-range API of its own, so the guard undoes an
+ * offending change on the tick it arrives — the character never appears, unlike
+ * correcting after a debounce, which shows the edit landing and then being taken
+ * away. Only the locked lines are rewritten, so an edit spanning them keeps
+ * everything else. Locked lines are decorated but never made unselectable, so
+ * their values stay selectable and copyable.
  */
 export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
     let changeListener: monaco.IDisposable | undefined
     let decorations: monaco.editor.IEditorDecorationsCollection | undefined
-    /** Last content known to satisfy every expectation; the last-resort fallback. */
+    /** Last content known to satisfy every expectation; the whole-document fallback. */
     let lastValid: string | undefined
     /** Guards against reacting to our own corrective edit. */
     let correcting = false
@@ -165,18 +126,10 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         return Object.keys(options.expected.value)
     }
 
-    /**
-     * Apply the correction as part of the edit that provoked it.
-     *
-     * By the time `onDidChangeModelContent` runs, Monaco has already closed the
-     * undo element for the user's keystroke. `executeEdits` would open a second
-     * one, and undoing that would put the violating text back, re-enter this
-     * listener and correct again — leaving the undo stack unable to step past
-     * the pair, and the user's earlier work unreachable for the rest of the
-     * session. `pushEditOperations` with no intervening `pushStackElement()`
-     * merges into the element already open, so one undo reverts both halves and
-     * lands on a document that violates nothing.
-     */
+    // pushEditOperations with no intervening pushStackElement() joins the undo
+    // element Monaco still has open for the user's keystroke, so one undo reverts
+    // both halves. executeEdits would open a second element, and undoing that
+    // would restore the violating text and re-enter this listener.
     function applyCorrection(
         editor: monaco.editor.IStandaloneCodeEditor,
         model: monaco.editor.ITextModel,
@@ -209,14 +162,8 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         })))
     }
 
-    /**
-     * Put the saved value back on each offending line, leaving the rest of the
-     * document as the user left it. Returns false when a locked key is no longer
-     * present at all, which cannot be corrected line-by-line.
-     *
-     * Anything trailing the value is carried over: an inline comment belongs to
-     * the user even on a line whose value does not.
-     */
+    // Returns false when a locked key is absent altogether, which cannot be
+    // corrected line by line. Anything trailing the value is carried over.
     function restoreLines(
         editor: monaco.editor.IStandaloneCodeEditor,
         model: monaco.editor.ITextModel,
@@ -261,6 +208,9 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         detach()
 
         const initial = editor.getModel()?.getValue() ?? ""
+        // Known dead end: a buffer that already violates leaves lastValid unset,
+        // so a later edit removing a locked key outright cannot be recovered and
+        // passes unreported. It resolves itself on the next clean edit.
         lastValid = violatedKeys(initial, options.expected.value).length ? undefined : initial
         paint(editor, initial)
 
@@ -287,12 +237,15 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
             correcting = true
             const selection = editor.getSelection()
 
-            // Whole-document fallback only when a locked key was removed outright;
-            // otherwise the user's other changes are preserved.
-            if (!restoreLines(editor, model, violations) && lastValid !== undefined) {
+            // Correcting the lines in place keeps the rest of the edit; the
+            // whole-document fallback does not, which is why only that branch is
+            // reported below.
+            const fallback = restoreLines(editor, model, violations) ? undefined : lastValid
+
+            if (fallback !== undefined) {
                 applyCorrection(editor, model, [{
                     range: model.getFullModelRange(),
-                    text: lastValid,
+                    text: fallback,
                     forceMoveMarkers: true,
                 }])
             }
@@ -300,21 +253,15 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
             if (selection) editor.setSelection(selection)
             correcting = false
 
-            lastValid = model.getValue()
-            paint(editor, lastValid)
+            if (fallback !== undefined) options.onReverted?.(violations)
         })
     }
 
-    // Keyed on the serialised expectations rather than on `expected` itself. The
-    // call site builds that object from the flow store, which replaces the flow
-    // on every save, revision load and refetch — so its identity changes far more
-    // often than the locked values do, and each change would re-run attach().
-    // That is mostly self-healing, except attach() leaves `lastValid` undefined
-    // when the buffer violates at that instant, which disables the only recovery
-    // path for a locked key deleted outright. Serialising is the primitive the
-    // deep-watch / computed-spread trap in ui/AGENTS.md calls for; a deep watch
-    // is not an option here, as it would walk the Monaco editor's enormous and
-    // self-referential object graph.
+    // Keyed on the serialised expectations, not on `expected` itself: the call
+    // site rebuilds that object whenever the flow store replaces the flow, which
+    // is far more often than the locked values change, and each new identity
+    // would re-run attach(). This is the deep-watch / computed-spread trap in
+    // ui/AGENTS.md; a deep watch would walk the Monaco editor's object graph.
     watch(
         [options.editor, options.enabled, () => JSON.stringify(options.expected.value)],
         ([editor]) => {

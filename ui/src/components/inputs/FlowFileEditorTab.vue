@@ -101,11 +101,13 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import {humanFileSize} from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
 
     const route = useRoute()
     const {t} = useI18n()
+    const toast = useToast()
 
     const {save} = useFlowEditorActions()
     const flowStore = useFlowStore()
@@ -285,6 +287,10 @@
             : {}),
         enabled: metadataGuarded,
         hoverMessage: computed(() => t("namespace and id readonly")),
+        // Reverting the whole document is the one correction that discards what
+        // the user just did, and metadataGuarded has already told the store to
+        // drop its warning, so this is all that is left to say it happened.
+        onReverted: () => toast.warning(t("namespace and id readonly")),
     })
 
     const timeout = ref<any>(null)

@@ -1,4 +1,4 @@
-import {describe, expect, it} from "vitest"
+import {describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {computed, defineComponent, ref, type Ref} from "vue"
 import {
@@ -256,16 +256,25 @@ describe("useReadOnlyYamlKeys", () => {
         double: ReturnType<typeof editorDouble>,
         expected: Ref<Record<string, string | undefined>>,
         enabled = true,
+        onReverted?: (keys: string[]) => void,
     ) {
         return withComposable(() => useReadOnlyYamlKeys({
             editor: ref(double.editor) as any,
             expected,
             enabled: computed(() => enabled),
+            onReverted,
         }))
     }
 
     function guard(double: ReturnType<typeof editorDouble>, enabled = true) {
         return guardWith(double, ref({id: "my_flow", namespace: "company.team"}), enabled)
+    }
+
+    /** Guard as usual, handing back the spy that stands in for the toast. */
+    function guardReporting(double: ReturnType<typeof editorDouble>) {
+        const reverted = vi.fn()
+        guardWith(double, ref({id: "my_flow", namespace: "company.team"}), true, reverted)
+        return reverted
     }
 
     it("rejects an edit to a locked value", () => {
@@ -328,6 +337,50 @@ describe("useReadOnlyYamlKeys", () => {
         double.type(FLOW.replace("id: my_flow\n", ""))
 
         expect(double.current()).toBe(FLOW)
+    })
+
+    it("reports the paste it threw away when a locked key is dropped", () => {
+        const double = editorDouble(FLOW)
+        const reverted = guardReporting(double)
+
+        // A snippet pasted over the whole document that simply carries no `id:`
+        // line — nothing is left to correct, so the paste goes in full. That is
+        // the one case where the user loses work and has to be told.
+        double.type([
+            "namespace: company.team",
+            "",
+            "tasks:",
+            "  - id: pasted",
+            "    type: io.kestra.plugin.core.log.Log",
+            "",
+        ].join("\n"))
+
+        expect(double.current()).toBe(FLOW)
+        expect(reverted).toHaveBeenCalledWith(["id"])
+    })
+
+    it("says nothing when the locked line was corrected in place", () => {
+        const double = editorDouble(FLOW)
+        const reverted = guardReporting(double)
+
+        // The id snaps back and the rest of the edit survives, so nothing was
+        // lost — reporting here would fire on every keystroke on a locked line.
+        double.type(FLOW.replace("id: my_flow", "id: someone_elses_flow"))
+
+        expect(double.current()).toBe(FLOW)
+        expect(reverted).not.toHaveBeenCalled()
+    })
+
+    it("says nothing when there is no good document to fall back to", () => {
+        // Attached to a buffer that already violates, so nothing was recorded to
+        // restore: the edit stands, and no revert happened to report.
+        const stale = FLOW.replace("id: my_flow", "id: stale")
+        const double = editorDouble(stale)
+        const reverted = guardReporting(double)
+
+        double.type(stale.replace("id: stale\n", ""))
+
+        expect(reverted).not.toHaveBeenCalled()
     })
 
     it("keeps an inline comment when correcting the line it sits on", () => {

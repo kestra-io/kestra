@@ -27,7 +27,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         removeFalsyValues: true,
     })
 
-    const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem("editorPlayground") === "true")
+    const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem("editorPlayground") !== "false")
     watch(enabled, (newValue) => {
         if (newValue) {
             params.playground = "on"

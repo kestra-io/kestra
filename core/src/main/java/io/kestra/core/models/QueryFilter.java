@@ -110,7 +110,12 @@ public record QueryFilter(
         IS_NULL,
         IS_NOT_NULL,
         REGEX,
-        PREFIX
+        PREFIX;
+
+        @JsonCreator
+        public static Op fromString(String value) {
+            return Enums.getForNameIgnoreCase(value, Op.class);
+        }
     }
 
     @SuppressWarnings("unchecked")

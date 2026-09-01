@@ -272,9 +272,14 @@ export function toFormData(obj: FormData | Record<string, any>) {
     return obj
 }
 
-export function getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined) {
+export interface DateGrouping {
+    format: string;
+    unit: "month" | "week" | "day" | "hour" | "minute";
+}
+
+export function getDateGrouping(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined): DateGrouping {
     if ((!startDate || !endDate) && timeRange === undefined) {
-        return "yyyy-MM-DD"
+        return {format: "yyyy-MM-DD", unit: "day"}
     }
 
     const duration = timeRange === undefined
@@ -282,15 +287,15 @@ export function getDateFormat(startDate: moment.MomentInput, endDate: moment.Mom
         : moment.duration(timeRange)
 
     if (duration.asDays() > 365) {
-        return "yyyy-MM"
+        return {format: "yyyy-MM", unit: "month"}
     } else if (duration.asDays() > 180) {
-        return "yyyy-'W'ww"
+        return {format: "yyyy-'W'ww", unit: "week"}
     } else if (duration.asDays() > 1) {
-        return "yyyy-MM-DD"
+        return {format: "yyyy-MM-DD", unit: "day"}
     } else if (duration.asHours() > 1) {
-        return "yyyy-MM-DD HH:00"
+        return {format: "yyyy-MM-DD HH:00", unit: "hour"}
     } else {
-        return "yyyy-MM-DD HH:mm"
+        return {format: "yyyy-MM-DD HH:mm", unit: "minute"}
     }
 }
 

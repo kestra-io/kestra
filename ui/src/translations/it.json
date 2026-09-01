@@ -207,6 +207,7 @@
     "total_duration": "Durata totale",
     "running duration": "Durata in esecuzione",
     "queued duration": "Durata in coda",
+    "paused duration": "Durata in pausa",
     "executionProgress": {
       "title": "Avanzamento dell'esecuzione",
       "estimatedRemaining": "Tempo rimanente stimato: {duration}",
@@ -299,6 +300,21 @@
     "to": "A",
     "steps": "Passaggi",
     "state": "Stato",
+    "state_history": {
+      "title": "Cronologia stato",
+      "open": "Cronologia stato",
+      "aria_open": "Mostra la cronologia dello stato",
+      "aria_open_for": "Mostra la cronologia dello stato di {subject}",
+      "started_at": "Avviato alle {time}",
+      "failed_at": "Fallito alle {time}",
+      "skipped_at": "Saltato alle {time}",
+      "created_at": "Creato alle {time}",
+      "did_not_run": "Questo task non è stato eseguito",
+      "waiting_to_start": "In attesa di avvio",
+      "attempt_n": "Tentativo {index}",
+      "attempt_count": "{count} tentativi",
+      "copy": "Copia cronologia stato"
+    },
     "search": "Cerca",
     "source search": "Cerca fonte",
     "selected": "Selezionato",
@@ -457,6 +473,11 @@
         "title": "Limite di concorrenza residuo"
       }
     },
+    "docsPage": {
+      "notFound": "Questa pagina della documentazione non esiste. Potrebbe essere stata spostata o rinominata.",
+      "loadError": "Impossibile caricare questa pagina della documentazione. Riprova.",
+      "backToDocs": "Torna ai Docs"
+    },
     "documentation": {
       "documentation": "Documentazione"
     },
@@ -495,6 +516,15 @@
     },
     "use": "Usa",
     "plugins": {
+      "autoInstall": {
+        "failed": "Installazione del plugin non riuscita",
+        "failedHint": "Il flow non è stato salvato. Correggi il problema o rimuovi il plugin dal flow, poi salva di nuovo.",
+        "preparing": "Preparazione dell'installazione del plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installato correttamente | Plugin installati correttamente",
+        "timeout": "L'installazione del plugin sta impiegando più tempo del previsto. Il flow non è stato salvato, salva di nuovo al termine dell'installazione.",
+        "title": "Installazione di {count} plugin in corso | Installazione di {count} plugin in corso"
+      },
       "names": "Plugins",
       "release": "Note di rilascio",
       "beta": "Beta",
@@ -534,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentazione del flow",
+      "nav_definitions": "Definizioni",
       "nav_examples": "Esempi",
+      "nav_metrics": "Metriche",
       "nav_outputs": "Outputs",
       "nav_overview": "Panoramica",
       "nav_properties": "Proprietà",
@@ -616,6 +648,10 @@
     "open full page": "Apri Pagina Completa",
     "drill down preview": "Anteprima",
     "errors": {
+      "400": {
+        "title": "Richiesta non valida",
+        "content": "La richiesta non può essere compresa dal server."
+      },
       "401": {
         "title": "Non autorizzato",
         "content": "Devi essere autenticato per accedere a questa pagina."
@@ -628,6 +664,114 @@
         "title": "Pagina non trovata",
         "content": "L'URL richiesto non è stato trovato su questo server.<br />Questo è tutto ciò che sappiamo.",
         "flow or execution": "Il flow o l'esecuzione che stai cercando non esiste."
+      },
+      "409": {
+        "title": "Conflitto",
+        "content": "La richiesta è in conflitto con lo stato attuale della risorsa."
+      },
+      "422": {
+        "title": "Entità non valida",
+        "content": "Il contenuto inviato non può essere elaborato."
+      },
+      "500": {
+        "title": "Errore interno del server",
+        "content": "Qualcosa è andato storto da parte nostra. Riprova più tardi."
+      },
+      "503": {
+        "title": "Servizio non disponibile",
+        "content": "Il server è temporaneamente non disponibile. Riprova più tardi."
+      },
+      "generic": {
+        "title": "Qualcosa è andato storto",
+        "content": "Si è verificato un errore imprevisto. Riprova."
+      },
+      "trace id": "ID traccia",
+      "problems": {
+        "ai-request-failed": {
+          "title": "Richiesta AI fallita"
+        },
+        "bad-request": {
+          "title": "Richiesta non valida"
+        },
+        "bulk-validation-failed": {
+          "title": "Alcuni elementi non possono essere elaborati"
+        },
+        "conflict": {
+          "title": "Conflitto"
+        },
+        "entity-already-exists": {
+          "title": "L'entità esiste già"
+        },
+        "forbidden": {
+          "title": "Accesso negato"
+        },
+        "internal-error": {
+          "title": "Errore interno del server"
+        },
+        "invalid-argument": {
+          "title": "Argomento non valido"
+        },
+        "invalid-entity": {
+          "title": "Entità non valida"
+        },
+        "invalid-format": {
+          "title": "Formato valore non valido"
+        },
+        "invalid-json": {
+          "title": "JSON non valido"
+        },
+        "invalid-plugin-type": {
+          "title": "Tipo di plugin non valido"
+        },
+        "invalid-query-filters": {
+          "title": "Filtri di query non validi"
+        },
+        "invalid-query-parameter": {
+          "title": "Parametro di query non valido"
+        },
+        "invalid-request-body": {
+          "title": "Corpo della richiesta non valido"
+        },
+        "locked": {
+          "title": "La risorsa è bloccata"
+        },
+        "method-not-allowed": {
+          "title": "Metodo non consentito"
+        },
+        "migration-required": {
+          "title": "Migrazione richiesta"
+        },
+        "not-acceptable": {
+          "title": "Non accettabile"
+        },
+        "not-found": {
+          "title": "Risorsa non trovata"
+        },
+        "payload-too-large": {
+          "title": "Payload troppo grande"
+        },
+        "resource-expired": {
+          "title": "La risorsa è scaduta"
+        },
+        "service-unavailable": {
+          "title": "Servizio non disponibile",
+          "detail": "Il server è temporaneamente non disponibile. Riprova più tardi."
+        },
+        "timeout": {
+          "title": "Operazione scaduta"
+        },
+        "too-many-requests": {
+          "title": "Troppe richieste"
+        },
+        "unauthenticated": {
+          "title": "Autenticazione richiesta"
+        },
+        "unsupported-media-type": {
+          "title": "Tipo di media non supportato"
+        },
+        "validation-failed": {
+          "title": "Validazione fallita"
+        }
       }
     },
     "back_to_dashboard": "Torna alla dashboard",
@@ -645,6 +789,7 @@
     "label": "Label",
     "labels": "Etichette",
     "execution labels": "Etichette di esecuzione",
+    "show more labels": "Mostra altre {count} label",
     "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
     "feeds": {
       "heading": "Tutto su Kestra.",
@@ -754,6 +899,11 @@
     "expand_by_default": "Espandi i log strutturati per impostazione predefinita",
     "similar lines": "linee simili",
     "download_logs_description": "Scegli quali log esportare. I filtri sono impostati sulla tua visualizzazione attuale.",
+    "logs_download_truncated": "Sono state esportate le {downloaded} righe di log più recenti. Altre {skipped} corrispondevano ai tuoi filtri e sono state escluse.",
+    "logs_download_capped": "Sono state esportate le {downloaded} righe di log più recenti, il massimo per una singola esportazione. Altre potrebbero aver corrisposto ai tuoi filtri.",
+    "logs_download_partial": "L'esportazione si è fermata a {downloaded} righe di log perché questo filtro non può essere paginato oltre. Alcune righe corrispondenti sono assenti.",
+    "logs_download_failed": "L'esportazione dei log è fallita. Nessun file è stato scaricato.",
+    "logs_download_empty": "Nessuna riga di log corrisponde ai tuoi filtri, quindi non è stato scaricato alcun file.",
     "display_settings": "Impostazioni di visualizzazione",
     "density": "Densità",
     "density_compact": "Compatto",
@@ -863,6 +1013,7 @@
       },
       "export": "Esporta file del namespace",
       "export_single": "Esporta file",
+      "export_error": "Impossibile esportare \"{name}\". Non è stato possibile risolvere il suo percorso.",
       "dialog": {
         "name": {
           "file": "Nome con estensione:",
@@ -1411,7 +1562,8 @@
         "confirm": "Sei sicuro di voler eliminare: <code>{name}</code> KV?",
         "warning": "Non hai i permessi per quei namespace, quindi verranno omessi: <code>{namespaces}</code>"
       },
-      "inherited": "Coppie KV ereditate"
+      "inherited": "Coppie KV ereditate",
+      "expiration_hint": "Attualmente scade il {date}. Lascia il campo intatto per mantenere questa scadenza; la selezione di una durata la ricalcola da ora, e la sua cancellazione la rimuove."
     },
     "expiration": "Scadenza",
     "page": {
@@ -1764,7 +1916,9 @@
       "triggers": "Nessun Trigger Trovato",
       "flows": "Nessun Flow Trovato",
       "kv_pairs": "Nessuna coppia Key-Value trovata",
-      "secrets": "Nessun Secret Trovato"
+      "secrets": "Nessun Secret Trovato",
+      "all_columns_hidden": "Tutte le colonne sono nascoste",
+      "all_columns_hidden_description": "Riattiva almeno una colonna in Personalizza colonne della tabella per visualizzare nuovamente i dati."
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {
@@ -1782,6 +1936,7 @@
       "others": "Altri",
       "viewAll": "Vedi tutti",
       "export": "Esporta",
+      "exportEmpty": "Questo grafico non ha dati da esportare.",
       "exportTo": {
         "csv": "Esporta in CSV",
         "ion": "Esporta in ION"
@@ -2017,6 +2172,31 @@
         "clear_selection": "Cancella selezione",
         "fit_view": "Adatta allo schermo"
       },
+      "dag": {
+        "force": "Albero",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Ultimo aggiornamento",
+        "status": {
+          "fresh": "Nuovo",
+          "stale": "Stale",
+          "failed": "Fallito",
+          "unknown": "Non tracciato"
+        },
+        "summary": {
+          "fresh": "Tutti i {n} Asset freschi",
+          "issues": "{n} obsoleto",
+          "failed": "{n} fallito",
+          "last_run": "ultima esecuzione {ago}",
+          "unknown": "{n} non tracciato"
+        },
+        "recent_runs": "Esecuzioni recenti",
+        "group_by": "Raggruppa per",
+        "groups": "Gruppi ({n})",
+        "group_none": "Nessun raggruppamento",
+        "group_dataset": "Dataset",
+        "ungrouped": "Non raggruppato"
+      },
       "search": {
         "placeholders": {
           "default": "Cerca per flow o namespace...",
@@ -2078,7 +2258,7 @@
     },
     "mcp": {
       "your_servers": "I tuoi server",
-      "servers_count": "{count} Server MCP",
+      "servers_count": "{count} server MCP | {count} server MCP",
       "managed_by_kestra": "Gestito da Kestra",
       "servers": "Server MCP",
       "client_setup": "Configurazione Client",

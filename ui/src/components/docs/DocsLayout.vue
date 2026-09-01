@@ -19,7 +19,7 @@
                 <slot name="menu" />
             </div>
         </div>
-        <div class="main-content-wrapper">
+        <div ref="mainContent" class="main-content-wrapper">
             <div v-if="$slots['secondary-header']" class="secondary-header">
                 <KsButton
                     v-if="$slots.menu && isPluginsRoute"
@@ -60,7 +60,9 @@
             (typeof route.name === "string" && route.name.startsWith("plugins/"))
     })
 
-    useScrollMemory(scrollKey, undefined, true)
+    const mainContent = ref<HTMLElement | null>(null)
+
+    useScrollMemory(scrollKey, mainContent, !hasMenu.value)
 
     watch(() => route.fullPath, () => {
         mobileMenuOpen.value = false
@@ -70,6 +72,10 @@
 
 <style scoped lang="scss">
     @use '../../styles/responsive' as *;
+
+    .docs-layout-container.full-height {
+        min-height: 0;
+    }
 
     .sidebar {
         background: var(--ks-bg-surface);
@@ -317,6 +323,11 @@
             &.mobile-open {
                 left: auto;
             }
+        }
+
+        .full-height .sidebar {
+            height: 100%;
+            padding-bottom: 0;
         }
 
         .main-content-wrapper {

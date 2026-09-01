@@ -11,6 +11,7 @@ import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVStoreService;
@@ -45,15 +46,41 @@ public class KVController {
     @Inject
     protected TenantService tenantService;
 
+    /**
+     * Maps a sortable name to the {@link PersistedKvMetadata} property the repositories sort on:
+     * JDBC turns the value into a column by camel-to-snake conversion, Elasticsearch uses it
+     * verbatim as the document field. Four {@link KVEntry} field names differ from their property,
+     * so an unmapped sort resolved to nothing and failed the query with a 500 — {@code updateDate}
+     * being the one the UI exposes.
+     *
+     * <p>{@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
+     * holding the uid, so that mapping prevents an ordering on the wrong data rather than a failure.
+     *
+     * <p>Both spellings are accepted. {@link KVEntry} field names are the documented contract, but
+     * the KV table has always sorted on the properties directly — its default sort is
+     * {@code name:asc} — so rejecting those would break every existing client. Anything outside
+     * both sets yields {@code null}, which {@link PageableUtils} answers with a 422 rather than
+     * letting an unknown column reach the query; that still rules out internal columns such as
+     * {@code last} and {@code deleted}.
+     */
+    private static final Map<String, String> SORT_FIELDS = Map.ofEntries(
+        // KVEntry field -> PersistedKvMetadata property
+        Map.entry("namespace", "namespace"),
+        Map.entry("key", "name"),
+        Map.entry("revision", "version"),
+        Map.entry("description", "description"),
+        Map.entry("creationDate", "created"),
+        Map.entry("updateDate", "updated"),
+        Map.entry("expirationDate", "expirationDate"),
+        // the four properties whose name differs, accepted under their own name too
+        Map.entry("name", "name"),
+        Map.entry("version", "version"),
+        Map.entry("created", "created"),
+        Map.entry("updated", "updated")
+    );
+
     private String sortMapper(String key) {
-        if (key != null && key.equals("key")) {
-            return "name";
-        }
-        // updateDate is the KVEntry API field name; the real column is "updated".
-        if (key != null && key.equals("updateDate")) {
-            return "updated";
-        }
-        return key;
+        return key == null ? null : SORT_FIELDS.get(key);
     }
 
     @ExecuteOn(TaskExecutors.IO)

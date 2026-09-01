@@ -1929,6 +1929,9 @@
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
       },
+      "creation": {
+        "label": "Créer un Dashboard"
+      },
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",

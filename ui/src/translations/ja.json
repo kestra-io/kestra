@@ -1377,7 +1377,8 @@
       "kv_pairs": "キー-バリュー ペアが見つかりません",
       "secrets": "シークレットが見つかりません",
       "templates": "テンプレートが見つかりません",
-      "triggers": "トリガーが見つかりません"
+      "triggers": "トリガーが見つかりません",
+      "all_columns_hidden": "すべての列が非表示です"
     },
     "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",

@@ -1377,7 +1377,8 @@
       "kv_pairs": "Пары kv store не найдены",
       "secrets": "Секреты не найдены",
       "templates": "Шаблоны не найдены",
-      "triggers": "Триггеры не найдены"
+      "triggers": "Триггеры не найдены",
+      "all_columns_hidden": "Все столбцы скрыты"
     },
     "no_results_found": "Результаты не найдены",
     "no_tasks_running": "Ещё нет запущенных tasks.",

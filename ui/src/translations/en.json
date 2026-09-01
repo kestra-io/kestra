@@ -1586,7 +1586,8 @@
             "kv_pairs": "No Key-Value pairs Found",
             "secrets": "No Secrets Found",
             "templates": "No Templates Found",
-            "assets": "No Assets Found"
+            "assets": "No Assets Found",
+            "all_columns_hidden": "All columns are hidden"
         },
         "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
         "dashboards": {

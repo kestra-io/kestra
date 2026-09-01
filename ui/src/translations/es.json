@@ -1377,7 +1377,8 @@
       "kv_pairs": "No se encontraron pares Key-Value",
       "secrets": "No se encontraron Secrets",
       "templates": "No se encontraron plantillas",
-      "triggers": "No se encontraron Triggers"
+      "triggers": "No se encontraron Triggers",
+      "all_columns_hidden": "Todas las columnas están ocultas"
     },
     "no_results_found": "No se encontraron resultados",
     "no_tasks_running": "Todavía no hay tasks en ejecución.",

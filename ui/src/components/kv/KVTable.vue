@@ -1,5 +1,5 @@
 <template>
-    <DataTable @page-changed="onPageChanged" ref="dataTable" :total="total">
+    <DataTable @page-changed="onPageChanged" ref="dataTable" :total="hasVisibleColumns ? total : 0">
         <template #top>
             <KSFilter
                 :configuration="kvFilter"
@@ -21,14 +21,14 @@
 
         <template #table>
             <SelectTable
-                :data="kvs"
+                :data="hasVisibleColumns ? kvs : []"
                 ref="selectTable"
                 :defaultSort="{prop: 'key', order: 'ascending'}"
                 tableLayout="auto"
                 fixed
                 @selection-change="handleSelectionChange"
                 @sort-change="onSort"
-                :no-data-text="$t('no_results.kv_pairs')"
+                :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
                 class="fill-height"
                 :showSelection="!paneView"
                 :rowKey="(row: any) => `${row.namespace}-${row.key}`"
@@ -96,7 +96,7 @@
                     </el-table-column>
                 </template>
 
-                <el-table-column columnKey="copy" className="row-action">
+                <el-table-column v-if="hasVisibleColumns" columnKey="copy" className="row-action">
                     <template #default="scope">
                         <IconButton
                             v-if="scope.row.key !== undefined"
@@ -109,7 +109,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column v-if="!paneView" columnKey="view" className="row-action">
+                <el-table-column v-if="!paneView && hasVisibleColumns" columnKey="view" className="row-action">
                     <template #default="scope">
                         <IconButton
                             v-if="!canUpdate(scope.row) && canRead(scope.row)"
@@ -122,7 +122,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column v-if="!paneView" columnKey="update" className="row-action">
+                <el-table-column v-if="!paneView && hasVisibleColumns" columnKey="update" className="row-action">
                     <template #default="scope">
                         <IconButton
                             v-if="canUpdate(scope.row)"
@@ -135,7 +135,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
+                <el-table-column v-if="!paneView && hasVisibleColumns" columnKey="delete" className="row-action">
                     <template #default="scope">
                         <IconButton
                             v-if="canDelete(scope.row)"
@@ -484,6 +484,8 @@
         columns: optionalColumns.value,
         storageKey: storageKey
     });
+
+    const hasVisibleColumns = computed(() => orderedVisibleColumns.value.length > 0);
 
     const {
         selection,

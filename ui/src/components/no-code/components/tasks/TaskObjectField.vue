@@ -51,7 +51,7 @@
             />
         </div>
     </div>
-    <KsFormItem v-else-if="fieldKey" :required="isRequired" for="">
+    <KsFormItem v-else-if="fieldKey" :required="isRequired" for="" :data-test="`field-${fieldKey}`">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">

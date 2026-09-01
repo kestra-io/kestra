@@ -52,7 +52,7 @@ class TimeoutTest {
                         .id("test")
                         .type(Sleep.class.getName())
                         .duration(Property.ofValue(Duration.ofSeconds(100)))
-                        .timeout(Property.ofValue(Duration.ofNanos(100000)))
+                        .timeout(Property.ofValue(Duration.ofMillis(1)))
                         .build()
                 )
             )

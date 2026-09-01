@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {recipeToFlowObject, recipeToYaml, SYSTEM_FLOW_RECIPE_ID, type RecipeState} from "../../../src/utils/recipeToYaml"
 
 const baseState = (): RecipeState => ({

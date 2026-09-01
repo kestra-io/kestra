@@ -151,7 +151,7 @@
         return style.toLowerCase() as AlertType
     }
 
-    interface ReplaySubmitOptions {
+    export interface ReplaySubmitOptions {
         formRef: FormInstance
         id: string
         namespace: string

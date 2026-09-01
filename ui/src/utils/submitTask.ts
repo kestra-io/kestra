@@ -3,7 +3,7 @@ import {useExecutionsStore, type Execution} from "../stores/executions"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
 import {flattenInputs} from "./inputs"
-import {EXECUTION_TAB_ROUTES} from "../components/executions/executionTabs"
+import {DEFAULT_EXECUTION_TAB, DEFAULT_TAB_STORAGE_KEY, EXECUTION_TAB_ROUTES} from "../components/executions/executionTabs"
 import {resolveDefaultTab} from "./routeTabs"
 
 export const normalizeInputValues = (
@@ -90,7 +90,7 @@ export const executeTask = (
         .then(response => {
             executionsStore.execution = response
             if (options.redirect) {
-                const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem("executeDefaultTab"), "gantt")
+                const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem(DEFAULT_TAB_STORAGE_KEY), DEFAULT_EXECUTION_TAB)
                 if (options.newTab) {
                     const resolved = submitor.$router.resolve({
                         name: `executions/update/${tab}`,

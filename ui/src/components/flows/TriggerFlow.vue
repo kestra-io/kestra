@@ -1,15 +1,17 @@
 <template>
     <div class="trigger-flow-wrapper">
         <span data-onboarding-target="flow-execute-button">
-            <KsButton
-                :id="actionId"
-                :icon="PlayOutlineIcon"
-                :type="type"
-                :disabled="actionDisabled"
-                @click="runAction()"
-            >
-                {{ actionLabel }}
-            </KsButton>
+            <slot name="button" :execute="runAction" :disabled="actionDisabled">
+                <KsButton
+                    :id="actionId"
+                    :icon="PlayOutlineIcon"
+                    :type="type"
+                    :disabled="actionDisabled"
+                    @click="runAction()"
+                >
+                    {{ actionLabel }}
+                </KsButton>
+            </slot>
         </span>
         <KsDialog
             id="execute-flow-dialog"
@@ -24,7 +26,7 @@
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun ref="flowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
                 <FlowRunActions :flowRun="flowRunRef" />
             </template>
@@ -92,7 +94,7 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
-    import FlowRun from "./FlowRun.vue"
+    import FlowRun, {type ReplaySubmitOptions} from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
     import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
@@ -109,10 +111,14 @@
         disabled?: boolean
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         flowSource?: string | null
+        submit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
+        lazy?: boolean
     }>(), {
         disabled: false,
         type: "primary",
         flowSource: null,
+        submit: null,
+        lazy: false,
     })
 
     const {t} = useI18n({useScope: "global"})
@@ -138,7 +144,10 @@
 
     async function handleExecutionStart() {
         closeModal()
-        toast.success(t("execution_started"))
+        // a caller that overrides the submission owns the user feedback too, otherwise it toasts twice
+        if (!props.submit) {
+            toast.success(t("execution_started"))
+        }
     }
 
     function isDisabled() {
@@ -270,7 +279,7 @@
             
             loadDefinition()
         },
-        {immediate: true},
+        {immediate: !props.lazy},
     )
 
     watch(

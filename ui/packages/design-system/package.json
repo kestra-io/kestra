@@ -13,6 +13,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./shiki": "./src/components/Data/KsMarkdown/shikiHighlighter.ts",
     "./components/*": "./src/components/*",
     "./src/assets/styles/*": "./src/assets/styles/*",
     "./package.json": "./package.json"

@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import org.eclipse.aether.transfer.TransferListener;
+
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 
 import jakarta.annotation.Nullable;
@@ -80,6 +82,25 @@ public interface PluginManager extends AutoCloseable {
         List<MavenPluginRepositoryConfig> repositoryConfigs,
         boolean installForRegistration,
         @Nullable Path localRepositoryPath);
+
+    /**
+     * Installs the given plugin artifacts, reporting byte-level transfer progress to the provided
+     * listener. Implementations that do not support listener-based progress may ignore it.
+     *
+     * @param artifacts the list of plugin artifacts.
+     * @param repositoryConfigs the addition repository configs.
+     * @param installForRegistration specify whether the plugin registry should be refreshed.
+     * @param localRepositoryPath the optional local repository path to install artifact.
+     * @param transferListener optional Aether listener for byte-level download progress; may be {@code null}.
+     * @return The URIs of the installed plugins.
+     */
+    default List<PluginArtifact> install(List<PluginArtifact> artifacts,
+        List<MavenPluginRepositoryConfig> repositoryConfigs,
+        boolean installForRegistration,
+        @Nullable Path localRepositoryPath,
+        @Nullable TransferListener transferListener) {
+        return install(artifacts, repositoryConfigs, installForRegistration, localRepositoryPath);
+    }
 
     /**
      * Uninstall the given plugin artifact.

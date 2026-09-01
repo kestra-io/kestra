@@ -44,7 +44,10 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * <b>Recursion.</b> A subflow whose own inputs call {@code subflow()} is bounded by a per-thread depth
  * cap. Input resolution is synchronous and runs on the same thread, so the cap catches both direct
- * self-recursion and mutual recursion across flows without a dedicated self-call check.
+ * self-recursion and mutual recursion across flows without a dedicated self-call check. This cap is
+ * independent of {@code kestra.execution.depth.max-depth} ({@link io.kestra.core.runners.configuration.ExecutionDepthConfiguration}),
+ * which bounds the Subflow task and Flow trigger chains instead — a subflow executed here does not
+ * carry or check that depth.
  * <p>
  * <b>Bean wiring.</b> The function is only registered on server types that render execute forms
  * ({@code WEBSERVER}, {@code STANDALONE}); on other server types the bean is absent and the function
@@ -166,10 +169,18 @@ public class SubflowFunction implements KestraFunction {
                 );
 
             if (targetFlow instanceof FlowWithException fwe) {
-                throw new PebbleException(null, "Cannot run the invalid flow '" + namespace + "'.'" + id + "': " + fwe.getException(), lineNumber, self.getName());
+                // The flow could not be resolved for runtime, either because it is invalid or because governance
+                // blocks it. Which one it was is in the carried message, so state neither here.
+                throw new PebbleException(
+                    null, "Cannot execute flow '%s'.'%s': %s".formatted(namespace, id, fwe.getException()),
+                    lineNumber, self.getName()
+                );
             }
             if (targetFlow.isDisabled()) {
-                throw new PebbleException(null, "Cannot run the disabled flow '" + namespace + "'.'" + id + "'.", lineNumber, self.getName());
+                throw new PebbleException(
+                    null, "Cannot execute flow '%s'.'%s': it is disabled.".formatted(namespace, id),
+                    lineNumber, self.getName()
+                );
             }
 
             Execution execution;

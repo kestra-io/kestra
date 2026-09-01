@@ -85,10 +85,10 @@
         padding: 0;
         cursor: pointer;
 
-        :deep(.material-design-icon__svg) {
-            width: 16px;
-            height: 16px;
-            transform: translateY(1px) translateX(-0.5px);
+        :deep(.material-design-icon),
+        :deep(.material-design-icon > .material-design-icon__svg) {
+            width: var(--ks-icon-size-sm);
+            height: var(--ks-icon-size-sm);
         }
     }
 

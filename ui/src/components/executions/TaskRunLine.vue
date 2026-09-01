@@ -4,7 +4,7 @@
         class="taskrun-header"
         :style="{'--depth': depth}"
     >
-        <div class="me-1">
+        <div>
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"
@@ -16,7 +16,7 @@
                 <ChevronRight v-else />
             </KsIcon>
         </div>
-        <div class="task-icon d-none d-md-inline-block me-1">
+        <div class="task-icon d-none d-md-inline-block">
             <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
@@ -52,7 +52,7 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="currentTaskRun.state.histories" />
+                <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" :subject="currentTaskRun.taskId" />
             </small>
         </div>
 
@@ -103,7 +103,10 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="selectedAttempt(currentTaskRun).state.histories" />
+                <Duration
+                    :histories="selectedAttempt(currentTaskRun).state.histories"
+                    :subject="`${currentTaskRun.taskId}, ${$t('attempt')} ${(selectedAttemptNumberByTaskRunId[currentTaskRun.id] ?? 0) + 1}`"
+                />
             </small>
         </div>
     </div>
@@ -257,7 +260,6 @@
             width: var(--ks-spacing-6);
             height: var(--ks-spacing-6);
             border-radius: var(--ks-radius-base);
-            margin-left: calc(-1 * var(--ks-spacing-2));
         }
 
         .task-id {

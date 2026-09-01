@@ -66,5 +66,72 @@ class ConcurrencyLimitControllerTest {
         );
         assertThat(updated).isNotNull();
         assertThat(updated.getRunning()).isEqualTo(99);
+
+        // the flow-scoped GET returns the same record
+        ConcurrencyLimit scoped = client.toBlocking().retrieve(
+            GET("/api/v1/main/concurrency-limit/" + concurrencyLimit.getNamespace() + "/" + concurrencyLimit.getFlowId()),
+            ConcurrencyLimit.class
+        );
+        assertThat(scoped.getNamespace()).isEqualTo(concurrencyLimit.getNamespace());
+        assertThat(scoped.getFlowId()).isEqualTo(concurrencyLimit.getFlowId());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
+    void shouldRejectNegativeRunningCount(Execution execution) {
+        ConcurrencyLimit existing = client.toBlocking().retrieve(
+            GET("/api/v1/main/concurrency-limit/" + execution.getNamespace() + "/" + execution.getFlowId()),
+            ConcurrencyLimit.class
+        );
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                PUT("/api/v1/main/concurrency-limit/" + existing.getNamespace() + "/" + existing.getFlowId(), existing.withRunning(-5))
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
+    void shouldIdentifyConcurrencyLimitFromPathNotBody(Execution execution) {
+        // A body naming a different flow must not retarget it: the path identifies the resource.
+        ConcurrencyLimit spoofed = ConcurrencyLimit.builder()
+            .tenantId("main")
+            .namespace("evil.namespace")
+            .flowId("evil-flow")
+            .running(42)
+            .build();
+
+        ConcurrencyLimit updated = client.toBlocking().retrieve(
+            PUT("/api/v1/main/concurrency-limit/" + execution.getNamespace() + "/" + execution.getFlowId(), spoofed),
+            ConcurrencyLimit.class
+        );
+
+        assertThat(updated.getNamespace()).isEqualTo(execution.getNamespace());
+        assertThat(updated.getFlowId()).isEqualTo(execution.getFlowId());
+        assertThat(updated.getRunning()).isEqualTo(42);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                GET("/api/v1/main/concurrency-limit/evil.namespace/evil-flow")
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenGettingConcurrencyLimitForUnknownFlow() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                GET("/api/v1/main/concurrency-limit/unknown.namespace/unknown-flow")
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 }

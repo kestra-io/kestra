@@ -2,47 +2,6 @@
   "ko": {
     "loading": "로딩 중...",
     "more actions": "추가 작업",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "문자, 숫자, 점, 대시, 밑줄만 사용하고, 문자로 시작하거나 숫자로 시작해야 합니다.",
-        "id_label": "flow id",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "소문자, 숫자, 점, 대시, 밑줄만 사용하며, 소문자 또는 숫자로 시작해야 합니다.",
-        "namespace_placeholder": "namespace를 선택하세요",
-        "namespaces_error": "namespace를 로드할 수 없습니다. namespace를 수동으로 입력하세요.",
-        "open_editor": "에디터 열기",
-        "subtitle": "hello-world 스타터로 시작하여 처음부터 빌드하세요.",
-        "title": "빈 flow"
-      },
-      "blueprints": {
-        "subtitle": "커뮤니티 카탈로그에서 미리 만들어진 flow를 선택하세요.",
-        "title": "블루프린트 찾아보기"
-      },
-      "import": {
-        "back": "뒤로",
-        "error": {
-          "empty": "YAML 콘텐츠가 비어 있습니다.",
-          "invalid_mapping": "유효하지 않은 flow YAML: 목록 또는 스칼라가 아닌 키-값 매핑이 필요합니다.",
-          "parse_error": "YAML을 구문 분석할 수 없습니다.",
-          "too_large": "파일이 너무 큽니다. 대신 flow 정의를 붙여넣거나 1MB 미만의 파일을 업로드하세요."
-        },
-        "paste_label": "YAML 붙여넣기",
-        "read_error": "파일을 읽을 수 없습니다.",
-        "submit": "flow 가져오기",
-        "subtitle": "기존 flow 정의를 붙여넣거나 업로드하세요.",
-        "title": "YAML 가져오기",
-        "upload_button": ".yml / .yaml 업로드",
-        "upload_label": "또는 파일 업로드",
-        "upload_tip": ".yml 및 .yaml 파일을 허용합니다."
-      },
-      "subtitle": "빈 캔버스에서 시작하거나, blueprint를 탐색하거나, 기존 YAML을 가져오세요.",
-      "system": {
-        "badge": "시스템",
-        "subtitle": "플랫폼을 위한 알림 또는 자동화 flow를 구축하세요.",
-        "title": "시스템 flow 생성"
-      },
-      "title": "새 flow 생성"
-    },
     "recipe": {
       "create_flow": "flow 생성",
       "email": "이메일",
@@ -223,10 +182,12 @@
     "add_new_item": "새 항목 추가",
     "copy": "복사",
     "copy_to_clipboard": "클립보드에 복사",
+    "copy_pebble_expression": "pebble 표현식 복사",
     "new": "새로 만들기",
     "edit": "편집",
     "back": "뒤로",
     "next": "다음",
+    "previous": "이전",
     "done": "완료",
     "review your inputs": "입력 내용을 검토하세요",
     "edit flow": "Flow 편집",
@@ -246,6 +207,7 @@
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
     "queued duration": "대기 중 지속 시간",
+    "paused duration": "일시 중지 시간",
     "executionProgress": {
       "title": "실행 진행률",
       "estimatedRemaining": "예상 남은 시간: {duration}",
@@ -311,8 +273,6 @@
         "1d": "1일",
         "7d": "7일"
       },
-      "last14days": "지난 14일",
-      "last28days": "지난 28일",
       "14days": "14일",
       "28days": "28일"
     },
@@ -340,6 +300,21 @@
     "to": "종료",
     "steps": "단계",
     "state": "상태",
+    "state_history": {
+      "title": "상태 기록",
+      "open": "상태 기록",
+      "aria_open": "상태 기록 표시",
+      "aria_open_for": "{subject}의 상태 기록 표시",
+      "started_at": "{time}에 시작됨",
+      "failed_at": "{time}에 실패함",
+      "skipped_at": "{time}에 건너뜀",
+      "created_at": "{time}에 생성됨",
+      "did_not_run": "이 태스크는 실행되지 않았습니다",
+      "waiting_to_start": "시작 대기 중",
+      "attempt_n": "시도 {index}",
+      "attempt_count": "{count}회 시도",
+      "copy": "상태 기록 복사"
+    },
     "search": "검색",
     "source search": "소스 검색",
     "selected": "선택됨",
@@ -409,7 +384,7 @@
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "force run": "강제 실행",
     "force run title": "실행 <code>{id}</code> 강제 실행.",
-    "force run confirm": "실행 <code>{id}</code>를 강제로 실행하시겠습니까?<br/><br/>경고: 실행 강제 실행은 보장되지 않으며 중복 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED task는 실행 중 상태로 이동됩니다.</li><li>RUNNING task는 다시 제출됩니다.</li><li>QUEUED task는 대기열에서 제거됩니다.</li><li>PAUSED task는 재개됩니다.</li></ul>",
+    "force run confirm": "실행 `{id}`를 강제로 실행하시겠습니까?\n\n경고: 실행 강제 실행은 보장되지 않으며 중복 Task 실행을 생성할 수 있습니다.\n\n다음 전환이 수행됩니다:\n\n- CREATED Task는 실행 중 상태로 이동됩니다.\n- RUNNING Task는 다시 제출됩니다.\n- QUEUED Task는 대기열에서 제거됩니다.\n- PAUSED Task는 재개됩니다.",
     "force run done": "실행이 강제로 실행됨",
     "metrics": "메트릭",
     "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
@@ -478,6 +453,7 @@
     },
     "file_preview": {
       "big_file_warning": "이 파일의 크기는 {size}입니다. 브라우저가 차단될 수 있으니 로드하는 데 시간이 걸릴 수 있습니다. 그래도 로드하시겠습니까?",
+      "big_file_download_only": "이 파일의 크기는 {size}입니다. 에디터에서 열기에는 너무 크므로 대신 다운로드하세요.",
       "load_anyway": "그래도 로드하기",
       "load_error": "파일 미리보기를 로드하지 못했습니다. 일시적인 문제이거나 권한 문제일 수 있습니다.",
       "retry": "다시 시도",
@@ -496,6 +472,11 @@
         "message": "이 flow는 더 이상 동시성 블록을 선언하지 않지만, 제한 레코드가 여전히 실행 중인 실행 {count}개를 세고 있습니다. 새 실행에는 영향을 주지 않으며 관리 → 동시성 제한에서 초기화할 수 있습니다.",
         "title": "남아 있는 동시성 제한"
       }
+    },
+    "docsPage": {
+      "notFound": "이 문서 페이지가 존재하지 않습니다. 이동되었거나 이름이 변경되었을 수 있습니다.",
+      "loadError": "이 문서 페이지를 불러올 수 없습니다. 다시 시도해 주세요.",
+      "backToDocs": "Docs로 돌아가기"
     },
     "documentation": {
       "documentation": "문서"
@@ -535,6 +516,15 @@
     },
     "use": "사용",
     "plugins": {
+      "autoInstall": {
+        "failed": "플러그인 설치에 실패했습니다",
+        "failedHint": "flow가 저장되지 않았습니다. 문제를 해결하거나 flow에서 plugin을 제거한 후 다시 저장하세요.",
+        "preparing": "플러그인 설치를 준비하는 중...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "플러그인이 성공적으로 설치되었습니다 | 플러그인이 성공적으로 설치되었습니다",
+        "timeout": "플러그인 설치가 예상보다 오래 걸리고 있습니다. flow가 저장되지 않았으므로 설치가 완료되면 다시 저장하세요.",
+        "title": "플러그인 {count}개 설치 중 | 플러그인 {count}개 설치 중"
+      },
       "names": "플러그인들",
       "release": "릴리스 노트",
       "beta": "베타",
@@ -574,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow 문서",
+      "nav_definitions": "정의",
       "nav_examples": "예시",
+      "nav_metrics": "메트릭",
       "nav_outputs": "Outputs",
       "nav_overview": "개요",
       "nav_properties": "속성",
@@ -611,6 +603,7 @@
     "triggers_add_filter_app": "앱",
     "triggers_add_empty_title": "트리거를 찾을 수 없음",
     "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
+    "ee_feature_tooltip": "이 기능은 Enterprise Edition이 필요합니다.",
     "triggers_add_card_add": "추가",
     "triggers_add_modal_tab_form": "폼",
     "triggers_add_modal_tab_source": "출처",
@@ -655,6 +648,10 @@
     "open full page": "전체 페이지 열기",
     "drill down preview": "미리보기",
     "errors": {
+      "400": {
+        "title": "잘못된 요청",
+        "content": "서버가 요청을 이해할 수 없습니다."
+      },
       "401": {
         "title": "인증되지 않았습니다.",
         "content": "이 페이지에 접근하려면 인증이 필요합니다."
@@ -667,6 +664,114 @@
         "title": "페이지를 찾을 수 없음",
         "content": "요청한 URL을 이 서버에서 찾을 수 없습니다.<br />알고 있는 전부입니다.",
         "flow or execution": "찾고 있는 flow 또는 실행이 존재하지 않습니다."
+      },
+      "409": {
+        "title": "충돌",
+        "content": "요청이 리소스의 현재 상태와 충돌합니다."
+      },
+      "422": {
+        "title": "유효하지 않은 엔터티",
+        "content": "제출된 콘텐츠를 처리할 수 없습니다."
+      },
+      "500": {
+        "title": "내부 서버 오류",
+        "content": "저희 쪽에 문제가 발생했습니다. 나중에 다시 시도해 주세요."
+      },
+      "503": {
+        "title": "서비스를 사용할 수 없습니다.",
+        "content": "서버를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요."
+      },
+      "generic": {
+        "title": "문제가 발생했습니다.",
+        "content": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요."
+      },
+      "trace id": "추적 ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI 요청 실패"
+        },
+        "bad-request": {
+          "title": "잘못된 요청"
+        },
+        "bulk-validation-failed": {
+          "title": "일부 항목을 처리할 수 없습니다."
+        },
+        "conflict": {
+          "title": "충돌"
+        },
+        "entity-already-exists": {
+          "title": "엔터티가 이미 존재합니다."
+        },
+        "forbidden": {
+          "title": "액세스 거부됨"
+        },
+        "internal-error": {
+          "title": "내부 서버 오류"
+        },
+        "invalid-argument": {
+          "title": "잘못된 인수"
+        },
+        "invalid-entity": {
+          "title": "유효하지 않은 엔티티"
+        },
+        "invalid-format": {
+          "title": "잘못된 값 형식"
+        },
+        "invalid-json": {
+          "title": "유효하지 않은 JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "유효하지 않은 plugin 유형"
+        },
+        "invalid-query-filters": {
+          "title": "잘못된 쿼리 필터"
+        },
+        "invalid-query-parameter": {
+          "title": "잘못된 쿼리 파라미터"
+        },
+        "invalid-request-body": {
+          "title": "잘못된 요청 본문"
+        },
+        "locked": {
+          "title": "리소스가 잠겨 있습니다"
+        },
+        "method-not-allowed": {
+          "title": "허용되지 않는 메서드"
+        },
+        "migration-required": {
+          "title": "마이그레이션 필요"
+        },
+        "not-acceptable": {
+          "title": "허용되지 않음"
+        },
+        "not-found": {
+          "title": "리소스를 찾을 수 없습니다."
+        },
+        "payload-too-large": {
+          "title": "Payload가 너무 큽니다"
+        },
+        "resource-expired": {
+          "title": "리소스가 만료되었습니다."
+        },
+        "service-unavailable": {
+          "title": "서비스를 사용할 수 없습니다.",
+          "detail": "서버를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요."
+        },
+        "timeout": {
+          "title": "작업 시간 초과"
+        },
+        "too-many-requests": {
+          "title": "요청이 너무 많습니다."
+        },
+        "unauthenticated": {
+          "title": "인증 필요"
+        },
+        "unsupported-media-type": {
+          "title": "지원되지 않는 미디어 유형"
+        },
+        "validation-failed": {
+          "title": "유효성 검사 실패"
+        }
       }
     },
     "back_to_dashboard": "대시보드로 돌아가기",
@@ -684,6 +789,7 @@
     "label": "Label",
     "labels": "라벨",
     "execution labels": "실행 라벨",
+    "show more labels": "라벨 {count}개 더 보기",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
     "feeds": {
       "heading": "Kestra의 모든 것.",
@@ -697,7 +803,7 @@
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",
     "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
-    "bulk force run": "<code>{executionCount}</code>개의 실행을 강제로 실행하시겠습니까?<br/><br/>경고: 실행 강제 실행은 보장되지 않으며 중복 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED task는 실행 중 상태로 이동됩니다.</li><li>RUNNING task는 다시 제출됩니다.</li><li>QUEUED task는 대기열에서 제거됩니다.</li><li>PAUSED task는 재개됩니다.</li></ul>",
+    "bulk force run": "`{executionCount}`개의 실행을 강제로 실행하시겠습니까?\n\n경고: 실행 강제 실행은 보장되지 않으며 중복 Task 실행을 생성할 수 있습니다.\n\n다음 전환이 수행됩니다:\n\n- CREATED Task는 실행 중 상태로 이동됩니다.\n- RUNNING Task는 다시 제출됩니다.\n- QUEUED Task는 대기열에서 제거됩니다.\n- PAUSED Task는 재개됩니다.",
     "bulk restart": "<code>{executionCount}</code> 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
     "cancel": "취소",
@@ -793,6 +899,11 @@
     "expand_by_default": "기본적으로 구조화된 log 확장",
     "similar lines": "유사한 라인",
     "download_logs_description": "내보낼 log를 선택하세요. 필터는 현재 보기에 기본 설정됩니다.",
+    "logs_download_truncated": "가장 최근 {downloaded} 줄의 log를 내보냈습니다. {skipped} 줄이 더 필터와 일치했지만 제외되었습니다.",
+    "logs_download_capped": "한 번의 내보내기 최대치인 가장 최근 {downloaded} 줄의 log를 내보냈습니다. 필터와 일치하는 줄이 더 있었을 수 있습니다.",
+    "logs_download_partial": "이 필터는 더 이상 페이지를 넘길 수 없어 내보내기가 {downloaded} 줄의 log에서 중단되었습니다. 일치하는 일부 줄이 누락되었습니다.",
+    "logs_download_failed": "log 내보내기에 실패했습니다. 파일이 다운로드되지 않았습니다.",
+    "logs_download_empty": "필터와 일치하는 log 줄이 없어 파일이 다운로드되지 않았습니다.",
     "display_settings": "표시 설정",
     "density": "밀도",
     "density_compact": "압축",
@@ -876,6 +987,7 @@
         "folder_error": "폴더 생성 중 오류가 발생했습니다"
       },
       "rename": {
+        "error": "\"{name}\"(으)로 이름을 변경할 수 없습니다. 같은 이름의 파일 또는 폴더가 이미 있을 수 있습니다.",
         "label": "이름 변경",
         "file": "파일 이름 변경",
         "folder": "폴더 이름 변경",
@@ -901,6 +1013,7 @@
       },
       "export": "namespace 파일 내보내기",
       "export_single": "파일 내보내기",
+      "export_error": "\"{name}\"을(를) 내보낼 수 없습니다. 경로를 확인할 수 없습니다.",
       "dialog": {
         "name": {
           "file": "확장자를 포함한 이름:",
@@ -1020,7 +1133,8 @@
             "triggers_default_tab": "기본 Trigger 탭",
             "playground": "플레이그라운드",
             "auto_refresh_interval": "자동 새로고침 간격",
-            "task_edit_default_mode": "기본 Task 편집 모드"
+            "task_edit_default_mode": "기본 Task 편집 모드",
+            "flow_template": "기본 flow 템플릿"
           },
           "descriptions": {
             "default_namespace": "namespace 없이 새로운 flow를 생성할 때 사용됩니다.",
@@ -1033,11 +1147,17 @@
             "triggers_default_tab": "트리거 페이지로 이동할 때 선택된 탭.",
             "auto_refresh_interval": "목록 페이지에서 자동 데이터 새로 고침 간격(초).",
             "playground": "편집기 플레이그라운드에서 개별적으로 task 실행.",
-            "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다."
+            "task_edit_default_mode": "노코드 편집기에서 task가 기본적으로 열리는 방식입니다.",
+            "flow_template": "새 flow를 생성할 때 YAML이 에디터에서 열립니다. id와 namespace는 자동으로 생성되므로 비워둘 수 있습니다. 이 필드가 비어 있으면 인스턴스에 구성된 템플릿이 사용됩니다."
           },
           "task_edit_default_mode_options": {
             "modal": "모달",
             "tab": "탭"
+          },
+          "flow_template_reset": "기본값으로 재설정",
+          "flow_template_error": {
+            "invalid_mapping": "잘못된 flow 템플릿: 목록 또는 스칼라가 아닌 키-값 매핑이 필요합니다.",
+            "parse_error": "YAML을 파싱할 수 없습니다. 템플릿이 저장되었으므로 flow를 생성할 때 편집기에 동일한 오류가 표시될 수 있습니다."
           }
         },
         "theme": {
@@ -1114,7 +1234,7 @@
       "contact_sales": "영업팀에 문의하세요",
       "secrets": {
         "title": "비밀 관리 업그레이드",
-        "message": "Enterprise Edition(EE)을 사용하면 UI에서 직접 시크릿을 추가, 편집 또는 삭제할 수 있으며 인스턴스를 다시 시작할 필요가 없습니다. 세분화된 RBAC 권한으로 namespace별로 시크릿을 구성하고, 부모 namespace에서 자식 namespace로 시크릿을 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 시크릿 관리자와 통합됩니다. 팀 간에 시크릿을 격리하기 위해 namespace, tenant 또는 인스턴스별로 전용 백엔드를 설정하거나 외부 볼트에 저장된 읽기 전용 시크릿을 활성화할 수 있습니다. 시크릿은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 액세스를 기록합니다.",
+        "message": "Enterprise Edition을 사용하면 UI에서 직접 시크릿을 추가, 편집, 삭제하고 RBAC으로 namespace별로 구성하며 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager 또는 Elasticsearch를 백엔드로 사용할 수 있습니다.",
         "add_env": {
           "intro": "새 Secret 생성",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
@@ -1425,6 +1545,7 @@
       "key": "이름",
       "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
       "name": "비밀 value",
+      "valuePlaceholder": "비밀 value 입력",
       "description": "설명",
       "descriptionPlaceholder": "이 비밀을 설명하세요",
       "tags": "태그",
@@ -1441,7 +1562,8 @@
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
       },
-      "inherited": "상속된 KV 쌍"
+      "inherited": "상속된 KV 쌍",
+      "expiration_hint": "현재 {date}에 만료됩니다. 이 만료를 유지하려면 필드를 그대로 두십시오. 기간을 선택하면 지금부터 다시 계산되고, 지우면 제거됩니다."
     },
     "expiration": "만료",
     "page": {
@@ -1812,6 +1934,7 @@
       "others": "기타",
       "viewAll": "전체 보기",
       "export": "내보내기",
+      "exportEmpty": "이 차트에는 내보낼 데이터가 없습니다.",
       "exportTo": {
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"
@@ -1921,6 +2044,7 @@
           "test": "테스트"
         },
         "contextRemoved": "{type} {id}이(가) 컨텍스트에서 제거되었습니다.",
+        "modelChanged": "{model}으로 전환되었습니다.",
         "toolResult": {
           "detail": "세부 정보",
           "error": "{tool} 실패했습니다",
@@ -1991,6 +2115,12 @@
           "수렴 중"
         ],
         "newChat": "새 채팅",
+        "fixThread": {
+          "flow": "Flow {id} 수정",
+          "task": "Task {id} 수정",
+          "execution": "{id} 실행 수정",
+          "generic": "Flow 오류 수정"
+        },
         "draft": {
           "openInEditor": "에디터에서 열기",
           "apply": "적용",
@@ -2039,6 +2169,31 @@
         "zoom_out": "축소",
         "clear_selection": "선택 해제",
         "fit_view": "화면에 맞추기"
+      },
+      "dag": {
+        "force": "트리",
+        "layered": "DAG",
+        "system": "시스템",
+        "last_update": "마지막 업데이트",
+        "status": {
+          "fresh": "신규",
+          "stale": "오래됨",
+          "failed": "실패함",
+          "unknown": "추적되지 않음"
+        },
+        "summary": {
+          "fresh": "모든 {n} Asset이 최신입니다.",
+          "issues": "{n} 고정",
+          "failed": "{n} 실패함",
+          "last_run": "마지막 실행 {ago}",
+          "unknown": "{n} 추적되지 않음"
+        },
+        "recent_runs": "최근 실행",
+        "group_by": "그룹화 기준",
+        "groups": "그룹 ({n})",
+        "group_none": "그룹화 없음",
+        "group_dataset": "데이터셋",
+        "ungrouped": "그룹 해제됨"
       },
       "search": {
         "placeholders": {
@@ -2101,7 +2256,7 @@
     },
     "mcp": {
       "your_servers": "내 서버",
-      "servers_count": "{count} MCP 서버",
+      "servers_count": "{count} MCP 서버 | {count} MCP 서버",
       "managed_by_kestra": "Kestra에서 관리",
       "servers": "MCP 서버",
       "client_setup": "클라이언트 설정",
@@ -2235,7 +2390,7 @@
       "next_match": "다음 일치",
       "no_results_description": "namespace를 확장하거나, 범위를 '모든 소스'로 다시 전환하거나, '대소문자 일치' 및 '단어 전체 일치'를 끄십시오.",
       "no_results_hidden_type": "선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다. | 선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다.",
-      "no_results_in_types": "{types}에서 “{query}”와 일치하는 항목이 없습니다",
+      "no_results_in_types": "{types}에서 {query}와 일치하는 항목이 없습니다",
       "no_results_title": "\"{query}\"에 대한 일치 항목 없음",
       "open_flow": "flow 열기",
       "open_in_editor": "에디터에서 열기",

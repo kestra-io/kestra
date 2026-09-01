@@ -7,23 +7,18 @@
         >
         <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
             <KsAlert type="warning" :closable="false">
-                {{ $t("file_preview.big_file_warning", {size: humanSize}) }}
+                {{ $t("file_preview.big_file_download_only", {size: humanSize}) }}
             </KsAlert>
-            <KsButtonGroup>
-                <KsButton type="primary" data-test="big-file-load-anyway" :icon="FileEyeOutline" @click="loadAnyway()">
-                    {{ $t("file_preview.load_anyway") }}
-                </KsButton>
-                <KsButton
-                    type="primary"
-                    tag="a"
-                    :href="fileUrl"
-                    :download="name"
-                    :icon="Download"
-                    rel="noopener noreferrer"
-                >
-                    {{ $t("download") }}
-                </KsButton>
-            </KsButtonGroup>
+            <KsButton
+                type="primary"
+                tag="a"
+                :href="fileUrl"
+                :download="name"
+                :icon="Download"
+                rel="noopener noreferrer"
+            >
+                {{ $t("download") }}
+            </KsButton>
         </div>
         <KsEditor
             v-else
@@ -82,33 +77,33 @@
 
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute} from "vue-router"
     import {apiUrl} from "override/utils/route"
     import type * as monaco from "monaco-editor/editor/editor.api"
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
     import {useFlowStore} from "../../stores/flow"
+    import {useFlowEditorActions} from "../flows/useFlowEditorActions"
     import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import FileEyeOutline from "vue-material-design-icons/FileEyeOutline.vue"
     import {humanFileSize} from "../../utils/utils"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
 
     const route = useRoute()
-    const router = useRouter()
 
+    const {save} = useFlowEditorActions()
     const flowStore = useFlowStore()
     const editorBindings = useEditorBindings()
 
@@ -147,28 +142,24 @@
 
     const bigFile = ref(false)
     const fileSize = ref<number>()
-    /** once the user opts in via "Load anyway", tab re-activations skip the guard */
-    const bypassSizeGuard = ref(false)
 
     async function loadFile() {
         if (props.dirty || props.flow) return
 
         if (!fileNamespace.value) return
 
-        if (!bypassSizeGuard.value) {
-            try {
-                const stats = await namespacesStore.fileMetadata({
-                    namespace: fileNamespace.value,
-                    path: props.path ?? "",
-                })
-                fileSize.value = stats?.size
-            } catch {
-                /** the size guard must not block the file when stats are unavailable */
-                fileSize.value = undefined
-            }
-            bigFile.value = (fileSize.value ?? 0) >= BIG_FILE_THRESHOLD
-            if (bigFile.value) return
+        try {
+            const stats = await namespacesStore.fileMetadata({
+                namespace: fileNamespace.value,
+                path: props.path ?? "",
+            })
+            fileSize.value = stats?.size
+        } catch {
+            /** the size guard must not block the file when stats are unavailable */
+            fileSize.value = undefined
         }
+        bigFile.value = (fileSize.value ?? 0) >= BIG_FILE_THRESHOLD
+        if (bigFile.value) return
 
         const result = await namespacesStore.readFile({
             namespace: fileNamespace.value,
@@ -192,13 +183,7 @@
         }
     }
 
-    async function loadAnyway() {
-        bypassSizeGuard.value = true
-        bigFile.value = false
-        await loadFile()
-    }
-
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {})
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => false)
 
     function closeCurrentTab() {
         closeTab(props)
@@ -340,22 +325,13 @@
         pluginsStore.updateDocumentation({cls, version, hash: hash.value})
     }
 
+    // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
+    // path as the Save button — including auto-install of missing plugins before persisting.
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value)
         if(!editorRefElement.value?.getEditor()) return
 
-        const result = await flowStore.saveAll()
-
-        if (result === "redirect_to_update") {
-            await router.push({
-                name: "flows/update/edit",
-                params: {
-                    id: flowStore.flow?.id,
-                    namespace: flowStore.flow?.namespace,
-                    tenant: route.params?.tenant,
-                },
-            })
-        }
+        await save()
     }
 
     const saveFileContent = async () => {

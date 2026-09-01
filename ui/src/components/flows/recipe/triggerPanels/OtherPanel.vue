@@ -35,12 +35,12 @@
                 :key="trigger.type"
                 role="radio"
                 :selected="recipe.otherTriggerType === trigger.type"
-                :ariaLabel="triggerDisplayName(trigger)"
+                :ariaLabel="displayName(trigger)"
                 @select="setOtherTriggerType(trigger.type)"
             >
                 <TaskIcon :cls="trigger.type" :icons="pluginIcons" class="trigger-icon" />
                 <div class="trigger-info">
-                    <span class="trigger-name">{{ triggerDisplayName(trigger) }}</span>
+                    <span class="trigger-name">{{ displayName(trigger) }}</span>
                     <span v-if="trigger.description" class="trigger-desc">{{ trigger.description }}</span>
                 </div>
                 <KsIcon v-if="recipe.otherTriggerType === trigger.type" class="check-icon">
@@ -55,7 +55,7 @@
     import {computed, onMounted, ref} from "vue"
     import SelectableTile from "../SelectableTile.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
-    import {triggerDisplayName} from "../../../admin/triggers/triggerCatalog"
+    import {buildTriggerDisplayNames} from "../../../admin/triggers/triggerCatalog"
     import {usePluginsStore} from "../../../../stores/plugins"
     import type {TriggerPluginDto} from "../../../../stores/plugins"
     import type {PluginIconMap} from "../../../../utils/pluginUtils"
@@ -75,11 +75,16 @@
     const loadError = ref(false)
     const pluginIcons = ref<PluginIconMap>({})
 
+    const displayNames = computed(() => buildTriggerDisplayNames(triggers.value))
+    const displayName = (trigger: TriggerPluginDto) => displayNames.value.get(trigger.type) ?? trigger.name
+
     const filteredTriggers = computed(() => {
         const q = searchQuery.value.toLowerCase()
         if (!q) return triggers.value
         return triggers.value.filter(
-            t => triggerDisplayName(t).toLowerCase().includes(q) || t.type.toLowerCase().includes(q),
+            t => displayName(t).toLowerCase().includes(q)
+                || t.name.toLowerCase().includes(q)
+                || t.type.toLowerCase().includes(q),
         )
     })
 

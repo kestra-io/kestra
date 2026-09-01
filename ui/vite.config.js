@@ -81,9 +81,11 @@ export default defineConfig(({mode}) => {
         },
         resolve: {
             preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls", "moment"],
             alias: [
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+                // moment timezones are heavy. only load what is common 
+                {find: /^moment-timezone$/, replacement: "moment-timezone/builds/moment-timezone-with-data-1970-2030"},
             ],
         },
         plugins: [
@@ -108,13 +110,16 @@ export default defineConfig(({mode}) => {
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
                     },
-                    // add all exports of @kestra-io/kestra-sdk as shared singletons
+                    // every @kestra-io/kestra-sdk export as a shared singleton, "./all" included:
+                    // a plugin importing it must get the host's shared.gen, not a second tenant state
                     ...Object.fromEntries(Object.keys(kestraSdkExports)
                         .filter((key) => key !== "." && !key.endsWith(".json"))
                         .map((key) => {
                             const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
                             return [`@kestra-io/kestra-sdk/${name}`, {
                                 singleton: true,
+                                // every operation imports shared.gen's tenant state statically
+                                eager: name === "shared",
                             }]
                         }),
                     ),

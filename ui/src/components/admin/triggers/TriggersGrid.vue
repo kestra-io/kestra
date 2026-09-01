@@ -50,6 +50,7 @@
                 v-for="trigger in visibleTriggers"
                 :key="trigger.type"
                 :trigger="trigger"
+                :displayName="displayName(trigger)"
                 @add="openConfigureModal"
             />
         </div>
@@ -58,6 +59,7 @@
             v-if="selectedTrigger"
             v-model:visible="configureModalVisible"
             :trigger="selectedTrigger"
+            :displayName="displayName(selectedTrigger)"
             @cancel="configureModalVisible = false"
         />
     </div>
@@ -75,7 +77,7 @@
     import AddTriggerModal from "./AddTriggerModal.vue"
 
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
-    import {triggerDisplayName} from "./triggerCatalog"
+    import {buildTriggerDisplayNames} from "./triggerCatalog"
 
     const TRIGGER_GROUPS = ["core", "realtime", "app"] as const
     const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const
@@ -96,7 +98,7 @@
     const pluginsStore = usePluginsStore()
 
     const nameAsc = (a: TriggerPluginDto, b: TriggerPluginDto) =>
-        triggerDisplayName(a).localeCompare(triggerDisplayName(b))
+        displayName(a).localeCompare(displayName(b))
 
     const COMPARATORS: Record<SortKey, (a: TriggerPluginDto, b: TriggerPluginDto) => number> = {
         nameAsc,
@@ -111,11 +113,15 @@
     const selectedTrigger = ref<TriggerPluginDto | null>(null)
     const configureModalVisible = ref(false)
 
+    const displayNames = computed(() => buildTriggerDisplayNames(allTriggers.value))
+    const displayName = (trigger: TriggerPluginDto) => displayNames.value.get(trigger.type) ?? trigger.name
+
     const visibleTriggers = computed(() => {
         const q = searchQuery.value.trim().toLowerCase()
         const matchesSearch = (tr: TriggerPluginDto) =>
             !q ||
-            triggerDisplayName(tr).toLowerCase().includes(q) ||
+            displayName(tr).toLowerCase().includes(q) ||
+            tr.name.toLowerCase().includes(q) ||
             tr.type.toLowerCase().includes(q) ||
             (tr.description ?? "").toLowerCase().includes(q)
 

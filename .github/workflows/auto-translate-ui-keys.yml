@@ -67,9 +67,44 @@ jobs:
               echo "No changes to commit. Exiting with success."
               exit 0
             fi
+            # The staged fingerprint diff is exactly the set of keys this run (re)translated.
+            FINGERPRINTS="ui/scripts/translations/fingerprints.json ui/scripts/translations/fingerprints-design-system.json"
+            git diff --cached -U0 -- $FINGERPRINTS | sed -n 's/^+[[:space:]]*"\([^"]*\)":.*/\1/p' | sort -u > "$RUNNER_TEMP/added"
+            git diff --cached -U0 -- $FINGERPRINTS | sed -n 's/^-[[:space:]]*"\([^"]*\)":.*/\1/p' | sort -u > "$RUNNER_TEMP/removed"
+            {
+              comm -23 "$RUNNER_TEMP/added" "$RUNNER_TEMP/removed" | sed 's/.*/- `&` (new)/'
+              comm -12 "$RUNNER_TEMP/added" "$RUNNER_TEMP/removed" | sed 's/.*/- `&` (re-translated)/'
+              comm -13 "$RUNNER_TEMP/added" "$RUNNER_TEMP/removed" | sed 's/.*/- `&` (removed)/'
+            } > "$RUNNER_TEMP/keys"
+            # The last commit that touched the fingerprints is the previous generation, so every
+            # commit after it that touched an English source is what this run translates.
+            SINCE=$(git log -1 --format=%H -- $FINGERPRINTS)
+            git log --format='- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))' "${SINCE:-HEAD}..HEAD" -- ui/src/translations/en.json ':(glob)ui/packages/design-system/**/*.locale.ts' > "$RUNNER_TEMP/sources"
+            {
+              echo "This PR was created automatically by a GitHub Action."
+              echo
+              echo "### Translated keys"
+              head -100 "$RUNNER_TEMP/keys"
+              KEY_COUNT=$(wc -l < "$RUNNER_TEMP/keys")
+              if [ "$KEY_COUNT" -gt 100 ]; then
+                echo "- ... and $((KEY_COUNT - 100)) more keys"
+              fi
+              echo
+              echo "### Commits that introduced the English changes"
+              if [ -s "$RUNNER_TEMP/sources" ]; then
+                cat "$RUNNER_TEMP/sources"
+              else
+                echo "_No commit touched the English sources since the last run; this is a forced or catch-up re-translation._"
+              fi
+              echo
+              echo "Someone from the @kestra-io/frontend team needs to review and merge."
+            } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
             git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
-            gh pr create --title "Translations from en.json" --body $'This PR was created automatically by a GitHub Action.\n\nSomeone from the @kestra-io/frontend team needs to review and merge.' --base ${{ github.ref_name }} --head $BRANCH_NAME
+            PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base ${{ github.ref_name }} --head $BRANCH_NAME)
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              gh pr edit "$PR_URL" --add-reviewer "${{ github.actor }}" || echo "Could not request a review from ${{ github.actor }} on $PR_URL"
+            fi
 
         - name: Check keys matching
           run: npm run translations:check

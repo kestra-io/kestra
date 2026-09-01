@@ -45,7 +45,8 @@ public class FlowTriggerService {
     private final ExecutionOutputService executionOutputService;
     private final ExecutionDepthConfiguration executionDepthConfiguration;
 
-    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore, ExecutionOutputService executionOutputService,
+    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore,
+        ExecutionOutputService executionOutputService,
         ExecutionDepthConfiguration executionDepthConfiguration) {
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
@@ -159,7 +160,9 @@ public class FlowTriggerService {
                     flowWithMultipleCondition.getMultipleCondition(),
                     buildOutputs(execution, executionOutputs),
                     (txContext,
-                        multipleConditionWindow) -> processMultipleConditionWindow(txContext, flowWithMultipleCondition, multipleConditionWindow, execution, executionOutputs, multipleConditionStorage, resolved)
+                        multipleConditionWindow) -> processMultipleConditionWindow(
+                            txContext, flowWithMultipleCondition, multipleConditionWindow, execution, executionOutputs, multipleConditionStorage, resolved
+                        )
                 )
             )
             .filter(Objects::nonNull)

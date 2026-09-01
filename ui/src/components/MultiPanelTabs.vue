@@ -16,7 +16,12 @@
                 @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
                 @dragleave.prevent="panelDragLeave"
                 @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
-                :class="{'panel-dragover': panel.dragover, 'panel-maximized': maximizedPanelIndex === panelIndex}"
+                :class="{
+                    'panel-dragover': panel.dragover,
+                    'panel-maximized': maximizedPanelIndex === panelIndex,
+                    'panel-maximized--left-sliver': maximizedPanelIndex === panelIndex && !!leftNeighbor,
+                    'panel-maximized--right-sliver': maximizedPanelIndex === panelIndex && !!rightNeighbor,
+                }"
             >
                 <template v-if="maximizedPanelIndex === panelIndex">
                     <button
@@ -624,10 +629,6 @@
         }
         panels.value.splice(panelIndex + 1, 0, newPanel)
 
-        // Moving the only tab out left the source panel with no tabs and an undefined activeTab,
-        // so the split rendered an empty panel and the button looked inert.
-        if (panel.tabs.length <= 1) return
-
         const activeTabIndex = panel.tabs.findIndex((tab) => tab.uid === panel.activeTab.uid)
 
         panel.activeTab = panel.tabs[activeTabIndex - 1] ?? panel.tabs[activeTabIndex + 1]
@@ -809,12 +810,20 @@
         position: relative;
         z-index: 1;
         height: calc(100% - var(--ks-spacing-5));
-        margin-left: calc(2vw + var(--ks-spacing-4));
-        margin-right: calc(2vw + var(--ks-spacing-4));
         background: var(--ks-bg-surface);
         border-left: 1px solid var(--ks-border-default);
         border-right: 1px solid var(--ks-border-default);
         box-shadow: var(--ks-shadow-md);
+    }
+
+    .panel-maximized--left-sliver .editor-tabs-container,
+    .panel-maximized--left-sliver .content-panel {
+        margin-left: calc(2vw + var(--ks-spacing-4));
+    }
+
+    .panel-maximized--right-sliver .editor-tabs-container,
+    .panel-maximized--right-sliver .content-panel {
+        margin-right: calc(2vw + var(--ks-spacing-4));
     }
 
     .panel-maximized .editor-tabs-container {

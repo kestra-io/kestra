@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Документация flow",
+      "nav_definitions": "Определения",
       "nav_examples": "Примеры",
+      "nav_metrics": "Метрики",
       "nav_outputs": "Outputs",
       "nav_overview": "Обзор",
       "nav_properties": "Свойства",
@@ -646,6 +648,10 @@
     "open full page": "Открыть страницу полностью",
     "drill down preview": "Предпросмотр",
     "errors": {
+      "400": {
+        "title": "Неверный запрос",
+        "content": "Запрос не может быть понят сервером."
+      },
       "401": {
         "title": "Неавторизован",
         "content": "Вам нужно пройти аутентификацию для доступа к этой странице."
@@ -658,6 +664,114 @@
         "title": "Страница не найдена",
         "content": "Запрашиваемый URL не найден на этом сервере.<br />Это все, что мы знаем.",
         "flow or execution": "Flow или выполнение, которое вы ищете, не существует."
+      },
+      "409": {
+        "title": "Конфликт",
+        "content": "Запрос конфликтует с текущим состоянием ресурса."
+      },
+      "422": {
+        "title": "Недопустимая сущность",
+        "content": "Отправленное содержимое не может быть обработано."
+      },
+      "500": {
+        "title": "Внутренняя ошибка сервера",
+        "content": "Что-то пошло не так с нашей стороны. Пожалуйста, попробуйте позже."
+      },
+      "503": {
+        "title": "Сервис недоступен",
+        "content": "Сервер временно недоступен. Пожалуйста, попробуйте позже."
+      },
+      "generic": {
+        "title": "Что-то пошло не так",
+        "content": "Произошла непредвиденная ошибка. Пожалуйста, попробуйте еще раз."
+      },
+      "trace id": "ID трассировки",
+      "problems": {
+        "ai-request-failed": {
+          "title": "Сбой запроса AI"
+        },
+        "bad-request": {
+          "title": "Неверный запрос"
+        },
+        "bulk-validation-failed": {
+          "title": "Некоторые элементы не удалось обработать"
+        },
+        "conflict": {
+          "title": "Конфликт"
+        },
+        "entity-already-exists": {
+          "title": "Сущность уже существует"
+        },
+        "forbidden": {
+          "title": "Доступ запрещен"
+        },
+        "internal-error": {
+          "title": "Внутренняя ошибка сервера"
+        },
+        "invalid-argument": {
+          "title": "Недопустимый аргумент"
+        },
+        "invalid-entity": {
+          "title": "Недопустимая сущность"
+        },
+        "invalid-format": {
+          "title": "Неверный формат значения"
+        },
+        "invalid-json": {
+          "title": "Неверный JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Недопустимый тип plugin"
+        },
+        "invalid-query-filters": {
+          "title": "Неверные фильтры запроса"
+        },
+        "invalid-query-parameter": {
+          "title": "Недопустимый параметр запроса"
+        },
+        "invalid-request-body": {
+          "title": "Недопустимое тело запроса"
+        },
+        "locked": {
+          "title": "Ресурс заблокирован"
+        },
+        "method-not-allowed": {
+          "title": "Метод не разрешен"
+        },
+        "migration-required": {
+          "title": "Требуется миграция"
+        },
+        "not-acceptable": {
+          "title": "Неприемлемо"
+        },
+        "not-found": {
+          "title": "Ресурс не найден"
+        },
+        "payload-too-large": {
+          "title": "Payload слишком большой"
+        },
+        "resource-expired": {
+          "title": "Ресурс истек"
+        },
+        "service-unavailable": {
+          "title": "Сервис недоступен",
+          "detail": "Сервер временно недоступен. Пожалуйста, попробуйте позже."
+        },
+        "timeout": {
+          "title": "Операция завершилась по таймауту"
+        },
+        "too-many-requests": {
+          "title": "Слишком много запросов"
+        },
+        "unauthenticated": {
+          "title": "Требуется аутентификация"
+        },
+        "unsupported-media-type": {
+          "title": "Неподдерживаемый тип медиа"
+        },
+        "validation-failed": {
+          "title": "Ошибка валидации"
+        }
       }
     },
     "back_to_dashboard": "Вернуться на панель управления",
@@ -675,6 +789,7 @@
     "label": "Метка",
     "labels": "Метки",
     "execution labels": "Метки выполнения",
+    "show more labels": "Показать еще {count} меток",
     "wrong labels": "Пустой key или value не допускается в метках",
     "feeds": {
       "heading": "Все о Kestra.",
@@ -898,6 +1013,7 @@
       },
       "export": "Экспортировать файлы namespace",
       "export_single": "Экспортировать файл",
+      "export_error": "Не удалось экспортировать \"{name}\". Не удалось определить путь.",
       "dialog": {
         "name": {
           "file": "Имя с расширением:",
@@ -1446,7 +1562,8 @@
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
       },
-      "inherited": "Наследуемые KV пары"
+      "inherited": "Наследуемые KV пары",
+      "expiration_hint": "Срок действия истекает {date}. Оставьте поле без изменений, чтобы сохранить этот срок действия; выбор продолжительности пересчитывает его с текущего момента, а очистка удаляет его."
     },
     "expiration": "Срок действия",
     "page": {
@@ -2139,7 +2256,7 @@
     },
     "mcp": {
       "your_servers": "Ваши серверы",
-      "servers_count": "{count} MCP Серверов",
+      "servers_count": "{count} сервер MCP | {count} сервера MCP | {count} серверов MCP",
       "managed_by_kestra": "Управляется Kestra",
       "servers": "Серверы MCP",
       "client_setup": "Настройка клиента",

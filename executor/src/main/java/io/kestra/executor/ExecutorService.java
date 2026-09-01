@@ -1511,12 +1511,23 @@ public class ExecutorService {
                             .build()
                     );
                 } catch (Exception e) {
+                    Task task = workerTask.getTask();
+                    // Log against the task run so the failure carries its taskId/taskRunId, not only the execution.
+                    executorTask.runContext().logger().error("Failed to process task: {}", e.getMessage(), e);
+
+                    // State.Type.fail resolves the failure against allowFailure/allowWarning: FAILED, WARNING or SUCCESS.
+                    State.Type failState = State.Type.fail(task);
+                    // Fail the execution only when the task itself ends FAILED; WARNING/SUCCESS let it continue.
+                    if (failState == State.Type.FAILED) {
+                        executor.withException(e, "handleExecutionUpdatingTasks");
+                    }
+
+                    TaskRunAttempt failedAttempt = TaskRunAttempt.builder().state(new State(failState)).build();
                     workerTaskResults.add(
                         WorkerTaskResult.builder()
-                            .taskRun(workerTask.getTaskRun().fail())
+                            .taskRun(workerTask.getTaskRun().withAttempts(List.of(failedAttempt)).withState(failState))
                             .build()
                     );
-                    executor.withException(e, "handleExecutionUpdatingTasks");
                 }
                 return true;
             });

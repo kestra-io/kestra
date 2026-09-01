@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Dokumentacja Flow",
+      "nav_definitions": "Definicje",
       "nav_examples": "Przykłady",
+      "nav_metrics": "Metryki",
       "nav_outputs": "Outputs",
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
@@ -646,6 +648,10 @@
     "open full page": "Otwórz pełną stronę",
     "drill down preview": "Podgląd",
     "errors": {
+      "400": {
+        "title": "Nieprawidłowe żądanie",
+        "content": "Żądanie nie mogło zostać zrozumiane przez serwer."
+      },
       "401": {
         "title": "Brak autoryzacji",
         "content": "Musisz być uwierzytelniony, aby uzyskać dostęp do tej strony."
@@ -658,6 +664,114 @@
         "title": "Strona nie znaleziona",
         "content": "Żądany URL nie został znaleziony na tym serwerze.<br />To wszystko, co wiemy.",
         "flow or execution": "Flow lub egzekucja, której szukasz, nie istnieje."
+      },
+      "409": {
+        "title": "Konflikt",
+        "content": "Żądanie jest sprzeczne z bieżącym stanem zasobu."
+      },
+      "422": {
+        "title": "Nieprawidłowa encja",
+        "content": "Przesłana zawartość nie mogła zostać przetworzona."
+      },
+      "500": {
+        "title": "Wewnętrzny błąd serwera",
+        "content": "Coś poszło nie tak po naszej stronie. Spróbuj ponownie później."
+      },
+      "503": {
+        "title": "Usługa niedostępna",
+        "content": "Serwer jest tymczasowo niedostępny. Spróbuj ponownie później."
+      },
+      "generic": {
+        "title": "Coś poszło nie tak",
+        "content": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+      },
+      "trace id": "ID śledzenia",
+      "problems": {
+        "ai-request-failed": {
+          "title": "Żądanie AI nie powiodło się"
+        },
+        "bad-request": {
+          "title": "Nieprawidłowe żądanie"
+        },
+        "bulk-validation-failed": {
+          "title": "Niektóre elementy nie mogły zostać przetworzone"
+        },
+        "conflict": {
+          "title": "Konflikt"
+        },
+        "entity-already-exists": {
+          "title": "Encja już istnieje"
+        },
+        "forbidden": {
+          "title": "Odmowa dostępu"
+        },
+        "internal-error": {
+          "title": "Wewnętrzny błąd serwera"
+        },
+        "invalid-argument": {
+          "title": "Nieprawidłowy argument"
+        },
+        "invalid-entity": {
+          "title": "Nieprawidłowa encja"
+        },
+        "invalid-format": {
+          "title": "Nieprawidłowy format wartości"
+        },
+        "invalid-json": {
+          "title": "Nieprawidłowy JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Nieprawidłowy typ pluginu"
+        },
+        "invalid-query-filters": {
+          "title": "Nieprawidłowe filtry zapytania"
+        },
+        "invalid-query-parameter": {
+          "title": "Nieprawidłowy parametr zapytania"
+        },
+        "invalid-request-body": {
+          "title": "Nieprawidłowy body żądania"
+        },
+        "locked": {
+          "title": "Zasób jest zablokowany"
+        },
+        "method-not-allowed": {
+          "title": "Metoda niedozwolona"
+        },
+        "migration-required": {
+          "title": "Wymagana migracja"
+        },
+        "not-acceptable": {
+          "title": "Niedopuszczalne"
+        },
+        "not-found": {
+          "title": "Zasób nie znaleziono"
+        },
+        "payload-too-large": {
+          "title": "Payload zbyt duży"
+        },
+        "resource-expired": {
+          "title": "Zasób wygasł"
+        },
+        "service-unavailable": {
+          "title": "Usługa niedostępna",
+          "detail": "Serwer jest tymczasowo niedostępny. Spróbuj ponownie później."
+        },
+        "timeout": {
+          "title": "Operacja przekroczyła limit czasu"
+        },
+        "too-many-requests": {
+          "title": "Zbyt wiele żądań"
+        },
+        "unauthenticated": {
+          "title": "Wymagane uwierzytelnienie"
+        },
+        "unsupported-media-type": {
+          "title": "Nieobsługiwany typ nośnika"
+        },
+        "validation-failed": {
+          "title": "Walidacja nie powiodła się"
+        }
       }
     },
     "back_to_dashboard": "Powrót do Dashboardu",
@@ -675,6 +789,7 @@
     "label": "Etykieta",
     "labels": "Etykiety",
     "execution labels": "Etykiety egzekucji",
+    "show more labels": "Pokaż {count} więcej etykiet",
     "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
     "feeds": {
       "heading": "Wszystko o Kestra.",
@@ -898,6 +1013,7 @@
       },
       "export": "Eksportuj pliki namespace'u",
       "export_single": "Eksportuj plik",
+      "export_error": "Nie udało się wyeksportować \"{name}\". Nie można było ustalić ścieżki.",
       "dialog": {
         "name": {
           "file": "Nazwa z rozszerzeniem:",
@@ -1446,7 +1562,8 @@
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
         "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>"
       },
-      "inherited": "Odziedziczone pary KV"
+      "inherited": "Odziedziczone pary KV",
+      "expiration_hint": "Obecnie wygasa {date}. Pozostaw pole bez zmian, aby zachować to wygaśnięcie; wybranie czasu trwania przelicza go od teraz, a wyczyszczenie usuwa go."
     },
     "expiration": "Wygaśnięcie",
     "page": {
@@ -2139,7 +2256,7 @@
     },
     "mcp": {
       "your_servers": "Twoje Serwery",
-      "servers_count": "{count} Serwerów MCP",
+      "servers_count": "{count} serwer MCP | {count} serwery MCP | {count} serwerów MCP",
       "managed_by_kestra": "Zarządzane przez Kestra",
       "servers": "Serwery MCP",
       "client_setup": "Konfiguracja klienta",

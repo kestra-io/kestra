@@ -557,7 +557,7 @@ export function useDependencies(
             coreStore.message = {
                 variant: "error",
                 title:   t("error"),
-                message: t("something_went_wrong.loading_execution"),
+                content: t("something_went_wrong.loading_execution"),
             }
 
             // Close on error: EventSource auto-reconnects unless explicitly closed, and each

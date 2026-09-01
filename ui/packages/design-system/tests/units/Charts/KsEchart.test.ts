@@ -139,6 +139,29 @@ describe("KsEchart", () => {
         expect(tooltip.props("trigger")).toBe("manual")
     })
 
+    test("external tooltip honors the per-series tooltip.valueFormatter option", async () => {
+        const options = {
+            ...BASE_OPTIONS,
+            series: [
+                {name: "Executions", type: "bar", data: [10, 20, 30]},
+                {name: "Duration", type: "line", data: [1.5, 2, 3], tooltip: {valueFormatter: (value: unknown) => `${value}s`}},
+            ],
+        }
+        const wrapper = mount(KsEchart, {props: {options, tooltipType: "external"}, global: globalConfig})
+
+        const vChart = wrapper.findComponent({name: "VChart"})
+        const opt = vChart.props("option") as {tooltip: {formatter: (params: unknown) => string}}
+        opt.tooltip.formatter([
+            {seriesName: "Executions", seriesType: "bar", seriesIndex: 0, name: "Jan", value: 10, color: "#0f0"},
+            {seriesName: "Duration", seriesType: "line", seriesIndex: 1, name: "Jan", value: 1.5, color: "#00f"},
+        ])
+        await wrapper.vm.$nextTick()
+
+        const content = wrapper.findComponent({name: "KsTooltip"}).props("content") as string
+        expect(content).toContain(">10<")
+        expect(content).toContain(">1.5s<")
+    })
+
     // ── loading ────────────────────────────────────────────────────────────────
 
     test("applies v-ks-loading directive when loading is true", () => {

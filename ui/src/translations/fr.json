@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentation de flow",
+      "nav_definitions": "Définitions",
       "nav_examples": "Exemples",
+      "nav_metrics": "Métriques",
       "nav_outputs": "Outputs",
       "nav_overview": "Vue d'ensemble",
       "nav_properties": "Propriétés",
@@ -646,6 +648,10 @@
     "open full page": "Ouvrir la page complète",
     "drill down preview": "Aperçu",
     "errors": {
+      "400": {
+        "title": "Mauvaise requête",
+        "content": "La requête n'a pas pu être comprise par le serveur."
+      },
       "401": {
         "title": "Non authentifié",
         "content": "Vous devez être authentifié pour accéder à cette page."
@@ -658,6 +664,114 @@
         "title": "Page introuvable",
         "content": "L'URL demandée n'a pas été trouvée sur ce serveur.<br />C'est tout ce que nous savons.",
         "flow or execution": "Le flow ou l'exécution demandé est introuvable."
+      },
+      "409": {
+        "title": "Conflit",
+        "content": "La requête est en conflit avec l'état actuel de la ressource."
+      },
+      "422": {
+        "title": "Entité invalide",
+        "content": "Le contenu soumis n'a pas pu être traité."
+      },
+      "500": {
+        "title": "Erreur interne du serveur",
+        "content": "Un problème est survenu de notre côté. Veuillez réessayer plus tard."
+      },
+      "503": {
+        "title": "Service indisponible",
+        "content": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard."
+      },
+      "generic": {
+        "title": "Un problème est survenu",
+        "content": "Une erreur inattendue est survenue. Veuillez réessayer."
+      },
+      "trace id": "ID de trace",
+      "problems": {
+        "ai-request-failed": {
+          "title": "La requête AI a échoué"
+        },
+        "bad-request": {
+          "title": "Mauvaise requête"
+        },
+        "bulk-validation-failed": {
+          "title": "Certains éléments n'ont pas pu être traités"
+        },
+        "conflict": {
+          "title": "Conflit"
+        },
+        "entity-already-exists": {
+          "title": "L'entité existe déjà"
+        },
+        "forbidden": {
+          "title": "Accès refusé"
+        },
+        "internal-error": {
+          "title": "Erreur interne du serveur"
+        },
+        "invalid-argument": {
+          "title": "Argument invalide"
+        },
+        "invalid-entity": {
+          "title": "Entité invalide"
+        },
+        "invalid-format": {
+          "title": "Format de valeur invalide"
+        },
+        "invalid-json": {
+          "title": "JSON invalide"
+        },
+        "invalid-plugin-type": {
+          "title": "Type de plugin invalide"
+        },
+        "invalid-query-filters": {
+          "title": "Filtres de requête invalides"
+        },
+        "invalid-query-parameter": {
+          "title": "Paramètre de requête invalide"
+        },
+        "invalid-request-body": {
+          "title": "Corps de requête invalide"
+        },
+        "locked": {
+          "title": "La ressource est verrouillée"
+        },
+        "method-not-allowed": {
+          "title": "Méthode non autorisée"
+        },
+        "migration-required": {
+          "title": "Migration requise"
+        },
+        "not-acceptable": {
+          "title": "Non acceptable"
+        },
+        "not-found": {
+          "title": "Ressource introuvable"
+        },
+        "payload-too-large": {
+          "title": "Charge utile trop volumineuse"
+        },
+        "resource-expired": {
+          "title": "La ressource a expiré"
+        },
+        "service-unavailable": {
+          "title": "Service indisponible",
+          "detail": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard."
+        },
+        "timeout": {
+          "title": "Opération expirée"
+        },
+        "too-many-requests": {
+          "title": "Trop de requêtes"
+        },
+        "unauthenticated": {
+          "title": "Authentification requise"
+        },
+        "unsupported-media-type": {
+          "title": "Type de média non pris en charge"
+        },
+        "validation-failed": {
+          "title": "La validation a échoué"
+        }
       }
     },
     "back_to_dashboard": "Retour au tableau de bord",
@@ -675,6 +789,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Labels d'exécution",
+    "show more labels": "Afficher {count} étiquettes supplémentaires",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",
     "feeds": {
       "heading": "Tout sur Kestra.",
@@ -898,6 +1013,7 @@
       },
       "export": "Exporter les fichiers de l'espace de noms",
       "export_single": "Exporter le fichier",
+      "export_error": "Impossible d'exporter \"{name}\". Son chemin n'a pas pu être résolu.",
       "dialog": {
         "name": {
           "file": "Nom avec extension :",
@@ -1446,7 +1562,8 @@
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
       },
-      "inherited": "Paires KV héritées"
+      "inherited": "Paires KV héritées",
+      "expiration_hint": "Expire actuellement le {date}. Laissez le champ intact pour conserver cette expiration ; choisir une durée la recalcule à partir de maintenant, et la vider la supprime."
     },
     "expiration": "Expiration",
     "page": {
@@ -2139,7 +2256,7 @@
     },
     "mcp": {
       "your_servers": "Vos Serveurs",
-      "servers_count": "{count} serveurs MCP",
+      "servers_count": "{count} serveur MCP | {count} serveurs MCP",
       "managed_by_kestra": "Géré par Kestra",
       "servers": "Serveurs MCP",
       "client_setup": "Configuration du client",

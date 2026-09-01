@@ -1,6 +1,5 @@
 package io.kestra.executor.testkit;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -59,7 +58,6 @@ public class KitRunContextFactory extends RunContextFactory {
                         .withFlow(flow)
                         .withExecution(execution)
                         .withOutputs(taskOutputService.computeOutputs(execution))
-                        .withDecryptVariables(decryptVariables)
                 )
                     .build(runContextLogger, PropertyContext.create(renderer))
             )
@@ -79,7 +77,6 @@ public class KitRunContextFactory extends RunContextFactory {
                     .withExecution(execution)
                     .withOutputs(taskOutputService.computeOutputs(execution))
                     .withTaskRun(taskRun)
-                    .withDecryptVariables(decryptVariables)
                     .build(runContextLogger, PropertyContext.create(renderer))
             )
             .build();
@@ -91,7 +88,6 @@ public class KitRunContextFactory extends RunContextFactory {
             .withLogger(runContextLogger)
             .withMeterRegistry(meterRegistry)
             .withVariableRenderer(renderer)
-            .withPluginConfiguration(Map.of())
-            .withSecretInputs(List.of());
+            .withPluginConfiguration(Map.of());
     }
 }

@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -165,6 +166,28 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @Test
+    void excludedInputTypesAreStrippedForTheTargetedSchemaOnly() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator standard = applicationContext.getBean(JsonSchemaGenerator.class);
+            JsonSchemaGenerator excludingEmail = new JsonSchemaGenerator(applicationContext.getBean(PluginRegistry.class)) {
+                @Override
+                protected Set<String> excludedInputTypes(Class<?> cls) {
+                    return Flow.class.equals(cls) ? Set.of("EMAIL") : super.excludedInputTypes(cls);
+                }
+            };
+
+            // the default generator offers EMAIL, so its absence below is the override's doing and not a schema change
+            assertThat(standard.schemas(Flow.class).toString(), containsString("EMAIL"));
+            // the strip has to run before discriminator wrappers collapse: afterwards the subtype is a flat definition
+            // reached by $ref, with no branch left to remove, and EMAIL would survive here
+            assertThat(excludingEmail.schemas(Flow.class).toString(), not(containsString("EMAIL")));
+            // a class the override does not target keeps the default (empty) exclusion set
+            assertThat(excludingEmail.schemas(Dashboard.class).toString(), is(standard.schemas(Dashboard.class).toString()));
+        });
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void task() throws URISyntaxException {
@@ -177,6 +200,34 @@ class JsonSchemaGeneratorTest {
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
             var task = definitions.get(Task.class.getName());
             Assertions.assertNotNull(task.get("anyOf"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void taskSchemaCollapsesSingleUseDiscriminatorWrapper() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            String base = "io.kestra.core.http.client.configurations.BasicAuthConfiguration";
+            assertThat(
+                "the plain definition, only ever used by its own wrapper, must be inlined away instead of kept as a separate entry",
+                definitions.containsKey(base + "-1"), is(false)
+            );
+
+            var wrapper = definitions.get(base + "-2");
+            assertThat("the wrapper must survive, carrying its own discriminator addition", wrapper, is(notNullValue()));
+            assertThat((List<String>) wrapper.get("required"), hasItem("type"));
+
+            var properties = (Map<String, Object>) wrapper.get("properties");
+            assertThat(
+                "the original class's own properties must not be lost in the merge",
+                properties.keySet(), hasItems("username", "password")
+            );
         });
     }
 

@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
     import {computed, inject, provide, ref} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsForm, KsIconButton} from "@kestra-io/design-system"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 

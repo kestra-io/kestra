@@ -7,27 +7,35 @@
             :checked="isChecked(label)"
             @change="updateLabel(label)"
             class="me-0 label"
+            data-test="label"
         >
-            {{ labelText(label) }}
+            <span class="label-text" :title="wrap ? undefined : text(label)">{{ text(label) }}</span>
         </KsCheckTag>
-
-        <KsTooltip
+        <KsPopover
             v-if="hiddenLabels.length"
+            trigger="click"
+            placement="top"
+            :width="360"
         >
-            <KsCheckTag class="me-0 label">
-                +{{ hiddenLabels.length }}
-            </KsCheckTag>
-            <template #content>
-                <ul class="labels-overflow__list">
-                    <li
-                        v-for="(label, index) in hiddenLabels"
-                        :key="index"
-                    >
-                        {{ labelText(label) }}
-                    </li>
-                </ul>
+            <Labels
+                :labels="hiddenLabels"
+                :readOnly="readOnly"
+                :filterType="filterType"
+                wrap
+                class="labels-popover"
+                data-test="labels-overflow-content"
+            />
+            <template #reference>
+                <button
+                    type="button"
+                    class="label-more"
+                    :aria-label="$t('show more labels', {count: hiddenLabels.length})"
+                    data-test="labels-overflow"
+                >
+                    +{{ hiddenLabels.length }}
+                </button>
             </template>
-        </KsTooltip>
+        </KsPopover>
     </span>
 </template>
 
@@ -35,14 +43,13 @@
     import {computed, watch} from "vue"
 
     import {useRouter, useRoute} from "vue-router"
-    import {KsTooltip} from "@kestra-io/design-system"
     const router = useRouter()
     const route = useRoute()
 
     interface Label {
         key?: string;
         value: string;
-        text?: string;
+        display?: string;
     }
 
     const props = withDefaults(
@@ -58,18 +65,20 @@
             readOnly: false,
             filterType: "labels",
             wrap: false,
-            max: undefined,
+            max: 0,
         },
     )
 
-    const labelText = (label: Label) => label.text ?? (label.key ? `${label.key}:${label.value}` : label.value)
+    // Collapsing a single extra label costs more room than showing it, so `max` is a soft cap:
+    // the popover only appears once it hides at least two.
+    const overflows = computed(() => props.max > 0 && props.labels.length > props.max + 1)
+    const visibleLabels = computed(() => (overflows.value ? props.labels.slice(0, props.max) : props.labels))
+    const hiddenLabels = computed(() => (overflows.value ? props.labels.slice(props.max) : []))
 
-    const visibleLabels = computed(() =>
-        props.max != null ? props.labels.slice(0, props.max) : props.labels,
-    )
-    const hiddenLabels = computed(() =>
-        props.max != null ? props.labels.slice(props.max) : [],
-    )
+    const text = (label: Label) => {
+        const value = label.display ?? label.value
+        return label.key ? `${label.key}:${value}` : value
+    }
 
     import {decodeSearchParams} from "@kestra-io/design-system"
     let query: any[] = []
@@ -115,7 +124,8 @@
 </script>
 
 <style scoped lang="scss">
-.label.kel-check-tag {
+.label.kel-check-tag,
+.label-more {
     --ks-bg-tag: #7b7b7e45;
 ;
     --ks-bg-tag-active: #414557;
@@ -131,6 +141,7 @@
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);
     font-size: var(--ks-font-size-xs);
+    line-height: 1;
     padding: 4px 6px;
     border-radius: 6px;
     font-weight: 400;
@@ -150,6 +161,31 @@
     }
 }
 
+.labels-container:not(.wrap) .label-text {
+    display: inline-block;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+.labels-container:not(.wrap) .label.kel-check-tag {
+    min-width: 0;
+}
+
+.label-more {
+    flex-shrink: 0;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.labels-popover .label.kel-check-tag {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 .label.kel-check-tag.is-checked {
     background-color: var(--ks-bg-tag-active);
     color: var(--ks-black);
@@ -157,16 +193,6 @@
 
     html.light & {
         color: var(--label-text-active);
-    }
-}
-
-.labels-overflow__list {
-    margin: 0;
-    padding-left: var(--ks-spacing-3);
-    list-style: disc;
-
-    li + li {
-        margin-top: var(--ks-spacing-1);
     }
 }
 </style>

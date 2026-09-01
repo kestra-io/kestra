@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubAiProviderConfigured, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * Per-tool end-to-end coverage for the AI Copilot v2 tool catalog.
@@ -44,6 +44,8 @@ const AUTHORING_TOOLS = [
 
 test.describe("AI Copilot v2 — tool catalog", () => {
     test.beforeEach(async ({page}) => {
+        // The turn is stubbed, so the surface has to behave as it does on a configured instance.
+        await stubAiProviderConfigured(page, true)
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
 

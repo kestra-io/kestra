@@ -24,6 +24,17 @@ export const UserPrompt: Story = {
     args: {message: {id: "1", role: "USER", type: "TEXT", content: "Add error handling to my dbt flow."}},
 }
 
+export const UserPromptWithCode: Story = {
+    args: {
+        message: {
+            id: "1c",
+            role: "USER",
+            type: "TEXT",
+            content: "This flow fails on start:\n```yaml\nid: hello\nnamespace: company.team\ntasks:\n  - id: log\n    type: io.kestra.plugin.core.log.Log\n    message: Hello\n```\nAny idea why?",
+        },
+    },
+}
+
 export const AssistantMarkdown: Story = {
     args: {message: {id: "2", role: "ASSISTANT", type: "TEXT", content: "Sure — I'll add a `errors:` block with a **Slack** alert."}},
 }

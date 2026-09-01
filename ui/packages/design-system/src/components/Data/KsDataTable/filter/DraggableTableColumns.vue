@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, onMounted, ref, watch} from "vue"
     import {Reorder} from "motion-v"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ColumnToggleRow from "./ColumnToggleRow.vue"
@@ -74,6 +74,7 @@
 
     const emits = defineEmits<{
         updateColumns: [columns: string[]];
+        resolved: [columns: string[]];
     }>()
 
     const {
@@ -96,6 +97,8 @@
     const filteredColumns = computed(() =>
         availableColumns.value.filter(c => c.label.toLowerCase().includes(query.value)),
     )
+
+    onMounted(() => emits("resolved", localVisibleColumns.value))
 
     const ungroupedColumns = computed(() => availableColumns.value.filter(c => !c.group))
 

@@ -1,6 +1,6 @@
 {
-  "../../packages/design-system/src/components/Data/KsDataTable/KsBulkSelect.locale.ts|all": "be32cb107e5a",
-  "../../packages/design-system/src/components/Data/KsDataTable/KsBulkSelect.locale.ts|selected": "894aa5fe9555",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsBulkSelect.locale.ts|ks_bulk_select|all": "be32cb107e5a",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsBulkSelect.locale.ts|ks_bulk_select|selected": "894aa5fe9555",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|add": "9fd728c66c9a",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|active key value pairs": "083b0e2a07f2",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|add_advanced_filter": "f71cb7ee1db3",

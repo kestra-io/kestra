@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   welcome:
-    # author_association misses organization members with private membership, so the membership lookup below is the authoritative check.
+    # author_association misses organization members with private membership, so the permission lookup below is the authoritative check.
     if: ${{ github.event.pull_request.user.type != 'Bot' && !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) && (github.event.action == 'opened' || github.event.pull_request.merged) }}
     runs-on: ubuntu-latest
     steps:
@@ -24,27 +24,22 @@ jobs:
           owner: kestra-io
           repositories: kestra
 
-      - name: Check organization membership
-        id: membership
+      - name: Check the author's repository permission
+        id: permission
         uses: actions/github-script@v9
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |
             const username = context.payload.pull_request.user.login;
-            try {
-              await github.rest.orgs.checkMembershipForUser({org: context.repo.owner, username});
-              core.info(`@${username} is a member of the ${context.repo.owner} organization. Exiting..`);
-              core.setOutput('is-member', 'true');
-            } catch (error) {
-              // 404 means the author is not an organization member.
-              if (error.status !== 404) {
-                throw error;
-              }
-              core.setOutput('is-member', 'false');
-            }
+            // The organization membership endpoint answers 404 for this repository-scoped token, which is
+            // indistinguishable from a genuine non-member, so read the author's repository permission instead:
+            // organization members inherit write access, outside contributors only ever get 'read'.
+            const {data} = await github.rest.repos.getCollaboratorPermissionLevel({...context.repo, username});
+            core.info(`@${username} has '${data.permission}' permission on ${context.repo.repo}.`);
+            core.setOutput('has-write-access', String(data.permission === 'admin' || data.permission === 'write'));
 
       - name: Welcome a first pull request
-        if: github.event.action == 'opened' && steps.membership.outputs.is-member == 'false'
+        if: github.event.action == 'opened' && steps.permission.outputs.has-write-access == 'false'
         uses: actions/github-script@v9
         env:
           # Kept out of the script itself: interpolated there, a backtick or ${ would break out and run as JS.
@@ -92,7 +87,7 @@ jobs:
             });
 
       - name: Congratulate on a first merged pull request
-        if: github.event.action == 'closed' && steps.membership.outputs.is-member == 'false'
+        if: github.event.action == 'closed' && steps.permission.outputs.has-write-access == 'false'
         uses: actions/github-script@v9
         env:
           # Kept out of the script itself for the same reason as above: a backtick or ${ interpolated there would break out and run as JS.

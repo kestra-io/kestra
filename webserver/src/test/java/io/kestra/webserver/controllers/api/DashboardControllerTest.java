@@ -39,6 +39,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -145,6 +147,39 @@ class DashboardControllerTest {
         );
         assertThat(deleted).isNotNull();
         assertThat(deleted.code()).isEqualTo(204);
+    }
+
+    @Test
+    void searchDashboardsWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(GET(DASHBOARD_PATH + "?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchDashboardsSortsByTitle() {
+        String idA = IdUtils.create();
+        String idB = IdUtils.create();
+        client.toBlocking().exchange(POST(DASHBOARD_PATH, "id: %s\ntitle: AAA sort test %s".formatted(idA, idA)).contentType(MediaType.APPLICATION_YAML));
+        client.toBlocking().exchange(POST(DASHBOARD_PATH, "id: %s\ntitle: ZZZ sort test %s".formatted(idB, idB)).contentType(MediaType.APPLICATION_YAML));
+
+        PagedResults<DashboardController.DashboardResponse> dashboards = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "?sort=title:asc&size=1000"),
+            Argument.of(PagedResults.class, DashboardController.DashboardResponse.class)
+        );
+
+        List<String> ids = dashboards.getResults().stream().map(DashboardController.DashboardResponse::getId).toList();
+        assertThat(ids.indexOf(idA)).isLessThan(ids.indexOf(idB));
     }
 
     @Test
@@ -424,8 +459,8 @@ class DashboardControllerTest {
                 DashboardController.DashboardResponse.class
             )
         );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Dashboard id already exists");
+        // An id clash is a conflict, so 409 — not a validation failure.
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.ENTITY_ALREADY_EXISTS);
     }
 
     @Test
@@ -505,7 +540,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpStatusException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpStatusException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Illegal dashboard id update");
+        assertThat(Problems.detail(httpStatusException)).contains("Illegal dashboard id update");
 
         get = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/" + dashboard.getId()),
@@ -561,7 +596,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Illegal argument: Dashboard id is mandatory");
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("Dashboard id is mandatory");
     }
 
     @Test
@@ -877,6 +912,18 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldTreatNullFiltersAsNoFiltersOnChartData() {
+        // Raw JSON body with an explicit "filters":null, matching the reported repro exactly -
+        // going through ChartFiltersOverrides' builder would drop the null key (NON_NULL inclusion)
+        // and never exercise the bug.
+        List<Map> chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/_default/charts/total_executions_timeseries", "{\"filters\":null}").contentType(MediaType.APPLICATION_JSON),
+            Argument.listOf(Map.class)
+        );
+        assertThat(chartData).isNotNull();
+    }
+
+    @Test
     void shouldReturnBuiltinDefaultDashboardDefinitions() {
         Map definitions = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/defaults/definitions"),
@@ -915,7 +962,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid Dashboard: Dashboard id '_default' is reserved");
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("Dashboard id '_default' is reserved");
     }
 
     @Test
@@ -945,7 +992,7 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: Dashboard id '_default' is reserved");
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("Dashboard id '_default' is reserved");
     }
 
     @Test

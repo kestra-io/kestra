@@ -273,9 +273,10 @@ class FlowTriggerDecisionTest {
     }
 
     @Test
-    void shouldKeepWindowWhenExplicitWindowIsNotFireOnce() {
-        // Given: an explicit window defaults to fireOnce=false — the trigger may re-fire within
-        // the same window, so a successful evaluation must NOT reset the window state
+    void shouldResetWindowAfterFiringEvenWithAnExplicitWindow() {
+        // Given: an explicit window — since window.fireOnce was removed, the stored dependency
+        // results are always reset after firing, otherwise any later terminal execution of an
+        // unrelated flow would re-fire the trigger from the kept, fully-satisfied window
         Flow upstreamA = upstreamFlow();
         Flow upstreamB = upstreamFlow();
         Flow listening = listeningFlow(
@@ -290,10 +291,9 @@ class FlowTriggerDecisionTest {
             executionOf(upstreamB, State.Type.SUCCESS), listening, multipleConditionStateStore
         );
 
-        // Then: fires, and the fully-satisfied window survives
+        // Then: fires, and the satisfied window is reset
         assertThat(afterB).hasSize(1);
-        assertThat(multipleConditionStateStore.all()).hasSize(1);
-        assertThat(satisfiedConditions(multipleConditionStateStore.all().getFirst())).isEqualTo(2);
+        assertThat(multipleConditionStateStore.all()).isEmpty();
     }
 
     @Test

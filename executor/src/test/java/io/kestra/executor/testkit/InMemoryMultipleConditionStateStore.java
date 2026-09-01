@@ -51,7 +51,7 @@ public class InMemoryMultipleConditionStateStore implements MultipleConditionSta
 
         Execution newExecution = consumer.apply(NoopTransactionContext.INSTANCE, window);
 
-        if (newExecution != null && !Boolean.FALSE.equals(multipleCondition.getResetOnSuccess())) {
+        if (newExecution != null) {
             get(flow, multipleCondition.getId())
                 .filter(multipleCondition::isConditionSatisfied)
                 .ifPresent(this::delete);

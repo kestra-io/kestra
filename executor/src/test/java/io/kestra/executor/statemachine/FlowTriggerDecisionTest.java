@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Window;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.executor.FlowTriggerService;
@@ -45,7 +46,8 @@ class FlowTriggerDecisionTest {
         // calls is removeUnwanted, which is pure — same pattern as the harness's ExecutionService
         Mockito.mock(FlowService.class, Mockito.CALLS_REAL_METHODS),
         harness.flowMetaStore(),
-        harness.executionOutputService()
+        harness.executionOutputService(),
+        new ExecutionDepthConfiguration(100)
     );
 
     // --- standard conditions: who fires

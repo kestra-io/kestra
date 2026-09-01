@@ -24,25 +24,27 @@
             </Dashboards>
         </template>
 
-        <template v-if="isAllowedDashboard || isAllowedFlow" #actions>
-            <NavBarActions>
+        <template v-if="canManageDashboards || isAllowedFlow" #actions>
+            <NavBarActionsDropdown v-if="canManageDashboards">
                 <NavBarAction
-                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
+                    v-if="isNonDefaultDashboard"
                     :icon="Pencil"
                     :label="$t('dashboards.edition.label')"
-                    :to="{name: 'dashboards/update', params: {dashboard: props.dashboard.id}}"
+                    :to="{name: 'dashboards/update', params: {dashboard: props.dashboard?.id}}"
                 />
-
-                <template #primary>
-                    <NavBarAction
-                        v-if="isAllowedFlow"
-                        type="primary"
-                        :icon="Plus"
-                        :label="$t('create_flow')"
-                        :to="{name: 'flows/create'}"
-                    />
-                </template>
-            </NavBarActions>
+                <NavBarAction
+                    :icon="Plus"
+                    :label="$t('dashboards.creation.label')"
+                    :to="{name: 'dashboards/create'}"
+                />
+            </NavBarActionsDropdown>
+            <NavBarAction
+                v-if="isAllowedFlow"
+                type="primary"
+                :icon="Plus"
+                :label="$t('create_flow')"
+                :to="{name: 'flows/create'}"
+            />
         </template>
     </TopNavBar>
 </template>
@@ -62,7 +64,7 @@
     import TopNavBar from "../../layout/TopNavBar.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
 
-    import NavBarActions from "../../layout/NavBarActions.vue"
+    import NavBarActionsDropdown from "../../layout/NavBarActionsDropdown.vue"
     import NavBarAction from "../../layout/NavBarAction.vue"
 
     import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
@@ -86,6 +88,12 @@
 
     const isCustomDashboardsDisabled = computed(() =>
         miscStore.configs?.isCustomDashboardsEnabled === false,
+    )
+
+    const canManageDashboards = computed(() => isAllowedDashboard.value && !isCustomDashboardsDisabled.value)
+
+    const isNonDefaultDashboard = computed(() =>
+        !!props.dashboard?.id && props.dashboard.id !== "default",
     )
 
     const showSelector = computed(() =>

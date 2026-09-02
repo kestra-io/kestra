@@ -1,0 +1,14 @@
+id: null-value-output-render
+namespace: io.kestra.tests
+
+tasks:
+  - id: produce
+    type: io.kestra.core.tasks.test.NullValueOutputTask
+
+  - id: render_null
+    type: io.kestra.plugin.core.debug.Return
+    format: "[{{ outputs.produce.records[0].b }}]"
+
+  - id: render_sibling
+    type: io.kestra.plugin.core.debug.Return
+    format: "[{{ outputs.produce.records[0].a }}]"

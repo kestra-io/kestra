@@ -44,6 +44,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -328,8 +330,8 @@ class KVControllerTest {
     void getKeyValueNotFound() {
         HttpClientResponseException httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Not Found: No value found for key 'my-key' in namespace '" + NAMESPACE + "'");
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.NOT_FOUND);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("No value found for key 'my-key' in namespace '" + NAMESPACE + "'");
     }
 
     @Test
@@ -338,8 +340,8 @@ class KVControllerTest {
 
         HttpClientResponseException httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.GONE.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Resource has expired: The requested value has expired");
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.RESOURCE_EXPIRED);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("The requested value has expired");
     }
 
     static Stream<Arguments> kvSetKeyValueArgs() {
@@ -431,24 +433,24 @@ class KVControllerTest {
 
     @Test
     void illegalKey() {
-        String expectedErrorMessage = "Illegal argument: Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.";
+        String expectedErrorMessage = "Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.";
 
         HttpClientResponseException httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.INVALID_ARGUMENT);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo(expectedErrorMessage);
 
         httpClientResponseException = Assertions.assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.TEXT_PLAIN))
         );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.INVALID_ARGUMENT);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo(expectedErrorMessage);
 
         httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.DELETE("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.INVALID_ARGUMENT);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo(expectedErrorMessage);
     }
 
     @Test

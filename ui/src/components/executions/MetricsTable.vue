@@ -4,15 +4,17 @@
         v-model:currentPage="currentPage"
         v-model:pageSize="pageSize"
         :loadData="loadData"
-        :data="metrics"
-        :total="metricsTotal"
+        :data="hasVisibleColumns ? metrics : []"
+        :total="hasVisibleColumns ? metricsTotal : 0"
+        :noDataText="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden')"
+        :noDataDescription="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
     >
         <template #navbar>
             <slot name="navbar" />
         </template>
 
-        <template v-if="$slots.empty" #empty>
+        <template v-if="$slots.empty && hasVisibleColumns" #empty>
             <slot name="empty" />
         </template>
 
@@ -82,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, useTemplateRef, watch} from "vue"
+    import {computed, ref, useTemplateRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
 
     import Timer from "vue-material-design-icons/Timer.vue"
@@ -124,6 +126,8 @@
         columns: localOptionalColumns.value,
         storageKey: "execution-metrics",
     })
+
+    const hasVisibleColumns = computed(() => displayColumns.value.length > 0)
 
     const metrics = ref<any[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)

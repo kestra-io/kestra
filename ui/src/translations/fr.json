@@ -648,6 +648,10 @@
     "open full page": "Ouvrir la page complète",
     "drill down preview": "Aperçu",
     "errors": {
+      "400": {
+        "title": "Mauvaise requête",
+        "content": "La requête n'a pas pu être comprise par le serveur."
+      },
       "401": {
         "title": "Non authentifié",
         "content": "Vous devez être authentifié pour accéder à cette page."
@@ -660,6 +664,114 @@
         "title": "Page introuvable",
         "content": "L'URL demandée n'a pas été trouvée sur ce serveur.<br />C'est tout ce que nous savons.",
         "flow or execution": "Le flow ou l'exécution demandé est introuvable."
+      },
+      "409": {
+        "title": "Conflit",
+        "content": "La requête est en conflit avec l'état actuel de la ressource."
+      },
+      "422": {
+        "title": "Entité invalide",
+        "content": "Le contenu soumis n'a pas pu être traité."
+      },
+      "500": {
+        "title": "Erreur interne du serveur",
+        "content": "Un problème est survenu de notre côté. Veuillez réessayer plus tard."
+      },
+      "503": {
+        "title": "Service indisponible",
+        "content": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard."
+      },
+      "generic": {
+        "title": "Un problème est survenu",
+        "content": "Une erreur inattendue est survenue. Veuillez réessayer."
+      },
+      "trace id": "ID de trace",
+      "problems": {
+        "ai-request-failed": {
+          "title": "La requête AI a échoué"
+        },
+        "bad-request": {
+          "title": "Mauvaise requête"
+        },
+        "bulk-validation-failed": {
+          "title": "Certains éléments n'ont pas pu être traités"
+        },
+        "conflict": {
+          "title": "Conflit"
+        },
+        "entity-already-exists": {
+          "title": "L'entité existe déjà"
+        },
+        "forbidden": {
+          "title": "Accès refusé"
+        },
+        "internal-error": {
+          "title": "Erreur interne du serveur"
+        },
+        "invalid-argument": {
+          "title": "Argument invalide"
+        },
+        "invalid-entity": {
+          "title": "Entité invalide"
+        },
+        "invalid-format": {
+          "title": "Format de valeur invalide"
+        },
+        "invalid-json": {
+          "title": "JSON invalide"
+        },
+        "invalid-plugin-type": {
+          "title": "Type de plugin invalide"
+        },
+        "invalid-query-filters": {
+          "title": "Filtres de requête invalides"
+        },
+        "invalid-query-parameter": {
+          "title": "Paramètre de requête invalide"
+        },
+        "invalid-request-body": {
+          "title": "Corps de requête invalide"
+        },
+        "locked": {
+          "title": "La ressource est verrouillée"
+        },
+        "method-not-allowed": {
+          "title": "Méthode non autorisée"
+        },
+        "migration-required": {
+          "title": "Migration requise"
+        },
+        "not-acceptable": {
+          "title": "Non acceptable"
+        },
+        "not-found": {
+          "title": "Ressource introuvable"
+        },
+        "payload-too-large": {
+          "title": "Charge utile trop volumineuse"
+        },
+        "resource-expired": {
+          "title": "La ressource a expiré"
+        },
+        "service-unavailable": {
+          "title": "Service indisponible",
+          "detail": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard."
+        },
+        "timeout": {
+          "title": "Opération expirée"
+        },
+        "too-many-requests": {
+          "title": "Trop de requêtes"
+        },
+        "unauthenticated": {
+          "title": "Authentification requise"
+        },
+        "unsupported-media-type": {
+          "title": "Type de média non pris en charge"
+        },
+        "validation-failed": {
+          "title": "La validation a échoué"
+        }
       }
     },
     "back_to_dashboard": "Retour au tableau de bord",
@@ -1791,7 +1903,8 @@
       "close_all_tabs": "Fermer tous les onglets",
       "close_all_panels": "Fermer tous les panneaux",
       "exit_fullscreen": "Quitter le mode plein écran",
-      "fullscreen": "Plein écran"
+      "fullscreen": "Plein écran",
+      "split_panel": "Diviser le panneau"
     },
     "search_docs": "Rechercher",
     "no_results_found": "Aucun résultat trouvé",
@@ -1804,7 +1917,9 @@
       "triggers": "Aucun Trigger trouvé",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
-      "secrets": "Aucun secret trouvé"
+      "secrets": "Aucun secret trouvé",
+      "all_columns_hidden": "Toutes les colonnes sont masquées",
+      "all_columns_hidden_description": "Réactivez au moins une colonne dans Personnaliser les colonnes du tableau pour revoir les données."
     },
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "dashboards": {

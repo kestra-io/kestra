@@ -648,6 +648,10 @@
     "open full page": "전체 페이지 열기",
     "drill down preview": "미리보기",
     "errors": {
+      "400": {
+        "title": "잘못된 요청",
+        "content": "서버가 요청을 이해할 수 없습니다."
+      },
       "401": {
         "title": "인증되지 않았습니다.",
         "content": "이 페이지에 접근하려면 인증이 필요합니다."
@@ -660,6 +664,114 @@
         "title": "페이지를 찾을 수 없음",
         "content": "요청한 URL을 이 서버에서 찾을 수 없습니다.<br />알고 있는 전부입니다.",
         "flow or execution": "찾고 있는 flow 또는 실행이 존재하지 않습니다."
+      },
+      "409": {
+        "title": "충돌",
+        "content": "요청이 리소스의 현재 상태와 충돌합니다."
+      },
+      "422": {
+        "title": "유효하지 않은 엔터티",
+        "content": "제출된 콘텐츠를 처리할 수 없습니다."
+      },
+      "500": {
+        "title": "내부 서버 오류",
+        "content": "저희 쪽에 문제가 발생했습니다. 나중에 다시 시도해 주세요."
+      },
+      "503": {
+        "title": "서비스를 사용할 수 없습니다.",
+        "content": "서버를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요."
+      },
+      "generic": {
+        "title": "문제가 발생했습니다.",
+        "content": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요."
+      },
+      "trace id": "추적 ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI 요청 실패"
+        },
+        "bad-request": {
+          "title": "잘못된 요청"
+        },
+        "bulk-validation-failed": {
+          "title": "일부 항목을 처리할 수 없습니다."
+        },
+        "conflict": {
+          "title": "충돌"
+        },
+        "entity-already-exists": {
+          "title": "엔터티가 이미 존재합니다."
+        },
+        "forbidden": {
+          "title": "액세스 거부됨"
+        },
+        "internal-error": {
+          "title": "내부 서버 오류"
+        },
+        "invalid-argument": {
+          "title": "잘못된 인수"
+        },
+        "invalid-entity": {
+          "title": "유효하지 않은 엔티티"
+        },
+        "invalid-format": {
+          "title": "잘못된 값 형식"
+        },
+        "invalid-json": {
+          "title": "유효하지 않은 JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "유효하지 않은 plugin 유형"
+        },
+        "invalid-query-filters": {
+          "title": "잘못된 쿼리 필터"
+        },
+        "invalid-query-parameter": {
+          "title": "잘못된 쿼리 파라미터"
+        },
+        "invalid-request-body": {
+          "title": "잘못된 요청 본문"
+        },
+        "locked": {
+          "title": "리소스가 잠겨 있습니다"
+        },
+        "method-not-allowed": {
+          "title": "허용되지 않는 메서드"
+        },
+        "migration-required": {
+          "title": "마이그레이션 필요"
+        },
+        "not-acceptable": {
+          "title": "허용되지 않음"
+        },
+        "not-found": {
+          "title": "리소스를 찾을 수 없습니다."
+        },
+        "payload-too-large": {
+          "title": "Payload가 너무 큽니다"
+        },
+        "resource-expired": {
+          "title": "리소스가 만료되었습니다."
+        },
+        "service-unavailable": {
+          "title": "서비스를 사용할 수 없습니다.",
+          "detail": "서버를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요."
+        },
+        "timeout": {
+          "title": "작업 시간 초과"
+        },
+        "too-many-requests": {
+          "title": "요청이 너무 많습니다."
+        },
+        "unauthenticated": {
+          "title": "인증 필요"
+        },
+        "unsupported-media-type": {
+          "title": "지원되지 않는 미디어 유형"
+        },
+        "validation-failed": {
+          "title": "유효성 검사 실패"
+        }
       }
     },
     "back_to_dashboard": "대시보드로 돌아가기",
@@ -1791,7 +1903,8 @@
       "close_all_tabs": "모든 탭 닫기",
       "close_all_panels": "모든 패널 닫기",
       "exit_fullscreen": "전체 화면 종료",
-      "fullscreen": "전체 화면"
+      "fullscreen": "전체 화면",
+      "split_panel": "패널 분할"
     },
     "search_docs": "검색",
     "no_results_found": "결과를 찾을 수 없습니다",
@@ -1804,7 +1917,9 @@
       "triggers": "트리거를 찾을 수 없음",
       "flows": "flow를 찾을 수 없음",
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
-      "secrets": "비밀 없음"
+      "secrets": "비밀 없음",
+      "all_columns_hidden": "모든 열이 숨겨짐",
+      "all_columns_hidden_description": "데이터를 다시 보려면 테이블 열 사용자 지정에서 최소 하나 이상의 열을 다시 켜세요."
     },
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {

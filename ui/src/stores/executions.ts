@@ -16,6 +16,7 @@ import {InputType} from "../utils/inputs"
 import {Optional} from "../utils/utils"
 import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 export interface Check {
     message: string
@@ -271,8 +272,19 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
-    const loadExecution = (options: { id: string }) => {
-        return ExecutionsAPI.execution({executionId: options.id}).then(data => {
+    let latestExecutionLoad = 0
+
+    const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
+        const load = ++latestExecutionLoad
+        return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
+            // A load the user has navigated away from must neither become the execution on screen
+            // nor drop the pending update for the one that is, the same way a superseded search is
+            // dropped in `stores/logs.ts`.
+            if (load !== latestExecutionLoad) return data
+
+            // A trailing event from the previous execution's stream, still open until the page
+            // mounts and follows this one, would otherwise land on top of this load.
+            throttledExecutionUpdate.cancel()
             execution.value = data
             return execution.value
         })
@@ -500,7 +512,11 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const followExecution = (options: { id: string }, translate: (itn: string) => string) => {
-        execution.value = undefined
+        // Keep an execution the route guard already loaded: clearing it would send the page back to
+        // its loading state, and cost a second fetch of what the store is already holding.
+        if (execution.value?.id !== options.id) {
+            execution.value = undefined
+        }
         closeSSE()
 
         executionSubscription.value = subscribeToExecution(options.id, {
@@ -512,16 +528,12 @@ export const useExecutionsStore = defineStore("executions", () => {
                     ? {
                         variant: "error",
                         title: translate("error"),
-                        content: {
-                            message: translate("errors.404.flow or execution"),
-                        },
+                        content: translate("errors.404.flow or execution"),
                     }
                     : {
                         variant: "error",
                         title: translate("something_went_wrong.connection_lost.title"),
-                        content: {
-                            message: translate("something_went_wrong.connection_lost.message"),
-                        },
+                        content: translate("something_went_wrong.connection_lost.message"),
                     }
             },
             onEnd: () => {

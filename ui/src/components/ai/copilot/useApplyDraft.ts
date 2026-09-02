@@ -86,8 +86,8 @@ export function useApplyDraft() {
 
         applying.value = true
         try {
-            // Try to create; if the flow already exists, update it instead. We deliberately don't
-            // probe with a GET first — a 404 on a not-yet-existing flow trips the global error page.
+            // Try to create; if the flow already exists, update it instead — one round trip rather
+            // than probing with a GET first.
             try {
                 await FlowsAPI.createFlow(
                     {body: draft.yaml, draft: false} as Parameters<typeof FlowsAPI.createFlow>[0],

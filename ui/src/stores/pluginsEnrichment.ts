@@ -20,6 +20,13 @@ type MetadataEntry = {
     body?: string;
 }
 
+// https://api.kestra.io/v1/plugins/subgroups
+type SubGroupEntry = {
+    group?: string;
+    subGroup?: string | null;
+    title?: string;
+}
+
 export type PluginEnrichment = {
     blueprintCount?: number;
     lastReleasedAt?: string;
@@ -28,6 +35,7 @@ export type PluginEnrichment = {
     managedBy?: string;
     description?: string;
     body?: string;
+    title?: string;
 }
 
 // https://api.kestra.io/v1/plugins/{cls}/versions
@@ -68,8 +76,12 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
             `${API_URL}/v1/plugins/metadata`,
             {signal: controller.signal},
         )
+        const subgroupsPromise = axios.get<SubGroupEntry[]>(
+            `${API_URL}/v1/plugins/subgroups`,
+            {signal: controller.signal},
+        )
 
-        pending = Promise.allSettled([informationPromise, metadataPromise]).then(([info, meta]) => {
+        pending = Promise.allSettled([informationPromise, metadataPromise, subgroupsPromise]).then(([info, meta, subgroups]) => {
             if (info.status === "fulfilled") {
                 for (const [key, entry] of Object.entries(info.value.data?.byPlugin ?? {})) {
                     upsert(key, {
@@ -90,11 +102,18 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
                     })
                 }
             }
-            if (info.status === "fulfilled" || meta.status === "fulfilled") {
+            if (subgroups.status === "fulfilled") {
+                for (const entry of subgroups.value.data ?? []) {
+                    const key = entry.subGroup ?? entry.group
+                    if (!key || !entry.title) continue
+                    upsert(key, {title: entry.title})
+                }
+            }
+            if (info.status === "fulfilled" || meta.status === "fulfilled" || subgroups.status === "fulfilled") {
                 loaded.value = true
             } else {
                 failed.value = true
-                console.warn("Plugin enrichment unavailable", {info, meta})
+                console.warn("Plugin enrichment unavailable", {info, meta, subgroups})
             }
         }).finally(() => {
             clearTimeout(timeout)

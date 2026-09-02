@@ -1903,7 +1903,8 @@
       "close_all_tabs": "सभी टैब बंद करें",
       "close_all_panels": "सभी पैनल बंद करें",
       "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
-      "fullscreen": "पूर्णस्क्रीन"
+      "fullscreen": "पूर्णस्क्रीन",
+      "split_panel": "पैनल विभाजित करें"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",
@@ -1916,7 +1917,9 @@
       "triggers": "कोई Triggers नहीं मिले",
       "flows": "कोई Flows नहीं मिला",
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
-      "secrets": "कोई Secrets नहीं मिले"
+      "secrets": "कोई Secrets नहीं मिले",
+      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
+      "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {

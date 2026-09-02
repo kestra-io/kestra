@@ -792,6 +792,7 @@
     "execution labels": "निष्पादन labels",
     "show more labels": "{count} और लेबल दिखाएं",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
+    "invalid label key": "अमान्य लेबल key. मान्य key एक लोअरकेस अक्षर से शुरू होनी चाहिए और इसमें केवल लोअरकेस अक्षर, अंक, हाइफ़न (-), अंडरस्कोर (_) या पीरियड (.) होने चाहिए.",
     "feeds": {
       "heading": "सभी चीजें Kestra।",
       "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ"

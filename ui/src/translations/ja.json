@@ -792,6 +792,7 @@
     "execution labels": "実行ラベル",
     "show more labels": "他 {count} 件のラベルを表示",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
+    "invalid label key": "無効なラベルkeyです。有効なkeyは小文字で始まり、小文字、数字、ハイフン (-)、アンダースコア (_)、ピリオド (.) のみを含む必要があります。",
     "feeds": {
       "heading": "すべてのKestraに関すること。",
       "subheading": "最新の更新情報、ガイド、ストーリー"

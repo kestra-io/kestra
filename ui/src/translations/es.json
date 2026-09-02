@@ -222,7 +222,7 @@
     "next_execution": "Próxima ejecución",
     "datepicker": {
       "invalid duration": "Formato de duración no válido. Utilice ISO 8601 (p. ej., PT30M, P1D).",
-      "leave empty for infinite": "Dejar vacío para una duración infinita o escribir una duración ISO 8601 (ej., 'P1DT1H1M1S')",
+      "leave empty for infinite": "Dejar vacío para una duración infinita o escribir una duración ISO 8601 (p. ej., 'P1DT1H1M1S')",
       "duration example": "Ejemplo: 'P1DT1H1M1S'",
       "error": "Formato de duración inválido, debe ser una duración ISO 8601 (ej., P1DT1H1M1S)",
       "custom": "Personalizado",
@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Límites de Concurrencia",
-      "warning": "Cambiar el contador en ejecución puede corromper la concurrencia, por lo que las ejecuciones pueden exceder el límite permitido."
+      "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido."
     },
     "flowConcurrency": {
       "loadError": "No se pudo cargar el límite de concurrencia de este flow.",
@@ -807,20 +807,20 @@
     "bulk restart": "¿Estás seguro de que quieres reiniciar <code>{executionCount}</code> ejecución(es)?",
     "bulk kill": "¿Estás seguro de que quieres matar <code>{executionCount}</code> ejecución(es)?",
     "cancel": "Cancelar",
-    "errorLogs": "Registros de errores",
+    "errorLogs": "Logs de error",
     "welcome_page": {
       "guide": "¿Necesitas orientación para ejecutar tu primer flow?"
     },
     "product_tour": "Recorrido del Producto",
-    "executions replayed": "<code>{executionCount}</code> ejecución(es) reproducidas",
+    "executions replayed": "<code>{executionCount}</code> ejecución(es) reproducida(s)",
     "executions state changed": "El estado de <code>{executionCount}</code> ejecución(es) ha sido cambiado",
-    "executions resumed": "<code>{executionCount}</code> ejecución(es) reanudadas",
-    "executions paused": "<code>{executionCount}</code> ejecución(es) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> ejecución(es) en cola",
-    "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",
-    "executions restarted": "<code>{executionCount}</code> ejecución(es) reiniciadas",
-    "executions killed": "<code>{executionCount}</code> ejecución(es) matadas",
-    "executions deleted": "<code>{executionCount}</code> ejecución(es) eliminadas",
+    "executions resumed": "<code>{executionCount}</code> ejecución(es) reanudada(s)",
+    "executions paused": "<code>{executionCount}</code> ejecución(es) pausada(s)",
+    "executions unqueue": "<code>{executionCount}</code> ejecución(es) sin cola",
+    "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s)",
+    "executions restarted": "<code>{executionCount}</code> ejecución(es) reiniciada(s)",
+    "executions killed": "<code>{executionCount}</code> ejecución(es) eliminada(s)",
+    "executions deleted": "`{executionCount}` ejecución(es) eliminada(s)",
     "invalid bulk replay": "No se pudieron reproducir las ejecuciones",
     "invalid bulk resume": "No se pudieron reanudar las ejecuciones",
     "invalid bulk pause": "No se pudo pausar las ejecuciones",
@@ -916,7 +916,7 @@
     "join_slack": "Unirse a Slack",
     "kestra": "Kestra",
     "error detected": "Se detectaron errores.",
-    "warning detected": "Advertencia(s) detectada(s)",
+    "warning detected": "Advertencia(s) detectada(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
     "dependency task": "Task {taskId} es una dependencia de otra task",
@@ -1903,7 +1903,8 @@
       "close_all_tabs": "Cerrar todas las pestañas",
       "close_all_panels": "Cerrar todos los paneles",
       "exit_fullscreen": "Salir de pantalla completa",
-      "fullscreen": "Pantalla completa"
+      "fullscreen": "Pantalla completa",
+      "split_panel": "Dividir panel"
     },
     "search_docs": "Buscar",
     "no_results_found": "No se encontraron resultados",
@@ -1916,7 +1917,9 @@
       "triggers": "No se encontraron Triggers",
       "flows": "No se encontraron Flows",
       "kv_pairs": "No se encontraron pares Key-Value",
-      "secrets": "No se encontraron Secrets"
+      "secrets": "No se encontraron Secrets",
+      "all_columns_hidden": "Todas las columnas están ocultas",
+      "all_columns_hidden_description": "Vuelve a activar al menos una columna en Personalizar columnas de tabla para ver los datos de nuevo."
     },
     "duplicate-pair": "{label} \"{key}\" está duplicado, se ignora la primera clave.",
     "dashboards": {
@@ -2088,8 +2091,8 @@
         },
         "unavailable": {
           "title": "AI Copilot no está disponible",
-          "detail": "Ningún proveedor de IA está configurado. Pida a un administrador que configure uno y vuelva a intentarlo.",
-          "retry": "Reintentar"
+          "detail": "No hay ningún proveedor de AI configurado. Pide a un administrador que configure uno.",
+          "docs": "Ver documentación"
         },
         "thinkingWords": [
           "Orquestación",

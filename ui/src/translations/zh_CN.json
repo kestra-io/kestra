@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "并发限制",
-      "warning": "更改运行计数器可能会破坏并发性，因此执行可能会超出允许的限制。"
+      "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。"
     },
     "flowConcurrency": {
       "loadError": "无法加载此 flow 的并发限制。",
@@ -807,20 +807,20 @@
     "bulk restart": "确定要重新开始 <code>{executionCount}</code> 个执行吗？",
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
     "cancel": "取消",
-    "errorLogs": "错误日志",
+    "errorLogs": "错误 logs",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？"
     },
     "product_tour": "产品导览",
-    "executions replayed": "<code>{executionCount}</code> 个执行已重放",
+    "executions replayed": "<code>{executionCount}</code> 个 Execution 已重放",
     "executions state changed": "<code>{executionCount}</code> 次执行的状态已更改",
-    "executions resumed": "<code>{executionCount}</code> 个执行已恢复",
-    "executions paused": "<code>{executionCount}</code> 次执行已暂停",
-    "executions unqueue": "<code>{executionCount}</code> 次执行未排队",
-    "executions force run": "<code>{executionCount}</code> 次执行被强制运行",
-    "executions restarted": "<code>{executionCount}</code> 个执行已重新开始",
-    "executions killed": "<code>{executionCount}</code> 个执行已终止",
-    "executions deleted": "<code>{executionCount}</code> 个执行已删除",
+    "executions resumed": "<code>{executionCount}</code> 个 execution 已恢复",
+    "executions paused": "<code>{executionCount}</code> 个执行已暂停",
+    "executions unqueue": "<code>{executionCount}</code> 个未排队的 Execution",
+    "executions force run": "<code>{executionCount}</code> 次强制执行",
+    "executions restarted": "<code>{executionCount}</code> 个执行已重启",
+    "executions killed": "<code>{executionCount}</code> 个 execution 已终止",
+    "executions deleted": "已删除 <code>{executionCount}</code> 个 execution",
     "invalid bulk replay": "无法重放执行",
     "invalid bulk resume": "无法恢复执行",
     "invalid bulk pause": "无法暂停执行",
@@ -916,7 +916,7 @@
     "join_slack": "加入 Slack",
     "kestra": "Kestra",
     "error detected": "检测到错误。",
-    "warning detected": "检测到警告",
+    "warning detected": "检测到警告。",
     "informative notice": "注意事项",
     "open": "打开",
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
@@ -1903,7 +1903,8 @@
       "close_all_tabs": "关闭所有标签页",
       "close_all_panels": "关闭所有面板",
       "exit_fullscreen": "退出全屏",
-      "fullscreen": "全屏"
+      "fullscreen": "全屏",
+      "split_panel": "拆分面板"
     },
     "search_docs": "搜索",
     "no_results_found": "未找到结果",
@@ -1916,7 +1917,9 @@
       "triggers": "未找到Triggers",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
-      "secrets": "未找到Secrets"
+      "secrets": "未找到Secrets",
+      "all_columns_hidden": "所有列均已隐藏",
+      "all_columns_hidden_description": "在“自定义表格列”中至少重新开启一列，以再次查看数据。"
     },
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
@@ -2088,8 +2091,8 @@
         },
         "unavailable": {
           "title": "AI Copilot 不可用",
-          "detail": "未配置 AI 提供商。请管理员设置，然后重试。",
-          "retry": "重试"
+          "detail": "未配置 AI 提供商。请联系管理员进行设置。",
+          "docs": "查看文档"
         },
         "thinkingWords": [
           "编排",

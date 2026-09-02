@@ -58,6 +58,8 @@
             </template>
         </Topology>
 
+        <BlockTaskPicker :picker="taskPicker" modal />
+
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
@@ -214,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, ref, inject, provide, watch, computed} from "vue"
+    import {nextTick, onBeforeUnmount, onMounted, ref, inject, provide, watch, computed} from "vue"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
@@ -239,6 +241,10 @@
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
+    import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
+    import {useTaskPicker} from "../no-code/blocks/useTaskPicker"
+    import {laneDisplayLabelFromPath, sectionDisplayLabel} from "../no-code/blocks/blockSections"
+    import {errorsLaneTarget} from "../../utils/flowableBlockOps"
     import {useAuthStore} from "override/stores/auth"
     import action from "../../models/action"
     import resource from "../../models/resource"
@@ -573,8 +579,6 @@
     })
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
-    const taskEditData = ref()
-    const taskEditDomElement = ref()
     const logFilter = ref("")
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
     const isDrawerOpen = ref(false)
@@ -707,12 +711,52 @@
         }
     }
 
-    const onAddFlowableError = (event: any) => {
-        taskEditData.value = {
-            action: "add_flowable_error",
-            taskId: event.task.id,
+    const taskPicker = useTaskPicker({
+        pluginsStore,
+        editorEl: vueFlow,
+        focusedId: ref<string | undefined>(undefined),
+        focusedAnchor: () => undefined,
+        focusedBlockPath: () => undefined,
+        focusCanvasCard: (id) => {
+            if (!id) return
+            topologyClick.value = {
+                action: "edit",
+                params: {
+                    section: SECTIONS.TASKS.toLowerCase() as any,
+                    id,
+                },
+            }
+        },
+        sectionList: (section) => {
+            const list = YAML_UTILS.parse<Record<string, any>>(props.source ?? "")?.[section]
+            return Array.isArray(list) ? list : []
+        },
+        sectionDisplayLabel: (section) => sectionDisplayLabel(t, section),
+        laneDisplayLabel: (parentPath) => laneDisplayLabelFromPath(t, parentPath),
+        flowYaml: computed(() => props.source ?? ""),
+        applyYaml: (yaml) => emit("on-edit", yaml, true),
+    })
+
+    const onPickerEscape = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+            taskPicker.taskPickerVisible.value = false
         }
-        taskEditDomElement.value.$refs.taskEdit.click()
+    }
+
+    watch(taskPicker.taskPickerVisible, (visible) => {
+        if (visible) {
+            window.addEventListener("keydown", onPickerEscape)
+        } else {
+            window.removeEventListener("keydown", onPickerEscape)
+        }
+    })
+
+    onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
+
+    const onAddFlowableError = (event: {task: Record<string, any>}) => {
+        const target = errorsLaneTarget(props.source ?? "", event.task.id)
+        if (!target) return
+        taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }
 
     const fitViewOrientation = () => {

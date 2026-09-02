@@ -11,15 +11,23 @@
         </div>
 
         <!-- AI unavailable: the backend has no configured provider — known up front from `/configs`,
-             or discovered mid-session (503). -->
+             or discovered mid-session (503). Configuring a provider is an instance-config change (a
+             restart), never something a retry in this panel could pick up, so the only action here
+             points at the docs that explain how to set one up. -->
         <div v-if="isUnavailable" class="copilot-unavailable" data-test="copilot-unavailable">
             <KsIcon class="copilot-unavailable-icon">
                 <RobotOffOutline />
             </KsIcon>
             <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
             <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
-            <KsButton size="small" data-test="copilot-unavailable-retry" @click="onRetry">
-                {{ $t("ai.copilot.unavailable.retry") }}
+            <KsButton
+                size="small"
+                tag="a"
+                target="_blank"
+                :href="docsUrl"
+                data-test="copilot-unavailable-docs"
+            >
+                {{ $t("ai.copilot.unavailable.docs") }}
             </KsButton>
         </div>
 
@@ -262,7 +270,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
 
     // `/configs` reports whether any AI provider is configured, so the unavailable state renders on
     // load rather than after the user composes a prompt that was always going to fail
@@ -271,13 +279,8 @@
     const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
     const isUnavailable = computed(() => unavailable.value || noProviderConfigured.value)
 
-    /** Re-check availability: a provider may have just been added, so refresh `/configs` too. */
-    async function onRetry(): Promise<void> {
-        try {
-            await miscStore.loadConfigs()
-        } catch { /* keep the unavailable state; the user can try again */ }
-        retry()
-    }
+    /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
+    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=kestra_app&utm_medium=referral&utm_campaign=ai_copilot_unavailable&utm_content=learn_more#configuration"
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })
@@ -463,7 +466,7 @@
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
-    /* AI-unavailable state (no provider configured): centered message + retry, no composer. */
+    /* AI-unavailable state (no provider configured): centered message + docs link, no composer. */
     .copilot-unavailable {
         flex: 1 1 auto;
         min-height: 0;

@@ -20,13 +20,17 @@ const {fakeClient, fakeAxiosClient, nprogressStart, nprogressSet, nprogressDone}
 vi.mock("@kestra-io/kestra-sdk", () => ({
     configureClient: vi.fn(() => fakeClient),
     useClient: vi.fn(() => fakeAxiosClient),
+    // Stands in for the real helper: recognises a problem document the SDK flattened onto the Error.
+    asProblem: (error: any) => (error?.type
+        ? {type: error.type, title: error.title, detail: error.detail, status: error.status}
+        : undefined),
 }))
 
 vi.mock("nprogress", () => ({
     default: {start: nprogressStart, set: nprogressSet, done: nprogressDone},
 }))
 
-import {setupKestraHttp} from "../../../src/utils/kestraHttp"
+import {isReportedCentrally, setupKestraHttp} from "../../../src/utils/kestraHttp"
 
 describe("setupKestraHttp router NProgress hooks", () => {
     let beforeEachCb: () => void
@@ -63,5 +67,78 @@ describe("setupKestraHttp router NProgress hooks", () => {
         await new Promise((r) => setTimeout(r, 60))
 
         expect(nprogressDone).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe("setupKestraHttp central 404 handling", () => {
+    const notFoundResponse = {
+        status: 404,
+        statusText: "Not Found",
+        url: "http://localhost:8080/api/v1/main/flows/io.kestra/missing",
+        headers: {forEach: () => {}},
+    }
+    const request = {method: "get", url: "/api/v1/main/flows/io.kestra/missing"}
+
+    function triggerNotFound(opts?: Record<string, unknown>) {
+        const coreStore = {message: undefined as unknown, error: undefined as unknown}
+        setupKestraHttp({}, {coreStore})
+        const onErrorInterceptor = fakeClient.interceptors.error.use.mock.calls.at(-1)![0]
+
+        const notFound = Object.assign(new Error("404 Not Found"), {
+            status: 404,
+            type: "https://kestra.io/problems/not-found",
+            title: "Resource not found",
+            detail: "Flow io.kestra.missing not found",
+        })
+        onErrorInterceptor(notFound, notFoundResponse, request, opts)
+
+        return coreStore
+    }
+
+    beforeEach(() => {
+        vi.spyOn(console, "error").mockImplementation(() => {})
+    })
+
+    it("shows the failed request as a toast and logs it, instead of swapping the page for the not-found screen", () => {
+        const coreStore = triggerNotFound()
+
+        expect(coreStore.message).toMatchObject({
+            variant: "error",
+            status: 404,
+            request: {method: "get", url: "/api/v1/main/flows/io.kestra/missing"},
+            problem: {type: "https://kestra.io/problems/not-found", detail: "Flow io.kestra.missing not found"},
+        })
+        // The full-page error screen is driven by coreStore.error - a 404 must not reach it.
+        expect(coreStore.error).toBeUndefined()
+        expect(console.error).toHaveBeenCalledWith(
+            expect.stringContaining("GET /api/v1/main/flows/io.kestra/missing failed with 404"),
+            expect.anything(),
+        )
+    })
+
+    it("stays silent for callers that opted out with ignoreNotFound or showMessageOnError", () => {
+        expect(triggerNotFound({ignoreNotFound: true}).message).toBeUndefined()
+        expect(triggerNotFound({showMessageOnError: false}).message).toBeUndefined()
+    })
+})
+
+describe("isReportedCentrally", () => {
+    const failure = (status: number, config?: Record<string, unknown>) => ({
+        status,
+        response: {data: {title: "problem"}},
+        config: {method: "put", url: "/api/v1/main/flows/io.kestra/gone", ...config},
+    }) as any
+
+    // What a caller reporting its own failures asks before adding a toast of its own: the flow
+    // editor's save handler would otherwise duplicate the global toast on a deleted flow.
+    it("claims the failures the interceptor toasts and leaves the caller the rest", () => {
+        expect(isReportedCentrally(failure(404))).toBe(true)
+        expect(isReportedCentrally(failure(500))).toBe(true)
+
+        expect(isReportedCentrally(failure(400))).toBe(false)
+        expect(isReportedCentrally(failure(401))).toBe(false)
+        expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
+        expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
+        expect(isReportedCentrally({status: 0} as any)).toBe(false)
     })
 })

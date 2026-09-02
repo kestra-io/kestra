@@ -179,7 +179,7 @@
     })
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`
+        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`
     }
 
     const jsonlUrl = (value: string): string => {

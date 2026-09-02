@@ -1,21 +1,46 @@
 <template>
     <span v-if="props.labels.length" class="d-flex gap-1 labels-container" :class="{wrap}">
         <KsCheckTag
-            v-for="(label, index) in props.labels"
+            v-for="(label, index) in visibleLabels"
             :key="index"
             :disabled="readOnly"
             :checked="isChecked(label)"
             @change="updateLabel(label)"
             class="me-0 label"
+            data-test="label"
         >
-            <template v-if="!label.key">{{ label.display ?? label.value }}</template>
-            <template v-else>{{ label.key }}:{{ label.display ?? label.value }}</template>
+            <span class="label-text" :title="wrap ? undefined : text(label)">{{ text(label) }}</span>
         </KsCheckTag>
+        <KsPopover
+            v-if="hiddenLabels.length"
+            trigger="click"
+            placement="top"
+            :width="360"
+        >
+            <Labels
+                :labels="hiddenLabels"
+                :readOnly="readOnly"
+                :filterType="filterType"
+                wrap
+                class="labels-popover"
+                data-test="labels-overflow-content"
+            />
+            <template #reference>
+                <button
+                    type="button"
+                    class="label-more"
+                    :aria-label="$t('show more labels', {count: hiddenLabels.length})"
+                    data-test="labels-overflow"
+                >
+                    +{{ hiddenLabels.length }}
+                </button>
+            </template>
+        </KsPopover>
     </span>
 </template>
 
 <script setup lang="ts">
-    import {watch} from "vue"
+    import {computed, watch} from "vue"
 
     import {useRouter, useRoute} from "vue-router"
     const router = useRouter()
@@ -33,14 +58,27 @@
             readOnly?: boolean;
             filterType?: "labels" | "metadata" | "type" | "details";
             wrap?: boolean;
+            max?: number;
         }>(),
         {
             labels: () => [],
             readOnly: false,
             filterType: "labels",
             wrap: false,
+            max: 0,
         },
     )
+
+    // Collapsing a single extra label costs more room than showing it, so `max` is a soft cap:
+    // the popover only appears once it hides at least two.
+    const overflows = computed(() => props.max > 0 && props.labels.length > props.max + 1)
+    const visibleLabels = computed(() => (overflows.value ? props.labels.slice(0, props.max) : props.labels))
+    const hiddenLabels = computed(() => (overflows.value ? props.labels.slice(props.max) : []))
+
+    const text = (label: Label) => {
+        const value = label.display ?? label.value
+        return label.key ? `${label.key}:${value}` : value
+    }
 
     import {decodeSearchParams} from "@kestra-io/design-system"
     let query: any[] = []
@@ -86,7 +124,8 @@
 </script>
 
 <style scoped lang="scss">
-.label.kel-check-tag {
+.label.kel-check-tag,
+.label-more {
     --ks-bg-tag: #7b7b7e45;
 ;
     --ks-bg-tag-active: #414557;
@@ -102,6 +141,7 @@
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);
     font-size: var(--ks-font-size-xs);
+    line-height: 1;
     padding: 4px 6px;
     border-radius: 6px;
     font-weight: 400;
@@ -119,6 +159,31 @@
         flex-wrap: wrap;
         overflow: visible;
     }
+}
+
+.labels-container:not(.wrap) .label-text {
+    display: inline-block;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+.labels-container:not(.wrap) .label.kel-check-tag {
+    min-width: 0;
+}
+
+.label-more {
+    flex-shrink: 0;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.labels-popover .label.kel-check-tag {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .label.kel-check-tag.is-checked {

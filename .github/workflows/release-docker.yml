@@ -57,7 +57,7 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-export-trace@main
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

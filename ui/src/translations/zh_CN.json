@@ -2572,6 +2572,7 @@
         "message": "保存前请修正错误。",
         "title": "无法保存 flow"
       },
+      "schema_default_tooltip": "字段未设置时使用的默认值",
       "search_task_placeholder": "搜索或描述一个 task…",
       "shortcuts": {
         "add_after": "在选中项后插入一个块",

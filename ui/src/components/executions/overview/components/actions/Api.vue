@@ -2,7 +2,8 @@
     <NavBarAction
         v-if="isAllowedEdit"
         :icon="Api"
-        @click="downloadApi"
+        :href="href"
+        :download="filename"
     >
         {{ $t("api") }}
     </NavBarAction>
@@ -12,8 +13,6 @@
     import {computed} from "vue"
 
     import {apiUrl} from "override/utils/route"
-
-    import * as Utils from "../../../../../utils/utils"
 
     import {Execution} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
@@ -37,10 +36,6 @@
         )
     })
 
-    const downloadApi = () => {
-        Utils.downloadUrl(
-            `${apiUrl()}/executions/${props.execution.id}`,
-            `execution-${props.execution.id}.json`,
-        )
-    }
+    const href = computed(() => `${apiUrl()}/executions/${props.execution.id}`)
+    const filename = computed(() => `execution-${props.execution.id}.json`)
 </script>

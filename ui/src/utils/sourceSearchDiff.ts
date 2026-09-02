@@ -4,19 +4,13 @@ import {crossSearchResultKey} from "./crossResourceSearch"
 export type SourceMatch = Required<ApiSourceMatch>
 export type SourceSearchResult = Required<Omit<ApiSourceSearchResult, "matches">> & {matches: SourceMatch[]}
 
-export interface SourceSearchSelectionGroup {
-    namespace: string;
-    id: string;
-    editable: boolean;
-    matches: {line: number; column: number}[];
-}
 
 export interface SelectionSummary {
     selectedFlowCount: number;
     selectedMatchCount: number;
 }
 
-export function computeSelectionSummary(results: SourceSearchSelectionGroup[], selectedMatchKeys: Set<string>): SelectionSummary {
+export function computeSelectionSummary(results: SourceSearchResult[], selectedMatchKeys: Set<string>): SelectionSummary {
     let selectedFlowCount = 0
     let selectedMatchCount = 0
 
@@ -120,4 +114,16 @@ export function buildDiffHunks(sourceLines: string[], matches: SourceSearchDiffM
     }
 
     return lines
+}
+
+export function getSeparatorVariant(query: string): string | null {
+    if (query.includes("-")) {
+        return query.replace(/-/g, "_")
+    }
+
+    if (query.includes("_")) {
+        return query.replace(/_/g, "-")
+    }
+
+    return null
 }

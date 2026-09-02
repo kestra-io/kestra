@@ -354,7 +354,7 @@
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
-    import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
+    import {computeSelectionSummary, distinctSkipReasons, getSeparatorVariant, type ReplaceContext, type SourceSearchResult} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
 
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
@@ -495,12 +495,8 @@
 
     const results = ref<SourceSearchResult[]>([])
     const suggestedQuery = ref<string | null>(null)
-    const hasResults = computed(() => results.value.length > 0)
-    const totalMatchCount = computed(() => results.value.reduce((sum, group) => sum + group.matches.length, 0))
-    const readOnlyExcludedCount = computed(() => results.value.filter((group) => !group.editable).length)
-    const firstReadOnlyNamespace = computed(() => results.value.find((group) => !group.editable)?.namespace ?? "")
 
-    const selectedKey = computed(() => selected.value ? `${selected.value.namespace}.${selected.value.id}#${selected.value.line}:${selected.value.column}` : null)
+    const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
 
@@ -537,15 +533,6 @@
         .map((type) => ({type, count: crossResourceSearchStore.countFor(type)}))
         .filter((entry) => entry.count > 0))
 
-    const hiddenTypeHint = computed(() => hiddenTypeCounts.value
-        .map((entry) => t("source_search.no_results_hidden_type", {count: entry.count, type: typeLabel(entry.type)}))
-        .join(" "))
-
-    const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
-    const noResultsMessage = computed(() => t("source_search.no_results_in_types", {
-        query: `<code>${query.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`,
-        types: selectedTypesLabel.value,
-    }))
 
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
@@ -579,16 +566,6 @@
 
     function onSelect(value: CrossSearchSelection) {
         selection.value = value
-    }
-    function getSeparatorVariant(query: string): string | null {
-        if (query.includes("-")) {
-        return query.replace(/-/g, "_")
-    }
-    if (query.includes("_")) {
-        return query.replace(/_/g, "-")
-    }
-
-    return null
     }
     function goToMatch(delta: number) {
         const list = visibleFlatSelections.value
@@ -750,7 +727,7 @@
                 namespace: namespaceFilter.value,
                 ...searchFilters.value,
             })
-            results.value = response.results as SourceSearchResult[]
+            results.value = crossResourceSearchStore.flows.results
             if (results.value.length === 0) {
                 const alternativeQuery = getSeparatorVariant(query.value)
 
@@ -758,7 +735,8 @@
                     const alternativeResponse = await FlowsAPI.searchFlowsBySourceCode({...searchFilters.value,
                         page: 1,
                         size: 200,
-                        q: alternativeQuery.value,
+                        q: alternativeQuery,
+                        namespace: namespaceFilter.value,
                     })
                     if(alternativeResponse.results.length > 0){
                         suggestedQuery.value = alternativeQuery
@@ -766,7 +744,6 @@
                 }
             }
         } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? t("source_search.search_failed")
             results.value = []
         } finally {
             searchPending.value = false

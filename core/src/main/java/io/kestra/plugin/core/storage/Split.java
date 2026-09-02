@@ -15,6 +15,7 @@ import io.kestra.core.storages.StorageSplitInterface;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -119,9 +120,9 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
 
     private Property<String> bytes;
 
-    private Property<Integer> partitions;
+    private Property<@Positive Integer> partitions;
 
-    private Property<Integer> rows;
+    private Property<@Positive Integer> rows;
 
     @Schema(
         title = "Split file by regex pattern. Lines are grouped by the first capture group value.",

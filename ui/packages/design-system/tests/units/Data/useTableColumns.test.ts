@@ -1,5 +1,5 @@
 import {describe, test, expect, beforeEach} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, nextTick} from "vue"
 import {mount} from "@vue/test-utils"
 import {useTableColumns, type ColumnConfig} from "../../../src/components/Data/KsDataTable/filter/composables/useTableColumns"
 
@@ -38,6 +38,35 @@ describe("useTableColumns reorder", () => {
         expect(localStorage.getItem("columns_set-order")).toBe("c,a,b")
     })
 
+    // The picker reaches the order through this copy, so the write-on-reorder guarantee has to hold here.
+    test("does not persist a column order until setColumnOrder is called", async () => {
+        const storedOrders = () => Object.keys(localStorage).filter(key => key.startsWith("ks-column-order"))
+
+        const table = setup("untouched")
+
+        expect(storedOrders()).toEqual([])
+
+        table.toggleColumn(COLUMNS[2])
+        await nextTick()
+
+        expect(storedOrders()).toEqual([])
+
+        table.setColumnOrder(["c", "a", "b"])
+        await nextTick()
+
+        expect(storedOrders()).toHaveLength(1)
+        expect(localStorage.getItem(storedOrders()[0])).toBe(JSON.stringify(["c", "a", "b"]))
+    })
+
+    test("ignores and drops an order left by the pre-v2 key", () => {
+        localStorage.setItem("ks-column-order-legacy", JSON.stringify(["c", "b", "a"]))
+
+        const table = setup("legacy")
+
+        expect(table.orderedColumns.value.map(c => c.prop)).toEqual(["a", "b", "c"])
+        expect(localStorage.getItem("ks-column-order-legacy")).toBeNull()
+    })
+
     test("setColumnOrder keeps hidden columns hidden while reordering visible ones", () => {
         const table = setup("set-order-hidden")
         table.updateVisibleColumns(["a", "c"])
@@ -47,5 +76,45 @@ describe("useTableColumns reorder", () => {
         expect(table.orderedColumns.value.map(c => c.prop)).toEqual(["c", "b", "a"])
         expect(table.visibleColumns.value).toEqual(["c", "a"])
         expect(localStorage.getItem("columns_set-order-hidden")).toBe("c,a")
+    })
+})
+
+describe("useTableColumns persistence", () => {
+    beforeEach(() => localStorage.clear())
+
+    test("should keep every column hidden when the stored selection is empty", () => {
+        localStorage.setItem("columns_all-hidden", "")
+
+        const table = setup("all-hidden")
+
+        expect(table.visibleColumns.value).toEqual([])
+        expect(table.visibleCount.value).toBe(0)
+    })
+
+    test("should keep every column hidden after re-initializing a deselect-all", () => {
+        const table = setup("deselect-all")
+
+        COLUMNS.forEach(column => table.toggleColumn(column))
+        expect(localStorage.getItem("columns_deselect-all")).toBe("")
+
+        table.initializeVisibleColumns()
+
+        expect(table.visibleColumns.value).toEqual([])
+    })
+
+    // No initialVisibleColumns, so these exercise the `default` flag branch rather than
+    // echoing the argument straight back.
+    test("should fall back to the default-flagged columns when no selection was ever stored", () => {
+        const table = setup("never-stored", [])
+
+        expect(table.visibleColumns.value).toEqual(["a", "b", "c"])
+    })
+
+    test("should fall back to the default-flagged columns when the stored columns no longer exist", () => {
+        localStorage.setItem("columns_stale", "gone,removed")
+
+        const table = setup("stale", [])
+
+        expect(table.visibleColumns.value).toEqual(["a", "b", "c"])
     })
 })

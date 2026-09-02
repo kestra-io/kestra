@@ -1024,6 +1024,69 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldIncludeStartOccurrenceWhenBackfillCreatedOnACronTick() {
+        // GIVEN: every-minute cron, backfill start is itself a cron occurrence
+        Clock clock = Clock.fixed(Instant.parse("2024-06-15T12:00:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(b -> b.cron("* * * * *").timezone("UTC").build())));
+        ZonedDateTime start = ZonedDateTime.parse("2024-06-15T12:00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2024-06-15T12:05:00Z");
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(start, end, null, null));
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN: first evaluation is AT start, not the next minute
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getBackfill()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(start.toInstant());
+        assertThat(updated.get().getBackfill().getCurrentDate()).isEqualTo(start);
+    }
+
+    @Test
+    void shouldSkipToNextOccurrenceWhenBackfillStartIsNotACronTick() {
+        // GIVEN: start sits between minute ticks
+        Clock clock = Clock.fixed(Instant.parse("2024-06-15T12:00:30Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(b -> b.cron("* * * * *").timezone("UTC").build())));
+        ZonedDateTime start = ZonedDateTime.parse("2024-06-15T12:00:30Z");
+        ZonedDateTime end = ZonedDateTime.parse("2024-06-15T12:05:00Z");
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(start, end, null, null));
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN: 12:00 is before start, so first evaluation is 12:01
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getBackfill()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(Instant.parse("2024-06-15T12:01:00Z"));
+    }
+
+    @Test
+    void shouldKeepBackfillWhenStartEqualsEndOnACronTick() {
+        // GIVEN: a single-tick range [12:00, 12:00]
+        Clock clock = Clock.fixed(Instant.parse("2024-06-15T12:00:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(b -> b.cron("* * * * *").timezone("UTC").build())));
+        ZonedDateTime startAndEnd = ZonedDateTime.parse("2024-06-15T12:00:00Z");
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(startAndEnd, startAndEnd, null, null));
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN: the occurrence at start/end is scheduled, backfill is not cleared
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getBackfill()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(startAndEnd.toInstant());
+    }
+
+    @Test
     void shouldClearBackfillWhenBackfillRangeIsAlreadyComplete() {
         // GIVEN: start == end between cron ticks, so the next tick is after end
         Clock clock = Clock.fixed(Instant.parse("2024-06-15T10:07:00Z"), ZoneOffset.UTC);

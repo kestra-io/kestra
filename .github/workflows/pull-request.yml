@@ -19,6 +19,8 @@ jobs:
       GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
     steps:
     - name: Checkout  # required so the local composite action below can resolve
+      with:
+        persist-credentials: false
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
       uses: actions/checkout@v7
 
@@ -214,6 +216,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
         name: Checkout
 
       - uses: actions/setup-node@v7

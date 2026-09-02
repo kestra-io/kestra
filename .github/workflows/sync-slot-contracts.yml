@@ -17,6 +17,8 @@ jobs:
       CHANGESET_FILE: .changeset/sync-slot-contracts.md
     steps:
       - name: Checkout kestra
+        with:
+          persist-credentials: false
         uses: actions/checkout@v7
 
       # The branch, the commit and the PR in artifact-sdk are all attributed to whoever owns the

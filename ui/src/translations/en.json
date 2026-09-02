@@ -789,6 +789,7 @@
     "execution labels": "Execution labels",
     "show more labels": "Show {count} more labels",
     "wrong labels": "Empty key or value is not allowed in labels",
+    "invalid label key": "Invalid label key. A valid key must start with a lowercase letter and contain only lowercase letters, numbers, hyphens (-), underscores (_) or periods (.)",
     "feeds": {
       "heading": "All things Kestra.",
       "subheading": "The latest updates, guides and stories"

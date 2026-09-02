@@ -789,6 +789,7 @@
     "execution labels": "Execution-Labels",
     "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
+    "invalid label key": "Ungültiger Label-Key. Ein gültiger Key muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben, Zahlen, Bindestriche (-), Unterstriche (_) oder Punkte (.) enthalten.",
     "feeds": {
       "heading": "Alles rund um Kestra.",
       "subheading": "Die neuesten Updates, Anleitungen und Beiträge"

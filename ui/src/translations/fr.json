@@ -2572,6 +2572,7 @@
         "message": "Corrigez les erreurs avant d'enregistrer.",
         "title": "Impossible d'enregistrer le flow"
       },
+      "schema_default_tooltip": "Valeur par défaut utilisée lorsque le champ n'est pas défini",
       "search_task_placeholder": "Rechercher ou décrire une tâche…",
       "shortcuts": {
         "add_after": "Insérer un bloc après la sélection",

@@ -222,7 +222,7 @@
     "next_execution": "次回の実行",
     "datepicker": {
       "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
-      "leave empty for infinite": "無期限にする場合は空欄にするか、ISO 8601期間（例：'P1DT1H1M1S'）を入力してください",
+      "leave empty for infinite": "無期限にする場合は空欄のままにするか、ISO 8601期間（例：'P1DT1H1M1S'）を入力してください",
       "duration example": "例：'P1DT1H1M1S'",
       "error": "期間の形式が無効です。ISO 8601期間形式（例：P1DT1H1M1S）である必要があります。",
       "custom": "カスタム",
@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
-      "warning": "実行中のカウンターを変更すると、並行性が損なわれ、実行が許可された制限を超える可能性があります。"
+      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
     },
     "flowConcurrency": {
       "loadError": "この flow の同時実行制限を読み込めませんでした。",
@@ -812,15 +812,15 @@
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？"
     },
     "product_tour": "プロダクトツアー",
-    "executions replayed": "<code>{executionCount}</code>件の実行が再実行されました",
+    "executions replayed": "<code>{executionCount}</code> の実行がリプレイされました",
     "executions state changed": "<code>{executionCount}</code> 回の実行の状態が変更されました",
-    "executions resumed": "<code>{executionCount}</code>件の実行が再開されました",
-    "executions paused": "<code>{executionCount}</code> 回の実行がPAUSEDされました",
-    "executions unqueue": "<code>{executionCount}</code> 回の実行がキューから外されました",
-    "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",
-    "executions restarted": "<code>{executionCount}</code>件の実行が再起動されました",
-    "executions killed": "<code>{executionCount}</code>件の実行がkillされました",
-    "executions deleted": "<code>{executionCount}</code>件の実行が削除されました",
+    "executions resumed": "<code>{executionCount}</code> 件の実行が再開されました",
+    "executions paused": "<code>{executionCount}</code> 件の実行が一時停止されました",
+    "executions unqueue": "<code>{executionCount}</code> の実行がキューから削除されました",
+    "executions force run": "<code>{executionCount}</code> 件の強制実行されたExecution",
+    "executions restarted": "<code>{executionCount}</code> 件の実行が再起動されました",
+    "executions killed": "<code>{executionCount}</code> 件の実行が強制終了されました",
+    "executions deleted": "<code>{executionCount}</code> 件の実行が削除されました",
     "invalid bulk replay": "実行を再実行できませんでした",
     "invalid bulk resume": "実行を再開できませんでした",
     "invalid bulk pause": "実行を一時停止できませんでした",
@@ -916,7 +916,7 @@
     "join_slack": "Slackに参加",
     "kestra": "Kestra",
     "error detected": "エラーが検出されました。",
-    "warning detected": "警告が検出されました",
+    "warning detected": "警告が検出されました。",
     "informative notice": "注記",
     "open": "開く",
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
@@ -1903,7 +1903,8 @@
       "close_all_tabs": "すべてのタブを閉じる",
       "close_all_panels": "すべてのパネルを閉じる",
       "exit_fullscreen": "フルスクリーンを終了",
-      "fullscreen": "全画面表示"
+      "fullscreen": "全画面表示",
+      "split_panel": "パネルを分割"
     },
     "search_docs": "検索",
     "no_results_found": "結果が見つかりません",
@@ -1916,7 +1917,9 @@
       "triggers": "トリガーが見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
-      "secrets": "シークレットが見つかりません"
+      "secrets": "シークレットが見つかりません",
+      "all_columns_hidden": "すべての列が非表示です",
+      "all_columns_hidden_description": "データを再度表示するには、テーブル列のカスタマイズで少なくとも1つの列を再度オンにしてください。"
     },
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
@@ -2085,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot は利用できません",
-          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼し、その後再試行してください。",
-          "retry": "再試行"
+          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼してください。",
+          "docs": "ドキュメントを見る"
         },
         "thinkingWords": [
           "オーケストレーション",

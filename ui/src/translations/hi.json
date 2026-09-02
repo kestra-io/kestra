@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "समानांतरता सीमाएँ",
-      "warning": "चल रहे काउंटर को बदलने से concurrency खराब हो सकती है जिससे executions अनुमत सीमा से अधिक हो सकते हैं।"
+      "warning": "चल रहे काउंटर को बदलने से समवर्तीता दूषित हो सकती है, इसलिए एग्जीक्यूशन अनुमत सीमा से अधिक हो सकते हैं।"
     },
     "flowConcurrency": {
       "loadError": "इस flow की समवर्तीता सीमा लोड नहीं हो सकी।",
@@ -807,20 +807,20 @@
     "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
-    "errorLogs": "त्रुटियाँ logs",
+    "errorLogs": "त्रुटि लॉग",
     "welcome_page": {
       "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?"
     },
     "product_tour": "उत्पाद यात्रा",
-    "executions replayed": "<code>{executionCount}</code> निष्पादन पुनः चलाए गए",
+    "executions replayed": "<code>{executionCount}</code> execution(s) रीप्ले किए गए",
     "executions state changed": "<code>{executionCount}</code> निष्पादन की स्थिति बदल दी गई है",
-    "executions resumed": "<code>{executionCount}</code> निष्पादन फिर से शुरू किए गए",
-    "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> निष्पादन अनक्यू करें",
-    "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाया गया",
-    "executions restarted": "<code>{executionCount}</code> निष्पादन पुनः प्रारंभ किए गए",
-    "executions killed": "<code>{executionCount}</code> निष्पादन kill किए गए",
-    "executions deleted": "<code>{executionCount}</code> निष्पादन हटाए गए",
+    "executions resumed": "<code>{executionCount}</code> execution(s) फिर से शुरू की गईं",
+    "executions paused": "<code>{executionCount}</code> execution(s) रोकी गई",
+    "executions unqueue": "<code>{executionCount}</code> execution(s) अनक्यूड",
+    "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाए गए",
+    "executions restarted": "<code>{executionCount}</code> execution(s) पुनः आरंभ की गईं",
+    "executions killed": "<code>{executionCount}</code> execution(s) समाप्त",
+    "executions deleted": "<code>{executionCount}</code> execution(s) हटाई गईं",
     "invalid bulk replay": "निष्पादन पुनः चलाने में असमर्थ",
     "invalid bulk resume": "निष्पादन फिर से शुरू करने में असमर्थ",
     "invalid bulk pause": "निष्पादन को PAUSE नहीं किया जा सका",
@@ -916,7 +916,7 @@
     "join_slack": "Slack से जुड़ें",
     "kestra": "केस्ट्रा",
     "error detected": "त्रुटि(त्रुटियाँ) पाई गईं।",
-    "warning detected": "चेतावनी का पता चला",
+    "warning detected": "चेतावनी(याँ) मिलीं।",
     "informative notice": "नोट(s)",
     "open": "खोलें",
     "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
@@ -1903,7 +1903,8 @@
       "close_all_tabs": "सभी टैब बंद करें",
       "close_all_panels": "सभी पैनल बंद करें",
       "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
-      "fullscreen": "पूर्णस्क्रीन"
+      "fullscreen": "पूर्णस्क्रीन",
+      "split_panel": "पैनल विभाजित करें"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",
@@ -1916,7 +1917,9 @@
       "triggers": "कोई Triggers नहीं मिले",
       "flows": "कोई Flows नहीं मिला",
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
-      "secrets": "कोई Secrets नहीं मिले"
+      "secrets": "कोई Secrets नहीं मिले",
+      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
+      "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
@@ -2085,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot उपलब्ध नहीं है",
-          "detail": "कोई AI प्रदाता कॉन्फ़िगर नहीं किया गया है। किसी व्यवस्थापक से इसे सेट अप करने के लिए पूछें, फिर से प्रयास करें।",
-          "retry": "फिर से प्रयास करें"
+          "detail": "कोई AI प्रोवाइडर कॉन्फ़िगर नहीं है। किसी एडमिनिस्ट्रेटर से इसे सेट अप करने के लिए कहें।",
+          "docs": "दस्तावेज़ देखें"
         },
         "thinkingWords": [
           "ऑर्केस्ट्रेशन",

@@ -10,6 +10,38 @@ import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 
+/** Mirrors io.kestra.core.plugins.PluginInstallJob */
+export interface PluginArtifact {
+    groupId: string;
+    artifactId: string;
+    extension: string;
+    classifier: string | null;
+    version: string;
+}
+
+export interface ArtifactProgress {
+    resource: string;
+    transferred: number;
+    total: number;
+    state: "STARTED" | "PROGRESSING" | "SUCCEEDED" | "FAILED";
+}
+
+export interface PluginInstallJob {
+    id: string;
+    status: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED";
+    artifacts: PluginArtifact[];
+    progress: Record<string, ArtifactProgress>;
+    startedAt: string | null;
+    finishedAt: string | null;
+    error: string | null;
+}
+
+export interface PluginAutoInstallDetectResult {
+    enabled: boolean;
+    missingTypes: string[];
+    artifacts: PluginArtifact[];
+}
+
 export interface PluginComponent {
     icon?: string;
     cls?: string;
@@ -30,6 +62,10 @@ export interface TriggerPluginDto {
     // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
     // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
     pluginTitle: string;
+    // The owning plugin artifact's manifest title (for example "NATS" for every NATS subgroup) -
+    // the disambiguation fallback for when pluginTitle itself resolves to a bare package segment;
+    // optional because older backends do not send it.
+    pluginGroupTitle?: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;
@@ -124,9 +160,13 @@ function usePluginsIcons() {
         }
 
         iconsPromiseLocal.value =
-            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
+            axios.get<Record<string, RawPluginIcon>>(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
                 pluginsIcons.value = toPluginIconDataMap(response.data)
                 iconsLoaded.value = true
+                return icons.value
+            }).catch(() => {
+                // rejected request -> try again
+                iconsPromiseLocal.value = undefined
                 return icons.value
             })
 
@@ -165,7 +205,7 @@ function usePluginsIcons() {
             return pending
         }
 
-        const localLookup = iconsLoaded.value
+        const localLookup = () => iconsLoaded.value
             ? Promise.resolve(undefined)
             : axios.get<{icon: RawPluginIcon | null}>(`${apiUrlWithoutTenants()}/plugins/icons/${encodeURIComponent(cls)}`)
                 .then(response => {
@@ -179,7 +219,11 @@ function usePluginsIcons() {
                 })
                 .catch(() => undefined)
 
-        const request = localLookup
+        // A bulk fetch in flight (the topology asks for one on mount) answers most classes, so
+        // wait for it instead of racing it with one request per rendered node.
+        const catalogPending = !iconsLoaded.value ? iconsPromiseLocal.value : undefined
+
+        const request = (catalogPending ? catalogPending.then(() => icons.value[cls] ?? localLookup()) : localLookup())
             .then(icon => icon ?? loadEcosystemIcon(cls))
             .finally(() => iconRequests.delete(cls))
 
@@ -327,26 +371,32 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls
-        const cacheKey = options.hash ? options.hash + id : id
+        // `all` returns a superset of the properties, so it gets its own key and never satisfies (or
+        // gets satisfied by) a request that did not ask for it.
+        const cacheKey = (options.all ? "all:" : "") + (options.hash ? options.hash + id : id)
         const cachedPluginDoc = pluginsDocumentation.value[cacheKey]
-        if (!options.all && cachedPluginDoc) {
-            nextTick(() => {
-                plugin.value = cachedPluginDoc
-            })
+        if (cachedPluginDoc) {
+            if (options.all !== true) {
+                nextTick(() => {
+                    plugin.value = cachedPluginDoc
+                })
+            }
             return cachedPluginDoc
         }
 
+        // A 404 is a normal outcome here (e.g. as-you-type documentation for a not-yet-installed
+        // catalog type) — every caller handles it locally, so it must not raise the shared HTTP
+        // client's error toast.
+        const requestOptions = {ignoreNotFound: true} as Parameters<typeof PluginsAPI.pluginDocumentation>[1]
         const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, {ignoreNotFound: true})
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, {ignoreNotFound: true})) as PluginComponent
+            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
+            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, requestOptions)) as PluginComponent
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data
         }
 
-        if (!options.all) {
-            pluginsDocumentation.value[cacheKey] = data
-        }
+        pluginsDocumentation.value[cacheKey] = data
 
         return data
     }
@@ -418,7 +468,15 @@ export const usePluginsStore = defineStore("plugins", () => {
             version,
         }
 
-        const pluginData = await load(payload)
+        let pluginData
+        try {
+            pluginData = await load(payload)
+        } catch {
+            // catalog-only type: no local doc until the plugin is actually installed
+            editorPlugin.value = undefined
+            currentlyLoading = undefined
+            return
+        }
 
         editorPlugin.value = {
             cls,
@@ -488,6 +546,41 @@ export const usePluginsStore = defineStore("plugins", () => {
         return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
     }
 
+    // Auto-install requests are best-effort and handled locally by their callers: a 403 (feature
+    // disabled) or a 404 (job evicted while the install toast is still polling) must never stack the
+    // shared HTTP client's own error toast on top of it.
+    const silentRequest = {ignoreNotFound: true, showMessageOnError: false}
+
+    async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {
+        const response = await axios.post<PluginAutoInstallDetectResult>(
+            `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
+            flowYaml,
+            {headers: {"Content-Type": "text/plain"}, ...silentRequest},
+        )
+        return response.data
+    }
+
+    async function startInstall(artifacts: PluginArtifact[]): Promise<PluginInstallJob> {
+        const response = await axios.post<PluginInstallJob>(
+            `${apiUrlWithoutTenants()}/plugins/install`,
+            artifacts,
+            silentRequest,
+        )
+        return response.data
+    }
+
+    async function getInstallJob(jobId: string): Promise<PluginInstallJob | null> {
+        try {
+            const response = await axios.get<PluginInstallJob>(
+                `${apiUrlWithoutTenants()}/plugins/install/${jobId}`,
+                silentRequest,
+            )
+            return response.data
+        } catch {
+            return null
+        }
+    }
+
     return {
         plugin,
         versions,
@@ -528,5 +621,10 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadIcon,
         groupIcons,
         ensureGroupIcons,
+
+        // auto-install
+        detectMissingPlugins,
+        startInstall,
+        getInstallJob,
     }
 })

@@ -21,6 +21,7 @@ import io.kestra.core.utils.GraphUtils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -131,7 +132,7 @@ public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailu
         title = "Number of concurrent parallel tasks that can be running at any point in time",
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
-    private final Property<Integer> concurrent = Property.ofValue(0);
+    private final Property<@PositiveOrZero Integer> concurrent = Property.ofValue(0);
 
     @NotNull
     @Builder.Default

@@ -211,6 +211,13 @@ $fill-color-base: #fafcff;
     #{--kel-box-shadow-dark}: 0px 16px 48px 16px var(--ks-shadow-elevated), 0px 12px 32px var(--ks-shadow-surface), 0px 8px 16px -8px var(--ks-shadow-surface);
 }
 
+:root .kel-input__inner::placeholder,
+:root .kel-textarea__inner::placeholder {
+    color: var(--ks-placeholder-color);
+    font-size: var(--ks-placeholder-font-size);
+    font-weight: var(--ks-placeholder-font-weight);
+}
+
 // popper
 .kel-popper {
     box-shadow: var(--kel-box-shadow);

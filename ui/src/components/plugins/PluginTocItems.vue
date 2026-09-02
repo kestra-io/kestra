@@ -16,6 +16,7 @@
                     :onlyIcon="true"
                     :cls="el.cls"
                     :icons="icons"
+                    variable="--ks-black"
                 />
                 <span class="plugin-toc-elements__label">{{ shortName(el.cls) }}</span>
             </router-link>
@@ -101,7 +102,8 @@
         flex-shrink: 0;
         width: 1rem;
         height: 1rem;
-        background-color: var(--ks-bg-tag);
+        background-color: var(--ks-bg-plugin-icon);
+        color: var(--ks-black);
         border-radius: var(--ks-radius-xs);
     }
 

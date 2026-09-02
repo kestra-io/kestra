@@ -2,7 +2,6 @@ import {onBeforeUnmount, onMounted, nextTick, watch, ref, computed} from "vue"
 import type {Ref, ComputedRef} from "vue"
 import type {RouteParams} from "vue-router"
 import {useI18n} from "vue-i18n"
-import {v4 as uuid} from "uuid"
 import {State, cssVar} from "@kestra-io/design-system"
 import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import {useCoreStore} from "../../../stores/core"
@@ -10,8 +9,9 @@ import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {useMiscStore} from "override/stores/misc"
-import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "../utils/types"
-import type {Types, Node, Edge, Element} from "../utils/types"
+import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "../utils/types"
+import {transformResponse} from "../utils/transform"
+import type {Types, Node, Element} from "../utils/types"
 
 const NODE_BG = {
     default:  "--ks-dependencies-node-background-default",
@@ -78,31 +78,6 @@ function buildEdgeCounts(elements: Element[]): Map<string, number> {
 /** Symbol size grows with connectivity, capped so hubs stay readable. */
 function nodeSize(id: string, edgeCounts: Map<string, number>, base = 20, scale = 2, max = 100): number {
     return Math.min(base + (edgeCounts.get(id) ?? 0) * scale, max)
-}
-
-/** Transforms an API response of nodes and edges into dependency Element[] with the given subtype. */
-export function transformResponse(
-    response: { nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[] },
-    subtype: Types,
-): Element[] {
-    const nodes: Node[] = response.nodes.map((node) => ({
-        id: node.uid,
-        type: NODE,
-        flow: node.id,
-        namespace: node.namespace,
-        metadata: {subtype},
-    }))
-    const edges: Edge[] = response.edges.map((edge) => ({
-        id: uuid(),
-        type: EDGE,
-        source: edge.source,
-        target: edge.target,
-    }))
-
-    return [
-        ...nodes.map((node) => ({data: node}) as Element),
-        ...edges.map((edge) => ({data: edge}) as Element),
-    ]
 }
 
 /** Manages a KsGraph-based dependency visualization inside a Vue component. */
@@ -582,7 +557,7 @@ export function useDependencies(
             coreStore.message = {
                 variant: "error",
                 title:   t("error"),
-                message: t("something_went_wrong.loading_execution"),
+                content: t("something_went_wrong.loading_execution"),
             }
 
             // Close on error: EventSource auto-reconnects unless explicitly closed, and each

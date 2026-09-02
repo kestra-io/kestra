@@ -473,6 +473,11 @@
         "title": "बची हुई समवर्तीता सीमा"
       }
     },
+    "docsPage": {
+      "notFound": "यह डॉक्युमेंटेशन पेज मौजूद नहीं है। इसे हटाया या इसका नाम बदला गया हो सकता है।",
+      "loadError": "यह डॉक्युमेंटेशन पेज लोड नहीं हो सका। कृपया फिर से प्रयास करें।",
+      "backToDocs": "Docs पर वापस जाएँ"
+    },
     "documentation": {
       "documentation": "दस्तावेज़ीकरण"
     },
@@ -559,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
+      "nav_definitions": "परिभाषाएँ",
       "nav_examples": "उदाहरण",
+      "nav_metrics": "Metrics",
       "nav_outputs": "Outputs",
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
@@ -641,6 +648,10 @@
     "open full page": "पूरा पेज खोलें",
     "drill down preview": "पूर्वावलोकन",
     "errors": {
+      "400": {
+        "title": "खराब अनुरोध",
+        "content": "सर्वर अनुरोध को समझ नहीं सका।"
+      },
       "401": {
         "title": "अनधिकृत",
         "content": "इस पृष्ठ तक पहुँचने के लिए आपको प्रमाणित होना आवश्यक है।"
@@ -653,6 +664,114 @@
         "title": "पृष्ठ नहीं मिला",
         "content": "अनुरोधित URL इस सर्वर पर नहीं मिला।<br />यही सब हमें पता है।",
         "flow or execution": "वह flow या निष्पादन जिसे आप ढूंढ रहे हैं, मौजूद नहीं है।"
+      },
+      "409": {
+        "title": "टकराव",
+        "content": "अनुरोध संसाधन की वर्तमान स्थिति से विरोधाभास करता है।"
+      },
+      "422": {
+        "title": "अमान्य इकाई",
+        "content": "सबमिट की गई सामग्री को प्रोसेस नहीं किया जा सका।"
+      },
+      "500": {
+        "title": "आंतरिक सर्वर त्रुटि",
+        "content": "हमारी तरफ से कुछ गलत हो गया। कृपया बाद में फिर से प्रयास करें।"
+      },
+      "503": {
+        "title": "सेवा अनुपलब्ध है",
+        "content": "सर्वर अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।"
+      },
+      "generic": {
+        "title": "कुछ गलत हो गया",
+        "content": "एक अप्रत्याशित त्रुटि हुई। कृपया पुनः प्रयास करें।"
+      },
+      "trace id": "ट्रेस ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI अनुरोध विफल रहा"
+        },
+        "bad-request": {
+          "title": "खराब अनुरोध"
+        },
+        "bulk-validation-failed": {
+          "title": "कुछ आइटम संसाधित नहीं किए जा सके"
+        },
+        "conflict": {
+          "title": "टकराव"
+        },
+        "entity-already-exists": {
+          "title": "एंटिटी पहले से मौजूद है"
+        },
+        "forbidden": {
+          "title": "पहुँच अस्वीकृत"
+        },
+        "internal-error": {
+          "title": "आंतरिक सर्वर त्रुटि"
+        },
+        "invalid-argument": {
+          "title": "अमान्य तर्क"
+        },
+        "invalid-entity": {
+          "title": "अमान्य इकाई"
+        },
+        "invalid-format": {
+          "title": "अमान्य मान प्रारूप"
+        },
+        "invalid-json": {
+          "title": "अमान्य JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "अमान्य प्लगइन प्रकार"
+        },
+        "invalid-query-filters": {
+          "title": "अमान्य क्वेरी फ़िल्टर"
+        },
+        "invalid-query-parameter": {
+          "title": "अमान्य क्वेरी पैरामीटर"
+        },
+        "invalid-request-body": {
+          "title": "अमान्य अनुरोध बॉडी"
+        },
+        "locked": {
+          "title": "संसाधन लॉक है"
+        },
+        "method-not-allowed": {
+          "title": "तरीका अनुमत नहीं है"
+        },
+        "migration-required": {
+          "title": "माइग्रेशन आवश्यक है"
+        },
+        "not-acceptable": {
+          "title": "स्वीकार्य नहीं"
+        },
+        "not-found": {
+          "title": "संसाधन नहीं मिला"
+        },
+        "payload-too-large": {
+          "title": "Payload बहुत बड़ा है"
+        },
+        "resource-expired": {
+          "title": "संसाधन की समय-सीमा समाप्त हो गई है"
+        },
+        "service-unavailable": {
+          "title": "सेवा अनुपलब्ध है",
+          "detail": "सर्वर अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।"
+        },
+        "timeout": {
+          "title": "ऑपरेशन का समय समाप्त हो गया"
+        },
+        "too-many-requests": {
+          "title": "बहुत ज़्यादा अनुरोध"
+        },
+        "unauthenticated": {
+          "title": "प्रमाणीकरण आवश्यक है"
+        },
+        "unsupported-media-type": {
+          "title": "असमर्थित मीडिया प्रकार"
+        },
+        "validation-failed": {
+          "title": "सत्यापन विफल रहा"
+        }
       }
     },
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
@@ -670,6 +789,7 @@
     "label": "Label",
     "labels": "labels",
     "execution labels": "निष्पादन labels",
+    "show more labels": "{count} और लेबल दिखाएं",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
     "feeds": {
       "heading": "सभी चीजें Kestra।",
@@ -779,6 +899,11 @@
     "expand_by_default": "संरचित logs को डिफ़ॉल्ट रूप से विस्तृत करें",
     "similar lines": "समान लाइनें",
     "download_logs_description": "निर्यात करने के लिए logs चुनें। फ़िल्टर आपकी वर्तमान दृश्य के अनुसार डिफ़ॉल्ट होते हैं।",
+    "logs_download_truncated": "सबसे नई {downloaded} log पंक्तियाँ निर्यात की गईं। {skipped} और आपके फ़िल्टर से मेल खाती थीं और छोड़ दी गईं।",
+    "logs_download_capped": "सबसे नई {downloaded} log पंक्तियाँ निर्यात की गईं, जो एक निर्यात की अधिकतम सीमा है। आपके फ़िल्टर से और भी मेल खा सकती थीं।",
+    "logs_download_partial": "यह फ़िल्टर इससे आगे पेज नहीं किया जा सकता, इसलिए निर्यात {downloaded} log पंक्तियों पर रुक गया। कुछ मेल खाती पंक्तियाँ अनुपस्थित हैं।",
+    "logs_download_failed": "log निर्यात विफल रहा। कोई फ़ाइल डाउनलोड नहीं हुई।",
+    "logs_download_empty": "आपके फ़िल्टर से कोई log पंक्ति मेल नहीं खाई, इसलिए कोई फ़ाइल डाउनलोड नहीं हुई।",
     "display_settings": "सेटिंग्स दिखाएँ",
     "density": "घनत्व",
     "density_compact": "कॉम्पैक्ट",
@@ -888,6 +1013,7 @@
       },
       "export": "Namespace फ़ाइलें निर्यात करें",
       "export_single": "फ़ाइल निर्यात करें",
+      "export_error": "\"{name}\" निर्यात नहीं किया जा सका। इसका पथ हल नहीं हो सका।",
       "dialog": {
         "name": {
           "file": "एक्सटेंशन के साथ नाम:",
@@ -1436,7 +1562,8 @@
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
       },
-      "inherited": "विरासत में मिले KV जोड़े"
+      "inherited": "विरासत में मिले KV जोड़े",
+      "expiration_hint": "वर्तमान में {date} को समाप्त होता है। इस समाप्ति को बनाए रखने के लिए फ़ील्ड को अछूता छोड़ दें; अवधि चुनने से यह अब से पुनर्गणना करता है, और इसे साफ़ करने से यह हट जाता है।"
     },
     "expiration": "समाप्ति",
     "page": {
@@ -1776,7 +1903,8 @@
       "close_all_tabs": "सभी टैब बंद करें",
       "close_all_panels": "सभी पैनल बंद करें",
       "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
-      "fullscreen": "पूर्णस्क्रीन"
+      "fullscreen": "पूर्णस्क्रीन",
+      "split_panel": "पैनल विभाजित करें"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",
@@ -1789,7 +1917,9 @@
       "triggers": "कोई Triggers नहीं मिले",
       "flows": "कोई Flows नहीं मिला",
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
-      "secrets": "कोई Secrets नहीं मिले"
+      "secrets": "कोई Secrets नहीं मिले",
+      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
+      "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
@@ -1807,6 +1937,7 @@
       "others": "अन्य",
       "viewAll": "सभी देखें",
       "export": "एक्सपोर्ट करें",
+      "exportEmpty": "इस चार्ट में निर्यात करने के लिए कोई डेटा नहीं है।",
       "exportTo": {
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"
@@ -2128,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{count} MCP सर्वर",
+      "servers_count": "{count} MCP सर्वर | {count} MCP सर्वर",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",

@@ -19,6 +19,7 @@
     import {useRouter, useRoute} from "vue-router"
     import {inputsToFormData} from "../../utils/submitTask"
     import {useExecutionsStore} from "../../stores/executions"
+    import {EXECUTION_PARENT_ROUTE} from "./executionTabs"
     import * as ExecutionUtils from "../../utils/executionUtils"
     import FlowRun from "../../components/flows/FlowRun.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
@@ -60,8 +61,9 @@
 
         const execution = response.data
         executionsStore.execution = execution
+        // The parent route resolves the user's default execution tab; naming a tab here ignored it.
         await router.push({
-            name: "executions/update/gantt",
+            name: EXECUTION_PARENT_ROUTE,
             params: {
                 namespace: execution.namespace,
                 flowId: execution.flowId,

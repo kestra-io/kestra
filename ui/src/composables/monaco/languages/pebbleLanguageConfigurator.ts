@@ -3,7 +3,7 @@ import {languages} from "monaco-editor/editor/editor.api"
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 import {useI18n} from "vue-i18n"
 import {ComputedRef} from "vue"

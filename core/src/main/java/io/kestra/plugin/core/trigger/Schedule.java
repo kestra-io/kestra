@@ -26,6 +26,8 @@ import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -183,6 +185,11 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private static final CronParser CRON_PARSER = new CronParser(CRON_DEFINITION_BUILDER.instance());
     private static final CronParser CRON_PARSER_WITH_SECONDS = new CronParser(CRON_DEFINITION_BUILDER.withSeconds().withValidRange(0, 59).withStrictRange().and().instance());
 
+    // Caps the when-condition tick walk below so a frequent cron (e.g. per-second) paired with a
+    // rarely-matching `when` can't pin the scheduling-loop thread rendering millions of ticks
+    // synchronously. 10 years of even a daily cron (~3650 ticks) stays well under this.
+    private static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
+
     @NotNull
     @Schema(
         title = "The cron expression.",
@@ -227,6 +234,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         description = "If the scheduled execution didn't start after this delay (e.g. due to infrastructure issues), the execution will be skipped."
     )
     @PluginProperty
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration lateMaximumDelay;
 
     @Getter(AccessLevel.NONE)
@@ -486,13 +494,14 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     /**
      * Walks forward from {@code fromDate} through successive cron executions and returns the
-     * first one where all schedule conditions match. Gives up after 10 years of lookahead.
+     * first one where all schedule conditions match. Gives up after 10 years of lookahead, or
+     * {@value #MAX_WHEN_CONDITION_ITERATIONS} ticks, whichever comes first.
      */
     @VisibleForTesting
     Optional<ZonedDateTime> findNextDateMatchingConditions(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime fromDate) throws InternalException {
         int upperYearBound = SchedulerClock.now().getYear() + 10;
 
-        while (fromDate.getYear() < upperYearBound) {
+        for (int iteration = 0; fromDate.getYear() < upperYearBound && iteration < MAX_WHEN_CONDITION_ITERATIONS; iteration++) {
             Optional<ZonedDateTime> candidate = executionTime.nextExecution(fromDate);
             if (candidate.isEmpty()) {
                 return candidate;
@@ -515,13 +524,14 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     /**
      * Walks backward from {@code fromDate} through preceding cron executions and returns the
-     * first one where all schedule conditions match. Gives up after 10 years of lookback.
+     * first one where all schedule conditions match. Gives up after 10 years of lookback, or
+     * {@value #MAX_WHEN_CONDITION_ITERATIONS} ticks, whichever comes first.
      */
     @VisibleForTesting
     Optional<ZonedDateTime> findPreviousDateMatchingConditions(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime fromDate) throws InternalException {
         int lowerYearBound = SchedulerClock.now().getYear() - 10;
 
-        while (fromDate.getYear() > lowerYearBound) {
+        for (int iteration = 0; fromDate.getYear() > lowerYearBound && iteration < MAX_WHEN_CONDITION_ITERATIONS; iteration++) {
             Optional<ZonedDateTime> candidate = executionTime.lastExecution(fromDate);
             if (candidate.isEmpty()) {
                 return candidate;

@@ -15,6 +15,7 @@
                 v-if="showLegend"
                 :items="legendItems"
                 :chart="ksBarRef"
+                :formatValue="isDurationAgg() ? durationUtils.humanDuration : undefined"
                 @toggle="onLegendToggle"
             />
             <KsBar

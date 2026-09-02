@@ -65,6 +65,11 @@ function getDecorators(data) {
             path: "/executions/:id?/:flowId?",
             name: "executions/list",
             component: {template: "<div>executions</div>"}
+          },
+          {
+            path: "/namespaces/edit/:id",
+            name: "namespaces/update",
+            component: {template: "<div>namespace</div>"}
           }
         ], {
             initialRoute: "/executions/123/645"

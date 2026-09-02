@@ -80,14 +80,15 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
         return execution.withVariables(variables);
     }
 
+    @SuppressWarnings("unchecked")
     private void removeVar(Map<String, Object> vars, String key, boolean ignoreMissing) {
         if (key.indexOf('.') >= 0) {
             String prefix = key.substring(0, key.indexOf('.'));
             String suffix = key.substring(key.indexOf('.') + 1);
             removeVar((Map<String, Object>) vars.get(prefix), suffix, ignoreMissing);
         } else {
-            if (ignoreMissing && !vars.containsKey(key)) {
-                return;
+            if (!ignoreMissing && !vars.containsKey(key)) {
+                throw new IllegalArgumentException("Variable '" + key + "' not found and `ignoreMissing` is false");
             }
             vars.remove(key);
         }

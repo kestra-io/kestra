@@ -119,7 +119,7 @@
     }>()
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.executionId}/file?path=${encodeURI(value)}`
+        return `${apiUrl()}/executions/${props.executionId}/file?path=${encodeURIComponent(value)}`
     }
 
     const maxRows = ref<number>()

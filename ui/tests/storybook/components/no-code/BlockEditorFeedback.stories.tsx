@@ -819,11 +819,10 @@ pluginDefaults:
 )
 
 // Schema defaults render a hint on every field carrying one, so a bare text
-// match on "default: …" hits several fields at once — anchor each hint to the
-// field label rendered right before it.
+// match on "default: …" hits several fields at once — scope each hint to the
+// field that owns it.
 function defaultHintFor(taskEdit: HTMLElement, field: string) {
-    return [...taskEdit.querySelectorAll("[data-test='field-default-hint']")]
-        .find(hint => hint.previousElementSibling?.textContent?.trim() === field)
+    return taskEdit.querySelector(`[data-test='field-${field}'] [data-test='field-default-hint']`)
 }
 
 export const F9PluginDefaultsHint: Story = {

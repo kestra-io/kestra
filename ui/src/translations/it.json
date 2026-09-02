@@ -2,47 +2,6 @@
   "it": {
     "loading": "Caricamento...",
     "more actions": "Altre azioni",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Usa solo lettere, cifre, punti, trattini e underscore, iniziando con una lettera o una cifra.",
-        "id_label": "ID del flow",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Utilizzare solo lettere minuscole, cifre, punti, trattini e underscore, iniziando con una lettera minuscola o una cifra.",
-        "namespace_placeholder": "Seleziona un namespace",
-        "namespaces_error": "Impossibile caricare i namespace. Digitare un namespace manualmente.",
-        "open_editor": "Apri editor",
-        "subtitle": "Inizia con un esempio \"hello-world\" e costruisci da zero.",
-        "title": "flow vuoto"
-      },
-      "blueprints": {
-        "subtitle": "Scegli un flow già pronto dal catalogo della community.",
-        "title": "Sfoglia i blueprint"
-      },
-      "import": {
-        "back": "Indietro",
-        "error": {
-          "empty": "Il contenuto YAML è vuoto.",
-          "invalid_mapping": "YAML del flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
-          "parse_error": "Impossibile analizzare il YAML.",
-          "too_large": "Il file è troppo grande. Incolla invece la definizione del flow o carica un file di dimensioni inferiori a 1 MB."
-        },
-        "paste_label": "Incolla YAML",
-        "read_error": "Impossibile leggere il file.",
-        "submit": "Importa flow",
-        "subtitle": "Incolla o carica una definizione di flow esistente.",
-        "title": "Importa YAML",
-        "upload_button": "Carica .yml / .yaml",
-        "upload_label": "O carica un file",
-        "upload_tip": "Accetta file .yml e .yaml."
-      },
-      "subtitle": "Inizia da una tela vuota, esplora i blueprint o importa un file YAML esistente.",
-      "system": {
-        "badge": "SISTEMA",
-        "subtitle": "Crea un flow di avviso o automazione per la tua piattaforma.",
-        "title": "Crea un system flow"
-      },
-      "title": "Crea un nuovo flow"
-    },
     "recipe": {
       "create_flow": "Crea flow",
       "email": "Email",
@@ -223,10 +182,12 @@
     "add_new_item": "Aggiungi nuovo elemento",
     "copy": "Copia",
     "copy_to_clipboard": "Copia negli appunti",
+    "copy_pebble_expression": "Copia espressione pebble",
     "new": "Nuovo",
     "edit": "Modifica",
     "back": "Indietro",
     "next": "Avanti",
+    "previous": "Precedente",
     "done": "Fatto",
     "review your inputs": "Rivedi i tuoi input",
     "edit flow": "Modifica flow",
@@ -246,6 +207,7 @@
     "total_duration": "Durata totale",
     "running duration": "Durata in esecuzione",
     "queued duration": "Durata in coda",
+    "paused duration": "Durata in pausa",
     "executionProgress": {
       "title": "Avanzamento dell'esecuzione",
       "estimatedRemaining": "Tempo rimanente stimato: {duration}",
@@ -311,8 +273,6 @@
         "1d": "1g",
         "7d": "7g"
       },
-      "last14days": "Ultimi 14 giorni",
-      "last28days": "Ultimi 28 giorni",
       "14days": "14 giorni",
       "28days": "28 giorni"
     },
@@ -340,6 +300,21 @@
     "to": "A",
     "steps": "Passaggi",
     "state": "Stato",
+    "state_history": {
+      "title": "Cronologia stato",
+      "open": "Cronologia stato",
+      "aria_open": "Mostra la cronologia dello stato",
+      "aria_open_for": "Mostra la cronologia dello stato di {subject}",
+      "started_at": "Avviato alle {time}",
+      "failed_at": "Fallito alle {time}",
+      "skipped_at": "Saltato alle {time}",
+      "created_at": "Creato alle {time}",
+      "did_not_run": "Questo task non è stato eseguito",
+      "waiting_to_start": "In attesa di avvio",
+      "attempt_n": "Tentativo {index}",
+      "attempt_count": "{count} tentativi",
+      "copy": "Copia cronologia stato"
+    },
     "search": "Cerca",
     "source search": "Cerca fonte",
     "selected": "Selezionato",
@@ -409,7 +384,7 @@
     "unqueue done": "L'esecuzione è in coda",
     "force run": "Esegui forzatamente",
     "force run title": "Esegui forzatamente l'esecuzione <code>{id}</code>.",
-    "force run confirm": "Sei sicuro di voler forzare l'esecuzione <code>{id}</code>?<br/><br/>ATTENZIONE: l'esecuzione forzata non è garantita e potrebbe creare esecuzioni di task duplicate.<br/><br/>Verranno effettuate le seguenti transizioni:<br/><ul><li>I task CREATED verranno spostati nello stato RUNNING.</li><li>I task RUNNING verranno nuovamente inviati.</li><li>I task QUEUED verranno rimossi dalla coda.</li><li>I task PAUSED verranno ripresi.</li></ul>",
+    "force run confirm": "Sei sicuro di voler forzare l'esecuzione `{id}`?\n\nATTENZIONE: l'esecuzione forzata non è garantita e potrebbe creare Task Run duplicati.\n\nVerranno eseguite le seguenti transizioni:\n\n- I Task CREATED verranno spostati nello stato RUNNING.\n- I Task RUNNING verranno nuovamente inviati.\n- I Task QUEUED verranno rimossi dalla coda.\n- I Task PAUSED verranno ripresi.",
     "force run done": "L'esecuzione è stata forzata",
     "metrics": "Metriche",
     "no metrics available": "Nessuna metrica registrata per questa esecuzione del task.",
@@ -478,6 +453,7 @@
     },
     "file_preview": {
       "big_file_warning": "Questo file è {size}. Potrebbe richiedere del tempo per caricarsi bloccando il tuo browser. Vuoi caricarlo comunque?",
+      "big_file_download_only": "Questo file è {size}. È troppo grande per essere aperto nell'editor, scaricalo invece.",
       "load_anyway": "Carica comunque",
       "load_error": "Impossibile caricare l'anteprima del file. Potrebbe trattarsi di un problema temporaneo o di autorizzazioni.",
       "retry": "Riprova",
@@ -496,6 +472,11 @@
         "message": "Questo flow non dichiara più un blocco di concorrenza, ma un record di limite conta ancora {count} esecuzione/i in corso. Non influisce più sulle nuove esecuzioni e può essere reimpostato da Amministrazione → Limiti di Concorrenza.",
         "title": "Limite di concorrenza residuo"
       }
+    },
+    "docsPage": {
+      "notFound": "Questa pagina della documentazione non esiste. Potrebbe essere stata spostata o rinominata.",
+      "loadError": "Impossibile caricare questa pagina della documentazione. Riprova.",
+      "backToDocs": "Torna ai Docs"
     },
     "documentation": {
       "documentation": "Documentazione"
@@ -526,14 +507,24 @@
         "openInDashboardEditor": "Apri nell'Editor Dashboard"
       },
       "missingPlugins": {
-        "title": "Plugin mancanti",
-        "description": "Questo blueprint utilizza task di plugin non installati su questa istanza: {plugins}. Installali per usare questo blueprint.",
-        "card": "Richiede plugin non installati su questa istanza: {plugins}",
+        "title": "Task non disponibili",
+        "description": "Questo blueprint utilizza tipi di task non disponibili su questa istanza:",
+        "installHint": "Installa i plugin mancanti per usare questo blueprint: {plugins}.",
+        "card": "Utilizza tipi di task non disponibili su questa istanza: {tasks}",
         "install": "Installa plugin"
       }
     },
     "use": "Usa",
     "plugins": {
+      "autoInstall": {
+        "failed": "Installazione del plugin non riuscita",
+        "failedHint": "Il flow non è stato salvato. Correggi il problema o rimuovi il plugin dal flow, poi salva di nuovo.",
+        "preparing": "Preparazione dell'installazione del plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installato correttamente | Plugin installati correttamente",
+        "timeout": "L'installazione del plugin sta impiegando più tempo del previsto. Il flow non è stato salvato, salva di nuovo al termine dell'installazione.",
+        "title": "Installazione di {count} plugin in corso | Installazione di {count} plugin in corso"
+      },
       "names": "Plugins",
       "release": "Note di rilascio",
       "beta": "Beta",
@@ -573,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentazione del flow",
+      "nav_definitions": "Definizioni",
       "nav_examples": "Esempi",
+      "nav_metrics": "Metriche",
       "nav_outputs": "Outputs",
       "nav_overview": "Panoramica",
       "nav_properties": "Proprietà",
@@ -610,6 +603,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Nessun trigger trovato",
     "triggers_add_ee_tooltip": "Questo trigger richiede l'Enterprise Edition.",
+    "ee_feature_tooltip": "Questa funzionalità richiede l'Enterprise Edition.",
     "triggers_add_card_add": "Aggiungi",
     "triggers_add_modal_tab_form": "Modulo",
     "triggers_add_modal_tab_source": "Sorgente",
@@ -654,6 +648,10 @@
     "open full page": "Apri Pagina Completa",
     "drill down preview": "Anteprima",
     "errors": {
+      "400": {
+        "title": "Richiesta non valida",
+        "content": "La richiesta non può essere compresa dal server."
+      },
       "401": {
         "title": "Non autorizzato",
         "content": "Devi essere autenticato per accedere a questa pagina."
@@ -666,6 +664,114 @@
         "title": "Pagina non trovata",
         "content": "L'URL richiesto non è stato trovato su questo server.<br />Questo è tutto ciò che sappiamo.",
         "flow or execution": "Il flow o l'esecuzione che stai cercando non esiste."
+      },
+      "409": {
+        "title": "Conflitto",
+        "content": "La richiesta è in conflitto con lo stato attuale della risorsa."
+      },
+      "422": {
+        "title": "Entità non valida",
+        "content": "Il contenuto inviato non può essere elaborato."
+      },
+      "500": {
+        "title": "Errore interno del server",
+        "content": "Qualcosa è andato storto da parte nostra. Riprova più tardi."
+      },
+      "503": {
+        "title": "Servizio non disponibile",
+        "content": "Il server è temporaneamente non disponibile. Riprova più tardi."
+      },
+      "generic": {
+        "title": "Qualcosa è andato storto",
+        "content": "Si è verificato un errore imprevisto. Riprova."
+      },
+      "trace id": "ID traccia",
+      "problems": {
+        "ai-request-failed": {
+          "title": "Richiesta AI fallita"
+        },
+        "bad-request": {
+          "title": "Richiesta non valida"
+        },
+        "bulk-validation-failed": {
+          "title": "Alcuni elementi non possono essere elaborati"
+        },
+        "conflict": {
+          "title": "Conflitto"
+        },
+        "entity-already-exists": {
+          "title": "L'entità esiste già"
+        },
+        "forbidden": {
+          "title": "Accesso negato"
+        },
+        "internal-error": {
+          "title": "Errore interno del server"
+        },
+        "invalid-argument": {
+          "title": "Argomento non valido"
+        },
+        "invalid-entity": {
+          "title": "Entità non valida"
+        },
+        "invalid-format": {
+          "title": "Formato valore non valido"
+        },
+        "invalid-json": {
+          "title": "JSON non valido"
+        },
+        "invalid-plugin-type": {
+          "title": "Tipo di plugin non valido"
+        },
+        "invalid-query-filters": {
+          "title": "Filtri di query non validi"
+        },
+        "invalid-query-parameter": {
+          "title": "Parametro di query non valido"
+        },
+        "invalid-request-body": {
+          "title": "Corpo della richiesta non valido"
+        },
+        "locked": {
+          "title": "La risorsa è bloccata"
+        },
+        "method-not-allowed": {
+          "title": "Metodo non consentito"
+        },
+        "migration-required": {
+          "title": "Migrazione richiesta"
+        },
+        "not-acceptable": {
+          "title": "Non accettabile"
+        },
+        "not-found": {
+          "title": "Risorsa non trovata"
+        },
+        "payload-too-large": {
+          "title": "Payload troppo grande"
+        },
+        "resource-expired": {
+          "title": "La risorsa è scaduta"
+        },
+        "service-unavailable": {
+          "title": "Servizio non disponibile",
+          "detail": "Il server è temporaneamente non disponibile. Riprova più tardi."
+        },
+        "timeout": {
+          "title": "Operazione scaduta"
+        },
+        "too-many-requests": {
+          "title": "Troppe richieste"
+        },
+        "unauthenticated": {
+          "title": "Autenticazione richiesta"
+        },
+        "unsupported-media-type": {
+          "title": "Tipo di media non supportato"
+        },
+        "validation-failed": {
+          "title": "Validazione fallita"
+        }
       }
     },
     "back_to_dashboard": "Torna alla dashboard",
@@ -683,6 +789,7 @@
     "label": "Label",
     "labels": "Etichette",
     "execution labels": "Etichette di esecuzione",
+    "show more labels": "Mostra altre {count} label",
     "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
     "feeds": {
       "heading": "Tutto su Kestra.",
@@ -696,7 +803,7 @@
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
     "bulk resume": "Sei sicuro di voler riprendere <code>{executionCount}</code> esecuzione/i?",
     "bulk pause": "Sei sicuro di voler mettere in pausa l'esecuzione di <code>{executionCount}</code>?",
-    "bulk force run": "Sei sicuro di voler forzare l'esecuzione di <code>{executionCount}</code> esecuzione/i?<br/><br/>ATTENZIONE: l'esecuzione forzata di un'esecuzione non è garantita e potrebbe creare esecuzioni di task duplicate.<br/><br/>Verranno effettuate le seguenti transizioni:<br/><ul><li>I task CREATED verranno spostati nello stato RUNNING.</li><li>I task RUNNING verranno nuovamente inviati.</li><li>I task QUEUED verranno rimossi dalla coda.</li><li>I task PAUSED verranno ripresi.</li></ul>",
+    "bulk force run": "Sei sicuro di voler forzare l'esecuzione di `{executionCount}` esecuzione/i?\n\nATTENZIONE: l'esecuzione forzata di un'esecuzione non è garantita e potrebbe creare esecuzioni di task duplicate.\n\nVerranno effettuate le seguenti transizioni:\n\n- I task CREATED verranno spostati nello stato RUNNING.\n- I task RUNNING verranno nuovamente inviati.\n- I task QUEUED verranno rimossi dalla coda.\n- I task PAUSED verranno ripresi.",
     "bulk restart": "Sei sicuro di voler riavviare <code>{executionCount}</code> esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
     "cancel": "Annulla",
@@ -792,6 +899,11 @@
     "expand_by_default": "Espandi i log strutturati per impostazione predefinita",
     "similar lines": "linee simili",
     "download_logs_description": "Scegli quali log esportare. I filtri sono impostati sulla tua visualizzazione attuale.",
+    "logs_download_truncated": "Sono state esportate le {downloaded} righe di log più recenti. Altre {skipped} corrispondevano ai tuoi filtri e sono state escluse.",
+    "logs_download_capped": "Sono state esportate le {downloaded} righe di log più recenti, il massimo per una singola esportazione. Altre potrebbero aver corrisposto ai tuoi filtri.",
+    "logs_download_partial": "L'esportazione si è fermata a {downloaded} righe di log perché questo filtro non può essere paginato oltre. Alcune righe corrispondenti sono assenti.",
+    "logs_download_failed": "L'esportazione dei log è fallita. Nessun file è stato scaricato.",
+    "logs_download_empty": "Nessuna riga di log corrisponde ai tuoi filtri, quindi non è stato scaricato alcun file.",
     "display_settings": "Impostazioni di visualizzazione",
     "density": "Densità",
     "density_compact": "Compatto",
@@ -875,6 +987,7 @@
         "folder_error": "Si è verificato un errore durante la creazione della cartella"
       },
       "rename": {
+        "error": "Impossibile rinominare in \"{name}\". Potrebbe già esistere un file o una cartella con quel nome.",
         "label": "Rinomina",
         "file": "Rinomina file",
         "folder": "Rinomina cartella",
@@ -888,6 +1001,10 @@
         "files": "Elimina {count} file selezionati",
         "folders": "Elimina {count} cartelle selezionate"
       },
+      "move": {
+        "bulk_success": "File selezionati spostati con successo.",
+        "bulk_error": "Impossibile spostare {count} degli elementi selezionati."
+      },
       "import": {
         "files": "Importa file",
         "folder": "Importa cartella",
@@ -896,6 +1013,7 @@
       },
       "export": "Esporta file del namespace",
       "export_single": "Esporta file",
+      "export_error": "Impossibile esportare \"{name}\". Non è stato possibile risolvere il suo percorso.",
       "dialog": {
         "name": {
           "file": "Nome con estensione:",
@@ -1015,7 +1133,8 @@
             "triggers_default_tab": "Scheda Trigger Predefiniti",
             "playground": "Playground",
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
-            "task_edit_default_mode": "Modalità di Modifica Task Predefinita"
+            "task_edit_default_mode": "Modalità di Modifica Task Predefinita",
+            "flow_template": "Modello di flow predefinito"
           },
           "descriptions": {
             "default_namespace": "Utilizzato quando si creano nuovi flow senza un namespace.",
@@ -1028,11 +1147,17 @@
             "triggers_default_tab": "Scheda selezionata quando si naviga alla pagina dei trigger.",
             "auto_refresh_interval": "Secondi tra gli aggiornamenti automatici dei dati nelle pagine elenco.",
             "playground": "Esegui i task singolarmente nel playground dell'editor.",
-            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code."
+            "task_edit_default_mode": "Come un task si apre di default dall'editor no-code.",
+            "flow_template": "YAML aperto nell'editor quando crei un nuovo flow. L'id e il namespace possono essere omessi, poiché vengono generati automaticamente. Quando è vuoto, viene utilizzato il template configurato per l'istanza."
           },
           "task_edit_default_mode_options": {
             "modal": "Modale",
             "tab": "Scheda"
+          },
+          "flow_template_reset": "Ripristina predefiniti",
+          "flow_template_error": {
+            "invalid_mapping": "Modello di flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
+            "parse_error": "Impossibile analizzare il YAML. Il template è stato salvato, quindi l'editor potrebbe mostrare lo stesso errore quando crei un flow."
           }
         },
         "theme": {
@@ -1109,7 +1234,7 @@
       "contact_sales": "Contatta il reparto vendite",
       "secrets": {
         "title": "Aggiorna il tuo Secrets Management",
-        "message": "L'Enterprise Edition (EE) ti consente di aggiungere, modificare o eliminare i secret direttamente nell'interfaccia utente, senza bisogno di riavvii dell'istanza. Organizza i secret per namespace con permessi RBAC granulari e ereditale dai namespace padre a quelli figlio. L'EE si integra con i gestori di secret come HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager ed Elasticsearch. Configura backend dedicati per namespace, tenant o istanza per isolare i secret tra i team, o abilita i secret di sola lettura archiviati in vault esterni. I secret rimangono crittografati a riposo e in transito. La cache opzionale riduce le chiamate API e i log di audit registrano tutti gli accessi.",
+        "message": "L'Enterprise Edition ti consente di aggiungere, modificare ed eliminare i secret direttamente nell'interfaccia utente, di organizzarli per namespace con RBAC e di archiviarli in HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager o Elasticsearch.",
         "add_env": {
           "intro": "Crea un nuovo Secret",
           "first": "Codifica il <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valore segreto in Base64</a>",
@@ -1189,7 +1314,7 @@
       "namespace": {
         "edit": {
           "title": "Aggiorna la Gestione del tuo Namespace",
-          "message": "Nell'edizione Kestra Enterprise, i namespace offrono isolamento avanzato e governance di segreti, variabili e impostazioni predefinite dei plugin su larga scala. Gli amministratori possono configurare gestori di segreti personalizzati, backend di archiviazione isolati, gruppi di worker dedicati e autorizzazioni granulari per ogni namespace. Ciò garantisce che segreti, variabili e configurazioni dei plugin rimangano sicuri e facili da mantenere tra diversi team e progetti."
+          "message": "In Kestra Enterprise Edition, i namespace forniscono isolamento avanzato e controllo di secrets, variabili e Policies di governance su larga scala. Gli amministratori possono configurare custom secrets managers, storage backends isolati, worker groups dedicati e permessi granulari per ogni namespace. Questo assicura che secrets, variabili e regole di governance rimangano sicuri e facili da mantenere tra diversi team e progetti."
         },
         "secrets": {
           "title": "Gestisci i Segreti in Modo Sicuro",
@@ -1420,6 +1545,7 @@
       "key": "Nome",
       "keyPlaceholder": "Nome usato per fare riferimento a questo segreto, ad es. MY_API_TOKEN",
       "name": "Valore segreto",
+      "valuePlaceholder": "Inserisci il valore segreto",
       "description": "Descrizione",
       "descriptionPlaceholder": "Descrivi questo segreto",
       "tags": "Etichette",
@@ -1436,7 +1562,8 @@
         "confirm": "Sei sicuro di voler eliminare: <code>{name}</code> KV?",
         "warning": "Non hai i permessi per quei namespace, quindi verranno omessi: <code>{namespaces}</code>"
       },
-      "inherited": "Coppie KV ereditate"
+      "inherited": "Coppie KV ereditate",
+      "expiration_hint": "Attualmente scade il {date}. Lascia il campo intatto per mantenere questa scadenza; la selezione di una durata la ricalcola da ora, e la sua cancellazione la rimuove."
     },
     "expiration": "Scadenza",
     "page": {
@@ -1751,10 +1878,6 @@
           "content": "Questo asset non ha dipendenze upstream o downstream con flow o altri asset."
         }
       },
-      "plugins": {
-        "title": "Nessun valore predefinito del plugin è impostato per questo Namespace.",
-        "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione."
-      },
       "triggers": {
         "title": "Il tuo flow non ha alcun trigger.",
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Trigger</a></strong> nella nostra documentazione."
@@ -1764,7 +1887,7 @@
         "content": "Esporre un flow come uno strumento MCP aggiungendo un <code>McpToolTrigger</code> ad esso. Leggi di più sul <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> nella nostra documentazione."
       },
       "versionPlugin": {
-        "title": "Non hai ancora un plugin versionato!",
+        "title": "Non hai ancora plugin versionati!",
         "content": "Qui puoi gestire tutti i plugin installati sulla tua istanza di Kestra. I plugin appena installati potrebbero non essere immediatamente disponibili in tutti i servizi di Kestra, a seconda della configurazione della tua istanza."
       },
       "panels": {
@@ -1780,7 +1903,8 @@
       "close_all_tabs": "Chiudi tutte le tab",
       "close_all_panels": "Chiudi tutti i pannelli",
       "exit_fullscreen": "Esci dalla modalità a schermo intero",
-      "fullscreen": "Schermo intero"
+      "fullscreen": "Schermo intero",
+      "split_panel": "Dividi pannello"
     },
     "search_docs": "Cerca",
     "no_results_found": "Nessun risultato trovato",
@@ -1793,7 +1917,9 @@
       "triggers": "Nessun Trigger Trovato",
       "flows": "Nessun Flow Trovato",
       "kv_pairs": "Nessuna coppia Key-Value trovata",
-      "secrets": "Nessun Secret Trovato"
+      "secrets": "Nessun Secret Trovato",
+      "all_columns_hidden": "Tutte le colonne sono nascoste",
+      "all_columns_hidden_description": "Riattiva almeno una colonna in Personalizza colonne della tabella per visualizzare nuovamente i dati."
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {
@@ -1811,6 +1937,7 @@
       "others": "Altri",
       "viewAll": "Vedi tutti",
       "export": "Esporta",
+      "exportEmpty": "Questo grafico non ha dati da esportare.",
       "exportTo": {
         "csv": "Esporta in CSV",
         "ion": "Esporta in ION"
@@ -1920,6 +2047,7 @@
           "test": "Test"
         },
         "contextRemoved": "Rimosso {type} {id} dal contesto.",
+        "modelChanged": "Passato a {model}.",
         "toolResult": {
           "detail": "Dettagli",
           "error": "{tool} fallito",
@@ -1990,6 +2118,12 @@
           "Convergendo"
         ],
         "newChat": "Nuova chat",
+        "fixThread": {
+          "flow": "Correggi il Flow {id}",
+          "task": "Correggi il task {id}",
+          "execution": "Correggi l'esecuzione di {id}",
+          "generic": "Correggi gli errori del Flow"
+        },
         "draft": {
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",
@@ -2038,6 +2172,31 @@
         "zoom_out": "Riduci zoom",
         "clear_selection": "Cancella selezione",
         "fit_view": "Adatta allo schermo"
+      },
+      "dag": {
+        "force": "Albero",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Ultimo aggiornamento",
+        "status": {
+          "fresh": "Nuovo",
+          "stale": "Stale",
+          "failed": "Fallito",
+          "unknown": "Non tracciato"
+        },
+        "summary": {
+          "fresh": "Tutti i {n} Asset freschi",
+          "issues": "{n} obsoleto",
+          "failed": "{n} fallito",
+          "last_run": "ultima esecuzione {ago}",
+          "unknown": "{n} non tracciato"
+        },
+        "recent_runs": "Esecuzioni recenti",
+        "group_by": "Raggruppa per",
+        "groups": "Gruppi ({n})",
+        "group_none": "Nessun raggruppamento",
+        "group_dataset": "Dataset",
+        "ungrouped": "Non raggruppato"
       },
       "search": {
         "placeholders": {
@@ -2100,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "I tuoi server",
-      "servers_count": "{count} Server MCP",
+      "servers_count": "{count} server MCP | {count} server MCP",
       "managed_by_kestra": "Gestito da Kestra",
       "servers": "Server MCP",
       "client_setup": "Configurazione Client",
@@ -2234,7 +2393,7 @@
       "next_match": "Prossima corrispondenza",
       "no_results_description": "Prova ad ampliare il namespace, a riportare lo scope su Tutte le sorgenti o a disattivare Maiuscole/minuscole e Corrispondenza parola intera.",
       "no_results_hidden_type": "Trovata {count} corrispondenza in {type}, che non hai selezionato. | Trovate {count} corrispondenze in {type}, che non hai selezionato.",
-      "no_results_in_types": "Nessuna corrispondenza per “{query}” in {types}",
+      "no_results_in_types": "Nessuna corrispondenza per {query} in {types}",
       "no_results_title": "Nessun risultato per \"{query}\"",
       "open_flow": "Apri flow",
       "open_in_editor": "Apri nell'editor",

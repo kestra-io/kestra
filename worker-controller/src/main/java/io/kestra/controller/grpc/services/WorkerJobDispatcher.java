@@ -2,6 +2,7 @@ package io.kestra.controller.grpc.services;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +21,8 @@ import java.util.stream.Stream;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.slf4j.event.Level;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -34,6 +37,7 @@ import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -160,6 +164,11 @@ public class WorkerJobDispatcher {
      */
     private final List<WorkerLifecycleListener> lifecycleListeners;
 
+    /**
+     * Builds the loggers used to surface dispatch failures in the user-facing execution logs.
+     */
+    private final RunContextLoggerFactory runContextLoggerFactory;
+
     @Inject
     public WorkerJobDispatcher(
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
@@ -171,7 +180,8 @@ public class WorkerJobDispatcher {
         MetricRegistry metricRegistry,
         MetadataChangeListener metadataChangeListener,
         WorkerQueueResolver workerQueueResolver,
-        List<WorkerLifecycleListener> lifecycleListeners) {
+        List<WorkerLifecycleListener> lifecycleListeners,
+        RunContextLoggerFactory runContextLoggerFactory) {
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.workerTaskResultQueue = workerTaskResultQueue;
@@ -180,6 +190,7 @@ public class WorkerJobDispatcher {
         this.metadataChangeListener = metadataChangeListener;
         this.workerQueueResolver = workerQueueResolver;
         this.lifecycleListeners = List.copyOf(lifecycleListeners);
+        this.runContextLoggerFactory = runContextLoggerFactory;
 
         // Construct broadcast subscribers and gauges with cleanup on partial failure.
         // @PreDestroy is not invoked when bean construction fails, so any subscriber that has
@@ -1032,14 +1043,43 @@ public class WorkerJobDispatcher {
 
         // Fail the job cleanly so the execution reaches a terminal state.
         if (job instanceof WorkerTask workerTask) {
+            emitJobLog(
+                runContextLoggerFactory.create(workerTask),
+                LogEntry.of(workerTask.getTaskRun(), workerTask.getExecutionKind()),
+                oversizedPayloadMessage("task", context.getWorkerId(), payloadSize, workerLimit)
+            );
+
             try {
                 workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().fail()));
             } catch (QueueException e) {
                 log.error("Failed to emit FAILED result for oversized job {}: {}", job.uid(), e.getMessage(), e);
             }
         } else if (job instanceof WorkerTrigger workerTrigger) {
+            emitJobLog(
+                runContextLoggerFactory.create(workerTrigger.triggerId(), workerTrigger.getTrigger()),
+                LogEntry.of(workerTrigger.triggerId(), workerTrigger.getTrigger()),
+                oversizedPayloadMessage("trigger", context.getWorkerId(), payloadSize, workerLimit)
+            );
+
             triggerEventQueue.send(new TriggerEvaluated(workerTrigger.triggerId(), null));
         }
+    }
+
+    private static String oversizedPayloadMessage(String jobKind, String workerId, int payloadSize, int workerLimit) {
+        return ("Cannot dispatch this %s to worker '%s': its serialized payload is %d bytes and exceeds the maximum inbound gRPC message size of %d bytes configured on that worker. "
+            + "Increase 'kestra.grpc.max-inbound-message-size' on the workers and on the worker controller, or reduce the amount of data it carries such as large inputs, variables or outputs.")
+            .formatted(jobKind, workerId, payloadSize, workerLimit);
+    }
+
+    private void emitJobLog(RunContextLogger logger, LogEntry template, String message) {
+        logger.emitLogIfEnabled(
+            template.toBuilder()
+                .level(Level.ERROR)
+                .message(message)
+                .timestamp(Instant.now())
+                .thread(Thread.currentThread().getName())
+                .build()
+        );
     }
 
     /**

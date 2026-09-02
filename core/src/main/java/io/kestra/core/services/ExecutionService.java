@@ -38,6 +38,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
@@ -95,6 +96,9 @@ public class ExecutionService {
 
     @Inject
     private TaskOutputService taskOutputService;
+
+    @Inject
+    private ExecutionOutputService executionOutputService;
 
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
@@ -223,17 +227,28 @@ public class ExecutionService {
         return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
     }
 
-    public Execution create(Create createCommand, FlowInterface flow) {
+    public Execution create(Create createCommand, ProcessedFlow processedFlow) {
+        // Governance outranks whoever starts the execution, so a key an overriding policy rule force-set is
+        // dropped here and taken from the flow by the merge below.
+        List<Label> supplied = ListUtils.emptyOnNull(createCommand.labels());
+        List<Label> contributed = LabelService.withoutPinned(supplied, processedFlow.pinnedLabelKeys());
+
+        Set<String> overridden = LabelService.overriddenPinnedKeys(processedFlow.flow(), supplied, processedFlow.pinnedLabelKeys());
+        if (!overridden.isEmpty()) {
+            log.warn(
+                "Execution {} was started with label(s) {} that a governance policy pins on this flow. The flow's values are used instead.",
+                createCommand.executionId(),
+                overridden
+            );
+        }
+
         // Pre-seed CORRELATION_ID so Execution.newExecution() doesn't assign the auto-generated ID to it.
         // Without this, newExecution() sets correlationId = auto-id, and then toBuilder().id() overrides
         // the execution ID while leaving correlationId pointing to the discarded auto-id.
-        List<Label> labels = new ArrayList<>(ListUtils.emptyOnNull(createCommand.labels()));
-        if (labels.stream().noneMatch(l -> Label.CORRELATION_ID.equals(l.key()))) {
-            labels.add(new Label(Label.CORRELATION_ID, createCommand.executionId()));
-        }
+        List<Label> labels = LabelService.withCorrelationId(contributed, createCommand.executionId());
 
         var newExecution = Execution.newExecution(
-            flow,
+            processedFlow.flow(),
             (x, y) -> createCommand.inputs(),
             labels,
             Optional.empty(),
@@ -260,6 +275,12 @@ public class ExecutionService {
 
         if (createCommand.fixtures() != null) {
             newExecution = newExecution.toBuilder().fixtures(createCommand.fixtures()).build();
+        }
+
+        // Carries the depth a Flow trigger's evaluate() computed before the dependsOn route rebuilt this
+        // execution from the Create command; Execution.newExecution() above reset it via prebuild().
+        if (createCommand.executionDepth() != null) {
+            newExecution = newExecution.withMetadata(newExecution.getMetadata().withExecutionDepth(createCommand.executionDepth()));
         }
 
         if (createCommand.variables() != null) {
@@ -409,12 +430,19 @@ public class ExecutionService {
         String newExecutionId) throws Exception {
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
-            GraphCluster graphCluster = GraphUtils.of(flow, execution);
-
             Set<String> taskRunToRestart = this.taskRunToRestart(
                 execution,
                 taskRun -> taskRun.getId().equals(taskRunId)
             );
+
+            GraphCluster graphCluster = GraphUtils.of(flow, execution);
+            if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
+                TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
+                throw new IllegalArgumentException(
+                    "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
+                        .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
+                );
+            }
 
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
@@ -706,6 +734,7 @@ public class ExecutionService {
                 if (purgeExecution) {
                     builder.executionsCount(this.executionRepository.purge(executions));
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
+                    builder.executionOutputsCount(this.executionOutputService.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -733,6 +762,8 @@ public class ExecutionService {
                     .logsCount(a.getLogsCount() + b.getLogsCount())
                     .storagesCount(a.getStoragesCount() + b.getStoragesCount())
                     .metricsCount(a.getMetricsCount() + b.getMetricsCount())
+                    .executionOutputsCount(a.getExecutionOutputsCount() + b.getExecutionOutputsCount())
+                    .taskOutputsCount(a.getTaskOutputsCount() + b.getTaskOutputsCount())
                     .build()
             )
             .block();
@@ -1165,6 +1196,9 @@ public class ExecutionService {
 
         @Builder.Default
         private int taskOutputsCount = 0;
+
+        @Builder.Default
+        private int executionOutputsCount = 0;
 
         @Builder.Default
         private int logsCount = 0;

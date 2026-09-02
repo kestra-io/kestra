@@ -93,6 +93,17 @@
                     {{ $t("delete") }}
                 </KsButton>
 
+                <component
+                    :is="action"
+                    v-for="(action, i) in bulkActionComponents"
+                    :key="i"
+                    :selection="selection"
+                    :queryBulkAction="queryBulkAction"
+                    :namespace="props.namespace"
+                    :loadQuery="loadQuery"
+                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
+                />
+
                 <KsDropdown>
                     <KsButton :aria-label="$t('bulk actions')">
                         <DotsVertical />
@@ -108,10 +119,10 @@
                             <KsDropdownItem v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                 {{ $t("pause") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                 {{ $t("unqueue") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" @click="forceRunExecutions()">
                                 {{ $t("force run") }}
                             </KsDropdownItem>
                         </KsDropdownMenu>
@@ -144,17 +155,6 @@
                         </KsFormItem>
                     </KsForm>
                 </KsDialog>
-
-                <component
-                    :is="action"
-                    v-for="(action, i) in bulkActionComponents"
-                    :key="i"
-                    :selection="selection"
-                    :queryBulkAction="queryBulkAction"
-                    :namespace="props.namespace"
-                    :loadQuery="loadQuery"
-                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
-                />
             </template>
 
             <KsTableColumn
@@ -217,14 +217,14 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
+                        <Labels :labels="filteredLabels(scope.row?.labels)" :max="3" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus
                             :status="scope.row?.state?.current"
                             size="small"
                             clickable
-                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            :aria-label="$t('filter by status', {status: scope.row?.state?.current})"
                             @click.stop="onStateClick(scope.row?.state?.current)"
                         />
                     </template>
@@ -410,12 +410,13 @@
 
 <script setup lang="ts">
     import _merge from "lodash/merge"
-    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
+    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -473,7 +474,7 @@
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -538,6 +539,12 @@
 
     const optionalColumns = ref([
         {
+            label: t("state"),
+            prop: "state.current",
+            default: true,
+            description: t("filter.table_column.executions.state"),
+        },
+        {
             label: t("start date"),
             prop: "state.startDate",
             default: true,
@@ -572,12 +579,6 @@
             prop: "labels",
             default: true,
             description: t("filter.table_column.executions.labels"),
-        },
-        {
-            label: t("state"),
-            prop: "state.current",
-            default: true,
-            description: t("filter.table_column.executions.state"),
         },
         {
             label: t("revision"),
@@ -622,13 +623,13 @@
         ...getExtraColumns().map(col => ({...col, label: t(col.label)})),
     ])
 
-    const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
+    const {visibleColumns: displayColumns, orderedVisibleColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: allColumns.value,
         storageKey: storageKey.value,
     })
 
     const visibleColumns = computed(() =>
-        displayColumns.value
+        orderedVisibleColumns.value
             .map(prop => allColumns.value.find(c => c.prop === prop))
             .filter(c => {
                 const condition = (c as {condition?: () => boolean})?.condition
@@ -719,7 +720,7 @@
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value || canKill.value
+        return canDelete.value || canUpdate.value || canKill.value || canForceRun.value || canUnqueue.value
     })
 
     const canReplay = computed(() => {
@@ -736,6 +737,14 @@
 
     const canKill = computed(() => {
         return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
+    })
+
+    const canForceRun = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.FORCE_RUN, props.namespace)
+    })
+
+    const canUnqueue = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.namespace)
     })
 
     const isAllowedEdit = computed(() => {
@@ -846,6 +855,8 @@
         )
     }
 
+    const affectedCount = (response: any) => response?.count ?? response?.totalItems ?? 0
+
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: any) => {
         const actionMap: Record<string, () => any> = {
             "queryResumeExecution": () => executionsStore.queryResumeExecution,
@@ -881,7 +892,7 @@
             const ac = actionMap[queryAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 })
@@ -895,13 +906,15 @@
             const ac = actionMap[byIdAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
-                }).catch((e: any) => {
-                    toast.error(e?.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message))
+                }).catch((e: unknown) => {
+                    const problem = asProblem(e)
+                    toast.error(
+                        problemBulkBody(problem, t, te),
+                        problemTitle(problem, t, te),
+                    )
                 })
         }
     }
@@ -1081,7 +1094,7 @@
                         data: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -1092,12 +1105,16 @@
                         executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message)))
+                    }).catch((e: unknown) => {
+                        const problem = asProblem(e)
+                        toast.error(
+                            problemBulkBody(problem, t, te),
+                            problemTitle(problem, t, te),
+                        )
+                    })
             }
         },
         )

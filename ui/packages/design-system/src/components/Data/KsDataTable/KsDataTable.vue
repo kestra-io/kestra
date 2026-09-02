@@ -46,12 +46,13 @@
                     @selection-change="selectionChanged"
                     @select="onSelect"
                     @sort-change="onSortChange"
+                    @row-click="(row, column, event) => emit('row-click', row, column, event)"
                     @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
                 >
                     <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection :selectable="rowSelectable" />
                     <slot />
                     <template #empty>
-                        <KsNoData :title="noDataText" />
+                        <KsNoData :title="noDataText" :description="noDataDescription" />
                     </template>
                 </KsTable>
             </div>
@@ -99,8 +100,10 @@
         showSelection?: boolean
         rowKey?: string | ((row: any) => string)
         noDataText?: string
+        noDataDescription?: string
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
+        sortKeyMapper?: (key: string) => string
         selectionMapper?: (element: any) => any
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
@@ -119,8 +122,10 @@
         showSelection: true,
         rowKey: "id",
         noDataText: undefined,
+        noDataDescription: undefined,
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
+        sortKeyMapper: undefined,
         selectionMapper: undefined,
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
@@ -143,6 +148,7 @@
         "update:pageSize": [size: number]
         "sort-change": [sort: SortItem]
         "selection-change": [selection: any[]]
+        "row-click": [row: any, column: any, event: Event]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
         "loaded": []
@@ -406,7 +412,8 @@
 
     const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
-            internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
+            const key = props.sortKeyMapper?.(sort.prop) ?? sort.prop
+            internalSort.value = `${key}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
             internalSort.value = undefined
         }
@@ -489,11 +496,11 @@
 
         &--fit {
             min-height: 0;
-            overflow: hidden;
 
             .ks-data-table-content {
                 flex: 1 1 0;
                 min-height: 0;
+                overflow: hidden;
 
                 &--slot {
                     overflow: auto;

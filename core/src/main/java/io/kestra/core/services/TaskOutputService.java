@@ -1,23 +1,14 @@
 package io.kestra.core.services;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
-import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -32,20 +23,13 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * whether to store the output in the database or in an internal storage based on the configured limit.
  */
 @Singleton
-public class TaskOutputService {
-    private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
-
+public class TaskOutputService extends AbstractOutputService {
     private final TaskOutputRepositoryInterface outputRepository;
-    private final StorageInterface storageInterface;
-    private final NamespaceFactory namespaceFactory;
-    private final int limit;
 
     public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
         TaskOutputConfiguration taskOutputConfiguration) {
+        super(storageInterface, namespaceFactory, taskOutputConfiguration.limit());
         this.outputRepository = outputRepository;
-        this.storageInterface = storageInterface;
-        this.namespaceFactory = namespaceFactory;
-        this.limit = taskOutputConfiguration.limit();
     }
 
     /**
@@ -79,39 +63,11 @@ public class TaskOutputService {
      */
     public void saveOutputs(TaskRun taskRun, Map<String, Object> outputMap) throws InternalException {
         if (!MapUtils.isEmpty(outputMap)) {
-            try {
-                byte[] value = ION_MAPPER.writeValueAsBytes(outputMap);
-                var output = shouldStoreInInternalStorage(value) ? storeToInternalStorage(taskRun, value)
-                    : new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), value, null);
-                outputRepository.save(output);
-            } catch (JsonProcessingException e) {
-                throw new InternalException(e);
-            }
-        }
-    }
-
-    /**
-     * Whether the value should be store in internal storage or not.
-     * In OSS: this is only defined by the task output limit configuration if set.
-     * In EE, this is also governed by the Execution data in internal storage configuration.
-     */
-    protected boolean shouldStoreInInternalStorage(byte[] value) {
-        if (limit < 0) {
-            return false;
-        }
-        return value.length > limit;
-    }
-
-    private TaskOutput storeToInternalStorage(TaskRun taskRun, byte[] outputBytes) throws InternalException {
-        try {
-            var context = StorageContext.forTask(taskRun);
-            var storage = new InternalStorage(context, storageInterface, namespaceFactory);
-            File file = Files.createTempFile("output-", ".ion").toFile();
-            Files.write(file.toPath(), outputBytes);
-            var uri = storage.putFile(file);
-            return new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), null, uri.toString());
-        } catch (IOException e) {
-            throw new InternalException(e);
+            byte[] value = serialize(outputMap);
+            var output = shouldStoreInInternalStorage(value)
+                ? new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), null, storeToInternalStorage(StorageContext.forTask(taskRun), value).toString())
+                : new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), value, null);
+            outputRepository.save(output);
         }
     }
 
@@ -192,27 +148,7 @@ public class TaskOutputService {
     }
 
     private Map<String, Object> readOutput(TaskRun taskRun, TaskOutput taskOutput) throws InternalException {
-        try {
-            return taskOutput.value() != null ? readFromValue(taskOutput) : readFromInternalStorage(taskRun, taskOutput);
-        } catch (IOException e) {
-            throw new InternalException(e);
-        }
-    }
-
-    private Map<String, Object> readFromValue(TaskOutput taskOutput) throws IOException {
-        return ION_MAPPER.readValue(taskOutput.value(), JacksonMapper.MAP_TYPE_REFERENCE);
-    }
-
-    private Map<String, Object> readFromInternalStorage(TaskRun taskRun, TaskOutput taskOutput) throws IOException {
-        if (taskOutput.uri() == null) {
-            return null;
-        }
-
-        var context = StorageContext.forTask(taskRun);
-        var storage = new InternalStorage(context, storageInterface, namespaceFactory);
-        try (var is = storage.getFile(URI.create(taskOutput.uri()))) {
-            return ION_MAPPER.readValue(is, JacksonMapper.MAP_TYPE_REFERENCE);
-        }
+        return read(() -> StorageContext.forTask(taskRun), taskOutput.value(), taskOutput.uri());
     }
 
     private Map<String, Object> outputs(TaskRun taskRun, Map<String, Object> outputs, Map<String, TaskRun> byIds) {

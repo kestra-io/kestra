@@ -35,6 +35,12 @@ describe("scopeFromRoute", () => {
         expect(scopeFromRoute({name: "home", params: {}})).toBeNull()
     })
 
+    // kestra-io/kestra-ee#10419: the create page has no saved resource, but must still bind
+    // the FLOW kind so the editor buffer can attach as context.
+    it("maps the flow create route to a FLOW scope with no ids", () => {
+        expect(scopeFromRoute({name: "flows/create", params: {}})).toEqual({kind: "FLOW"})
+    })
+
     it("maps a detail page's actual (child) route name, not just its redirecting parent", () => {
         expect(scopeFromRoute({name: "executions/update/overview", params: {namespace: "company.team", flowId: "my-flow", id: "exec-1"}}))
             .toEqual({kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"})
@@ -80,5 +86,14 @@ describe("scopeToContext", () => {
     it("returns undefined when there is no scope", () => {
         expect(scopeToContext(null)).toBeUndefined()
         expect(scopeToContext(undefined)).toBeUndefined()
+    })
+
+    // kestra-io/kestra-ee#10419: a new or unsaved flow exists only in the editor buffer,
+    // so the turn context must carry its source even without a saved flow to reference.
+    it("carries the editor's flow source into currentView, with or without a scope", () => {
+        expect(scopeToContext({kind: "FLOW", namespace: "company.team", flowId: "my-flow"}, "id: my-flow"))
+            .toEqual({currentView: {kind: "FLOW", namespace: "company.team", flowId: "my-flow", flowSource: "id: my-flow"}})
+        expect(scopeToContext(null, "id: repro"))
+            .toEqual({currentView: {kind: "FLOW", flowSource: "id: repro"}})
     })
 })

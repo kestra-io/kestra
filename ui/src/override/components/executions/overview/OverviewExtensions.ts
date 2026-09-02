@@ -1,5 +1,7 @@
 import type {Component} from "vue"
 
-// No-op in OSS. The EE build overrides this file (via the `override/` Vite alias)
-// to render a linked-cases panel on the execution Overview tab.
-export const executionOverviewPanel: Component | null = null
+// No-op in OSS. The EE build overrides this file (via the `override/` Vite alias) to
+// surface execution relations — linked cases today — as items in the Overview banner
+// meta row. Each component receives the `execution` prop and gates itself on its own
+// feature flag / permissions.
+export const executionBannerRelations: Component[] = []

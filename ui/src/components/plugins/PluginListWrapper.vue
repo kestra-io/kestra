@@ -6,10 +6,10 @@
         <template v-else>
             <div v-if="!pluginsStore.editorPlugin && showFlowDoc" class="flow-doc">
                 <div class="flow-doc-header">
-                    <span class="flow-doc-title">{{ t("flow_description") }}</span>
+                    <span class="flow-doc-title">{{ $t("flow_description") }}</span>
                 </div>
                 <KsMarkdown v-if="flowDescription" :content="flowDescription" class="flow-doc-content" />
-                <p v-else class="flow-doc-empty">{{ t("flow_no_description") }}</p>
+                <p v-else class="flow-doc-empty">{{ $t("flow_no_description") }}</p>
             </div>
             <PluginList
                 :plugins="pluginsData ?? []"
@@ -21,14 +21,12 @@
 
 <script setup lang="ts">
     import {onMounted, ref, computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
     import {useFlowStore} from "../../stores/flow"
     import {KsMarkdown} from "@kestra-io/design-system"
     import PluginList from "./PluginList.vue"
 
-    const {t} = useI18n()
     const isLoading = ref(false)
     const pluginsStore = usePluginsStore()
     const flowStore = useFlowStore()

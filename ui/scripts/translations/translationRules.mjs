@@ -40,6 +40,53 @@ export function leafKeys(obj, prefix = "") {
 }
 
 /**
+ * EE keys that collide with an OSS key, with the collision described.
+ *
+ * EE's locale files are layered over OSS's with `lodash.merge`, so a key defined on both sides
+ * resolves to EE's value. Three shapes of that are all bugs, and only the first is visible when
+ * leaf keys are compared to leaf keys:
+ *
+ * - `duplicate` — the same leaf on both sides: EE silently overrides an OSS message.
+ * - `nested-under-oss-leaf` — EE nests keys under a path OSS uses as a message (EE
+ *   `concurrency.section` vs OSS `concurrency`). The merge turns OSS's string into an object, and
+ *   vue-i18n renders the key path itself, so the OSS label reads as a raw key.
+ * - `replaces-oss-namespace` — the mirror image: EE defines a message at a path OSS uses as a
+ *   namespace, hiding every OSS key underneath it.
+ */
+export function shadowedOssKeys(eeLeafKeys, ossLeafKeys) {
+    const ossLeaves = new Set(ossLeafKeys)
+    const ossNamespaces = new Set()
+    for (const key of ossLeafKeys) {
+        const parts = key.split(".")
+        for (let i = 1; i < parts.length; i++) ossNamespaces.add(parts.slice(0, i).join("."))
+    }
+
+    const findings = []
+    for (const key of eeLeafKeys) {
+        if (ossLeaves.has(key)) {
+            findings.push({key, ossKey: key, kind: "duplicate"})
+            continue
+        }
+
+        const parts = key.split(".")
+        let ancestor
+        for (let i = 1; i < parts.length; i++) {
+            const candidate = parts.slice(0, i).join(".")
+            if (ossLeaves.has(candidate)) {
+                ancestor = candidate
+                break
+            }
+        }
+        if (ancestor) {
+            findings.push({key, ossKey: ancestor, kind: "nested-under-oss-leaf"})
+        } else if (ossNamespaces.has(key)) {
+            findings.push({key, ossKey: key, kind: "replaces-oss-namespace"})
+        }
+    }
+    return findings
+}
+
+/**
  * Leaf key path -> message, for every string leaf.
  *
  * Arrays are descended into by index, matching the generator, which translates their elements
@@ -188,6 +235,9 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     // which the model keeps verbatim on every reroll.
     "recipe.notify.slack_channel_placeholder",
     "recipe.notify.email_to_placeholder",
+    // Plugin-doc section label that Hindi keeps in English on every reroll, matching its sibling
+    // nav labels ("Outputs", "Tasks") that stay English through the reserved-terms rule.
+    "plugins.nav_metrics",
 ])
 
 /**

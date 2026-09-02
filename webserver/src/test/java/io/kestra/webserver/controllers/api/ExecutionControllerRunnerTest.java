@@ -72,7 +72,8 @@ import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
-import io.kestra.webserver.responses.BulkErrorResponse;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
@@ -83,6 +84,8 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
@@ -391,6 +394,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs-defaults-from-labels.yaml" }, tenantId = "inputdefaultsfromlabels")
+    void shouldResolveInputDefaultsFromExecutionLabelsWhenCreatingExecution() {
+        String tenantId = "inputdefaultsfromlabels";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/inputs-defaults-from-labels?labels=caller:me&wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getInputs().get("fromFlowLabel")).isEqualTo("kestra");
+        assertThat(result.getInputs().get("fromExecutionLabel")).isEqualTo("me");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputsmall")
     void triggerExecutionInputSmall() {
         String tenantId = "triggerexecutioninputsmall";
@@ -408,7 +428,7 @@ class ExecutionControllerRunnerTest {
         Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "inputs-small-files", requestBody, true);
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat((String) execution.getOutputs().get("o")).startsWith("kestra://");
+        assertThat((String) executionOutputs(tenantId, execution.getId()).get("o")).startsWith("kestra://");
     }
 
     @Test
@@ -429,6 +449,26 @@ class ExecutionControllerRunnerTest {
 
         assertThat(response).contains("Invalid entity");
         assertThat(response).contains("Invalid value for input `validatedString`");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/inputs-ion-file.yaml" }, tenantId = "ioninputfile")
+    void shouldRejectFileUploadOnIonInput() {
+        String tenantId = "ioninputfile";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        MultipartBody requestBody = MultipartBody.builder()
+            .addPart("payload", "data.ion", MediaType.TEXT_PLAIN_TYPE, "{name:\"Ada\"}".getBytes(StandardCharsets.UTF_8))
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "inputs-ion-file", requestBody, false)
+        );
+
+        String response = e.getResponse().getBody(String.class).orElseThrow();
+
+        assertThat(response).contains("Invalid entity");
+        assertThat(response).contains("Invalid value for input `payload`");
     }
 
     @Test
@@ -1669,7 +1709,7 @@ class ExecutionControllerRunnerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
-        assertThat(exception.getMessage()).isEqualTo("Invalid entity: Missing required input:asked");
+        assertThat(Problems.detail(exception)).isEqualTo("Missing required input:asked");
     }
 
     @Test
@@ -1864,7 +1904,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Conflict: Cannot change execution state: execution must be terminated and not killed.");
+        assertThat(Problems.detail(e)).isEqualTo("Cannot change execution state: execution must be terminated and not killed.");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -2500,10 +2540,11 @@ class ExecutionControllerRunnerTest {
         } catch (HttpClientResponseException e) {
             long afterException = System.currentTimeMillis();
             String errorMessage = "Duration before executions -> %d <-> duration after the exception -> %d <-> Error while pausing execution, err: %s, response: %s";
+            Optional<List<ProblemError>> errors = e.getResponse().getBody(ProblemDetail.class).map(ProblemDetail::errors);
             String formatedError = String.format(
-                errorMessage, afterExec - start, afterException - start, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse("errors")
+                errorMessage, afterExec - start, afterException - start, e.getMessage(), errors.orElse(List.of())
             );
-            log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
+            log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), errors, e);
             fail(formatedError);
         }
 
@@ -2831,6 +2872,11 @@ class ExecutionControllerRunnerTest {
                 .contentType(MediaType.TEXT_PLAIN_TYPE),
             Argument.of(ExecutionController.EvalResult.class)
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> executionOutputs(String tenantId, String executionId) {
+        return client.toBlocking().retrieve(HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executions/" + executionId), Map.class);
     }
 
     private Execution triggerExecutionExecution(String tenantId, String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
@@ -3178,7 +3224,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk restart");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
 
         Execution successful = client.toBlocking().retrieve(
             POST(
@@ -3202,7 +3248,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk restart");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
 
         // EXECUTION NOT FOUND
         e = assertThrows(
@@ -3217,7 +3263,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk restart");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
     }
 
     @Test
@@ -3384,7 +3430,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk kill");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
 
         // EXECUTION NOT FOUND
         e = assertThrows(
@@ -3399,7 +3445,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk kill");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
     }
 
     @Test

@@ -6,8 +6,8 @@
                 <KsIconButton
                     :aria-expanded="replaceOpen"
                     :aria-pressed="replaceOpen"
-                    :aria-label="replaceOpen ? t('source_search.hide_replace') : t('source_search.show_replace')"
-                    :tooltip="replaceOpen ? t('source_search.hide_replace') : t('source_search.show_replace')"
+                    :aria-label="replaceOpen ? $t('source_search.hide_replace') : $t('source_search.show_replace')"
+                    :tooltip="replaceOpen ? $t('source_search.hide_replace') : $t('source_search.show_replace')"
                     class="source-search__replace-toggle"
                     :class="{'source-search__replace-toggle--active': replaceOpen}"
                     @click="replaceOpen = !replaceOpen"
@@ -20,36 +20,36 @@
                         <KsSearch
                             v-model="query"
                             clearable
-                            :placeholder="t('source_search.search_placeholder')"
-                            :aria-label="t('source_search.search_aria')"
+                            :placeholder="$t('source_search.search_placeholder')"
+                            :aria-label="$t('source_search.search_aria')"
                             :aria-invalid="failedSelectedTypes.includes('flows')"
                             @keydown.down.prevent="goToMatch(1)"
                             @keydown.up.prevent="goToMatch(-1)"
                             @keydown.enter.exact.prevent="goToMatch(1)"
                             @keydown.enter.shift.prevent="goToMatch(-1)"
                         />
-                        <div class="source-search__toggles" role="group" :aria-label="t('source_search.options_aria')">
+                        <div class="source-search__toggles" role="group" :aria-label="$t('source_search.options_aria')">
                             <KsCheckboxButton
                                 v-model="caseSensitive"
                                 size="small"
-                                :title="t('source_search.match_case')"
-                                :aria-label="t('source_search.match_case')"
+                                :title="$t('source_search.match_case')"
+                                :aria-label="$t('source_search.match_case')"
                             >
                                 <span class="source-search__toggle-label">Aa</span>
                             </KsCheckboxButton>
                             <KsCheckboxButton
                                 v-model="wholeWord"
                                 size="small"
-                                :title="t('source_search.match_whole_word')"
-                                :aria-label="t('source_search.match_whole_word')"
+                                :title="$t('source_search.match_whole_word')"
+                                :aria-label="$t('source_search.match_whole_word')"
                             >
                                 <span class="source-search__toggle-label"><u>ab</u></span>
                             </KsCheckboxButton>
                             <KsCheckboxButton
                                 v-model="regexEnabled"
                                 size="small"
-                                :title="t('source_search.use_regex')"
-                                :aria-label="t('source_search.use_regex')"
+                                :title="$t('source_search.use_regex')"
+                                :aria-label="$t('source_search.use_regex')"
                             >
                                 <span class="source-search__toggle-label">.*</span>
                             </KsCheckboxButton>
@@ -58,14 +58,14 @@
 
                     <p v-if="showFlowOnlyToggleHint" class="source-search__toggle-hint">
                         <InformationOutline />
-                        {{ t('source_search.flow_only_toggle_hint') }}
+                        {{ $t('source_search.flow_only_toggle_hint') }}
                     </p>
 
                     <div v-if="replaceOpen" class="source-search__replace-row">
                         <KsSearch
                             v-model="replacement"
-                            :placeholder="t('source_search.replace_placeholder')"
-                            :aria-label="t('source_search.replace_aria')"
+                            :placeholder="$t('source_search.replace_placeholder')"
+                            :aria-label="$t('source_search.replace_aria')"
                         >
                             <template #prefix>
                                 <FindReplace />
@@ -75,29 +75,29 @@
                             :type="showDiffPreview ? 'primary' : 'default'"
                             :disabled="!query"
                             :loading="previewLoading"
-                            :tooltip="t('source_search.replace_all_tooltip')"
+                            :tooltip="$t('source_search.replace_all_tooltip')"
                             @click="triggerReplacePreview"
                         >
-                            {{ t('source_search.replace_all') }}
+                            {{ $t('source_search.replace_all') }}
                         </KsButton>
                     </div>
 
                     <p v-if="replaceOpen" class="source-search__toggle-hint">
                         <InformationOutline />
-                        {{ t('source_search.replace_scope_hint') }}
+                        {{ $t('source_search.replace_scope_hint') }}
                     </p>
 
                     <KsAlert
                         v-if="crossResourceSearchStore.truncatedFor('flows')"
                         type="warning"
                         class="source-search__truncation-alert"
-                        :description="t('source_search.truncated_flows', {shown: crossResourceSearchStore.countFor('flows'), total: crossResourceSearchStore.totalFor('flows')})"
+                        :description="$t('source_search.truncated_flows', {shown: crossResourceSearchStore.countFor('flows'), total: crossResourceSearchStore.totalFor('flows')})"
                     />
                 </div>
             </div>
 
             <div class="source-search__scope-row" data-test="source-search-type-pills">
-                <span id="source-search-in-label" class="source-search__scope-label">{{ t('source_search.search_in') }}</span>
+                <span id="source-search-in-label" class="source-search__scope-label">{{ $t('source_search.search_in') }}</span>
                 <div class="source-search__pills" role="group" aria-labelledby="source-search-in-label">
                     <KsCheckTag
                         v-for="type in SEARCH_RESOURCE_TYPES"
@@ -105,7 +105,7 @@
                         pill
                         :checked="selectedTypes.includes(type)"
                         :class="{'source-search__pill--failed': query && crossResourceSearchStore.statusFor(type) === 'failed'}"
-                        :title="type !== 'flows' ? t(type === 'files' ? 'source_search.path_only_hint' : 'source_search.key_only_hint') : undefined"
+                        :title="type !== 'flows' ? $t(type === 'files' ? 'source_search.path_only_hint' : 'source_search.key_only_hint') : undefined"
                         @change="(checked) => setTypeSelected(type, checked)"
                     >
                         <template #icon>
@@ -115,17 +115,17 @@
                         <span v-if="query && crossResourceSearchStore.statusFor(type) !== 'idle'" class="source-search__pill-count">{{ crossResourceSearchStore.countFor(type) }}</span>
                         <Loading v-if="crossResourceSearchStore.statusFor(type) === 'counting'" class="source-search__pill-spin" />
                         <AlertCircleOutline v-else-if="query && crossResourceSearchStore.statusFor(type) === 'failed'" :title="crossResourceSearchStore.errorMessageFor(type)" />
-                        <PencilOff v-else-if="type !== 'flows'" />
+                        <PencilLockOutline v-else-if="type !== 'flows'" />
                     </KsCheckTag>
                     <KsButton class="source-search__pill-outline" size="small" @click="selectAllTypes">
-                        {{ t('source_search.select_all_types') }}
+                        {{ $t('source_search.select_all_types') }}
                     </KsButton>
                 </div>
             </div>
 
             <div v-if="query" class="source-search__filter-row">
                 <div class="source-search__field">
-                    <label>{{ t('namespace') }}</label>
+                    <label>{{ $t('namespace') }}</label>
                     <NamespaceSelect
                         v-model="namespace"
                         data-type="flow"
@@ -133,7 +133,7 @@
                     />
                 </div>
                 <div v-if="selectedTypes.includes('flows')" class="source-search__field">
-                    <label>{{ t('source_search.flow_section') }}</label>
+                    <label>{{ $t('source_search.flow_section') }}</label>
                     <KsSegmented v-model="scope" size="small" :options="scopeOptions" />
                 </div>
 
@@ -146,20 +146,20 @@
                     class="source-search__summary"
                 >
                     <template #matches>
-                        <strong>{{ t('source_search.match_count', summaryMatchCount) }}</strong>
+                        <strong>{{ $t('source_search.match_count', summaryMatchCount) }}</strong>
                     </template>
                     <template #resources>
-                        <strong>{{ t('source_search.count_resources', summaryResourceCount) }}</strong>
+                        <strong>{{ $t('source_search.count_resources', summaryResourceCount) }}</strong>
                     </template>
                     <template #types>
-                        <strong>{{ t('source_search.count_types', summaryActiveTypeCount) }}</strong>
+                        <strong>{{ $t('source_search.count_types', summaryActiveTypeCount) }}</strong>
                     </template>
                 </i18n-t>
 
                 <div v-if="!showLoadingState" class="source-search__match-nav">
                     <KsIconButton
                         :disabled="visibleFlatSelections.length === 0"
-                        :tooltip="t('source_search.previous_match')"
+                        :tooltip="$t('source_search.previous_match')"
                         @click="goToMatch(-1)"
                     >
                         <ChevronUp />
@@ -167,13 +167,13 @@
                     <span class="source-search__match-count">{{ matchNavLabel }}</span>
                     <KsIconButton
                         :disabled="visibleFlatSelections.length === 0"
-                        :tooltip="t('source_search.next_match')"
+                        :tooltip="$t('source_search.next_match')"
                         @click="goToMatch(1)"
                     >
                         <ChevronDown />
                     </KsIconButton>
                     <KsIconButton
-                        :tooltip="allCollapsed ? t('source_search.expand_all') : t('source_search.collapse_all')"
+                        :tooltip="allCollapsed ? $t('source_search.expand_all') : $t('source_search.collapse_all')"
                         @click="toggleCollapseAll"
                     >
                         <ArrowExpandVertical v-if="allCollapsed" />
@@ -189,7 +189,7 @@
             type="error"
             class="source-search__type-failed-banner"
         >
-            <div class="source-search__alert-title">{{ t('source_search.type_search_failed', {type: typeLabel(type)}) }}</div>
+            <div class="source-search__alert-title">{{ $t('source_search.type_search_failed', {type: typeLabel(type)}) }}</div>
             <div>{{ crossResourceSearchStore.errorMessageFor(type) }}</div>
         </KsAlert>
 
@@ -199,14 +199,14 @@
             class="source-search__rbac-banner"
         >
             <div class="source-search__alert-title">
-                {{ t('source_search.exclusion_title', {count: totalExcludedFromReplaceCount}) }}
+                {{ $t('source_search.exclusion_title', {count: totalExcludedFromReplaceCount}) }}
             </div>
             <ul class="source-search__exclusion-list">
                 <li v-if="flowsReadOnlyMatchCount > 0">
-                    {{ t('source_search.exclusion_flows_readonly', {count: flowsReadOnlyMatchCount}) }}
+                    {{ $t('source_search.exclusion_flows_readonly', {count: flowsReadOnlyMatchCount}) }}
                 </li>
                 <li v-for="item in nonFlowSearchOnlyExclusions" :key="item.type">
-                    {{ t('source_search.exclusion_search_only', {type: typeLabel(item.type), count: item.count}) }}
+                    {{ $t('source_search.exclusion_search_only', {type: typeLabel(item.type), count: item.count}) }}
                 </li>
             </ul>
         </KsAlert>
@@ -216,33 +216,28 @@
             type="info"
             class="source-search__progress-banner"
         >
-            {{ t(filesProgressInfo.failed > 0 ? 'source_search.files_progress_banner_failed' : 'source_search.files_progress_banner_ok', filesProgressInfo) }}
+            {{ $t(filesProgressInfo.failed > 0 ? 'source_search.files_progress_banner_failed' : 'source_search.files_progress_banner_ok', filesProgressInfo) }}
         </KsAlert>
 
         <div v-if="!query" class="source-search__states">
-            <KsEmpty :background="false">
-                <template #image>
-                    <span class="source-search__empty-glyph">
-                        <Magnify />
-                    </span>
-                </template>
-                <template #description>
-                    <h3>{{ t('source_search.empty_title') }}</h3>
-                    <p>{{ t('source_search.empty_description') }}</p>
-                </template>
-                <div class="source-search__examples" role="list" :aria-label="t('source_search.examples_aria')">
-                    <button
-                        v-for="example in exampleQueries"
-                        :key="example"
-                        type="button"
-                        class="source-search__example-chip"
-                        role="listitem"
-                        @click="query = example"
-                    >
-                        {{ example }}
-                    </button>
-                </div>
-            </KsEmpty>
+            <KsNoData
+                class="source-search__empty"
+                :icon="Magnify"
+                :title="$t('source_search.empty_title')"
+                :description="$t('source_search.empty_description')"
+            />
+            <div class="source-search__examples" role="list" :aria-label="$t('source_search.examples_aria')">
+                <button
+                    v-for="example in exampleQueries"
+                    :key="example"
+                    type="button"
+                    class="source-search__example-chip"
+                    role="listitem"
+                    @click="query = example"
+                >
+                    {{ example }}
+                </button>
+            </div>
         </div>
 
         <div v-else-if="showLoadingState" class="source-search__states">
@@ -252,7 +247,7 @@
         </div>
 
         <div v-else-if="showEmptyResultsState" class="source-search__states">
-            <KsEmpty :background="false">
+            <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
                 <template #description>
                     <h3>{{ t('source_search.no_results_title', {query}) }}</h3>
                     <p>{{ t('source_search.no_results_description') }}</p>
@@ -267,16 +262,16 @@
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
-                        {{ t('source_search.select_all_types') }}
+                        {{ $t('source_search.select_all_types') }}
                     </KsButton>
                     <KsButton v-if="caseSensitive" @click="caseSensitive = false">
-                        {{ t('source_search.turn_off', {option: t('source_search.match_case')}) }}
+                        {{ $t('source_search.turn_off', {option: $t('source_search.match_case')}) }}
                     </KsButton>
                     <KsButton v-if="wholeWord" @click="wholeWord = false">
-                        {{ t('source_search.turn_off', {option: t('source_search.match_whole_word')}) }}
+                        {{ $t('source_search.turn_off', {option: $t('source_search.match_whole_word')}) }}
                     </KsButton>
                     <KsButton v-if="regexEnabled" @click="regexEnabled = false">
-                        {{ t('source_search.turn_off', {option: t('source_search.use_regex')}) }}
+                        {{ $t('source_search.turn_off', {option: $t('source_search.use_regex')}) }}
                     </KsButton>
                 </div>
             </KsEmpty>
@@ -346,9 +341,10 @@
     import ArrowExpandVertical from "vue-material-design-icons/ArrowExpandVertical.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import Magnify from "vue-material-design-icons/Magnify.vue"
+    import {images} from "../layout/empty/images"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
-    import PencilOff from "vue-material-design-icons/PencilOff.vue"
+    import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
@@ -362,7 +358,7 @@
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
 
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
-    import type {SourceSearchReplacePreviewResponse, SourceSearchReplaceApplyResponse, SourceSearchScope} from "@kestra-io/kestra-sdk"
+    import {asProblem, type SourceSearchReplacePreviewResponse, type SourceSearchReplaceApplyResponse, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
     const {loadInit} = useRestoreUrl()
 
@@ -546,6 +542,10 @@
         .join(" "))
 
     const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
+    const noResultsMessage = computed(() => t("source_search.no_results_in_types", {
+        query: `<code>${query.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`,
+        types: selectedTypesLabel.value,
+    }))
 
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
@@ -672,7 +672,7 @@
                 replacement: replacement.value,
             })
         } catch (e: any) {
-            toast.error(e?.response?.data?.message ?? t("source_search.replace_preview_failed"))
+            toast.error(asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
         } finally {
             previewLoading.value = false
         }
@@ -702,7 +702,7 @@
                 flows,
             }))
         } catch (e: any) {
-            toast.error(e?.response?.data?.message ?? t("source_search.replace_apply_failed"))
+            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
 
@@ -721,7 +721,7 @@
                 column: value.column,
             }))
         } catch (e: any) {
-            toast.error(e?.response?.data?.message ?? t("source_search.replace_apply_failed"))
+            toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
 
@@ -1009,17 +1009,35 @@
     gap: var(--ks-spacing-3);
 }
 
-.source-search__empty-glyph {
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--ks-radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--ks-bg-base);
-    border: 1px solid var(--ks-border-default);
-    color: var(--ks-text-muted);
-    margin: 0 auto var(--ks-spacing-3);
+.source-search__empty {
+    height: auto;
+}
+
+.source-search__no-results-title {
+    margin: 0 auto;
+    max-width: 28rem;
+    font-size: var(--ks-font-size-sm);
+    font-weight: var(--ks-font-weight-medium);
+    line-height: var(--ks-line-height-base);
+    color: var(--ks-text-secondary);
+
+    :deep(code) {
+        padding: 0 var(--ks-spacing-1);
+        background: var(--ks-bg-base);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-primary);
+    }
+}
+
+.source-search__no-results-hint {
+    margin: var(--ks-spacing-2) auto 0;
+    max-width: 28rem;
+    font-size: var(--ks-font-size-sm);
+    line-height: var(--ks-line-height-base);
+    color: var(--ks-text-secondary);
 }
 
 .source-search__examples {

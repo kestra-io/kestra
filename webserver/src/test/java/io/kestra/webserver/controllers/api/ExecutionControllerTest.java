@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.Flow;
@@ -39,6 +40,8 @@ import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -122,7 +125,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -136,7 +139,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -150,7 +153,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -160,7 +163,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -174,7 +177,25 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/webhook-disabled.yaml"})
+    void webhookDisabled() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST(
+                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS +"/webhook-disabled/webhook-disabled-key",
+                        null
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(exception.getMessage()).contains("the trigger 'webhook' is disabled");
     }
 
     @Test
@@ -371,9 +392,9 @@ class ExecutionControllerTest {
                 ), PagedResults.class
             )
         );
-        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(exception.getMessage()).isEqualTo(
-            "Invalid query filters: Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
+        Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
+        assertThat(Problems.detail(exception)).isEqualTo(
+            "Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
         );
 
         exception = assertThrows(
@@ -384,7 +405,30 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
-        assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
+        assertThat(Problems.detail(exception)).isEqualTo("Start date must be before End Date");
+
+        // A syntactically invalid REGEX filter must be rejected with a 400 that carries no SQL detail,
+        // instead of reaching the DB engine and leaking the rendered query (kestra-ee#10266)
+        exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[namespace][REGEX]=%5Ba-"
+                ), PagedResults.class
+            )
+        );
+        Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
+        assertThat(Problems.detail(exception)).doesNotContainIgnoringCase("select");
+        assertThat(Problems.detail(exception)).doesNotContain("SQL [");
+        assertThat(Problems.detail(exception)).contains("[a-");
+
+        exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[namespace][BOGUS_OP]=test"
+                ), PagedResults.class
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test
@@ -426,6 +470,110 @@ class ExecutionControllerTest {
         );
 
         assertThat(error.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
+    void shouldRejectInvalidLabelKeyWhenCreatingAnExecution() {
+        var error = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=Team:x", null)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                Execution.class
+            )
+        );
+
+        assertThat(error.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldRejectMissingExecutionsIdWhenSetLabelsOnTerminatedByIdsCalled() {
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/labels/by-ids",
+                    Map.of("executionLabels", List.of(new Label("team", "data")))
+                )
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldRejectMissingExecutionLabelsWhenSetLabelsOnTerminatedByIdsCalled() {
+        Execution execution = terminatedExecution();
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/labels/by-ids",
+                    Map.of("executionsId", List.of(execution.getId()))
+                )
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+
+        // the label must not have been silently dropped: the execution keeps its labels unchanged
+        Execution reloaded = client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId()), Execution.class);
+        assertThat(reloaded.getLabels()).isEqualTo(execution.getLabels());
+    }
+
+    @Test
+    void shouldRejectInvalidLabelKeyWhenSetLabelsOnTerminatedByIdsCalled() {
+        Execution execution = terminatedExecution();
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/labels/by-ids",
+                    new ExecutionController.SetLabelsByIdsRequest(List.of(execution.getId()), List.of(new Label("Team", "x")))
+                )
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldNotPartiallyApplyLabelsWhenSetLabelsOnTerminatedByIdsRejectsASystemLabel() {
+        Execution execution1 = terminatedExecution();
+        Execution execution2 = terminatedExecution();
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/labels/by-ids",
+                    new ExecutionController.SetLabelsByIdsRequest(
+                        List.of(execution1.getId(), execution2.getId()),
+                        List.of(new Label(Label.CORRELATION_ID, "spoofed"))
+                    )
+                )
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+
+        // the batch is all-or-nothing: neither execution gained the spoofed label
+        for (Execution execution : List.of(execution1, execution2)) {
+            Execution reloaded = client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId()), Execution.class);
+            assertThat(reloaded.getLabels()).doesNotContain(new Label(Label.CORRELATION_ID, "spoofed"));
+        }
+    }
+
+    private Execution terminatedExecution() {
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
+            .namespace(TESTS_FLOW_NS)
+            .flowId("minimal")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+        executionRepository.save(execution);
+        return execution;
     }
 
     @Test

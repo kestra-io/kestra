@@ -102,6 +102,42 @@ public final class JacksonMapper {
         return MAPPER.convertValue(object, MAP_TYPE_REFERENCE);
     }
 
+    /**
+     * Same as the JSON mapper, but keeps map entries and collection elements whose value is <code>null</code>.
+     * Null bean properties are still omitted, as {@link JsonInclude.Include#NON_NULL} is kept for values.
+     * <p>
+     * This is needed wherever an explicit <code>null</code> is data and must not become an absent key,
+     * typically for task and execution outputs.
+     *
+     * @see #toMapKeepingNullValues(Object)
+     */
+    private static final ObjectMapper NULL_VALUE_MAPPER = MAPPER
+        .copy()
+        .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
+
+    /**
+     * Convert an object to a map, keeping map entries and collection elements whose value is <code>null</code>
+     * at any nesting depth.
+     *
+     * @see #NULL_VALUE_MAPPER
+     */
+    public static Map<String, Object> toMapKeepingNullValues(Object object) {
+        return NULL_VALUE_MAPPER.convertValue(object, MAP_TYPE_REFERENCE);
+    }
+
+    /**
+     * Convert an object to a map in the given time zone, keeping map entries and collection elements whose value is
+     * <code>null</code> at any nesting depth.
+     *
+     * @see #NULL_VALUE_MAPPER
+     */
+    public static Map<String, Object> toMapKeepingNullValues(Object object, ZoneId zoneId) {
+        return NULL_VALUE_MAPPER
+            .copy()
+            .setTimeZone(TimeZone.getTimeZone(zoneId.getId()))
+            .convertValue(object, MAP_TYPE_REFERENCE);
+    }
+
     public static <T> T toMap(Object map, Class<T> cls) {
         return MAPPER.convertValue(map, cls);
     }

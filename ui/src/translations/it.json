@@ -807,7 +807,7 @@
     "bulk restart": "Sei sicuro di voler riavviare <code>{executionCount}</code> esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
     "cancel": "Annulla",
-    "errorLogs": "Log degli errori",
+    "errorLogs": "Log di errore",
     "welcome_page": {
       "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?"
     },

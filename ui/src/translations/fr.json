@@ -807,7 +807,7 @@
     "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> exécution(s) ?",
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> exécution(s) ?",
     "cancel": "Annuler",
-    "errorLogs": "Logs d'erreur",
+    "errorLogs": "Logs d'erreurs",
     "welcome_page": {
       "guide": "Besoin d'aide pour exécuter votre premier flow ?"
     },

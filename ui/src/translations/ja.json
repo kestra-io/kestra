@@ -1903,7 +1903,8 @@
       "close_all_tabs": "すべてのタブを閉じる",
       "close_all_panels": "すべてのパネルを閉じる",
       "exit_fullscreen": "フルスクリーンを終了",
-      "fullscreen": "全画面表示"
+      "fullscreen": "全画面表示",
+      "split_panel": "パネルを分割"
     },
     "search_docs": "検索",
     "no_results_found": "結果が見つかりません",

@@ -1903,7 +1903,8 @@
       "close_all_tabs": "Закрыть все вкладки",
       "close_all_panels": "Закрыть все панели",
       "exit_fullscreen": "Выйти из полноэкранного режима",
-      "fullscreen": "На весь экран"
+      "fullscreen": "На весь экран",
+      "split_panel": "Разделить панель"
     },
     "search_docs": "Поиск",
     "no_results_found": "Результаты не найдены",

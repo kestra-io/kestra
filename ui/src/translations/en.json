@@ -1903,7 +1903,8 @@
       "close_all_tabs": "Close all tabs",
       "close_all_panels": "Close all panels",
       "exit_fullscreen": "Exit fullscreen",
-      "fullscreen": "Fullscreen"
+      "fullscreen": "Fullscreen",
+      "split_panel": "Split panel"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",

@@ -791,6 +791,7 @@
     "execution labels": "Etiquetas de ejecución",
     "show more labels": "Mostrar {count} etiquetas más",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",
+    "invalid label key": "Key de etiqueta no válida. Una key válida debe empezar con una letra minúscula y contener solo letras minúsculas, números, guiones (-), guiones bajos (_) o puntos (.)",
     "feeds": {
       "heading": "Todo sobre Kestra.",
       "subheading": "Las últimas actualizaciones, guías e historias"

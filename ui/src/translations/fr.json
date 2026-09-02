@@ -791,6 +791,7 @@
     "execution labels": "Labels d'exécution",
     "show more labels": "Afficher {count} étiquettes supplémentaires",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",
+    "invalid label key": "Key de label invalide. Une key valide doit commencer par une lettre minuscule et ne contenir que des lettres minuscules, des chiffres, des tirets (-), des underscores (_) ou des points (.)",
     "feeds": {
       "heading": "Tout sur Kestra.",
       "subheading": "Les dernières mises à jour, guides et histoires"

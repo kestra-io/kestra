@@ -12,6 +12,7 @@ import com.google.common.hash.Hashing;
 abstract public class IdUtils {
     private static final HashFunction HASH_FUNCTION = Hashing.md5();
     private static final char ID_SEPARATOR = '_';
+    private static final char ID_SEPARATOR_PIPE = '|';
 
     public static String create() {
         return FriendlyId.createFriendlyId();
@@ -27,6 +28,10 @@ abstract public class IdUtils {
 
     public static String fromParts(String... parts) {
         return fromPartsAndSeparator(ID_SEPARATOR, parts);
+    }
+
+    public static String fromPartsPipeDelimited(String... parts) {
+        return fromPartsAndSeparator(ID_SEPARATOR_PIPE, parts);
     }
 
     public static String fromPartsAndSeparator(char separator, String... parts) {

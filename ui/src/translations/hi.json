@@ -819,7 +819,7 @@
     "executions unqueue": "<code>{executionCount}</code> execution(s) अनक्यूड",
     "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाए गए",
     "executions restarted": "<code>{executionCount}</code> execution(s) पुनः आरंभ की गईं",
-    "executions killed": "<code>{executionCount}</code> execution(s) killed",
+    "executions killed": "<code>{executionCount}</code> execution(s) समाप्त",
     "executions deleted": "<code>{executionCount}</code> execution(s) हटाई गईं",
     "invalid bulk replay": "निष्पादन पुनः चलाने में असमर्थ",
     "invalid bulk resume": "निष्पादन फिर से शुरू करने में असमर्थ",

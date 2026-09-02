@@ -237,7 +237,8 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
 
             // Correcting in place keeps the rest of the edit; the fallback throws it
             // away, which is why only that branch is reported.
-            const fallback = restoreLines(editor, model, violations) ? undefined : lastValid
+            const repaired = restoreLines(editor, model, violations)
+            const fallback = repaired ? undefined : lastValid
 
             if (fallback !== undefined) {
                 applyCorrection(editor, model, [{
@@ -249,6 +250,14 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
 
             if (selection) editor.setSelection(selection)
             correcting = false
+
+            const corrected = model.getValue()
+            // The rest of the edit survived the correction, so the buffer now holds work
+            // this does not; leaving it behind loses that work at the next fallback.
+            if (repaired) lastValid = corrected
+            // Both corrections replace a range the decorations sit inside, and Monaco
+            // collapses tracked ranges across a replacement rather than moving them.
+            paint(editor, corrected)
 
             if (fallback !== undefined) options.onReverted?.(violations)
         })

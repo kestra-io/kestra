@@ -109,7 +109,7 @@
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
-    import {useExecutionsStore} from "../../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../../stores/executions"
     import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
@@ -129,7 +129,7 @@
     /* ----------------------------- Pebble paths ----------------------------- */
 
     function isValidVariable(key: string): boolean {
-        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)
+        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
     }
 
     function formatStep(key: string): string {
@@ -152,7 +152,8 @@
         }
         if (typeof value === "object") {
             const keys = Object.keys(value as object)
-            return `{ ${keys.join(", ")} }`
+            // Unguarded, an empty object previews as `{  }`.
+            return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
     }
@@ -178,6 +179,12 @@
             preview: preview(value),
             expression: `${prefix}${formatStep(label)}`,
         }))
+    }
+
+    /** Mirrors RunVariables: trigger variables sit at the top level, id and type under `_context`. */
+    function triggerRecord(trigger: Execution["trigger"]): Record<string, unknown> | undefined {
+        if (!trigger) return undefined
+        return {...(trigger.variables ?? {}), _context: {id: trigger.id, type: trigger.type}}
     }
 
     /* ------------------------- Task outputs sourcing ------------------------- */
@@ -326,7 +333,7 @@
         const exec = execution.value
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
-            {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
+            {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
             {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
             {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(flowOutputs.value, "outputs")},

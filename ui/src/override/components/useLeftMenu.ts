@@ -302,9 +302,6 @@ export function useLeftMenu() {
                         icon: {
                             element: LockOutline,
                         },
-                        attributes: {
-                            locked: true,
-                        },
                     },
                     {
                         id: "triggers",
@@ -379,7 +376,7 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: Battery40,
-                        }
+                        },
                     },
                     {
                         id: "iam",

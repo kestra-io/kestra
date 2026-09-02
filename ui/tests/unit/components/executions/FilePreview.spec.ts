@@ -191,6 +191,25 @@ describe("FilePreview — HTML path", () => {
         expect(wrapper.find("iframe").attributes("srcdoc")).toBe(FULL_HTML)
     })
 
+    // Storage rewrites spaces in output file names to "+" and percent-encodes URI-special
+    // characters, so an unencoded ?path= query double-decodes server-side and 422s.
+    test("URL-encodes the storage path in the download link", async () => {
+        fileMetaMock.mockResolvedValue({size: SMALL_SIZE})
+        filePreviewMock.mockResolvedValue({content: "hello", type: "RAW", truncated: false})
+
+        const wrapper = shallowMount(FilePreview, {
+            props: {path: "kestra:///outputs/e1/abc-a%23b+c.txt", executionId: "exec-1"},
+            global: {
+                ...globalConfig,
+                stubs: {...globalConfig.stubs, KsButton: {inheritAttrs: false, template: "<a v-bind=\"$attrs\"><slot /></a>"}},
+            },
+        })
+        await flushPromises()
+
+        expect(wrapper.find("a[href]").attributes("href"))
+            .toBe("http://localhost:8080/api/v1/main/executions/exec-1/file?path=kestra%3A%2F%2F%2Foutputs%2Fe1%2Fabc-a%2523b%2Bc.txt")
+    })
+
     test("does not crash at render when the path prop is undefined", async () => {
         // A backend rejects a request with no path — the realistic outcome for a
         // caller that mounts FilePreview before path is set.

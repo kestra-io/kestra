@@ -42,7 +42,7 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
         KsEditor: {
             name: "KsEditor",
             template: "<div class=\"ks-editor-mock\" data-test=\"ks-editor\"></div>",
-            props: ["modelValue", "lang", "readOnly", "navbar"],
+            props: ["modelValue", "lang", "readOnly", "navbar", "options"],
             emits: ["editorMounted"],
             setup(_props: unknown, {emit, expose}: {emit: (e: string, ...args: unknown[]) => void; expose: (api: Record<string, unknown>) => void}) {
                 expose({
@@ -148,6 +148,7 @@ describe("SourceSearchPreview", () => {
 
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(true)
         expect(mockRevealLineInCenter).toHaveBeenCalledWith(2)
+        expect(wrapper.findComponent({name: "KsEditor"}).props("options")).toEqual({editor: {padding: {top: 16, bottom: 16}}})
     })
 
     test("shows error state when loadFlow rejects", async () => {

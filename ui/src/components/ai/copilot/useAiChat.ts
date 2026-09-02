@@ -50,17 +50,25 @@ export interface ContextNotice {
     id: string
 }
 
+/** A display-only transcript line noting the AI provider/model was switched mid-conversation. */
+export interface ModelChangeNotice {
+    /** The newly selected provider's display name (e.g. "GPT-5 nano"). */
+    label: string
+}
+
 /** A message as rendered in the chat transcript (a superset of the wire MessageView). */
 export interface ChatMessage {
     /** Local, stable key for v-for. */
     id: string
     role: AgentMessageRole
-    /** `"CONTEXT"` is a local, display-only transcript line noting a focus change — never a wire type. */
-    type: AgentMessageType | "CONTEXT"
+    /** `"CONTEXT"` and `"MODEL_CHANGED"` are local, display-only transcript lines — never wire types. */
+    type: AgentMessageType | "CONTEXT" | "MODEL_CHANGED"
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
     /** The focus change to render; present only on a `"CONTEXT"` line. */
     context?: ContextNotice
+    /** The model switch to render; present only on a `"MODEL_CHANGED"` line. */
+    modelChange?: ModelChangeNotice
     toolCall?: ToolCallEvent
     toolResult?: ToolResultEvent
     proposedAction?: ProposedActionEvent
@@ -88,6 +96,8 @@ export function useAiChat() {
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
     /** True when the backend reports no AI provider is configured (503) — render an "unavailable" state. */
     const unavailable = ref(false)
+    /** Title for the next thread created by `ensureThread` (e.g. a seeded "Fix with AI" turn); consumed once. */
+    const nextThreadTitle = ref<string | null>(null)
 
     /** Reference to the assistant bubble currently being streamed into. */
     let activeAssistant: ChatMessage | null = null
@@ -117,13 +127,17 @@ export function useAiChat() {
     /** Creates the thread once and reuses its uid for the rest of the session. */
     async function ensureThread(request: CreateThreadRequest = {}): Promise<ThreadSummary> {
         if (thread.value) return thread.value
-        // `showMessageOnError: false` opts out of the global "page not found" redirect: when no AI
-        // provider is configured the agentic endpoints (`AiAgentController`, `@Requires` the
-        // AiServiceManager bean) aren't registered, so this create 404s — surfaced as the copilot's
-        // own "unavailable" state by sendChat, not a full-page redirect.
+        if (nextThreadTitle.value) {
+            request = {...request, title: nextThreadTitle.value}
+        }
+        // `showMessageOnError: false` keeps the global error toast quiet: when no AI provider is
+        // configured the agentic endpoints (`AiAgentController`, `@Requires` the AiServiceManager
+        // bean) aren't registered, so this create 404s — surfaced as the copilot's own
+        // "unavailable" state by sendChat instead.
         const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false})
         thread.value = data
         status.value = data.status
+        nextThreadTitle.value = null
         rememberThread(data.uid)
         return data
     }
@@ -148,9 +162,9 @@ export function useAiChat() {
 
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
     async function loadThread(threadId: string): Promise<void> {
-        // `showMessageOnError: false` opts out of the global "page not found" so an expected 404 —
-        // the thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
-        // is handled here: forget the remembered id and start a fresh session instead of erroring out.
+        // `showMessageOnError: false` keeps the global error toast quiet for an expected 404 — the
+        // thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
+        // handled here by forgetting the remembered id and starting a fresh session.
         const response = await client
             .get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
             .catch((e: {status?: number; response?: {status?: number}}) => {
@@ -236,14 +250,6 @@ export function useAiChat() {
         await runStream(`${base()}/${active.uid}/chat`, request)
     }
 
-    /** Clears the unavailable state so the user can retry (e.g. after configuring a provider). */
-    function retry(): void {
-        unavailable.value = false
-        error.value = null
-        errorDetail.value = null
-        notice.value = null
-    }
-
     /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
     async function retryLastTurn(): Promise<void> {
         if (!lastTurn || streaming.value) return
@@ -281,6 +287,7 @@ export function useAiChat() {
         notice.value = null
         pendingConfirmation.value = null
         unavailable.value = false
+        nextThreadTitle.value = null
         activeAssistant = null
         lastTurn = null
         forgetThread()
@@ -390,6 +397,16 @@ export function useAiChat() {
         push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: notice})
     }
 
+    /**
+     * Appends a display-only system line noting the AI provider/model was switched — never a turn,
+     * so never sent to the backend or persisted. Suppressed until a conversation has started, same
+     * as `noteContext`.
+     */
+    function noteModelChange(label: string): void {
+        if (messages.value.length === 0) return
+        push({id: uid(), role: "SYSTEM", type: "MODEL_CHANGED", modelChange: {label}})
+    }
+
     function toErrorCode(e: unknown): ErrorCode {
         if (e instanceof SseHttpError) {
             if (e.status === 409) return "turnInProgress"
@@ -408,7 +425,7 @@ export function useAiChat() {
     /**
      * True when the failure is a 404 — the agentic AI endpoints aren't registered because no AI
      * provider is configured (`AiAgentController` is `@Requires(AiServiceManager)`). Treated like a
-     * 503 (copilot unavailable), not the global not-found page.
+     * 503 (copilot unavailable) rather than a generic request failure.
      */
     function is404(e: unknown): boolean {
         if (e instanceof SseHttpError) return e.status === 404
@@ -430,6 +447,7 @@ export function useAiChat() {
         pendingConfirmation,
         unavailable,
         canSend,
+        nextThreadTitle,
         // actions
         ensureThread,
         loadThread,
@@ -438,9 +456,9 @@ export function useAiChat() {
         confirm,
         cancel,
         reset,
-        retry,
         retryLastTurn,
         noteContext,
+        noteModelChange,
     }
 }
 

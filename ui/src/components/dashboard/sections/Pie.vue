@@ -4,6 +4,7 @@
         <div v-else-if="generated?.results?.length" class="chart">
             <KsPie
                 ref="ksPieRef"
+                :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
                 :data="pieData"
                 :loading="false"
                 :donut="chartOptions?.graphStyle !== 'PIE'"
@@ -26,6 +27,7 @@
             :maxVisible="6"
             center
             :chart="ksPieRef"
+            :formatValue="isDuration ? durationUtils.humanDuration : undefined"
         />
     </div>
 </template>
@@ -38,7 +40,7 @@
     import {KsPie, KsSkeleton, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {getConsistentHEXColor} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"

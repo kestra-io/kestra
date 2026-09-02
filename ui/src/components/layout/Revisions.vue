@@ -132,7 +132,7 @@
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import moment from "moment"
+    import {date as dateFilter} from "../../utils/filters"
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
@@ -263,7 +263,7 @@
     function formatTimestamp(updatedDate?: string): string {
         if (!updatedDate) return ""
 
-        return moment(updatedDate).format("YYYY-MM-DD HH:mm")
+        return dateFilter(updatedDate, "YYYY-MM-DD HH:mm")
     }
 
     function formatRevisionText(revision: number): string {

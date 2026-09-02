@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,7 @@ import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.kestra.plugin.core.dashboard.data.MetricsKPI;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -349,6 +351,44 @@ public abstract class AbstractMetricRepositoryTest {
         List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(tenant, "namespace", "flow");
 
         assertThat(tasksWithMetrics).containsExactlyInAnyOrder("taskA", "taskB");
+    }
+
+    @Test
+    void shouldSortByValueUnlikeOtherResourcesWhereItIsExcluded() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 3), null));
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 1), null));
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 2), null));
+
+        Function<String, String> sortMapper = metricRepository.sortMapping();
+        Pageable pageable = Pageable.from(1, 10, Sort.of(Sort.Order.asc(sortMapper.apply("value"))));
+
+        List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, pageable);
+
+        assertThat(results).extracting(MetricEntry::getValue).containsExactly(1.0, 2.0, 3.0);
+    }
+
+    @Test
+    void shouldSortByTaskRunIdUsingItsApiFieldName() {
+        // Regression: AbstractJdbcMetricRepository.sortMapping() used to map the lowercase "taskrunId",
+        // rejecting the camelCase "taskRunId" that MetricEntry#getTaskRunId() and every other sort key
+        // in this map actually use.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+        metricRepository.save(MetricEntry.of(taskRun1, counter("c"), null));
+
+        Function<String, String> sortMapper = metricRepository.sortMapping();
+        String mapped = sortMapper.apply("taskRunId");
+        assertThat(mapped).isNotNull();
+
+        Pageable pageable = Pageable.from(1, 10, Sort.of(Sort.Order.asc(mapped)));
+        List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, pageable);
+
+        assertThat(results).hasSize(1);
     }
 
 }

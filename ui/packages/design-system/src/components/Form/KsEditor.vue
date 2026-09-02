@@ -247,7 +247,7 @@
                 padding-right: inherit;
                 cursor: text;
                 user-select: none;
-                color: var(--ks-text-inactive);
+                color: var(--ks-placeholder-color);
             }
 
             .editor-wrapper {
@@ -313,6 +313,8 @@
             --vscode-editor-background: var(--ks-bg-input);
             --vscode-breadcrumb-background: var(--ks-bg-input);
             --vscode-editorGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScrollGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScroll-background: var(--ks-bg-input);
         }
 
         .monaco-editor .margin {
@@ -377,7 +379,7 @@
                 }
             }
 
-            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+            .monaco-list-row[aria-label^="_DATE_PICKER_"] {
                 display: none;
             }
         }

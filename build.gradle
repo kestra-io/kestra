@@ -20,7 +20,6 @@ plugins {
     id "application"
 
     // test
-    id "com.adarshr.test-logger" version "4.0.0"
     id "org.sonarqube" version "7.4.0.8496"
     id 'jacoco-report-aggregation'
 
@@ -34,7 +33,7 @@ plugins {
     id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.2.6"
+    id "io.kestra.gradle.spotless-conventions" version "1.2.10"
 }
 
 idea {
@@ -170,11 +169,29 @@ allprojects {
 /**********************************************************************************************************************\
  * Test
  **********************************************************************************************************************/
+
+// Per-module test heap, sized from measured peak GC heap occupancy (dev-tools/analyze-test-heap.sh,
+// run with -PprofileHeap) plus ~30% headroom. A single blanket value either wastes memory on small
+// modules or starves large ones — re-profile and bump a module's entry here if it starts failing
+// with OutOfMemoryError / GC overhead limit exceeded.
+ext.testHeapSizes = [
+    'processor'        : '256m',
+    'executor'         : '768m',
+    'scheduler'        : '768m',
+    'worker'           : '768m',
+    'jdbc-mysql'       : '768m',
+    'jdbc-postgres'    : '1024m',
+    'tests'            : '1024m',
+    'cli'              : '1280m',
+    'jdbc-h2'          : '1280m',
+    'webserver'        : '1280m',
+    'core'             : '2560m',
+]
+
 subprojects {subProj ->
 
     if (subProj.name != 'platform' && subProj.name != 'jmh-benchmarks') {
 
-        apply plugin: "com.adarshr.test-logger"
         apply plugin: 'jacoco'
 
         java {
@@ -238,16 +255,29 @@ subprojects {subProj ->
             t.timeout = java.time.Duration.ofMinutes(
                 (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
             )
+            // Bounds a single test method so it fails by itself, rather than a hung test consuming
+            // the module's whole Gradle-level timeout above and discarding every test's JUnit XML.
+            t.systemProperty 'junit.jupiter.execution.timeout.default',
+                System.getenv('JUNIT_TEST_TIMEOUT_MIN') ? "${System.getenv('JUNIT_TEST_TIMEOUT_MIN')} m" : '5 m'
             t.finalizedBy jacocoTestReport
-            t.doFirst {
-                logger.lifecycle("[TASK START] ${t.path}")
-            }
-            t.doLast {
-                logger.lifecycle("[TASK END]   ${t.path}")
+
+
+            // -PprofileHeap: raise the ceiling so no module is heap-starved, and log real GC
+            // occupancy per module so per-module maxHeapSize can be set from measurements
+            // instead of guessed. See dev-tools/analyze-test-heap.sh.
+            if (project.hasProperty('profileHeap')) {
+                t.maxHeapSize = '8g'
+                def heapProfileDir = "${rootDir}/heap-profile"
+                mkdir(heapProfileDir)
+                t.jvmArgs += ["-Xlog:gc:file=${heapProfileDir}/${project.name}-gc.log:time,uptime,level,tags"]
+            } else {
+                t.maxHeapSize = rootProject.ext.testHeapSizes.getOrDefault(project.name, '512m')
             }
 
-            // set Xmx for test workers
-            t.maxHeapSize = '4g'
+            // By default a thread that hits OutOfMemoryError just dies silently (JVM default
+            // UncaughtExceptionHandler) while the rest of the JVM limps on in a degraded state.
+            // Exit immediately instead.
+            t.jvmArgs += ["-XX:+ExitOnOutOfMemoryError"]
 
             // configure en_US default locale for tests
             t.systemProperty 'user.language', 'en'
@@ -355,17 +385,6 @@ subprojects {subProj ->
         tasks.named('check') {
             dependsOn(tasks.named('test'))// default behaviour
             dependsOn(tasks.named('flakyTest'))
-        }
-
-        testlogger {
-            theme = 'mocha-parallel'
-            showExceptions = true
-            showFullStackTraces = true
-            showCauses = true
-            slowThreshold = 2000
-            showStandardStreams = true
-            showPassedStandardStreams = false
-            showSkippedStandardStreams = true
         }
     }
 }

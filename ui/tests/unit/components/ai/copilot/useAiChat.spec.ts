@@ -312,15 +312,6 @@ describe("useAiChat", () => {
         expect(chat.status.value).toBe("IDLE")
     })
 
-    it("retry() clears the unavailable state", async () => {
-        const chat = useAiChat()
-        post.mockRejectedValueOnce({response: {status: 503}})
-        await chat.sendChat({prompt: "hi"})
-        expect(chat.unavailable.value).toBe(true)
-        chat.retry()
-        expect(chat.unavailable.value).toBe(false)
-    })
-
     it("reset() clears the transcript and thread back to the empty state", async () => {
         const chat = useAiChat()
         nextFrames = [{event: "token", data: {text: "hi"}}, {event: "done", data: {status: "IDLE"}}]

@@ -222,7 +222,7 @@
     "next_execution": "Next execution",
     "datepicker": {
       "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
-      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
+      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S')",
       "duration example": "Example: 'P1DT1H1M1S'",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
       "custom": "Custom",
@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
+      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -807,20 +807,20 @@
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "cancel": "Cancel",
-    "errorLogs": "Errors logs",
+    "errorLogs": "Error logs",
     "welcome_page": {
       "guide": "Need guidance to execute your first flow?"
     },
     "product_tour": "Product Tour",
-    "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
+    "executions replayed": "<code>{executionCount}</code> execution(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
-    "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
-    "executions paused": "<code>{executionCount}</code> executions(s) paused",
-    "executions unqueue": "<code>{executionCount}</code> executions(s) unqueue",
-    "executions force run": "<code>{executionCount}</code> executions(s) forced run",
-    "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
-    "executions killed": "<code>{executionCount}</code> executions(s) killed",
-    "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
+    "executions resumed": "<code>{executionCount}</code> execution(s) resumed",
+    "executions paused": "<code>{executionCount}</code> execution(s) paused",
+    "executions unqueue": "<code>{executionCount}</code> execution(s) unqueued",
+    "executions force run": "<code>{executionCount}</code> execution(s) forced run",
+    "executions restarted": "<code>{executionCount}</code> execution(s) restarted",
+    "executions killed": "<code>{executionCount}</code> execution(s) killed",
+    "executions deleted": "<code>{executionCount}</code> execution(s) deleted",
     "invalid bulk replay": "Could not replay executions",
     "invalid bulk resume": "Could not resume executions",
     "invalid bulk pause": "Could not pause executions",
@@ -916,7 +916,7 @@
     "join_slack": "Join Slack",
     "kestra": "Kestra",
     "error detected": "Error(s) detected.",
-    "warning detected": "Warning(s) detected",
+    "warning detected": "Warning(s) detected.",
     "informative notice": "Note(s)",
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
@@ -2088,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot isn't available",
-          "detail": "No AI provider is configured. Ask an administrator to set one up, then try again.",
-          "retry": "Try again"
+          "detail": "No AI provider is configured. Ask an administrator to set one up.",
+          "docs": "View documentation"
         },
         "thinkingWords": [
           "Orchestrating",

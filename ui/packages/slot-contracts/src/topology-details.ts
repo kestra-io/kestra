@@ -28,6 +28,9 @@ export const propsSchema = z.object({
     fetchOutputs: z.custom<(query?: {
         taskRunId?: string
     }) => Promise<Record<string, unknown>>>().optional(),
+    // Resolves a value's expressions against the flow — and, in an execution, that run — for display,
+    // host-side: `secret('K')` is masked as `[secret: K]`, and what it cannot resolve stays raw.
+    resolveForDisplay: z.custom<(value: string) => string>().optional(),
     // This task's metrics in the current execution — searchByExecution with the execution, the
     // tenant and this task already bound. A looped task has one entry set per iteration; pass
     // `taskRunId` to narrow to one. Resolves to an empty page outside an execution.

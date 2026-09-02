@@ -53,6 +53,7 @@
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
                         :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
                         :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
+                        :resolveForDisplay="resolveForDisplay"
                     />
                 </slot>
             </template>
@@ -197,6 +198,7 @@
                     :progress="taskProgress(selectedTask?.id)"
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
                     :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
+                    :resolveForDisplay="resolveForDisplay"
                     displayMode="full"
                     class="mt-3"
                 />
@@ -256,6 +258,7 @@
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
+    import {buildDisplayContext, resolveForDisplay as resolveExpressions} from "../../utils/displayExpression"
 
     const router = useRouter()
     const route = useRoute()
@@ -297,16 +300,17 @@
     // shares its id.
     const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
 
-    const indexTasks = (source: string | undefined): Record<string, any> => {
-        const parsed = YAML_UTILS.parse(source, false)
+    const indexTasks = (parsed: Record<string, any> | undefined): Record<string, any> => {
         const result: Record<string, any> = {}
         TASK_SECTIONS.forEach((section) => collectTasksById(parsed?.[section], result))
         return result
     }
 
+    const parsedFlowSource = computed(() => YAML_UTILS.parse<Record<string, any>>(flowSource.value, false))
+
     // The same document the `source` prop carries, so an artifact's `task` and `source` never
     // disagree.
-    const sourceTaskById = computed(() => indexTasks(flowSource.value))
+    const sourceTaskById = computed(() => indexTasks(parsedFlowSource.value))
 
     const runnersOf = (byId: Record<string, any>): Record<string, any> =>
         Object.fromEntries(
@@ -320,7 +324,7 @@
     const taskRunnerById = computed((): Record<string, any> => {
         const fromFlowSource = runnersOf(sourceTaskById.value)
         if (Object.keys(fromFlowSource).length || flowSource.value === props.source) return fromFlowSource
-        return runnersOf(indexTasks(props.source))
+        return runnersOf(indexTasks(YAML_UTILS.parse(props.source, false)))
     })
 
     // forExecution() strips taskRunner from graph nodes. Re-inject the task's own runner, whole,
@@ -419,6 +423,21 @@
             sort: sort ? [sort] : undefined,
         })
     }
+
+    // Read when CALLED rather than when bound, like the fetchers above: an artifact keeps the props
+    // it was handed while the draft — or the execution — it resolves against goes on changing.
+    const displayContext = computed(() => buildDisplayContext(
+        {
+            id: parsedFlowSource.value?.id ?? props.flowId,
+            namespace: parsedFlowSource.value?.namespace ?? props.namespace,
+            revision: flowStore.flow?.revision,
+            tenantId: tenant.value,
+            variables: parsedFlowSource.value?.variables,
+        },
+        exec.value,
+    ))
+
+    const resolveForDisplay = (value: string) => resolveExpressions(value, displayContext.value)
 
     // Topology nodes only re-evaluate their taskDetails slot (where taskProgress is read) when the
     // graph is regenerated — bump this so a live progress update (which isn't part of `execution`
@@ -896,6 +915,7 @@
                 progress: taskProgress(fullTask?.id),
                 fetchOutputs: fetchTaskOutputs(fullTask?.id),
                 fetchMetrics: fetchTaskMetrics(fullTask?.id),
+                resolveForDisplay,
             }
             isTaskModalOpen.value = true
             return

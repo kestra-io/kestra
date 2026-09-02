@@ -113,8 +113,8 @@ public abstract class AbstractRunnerTest {
     }
 
     /**
-     * A null nested inside an output must survive the round-trip through the output store as an explicit null,
-     * so a downstream expression renders an empty value instead of failing on a missing variable.
+     * A nested null must survive the round-trip through the output store, so a downstream expression renders
+     * empty instead of failing on a missing variable.
      *
      * @see <a href="https://github.com/kestra-io/plugin-transform/issues/110">plugin-transform#110</a>
      */

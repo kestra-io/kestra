@@ -38,8 +38,7 @@ class NullOutputTest {
     }
 
     /**
-     * A null nested as map <em>content</em>, which must stay an explicit null rather than become an absent key,
-     * so a downstream expression renders an empty value instead of failing on a missing variable.
+     * A null as map <em>content</em>, which must stay an explicit null rather than become an absent key.
      *
      * @see <a href="https://github.com/kestra-io/plugin-transform/issues/110">plugin-transform#110</a>
      */

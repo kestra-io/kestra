@@ -145,7 +145,7 @@ class JacksonMapperTest {
         Map<String, Object> nested = new LinkedHashMap<>();
         nested.put("b", null);
 
-        // the zoned overload copies the mapper, which must not lose the content inclusion
+        // the copy() in the zoned overload must not lose the content inclusion
         Map<String, Object> result = JacksonMapper.toMapKeepingNullValues(
             new NullContentPojo(List.of(nested), null), ZoneId.of("Asia/Tokyo")
         );

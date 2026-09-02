@@ -103,39 +103,20 @@ public final class JacksonMapper {
     }
 
     /**
-     * Same as the JSON mapper, but with {@link JsonInclude.Include#ALWAYS} as <em>content</em> inclusion instead of
-     * {@link JsonInclude.Include#NON_NULL}, so map entries and collection elements whose value is <code>null</code>
-     * are kept at any nesting depth.
-     * <p>
-     * <em>Value</em> inclusion stays {@link JsonInclude.Include#NON_NULL}: null bean properties are still omitted.
-     * Note that the single-argument {@code setDefaultPropertyInclusion} used for the other mappers sets both, which
-     * is why they drop null map entries.
-     * <p>
-     * This is needed wherever an explicit <code>null</code> is data and must not become an absent key, typically for
-     * task outputs.
-     *
-     * @see #toMapKeepingNullValues(Object)
+     * Keeps null map entries and collection elements ({@code ALWAYS} content inclusion) while still omitting null
+     * bean properties ({@code NON_NULL} value inclusion). The single-argument {@code setDefaultPropertyInclusion}
+     * used by the other mappers sets both, which is why they drop null map entries.
      */
     private static final ObjectMapper NULL_CONTENT_MAPPER = MAPPER
         .copy()
         .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
 
-    /**
-     * Convert an object to a map, keeping map entries and collection elements whose value is <code>null</code>
-     * at any nesting depth.
-     *
-     * @see #NULL_CONTENT_MAPPER
-     */
+    /** @see #NULL_CONTENT_MAPPER */
     public static Map<String, Object> toMapKeepingNullValues(Object object) {
         return NULL_CONTENT_MAPPER.convertValue(object, MAP_TYPE_REFERENCE);
     }
 
-    /**
-     * Convert an object to a map in the given time zone, keeping map entries and collection elements whose value is
-     * <code>null</code> at any nesting depth.
-     *
-     * @see #NULL_CONTENT_MAPPER
-     */
+    /** @see #NULL_CONTENT_MAPPER */
     public static Map<String, Object> toMapKeepingNullValues(Object object, ZoneId zoneId) {
         return NULL_CONTENT_MAPPER
             .copy()

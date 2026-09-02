@@ -13,12 +13,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 /**
- * Emits an output holding a nested map with an explicit null value, as data-transform tasks do when they
- * are configured to keep nulls.
- * <p>
- * The null here is map <em>content</em>, which is what the output mapper must keep. Compare with
- * {@link NullOutputTask}, whose null is a bean <em>property</em> and is only kept thanks to an explicit
- * {@link com.fasterxml.jackson.annotation.JsonInclude}.
+ * Emits a nested map holding an explicit null, as data-transform tasks do when configured to keep nulls.
+ * The null is map <em>content</em>; compare {@link NullOutputTask}, whose null is a bean <em>property</em>.
  */
 @SuperBuilder
 @ToString

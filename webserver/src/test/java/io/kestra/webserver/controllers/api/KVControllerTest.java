@@ -355,7 +355,9 @@ class KVControllerTest {
             Arguments.of(MediaType.TEXT_PLAIN, "false", Boolean.class),
             Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01", LocalDate.class),
             Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01T01:02:03Z", Instant.class),
-            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", Duration.class)
+            // A quoted duration-shaped value is a string the user asked for; only a bare one is a duration.
+            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", String.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "PT5S", Duration.class)
         );
     }
 
@@ -376,6 +378,37 @@ class KVControllerTest {
         assertThat(kvEntry.expirationDate().isAfter(Instant.now().plus(Duration.ofMinutes(4)))).isTrue();
         assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
         assertThat(kvEntry.description()).isEqualTo(myDescription);
+    }
+
+    @Test
+    void shouldKeepAQuotedDurationShapedValueAsAStringWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/quoted", "\"PT30M\"")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        KVValue stored = kvStore().getValue("quoted").get();
+
+        assertThat(stored.value()).isEqualTo("PT30M");
+        assertThat(KVType.from(stored.value())).isEqualTo(KVType.STRING);
+    }
+
+    @Test
+    void shouldNotRewriteAQuotedDurationShapedValueWhenSetting() throws IOException, ResourceExpiredException {
+        // P5D used to come back as PT120H, so the value was changed as well as its type.
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/quoted-days", "\"P5D\"")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        assertThat(kvStore().getValue("quoted-days").get().value()).isEqualTo("P5D");
+    }
+
+    @Test
+    void shouldStillReadAnUnquotedDurationAsADurationWhenSetting() throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest
+            .PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bare", "PT30M")
+            .contentType(MediaType.TEXT_PLAIN));
+
+        assertThat(kvStore().getValue("bare").get().value()).isEqualTo(Duration.ofMinutes(30));
     }
 
     private InternalKVStore kvStore() {

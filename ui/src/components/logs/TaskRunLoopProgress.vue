@@ -1,6 +1,7 @@
 <template>
     <div style="flex:1">
         <KsProgress
+            v-if="loopIterationCount > 0"
             :percentage="consolidatedTerminalStates / loopIterationCount * 100"
             :strokeWidth="7"
             :radius="81"

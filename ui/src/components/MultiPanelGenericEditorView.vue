@@ -14,10 +14,10 @@
         </MultiPanelEditorTabs>
         <div class="editor-wrapper">
             <KsSplitter class="default-theme editor-panels" :layout="splitOrientation">
-                <KsSplitterPanel>
+                <KsSplitterPanel min="100">
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
                 </KsSplitterPanel>
-                <KsSplitterPanel v-if="bottomVisible && slots['bottom-panel']">
+                <KsSplitterPanel v-if="bottomVisible && slots['bottom-panel']" size="30%" min="100">
                     <slot name="bottom-panel" />
                 </KsSplitterPanel>
             </KsSplitter>
@@ -178,11 +178,18 @@
     :deep(.editor-panels){
         position: absolute;
     }
-    :deep(.kel-splitter-bar){
-        width: 2px !important;
-    }
 
     .default-theme{
+        :deep(.kel-splitter__horizontal > .kel-splitter-bar){
+            width: 2px !important;
+        }
+
+        :deep(.kel-splitter__vertical > .kel-splitter-bar){
+            height: 4px !important;
+            width: 100% !important;
+            cursor: ns-resize;
+        }
+
         :deep(.kel-splitter-panel) {
             background-color: var(--ks-bg-surface);
         }

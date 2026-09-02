@@ -1903,7 +1903,8 @@
       "close_all_tabs": "Zamknij wszystkie zakładki",
       "close_all_panels": "Zamknij wszystkie panele",
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
-      "fullscreen": "Pełny ekran"
+      "fullscreen": "Pełny ekran",
+      "split_panel": "Podziel panel"
     },
     "search_docs": "Szukaj",
     "no_results_found": "Nie znaleziono wyników",

@@ -1903,7 +1903,8 @@
       "close_all_tabs": "सभी टैब बंद करें",
       "close_all_panels": "सभी पैनल बंद करें",
       "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
-      "fullscreen": "पूर्णस्क्रीन"
+      "fullscreen": "पूर्णस्क्रीन",
+      "split_panel": "पैनल विभाजित करें"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",

@@ -90,7 +90,7 @@ dependencies {
         api "org.slf4j:jcl-over-slf4j:$slf4jVersion"
         api "org.fusesource.jansi:jansi:2.4.3"
         api "com.devskiller.friendly-id:friendly-id:1.1.0"
-        api "net.thisptr:jackson-jq:1.6.2"
+        api "net.thisptr:jackson-jq:1.6.3"
         api "com.google.guava:guava:33.7.1-jre"
         api "commons-io:commons-io:2.22.0"
         api "org.apache.commons:commons-lang3:3.20.0"

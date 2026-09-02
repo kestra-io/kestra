@@ -139,7 +139,7 @@ public abstract class AbstractTriggerRepositoryTest {
         TriggerState.TriggerStateBuilder builder = trigger(tenant);
 
         // WHEN
-        Optional<TriggerState> result = triggerStateStore.findById(builder.build());
+        Optional<TriggerState> result = triggerStateStore.findByIdWithoutAcl(builder.build());
 
         // THEN
         assertThat(result).isEmpty();
@@ -153,7 +153,7 @@ public abstract class AbstractTriggerRepositoryTest {
         triggerStateStore.save(state);
 
         // WHEN
-        Optional<TriggerState> result = triggerStateStore.findById(state);
+        Optional<TriggerState> result = triggerStateStore.findByIdWithoutAcl(state);
 
         // THEN
         assertThat(result).isNotEmpty();
@@ -174,7 +174,7 @@ public abstract class AbstractTriggerRepositoryTest {
         triggerStateStore.save(updated);
 
         // THEN
-        Optional<TriggerState> result = triggerStateStore.findById(updated);
+        Optional<TriggerState> result = triggerStateStore.findByIdWithoutAcl(updated);
         assertThat(result).isNotEmpty();
         assertThat(TriggerId.of(result.get())).isEqualTo(TriggerId.of(updated));
         assertThat(result.get().getUpdatedAt()).isEqualTo(updatedAt);

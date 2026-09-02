@@ -44,7 +44,7 @@ public class InMemoryTriggerStateStore implements TriggerStateStore {
     }
 
     @Override
-    public Optional<TriggerState> findById(TriggerId triggerId) {
+    public Optional<TriggerState> findByIdWithoutAcl(TriggerId triggerId) {
         return Optional.ofNullable(store.get(TriggerId.of(triggerId)));
     }
 

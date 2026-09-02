@@ -21,6 +21,7 @@ import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 const textYamlHeader = {
     headers: {
@@ -433,7 +434,13 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean }) {
+    let latestFlowLoad = 0
+
+    async function loadFlow(
+        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
+        requestOptions?: KestraRequestOptions,
+    ) {
+        const load = options.store === false ? undefined : ++latestFlowLoad
         let data: Flow & {exception?: string}
         try {
             data = await FlowsAPI.flow({
@@ -442,7 +449,7 @@ export const useFlowStore = defineStore("flow", () => {
                 revision: options.revision ? Number(options.revision) : undefined,
                 allowDeleted: options.allowDeleted,
                 source: true,
-            }) as Flow & {exception?: string}
+            }, requestOptions) as Flow & {exception?: string}
         } catch (e: any) {
             if (options.deleted && e.status === 404) {
                 return e.body ?? {}
@@ -450,7 +457,9 @@ export const useFlowStore = defineStore("flow", () => {
             throw e
         }
 
-        if (options.store === false) {
+        // A load the user has navigated away from must not become the flow on screen, the same way a
+        // superseded search is dropped in `stores/logs.ts`.
+        if (options.store === false || load !== latestFlowLoad) {
             return data
         }
 

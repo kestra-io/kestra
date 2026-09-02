@@ -1904,7 +1904,8 @@
       "close_all_tabs": "Fechar todas as abas",
       "close_all_panels": "Fechar todos os painéis",
       "exit_fullscreen": "Sair do modo de tela cheia",
-      "fullscreen": "Tela Cheia"
+      "fullscreen": "Tela Cheia",
+      "split_panel": "Dividir painel"
     },
     "search_docs": "Pesquisar",
     "no_results_found": "Nenhum resultado encontrado",
@@ -1917,7 +1918,9 @@
       "triggers": "Nenhum Trigger Encontrado",
       "flows": "Nenhum Flow Encontrado",
       "kv_pairs": "Nenhum par de Key-Value encontrado",
-      "secrets": "Nenhum Secret Encontrado"
+      "secrets": "Nenhum Secret Encontrado",
+      "all_columns_hidden": "Todas as colunas estão ocultas",
+      "all_columns_hidden_description": "Ative pelo menos uma coluna novamente em Personalizar colunas da tabela para ver os dados novamente."
     },
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "dashboards": {

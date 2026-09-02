@@ -311,6 +311,24 @@ class InternalKVStoreTest {
         assertThat(result.get().value()).isEqualTo(42);
     }
 
+    @Test
+    void shouldNotCollideWhenNamespaceAndKeyConcatenateToSameString() throws IOException, ResourceExpiredException {
+        String prefix = IdUtils.create();
+        InternalKVStore store1 = new InternalKVStore(MAIN_TENANT, prefix + ".company.team", storageInterface, kvMetadataStateStore);
+        InternalKVStore store2 = new InternalKVStore(MAIN_TENANT, prefix + ".company.team_x", storageInterface, kvMetadataStateStore);
+
+        store1.put("x_y", new KVValueAndMetadata(null, "valueA"));
+        store2.put("y", new KVValueAndMetadata(null, "valueB"));
+
+        Optional<KVValue> val1 = store1.getValue("x_y");
+        Optional<KVValue> val2 = store2.getValue("y");
+
+        assertThat(val1).isPresent();
+        assertThat(val1.get().value()).isEqualTo("valueA");
+        assertThat(val2).isPresent();
+        assertThat(val2.get().value()).isEqualTo("valueB");
+    }
+
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
         return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface, kvMetadataStateStore);

@@ -98,6 +98,6 @@ public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, 
 
     @Override
     public String uid() {
-        return IdUtils.fromParts(getTenantId(), getNamespace(), getName(), String.valueOf(getRevision()));
+        return IdUtils.fromPartsPipeDelimited(getTenantId(), getNamespace(), getName(), String.valueOf(getRevision()));
     }
 }

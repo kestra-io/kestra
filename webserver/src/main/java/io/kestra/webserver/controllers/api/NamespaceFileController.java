@@ -304,19 +304,21 @@ public class NamespaceFileController {
     @Operation(tags = { "Files" }, summary = "Move a file or directory")
     public void moveFileDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri to move from") @QueryValue URI from,
-        @Parameter(description = "The internal storage uri to move to") @QueryValue URI to) throws Exception {
+        @Parameter(description = "The internal storage uri to move from") @QueryValue String from,
+        @Parameter(description = "The internal storage uri to move to") @QueryValue String to) throws Exception {
         innerMoveFileDirectory(namespace, from, to);
     }
 
-    protected List<Pair<NamespaceFile, NamespaceFile>> innerMoveFileDirectory(String namespace, URI from, URI to) throws Exception {
-        ensureWritableNamespaceFile(from);
-        ensureWritableNamespaceFile(to);
+    protected List<Pair<NamespaceFile, NamespaceFile>> innerMoveFileDirectory(String namespace, String from, String to) throws Exception {
+        URI encodedFrom = toFileUri(slashPrefixed(from));
+        URI encodedTo = toFileUri(slashPrefixed(to));
+        ensureWritableNamespaceFile(encodedFrom);
+        ensureWritableNamespaceFile(encodedTo);
 
         String tenantId = tenantService.resolveTenant();
 
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
-        return namespaceStorage.move(Path.of(from.getPath()), Path.of(to.getPath()));
+        return namespaceStorage.move(Path.of(encodedFrom.getPath()), Path.of(encodedTo.getPath()));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -365,6 +367,11 @@ public class NamespaceFileController {
      */
     private static URI toFileUri(String path) throws URISyntaxException {
         return new URI(null, null, path, null);
+    }
+
+    /** Makes the path absolute, as both the forbidden-path guard and the storage layer expect. */
+    private static String slashPrefixed(String path) {
+        return path.startsWith("/") ? path : "/" + path;
     }
 
     private void forbiddenPathsGuard(URI path) {

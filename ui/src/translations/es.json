@@ -2572,6 +2572,7 @@
         "message": "Corrige los errores antes de guardar.",
         "title": "No se puede guardar el flow"
       },
+      "schema_default_tooltip": "Valor predeterminado que se usa cuando el campo no está definido",
       "search_task_placeholder": "Buscar o describir una task…",
       "shortcuts": {
         "add_after": "Insertar un bloque después de la selección",

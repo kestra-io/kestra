@@ -471,18 +471,33 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
 
+                // Rendered independently so an unrenderable output doesn't discard the inputs of the same task.
+                List<AssetIdentifier> declaredInputs = List.of();
+                try {
+                    declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
+                } catch (IllegalVariableEvaluationException e) {
+                    logger.warn("Unable to render the declared asset inputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                }
+
+                List<Asset> declaredOutputs = List.of();
+                try {
+                    declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
+                } catch (IllegalVariableEvaluationException e) {
+                    logger.warn("Unable to render the declared asset outputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                }
+
                 // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
                 // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
                 List<AssetsInOut> bundles = new ArrayList<>();
-                List<AssetIdentifier> declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
-                List<Asset> declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
                     bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
                 }
                 runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
 
                 if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(bundles);
+                    taskRun = taskRun.withAssetEmits(withDefaultNamespace(bundles, taskRun.getNamespace()));
                 }
             }
         } catch (ConstraintViolationException e) {
@@ -496,7 +511,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 assetEmission = TaskRunWithOutput.AssetEmission.DECLARATION_INVALID;
             }
         } catch (Exception e) {
-            logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
+            logger.warn("Unable to emit the assets of task '{}'", taskRun.getTaskId(), e);
             assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
         }
 
@@ -508,6 +523,25 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             .filter(violation -> violation.getPropertyPath().toString().startsWith(propertyPathPrefix))
             .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
             .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * An asset emitted without a namespace belongs to the flow emitting it, and left null it is filtered
+     * out of the view of every user whose asset permission is scoped to namespaces rather than global.
+     */
+    private static List<AssetsInOut> withDefaultNamespace(List<AssetsInOut> bundles, String namespace) {
+        return bundles.stream()
+            .map(
+                bundle -> new AssetsInOut(
+                    bundle.getInputs().stream()
+                        .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
+                        .toList(),
+                    bundle.getOutputs().stream()
+                        .map(output -> output.getNamespace() == null ? output.withNamespace(namespace) : output)
+                        .toList()
+                )
+            )
+            .toList();
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

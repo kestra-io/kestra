@@ -55,12 +55,12 @@
             </template>
             <template #taskActions="taskProps">
                 <TaskRunActions
-                    v-if="taskProps.execution && taskProps.taskRun"
+                    v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
                     class="node-action-button"
                     :taskRun="taskProps.taskRun"
                     :execution="taskProps.execution"
                     :flow="flowStore.flow"
-                    :nodeActions="taskProps.actions.filter(a => !['outputs', 'replay', 'edit'].includes(a.key))"
+                    :nodeActions="taskProps.actions.filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))"
                     @follow="$emit('follow', $event)"
                 />
                 <NodeMenu v-else :actions="taskProps.actions" />
@@ -243,6 +243,8 @@
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+
+    const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useAuthStore} from "override/stores/auth"

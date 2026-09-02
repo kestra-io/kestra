@@ -5,16 +5,11 @@
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
-                <KsDropdownItem
+                <NodeMenuItem
                     v-for="action in nodeActions"
                     :key="action.key"
-                    :divided="action.divided"
-                    :icon="action.icon"
-                    :class="{'node-action--danger': action.danger}"
-                    @click="action.onClick()"
-                >
-                    {{ action.label }}
-                </KsDropdownItem>
+                    :action="action"
+                />
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
@@ -126,6 +121,8 @@
     import TaskEdit from "../flows/TaskEdit.vue"
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
+    import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
+
 
     const props = withDefaults(defineProps<{
         taskRun: any
@@ -134,7 +131,7 @@
         attemptIndex?: number
         forcedAttemptNumber?: number
         attemptLogs?: any[]
-        nodeActions?: any[]
+        nodeActions?: NodeAction[]
     }>(), {
         flow: undefined,
         attemptIndex: 0,

@@ -85,7 +85,7 @@
     "@tsdown/css": "^0.22.1",
     "@types/humanize-duration": "^3.27.4",
     "@types/mdast": "^4.0.4",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.4.0",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vitejs/plugin-vue-jsx": "^5.1.5",
     "@vitest/browser": "^4.1.7",

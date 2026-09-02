@@ -97,7 +97,7 @@
     "axe-core": "^4.12.1",
     "globals": "^17.6.0",
     "happy-dom": "^20.9.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "playwright": "^1.59.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

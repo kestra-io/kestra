@@ -335,9 +335,21 @@ public final class TriggerState implements TriggerId {
             .build();
     }
 
+    /**
+     * Checks whether this state carries a backfill that is currently paused.
+     * <p>
+     * A paused backfill freezes its {@code currentDate}, hence the trigger's next evaluation date, so such a
+     * trigger must not be evaluated until the backfill is resumed.
+     *
+     * @return {@code true} if the backfill is paused.
+     */
+    public boolean hasPausedBackfill() {
+        return backfill != null && Boolean.TRUE.equals(backfill.getPaused());
+    }
+
     private Backfill getBackFillForNextEvaluationDate(final Instant nextEvaluationDate) {
         final ZonedDateTime localNextEvaluationDate = toZonedDateTime(nextEvaluationDate);
-        if (backfill != null && !backfill.getPaused()) {
+        if (backfill != null && !hasPausedBackfill()) {
             if (localNextEvaluationDate.isAfter(backfill.getEnd())) {
                 return null;
             } else {

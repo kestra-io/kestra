@@ -45,11 +45,12 @@ class PebbleExpressionServiceTest {
         // secret function
         PebbleFunction secret = findFunction("secret");
         assertThat(secret.arguments()).extracting(PebbleFunction.Argument::name)
-            .containsExactly("key", "namespace", "subkey", "full");
+            .containsExactly("key", "namespace", "subkey", "full", "errorOnMissing");
         assertThat(secret.arguments().get(0).defaultValue()).isEqualTo("'MY_SECRET'");
         assertThat(secret.arguments().get(1).defaultValue()).isEqualTo("flow.namespace");
         assertThat(secret.arguments().get(2).defaultValue()).isNull();
         assertThat(secret.arguments().get(3).defaultValue()).isNull();
+        assertThat(secret.arguments().get(4).defaultValue()).isNull();
 
         // kv function
         PebbleFunction kv = findFunction("kv");

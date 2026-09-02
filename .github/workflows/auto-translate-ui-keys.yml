@@ -31,6 +31,7 @@ jobs:
           name: Checkout
           with:
             fetch-depth: 0
+            persist-credentials: false
 
         - name: Set up Node
           uses: actions/setup-node@v7
@@ -100,7 +101,12 @@ jobs:
               echo "Someone from the @kestra-io/frontend team needs to review and merge."
             } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
-            git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
+            # persist-credentials is disabled on checkout: authenticate each push with a one-off
+            # extraheader instead, so the token is never written to .git/config.
+            AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)"
+            git -c http.https://github.com/.extraheader="${AUTH_HEADER}" push -u origin $BRANCH_NAME || \
+              (git -c http.https://github.com/.extraheader="${AUTH_HEADER}" push origin --delete $BRANCH_NAME && \
+               git -c http.https://github.com/.extraheader="${AUTH_HEADER}" push -u origin $BRANCH_NAME)
             PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base ${{ github.ref_name }} --head $BRANCH_NAME)
             if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               gh pr edit "$PR_URL" --add-reviewer "${{ github.actor }}" || echo "Could not request a review from ${{ github.actor }} on $PR_URL"

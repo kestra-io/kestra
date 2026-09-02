@@ -439,6 +439,9 @@
     "documentationMenu": "文档菜单",
     "down trend": "减少",
     "download": "下载",
+    "file_preview": {
+        "big_file_download_only": "此文件大小为{size}。它太大，无法在编辑器中打开，请改为下载。"
+    },
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
     "draft_available": "编辑器中有可用的草稿更改",

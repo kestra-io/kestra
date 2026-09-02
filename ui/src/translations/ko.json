@@ -439,6 +439,9 @@
     "documentationMenu": "문서 메뉴",
     "down trend": "감소 중",
     "download": "다운로드",
+    "file_preview": {
+        "big_file_download_only": "이 파일의 크기는 {size}입니다. 에디터에서 열기에는 너무 크므로 대신 다운로드하세요."
+    },
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
     "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",

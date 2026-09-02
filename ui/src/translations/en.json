@@ -342,6 +342,9 @@
         "variables": "Variables",
         "no_variables": "No variables available.",
         "download": "Download",
+        "file_preview": {
+            "big_file_download_only": "This file is {size}. It is too large to open in the editor, download it instead."
+        },
         "concurrency_limit": {
             "dialog_title": "Concurrency Limits",
             "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"

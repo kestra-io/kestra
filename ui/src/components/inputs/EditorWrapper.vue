@@ -5,6 +5,14 @@
             :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
             class="image-preview"
         >
+        <div v-else-if="bigFile" class="big-file-warning" data-test="big-file-warning">
+            <el-alert type="warning" :closable="false">
+                {{ $t("file_preview.big_file_download_only", {size: humanSize}) }}
+            </el-alert>
+            <el-button type="primary" data-test="big-file-download" :icon="Download" @click="downloadFile()">
+                {{ $t("download") }}
+            </el-button>
+        </div>
         <Editor
             v-else
             id="editorWrapper"
@@ -114,6 +122,7 @@
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import Download from "vue-material-design-icons/Download.vue";
     import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
@@ -168,13 +177,32 @@
         return authStore.user?.isAllowed(permission.FLOW, action.CREATE, fileNamespace?.toString()) ?? false;
     });
 
+    /** 10MB */
+    const BIG_FILE_THRESHOLD = 10 * 1024 * 1024;
+
+    const bigFile = ref(false);
+    const fileSize = ref<number>();
+
     async function loadFile() {
         if (props.dirty || props.flow) return;
 
-        const fileNamespace = namespace.value ?? route.params?.namespace;
-        if (!fileNamespace) return;
+        if (!fileNamespace.value) return;
+
+        try {
+            const stats = await namespacesStore.fileMetadata({
+                namespace: fileNamespace.value,
+                path: props.path ?? ""
+            });
+            fileSize.value = stats?.size;
+        } catch {
+            /** the size guard must not block the file when stats are unavailable */
+            fileSize.value = undefined;
+        }
+        bigFile.value = (fileSize.value ?? 0) >= BIG_FILE_THRESHOLD;
+        if (bigFile.value) return;
+
         const result = await namespacesStore.readFile({
-            namespace: fileNamespace.toString(),
+            namespace: fileNamespace.value,
             path: props.path ?? ""
         });
 
@@ -193,6 +221,15 @@
             sourceNS.value = result.content;
             savedSourceNS.value = result.content;
         }
+    }
+
+    async function downloadFile() {
+        if (!fileNamespace.value) return;
+        const blob = await namespacesStore.downloadFile({
+            namespace: fileNamespace.value,
+            path: props.path ?? ""
+        });
+        Utils.downloadUrl(window.URL.createObjectURL(blob), props.name);
     }
 
     const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {});
@@ -270,6 +307,8 @@
     const editorRefElement = ref<InstanceType<typeof Editor>>();
 
     const namespace = computed(() => flowStore.flow?.namespace);
+    const fileNamespace = computed(() => (namespace.value ?? route.params?.namespace)?.toString());
+    const humanSize = computed(() => fileSize.value === undefined ? "" : Utils.humanFileSize(fileSize.value));
     const isCreating = computed(() => flowStore.isCreating);
 
     const timeout = ref<any>(null);
@@ -525,5 +564,13 @@
 
     .image-preview {
         margin: 2rem;
+    }
+
+    .big-file-warning {
+        display: flex;
+        flex-direction: column;
+        align-items: end;
+        gap: 1rem;
+        margin: 1.5rem;
     }
 </style>

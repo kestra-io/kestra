@@ -439,6 +439,9 @@
     "documentationMenu": "Menú de documentación",
     "down trend": "Disminuyendo",
     "download": "Descargar",
+    "file_preview": {
+        "big_file_download_only": "Este archivo tiene un tamaño de {size}. Es demasiado grande para abrirlo en el editor, descárguelo en su lugar."
+    },
     "download logs": "Descargar logs",
     "download_logos": "Descargar Paquete de Logos",
     "draft_available": "El cambio en borrador está disponible en el editor",

@@ -439,6 +439,9 @@
     "documentationMenu": "Menu de documentation",
     "down trend": "En baisse",
     "download": "Télécharger",
+    "file_preview": {
+        "big_file_download_only": "Ce fichier fait {size}. Il est trop volumineux pour être ouvert dans l'éditeur, téléchargez-le à la place."
+    },
     "download logs": "Télécharger les logs",
     "download_logos": "Télécharger le pack de logos",
     "draft_available": "Un changement de brouillon est disponible dans l'éditeur",

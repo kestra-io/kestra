@@ -439,6 +439,9 @@
     "documentationMenu": "Dokumentationsmenü",
     "down trend": "Sinkend",
     "download": "Herunterladen",
+    "file_preview": {
+        "big_file_download_only": "Diese Datei ist {size} groß. Sie ist zu groß, um sie im Editor zu öffnen, laden Sie sie stattdessen herunter."
+    },
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
     "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",

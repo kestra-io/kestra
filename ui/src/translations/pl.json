@@ -439,6 +439,9 @@
     "documentationMenu": "Menu dokumentacji",
     "down trend": "Malejący",
     "download": "Pobierz",
+    "file_preview": {
+        "big_file_download_only": "Ten plik ma rozmiar {size}. Jest zbyt duży, aby otworzyć go w edytorze, pobierz go zamiast tego."
+    },
     "download logs": "Pobierz logs",
     "download_logos": "Pobierz Pakiet Logo",
     "draft_available": "Szkic zmiany jest dostępny w edytorze",

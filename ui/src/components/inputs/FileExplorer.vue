@@ -941,13 +941,10 @@
     }
 
     async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const {content} = await namespacesStore.readFile({
-            path: filesStore.getPath(node.id) ?? "",
+        const blob = await namespacesStore.downloadFile({
             namespace: namespaceId.value,
+            path: filesStore.getPath(node.id) ?? "",
         });
-        if(!content?.length) 
-            throw new Error("File is empty or undefined");
-        const blob = new Blob([content], {type: "text/plain"});
         Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
     }
 

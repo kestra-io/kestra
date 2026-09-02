@@ -439,6 +439,9 @@
     "documentationMenu": "ドキュメントメニュー",
     "down trend": "減少",
     "download": "ダウンロード",
+    "file_preview": {
+        "big_file_download_only": "このファイルのサイズは{size}です。エディタで開くには大きすぎるため、代わりにダウンロードしてください。"
+    },
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
     "draft_available": "エディターでドラフト変更が利用可能です",

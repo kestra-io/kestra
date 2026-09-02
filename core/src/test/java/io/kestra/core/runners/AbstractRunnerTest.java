@@ -119,8 +119,8 @@ public abstract class AbstractRunnerTest {
      * @see <a href="https://github.com/kestra-io/plugin-transform/issues/110">plugin-transform#110</a>
      */
     @Test
-    @ExecuteFlow("flows/valids/null-value-output-render.yaml")
-    void nullValueOutput(Execution execution) throws Exception {
+    @ExecuteFlow("flows/valids/null-content-output.yaml")
+    void nullContentOutput(Execution execution) throws Exception {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("produce").getFirst());

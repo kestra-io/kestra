@@ -1,6 +1,0 @@
-id: null-value-output
-namespace: io.kestra.tests
-
-tasks:
-  - id: null-value-output
-    type: io.kestra.core.tasks.test.NullValueOutputTask

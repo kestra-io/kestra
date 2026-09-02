@@ -1,9 +1,9 @@
-id: null-value-output-render
+id: null-content-output
 namespace: io.kestra.tests
 
 tasks:
   - id: produce
-    type: io.kestra.core.tasks.test.NullValueOutputTask
+    type: io.kestra.core.tasks.test.NullContentOutputTask
 
   - id: render_null
     type: io.kestra.plugin.core.debug.Return

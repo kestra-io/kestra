@@ -337,7 +337,15 @@ public class PluginController {
             "RealtimeTriggerInterface) or app (implements PollingTriggerInterface)."
     )
     public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
-        List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
+        List<ApiTriggerPlugin> all = toTriggerPluginCatalog(pluginRegistry.plugins());
+
+        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
+    }
+
+    // A plugin installed in several versions registers one RegisteredPlugin per version, each
+    // exposing the same trigger classes - keep a single catalog entry per trigger type.
+    protected List<ApiTriggerPlugin> toTriggerPluginCatalog(List<RegisteredPlugin> plugins) {
+        return plugins.stream()
             .flatMap(
                 registeredPlugin -> registeredPlugin.getTriggers().stream()
                     .filter(c -> !isInternal(c))
@@ -345,13 +353,13 @@ public class PluginController {
                     .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
+            .collect(Collectors.toMap(ApiTriggerPlugin::type, dto -> dto, (first, duplicate) -> first, LinkedHashMap::new))
+            .values().stream()
             .sorted(
                 Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
                     .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER)
             )
             .toList();
-
-        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
     }
 
     protected ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
@@ -364,6 +372,7 @@ public class PluginController {
             triggerClass.getName(),
             title,
             io.kestra.core.docs.Plugin.titleFor(registeredPlugin, triggerClass),
+            registeredPlugin.title(),
             description,
             TriggerPluginCategory.classify(registeredPlugin, triggerClass),
             isEnterpriseEdition(registeredPlugin, triggerClass),
@@ -506,6 +515,7 @@ public class PluginController {
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),
                     plugin.getAppBlocks().stream(),
+                    plugin.getRules().stream(),
                     plugin.getAdditionalPlugins().stream()
                 )
                     .flatMap(i -> i)
@@ -807,6 +817,10 @@ public class PluginController {
      *        its own declared metadata rather than guessed from the class package — used
      *        by the UI to disambiguate triggers from different plugins that otherwise share
      *        the same last Java package segment (see {@link io.kestra.core.docs.Plugin#titleFor})
+     * @param pluginGroupTitle the owning plugin artifact's manifest title (for example {@code "NATS"}
+     *        for every subgroup of the NATS plugin) - coarser than {@code pluginTitle}, which falls
+     *        back to a bare package segment (such as {@code "core"}) when a subgroup declares no
+     *        title; the UI escalates to this when {@code pluginTitle} alone still collides
      * @param description one-line description from the plugin @Schema
      * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
      * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)
@@ -817,6 +831,7 @@ public class PluginController {
         String type,
         String name,
         String pluginTitle,
+        String pluginGroupTitle,
         String description,
         TriggerPluginCategory group,
         boolean ee,

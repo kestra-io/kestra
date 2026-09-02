@@ -40,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -413,6 +414,36 @@ class ExecutionServiceTest {
 
         assertThat(restart.getFlowRevision()).isEqualTo(updated.getRevision());
         assertThat(restart.getVariables()).containsEntry("greeting", "Hello World");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/replay-moved-task.yaml" }, tenantId = TENANT_1)
+    void shouldThrowWhenReplayingATaskThatMovedInTheRequestedRevision() throws Exception {
+        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "replay-moved-task");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        String standaloneTaskRunId = execution.findTaskRunsByTaskId("standalone").getFirst().getId();
+
+        // move "standalone" inside "seq" in the new revision
+        FlowWithSource flow = flowRepository.findByExecutionWithSource(execution);
+        String newSource = """
+            id: replay-moved-task
+            namespace: io.kestra.tests
+
+            tasks:
+              - id: seq
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: standalone
+                    type: io.kestra.plugin.core.log.Log
+                    message: standalone moved inside seq
+                  - id: boom
+                    type: io.kestra.plugin.core.execution.Fail
+            """;
+        FlowWithSource updated = flowService.update(GenericFlow.fromYaml(flow.getTenantId(), newSource), flow);
+
+        assertThatThrownBy(() -> executionService.replay(execution, updated, standaloneTaskRunId, updated.getRevision(), Optional.empty()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("standalone");
     }
 
     @Test

@@ -47,8 +47,6 @@ import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
 import {loaderFragment} from "./plugins/loaderFragment.js"
 
-import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
-
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}
 
@@ -105,21 +103,7 @@ export default defineConfig(({mode}) => {
                 shared: {
                     vue: {
                         singleton: true,
-
                     },
-                    "@kestra-io/kestra-sdk": {
-                        singleton: true,
-                    },
-                    // add all exports of @kestra-io/kestra-sdk as shared singletons
-                    ...Object.fromEntries(Object.keys(kestraSdkExports)
-                        .filter((key) => key !== "." && !key.endsWith(".json"))
-                        .map((key) => {
-                            const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
-                            return [`@kestra-io/kestra-sdk/${name}`, {
-                                singleton: true,
-                            }]
-                        }),
-                    ),
                 },
             }),
             !process.env.STORYBOOK && consolidateChunks(),

@@ -240,7 +240,7 @@
                         :to="{
                             name: 'executions/list',
                             query: {
-                                'filters[parentId][EQUALS]': asTaskRun(currentTaskRun).executionId,
+                                'filters[parentId][EQUALS]': followedExecution.id,
                                 'filters[kind][EQUALS]': 'LOOP',
                                 'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
                             }
@@ -252,7 +252,7 @@
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
-                        :executionId="asTaskRun(currentTaskRun).executionId"
+                        :executionId="followedExecution.id"
                         :taskId="asTaskRun(currentTaskRun).taskId"
                     />
                 </div>
@@ -888,7 +888,7 @@
                 coreStore.message = {
                     variant: "error",
                     title: t("error"),
-                    message: t(
+                    content: t(
                         "something_went_wrong.loading_execution",
                     ),
                 }

@@ -19,9 +19,6 @@ const isRealModule = (id) =>
     // evaluation cycle that crashes at boot, so the eager groups may not have
     // them; the mf-shared group claims them alongside their own shims.
     !/node_modules[\\/](vue|@vue)[\\/]/.test(id) &&
-    // Both id forms: the bare-specifier resolution (@kestra-io/kestra-sdk) and
-    // the workspace path (packages/kestra-sdk) it can resolve to.
-    !/(@kestra-io|packages)[\\/]kestra-sdk/.test(id) &&
     // Topology imports the design system, so capturing it in the (eager) vendor
     // group would create a vendor <-> design-system chunk cycle; left to
     // automatic chunking it gets its own chunk with one-way edges.
@@ -187,11 +184,11 @@ const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]lan
 const isLangChunkName = (name) => /(^|[\\/])shiki-lang-/.test(name)
 
 /**
- * Grammars some module statically imports (shikiHighlighter.ts pre-registers a
- * set, shikiToolset.ts another), plus the ones those pull in transitively — html
- * embeds css and javascript, and so on. Filled during buildEnd: derived from the
- * graph rather than a hardcoded list, because one missed grammar turns the whole
- * on-demand bundle into a static import of whichever chunk needed it.
+ * Grammars shikiHighlighter.ts statically pre-registers, plus the ones those pull
+ * in transitively — html embeds css and javascript, and so on. Filled during
+ * buildEnd: derived from the graph rather than a hardcoded list, because one
+ * missed grammar turns the whole on-demand bundle into a static import of
+ * whichever chunk needed it.
  * @type {Set<string>}
  */
 const staticLangs = new Set()

@@ -31,6 +31,7 @@
             <TaskNode
                 v-bind="taskProps"
                 :icons="icons"
+                :loadIcon="loadIcon"
                 :playgroundEnabled="playgroundEnabled"
                 :playgroundReadyToStart="playgroundReadyToStart"
                 :replayEnabled="replayEnabled"
@@ -66,6 +67,7 @@
             <BasicNode
                 v-bind="taskProps"
                 :icons="icons"
+                :loadIcon="loadIcon"
             />
         </template>
 
@@ -73,6 +75,7 @@
             <TriggerNode
                 v-bind="triggerProps as any"
                 :icons="icons"
+                :loadIcon="loadIcon"
                 :isReadOnly="isReadOnly"
                 :isAllowedEdit="isAllowedEdit"
                 @delete="emit(EVENTS.DELETE, $event)"
@@ -179,6 +182,9 @@
         namespace?: string;
         expandedSubflows?: string[];
         icons?: Record<string, any>;
+        // Per-class resolver for icons absent from `icons`, which only indexes the plugins
+        // registered on this instance (kestra-io/kestra#18129).
+        loadIcon?: (cls: string) => Promise<any>;
         enableSubflowInteraction?: boolean;
         execution?: any;
         subflowsExecutions?: Record<string, any[]>;
@@ -202,6 +208,7 @@
         namespace: undefined,
         expandedSubflows: () => [],
         icons: () => ({}),
+        loadIcon: undefined,
         execution: undefined,
         enableSubflowInteraction: true,
         playgroundEnabled: false,

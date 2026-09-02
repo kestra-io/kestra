@@ -135,6 +135,13 @@ class LoopExecutionEventMessageHandlerTest {
         String loopTaskRunId = IdUtils.create();
         var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
         executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.addListener(logs::add);
 
@@ -147,6 +154,10 @@ class LoopExecutionEventMessageHandlerTest {
         assertThat(maybeExecutor).isPresent();
         var taskRun = maybeExecutor.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
         assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // the failed iteration is still recorded in the per-state count
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1));
 
         // check that a log was created for the parent execution
         List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 1);

@@ -26,7 +26,7 @@ jobs:
 
       - name: Check the author's repository permission
         id: permission
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |
@@ -40,7 +40,7 @@ jobs:
 
       - name: Welcome a first pull request
         if: github.event.action == 'opened' && steps.permission.outputs.has-write-access == 'false'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           # Kept out of the script itself: interpolated there, a backtick or ${ would break out and run as JS.
           OPENED_MESSAGE: |

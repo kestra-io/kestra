@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.assets.External;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -120,6 +122,53 @@ class WorkerTaskProcessorTest {
         assertThat(results)
             .as("an interrupted task's failure must be deferred for resubmission, not reported")
             .noneMatch(result -> result.getTaskRun().getState().isFailed());
+    }
+
+    @Test
+    void shouldKeepDeclaredInputsWhenOutputsCannotBeRendered() throws Exception {
+        // Given a task whose declared outputs cannot be rendered, while its declared inputs can
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // When the task runs
+        processor.process(unrenderableOutputsWorkerTask());
+
+        // Then the inputs are still emitted, and the unrendered outputs only show up in the state
+        List<WorkerTaskResult> results = drain(resultQueue);
+        TaskRun taskRun = results.getLast().getTaskRun();
+        assertThat(taskRun.getAssetEmits())
+            .as("a failing output must not discard the declared inputs")
+            .singleElement()
+            .satisfies(bundle ->
+            {
+                assertThat(bundle.getInputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
+                assertThat(bundle.getOutputs()).isEmpty();
+            });
+        assertThat(taskRun.getState().getCurrent())
+            .as("a partially emitted declaration is still an emission failure, escalated per assetFailureBehavior")
+            .isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldDefaultAssetNamespaceToTheFlowNamespaceWhenNotDeclared() throws Exception {
+        // Given a task declaring an input and an output that carry no namespace
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // When the task runs
+        processor.process(namespacelessAssetsWorkerTask());
+
+        // Then both inherit the namespace of the flow
+        List<WorkerTaskResult> results = drain(resultQueue);
+        TaskRun taskRun = results.getLast().getTaskRun();
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskRun.getAssetEmits())
+            .singleElement()
+            .satisfies(bundle ->
+            {
+                assertThat(bundle.getInputs()).extracting(AssetIdentifier::namespace).containsExactly("io.kestra.unit-test");
+                assertThat(bundle.getOutputs()).extracting(Asset::getNamespace).containsExactly("io.kestra.unit-test");
+            });
     }
 
     @Test
@@ -393,6 +442,41 @@ class WorkerTaskProcessorTest {
             .build();
     }
 
+    private WorkerTask unrenderableOutputsWorkerTask() {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, "io.kestra.unit-test", "declared-input", "MY_OWN_ASSET_TYPE"))),
+                    // rendered value is a plain string, not JSON, so binding it as List<Asset> fails
+                    Property.ofExpression("{{ 'not-json' }}"),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask namespacelessAssetsWorkerTask() {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, null, "declared-input", "MY_OWN_ASSET_TYPE"))),
+                    Property.ofValue(List.<Asset> of(External.builder().id("declared-output").build())),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
     private WorkerTask assetEmissionFailureWorkerTask(AssetFailureBehavior assetFailureBehavior) {
         return assetEmissionFailureWorkerTask(assetFailureBehavior, false, false);
     }
@@ -553,9 +637,8 @@ class WorkerTaskProcessorTest {
     }
 
     /**
-     * A task that succeeds on its own but whose asset declaration fails to render, modeling a task
-     * emitting a malformed asset. Constructed and executed directly by the processor, so no plugin
-     * registration is needed.
+     * A task that succeeds on its own, so only its asset declaration decides the outcome. Constructed and
+     * executed directly by the processor, so no plugin registration is needed.
      */
     @SuperBuilder
     @Getter

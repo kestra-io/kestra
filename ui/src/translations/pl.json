@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limity Concurrency",
-      "warning": "Zmiana licznika uruchomień może naruszyć Concurrency, więc egzekucje mogą przekroczyć dozwolony limit"
+      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
@@ -812,15 +812,15 @@
       "guide": "Potrzebujesz wskazówek, aby uruchomić swój pierwszy Flow?"
     },
     "product_tour": "Przewodnik po produkcie",
-    "executions replayed": "Uruchomiono Replay dla <code>{executionCount}</code> egzekucji",
+    "executions replayed": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji odtworzonych",
     "executions state changed": "Status <code>{executionCount}</code> egzekucji został zmieniony",
-    "executions resumed": "Wznowiono <code>{executionCount}</code> egzekucji",
-    "executions paused": "Wstrzymano <code>{executionCount}</code> egzekucji",
-    "executions unqueue": "Usunięto z kolejki <code>{executionCount}</code> egzekucji",
-    "executions force run": "Wymuszono uruchomienie <code>{executionCount}</code> egzekucji",
-    "executions restarted": "Uruchomiono ponownie <code>{executionCount}</code> egzekucji",
-    "executions killed": "Zabito <code>{executionCount}</code> egzekucji",
-    "executions deleted": "Usunięto <code>{executionCount}</code> egzekucji",
+    "executions resumed": "<code>{executionCount}</code> egzekucja wznowiona | <code>{executionCount}</code> egzekucje wznowione | <code>{executionCount}</code> egzekucji wznowionych",
+    "executions paused": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji wstrzymanych",
+    "executions unqueue": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji usuniętych z kolejki",
+    "executions force run": "<code>{executionCount}</code> wymuszona egzekucja | <code>{executionCount}</code> wymuszone egzekucje | <code>{executionCount}</code> wymuszonych egzekucji",
+    "executions restarted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji uruchomionych ponownie",
+    "executions killed": "<code>{executionCount}</code> egzekucja zabita | <code>{executionCount}</code> egzekucje zabite | <code>{executionCount}</code> egzekucji zabitych",
+    "executions deleted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji usuniętych",
     "invalid bulk replay": "Nie można uruchomić Replaya egzekucji",
     "invalid bulk resume": "Nie można wznowić egzekucji",
     "invalid bulk pause": "Nie można wstrzymać egzekucji",
@@ -916,7 +916,7 @@
     "join_slack": "Dołącz do Slacka",
     "kestra": "Kestra",
     "error detected": "Wykryto błąd(y).",
-    "warning detected": "Wykryto ostrzeżenie(a)",
+    "warning detected": "Wykryto ostrzeżenie(-a).",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
     "dependency task": "Task {taskId} jest zależnością innego Taska",
@@ -2088,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot nie jest dostępny",
-          "detail": "Nie skonfigurowano żadnego dostawcy AI. Poproś administratora o jego konfigurację, a potem spróbuj ponownie.",
-          "retry": "Spróbuj ponownie"
+          "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego ustawienie.",
+          "docs": "Wyświetl dokumentację"
         },
         "thinkingWords": [
           "Orchestrowanie",

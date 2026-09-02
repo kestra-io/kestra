@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limiti di Concorrenza",
-      "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
+      "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito."
     },
     "flowConcurrency": {
       "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",
@@ -807,20 +807,20 @@
     "bulk restart": "Sei sicuro di voler riavviare <code>{executionCount}</code> esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
     "cancel": "Annulla",
-    "errorLogs": "Log degli errori",
+    "errorLogs": "Log di errore",
     "welcome_page": {
       "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?"
     },
     "product_tour": "Tour del prodotto",
-    "executions replayed": "<code>{executionCount}</code> esecuzione/i ripetute",
+    "executions replayed": "<code>{executionCount}</code> esecuzione(i) riprodotta(e)",
     "executions state changed": "Lo stato di <code>{executionCount}</code> esecuzione/i è stato cambiato",
-    "executions resumed": "<code>{executionCount}</code> esecuzione/i riprese",
-    "executions paused": "<code>{executionCount}</code> esecuzione(i) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> esecuzione(i) in coda",
-    "executions force run": "<code>{executionCount}</code> esecuzione/i forzata/e",
-    "executions restarted": "<code>{executionCount}</code> esecuzione/i riavviate",
-    "executions killed": "<code>{executionCount}</code> esecuzione/i kill",
-    "executions deleted": "<code>{executionCount}</code> esecuzione/i eliminate",
+    "executions resumed": "<code>{executionCount}</code> esecuzione(i) ripresa(e)",
+    "executions paused": "<code>{executionCount}</code> esecuzione(i) in pausa",
+    "executions unqueue": "<code>{executionCount}</code> esecuzione(i) non in coda",
+    "executions force run": "<code>{executionCount}</code> esecuzione(i) forzata/e",
+    "executions restarted": "<code>{executionCount}</code> esecuzione(i) riavviata(e)",
+    "executions killed": "<code>{executionCount}</code> esecuzione(i) killata(e)",
+    "executions deleted": "<code>{executionCount}</code> esecuzione(i) eliminata(e)",
     "invalid bulk replay": "Impossibile ripetere le esecuzioni",
     "invalid bulk resume": "Impossibile riprendere le esecuzioni",
     "invalid bulk pause": "Impossibile mettere in pausa le esecuzioni",
@@ -916,7 +916,7 @@
     "join_slack": "Unisciti a Slack",
     "kestra": "Kestra",
     "error detected": "Errore(i) rilevato(i).",
-    "warning detected": "Avvisi rilevati",
+    "warning detected": "Avviso/i rilevato/i.",
     "informative notice": "Note(s)",
     "open": "Apri",
     "dependency task": "Il task {taskId} è una dipendenza di un altro task",

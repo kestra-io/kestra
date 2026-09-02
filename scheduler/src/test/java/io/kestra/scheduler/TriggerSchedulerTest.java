@@ -662,7 +662,7 @@ class TriggerSchedulerTest {
             triggerState
                 .locked(SchedulerClock.getClock(), false)
                 .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
-                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).build())
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).currentDate(backfillStart).build())
         );
 
         // Simulate multiple 'onSchedule'

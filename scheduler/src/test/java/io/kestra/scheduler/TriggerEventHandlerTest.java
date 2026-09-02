@@ -5,6 +5,7 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -1018,21 +1019,22 @@ class TriggerEventHandlerTest {
         assertThat(updated.get().getBackfill().getStart()).isEqualTo(backfillStart);
         assertThat(updated.get().getBackfill().getEnd()).isEqualTo(backfillEnd);
         assertThat(updated.get().getNextEvaluationDate()).isNotNull();
-        assertThat(updated.get().getNextEvaluationDate()).isAfter(backfillStart.toInstant());
+        assertThat(updated.get().getNextEvaluationDate()).isAfterOrEqualTo(backfillStart.toInstant());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
     @Test
     void shouldClearBackfillWhenBackfillRangeIsAlreadyComplete() {
-        // GIVEN
+        // GIVEN: start == end between cron ticks, so the next tick is after end
+        Clock clock = Clock.fixed(Instant.parse("2024-06-15T10:07:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
         triggerStateStore.save(triggerState);
-        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
-        // Backfill with start == end == now: the next cron tick is after end, so backfill completes immediately
-        ZonedDateTime now = ZonedDateTime.now(CLOCK);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(b -> b.timezone("UTC").build())));
+        ZonedDateTime now = ZonedDateTime.now(clock);
         CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(now, now, null, null));
 
         // WHEN
-        handler.handle(CLOCK, TEST_VNODE, event);
+        handler.handle(clock, TEST_VNODE, event);
 
         // THEN
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);

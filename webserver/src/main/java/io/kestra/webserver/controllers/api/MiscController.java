@@ -9,8 +9,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.UsageReportConfig;
@@ -118,6 +120,9 @@ public class MiscController {
     private PluginRegistry pluginRegistry;
 
     @Inject
+    private PluginAutoInstallService pluginAutoInstallService;
+
+    @Inject
     private PebbleExpressionService pebbleExpressionService;
 
     @Inject
@@ -155,7 +160,7 @@ public class MiscController {
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
             .flowTemplate(this.flowTemplate)
-            ;
+            .isPluginAutoInstallEnabled(pluginAutoInstallService.isEnabled());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -197,13 +202,27 @@ public class MiscController {
 
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
+    @Operation(
+        tags = { "Misc" }, summary = "Configure basic authentication for the instance.",
+        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password."
+    )
     public MutableHttpResponse<?> createBasicAuth(
         HttpRequest<?> request,
         @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
-        basicAuthService
-            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
-            .save(basicAuthCredentials);
+        BasicAuthService service = basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
+
+        // Being authenticated is not enough to prove the caller still knows the *current*
+        // password: isAuthenticated() caches verified tokens, so a password already rotated on
+        // another webserver node sharing this settings store can still pass it here. Re-checking
+        // directly against the stored credentials closes that window.
+        if (service.isBasicAuthInitialized() && !service.validateCurrentPassword(basicAuthCredentials.getCurrentPassword())) {
+            throw new ValidationErrorException(List.of(
+                "The current password is required and must be correct to change Basic Authentication credentials."
+            ));
+        }
+
+        service.save(basicAuthCredentials);
 
         // Log the caller in immediately: they just proved they know these credentials by submitting them.
         return HttpResponse.noContent()
@@ -354,6 +373,8 @@ public class MiscController {
         Boolean isBasicAuthInitialized;
 
         Long pluginsHash;
+
+        Boolean isPluginAutoInstallEnabled;
     }
 
     @Value

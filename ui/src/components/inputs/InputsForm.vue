@@ -201,16 +201,32 @@
 
                     <div v-else class="edit_input">
                         <div>
-                            <div v-for="(_item, index) in editableItems[input.id]" :key="index" class="list-row">
-                                <KsInput
-                                    v-model="editableItems[input.id][index]"
-                                    class="array-cell"
-                                />
-                                <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" :tooltip="$t('remove this item')" />
-                                <div class="d-flex flex-column controls-input">
-                                    <ChevronUp @click="moveArrayItem(input, 'up', index)" />
-                                    <ChevronDown @click="moveArrayItem(input, 'down', index)" />
+                            <div
+                                v-for="(_item, index) in editableItems[input.id]"
+                                :key="index"
+                                :data-testid="`array-item-${input.id}-${index}`"
+                                class="list-row"
+                            >
+                                <div
+                                    :data-testid="`array-item-field-${input.id}-${index}`"
+                                    class="array-cell-wrapper"
+                                >
+                                    <KsInput
+                                        v-model="editableItems[input.id][index]"
+                                        class="array-cell"
+                                    />
+                                    <div class="controls-input">
+                                        <ChevronUp @click="moveArrayItem(input, 'up', index)" />
+                                        <ChevronDown @click="moveArrayItem(input, 'down', index)" />
+                                    </div>
                                 </div>
+                                <KsIconButton
+                                    :tooltip="$t('remove this item')"
+                                    :data-testid="`array-item-remove-${input.id}-${index}`"
+                                    @click="removeArrayItem(input, index)"
+                                >
+                                    <DeleteOutline />
+                                </KsIconButton>
                             </div>
                         </div>
                         <KsButton
@@ -395,6 +411,9 @@
     const editableItems = reactive<Record<string, string[]>>({})
     const isComputingValues = ref(false)
     let inputGeneration = 0
+    // Clearing a field submits nothing, so the validate round-trip legitimately answers
+    // `isDefault: true` for it — the default must not be written back over an input the user edited.
+    const userEditedInputs = new Set<string>()
 
     const DeleteOutline = markRaw(DeleteOutlineIcon) as Component
     const Pencil = markRaw(PencilIcon) as Component
@@ -495,6 +514,10 @@
     function updateDefaults(): void {
         for (const input of inputsMetaData.value) {
             const {type, id, value, defaults} = input
+            // A dynamic input is still the server's to recompute, so only a static one is protected.
+            if (userEditedInputs.has(id) && !dynamicInputIds.value.has(id)) {
+                continue
+            }
             if (value == null && typeof defaults === "string" && defaults.includes("{{")) {
                 continue
             }
@@ -526,6 +549,7 @@
 
     function onChange(input: InputMetaData): void {
         inputGeneration++
+        userEditedInputs.add(input.id)
         setTimeout(() => {
             inputsValidated.value.add(input.id)
         }, 2000)
@@ -962,6 +986,8 @@
     function invalidateValidationCache(): void {
         lastValidatedSignature = undefined
         pendingValidation = undefined
+        // A newly selected flow or execution brings its own inputs, which must take their defaults again.
+        userEditedInputs.clear()
     }
 
     watch(() => props.flow, () => {
@@ -1165,14 +1191,23 @@
 
 .edit_input {
     .list-row {
-        position: relative;
-        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin-bottom: var(--ks-spacing-2);
+
+        .array-cell-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
 
         .array-cell {
             :deep(.kel-input__wrapper) {
                 box-shadow: none;
                 border: 1px solid var(--ks-border-default);
                 border-radius: 5px;
+                padding-right: var(--ks-spacing-5);
             }
 
             :deep(.kel-input__inner) {
@@ -1185,30 +1220,17 @@
             }
         }
 
-        .delete-input {
-            position: absolute;
-            right: 28px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 4px;
-            border: none;
-            color: var(--ks-text-secondary);
-            background: transparent;
-
-            &:hover {
-                color: var(--ks-status-error);
-            }
-        }
-
         .controls-input {
             position: absolute;
+            display: flex;
+            flex-direction: column;
             right: 2px;
             top: 50%;
             transform: translateY(-50%);
-            padding: 3px;
+            padding: 0 var(--ks-spacing-1);
             border-left: 1px solid var(--ks-border-default);
             color: var(--ks-text-secondary);
-            background: transparent;
+            cursor: pointer;
         }
     }
 

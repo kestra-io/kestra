@@ -71,6 +71,7 @@
     import {useI18n} from "vue-i18n"
     import {useFlowStore} from "../../stores/flow"
     import {getFormat} from "../dashboard/composables/charts"
+    import {date as dateFilter} from "../../utils/filters"
     import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
@@ -161,7 +162,7 @@
         const data = metricsData.value[metric]
         if (!data) return []
         const aggregations = (data.aggregations ?? []) as MetricAggregation[]
-        return aggregations.map((e) => moment(e.date).format(getFormat(data.groupBy)))
+        return aggregations.map((e) => dateFilter(e.date, getFormat(data.groupBy)))
     }
 
     function getSeriesData(metric: string): KsChartSeriesItem[] {

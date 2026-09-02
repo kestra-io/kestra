@@ -10,10 +10,14 @@ vi.mock("vue-router", () => ({
     useRoute: () => ({name: "dashboards", params: {}, query: {}}),
 }))
 
-const {exportChart} = vi.hoisted(() => ({exportChart: vi.fn()}))
+const {exportChart, warning} = vi.hoisted(() => ({exportChart: vi.fn(() => true), warning: vi.fn()}))
 
 vi.mock("../../../../src/stores/dashboard", () => ({
     useDashboardStore: () => ({export: exportChart}),
+}))
+
+vi.mock("../../../../src/utils/toast", () => ({
+    useToast: () => ({warning}),
 }))
 
 vi.mock("../../../../src/components/dashboard/dashboard-types", () => ({
@@ -90,6 +94,22 @@ describe("dashboard Sections.vue — export trigger", () => {
             },
             "CSV",
         )
+    })
+
+    it("warns instead of staying silent when the export produced nothing", async () => {
+        exportChart.mockResolvedValueOnce(false)
+
+        const wrapper = mountSections([{id: "recent_executions", type: "stub-type", chartOptions: {width: 6}}], {
+            KsDropdown: {template: "<div><slot /><slot name=\"dropdown\" /></div>"},
+            KsDropdownMenu: {template: "<div><slot /></div>"},
+            KsDropdownItem: {emits: ["click"], template: "<button class=\"export-item\" @click=\"$emit('click')\"><slot /></button>"},
+        })
+        await flushPromises()
+
+        await wrapper.findAll("button.export-item")[0].trigger("click")
+        await flushPromises()
+
+        expect(warning).toHaveBeenCalledWith(en.en.dashboards.exportEmpty)
     })
 
     it("renders no export trigger for a Markdown chart", () => {

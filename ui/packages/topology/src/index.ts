@@ -1,6 +1,7 @@
 import "./vue-flow-styles.css"
 import "./topology.scss"
 export {default as Topology} from "./Topology.vue"
+export {default as NodeMenu} from "./nodes/NodeMenu.vue"
 export {default as Duration} from "./misc/Duration.vue"
 export {useScreenshot} from "./composables/useScreenshot"
 export {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"

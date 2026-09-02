@@ -41,7 +41,9 @@
             </span>
         </template>
         <template #title-actions>
-            <NodeMenu :actions="actions" />
+            <slot name="task-actions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
+                <NodeMenu :actions="actions" />
+            </slot>
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />

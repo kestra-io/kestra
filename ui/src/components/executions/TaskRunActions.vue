@@ -6,6 +6,16 @@
         <template #dropdown>
             <KsDropdownMenu>
                 <KsDropdownItem
+                    v-for="action in nodeActions"
+                    :key="action.key"
+                    :divided="action.divided"
+                    :icon="action.icon"
+                    :class="{'node-action--danger': action.danger}"
+                    @click="action.onClick()"
+                >
+                    {{ action.label }}
+                </KsDropdownItem>
+                <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
@@ -124,11 +134,13 @@
         attemptIndex?: number
         forcedAttemptNumber?: number
         attemptLogs?: any[]
+        nodeActions?: any[]
     }>(), {
         flow: undefined,
         attemptIndex: 0,
         forcedAttemptNumber: undefined,
         attemptLogs: () => [],
+        nodeActions: () => [],
     })
 
     const emit = defineEmits<{
@@ -241,5 +253,9 @@
         &:not(:hover) {
             background: var(--ks-btn-secondary-bg-inactive);
         }
+    }
+
+    .node-action--danger {
+        color: var(--ks-text-error);
     }
 </style>

@@ -14,12 +14,12 @@ import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,7 +36,7 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     private static final String DEFAULT_MAIN_DEFINITION_RESOURCE = "dashboards/default_main_definition.yaml";
 
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     private String tenantId;
 
     @NotNull

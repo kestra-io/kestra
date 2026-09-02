@@ -65,7 +65,7 @@
         }
     }
 
-    function getPanelFromValue(value: string): {panel: Panel, prepend: boolean} | undefined {
+    function getPanelFromValue(value: string): {panel: Panel, prepend: boolean, preferredSize?: number} | undefined {
         for (const element of props.editorElements) {
             const deserializedTab = element.deserialize(value, true)
             if (deserializedTab) {
@@ -73,13 +73,25 @@
                     panel: {
                         activeTab: deserializedTab,
                         tabs: [deserializedTab],
-                        size: defaultPanelSize.value,
+                        size: element.preferredSize ?? defaultPanelSize.value,
                     },
                     prepend: element.prepend ?? false,
+                    preferredSize: element.preferredSize,
                 }
             }
         }
     };
+
+    // Panel sizes are shares the splitter normalizes, so inserting a 25 next to two 50s yields 20.
+    // The existing panels give up exactly the requested share, keeping their ratio to each other.
+    function makeRoomFor(preferredSize: number) {
+        const currentTotal = panels.value.reduce((acc, p) => acc + p.size, 0)
+        if (currentTotal <= 0) return
+        const remaining = 100 - preferredSize
+        panels.value.forEach(p => {
+            p.size = (p.size / currentTotal) * remaining
+        })
+    }
 
     const {panels, saveState} = useStoredPanels(
         props.saveKey,
@@ -109,6 +121,9 @@
 
         const panel = getPanelFromValue(tabValue)
         if(panel){
+            if(panel.preferredSize !== undefined){
+                makeRoomFor(panel.preferredSize)
+            }
             if(panel.prepend){
                 panels.value.unshift(panel.panel)
             } else {

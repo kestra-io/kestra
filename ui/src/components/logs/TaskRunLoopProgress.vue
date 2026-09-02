@@ -20,7 +20,7 @@
                         'filters[parentId][EQUALS]': executionId,
                         'filters[kind][EQUALS]': 'LOOP',
                         'filters[taskId][EQUALS]': taskId,
-                        'filters[state][EQUALS]': loopTerminatedSegment.state
+                        'filters[state][IN]': loopTerminatedSegment.state
                     }
                 }"
             >

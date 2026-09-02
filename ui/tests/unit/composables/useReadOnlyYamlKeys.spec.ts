@@ -154,11 +154,18 @@ describe("violatedKeys", () => {
  * Listener registrations are counted rather than merely tracked, so that a guard
  * re-attaching when it should not is visible even though attach() leaves exactly
  * one listener behind either way.
+ *
+ * Decorations are modelled as tracked ranges for the same reason: Monaco collapses
+ * a range that an edit replaces rather than moving it, so a guard that never
+ * repaints leaves the highlight on line 1. Holding the decoration array untouched
+ * would keep the right answer by accident and hide exactly that.
  */
+type PaintedDecoration = {range: {startLineNumber: number; endLineNumber: number}}
+
 function editorDouble(initial: string) {
     let lines = initial.split("\n")
     const listeners: Array<() => void> = []
-    let painted: unknown[] = []
+    let painted: PaintedDecoration[] = []
     let registrations = 0
     /** Snapshot taken before each undo element; last entry is the newest. */
     const undoStack: string[] = []
@@ -188,6 +195,15 @@ function editorDouble(initial: string) {
             const start = edit.range.startLineNumber - 1
             const count = edit.range.endLineNumber - edit.range.startLineNumber + 1
             lines.splice(start, count, ...edit.text.split("\n"))
+
+            // A decoration inside the replaced span collapses onto its start.
+            for (const decoration of painted) {
+                const line = decoration.range.startLineNumber
+                if (line >= edit.range.startLineNumber && line <= edit.range.endLineNumber) {
+                    decoration.range.startLineNumber = edit.range.startLineNumber
+                    decoration.range.endLineNumber = edit.range.startLineNumber
+                }
+            }
         }
         // Monaco notifies synchronously, which is also what exercises the
         // composable's re-entrancy guard.
@@ -202,7 +218,7 @@ function editorDouble(initial: string) {
             return {dispose: () => listeners.splice(listeners.indexOf(callback), 1)}
         },
         createDecorationsCollection: () => ({
-            set: (next: unknown[]) => { painted = next },
+            set: (next: PaintedDecoration[]) => { painted = next },
             clear: () => { painted = [] },
         }),
         /** Opens its own undo element, as Monaco does outside an open one. */
@@ -220,6 +236,8 @@ function editorDouble(initial: string) {
         editor,
         current: () => lines.join("\n"),
         decorationCount: () => painted.length,
+        /** Which lines currently carry the locked-line decoration. */
+        decoratedLines: () => painted.map((decoration) => decoration.range.startLineNumber),
         undoDepth: () => undoStack.length,
         attachCount: () => registrations,
         /** Simulate the user changing the buffer; each one opens an undo element. */
@@ -353,6 +371,40 @@ describe("useReadOnlyYamlKeys", () => {
 
         expect(double.current()).toBe(FLOW)
         expect(reverted).toHaveBeenCalledWith(["id"])
+    })
+
+    it("keeps work that survived an in-place correction when a later edit falls back", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        // A paste that renames the flow and adds a task: the rename is refused, the
+        // task is kept. The buffer now holds work that the last good content does not.
+        double.type(FLOW
+            .replace("id: my_flow", "id: renamed")
+            .replace("    message: hello\n", "    message: hello\n  - id: added\n    type: io.kestra.plugin.core.log.Log\n"))
+        expect(double.current()).toContain("id: my_flow")
+        expect(double.current()).toContain("- id: added")
+
+        // Removing the locked line outright is the one edit only the fallback can
+        // handle, and it must not take the kept task down with it.
+        double.type(double.current().replace("id: my_flow\n", ""))
+
+        expect(double.current()).toContain("id: my_flow")
+        expect(double.current()).toContain("- id: added")
+    })
+
+    it("repaints the locked lines after the whole-document fallback", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+        expect(double.decoratedLines()).toEqual([1, 2])
+
+        double.type(FLOW.replace("id: my_flow\n", ""))
+
+        // The fallback replaces the whole document, which collapses both tracked
+        // ranges onto line 1; without a repaint the highlight and its hover sit
+        // there rather than on the `id:` and `namespace:` lines.
+        expect(double.current()).toBe(FLOW)
+        expect(double.decoratedLines()).toEqual([1, 2])
     })
 
     it("says nothing when the locked line was corrected in place", () => {

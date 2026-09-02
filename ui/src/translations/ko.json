@@ -2578,6 +2578,7 @@
         "message": "저장하기 전에 오류를 수정하세요.",
         "title": "flow를 저장할 수 없습니다"
       },
+      "schema_default_tooltip": "필드가 설정되지 않은 경우 사용되는 기본값",
       "search_task_placeholder": "Task 검색 또는 설명…",
       "shortcuts": {
         "add_after": "선택 영역 뒤에 블록 삽입",

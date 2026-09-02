@@ -2578,6 +2578,7 @@
         "message": "Napraw błędy przed zapisaniem.",
         "title": "Nie można zapisać Flow"
       },
+      "schema_default_tooltip": "Wartość domyślna używana, gdy pole nie jest ustawione",
       "search_task_placeholder": "Wyszukaj lub opisz Task…",
       "shortcuts": {
         "add_after": "Wstaw blok po zaznaczeniu",

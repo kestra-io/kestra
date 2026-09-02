@@ -2578,6 +2578,7 @@
         "message": "Corrija os erros antes de salvar.",
         "title": "Não é possível salvar o flow"
       },
+      "schema_default_tooltip": "Valor padrão usado quando o campo não está definido",
       "search_task_placeholder": "Pesquisar ou descrever uma task…",
       "shortcuts": {
         "add_after": "Inserir um bloco após a seleção",

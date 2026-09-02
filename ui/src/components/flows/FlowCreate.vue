@@ -25,7 +25,7 @@
     import {computed, onBeforeUnmount, ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import Actions from "override/components/flows/Actions.vue"
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue"

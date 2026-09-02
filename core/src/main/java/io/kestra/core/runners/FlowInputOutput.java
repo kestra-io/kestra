@@ -582,10 +582,31 @@ public class FlowInputOutput {
         );
     }
 
+    /**
+     * Coerces a scalar input value to its typed form for {@code type}, returning empty for types whose parsing needs
+     * execution-time infrastructure (FILE, SECRET) or structural/document handling (URI, ARRAY, MULTISELECT, JSON,
+     * ION, YAML, FORM, REUSABLE_INPUTS). Shared by input resolution ({@link #parseType}) and save-time flow validation
+     * so both coerce a literal identically.
+     */
+    public static Optional<Object> parseScalarInputValue(Type type, Object current) {
+        return Optional.ofNullable(switch (type) {
+            case STRING, EMAIL, SELECT -> current.toString();
+            case INT -> TypeConverter.toInteger(current);
+            case FLOAT -> TypeConverter.toFloat(current);
+            case BOOL -> TypeConverter.toBoolean(current);
+            case DATETIME -> TypeConverter.toInstant(current);
+            case DATE -> TypeConverter.toLocalDate(current);
+            case TIME -> TypeConverter.toLocalTime(current);
+            case DURATION -> TypeConverter.toDuration(current);
+            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, FORM, REUSABLE_INPUTS -> null;
+        });
+    }
+
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current, Data data) throws Exception {
         try {
             return switch (type) {
-                case SELECT, STRING, EMAIL -> current.toString();
+                case STRING, EMAIL, SELECT, INT, FLOAT, BOOL, DATETIME, DATE, TIME, DURATION ->
+                    parseScalarInputValue(type, current).orElseThrow();
                 case SECRET -> {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
@@ -596,14 +617,6 @@ public class FlowInputOutput {
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                     yield EncryptedString.from(encrypted);
                 }
-                case INT -> TypeConverter.toInteger(current);
-                // Assuming that after the render we must have a double/int, so we can safely use its toString representation
-                case FLOAT -> TypeConverter.toFloat(current);
-                case BOOL -> TypeConverter.toBoolean(current);
-                case DATETIME -> TypeConverter.toInstant(current);
-                case DATE -> TypeConverter.toLocalDate(current);
-                case TIME -> TypeConverter.toLocalTime(current);
-                case DURATION -> TypeConverter.toDuration(current);
                 case FILE -> {
                     URI uri = URI.create(current.toString().replace(File.separator, "/"));
 

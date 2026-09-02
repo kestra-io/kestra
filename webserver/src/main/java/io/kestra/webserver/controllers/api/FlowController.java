@@ -14,6 +14,7 @@ import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -147,9 +148,10 @@ public class FlowController {
         }
 
         if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException(
-                "Unable to generate graph for flow " + flowUid +
-                    " because of exception " + fwe.getException()
+            throw new InvalidException(
+                fwe,
+                "Cannot generate a graph for flow '%s': the flow itself is invalid. Cause: %s"
+                    .formatted(flowUid, fwe.getException())
             );
         }
 

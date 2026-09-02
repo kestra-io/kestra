@@ -307,6 +307,7 @@
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
     import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes} from "../../utils/constants"
+    import {DEFAULT_EXECUTION_TAB, DEFAULT_TAB_STORAGE_KEY} from "../executions/executionTabs"
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
     import {defaultNamespace} from "../../composables/useNamespaces"
@@ -377,7 +378,7 @@
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
         taskEditDefaultMode: localStorage.getItem(storageKeys.TASK_EDIT_DEFAULT_MODE) || taskEditDefaultModes.MODAL,
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
-        executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
+        executeDefaultTab: localStorage.getItem(DEFAULT_TAB_STORAGE_KEY) || DEFAULT_EXECUTION_TAB,
         flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
         triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
@@ -597,7 +598,7 @@
 
     function onExecuteDefaultTab(value: string) {
         settings.executeDefaultTab = value
-        persist("executeDefaultTab", value)
+        persist(DEFAULT_TAB_STORAGE_KEY, value)
     }
 
     function onFlowDefaultTab(value: string) {

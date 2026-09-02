@@ -133,7 +133,7 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="scope.row.labels" @click.prevent.stop />
+                        <Labels :labels="scope.row.labels" :max="3" @click.prevent.stop />
                     </template>
                 </KsTableColumn>
 
@@ -305,7 +305,7 @@
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
     import BreakableText from "../BreakableText"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useFlowFilter} from "../filter/configurations"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 

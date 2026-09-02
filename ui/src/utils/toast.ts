@@ -7,9 +7,15 @@ import {useI18n} from "vue-i18n"
 let savedNotificationHandles: {close: () => void}[] = []
 
 
+/**
+ * What a toast body may be: markdown text, or one entry per item for a bulk operation that partly failed.
+ */
+export type ToastMessageBody = string | {message: string}[]
+
 export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => {
-    function wrapMessage(message:string) {
-        if(Array.isArray(message) && message.length > 0){
+    /** A list of items renders as a table; a plain string renders as markdown. */
+    function wrapMessage(message: ToastMessageBody) {
+        if (Array.isArray(message) && message.length > 0) {
             return h(
                 KsTable,
                 {
@@ -25,7 +31,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ],
             )
         } else {
-            return h(KsMarkdown, {content: message})
+            return h(KsMarkdown, {content: message as string})
         }
     }
 
@@ -82,7 +88,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        error: function(message:string, title?:string, options?: Record<string, any>) {
+        error: function(message: ToastMessageBody, title?:string, options?: Record<string, any>) {
             KsNotification({
                     title: title ?? t("error"),
                     message: wrapMessage(message),

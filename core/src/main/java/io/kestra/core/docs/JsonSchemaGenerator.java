@@ -146,7 +146,7 @@ public class JsonSchemaGenerator {
             // only works while that branch is still a separate array entry. Collapsing first would
             // inline it into a flat object, leaving no branch for the strip step to remove.
             Map<String, Object> schema = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
-            stripEditionRestrictedInputTypes(schema);
+            stripEditionRestrictedInputTypes(schema, cls);
 
             objectNode = MAPPER.convertValue(schema, ObjectNode.class);
             collapseSingleUseDiscriminatorWrappers(objectNode);
@@ -165,15 +165,24 @@ public class JsonSchemaGenerator {
      * must be pruned. Open-source removes the {@code @EeOnly} types; the Enterprise override of
      * {@code includeInputSubtype} keeps them all, so the excluded set is empty here (no-op).
      */
-    private void stripEditionRestrictedInputTypes(Object node) {
-        Set<String> excluded = Arrays.stream(io.kestra.core.models.flows.Type.values())
-            .filter(type -> !this.includeInputSubtype(type.cls()))
-            .map(Enum::name)
-            .collect(Collectors.toSet());
+    private void stripEditionRestrictedInputTypes(Object node, Class<?> cls) {
+        Set<String> excluded = this.excludedInputTypes(cls);
 
         if (!excluded.isEmpty()) {
             stripEditionRestrictedInputTypes(node, excluded);
         }
+    }
+
+    /**
+     * The input type names to strip from the schema generated for {@code cls}, by default the ones
+     * {@link #includeInputSubtype} rejects for this edition. Override to exclude a type for one schema only; it is
+     * applied before discriminator wrappers are collapsed, which a caller stripping the returned map cannot do.
+     */
+    protected Set<String> excludedInputTypes(Class<?> cls) {
+        return Arrays.stream(io.kestra.core.models.flows.Type.values())
+            .filter(type -> !this.includeInputSubtype(type.cls()))
+            .map(Enum::name)
+            .collect(Collectors.toSet());
     }
 
     @SuppressWarnings("unchecked")

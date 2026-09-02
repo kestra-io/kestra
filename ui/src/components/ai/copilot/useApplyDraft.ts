@@ -2,7 +2,8 @@ import {computed, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox} from "@kestra-io/design-system"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
@@ -85,8 +86,8 @@ export function useApplyDraft() {
 
         applying.value = true
         try {
-            // Try to create; if the flow already exists, update it instead. We deliberately don't
-            // probe with a GET first — a 404 on a not-yet-existing flow trips the global error page.
+            // Try to create; if the flow already exists, update it instead — one round trip rather
+            // than probing with a GET first.
             try {
                 await FlowsAPI.createFlow(
                     {body: draft.yaml, draft: false} as Parameters<typeof FlowsAPI.createFlow>[0],
@@ -165,8 +166,8 @@ export function useApplyDraft() {
     }
 
     async function alertError(e: unknown, fallback: string, title: string): Promise<void> {
-        const err = e as {response?: {data?: {message?: string}}; message?: string}
-        await KsMessageBox.alert(err?.response?.data?.message ?? err?.message ?? fallback, title, {type: "error"})
+        const message = asProblem(e)?.detail ?? (e instanceof Error ? e.message : undefined) ?? fallback
+        await KsMessageBox.alert(message, title, {type: "error"})
     }
 
     /** Parse an artefact's namespace + id out of its YAML; empty strings when they can't be read. */
@@ -179,18 +180,9 @@ export function useApplyDraft() {
         }
     }
 
-    /**
-     * A create failed because the artefact already exists (→ update instead). The SDK throws the
-     * parsed error body with a `.response = {status, data}` attached; the "already exists" text can
-     * sit at `data.message` or nested in the validation errors (`_embedded.errors[].message`), so
-     * match against the whole serialized body rather than a single field.
-     */
+    /** A create failed because the artefact already exists, so update it instead. */
     function isAlreadyExists(e: unknown): boolean {
-        const err = e as {status?: number; response?: {status?: number; data?: unknown}}
-        const status = err?.response?.status ?? err?.status
-        if (status !== 422) return false
-        const body = err?.response?.data ?? err
-        return /already exists/i.test(typeof body === "string" ? body : JSON.stringify(body ?? ""))
+        return isProblemType(e, ProblemTypes.ENTITY_ALREADY_EXISTS)
     }
 
     return {applying, appSupported, dashboardSupported, openInEditor, apply}

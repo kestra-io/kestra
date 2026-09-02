@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow-Dokumentation",
+      "nav_definitions": "Definitionen",
       "nav_examples": "Beispiele",
+      "nav_metrics": "Metriken",
       "nav_outputs": "Outputs",
       "nav_overview": "Übersicht",
       "nav_properties": "Eigenschaften",
@@ -646,6 +648,10 @@
     "open full page": "Ganze Seite öffnen",
     "drill down preview": "Vorschau",
     "errors": {
+      "400": {
+        "title": "Fehlerhafte Anfrage",
+        "content": "Die Anfrage konnte vom Server nicht verstanden werden."
+      },
       "401": {
         "title": "Nicht autorisiert",
         "content": "Du musst angemeldet sein, um auf diese Seite zuzugreifen."
@@ -658,6 +664,114 @@
         "title": "Seite nicht gefunden",
         "content": "Die angeforderte URL wurde auf diesem Server nicht gefunden.<br />Mehr wissen wir leider auch nicht.",
         "flow or execution": "Der Flow oder die Execution, die du suchst, existiert nicht."
+      },
+      "409": {
+        "title": "Konflikt",
+        "content": "Die Anfrage steht im Konflikt mit dem aktuellen Status der Ressource."
+      },
+      "422": {
+        "title": "Ungültige Entität",
+        "content": "Der übermittelte Inhalt konnte nicht verarbeitet werden."
+      },
+      "500": {
+        "title": "Interner Serverfehler",
+        "content": "Auf unserer Seite ist etwas schiefgelaufen. Bitte versuche es später noch einmal."
+      },
+      "503": {
+        "title": "Dienst nicht verfügbar",
+        "content": "Der Server ist vorübergehend nicht verfügbar. Bitte versuche es später noch einmal."
+      },
+      "generic": {
+        "title": "Etwas ist schiefgelaufen",
+        "content": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut."
+      },
+      "trace id": "Trace-ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "KI-Anfrage fehlgeschlagen"
+        },
+        "bad-request": {
+          "title": "Fehlerhafte Anfrage"
+        },
+        "bulk-validation-failed": {
+          "title": "Einige Elemente konnten nicht verarbeitet werden"
+        },
+        "conflict": {
+          "title": "Konflikt"
+        },
+        "entity-already-exists": {
+          "title": "Entität existiert bereits"
+        },
+        "forbidden": {
+          "title": "Zugriff verweigert"
+        },
+        "internal-error": {
+          "title": "Interner Serverfehler"
+        },
+        "invalid-argument": {
+          "title": "Ungültiges Argument"
+        },
+        "invalid-entity": {
+          "title": "Ungültige Entität"
+        },
+        "invalid-format": {
+          "title": "Ungültiges Werteformat"
+        },
+        "invalid-json": {
+          "title": "Ungültiges JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Ungültiger Plugin-Typ"
+        },
+        "invalid-query-filters": {
+          "title": "Ungültige Abfragefilter"
+        },
+        "invalid-query-parameter": {
+          "title": "Ungültiger Abfrageparameter"
+        },
+        "invalid-request-body": {
+          "title": "Ungültiger Request-Body"
+        },
+        "locked": {
+          "title": "Ressource ist gesperrt"
+        },
+        "method-not-allowed": {
+          "title": "Methode nicht erlaubt"
+        },
+        "migration-required": {
+          "title": "Migration erforderlich"
+        },
+        "not-acceptable": {
+          "title": "Nicht akzeptabel"
+        },
+        "not-found": {
+          "title": "Ressource nicht gefunden"
+        },
+        "payload-too-large": {
+          "title": "Payload zu groß"
+        },
+        "resource-expired": {
+          "title": "Ressource ist abgelaufen"
+        },
+        "service-unavailable": {
+          "title": "Dienst nicht verfügbar",
+          "detail": "Der Server ist vorübergehend nicht verfügbar. Bitte versuche es später noch einmal."
+        },
+        "timeout": {
+          "title": "Operation Zeitüberschreitung"
+        },
+        "too-many-requests": {
+          "title": "Zu viele Anfragen"
+        },
+        "unauthenticated": {
+          "title": "Authentifizierung erforderlich"
+        },
+        "unsupported-media-type": {
+          "title": "Nicht unterstützter Medientyp"
+        },
+        "validation-failed": {
+          "title": "Validierung fehlgeschlagen"
+        }
       }
     },
     "back_to_dashboard": "Zurück zum Dashboard",
@@ -675,6 +789,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Execution-Labels",
+    "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
     "feeds": {
       "heading": "Alles rund um Kestra.",
@@ -899,6 +1014,7 @@
       },
       "export": "Namespace-Dateien exportieren",
       "export_single": "Datei exportieren",
+      "export_error": "\"{name}\" konnte nicht exportiert werden. Der Pfad konnte nicht aufgelöst werden.",
       "dialog": {
         "name": {
           "file": "Name mit Erweiterung:",
@@ -1447,7 +1563,8 @@
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
         "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
-      "inherited": "Geerbte KV-Paare"
+      "inherited": "Geerbte KV-Paare",
+      "expiration_hint": "Läuft derzeit am {date} ab. Lasse das Feld unberührt, um dieses Ablaufdatum beizubehalten; die Auswahl einer Dauer berechnet es ab jetzt neu, und das Löschen entfernt es."
     },
     "expiration": "Ablauf",
     "page": {
@@ -1787,7 +1904,8 @@
       "close_all_tabs": "Alle Tabs schließen",
       "close_all_panels": "Alle Panels schließen",
       "exit_fullscreen": "Vollbild verlassen",
-      "fullscreen": "Vollbild"
+      "fullscreen": "Vollbild",
+      "split_panel": "Bereich teilen"
     },
     "search_docs": "Suche",
     "no_results_found": "Keine Ergebnisse gefunden",
@@ -1800,7 +1918,9 @@
       "triggers": "Keine Trigger gefunden",
       "flows": "Keine Flows gefunden",
       "kv_pairs": "Keine KV-Paare gefunden",
-      "secrets": "Keine Secrets gefunden"
+      "secrets": "Keine Secrets gefunden",
+      "all_columns_hidden": "Alle Spalten sind ausgeblendet",
+      "all_columns_hidden_description": "Aktiviere mindestens eine Spalte in „Tabellenspalten anpassen“ wieder, um die Daten erneut anzuzeigen."
     },
     "duplicate-pair": "{label} „{key}“ ist doppelt vorhanden, der erste Key wird ignoriert.",
     "dashboards": {
@@ -2140,7 +2260,7 @@
     },
     "mcp": {
       "your_servers": "Deine Server",
-      "servers_count": "{count} MCP-Server",
+      "servers_count": "{count} MCP Server | {count} MCP Server",
       "managed_by_kestra": "Verwaltet von Kestra",
       "servers": "MCP-Server",
       "client_setup": "Client-Einrichtung",

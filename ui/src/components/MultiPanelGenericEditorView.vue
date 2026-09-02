@@ -165,11 +165,11 @@
     }
 
     .default-theme{
-        :deep(.kel-splitter--horizontal > .kel-splitter-bar){
+        :deep(.kel-splitter__horizontal > .kel-splitter-bar){
             width: 2px !important;
         }
 
-        :deep(.kel-splitter--vertical > .kel-splitter-bar){
+        :deep(.kel-splitter__vertical > .kel-splitter-bar){
             height: 4px !important;
             width: 100% !important;
             cursor: ns-resize;

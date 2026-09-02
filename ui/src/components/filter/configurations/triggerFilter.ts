@@ -14,7 +14,9 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
     const route = useRoute()
 
     return computed(() => {
-        const {VALUES} = useValues("triggers")
+        // `t` is handed over so this never re-enters useI18n: the computed also refreshes outside a
+        // setup context (a flush job after a route-query change), where useI18n throws.
+        const {VALUES} = useValues("triggers", t)
 
         return {
             title: t("filter.titles.trigger_filters"),
@@ -94,10 +96,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.scope_trigger.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "radio",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers")
-                        return VALUES.SCOPES
-                    },
+                    valueProvider: async () => VALUES.SCOPES,
                     showComparatorSelection: false,
                 },
                 {
@@ -140,10 +139,27 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "select",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers")
-                        return VALUES.TRIGGER_STATES
-                    },
+                    valueProvider: async () => VALUES.TRIGGER_STATES,
+                },
+                {
+                    // QueryFilter.Field.LOCKED supports EQUALS only, so there is no comparator to offer.
+                    key: "locked",
+                    label: t("filter.triggerLocked.label"),
+                    description: t("filter.triggerLocked.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "select",
+                    valueProvider: async () => VALUES.TRIGGER_LOCK_STATES,
+                },
+                {
+                    // Keyed `source` after QueryFilter.Field.SOURCE, but labelled "Kind": it targets the
+                    // scheduler's trigger type, which the API exposes as `state.kind` so it does not clash
+                    // with the trigger definition's plugin type.
+                    key: "source",
+                    label: t("filter.triggerKind.label"),
+                    description: t("filter.triggerKind.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "select",
+                    valueProvider: async () => VALUES.TRIGGER_KINDS,
                 },
             ],
         }

@@ -348,9 +348,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         final Backfill backfill = triggerContext.getBackfill();
 
         if (backfill != null) {
-            if (backfill.getPaused()) {
-                return Optional.empty();
-            }
             currentDateTimeExecution = convertDateTime(backfill.getCurrentDate());
         }
 

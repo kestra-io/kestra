@@ -736,7 +736,7 @@ class TriggerSchedulerTest {
         triggerStateStore.save(
             triggerState
                 .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
-                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).paused(true).build())
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).currentDate(backfillStart).paused(true).build())
         );
         // endregion [GIVEN]
 

@@ -3,9 +3,10 @@ import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
+import {asProblem, isProblemType, ProblemTypes, useClient} from "@kestra-io/kestra-sdk"
+import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
-import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
+import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
@@ -137,17 +138,14 @@ export function useApplyDraft() {
         applying.value = true
         try {
             // Create, falling back to update if the id already exists — same no-probe rationale as flows.
+            // Writing a dashboard is an Enterprise route, absent from the OSS SDK, so go through the
+            // raw client to stay edition-agnostic (same approach as the dashboard store).
+            const yaml = {...silent, headers: {"Content-Type": "application/x-yaml"}} as AxiosLikeConfig
             try {
-                await DashboardsAPI.createDashboard(
-                    {body: draft.yaml} as Parameters<typeof DashboardsAPI.createDashboard>[0],
-                    silent,
-                )
+                await useClient().post(`${apiUrl()}/dashboards`, draft.yaml, yaml)
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
-                await DashboardsAPI.updateDashboard(
-                    {id, body: draft.yaml} as Parameters<typeof DashboardsAPI.updateDashboard>[0],
-                    silent,
-                )
+                await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
         } catch (e) {

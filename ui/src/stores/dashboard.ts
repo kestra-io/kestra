@@ -16,12 +16,13 @@ const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: st
 }
 
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
+import {useMiscStore} from "override/stores/misc"
 
 import * as Utils from "../utils/utils"
 import {routeFamily} from "../utils/routeFamily"
 
-import type {Dashboard, Chart} from "../components/dashboard/types.ts"
-import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
+import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
+import {ChartFiltersOverrides, useClient} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -91,6 +92,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function loadDefaults() {
+        // A tenant default can only name a stored dashboard, so an instance that cannot store any
+        // has nothing to answer and does not serve the route. Resolving a dashboard id consults the
+        // defaults before anything else does, which is earlier than the callers can guard.
+        if (useMiscStore().configs?.isCustomDashboardsEnabled === false) {
+            defaultDashboards.value = {}
+            return defaultDashboards.value
+        }
+
         // "get default dashboards" lives under a different SDK tag per edition (dashboards in OSS,
         // dashboards-admin in EE) but the same REST path, so go through the raw client to stay
         // edition-agnostic (same approach as the custom-blueprint reads).
@@ -228,20 +237,26 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return activeDashboard.value
     }
 
+    // Storing dashboards of one's own, and authoring their charts, are Enterprise features, so these
+    // routes exist only in the EE API and are absent from the OSS SDK. Go through the raw client to stay edition-agnostic
+    // (same approach as loadDefaults), so the EE components sharing this store keep working.
+    // x-yaml is what MediaType.APPLICATION_YAML resolves to; "application/yaml" matches no route.
+    const yaml = {headers: {"Content-Type": "application/x-yaml"}}
+
     async function create(source: Dashboard["sourceCode"]) {
-        const data = await DashboardsAPI.createDashboard({body: source ?? ""})
+        const {data} = await axios.post(`${apiUrl()}/dashboards`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const data = await DashboardsAPI.updateDashboard({id, body: source ?? ""})
+        const {data} = await axios.put(`${apiUrl()}/dashboards/${id}`, source ?? "", yaml)
         sourceCodeOrigin.value = source ?? ""
         return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const deleted = await DashboardsAPI.deleteDashboard({id})
+        const {data: deleted} = await axios.delete(`${apiUrl()}/dashboards/${id}`)
 
         const bookmarksStore = useBookmarksStore()
         const encodedId = encodeURIComponent(id)
@@ -255,15 +270,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        return DashboardsAPI.validateDashboard({body: source ?? ""})
+        const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+        return data
     }
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            return await DashboardsAPI.dashboardChartData(
-                {id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0],
-                silent as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[1],
-            )
+            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            return data
         } catch (e: any) {
             if (e.status === 404) return undefined
             throw e
@@ -271,7 +285,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function validateChart(source: string) {
-        const data = await DashboardsAPI.validateChart({body: source})
+        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = data.constraints ? [data.constraints] : []
         return data
     }

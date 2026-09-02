@@ -34,3 +34,14 @@ export interface Chart extends ChartChartOption {
 
     [key: string]: unknown;
 };
+
+/**
+ * The dashboards a tenant serves by default. Only an edition that can store dashboards has any,
+ * so the schema is Enterprise-only and absent from the open-source SDK — hence declared here,
+ * for the store shared by both editions.
+ */
+export interface DashboardSettings {
+    defaultHomeDashboard?: string;
+    defaultFlowOverviewDashboard?: string;
+    defaultNamespaceOverviewDashboard?: string;
+}

@@ -24,6 +24,8 @@ jobs:
     if: github.repository == 'kestra-io/kestra'
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: EE compile check (via Kestra webhook)
         uses: ./.github/actions/ee-compile-check
         with:

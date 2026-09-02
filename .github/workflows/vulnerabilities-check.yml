@@ -19,6 +19,7 @@ jobs:
       # Checkout
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       # Setup build
@@ -61,6 +62,7 @@ jobs:
       # Checkout
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       # Setup build
@@ -99,6 +101,7 @@ jobs:
       # Checkout
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       # Setup build

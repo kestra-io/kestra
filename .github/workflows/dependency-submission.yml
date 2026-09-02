@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
+        with:
+          persist-credentials: false
         uses: actions/checkout@v7
       - name: Setup Java
         uses: actions/setup-java@v6

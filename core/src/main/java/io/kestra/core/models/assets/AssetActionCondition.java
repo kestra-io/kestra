@@ -9,7 +9,7 @@ public record AssetActionCondition(
     @NotBlank
     @Schema(
         title = "The asset field this condition reads.",
-        description = "A dotted path into the asset, such as `namespace`, `type`, `state` or `metadata.node_count`."
+        description = "A dotted path into the asset, such as `namespace`, `type` or `metadata.node_count`."
     )
     String field,
 

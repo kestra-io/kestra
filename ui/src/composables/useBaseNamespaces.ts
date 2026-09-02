@@ -7,6 +7,7 @@ import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 export {PagedResultsNamespace}
 
@@ -15,7 +16,7 @@ function base(namespace: string) {
 }
 
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
-const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/")
+export const safePath = (path: string) => encodeURIComponent(path).replace(/%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
 
 export const useBaseNamespacesStore = () => {
@@ -42,16 +43,31 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
+    // A missing namespace is reported through `existing` below, so it must not also toast.
+    const expectNotFound: KestraRequestOptions = {ignoreNotFound: true}
+
+    let latestLoad = 0
+
     async function load(id: string) {
+        const current = ++latestLoad
+        let data: any
         try{
-            namespace.value = await NamespaceAPI.loadNamespace({id})
+            data = await NamespaceAPI.loadNamespace({id}, expectNotFound)
         }catch (e: any) {
             if (e.status === 404) {
-                existing.value = false
+                // A load the user has navigated away from must not report its absence for the
+                // namespace they are on, the same way a superseded search is dropped in
+                // `stores/logs.ts`.
+                if (current === latestLoad) existing.value = false
                 return null
             }
             throw e
         }
+
+        if (current !== latestLoad) return data
+
+        namespace.value = data
+        existing.value = true
 
         return namespace.value
     }
@@ -204,10 +220,10 @@ export const useBaseNamespacesStore = () => {
         return await FilesAPI.searchNamespaceFiles({namespace: payload.namespace, q: payload.query}) ?? []
     }
 
-    async function importFileDirectory(payload: {namespace: string; path: string; content: ArrayBuffer}) {
+    /** Sent as a File, not a Blob: the server unpacks only a part named `*.zip`, and a Blob arrives as `filename="blob"`. */
+    async function importFileDirectory(payload: {namespace: string; path: string; file: File}) {
         const DATA = new FormData()
-        const BLOB = new Blob([payload.content], {type: "text/plain"})
-        DATA.append("fileContent", BLOB)
+        DATA.append("fileContent", payload.file, payload.file.name)
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`
         // Don't set Content-Type - the browser must generate the multipart boundary itself.
@@ -218,8 +234,16 @@ export const useBaseNamespacesStore = () => {
         await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
     }
 
+    /**
+     * Unlike {@link moveFileDirectory}, this suppresses the global error toast: the rename caller
+     * reports the failure itself, and the two together left a persistent raw
+     * "Internal Server Error" alongside the friendly one.
+     */
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
-        await FilesAPI.moveFileDirectory({namespace: payload.namespace, from: payload.old, to: payload.new})
+        await FilesAPI.moveFileDirectory(
+            {namespace: payload.namespace, from: payload.old, to: payload.new},
+            {showMessageOnError: false} as Parameters<typeof FilesAPI.moveFileDirectory>[1],
+        )
     }
 
     async function deleteFileDirectory(payload: {namespace: string; path: string}) {

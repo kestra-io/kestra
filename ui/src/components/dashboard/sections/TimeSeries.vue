@@ -16,6 +16,7 @@
 
         <KsEchart
             ref="ksEchartRef"
+            :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
             class="canvas"
             :options="echartsOption"
             :loading="false"
@@ -41,10 +42,10 @@
     import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import {getDateFormat, useTheme} from "../../../utils/utils"
+    import {getDateGrouping, useTheme} from "../../../utils/utils"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     use([BarChart, LineChart])
@@ -97,8 +98,7 @@
         return field === "DURATION"
     }
 
-    const parseValue = (value: unknown): unknown => {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+    const grouping = computed(() => {
         const query = {
             ...Object.fromEntries(
                 props.filters.map(({field, value: filterValue, operation}) =>
@@ -106,11 +106,16 @@
             ),
             ...route.query,
         }
-        return date.isValid() ? date.format(getDateFormat(
+        return getDateGrouping(
             (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
             (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
             query["filters[timeRange][EQUALS]"] as string | undefined,
-        )) : value
+        )
+    })
+
+    const parseValue = (value: unknown): unknown => {
+        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+        return date.isValid() ? date.format(grouping.value.format) : value
     }
 
     const shortAxisLabel = (value: string): string => {
@@ -123,13 +128,11 @@
 
     const parsedData = computed(() => {
         const rawData = generated.value.results as Record<string, any>[] | undefined
-        const xAxis = (() => {
-            const values = rawData?.map((v: Record<string, any>) => {
-                return parseValue(v[chartOptions?.column ?? ""])
-            })
-
-            return Array.from(new Set(values)).sort()
-        })()
+        // fill the buckets between the earliest and latest returned dates so gaps stay visible on the axis
+        const xAxis = fillTimeBucketLabels(
+            rawData?.map((v: Record<string, any>) => v[chartOptions?.column ?? ""]) ?? [],
+            grouping.value,
+        )
 
         const aggregatorKeys = aggregator.value.map(([key]) => key)
 
@@ -205,17 +208,18 @@
 
         let duration: number[] = []
         if(yBShown.value){
-            const helper = Array.from(new Set(rawData?.map((v: Record<string, any>) => parseValue(v.date)))).sort()
+            const column = chartOptions?.column ?? ""
+            const durationKey = aggregator.value[1][0]
 
             // Step 1: Group durations by formatted date
             const groupedDurations: Record<string, number> = {}
             rawData?.forEach((item: Record<string, any>) => {
-                const formattedDate = parseValue(item.date) as string
-                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration
+                const formattedDate = parseValue(item[column]) as string
+                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item[durationKey]
             })
 
-            // Step 2: Map to target dates
-            duration = helper.map(date => groupedDurations[date as string] || 0)
+            // Step 2: Map onto the x-axis labels so the line stays aligned with the bars
+            duration = xAxis.map(date => groupedDurations[date] || 0)
         }
 
         return {
@@ -257,6 +261,12 @@
         const barDatasets = (pd.datasets as any[]).filter((ds) => ds.type !== "line")
         const radius = props.short ? 0.5 : 2
 
+        // format duration values in the tooltip as human durations instead of raw seconds
+        const durationTooltip = (fieldIndex: number) =>
+            isDuration(aggregator.value[fieldIndex]?.[1]?.field)
+                ? {tooltip: {valueFormatter: (value: unknown) => durationUtils.humanDuration(Number(value))}}
+                : {}
+
         /**
          * ECharts has no native gap for stacked segments — faked with a transparent border.
          * Lowest non-zero segment per x gets a flat bottom to sit on the axis; rest are pills.
@@ -281,6 +291,7 @@
             },
             barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
             ...(props.short ? {barCategoryGap: "0%"} : {}),
+            ...durationTooltip(0),
         }))
 
         const lineSeries = (pd.datasets as any[])
@@ -295,6 +306,7 @@
                 z: 1,
                 lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},
                 ...(ds.areaStyle ? {areaStyle: ds.areaStyle} : {}),
+                ...durationTooltip(yBShown.value ? 1 : 0),
             }))
 
         const axisLabelStyle = {

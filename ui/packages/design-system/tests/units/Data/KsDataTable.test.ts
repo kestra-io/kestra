@@ -5,6 +5,7 @@ import KestraDesignSystem from "../../../src/index"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
 import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
+import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 
 const globalConfig = {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]}
 
@@ -35,6 +36,19 @@ describe("KsDataTable", () => {
             setup: () => ({data: SAMPLE_DATA}),
         }, {global: globalConfig})
         expect(wrapper.find(".kel-table").exists()).toBe(true)
+    })
+
+    test("forwards row-click from the underlying table", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3},
+            global: globalConfig,
+        })
+
+        const column = {type: "default", property: "id"}
+        const event = new MouseEvent("click")
+        wrapper.findComponent(KsTable).vm.$emit("rowClick", SAMPLE_DATA[0], column, event)
+
+        expect(wrapper.emitted("row-click")?.[0]).toEqual([SAMPLE_DATA[0], column, event])
     })
 
     test("does not render pagination when total is 0", () => {
@@ -411,6 +425,36 @@ describe("KsDataTable", () => {
         const loads = mountWithSpy({currentPage: 3, pageSize: 50})
         await tick()
         expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
+    })
+
+    const mountWithSortSpy = (props: Record<string, any>) => {
+        const loads: Load[] = []
+        const wrapper = mount(KsDataTable, {
+            props: {
+                data: SAMPLE_DATA,
+                total: 100,
+                loadData: async (p: Load) => { loads.push(p) },
+                ...props,
+            },
+            global: globalConfig,
+        })
+        return {loads, wrapper}
+    }
+
+    test("passes the raw column prop as sort key to loadData when no sortKeyMapper is set", async () => {
+        const {loads, wrapper} = mountWithSortSpy({})
+        wrapper.findComponent(KsTable).vm.$emit("sortChange", {column: {}, prop: "id", order: "descending"})
+        await tick()
+        expect(lastLoad(loads).sort).toBe("id:desc")
+    })
+
+    test("applies sortKeyMapper to the column prop before calling loadData", async () => {
+        const {loads, wrapper} = mountWithSortSpy({
+            sortKeyMapper: (key: string) => key.replace(/^auditLog\./, ""),
+        })
+        wrapper.findComponent(KsTable).vm.$emit("sortChange", {column: {}, prop: "auditLog.detail.resourceType", order: "ascending"})
+        await tick()
+        expect(lastLoad(loads).sort).toBe("detail.resourceType:asc")
     })
 
     test("applies ks-data-table-body--fit modifier class when fitHeight is true", () => {

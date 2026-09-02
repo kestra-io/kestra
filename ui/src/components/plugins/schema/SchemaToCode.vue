@@ -22,9 +22,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
-    import type {HighlighterCore} from "shiki/core"
+    import {computed, ref, watchEffect} from "vue"
     import {KsButton, KsTooltip, copyToClipboard as writeToClipboard} from "@kestra-io/design-system"
+    import {isSpecialLang, loadLanguageOnDemand, type HighlighterCore} from "@kestra-io/design-system/shiki"
     import Check from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -45,8 +45,28 @@
     const copied = ref(false)
     const copyResetTimer = ref<ReturnType<typeof setTimeout>>()
 
+    const resolvedLanguage = ref("text")
+
+    watchEffect(async () => {
+        const {highlighter} = props
+        const requested = props.language ?? "text"
+
+        if (isSpecialLang(requested) || highlighter.getLoadedLanguages().includes(requested)) {
+            resolvedLanguage.value = requested
+            return
+        }
+
+        // Plugin authors pick example.lang freely, so it may be a grammar the
+        // shared highlighter does not pre-register; render it plain until (and
+        // unless) that grammar loads, rather than letting codeToHtml throw.
+        resolvedLanguage.value = "text"
+        if (await loadLanguageOnDemand(highlighter, requested) && props.language === requested) {
+            resolvedLanguage.value = requested
+        }
+    })
+
     const codeData = computed(() => props.highlighter.codeToHtml(props.code, {
-        lang: props.language ?? "text",
+        lang: resolvedLanguage.value,
         theme: props.theme,
     }))
 

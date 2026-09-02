@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.plugins.ExternalPluginsPath;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.services.FlowAutoLoader;
@@ -64,7 +65,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
 
     @Option(names = { "-p", "--plugins" }, description = "Path to plugins directory")
-    protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
+    protected Path pluginsPath = ExternalPluginsPath.fromEnvironment().orElse(null);
 
     @Override
     public Integer call() throws Exception {

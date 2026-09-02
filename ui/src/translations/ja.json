@@ -182,10 +182,12 @@
     "add_new_item": "新しいアイテムを追加",
     "copy": "コピー",
     "copy_to_clipboard": "クリップボードにコピー",
+    "copy_pebble_expression": "pebble 式をコピー",
     "new": "新規",
     "edit": "編集",
     "back": "戻る",
     "next": "次へ",
+    "previous": "前へ",
     "done": "完了",
     "review your inputs": "入力内容を確認してください",
     "edit flow": "Flowを編集",
@@ -205,6 +207,7 @@
     "total_duration": "合計時間",
     "running duration": "実行期間",
     "queued duration": "キュー待ち期間",
+    "paused duration": "一時停止時間",
     "executionProgress": {
       "title": "実行の進行状況",
       "estimatedRemaining": "残り時間の目安: {duration}",
@@ -297,6 +300,21 @@
     "to": "まで",
     "steps": "ステップ",
     "state": "状態",
+    "state_history": {
+      "title": "状態履歴",
+      "open": "状態履歴",
+      "aria_open": "状態履歴を表示",
+      "aria_open_for": "{subject} の状態履歴を表示",
+      "started_at": "{time} に開始",
+      "failed_at": "{time} に失敗",
+      "skipped_at": "{time} にスキップ",
+      "created_at": "{time} に作成",
+      "did_not_run": "このタスクは実行されませんでした",
+      "waiting_to_start": "開始待ち",
+      "attempt_n": "試行 {index}",
+      "attempt_count": "{count} 回の試行",
+      "copy": "状態履歴をコピー"
+    },
     "search": "検索",
     "source search": "ソース検索",
     "selected": "選択済み",
@@ -366,8 +384,8 @@
     "unqueue done": "実行はキューから外されました",
     "force run": "強制実行",
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
-    "force run confirm": "実行 <code>{id}</code> を強制的に実行してもよろしいですか？<br/><br/>警告: 実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATED タスクは実行状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから削除されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
-    "force run done": "Executionの強制実行が開始されました",
+    "force run confirm": "実行 `{id}` を強制的に実行してもよろしいですか？\n\n警告: 実行の強制実行は保証されておらず、重複する Task Run が作成される可能性があります。\n\n以下の遷移が行われます。\n\n- CREATED Task は RUNNING 状態に移行します。\n- RUNNING Task は再送信されます。\n- QUEUED Task はキューから削除されます。\n- PAUSED Task は再開されます。",
+    "force run done": "実行は強制的に実行されました",
     "metrics": "メトリクス",
     "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
     "no outputs available": "このタスク実行には利用可能なoutputがありません。",
@@ -455,6 +473,11 @@
         "title": "残存している同時実行制限"
       }
     },
+    "docsPage": {
+      "notFound": "このドキュメントページは存在しません。移動または名前が変更された可能性があります。",
+      "loadError": "このドキュメントページを読み込めませんでした。もう一度お試しください。",
+      "backToDocs": "Docs に戻る"
+    },
     "documentation": {
       "documentation": "ドキュメント"
     },
@@ -493,6 +516,15 @@
     },
     "use": "使用",
     "plugins": {
+      "autoInstall": {
+        "failed": "プラグインのインストールに失敗しました",
+        "failedHint": "flow は保存されませんでした。問題を修正するか、flow から plugin を削除してから再度保存してください。",
+        "preparing": "プラグインのインストールを準備しています...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "プラグインのインストールに成功しました | プラグインのインストールに成功しました",
+        "timeout": "プラグインのインストールに予想より時間がかかっています。flow は保存されませんでした。インストール完了後にもう一度保存してください。",
+        "title": "{count} 件のプラグインをインストール中 | {count} 件のプラグインをインストール中"
+      },
       "names": "プラグイン",
       "release": "リリースノート",
       "beta": "ベータ",
@@ -532,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flowドキュメント",
+      "nav_definitions": "定義",
       "nav_examples": "例",
+      "nav_metrics": "メトリクス",
       "nav_outputs": "Outputs",
       "nav_overview": "概要",
       "nav_properties": "プロパティ",
@@ -569,6 +603,7 @@
     "triggers_add_filter_app": "アプリケーション",
     "triggers_add_empty_title": "トリガーが見つかりません",
     "triggers_add_ee_tooltip": "このtriggerはEnterprise Editionが必要です。",
+    "ee_feature_tooltip": "この機能にはEnterprise Editionが必要です。",
     "triggers_add_card_add": "追加",
     "triggers_add_modal_tab_form": "フォーム",
     "triggers_add_modal_tab_source": "ソース",
@@ -613,6 +648,10 @@
     "open full page": "フルページを開く",
     "drill down preview": "プレビュー",
     "errors": {
+      "400": {
+        "title": "不正なリクエスト",
+        "content": "サーバーはリクエストを理解できませんでした。"
+      },
       "401": {
         "title": "認証されていません",
         "content": "このページにアクセスするには認証が必要です。"
@@ -625,6 +664,114 @@
         "title": "ページが見つかりません",
         "content": "リクエストされたURLはこのサーバー上に見つかりませんでした。<br />これが私たちの知っているすべてです。",
         "flow or execution": "探しているflowまたは実行は存在しません。"
+      },
+      "409": {
+        "title": "競合",
+        "content": "リクエストはリソースの現在の状態と競合しています。"
+      },
+      "422": {
+        "title": "無効なエンティティ",
+        "content": "送信されたコンテンツを処理できませんでした。"
+      },
+      "500": {
+        "title": "内部サーバーエラー",
+        "content": "システム側で問題が発生しました。後でもう一度お試しください。"
+      },
+      "503": {
+        "title": "サービス利用不可",
+        "content": "サーバーは一時的に利用できません。後でもう一度お試しください。"
+      },
+      "generic": {
+        "title": "問題が発生しました",
+        "content": "予期せぬエラーが発生しました。もう一度お試しください。"
+      },
+      "trace id": "トレース ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AIリクエストに失敗しました"
+        },
+        "bad-request": {
+          "title": "不正なリクエスト"
+        },
+        "bulk-validation-failed": {
+          "title": "一部のアイテムを処理できませんでした"
+        },
+        "conflict": {
+          "title": "競合"
+        },
+        "entity-already-exists": {
+          "title": "エンティティはすでに存在します"
+        },
+        "forbidden": {
+          "title": "アクセスが拒否されました"
+        },
+        "internal-error": {
+          "title": "内部サーバーエラー"
+        },
+        "invalid-argument": {
+          "title": "無効な引数"
+        },
+        "invalid-entity": {
+          "title": "無効なエンティティ"
+        },
+        "invalid-format": {
+          "title": "無効な値の形式"
+        },
+        "invalid-json": {
+          "title": "無効なJSON"
+        },
+        "invalid-plugin-type": {
+          "title": "無効なプラグインタイプ"
+        },
+        "invalid-query-filters": {
+          "title": "無効なクエリフィルター"
+        },
+        "invalid-query-parameter": {
+          "title": "無効なクエリパラメータ"
+        },
+        "invalid-request-body": {
+          "title": "無効なリクエストボディ"
+        },
+        "locked": {
+          "title": "リソースはロックされています"
+        },
+        "method-not-allowed": {
+          "title": "許可されていないメソッド"
+        },
+        "migration-required": {
+          "title": "移行が必要です"
+        },
+        "not-acceptable": {
+          "title": "許可されていません"
+        },
+        "not-found": {
+          "title": "リソースが見つかりません"
+        },
+        "payload-too-large": {
+          "title": "Payloadが大きすぎます"
+        },
+        "resource-expired": {
+          "title": "リソースの有効期限が切れました"
+        },
+        "service-unavailable": {
+          "title": "サービス利用不可",
+          "detail": "サーバーは一時的に利用できません。後でもう一度お試しください。"
+        },
+        "timeout": {
+          "title": "操作がタイムアウトしました"
+        },
+        "too-many-requests": {
+          "title": "リクエストが多すぎます"
+        },
+        "unauthenticated": {
+          "title": "認証が必要です"
+        },
+        "unsupported-media-type": {
+          "title": "サポートされていないメディアタイプ"
+        },
+        "validation-failed": {
+          "title": "検証に失敗しました"
+        }
       }
     },
     "back_to_dashboard": "ダッシュボードに戻る",
@@ -642,6 +789,7 @@
     "label": "ラベル",
     "labels": "ラベル",
     "execution labels": "実行ラベル",
+    "show more labels": "他 {count} 件のラベルを表示",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
     "feeds": {
       "heading": "すべてのKestraに関すること。",
@@ -655,7 +803,7 @@
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
-    "bulk force run": "<code>{executionCount}</code>件の実行を強制的に実行してもよろしいですか？<br/><br/>警告：実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATEDタスクは実行状態に移行します。</li><li>RUNNINGタスクは再提出されます。</li><li>QUEUEDタスクはキューから削除されます。</li><li>PAUSEDタスクは再開されます。</li></ul>",
+    "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
     "bulk restart": "<code>{executionCount}</code>件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
     "cancel": "キャンセル",
@@ -751,6 +899,11 @@
     "expand_by_default": "デフォルトで構造化ログを展開する",
     "similar lines": "類似の行",
     "download_logs_description": "エクスポートするログを選択します。フィルターは現在のビューにデフォルト設定されます。",
+    "logs_download_truncated": "最新の {downloaded} 行の log をエクスポートしました。さらに {skipped} 行がフィルターに一致しましたが、除外されました。",
+    "logs_download_capped": "1 回のエクスポートの上限である最新の {downloaded} 行の log をエクスポートしました。フィルターに一致する行がさらにあった可能性があります。",
+    "logs_download_partial": "このフィルターはこれ以上ページ送りできないため、エクスポートは {downloaded} 行の log で停止しました。一致する行の一部が欠けています。",
+    "logs_download_failed": "log のエクスポートに失敗しました。ファイルはダウンロードされていません。",
+    "logs_download_empty": "フィルターに一致する log 行がなかったため、ファイルはダウンロードされていません。",
     "display_settings": "表示設定",
     "density": "密度",
     "density_compact": "コンパクト",
@@ -834,6 +987,7 @@
         "folder_error": "フォルダーの作成中にエラーが発生しました"
       },
       "rename": {
+        "error": "\"{name}\" に名前を変更できませんでした。同じ名前のファイルまたはフォルダーが既に存在する可能性があります。",
         "label": "名前を変更",
         "file": "ファイルの名前を変更",
         "folder": "フォルダーの名前を変更",
@@ -859,6 +1013,7 @@
       },
       "export": "namespaceファイルをエクスポート",
       "export_single": "ファイルをエクスポート",
+      "export_error": "\"{name}\" をエクスポートできませんでした。パスを解決できませんでした。",
       "dialog": {
         "name": {
           "file": "拡張子付きの名前:",
@@ -1390,6 +1545,7 @@
       "key": "名前",
       "keyPlaceholder": "このシークレットを参照するために使用される名前。例: MY_API_TOKEN",
       "name": "秘密の値",
+      "valuePlaceholder": "秘密の値を入力",
       "description": "説明",
       "descriptionPlaceholder": "このシークレットの説明",
       "tags": "タグ",
@@ -1406,7 +1562,8 @@
         "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
         "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
       },
-      "inherited": "継承されたKVペア"
+      "inherited": "継承されたKVペア",
+      "expiration_hint": "現在、{date}に期限切れになります。この期限を維持するには、フィールドをそのままにしておきます。期間を選択すると、現在から再計算され、クリアすると削除されます。"
     },
     "expiration": "有効期限",
     "page": {
@@ -1746,7 +1903,8 @@
       "close_all_tabs": "すべてのタブを閉じる",
       "close_all_panels": "すべてのパネルを閉じる",
       "exit_fullscreen": "フルスクリーンを終了",
-      "fullscreen": "全画面表示"
+      "fullscreen": "全画面表示",
+      "split_panel": "パネルを分割"
     },
     "search_docs": "検索",
     "no_results_found": "結果が見つかりません",
@@ -1759,7 +1917,9 @@
       "triggers": "トリガーが見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
-      "secrets": "シークレットが見つかりません"
+      "secrets": "シークレットが見つかりません",
+      "all_columns_hidden": "すべての列が非表示です",
+      "all_columns_hidden_description": "データを再度表示するには、テーブル列のカスタマイズで少なくとも1つの列を再度オンにしてください。"
     },
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
@@ -1777,6 +1937,7 @@
       "others": "その他",
       "viewAll": "すべて表示",
       "export": "エクスポート",
+      "exportEmpty": "このチャートにエクスポートするデータはありません。",
       "exportTo": {
         "csv": "CSVにエクスポート",
         "ion": "ION にエクスポート"
@@ -1886,6 +2047,7 @@
           "test": "テスト"
         },
         "contextRemoved": "コンテキストから {type} {id} を削除しました。",
+        "modelChanged": "{model} に切り替えました。",
         "toolResult": {
           "detail": "詳細",
           "error": "{tool} が失敗しました",
@@ -1956,6 +2118,12 @@
           "収束中"
         ],
         "newChat": "新規チャット",
+        "fixThread": {
+          "flow": "Flow {id} を修正",
+          "task": "タスク {id} を修正",
+          "execution": "{id} の実行を修正",
+          "generic": "Flowのエラーを修正する"
+        },
         "draft": {
           "openInEditor": "エディターで開く",
           "apply": "適用",
@@ -2004,6 +2172,31 @@
         "zoom_out": "ズームアウト",
         "clear_selection": "選択をクリア",
         "fit_view": "画面に合わせる"
+      },
+      "dag": {
+        "force": "ツリー",
+        "layered": "DAG",
+        "system": "システム",
+        "last_update": "最終更新",
+        "status": {
+          "fresh": "新規",
+          "stale": "古い",
+          "failed": "失敗",
+          "unknown": "追跡されていません"
+        },
+        "summary": {
+          "fresh": "すべての {n} Asset は最新です",
+          "issues": "{n} ステーブル",
+          "failed": "{n} 失敗",
+          "last_run": "最終実行 {ago}",
+          "unknown": "{n} は追跡されていません"
+        },
+        "recent_runs": "最近の実行",
+        "group_by": "グループ化",
+        "groups": "グループ（{n}）",
+        "group_none": "グループ化なし",
+        "group_dataset": "データセット",
+        "ungrouped": "グループ化されていません"
       },
       "search": {
         "placeholders": {
@@ -2066,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "あなたのサーバー",
-      "servers_count": "{count} MCPサーバー",
+      "servers_count": "{count} MCPサーバー | {count} MCPサーバー",
       "managed_by_kestra": "Kestraによって管理されています",
       "servers": "MCPサーバー",
       "client_setup": "クライアント設定",
@@ -2200,7 +2393,7 @@
       "next_match": "次の一致",
       "no_results_description": "namespaceを広げるか、スコープを「すべてのソース」に戻すか、「大文字と小文字を区別する」と「単語全体に一致」をオフにしてみてください。",
       "no_results_hidden_type": "選択していない{type}で{count}件の一致が見つかりました。 | 選択していない{type}で{count}件の一致が見つかりました。",
-      "no_results_in_types": "“{query}” に一致する結果は{types}にありません",
+      "no_results_in_types": "{query} に一致する結果は{types}にありません",
       "no_results_title": "「{query}」に一致する項目はありません",
       "open_flow": "flow を開く",
       "open_in_editor": "エディターで開く",

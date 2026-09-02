@@ -182,10 +182,12 @@
     "add_new_item": "Neues Element hinzufügen",
     "copy": "Kopieren",
     "copy_to_clipboard": "In die Zwischenablage kopieren",
+    "copy_pebble_expression": "Pebble-Ausdruck kopieren",
     "new": "Neu",
     "edit": "Bearbeiten",
     "back": "Zurück",
     "next": "Weiter",
+    "previous": "Zurück",
     "done": "Fertig",
     "review your inputs": "Überprüfe deine Inputs",
     "edit flow": "Flow bearbeiten",
@@ -205,6 +207,7 @@
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeit",
     "queued duration": "Wartedauer",
+    "paused duration": "Pausierte Dauer",
     "executionProgress": {
       "title": "Execution-Fortschritt",
       "estimatedRemaining": "Geschätzte Restzeit: {duration}",
@@ -297,6 +300,21 @@
     "to": "Bis",
     "steps": "Schritte",
     "state": "Status",
+    "state_history": {
+      "title": "Statusverlauf",
+      "open": "Statusverlauf",
+      "aria_open": "Statusverlauf anzeigen",
+      "aria_open_for": "Statusverlauf für {subject} anzeigen",
+      "started_at": "Gestartet {time}",
+      "failed_at": "Fehlgeschlagen um {time}",
+      "skipped_at": "Übersprungen um {time}",
+      "created_at": "Erstellt {time}",
+      "did_not_run": "Dieser Task wurde nicht ausgeführt",
+      "waiting_to_start": "Wartet auf Start",
+      "attempt_n": "Versuch {index}",
+      "attempt_count": "{count} Versuche",
+      "copy": "Statusverlauf kopieren"
+    },
     "search": "Suche",
     "source search": "Quellensuche",
     "selected": "Ausgewählt",
@@ -366,8 +384,8 @@
     "unqueue done": "Die Execution wurde aus der Warteschlange entfernt",
     "force run": "Ausführung erzwingen",
     "force run title": "Execution <code>{id}</code> erzwingen.",
-    "force run confirm": "Möchtest du die Execution <code>{id}</code> wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
-    "force run done": "Execution-Forcerun initiiert",
+    "force run confirm": "Möchtest du die Execution `{id}` wirklich erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task Runs führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
+    "force run done": "Die Execution wurde erzwungen",
     "metrics": "Metriken",
     "no metrics available": "Für diesen Task-Run wurden keine Metriken aufgezeichnet.",
     "no outputs available": "Keine Outputs für diesen Task-Run verfügbar.",
@@ -455,6 +473,11 @@
         "title": "Übrig gebliebenes Concurrency-Limit"
       }
     },
+    "docsPage": {
+      "notFound": "Diese Dokumentationsseite existiert nicht. Sie wurde möglicherweise verschoben oder umbenannt.",
+      "loadError": "Diese Dokumentationsseite konnte nicht geladen werden. Bitte versuche es erneut.",
+      "backToDocs": "Zurück zu Docs"
+    },
     "documentation": {
       "documentation": "Dokumentation"
     },
@@ -493,6 +516,15 @@
     },
     "use": "Verwenden",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin-Installation fehlgeschlagen",
+        "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
+        "preparing": "Plugin-Installation wird vorbereitet...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin erfolgreich installiert | Plugins erfolgreich installiert",
+        "timeout": "Die Plugin-Installation dauert länger als erwartet. Der Flow wurde nicht gespeichert, speichere erneut, sobald die Installation abgeschlossen ist.",
+        "title": "{count} Plugin wird installiert | {count} Plugins werden installiert"
+      },
       "names": "Plugins",
       "release": "Versionshinweise",
       "beta": "Beta",
@@ -532,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow-Dokumentation",
+      "nav_definitions": "Definitionen",
       "nav_examples": "Beispiele",
+      "nav_metrics": "Metriken",
       "nav_outputs": "Outputs",
       "nav_overview": "Übersicht",
       "nav_properties": "Eigenschaften",
@@ -569,6 +603,7 @@
     "triggers_add_filter_app": "App",
     "triggers_add_empty_title": "Keine Trigger gefunden",
     "triggers_add_ee_tooltip": "Dieser Trigger erfordert die Enterprise Edition.",
+    "ee_feature_tooltip": "Diese Funktion erfordert die Enterprise Edition.",
     "triggers_add_card_add": "Hinzufügen",
     "triggers_add_modal_tab_form": "Formular",
     "triggers_add_modal_tab_source": "Quelle",
@@ -613,6 +648,10 @@
     "open full page": "Ganze Seite öffnen",
     "drill down preview": "Vorschau",
     "errors": {
+      "400": {
+        "title": "Fehlerhafte Anfrage",
+        "content": "Die Anfrage konnte vom Server nicht verstanden werden."
+      },
       "401": {
         "title": "Nicht autorisiert",
         "content": "Du musst angemeldet sein, um auf diese Seite zuzugreifen."
@@ -625,6 +664,114 @@
         "title": "Seite nicht gefunden",
         "content": "Die angeforderte URL wurde auf diesem Server nicht gefunden.<br />Mehr wissen wir leider auch nicht.",
         "flow or execution": "Der Flow oder die Execution, die du suchst, existiert nicht."
+      },
+      "409": {
+        "title": "Konflikt",
+        "content": "Die Anfrage steht im Konflikt mit dem aktuellen Status der Ressource."
+      },
+      "422": {
+        "title": "Ungültige Entität",
+        "content": "Der übermittelte Inhalt konnte nicht verarbeitet werden."
+      },
+      "500": {
+        "title": "Interner Serverfehler",
+        "content": "Auf unserer Seite ist etwas schiefgelaufen. Bitte versuche es später noch einmal."
+      },
+      "503": {
+        "title": "Dienst nicht verfügbar",
+        "content": "Der Server ist vorübergehend nicht verfügbar. Bitte versuche es später noch einmal."
+      },
+      "generic": {
+        "title": "Etwas ist schiefgelaufen",
+        "content": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut."
+      },
+      "trace id": "Trace-ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "KI-Anfrage fehlgeschlagen"
+        },
+        "bad-request": {
+          "title": "Fehlerhafte Anfrage"
+        },
+        "bulk-validation-failed": {
+          "title": "Einige Elemente konnten nicht verarbeitet werden"
+        },
+        "conflict": {
+          "title": "Konflikt"
+        },
+        "entity-already-exists": {
+          "title": "Entität existiert bereits"
+        },
+        "forbidden": {
+          "title": "Zugriff verweigert"
+        },
+        "internal-error": {
+          "title": "Interner Serverfehler"
+        },
+        "invalid-argument": {
+          "title": "Ungültiges Argument"
+        },
+        "invalid-entity": {
+          "title": "Ungültige Entität"
+        },
+        "invalid-format": {
+          "title": "Ungültiges Werteformat"
+        },
+        "invalid-json": {
+          "title": "Ungültiges JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Ungültiger Plugin-Typ"
+        },
+        "invalid-query-filters": {
+          "title": "Ungültige Abfragefilter"
+        },
+        "invalid-query-parameter": {
+          "title": "Ungültiger Abfrageparameter"
+        },
+        "invalid-request-body": {
+          "title": "Ungültiger Request-Body"
+        },
+        "locked": {
+          "title": "Ressource ist gesperrt"
+        },
+        "method-not-allowed": {
+          "title": "Methode nicht erlaubt"
+        },
+        "migration-required": {
+          "title": "Migration erforderlich"
+        },
+        "not-acceptable": {
+          "title": "Nicht akzeptabel"
+        },
+        "not-found": {
+          "title": "Ressource nicht gefunden"
+        },
+        "payload-too-large": {
+          "title": "Payload zu groß"
+        },
+        "resource-expired": {
+          "title": "Ressource ist abgelaufen"
+        },
+        "service-unavailable": {
+          "title": "Dienst nicht verfügbar",
+          "detail": "Der Server ist vorübergehend nicht verfügbar. Bitte versuche es später noch einmal."
+        },
+        "timeout": {
+          "title": "Operation Zeitüberschreitung"
+        },
+        "too-many-requests": {
+          "title": "Zu viele Anfragen"
+        },
+        "unauthenticated": {
+          "title": "Authentifizierung erforderlich"
+        },
+        "unsupported-media-type": {
+          "title": "Nicht unterstützter Medientyp"
+        },
+        "validation-failed": {
+          "title": "Validierung fehlgeschlagen"
+        }
       }
     },
     "back_to_dashboard": "Zurück zum Dashboard",
@@ -642,6 +789,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Execution-Labels",
+    "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
     "feeds": {
       "heading": "Alles rund um Kestra.",
@@ -655,7 +803,7 @@
     "bulk change state": "Möchtest du den Status von <code>{executionCount}</code> Execution(s) wirklich ändern?",
     "bulk resume": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich fortsetzen?",
     "bulk pause": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich pausieren?",
-    "bulk force run": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich erzwingen?<br/><br/>WARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task-Runs führen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>Tasks mit CREATED werden in den Status RUNNING versetzt.</li><li>Tasks mit RUNNING werden erneut übermittelt.</li><li>Tasks mit QUEUED werden aus der Warteschlange entfernt.</li><li>Tasks mit PAUSED werden fortgesetzt.</li></ul>",
+    "bulk force run": "Möchtest du wirklich `{executionCount}` Execution(s) erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution wird nicht garantiert und kann zu doppelten Task-Executions führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
     "bulk restart": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich neu starten?",
     "bulk kill": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich killen?",
     "cancel": "Abbrechen",
@@ -751,6 +899,11 @@
     "expand_by_default": "Strukturierte Logs standardmäßig ausklappen",
     "similar lines": "ähnliche Zeilen",
     "download_logs_description": "Wähle aus, welche Logs exportiert werden sollen. Die Filter entsprechen standardmäßig deiner aktuellen Ansicht.",
+    "logs_download_truncated": "Die neuesten {downloaded} Log-Zeilen wurden exportiert. {skipped} weitere entsprachen deinen Filtern und wurden ausgelassen.",
+    "logs_download_capped": "Die neuesten {downloaded} Log-Zeilen wurden exportiert, das Maximum für einen Export. Möglicherweise entsprachen weitere deinen Filtern.",
+    "logs_download_partial": "Der Export endete bei {downloaded} Log-Zeilen, weil dieser Filter nicht weiter durchblättert werden kann. Einige passende Zeilen fehlen.",
+    "logs_download_failed": "Der Log-Export ist fehlgeschlagen. Es wurde keine Datei heruntergeladen.",
+    "logs_download_empty": "Keine Log-Zeilen entsprachen deinen Filtern, daher wurde keine Datei heruntergeladen.",
     "display_settings": "Anzeigeeinstellungen",
     "density": "Dichte",
     "density_compact": "Kompakt",
@@ -834,6 +987,7 @@
         "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten"
       },
       "rename": {
+        "error": "Umbenennen in \"{name}\" nicht möglich. Möglicherweise existiert bereits eine Datei oder ein Ordner mit diesem Namen.",
         "label": "Umbenennen",
         "file": "Datei umbenennen",
         "folder": "Ordner umbenennen",
@@ -859,6 +1013,7 @@
       },
       "export": "Namespace-Dateien exportieren",
       "export_single": "Datei exportieren",
+      "export_error": "\"{name}\" konnte nicht exportiert werden. Der Pfad konnte nicht aufgelöst werden.",
       "dialog": {
         "name": {
           "file": "Name mit Erweiterung:",
@@ -1390,6 +1545,7 @@
       "key": "Name",
       "keyPlaceholder": "Name, über den dieses Secret referenziert wird, z. B. MY_API_TOKEN",
       "name": "Secret-Wert",
+      "valuePlaceholder": "Secret-Wert eingeben",
       "description": "Beschreibung",
       "descriptionPlaceholder": "Beschreibe dieses Secret",
       "tags": "Tags",
@@ -1406,7 +1562,8 @@
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
         "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
-      "inherited": "Geerbte KV-Paare"
+      "inherited": "Geerbte KV-Paare",
+      "expiration_hint": "Läuft derzeit am {date} ab. Lasse das Feld unberührt, um dieses Ablaufdatum beizubehalten; die Auswahl einer Dauer berechnet es ab jetzt neu, und das Löschen entfernt es."
     },
     "expiration": "Ablauf",
     "page": {
@@ -1730,7 +1887,7 @@
         "content": "Stelle einen Flow als MCP-Tool bereit, indem du ihm einen <code>McpToolTrigger</code> hinzufügst. Erfahre mehr über den <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> in unserer Dokumentation."
       },
       "versionPlugin": {
-        "title": "Du hast noch kein versioniertes Plugin!",
+        "title": "Du hast noch keine versionierten Plugins!",
         "content": "Hier kannst du alle Plugins verwalten, die auf deiner Kestra-Instanz installiert sind. Neu installierte Plugins stehen je nach Konfiguration deiner Instanz möglicherweise nicht sofort in allen Kestra-Services zur Verfügung."
       },
       "panels": {
@@ -1746,7 +1903,8 @@
       "close_all_tabs": "Alle Tabs schließen",
       "close_all_panels": "Alle Panels schließen",
       "exit_fullscreen": "Vollbild verlassen",
-      "fullscreen": "Vollbild"
+      "fullscreen": "Vollbild",
+      "split_panel": "Bereich teilen"
     },
     "search_docs": "Suche",
     "no_results_found": "Keine Ergebnisse gefunden",
@@ -1759,7 +1917,9 @@
       "triggers": "Keine Trigger gefunden",
       "flows": "Keine Flows gefunden",
       "kv_pairs": "Keine KV-Paare gefunden",
-      "secrets": "Keine Secrets gefunden"
+      "secrets": "Keine Secrets gefunden",
+      "all_columns_hidden": "Alle Spalten sind ausgeblendet",
+      "all_columns_hidden_description": "Aktiviere mindestens eine Spalte in „Tabellenspalten anpassen“ wieder, um die Daten erneut anzuzeigen."
     },
     "duplicate-pair": "{label} „{key}“ ist doppelt vorhanden, der erste Key wird ignoriert.",
     "dashboards": {
@@ -1777,6 +1937,7 @@
       "others": "Andere",
       "viewAll": "Alle anzeigen",
       "export": "Exportieren",
+      "exportEmpty": "Dieses Diagramm hat keine Daten zum Exportieren.",
       "exportTo": {
         "csv": "Als CSV exportieren",
         "ion": "Als ION exportieren"
@@ -1886,6 +2047,7 @@
           "test": "Test"
         },
         "contextRemoved": "{type} {id} aus dem Kontext entfernt.",
+        "modelChanged": "Zu {model} gewechselt.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} fehlgeschlagen",
@@ -1956,6 +2118,12 @@
           "Konvergenz"
         ],
         "newChat": "Neuer Chat",
+        "fixThread": {
+          "flow": "Flow {id} reparieren",
+          "task": "Task {id} reparieren",
+          "execution": "Execution {id} reparieren",
+          "generic": "Flow-Fehler beheben"
+        },
         "draft": {
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",
@@ -2004,6 +2172,31 @@
         "zoom_out": "Rauszoomen",
         "clear_selection": "Auswahl aufheben",
         "fit_view": "An Bildschirm anpassen"
+      },
+      "dag": {
+        "force": "Baum",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Letzte Aktualisierung",
+        "status": {
+          "fresh": "Neu",
+          "stale": "Veraltet",
+          "failed": "Fehlgeschlagen",
+          "unknown": "Nicht getrackt"
+        },
+        "summary": {
+          "fresh": "Alle {n} Assets sind aktuell",
+          "issues": "{n} veraltet",
+          "failed": "{n} fehlgeschlagen",
+          "last_run": "letzter Run {ago}",
+          "unknown": "{n} nicht getrackt"
+        },
+        "recent_runs": "Letzte Runs",
+        "group_by": "Gruppieren nach",
+        "groups": "Gruppen ({n})",
+        "group_none": "Keine Gruppierung",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungruppiert"
       },
       "search": {
         "placeholders": {
@@ -2066,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "Deine Server",
-      "servers_count": "{count} MCP-Server",
+      "servers_count": "{count} MCP Server | {count} MCP Server",
       "managed_by_kestra": "Verwaltet von Kestra",
       "servers": "MCP-Server",
       "client_setup": "Client-Einrichtung",
@@ -2200,7 +2393,7 @@
       "next_match": "Nächste Übereinstimmung",
       "no_results_description": "Versuche, den Namespace zu erweitern, den Bereich auf „Alle Quellen“ zurückzustellen oder „Groß-/Kleinschreibung beachten“ und „Ganzes Wort“ zu deaktivieren.",
       "no_results_hidden_type": "{count} Treffer in {type} gefunden, das du nicht ausgewählt hast. | {count} Treffer in {type} gefunden, das du nicht ausgewählt hast.",
-      "no_results_in_types": "Keine Treffer für „{query}“ in {types}",
+      "no_results_in_types": "Keine Treffer für {query} in {types}",
       "no_results_title": "Keine Übereinstimmungen für „{query}“",
       "open_flow": "Flow öffnen",
       "open_in_editor": "Im Editor öffnen",

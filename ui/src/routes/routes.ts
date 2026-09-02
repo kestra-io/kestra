@@ -3,18 +3,6 @@ import type {RouteRecordRaw} from "vue-router"
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
 import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
 import Errors from "../components/errors/Errors.vue"
-import DemoIAM from "../components/demo/IAM.vue"
-import DemoTenants from "../components/demo/Tenants.vue"
-import DemoAuditLogs from "../components/demo/AuditLogs.vue"
-import DemoInstance from "../components/demo/Instance.vue"
-import DemoApps from "../components/demo/Apps.vue"
-import DemoTests from "../components/demo/Tests.vue"
-import DemoAssets from "../components/demo/Assets.vue"
-import DemoCases from "../components/demo/Cases.vue"
-import DemoQuotas from "../components/demo/Quotas.vue"
-import DemoPolicies from "../components/demo/Policies.vue"
-import DemoPromote from "../components/demo/Promote.vue"
-import DemoDashboards from "../components/demo/Dashboards.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
@@ -81,6 +69,14 @@ const routes: KestraRouteRecord[] = [
         name: NAMESPACE_PARENT_ROUTE,
         path: "/:tenant?/namespaces/edit/:id",
         component: () => import("../components/namespaces/Namespace.vue"),
+        // Only Enterprise Edition reports a missing namespace: the OSS endpoint echoes any id back,
+        // since an OSS namespace is whatever its flows declare rather than a stored entity.
+        meta: {
+            entity: async (to) => {
+                const {useNamespacesStore} = await import("override/stores/namespaces")
+                return useNamespacesStore().load(String(to.params.id))
+            },
+        },
         // Resolve legacy deep-links `{name: "namespaces/update", params: {tab}}` and bare
         // `/:id` URLs to the matching child route, preserving params and query.
         redirect: (to) => {
@@ -114,19 +110,19 @@ const routes: KestraRouteRecord[] = [
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},
 
     //Demo Pages
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: DemoDashboards},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: DemoDashboards},
-    {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
-    {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
-    {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
-    {name: "cases/list", path: "/:tenant?/cases", component: DemoCases},
-    {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
-    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
-    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
-    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: DemoQuotas},
-    {name: "admin/policies", path: "/:tenant?/admin/policies", component: DemoPolicies},
-    {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
-    {name: "promote/targets", path: "/:tenant?/promote/targets", component: DemoPromote},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/demo/Dashboards.vue")},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("../components/demo/Dashboards.vue")},
+    {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue")},
+    {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue")},
+    {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue")},
+    {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue")},
+    {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue")},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue")},
+    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: () => import("../components/demo/AuditLogs.vue")},
+    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: () => import("../components/demo/Quotas.vue")},
+    {name: "admin/policies", path: "/:tenant?/admin/policies", component: () => import("../components/demo/Policies.vue")},
+    {name: "admin/instance", path: "/:tenant?/admin/instance", component: () => import("../components/demo/Instance.vue")},
+    {name: "promote/targets", path: "/:tenant?/promote/targets", component: () => import("../components/demo/Promote.vue")},
 ]
 
 export default routes

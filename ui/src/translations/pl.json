@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limity Concurrency",
-      "warning": "Zmiana licznika uruchomień może naruszyć Concurrency, więc egzekucje mogą przekroczyć dozwolony limit"
+      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Dokumentacja Flow",
+      "nav_definitions": "Definicje",
       "nav_examples": "Przykłady",
+      "nav_metrics": "Metryki",
       "nav_outputs": "Outputs",
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
@@ -646,6 +648,10 @@
     "open full page": "Otwórz pełną stronę",
     "drill down preview": "Podgląd",
     "errors": {
+      "400": {
+        "title": "Nieprawidłowe żądanie",
+        "content": "Żądanie nie mogło zostać zrozumiane przez serwer."
+      },
       "401": {
         "title": "Brak autoryzacji",
         "content": "Musisz być uwierzytelniony, aby uzyskać dostęp do tej strony."
@@ -658,6 +664,114 @@
         "title": "Strona nie znaleziona",
         "content": "Żądany URL nie został znaleziony na tym serwerze.<br />To wszystko, co wiemy.",
         "flow or execution": "Flow lub egzekucja, której szukasz, nie istnieje."
+      },
+      "409": {
+        "title": "Konflikt",
+        "content": "Żądanie jest sprzeczne z bieżącym stanem zasobu."
+      },
+      "422": {
+        "title": "Nieprawidłowa encja",
+        "content": "Przesłana zawartość nie mogła zostać przetworzona."
+      },
+      "500": {
+        "title": "Wewnętrzny błąd serwera",
+        "content": "Coś poszło nie tak po naszej stronie. Spróbuj ponownie później."
+      },
+      "503": {
+        "title": "Usługa niedostępna",
+        "content": "Serwer jest tymczasowo niedostępny. Spróbuj ponownie później."
+      },
+      "generic": {
+        "title": "Coś poszło nie tak",
+        "content": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+      },
+      "trace id": "ID śledzenia",
+      "problems": {
+        "ai-request-failed": {
+          "title": "Żądanie AI nie powiodło się"
+        },
+        "bad-request": {
+          "title": "Nieprawidłowe żądanie"
+        },
+        "bulk-validation-failed": {
+          "title": "Niektóre elementy nie mogły zostać przetworzone"
+        },
+        "conflict": {
+          "title": "Konflikt"
+        },
+        "entity-already-exists": {
+          "title": "Encja już istnieje"
+        },
+        "forbidden": {
+          "title": "Odmowa dostępu"
+        },
+        "internal-error": {
+          "title": "Wewnętrzny błąd serwera"
+        },
+        "invalid-argument": {
+          "title": "Nieprawidłowy argument"
+        },
+        "invalid-entity": {
+          "title": "Nieprawidłowa encja"
+        },
+        "invalid-format": {
+          "title": "Nieprawidłowy format wartości"
+        },
+        "invalid-json": {
+          "title": "Nieprawidłowy JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Nieprawidłowy typ pluginu"
+        },
+        "invalid-query-filters": {
+          "title": "Nieprawidłowe filtry zapytania"
+        },
+        "invalid-query-parameter": {
+          "title": "Nieprawidłowy parametr zapytania"
+        },
+        "invalid-request-body": {
+          "title": "Nieprawidłowy body żądania"
+        },
+        "locked": {
+          "title": "Zasób jest zablokowany"
+        },
+        "method-not-allowed": {
+          "title": "Metoda niedozwolona"
+        },
+        "migration-required": {
+          "title": "Wymagana migracja"
+        },
+        "not-acceptable": {
+          "title": "Niedopuszczalne"
+        },
+        "not-found": {
+          "title": "Zasób nie znaleziono"
+        },
+        "payload-too-large": {
+          "title": "Payload zbyt duży"
+        },
+        "resource-expired": {
+          "title": "Zasób wygasł"
+        },
+        "service-unavailable": {
+          "title": "Usługa niedostępna",
+          "detail": "Serwer jest tymczasowo niedostępny. Spróbuj ponownie później."
+        },
+        "timeout": {
+          "title": "Operacja przekroczyła limit czasu"
+        },
+        "too-many-requests": {
+          "title": "Zbyt wiele żądań"
+        },
+        "unauthenticated": {
+          "title": "Wymagane uwierzytelnienie"
+        },
+        "unsupported-media-type": {
+          "title": "Nieobsługiwany typ nośnika"
+        },
+        "validation-failed": {
+          "title": "Walidacja nie powiodła się"
+        }
       }
     },
     "back_to_dashboard": "Powrót do Dashboardu",
@@ -675,6 +789,7 @@
     "label": "Etykieta",
     "labels": "Etykiety",
     "execution labels": "Etykiety egzekucji",
+    "show more labels": "Pokaż {count} więcej etykiet",
     "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
     "feeds": {
       "heading": "Wszystko o Kestra.",
@@ -697,15 +812,15 @@
       "guide": "Potrzebujesz wskazówek, aby uruchomić swój pierwszy Flow?"
     },
     "product_tour": "Przewodnik po produkcie",
-    "executions replayed": "Uruchomiono Replay dla <code>{executionCount}</code> egzekucji",
+    "executions replayed": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji odtworzonych",
     "executions state changed": "Status <code>{executionCount}</code> egzekucji został zmieniony",
-    "executions resumed": "Wznowiono <code>{executionCount}</code> egzekucji",
-    "executions paused": "Wstrzymano <code>{executionCount}</code> egzekucji",
-    "executions unqueue": "Usunięto z kolejki <code>{executionCount}</code> egzekucji",
-    "executions force run": "Wymuszono uruchomienie <code>{executionCount}</code> egzekucji",
-    "executions restarted": "Uruchomiono ponownie <code>{executionCount}</code> egzekucji",
-    "executions killed": "Zabito <code>{executionCount}</code> egzekucji",
-    "executions deleted": "Usunięto <code>{executionCount}</code> egzekucji",
+    "executions resumed": "<code>{executionCount}</code> egzekucja wznowiona | <code>{executionCount}</code> egzekucje wznowione | <code>{executionCount}</code> egzekucji wznowionych",
+    "executions paused": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji wstrzymanych",
+    "executions unqueue": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji usuniętych z kolejki",
+    "executions force run": "<code>{executionCount}</code> wymuszona egzekucja | <code>{executionCount}</code> wymuszone egzekucje | <code>{executionCount}</code> wymuszonych egzekucji",
+    "executions restarted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji uruchomionych ponownie",
+    "executions killed": "<code>{executionCount}</code> egzekucja zabita | <code>{executionCount}</code> egzekucje zabite | <code>{executionCount}</code> egzekucji zabitych",
+    "executions deleted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji usuniętych",
     "invalid bulk replay": "Nie można uruchomić Replaya egzekucji",
     "invalid bulk resume": "Nie można wznowić egzekucji",
     "invalid bulk pause": "Nie można wstrzymać egzekucji",
@@ -801,7 +916,7 @@
     "join_slack": "Dołącz do Slacka",
     "kestra": "Kestra",
     "error detected": "Wykryto błąd(y).",
-    "warning detected": "Wykryto ostrzeżenie(a)",
+    "warning detected": "Wykryto ostrzeżenie(-a).",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
     "dependency task": "Task {taskId} jest zależnością innego Taska",
@@ -898,6 +1013,7 @@
       },
       "export": "Eksportuj pliki namespace'u",
       "export_single": "Eksportuj plik",
+      "export_error": "Nie udało się wyeksportować \"{name}\". Nie można było ustalić ścieżki.",
       "dialog": {
         "name": {
           "file": "Nazwa z rozszerzeniem:",
@@ -1446,7 +1562,8 @@
         "confirm": "Czy na pewno chcesz usunąć <code>{name}</code> par KV?",
         "warning": "Nie masz uprawnień do tych namespace'ów, więc zostaną pominięte: <code>{namespaces}</code>"
       },
-      "inherited": "Odziedziczone pary KV"
+      "inherited": "Odziedziczone pary KV",
+      "expiration_hint": "Obecnie wygasa {date}. Pozostaw pole bez zmian, aby zachować to wygaśnięcie; wybranie czasu trwania przelicza go od teraz, a wyczyszczenie usuwa go."
     },
     "expiration": "Wygaśnięcie",
     "page": {
@@ -1786,7 +1903,8 @@
       "close_all_tabs": "Zamknij wszystkie zakładki",
       "close_all_panels": "Zamknij wszystkie panele",
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
-      "fullscreen": "Pełny ekran"
+      "fullscreen": "Pełny ekran",
+      "split_panel": "Podziel panel"
     },
     "search_docs": "Szukaj",
     "no_results_found": "Nie znaleziono wyników",
@@ -1799,7 +1917,9 @@
       "triggers": "Nie znaleziono Triggerów",
       "flows": "Nie znaleziono Flowów",
       "kv_pairs": "Nie znaleziono par KV",
-      "secrets": "Nie znaleziono sekretów"
+      "secrets": "Nie znaleziono sekretów",
+      "all_columns_hidden": "Wszystkie kolumny są ukryte",
+      "all_columns_hidden_description": "Włącz co najmniej jedną kolumnę w Dostosuj kolumny tabeli, aby ponownie zobaczyć dane."
     },
     "duplicate-pair": "{label} „{key}” jest zduplikowany, pierwszy Key został zignorowany.",
     "dashboards": {
@@ -1968,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot nie jest dostępny",
-          "detail": "Nie skonfigurowano żadnego dostawcy AI. Poproś administratora o jego konfigurację, a potem spróbuj ponownie.",
-          "retry": "Spróbuj ponownie"
+          "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego ustawienie.",
+          "docs": "Wyświetl dokumentację"
         },
         "thinkingWords": [
           "Orchestrowanie",
@@ -2139,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "Twoje Serwery",
-      "servers_count": "{count} Serwerów MCP",
+      "servers_count": "{count} serwer MCP | {count} serwery MCP | {count} serwerów MCP",
       "managed_by_kestra": "Zarządzane przez Kestra",
       "servers": "Serwery MCP",
       "client_setup": "Konfiguracja klienta",

@@ -222,7 +222,7 @@
     "next_execution": "Next execution",
     "datepicker": {
       "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
-      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
+      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S')",
       "duration example": "Example: 'P1DT1H1M1S'",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
       "custom": "Custom",
@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
+      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -564,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow documentation",
+      "nav_definitions": "Definitions",
       "nav_examples": "Examples",
+      "nav_metrics": "Metrics",
       "nav_outputs": "Outputs",
       "nav_overview": "Overview",
       "nav_properties": "Properties",
@@ -658,6 +660,118 @@
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
+      },
+      "400": {
+        "title": "Bad request",
+        "content": "The request could not be understood by the server."
+      },
+      "409": {
+        "title": "Conflict",
+        "content": "The request conflicts with the current state of the resource."
+      },
+      "422": {
+        "title": "Invalid entity",
+        "content": "The submitted content could not be processed."
+      },
+      "500": {
+        "title": "Internal server error",
+        "content": "Something went wrong on our side. Please try again later."
+      },
+      "503": {
+        "title": "Service unavailable",
+        "content": "The server is temporarily unavailable. Please try again later."
+      },
+      "generic": {
+        "title": "Something went wrong",
+        "content": "An unexpected error occurred. Please try again."
+      },
+      "trace id": "Trace ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI request failed"
+        },
+        "bad-request": {
+          "title": "Bad request"
+        },
+        "bulk-validation-failed": {
+          "title": "Some items could not be processed"
+        },
+        "conflict": {
+          "title": "Conflict"
+        },
+        "entity-already-exists": {
+          "title": "Entity already exists"
+        },
+        "forbidden": {
+          "title": "Access denied"
+        },
+        "internal-error": {
+          "title": "Internal server error"
+        },
+        "invalid-argument": {
+          "title": "Invalid argument"
+        },
+        "invalid-entity": {
+          "title": "Invalid entity"
+        },
+        "invalid-format": {
+          "title": "Invalid value format"
+        },
+        "invalid-json": {
+          "title": "Invalid JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Invalid plugin type"
+        },
+        "invalid-query-filters": {
+          "title": "Invalid query filters"
+        },
+        "invalid-query-parameter": {
+          "title": "Invalid query parameter"
+        },
+        "invalid-request-body": {
+          "title": "Invalid request body"
+        },
+        "locked": {
+          "title": "Resource is locked"
+        },
+        "method-not-allowed": {
+          "title": "Method not allowed"
+        },
+        "migration-required": {
+          "title": "Migration required"
+        },
+        "not-acceptable": {
+          "title": "Not acceptable"
+        },
+        "not-found": {
+          "title": "Resource not found"
+        },
+        "payload-too-large": {
+          "title": "Payload too large"
+        },
+        "resource-expired": {
+          "title": "Resource has expired"
+        },
+        "service-unavailable": {
+          "title": "Service unavailable",
+          "detail": "The server is temporarily unavailable. Please try again later."
+        },
+        "timeout": {
+          "title": "Operation timed out"
+        },
+        "too-many-requests": {
+          "title": "Too many requests"
+        },
+        "unauthenticated": {
+          "title": "Authentication required"
+        },
+        "unsupported-media-type": {
+          "title": "Unsupported media type"
+        },
+        "validation-failed": {
+          "title": "Validation failed"
+        }
       }
     },
     "back_to_dashboard": "Back to dashboard",
@@ -675,6 +789,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Execution labels",
+    "show more labels": "Show {count} more labels",
     "wrong labels": "Empty key or value is not allowed in labels",
     "feeds": {
       "heading": "All things Kestra.",
@@ -692,20 +807,20 @@
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "cancel": "Cancel",
-    "errorLogs": "Errors logs",
+    "errorLogs": "Error logs",
     "welcome_page": {
       "guide": "Need guidance to execute your first flow?"
     },
     "product_tour": "Product Tour",
-    "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
+    "executions replayed": "<code>{executionCount}</code> execution(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
-    "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
-    "executions paused": "<code>{executionCount}</code> executions(s) paused",
-    "executions unqueue": "<code>{executionCount}</code> executions(s) unqueue",
-    "executions force run": "<code>{executionCount}</code> executions(s) forced run",
-    "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
-    "executions killed": "<code>{executionCount}</code> executions(s) killed",
-    "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
+    "executions resumed": "<code>{executionCount}</code> execution(s) resumed",
+    "executions paused": "<code>{executionCount}</code> execution(s) paused",
+    "executions unqueue": "<code>{executionCount}</code> execution(s) unqueued",
+    "executions force run": "<code>{executionCount}</code> execution(s) forced run",
+    "executions restarted": "<code>{executionCount}</code> execution(s) restarted",
+    "executions killed": "<code>{executionCount}</code> execution(s) killed",
+    "executions deleted": "<code>{executionCount}</code> execution(s) deleted",
     "invalid bulk replay": "Could not replay executions",
     "invalid bulk resume": "Could not resume executions",
     "invalid bulk pause": "Could not pause executions",
@@ -801,7 +916,7 @@
     "join_slack": "Join Slack",
     "kestra": "Kestra",
     "error detected": "Error(s) detected.",
-    "warning detected": "Warning(s) detected",
+    "warning detected": "Warning(s) detected.",
     "informative notice": "Note(s)",
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
@@ -898,6 +1013,7 @@
       },
       "export": "Export namespace files",
       "export_single": "Export file",
+      "export_error": "Could not export \"{name}\". Its path could not be resolved.",
       "dialog": {
         "name": {
           "file": "Name with extension:",
@@ -1446,7 +1562,8 @@
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
       },
-      "inherited": "Inherited KV pairs"
+      "inherited": "Inherited KV pairs",
+      "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."
     },
     "expiration": "Expiration",
     "page": {
@@ -1786,7 +1903,8 @@
       "close_all_tabs": "Close all tabs",
       "close_all_panels": "Close all panels",
       "exit_fullscreen": "Exit fullscreen",
-      "fullscreen": "Fullscreen"
+      "fullscreen": "Fullscreen",
+      "split_panel": "Split panel"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",
@@ -1799,7 +1917,9 @@
       "triggers": "No Triggers Found",
       "flows": "No Flows Found",
       "kv_pairs": "No Key-Value pairs Found",
-      "secrets": "No Secrets Found"
+      "secrets": "No Secrets Found",
+      "all_columns_hidden": "All columns are hidden",
+      "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again."
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
@@ -1968,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot isn't available",
-          "detail": "No AI provider is configured. Ask an administrator to set one up, then try again.",
-          "retry": "Try again"
+          "detail": "No AI provider is configured. Ask an administrator to set one up.",
+          "docs": "View documentation"
         },
         "thinkingWords": [
           "Orchestrating",
@@ -2139,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "Your Servers",
-      "servers_count": "{count} MCP Servers",
+      "servers_count": "{count} MCP Server | {count} MCP Servers",
       "managed_by_kestra": "Managed by Kestra",
       "servers": "MCP Servers",
       "client_setup": "Client setup",

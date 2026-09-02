@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.MapPropertySource;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -71,6 +72,39 @@ class BasicAuthEndpointsFilterTest {
             HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
             {
                 client.toBlocking().exchange(httpRequest);
+            });
+
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        });
+
+        test(true, (client, httpRequest) ->
+        {
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+            {
+                client.toBlocking().exchange(httpRequest.basicAuth("wrongUser", "bar"));
+            });
+
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        });
+    }
+
+    @Test
+    void shouldReturnUnauthorizedWhenAuthorizationHeaderIsMalformed() {
+        test(true, (client, httpRequest) ->
+        {
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+            {
+                client.toBlocking().exchange(httpRequest.header(HttpHeaders.AUTHORIZATION, "Basic !!!not-base64!!!"));
+            });
+
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        });
+
+        test(true, (client, httpRequest) ->
+        {
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+            {
+                client.toBlocking().exchange(httpRequest.header(HttpHeaders.AUTHORIZATION, "Basic"));
             });
 
             assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());

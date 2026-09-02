@@ -4,15 +4,17 @@
         v-model:currentPage="currentPage"
         v-model:pageSize="pageSize"
         :loadData="loadData"
-        :data="metrics"
-        :total="metricsTotal"
+        :data="hasVisibleColumns ? metrics : []"
+        :total="hasVisibleColumns ? metricsTotal : 0"
+        :noDataText="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden')"
+        :noDataDescription="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
     >
         <template #navbar>
             <slot name="navbar" />
         </template>
 
-        <template v-if="$slots.empty" #empty>
+        <template v-if="$slots.empty && hasVisibleColumns" #empty>
             <slot name="empty" />
         </template>
 
@@ -40,7 +42,7 @@
             <KsTableColumn v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
                 <template #default="scope">
                     <span v-if="scope.row.type === 'timer'">
-                        {{ humanizeDuration((scope.row.value / 1000).toString()) }}
+                        {{ humanizeDuration(scope.row.value / 1000) }}
                     </span>
                     <span v-else>
                         {{ humanizeNumber(scope.row.value) }}
@@ -62,28 +64,27 @@
                     </KsTag>
                 </template>
             </KsTableColumn>
-
-
-            <KsTableColumn className="row-action">
-                <template #default="scope">
-                    <router-link
-                        :to="{name: 'flows/update/metrics',
-                              params: {namespace: scope.row.namespace, id: scope.row.flowId, tenant: scope.row.tenant},
-                              query: {'filters[q][EQUALS]': scope.row.name}
-                        }"
-                    >
-                        <KsIconButton :tooltip="$t('view metrics')">
-                            <ChartAreaspline />
-                        </KsIconButton>
-                    </router-link>
-                </template>
-            </KsTableColumn>
         </template>
+
+        <KsTableColumn className="row-action">
+            <template #default="scope">
+                <router-link
+                    :to="{name: 'flows/update/metrics',
+                          params: {namespace: scope.row.namespace, id: scope.row.flowId, tenant: scope.row.tenant},
+                          query: {'filters[q][EQUALS]': scope.row.name}
+                    }"
+                >
+                    <KsIconButton :tooltip="$t('view metrics')">
+                        <ChartAreaspline />
+                    </KsIconButton>
+                </router-link>
+            </template>
+        </KsTableColumn>
     </KsDataTable>
 </template>
 
 <script setup lang="ts">
-    import {ref, useTemplateRef, watch} from "vue"
+    import {computed, ref, useTemplateRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
 
     import Timer from "vue-material-design-icons/Timer.vue"
@@ -91,10 +92,10 @@
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
 
 
+    import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
+
     import type {Execution} from "../../stores/executions"
     import {humanizeDuration, humanizeNumber} from "../../utils/filters"
-
-    import {useExecutionsStore} from "../../stores/executions"
 
     import {useTableColumns} from "../../composables/useTableColumns"
 
@@ -126,7 +127,7 @@
         storageKey: "execution-metrics",
     })
 
-    const executionsStore = useExecutionsStore()
+    const hasVisibleColumns = computed(() => displayColumns.value.length > 0)
 
     const metrics = ref<any[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)
@@ -136,26 +137,12 @@
     const dataTable = useTemplateRef("dataTable")
 
     const loadData = async ({page, size, sort}: {page?: number; size?: number; sort?: string} = {}) => {
-        let params: Record<string, any> = {}
-
-        if (props.taskRunId) {
-            params.taskRunId = props.taskRunId
-        }
-
-        if (page) {
-            params.page = page
-        }
-
-        if (size) {
-            params.size = size
-        }
-
-        params.sort = sort ?? "name:asc"
-
-        const response: any = await executionsStore.loadMetrics({
+        const response = await MetricsAPI.searchByExecution({
             executionId: props.execution?.id ?? "",
-            params: params,
-            store: false,
+            taskRunId: props.taskRunId,
+            page,
+            size,
+            sort: [sort ?? "name:asc"],
         })
         metrics.value = response.results
         metricsTotal.value = response.total

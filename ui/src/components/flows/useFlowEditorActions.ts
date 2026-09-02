@@ -12,6 +12,8 @@ import {useMiscStore} from "override/stores/misc"
 import {useCoreStore} from "../../stores/core"
 import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
+import {asProblem} from "@kestra-io/kestra-sdk"
+import {isReportedCentrally} from "../../utils/kestraHttp"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
 export function useFlowEditorActions() {
@@ -160,8 +162,11 @@ export function useFlowEditorActions() {
     function reportSaveError(error: any) {
         if (error?.status === 401) {
             toast.error("401 Unauthorized", undefined, {duration: 2000})
-        } else {
-            toast.error(error?.response?.data?.message ?? t("error"))
+        } else if (!isReportedCentrally(error)) {
+            // A validation error and a lost connection reach here unreported; anything the
+            // interceptor toasted, a 404 on a flow deleted under the editor included, is on screen
+            // already with its problem title and its own remedies.
+            toast.error(asProblem(error)?.detail ?? t("error"))
         }
     }
 
@@ -291,8 +296,8 @@ export function useFlowEditorActions() {
                     params: {tenant: tenant.value},
                 })
             })
-            .catch(() => {
-                toast.error(`Failed to delete flow ${flowId}`)
+            .catch((error: any) => {
+                if (!isReportedCentrally(error)) toast.error(`Failed to delete flow ${flowId}`)
             })
     }
 

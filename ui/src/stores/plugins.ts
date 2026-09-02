@@ -62,6 +62,10 @@ export interface TriggerPluginDto {
     // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
     // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
     pluginTitle: string;
+    // The owning plugin artifact's manifest title (for example "NATS" for every NATS subgroup) -
+    // the disambiguation fallback for when pluginTitle itself resolves to a bare package segment;
+    // optional because older backends do not send it.
+    pluginGroupTitle?: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;
@@ -342,7 +346,15 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function listTriggers() {
         const response = await PluginsAPI.listTriggerPlugins() as unknown as {results: TriggerPluginDto[]; total: number}
-        return response?.results ?? []
+        // The triggers grid keys its cards by type, and duplicate keys corrupt Vue's keyed diff on
+        // every filter change (https://github.com/kestra-io/kestra/issues/18419), so drop duplicates
+        // even if the API misbehaves.
+        const seen = new Set<string>()
+        return (response?.results ?? []).filter(trigger => {
+            if (seen.has(trigger.type)) return false
+            seen.add(trigger.type)
+            return true
+        })
     }
 
     async function listWithSubgroup(_options?: Record<string, any>) {
@@ -367,18 +379,22 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls
-        const cacheKey = options.hash ? options.hash + id : id
+        // `all` returns a superset of the properties, so it gets its own key and never satisfies (or
+        // gets satisfied by) a request that did not ask for it.
+        const cacheKey = (options.all ? "all:" : "") + (options.hash ? options.hash + id : id)
         const cachedPluginDoc = pluginsDocumentation.value[cacheKey]
-        if (!options.all && cachedPluginDoc) {
-            nextTick(() => {
-                plugin.value = cachedPluginDoc
-            })
+        if (cachedPluginDoc) {
+            if (options.all !== true) {
+                nextTick(() => {
+                    plugin.value = cachedPluginDoc
+                })
+            }
             return cachedPluginDoc
         }
 
         // A 404 is a normal outcome here (e.g. as-you-type documentation for a not-yet-installed
-        // catalog type) — every caller handles it locally, so never trip the shared HTTP client's
-        // global not-found page.
+        // catalog type) — every caller handles it locally, so it must not raise the shared HTTP
+        // client's error toast.
         const requestOptions = {ignoreNotFound: true} as Parameters<typeof PluginsAPI.pluginDocumentation>[1]
         const data = (options.version
             ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
@@ -388,9 +404,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             plugin.value = data
         }
 
-        if (!options.all) {
-            pluginsDocumentation.value[cacheKey] = data
-        }
+        pluginsDocumentation.value[cacheKey] = data
 
         return data
     }
@@ -541,8 +555,8 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     // Auto-install requests are best-effort and handled locally by their callers: a 403 (feature
-    // disabled) or a 404 (job evicted while the toast is still polling) must never trip the shared
-    // HTTP client's global error page or toast.
+    // disabled) or a 404 (job evicted while the install toast is still polling) must never stack the
+    // shared HTTP client's own error toast on top of it.
     const silentRequest = {ignoreNotFound: true, showMessageOnError: false}
 
     async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {

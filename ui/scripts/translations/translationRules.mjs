@@ -235,6 +235,9 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     // which the model keeps verbatim on every reroll.
     "recipe.notify.slack_channel_placeholder",
     "recipe.notify.email_to_placeholder",
+    // Plugin-doc section label that Hindi keeps in English on every reroll, matching its sibling
+    // nav labels ("Outputs", "Tasks") that stay English through the reserved-terms rule.
+    "plugins.nav_metrics",
 ])
 
 /**

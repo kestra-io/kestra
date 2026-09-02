@@ -62,7 +62,7 @@ describe("AppTopNavBar favourite label", () => {
         topNavStore.breadcrumb = [{label: "Edit Dashboard"}]
         topNavStore.bookmarkLabel = "dash1"
 
-        expect(starCurrentPage()).toEqual([{path: "/main/dashboards/dash1/edit", label: "dash1"}])
+        expect(starCurrentPage()).toEqual([{path: "/main/dashboards/dash1/edit", label: "dash1", custom: false}])
     })
 
     it("falls back to the breadcrumb and title pair without a bookmark label", () => {
@@ -70,12 +70,12 @@ describe("AppTopNavBar favourite label", () => {
         topNavStore.title = "dash1"
         topNavStore.breadcrumb = [{label: "Edit Dashboard"}]
 
-        expect(starCurrentPage()).toEqual([{path: "/main/dashboards/dash1/edit", label: "Edit Dashboard: dash1"}])
+        expect(starCurrentPage()).toEqual([{path: "/main/dashboards/dash1/edit", label: "Edit Dashboard: dash1", custom: false}])
     })
 
     it("falls back to the title alone without a breadcrumb", () => {
         useTopNavStore().title = "Executions"
 
-        expect(starCurrentPage()).toEqual([{path: "/main/dashboards/dash1/edit", label: "Executions"}])
+        expect(starCurrentPage()).toEqual([{path: "/main/dashboards/dash1/edit", label: "Executions", custom: false}])
     })
 })

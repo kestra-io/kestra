@@ -20,7 +20,6 @@ const state = {
     confirm: vi.fn(),
     cancel: vi.fn(),
     reset: vi.fn(),
-    retry: vi.fn(),
     retryLastTurn: vi.fn(),
     loadThread: vi.fn(),
     restoreThread: vi.fn(),
@@ -40,11 +39,14 @@ const miscStore = reactive({
     copilotThreadTitle: null as string | null,
     copilotNewThread: false,
     configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
-    loadConfigs: vi.fn(),
     openCopilot: vi.fn(),
     promptCopilot: vi.fn(),
 })
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
+// CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
+// create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419).
+const flowStore = reactive({flowYaml: ""})
+vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
@@ -65,7 +67,6 @@ describe("CopilotChat", () => {
         state.sendChat.mockReset()
         state.confirm.mockReset()
         state.reset.mockReset()
-        state.retry.mockReset()
         state.retryLastTurn.mockReset()
         state.loadThread.mockReset()
         state.restoreThread.mockReset()
@@ -76,7 +77,7 @@ describe("CopilotChat", () => {
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
         miscStore.configs = {isAiApiKeyConfigured: true}
-        miscStore.loadConfigs.mockReset()
+        flowStore.flowYaml = ""
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -152,6 +153,43 @@ describe("CopilotChat", () => {
         expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
             prompt: "why did this fail?",
             additionalContext: {currentView: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}},
+        }))
+    })
+
+    // kestra-io/kestra-ee#10419: a flow pasted on the create page was never saved, so the agent
+    // has nothing to read — the turn must carry the editor buffer itself.
+    it("sends the editor buffer as flowSource on the flow create page", async () => {
+        routeStub = {name: "flows/create", params: {}}
+        flowStore.flowYaml = "id: repro\nnamespace: company.team"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "fix this error")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", flowSource: "id: repro\nnamespace: company.team"}},
+        }))
+    })
+
+    it("sends the editor buffer alongside the flow ids on a flow detail route", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "what does this flow do?")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team", flowId: "my-flow", flowSource: "id: my-flow"}},
+        }))
+    })
+
+    it("drops the editor buffer when the flow context pill is dismissed", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotContextChip"}).vm.$emit("remove", "flowId")
+        await flushPromises()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no flow please")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team"}},
         }))
     })
 
@@ -285,13 +323,15 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
     })
 
-    it("retries from the unavailable state, re-checking whether a provider has been added", async () => {
+    // Configuring a provider is an instance-config change, so the unavailable state points at the
+    // docs rather than offering a retry that could never succeed within the session.
+    it("offers the configuration docs — not a retry — from the unavailable state", () => {
         state.unavailable.value = true
         const w = mountChat()
-        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
-        await flushPromises()
-        expect(miscStore.loadConfigs).toHaveBeenCalled()
-        expect(state.retry).toHaveBeenCalled()
+        const docs = w.find("[data-test=\"copilot-unavailable-docs\"]")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
+        expect(docs.attributes("target")).toBe("_blank")
+        expect(w.find("[data-test=\"copilot-unavailable-retry\"]").exists()).toBe(false)
     })
 
     // kestra-io/kestra#18322: no provider configured is known from `/configs` before the first turn,
@@ -310,18 +350,6 @@ describe("CopilotChat", () => {
 
         miscStore.configs = undefined
         expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
-    })
-
-    it("clears the up-front unavailable state once a provider is configured", async () => {
-        miscStore.configs = {isAiApiKeyConfigured: false}
-        miscStore.loadConfigs.mockImplementation(async () => {
-            miscStore.configs = {isAiApiKeyConfigured: true}
-        })
-        const w = mountChat()
-        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
-        await flushPromises()
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
     })
 
     it("auto-scrolls the transcript to the bottom as new content arrives", async () => {

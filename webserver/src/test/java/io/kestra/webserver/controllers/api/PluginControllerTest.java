@@ -15,6 +15,7 @@ import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
@@ -526,11 +527,34 @@ class PluginControllerTest {
         assertThat(mongodbTrigger.pluginTitle()).isEqualTo("MongoDB");
         assertThat(debeziumMongodbTrigger.pluginTitle()).isEqualTo("Debezium MongoDB");
         assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
+        assertThat(mongodbTrigger.pluginGroupTitle()).isEqualTo("MongoDB");
+    }
+
+    @Test
+    void shouldReturnASingleCatalogEntryPerTriggerTypeWhenAPluginIsRegisteredInSeveralVersions() {
+        // Regression test for https://github.com/kestra-io/kestra/issues/18419: a plugin installed
+        // in several versions registers one RegisteredPlugin per version, and the duplicated trigger
+        // types corrupted the "Add Trigger" grid, which keys its cards by type.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin plugin = pluginWithTriggers(Schedule.class, Webhook.class);
+        RegisteredPlugin samePluginOtherVersion = pluginWithTriggers(Schedule.class, Webhook.class);
+
+        List<ApiTriggerPlugin> catalog = controller.toTriggerPluginCatalog(List.of(plugin, samePluginOtherVersion));
+
+        assertThat(catalog).map(ApiTriggerPlugin::type).containsExactlyInAnyOrder(Schedule.class.getName(), Webhook.class.getName());
     }
 
     private static RegisteredPlugin pluginWithTitle(String title) {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("X-Kestra-Title", title);
         return RegisteredPlugin.builder().manifest(manifest).build();
+    }
+
+    @SafeVarargs
+    private static RegisteredPlugin pluginWithTriggers(Class<? extends AbstractTrigger>... triggers) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", "Core");
+        return RegisteredPlugin.builder().manifest(manifest).triggers(List.of(triggers)).build();
     }
 }

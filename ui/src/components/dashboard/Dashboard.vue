@@ -184,6 +184,7 @@
                 coreStore.message = {
                     variant: "error",
                     title: err,
+                    content: err,
                 }
                 await useDefaultDashboardBundledInUI()
             }

@@ -34,6 +34,15 @@ public interface KVBackend {
     Optional<InputStream> getRawValue(String tenant, String namespace, String key) throws IOException, ResourceExpiredException;
 
     /**
+     * Gets the metadata stored with the current revision of an entry, for what {@link KVEntry} does not carry.
+     *
+     * @return the metadata, or {@link Optional#empty()} if the entry does not exist or the backend does not keep it.
+     */
+    default Optional<KVMetadata> getMetadata(String tenant, String namespace, String key) throws IOException {
+        return Optional.empty();
+    }
+
+    /**
      * @return the entry, or {@link Optional#empty()} if it does not exist or is deleted.
      */
     Optional<KVEntry> get(String tenant, String namespace, String key) throws IOException;

@@ -238,6 +238,19 @@ export default {
                 "enabled": "Enabled",
                 "disabled": "Disabled",
             },
+            "triggerLocked": {
+                "label": "Lock State",
+                "description": "Filter by trigger lock state",
+                "locked": "Locked",
+                "unlocked": "Unlocked",
+            },
+            "triggerKind": {
+                "label": "Kind",
+                "description": "Filter by trigger kind",
+                "schedule": "Schedule",
+                "polling": "Polling",
+                "realtime": "Realtime",
+            },
             "scope_flow": {
                 "label": "Scope",
                 "description": "Filter by flow scope",
@@ -619,6 +632,19 @@ export default {
                 "description": "Nach Trigger-Status filtern",
                 "enabled": "Aktiviert",
                 "disabled": "Deaktiviert",
+            },
+            "triggerLocked": {
+                "label": "Lock-Status",
+                "description": "Nach Trigger-Sperrstatus filtern",
+                "locked": "Gesperrt",
+                "unlocked": "Entsperrt",
+            },
+            "triggerKind": {
+                "label": "Art",
+                "description": "Nach Trigger-Art filtern",
+                "schedule": "Zeitplan",
+                "polling": "Polling",
+                "realtime": "Echtzeit",
             },
             "scope_flow": {
                 "label": "Bereich",
@@ -1002,6 +1028,19 @@ export default {
                 "enabled": "Habilitado",
                 "disabled": "Desactivado",
             },
+            "triggerLocked": {
+                "label": "Estado de bloqueo",
+                "description": "Filtrar por estado de bloqueo del trigger",
+                "locked": "Bloqueado",
+                "unlocked": "Desbloqueado",
+            },
+            "triggerKind": {
+                "label": "Tipo",
+                "description": "Filtrar por tipo de trigger",
+                "schedule": "Programar",
+                "polling": "Sondeo",
+                "realtime": "Tiempo real",
+            },
             "scope_flow": {
                 "label": "Ámbito",
                 "description": "Filtrar por alcance de flow",
@@ -1383,6 +1422,19 @@ export default {
                 "description": "Filtrer par état du trigger",
                 "enabled": "Activé",
                 "disabled": "Désactivé",
+            },
+            "triggerLocked": {
+                "label": "État du verrou",
+                "description": "Filtrer par état de verrouillage du trigger",
+                "locked": "Verrouillé",
+                "unlocked": "Déverrouillé",
+            },
+            "triggerKind": {
+                "label": "Type",
+                "description": "Filtrer par type de trigger",
+                "schedule": "Planifier",
+                "polling": "Interrogation",
+                "realtime": "Temps réel",
             },
             "scope_flow": {
                 "label": "Portée",
@@ -1766,6 +1818,19 @@ export default {
                 "enabled": "सक्रिय",
                 "disabled": "अक्षम",
             },
+            "triggerLocked": {
+                "label": "लॉक स्थिति",
+                "description": "ट्रिगर लॉक स्थिति के अनुसार फ़िल्टर करें",
+                "locked": "लॉक किया गया",
+                "unlocked": "अनलॉक किया गया",
+            },
+            "triggerKind": {
+                "label": "प्रकार",
+                "description": "ट्रिगर प्रकार के अनुसार फ़िल्टर करें",
+                "schedule": "शेड्यूल",
+                "polling": "पोलिंग",
+                "realtime": "रीयलटाइम",
+            },
             "scope_flow": {
                 "label": "दायरा",
                 "description": "फ्लो स्कोप द्वारा फ़िल्टर करें",
@@ -2147,6 +2212,19 @@ export default {
                 "description": "Filtra per stato del trigger",
                 "enabled": "Abilitato",
                 "disabled": "Disabilitato",
+            },
+            "triggerLocked": {
+                "label": "Blocca Stato",
+                "description": "Filtra per stato di blocco del trigger",
+                "locked": "Bloccato",
+                "unlocked": "Sbloccato",
+            },
+            "triggerKind": {
+                "label": "Tipo",
+                "description": "Filtra per tipo di trigger",
+                "schedule": "Pianificazione",
+                "polling": "Polling",
+                "realtime": "In tempo reale",
             },
             "scope_flow": {
                 "label": "Ambito",
@@ -2530,6 +2608,19 @@ export default {
                 "enabled": "有効",
                 "disabled": "無効",
             },
+            "triggerLocked": {
+                "label": "ロック状態",
+                "description": "トリガーロックの状態によってフィルタリング",
+                "locked": "ロック済み",
+                "unlocked": "ロック解除済み",
+            },
+            "triggerKind": {
+                "label": "種類",
+                "description": "トリガーの種類でフィルタリング",
+                "schedule": "スケジュール",
+                "polling": "ポーリング",
+                "realtime": "リアルタイム",
+            },
             "scope_flow": {
                 "label": "スコープ",
                 "description": "flowスコープでフィルター",
@@ -2911,6 +3002,19 @@ export default {
                 "description": "트리거 상태별 필터링",
                 "enabled": "사용 가능",
                 "disabled": "비활성화됨",
+            },
+            "triggerLocked": {
+                "label": "잠금 상태",
+                "description": "트리거 잠금 상태로 필터링",
+                "locked": "잠김",
+                "unlocked": "잠금 해제됨",
+            },
+            "triggerKind": {
+                "label": "종류",
+                "description": "트리거 종류별 필터링",
+                "schedule": "스케줄",
+                "polling": "폴링",
+                "realtime": "실시간",
             },
             "scope_flow": {
                 "label": "범위",
@@ -3294,6 +3398,19 @@ export default {
                 "enabled": "Włączone",
                 "disabled": "Wyłączone",
             },
+            "triggerLocked": {
+                "label": "Stan blokady",
+                "description": "Filtruj według stanu blokady Triggera",
+                "locked": "Zablokowane",
+                "unlocked": "Odblokowano",
+            },
+            "triggerKind": {
+                "label": "Rodzaj",
+                "description": "Filtruj według rodzaju Triggera",
+                "schedule": "Harmonogram",
+                "polling": "Odpytywanie",
+                "realtime": "Czas rzeczywisty",
+            },
             "scope_flow": {
                 "label": "Zakres",
                 "description": "Filtruj według zakresu Flow",
@@ -3675,6 +3792,19 @@ export default {
                 "description": "Filtrar por estado do trigger",
                 "enabled": "Habilitado",
                 "disabled": "Desativado",
+            },
+            "triggerLocked": {
+                "label": "Estado de Bloqueio",
+                "description": "Filtrar por estado de bloqueio do trigger",
+                "locked": "Bloqueado",
+                "unlocked": "Desbloqueado",
+            },
+            "triggerKind": {
+                "label": "Tipo",
+                "description": "Filtrar por tipo de trigger",
+                "schedule": "Agendamento",
+                "polling": "Polling",
+                "realtime": "Tempo real",
             },
             "scope_flow": {
                 "label": "Escopo",
@@ -4058,6 +4188,19 @@ export default {
                 "enabled": "Habilitado",
                 "disabled": "Desativado",
             },
+            "triggerLocked": {
+                "label": "Estado de Bloqueio",
+                "description": "Filtrar por estado de bloqueio do trigger",
+                "locked": "Bloqueado",
+                "unlocked": "Desbloqueado",
+            },
+            "triggerKind": {
+                "label": "Tipo",
+                "description": "Filtrar por tipo de trigger",
+                "schedule": "Agendamento",
+                "polling": "Polling",
+                "realtime": "Tempo real",
+            },
             "scope_flow": {
                 "label": "Escopo",
                 "description": "Filtrar por escopo do flow",
@@ -4440,6 +4583,19 @@ export default {
                 "enabled": "Включено",
                 "disabled": "Отключено",
             },
+            "triggerLocked": {
+                "label": "Состояние блокировки",
+                "description": "Фильтровать по состоянию блокировки trigger'а",
+                "locked": "Заблокировано",
+                "unlocked": "Разблокировано",
+            },
+            "triggerKind": {
+                "label": "Вид",
+                "description": "Фильтровать по типу trigger'а",
+                "schedule": "Расписание",
+                "polling": "Опрос",
+                "realtime": "В реальном времени",
+            },
             "scope_flow": {
                 "label": "Область",
                 "description": "Фильтр по области flow",
@@ -4821,6 +4977,19 @@ export default {
                 "description": "按触发器状态筛选",
                 "enabled": "启用",
                 "disabled": "禁用",
+            },
+            "triggerLocked": {
+                "label": "锁定状态",
+                "description": "按触发器锁定状态筛选",
+                "locked": "已锁定",
+                "unlocked": "已解锁",
+            },
+            "triggerKind": {
+                "label": "种类",
+                "description": "按 trigger 类型筛选",
+                "schedule": "计划",
+                "polling": "轮询",
+                "realtime": "实时",
             },
             "scope_flow": {
                 "label": "范围",

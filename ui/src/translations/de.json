@@ -2572,6 +2572,7 @@
         "message": "Behebe die Fehler vor dem Speichern.",
         "title": "Der Flow kann nicht gespeichert werden"
       },
+      "schema_default_tooltip": "Standardwert, der verwendet wird, wenn das Feld nicht gesetzt ist",
       "search_task_placeholder": "Task suchen oder beschreiben…",
       "shortcuts": {
         "add_after": "Block nach Auswahl einfügen",

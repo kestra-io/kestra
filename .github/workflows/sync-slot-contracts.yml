@@ -17,7 +17,7 @@ jobs:
       CHANGESET_FILE: .changeset/sync-slot-contracts.md
     steps:
       - name: Checkout kestra
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # The branch, the commit and the PR in artifact-sdk are all attributed to whoever owns the
       # token this job pushes with, so mint kestrabot's instead of using a maintainer's own.
@@ -31,7 +31,7 @@ jobs:
           repositories: artifact-sdk
 
       - name: Checkout artifact-sdk
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: kestra-io/artifact-sdk
           token: ${{ steps.app-token.outputs.token }}

@@ -250,14 +250,6 @@ export function useAiChat() {
         await runStream(`${base()}/${active.uid}/chat`, request)
     }
 
-    /** Clears the unavailable state so the user can retry (e.g. after configuring a provider). */
-    function retry(): void {
-        unavailable.value = false
-        error.value = null
-        errorDetail.value = null
-        notice.value = null
-    }
-
     /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
     async function retryLastTurn(): Promise<void> {
         if (!lastTurn || streaming.value) return
@@ -464,7 +456,6 @@ export function useAiChat() {
         confirm,
         cancel,
         reset,
-        retry,
         retryLastTurn,
         noteContext,
         noteModelChange,

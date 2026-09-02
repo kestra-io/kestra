@@ -71,7 +71,7 @@ const globalConfig = {
     },
 }
 
-function mountExplorer(variables: Record<string, unknown>) {
+function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string; type: string; variables?: Record<string, unknown>}) {
     const executionsStore = useExecutionsStore()
     executionsStore.execution = {
         id: "execution-id",
@@ -84,6 +84,7 @@ function mountExplorer(variables: Record<string, unknown>) {
             attemptNumber: 1,
         },
         variables,
+        trigger,
         inputs: {},
         taskRunList: [],
         state: {
@@ -100,14 +101,14 @@ function mountExplorer(variables: Record<string, unknown>) {
     return mount(ExecutionVariableExplorer, {global: globalConfig})
 }
 
-async function selectVariable(wrapper: ReturnType<typeof mount>, variableName: string) {
+async function selectVariable(wrapper: ReturnType<typeof mount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
-    const variableItem = (sidebar.props("sections") as any[])
-        .find((section) => section.key === "variables")
+    const item = (sidebar.props("sections") as any[])
+        .find((section) => section.key === sectionKey)
         .items
-        .find((item: {label: string}) => item.label === variableName)
+        .find((candidate: {label: string}) => candidate.label === itemName)
 
-    await sidebar.vm.$emit("select", variableItem)
+    await sidebar.vm.$emit("select", item)
     await flushPromises()
 }
 
@@ -183,5 +184,34 @@ describe("ExecutionVariableExplorer", () => {
 
         expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
             .toBe("{{ vars.bundle.values.a.b }}")
+    })
+
+    test("maps the Triggers section onto the run-context shape, not the raw ExecutionTrigger DTO", async () => {
+        const wrapper = mountExplorer({}, {
+            id: "every_minute",
+            type: "io.kestra.plugin.core.trigger.Schedule",
+            variables: {date: "2026-01-01T00:00:00Z"},
+        })
+        await flushPromises()
+
+        const sidebar = wrapper.findComponent({name: "SidebarList"})
+        const triggerItems = (sidebar.props("sections") as any[])
+            .find((section) => section.key === "triggers")
+            .items as {label: string}[]
+
+        // trigger variables sit at the top level, id/type only under `_context` — mirroring
+        // RunVariables.java, not the DTO's own `id` / `type` / `variables` fields.
+        expect(triggerItems.map((item) => item.label)).toEqual(["date", "_context"])
+
+        await selectVariable(wrapper, "date", "triggers")
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
+            .toBe("{{ trigger.date }}")
+
+        // `_context` starts with an underscore — asserts the dot form (`trigger._context`),
+        // not the bracket-subscript fallback (`trigger["_context"]`) that isValidVariable
+        // used to force for any leading-underscore key.
+        await selectVariable(wrapper, "_context", "triggers")
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
+            .toBe("{{ trigger._context }}")
     })
 })

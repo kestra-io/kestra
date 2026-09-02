@@ -464,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "동시성 제한",
-      "warning": "실행 중인 카운터를 변경하면 동시성이 손상되어 실행이 허용된 한도를 초과할 수 있습니다."
+      "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다."
     },
     "flowConcurrency": {
       "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
@@ -807,20 +807,20 @@
     "bulk restart": "<code>{executionCount}</code> 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
     "cancel": "취소",
-    "errorLogs": "오류 logs",
+    "errorLogs": "오류 log",
     "welcome_page": {
       "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?"
     },
     "product_tour": "제품 둘러보기",
-    "executions replayed": "<code>{executionCount}</code> 개의 실행이 재실행되었습니다",
+    "executions replayed": "<code>{executionCount}</code>개의 실행이 재생되었습니다.",
     "executions state changed": "<code>{executionCount}</code> 실행 상태가 변경되었습니다",
-    "executions resumed": "<code>{executionCount}</code> 개의 실행이 재개되었습니다",
-    "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
+    "executions resumed": "<code>{executionCount}</code>개의 실행이 재개되었습니다.",
+    "executions paused": "<code>{executionCount}</code> 실행 일시 중지됨",
     "executions unqueue": "<code>{executionCount}</code> 실행 대기열에서 제거됨",
-    "executions force run": "<code>{executionCount}</code> 실행 강제 실행",
-    "executions restarted": "<code>{executionCount}</code> 개의 실행이 재시작되었습니다",
-    "executions killed": "<code>{executionCount}</code> 개의 실행이 강제 종료되었습니다",
-    "executions deleted": "<code>{executionCount}</code> 개의 실행이 삭제되었습니다",
+    "executions force run": "<code>{executionCount}</code> 강제 실행된 execution",
+    "executions restarted": "<code>{executionCount}</code>개의 실행이 다시 시작되었습니다.",
+    "executions killed": "<code>{executionCount}</code>개 실행이 중지되었습니다.",
+    "executions deleted": "<code>{executionCount}</code>개의 실행이 삭제되었습니다.",
     "invalid bulk replay": "실행을 재실행할 수 없습니다",
     "invalid bulk resume": "실행을 재개할 수 없습니다",
     "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
@@ -916,7 +916,7 @@
     "join_slack": "Slack 참여",
     "kestra": "Kestra",
     "error detected": "오류가 감지되었습니다.",
-    "warning detected": "경고 감지됨",
+    "warning detected": "경고가 감지되었습니다.",
     "informative notice": "노트(s)",
     "open": "열기",
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
@@ -1903,7 +1903,8 @@
       "close_all_tabs": "모든 탭 닫기",
       "close_all_panels": "모든 패널 닫기",
       "exit_fullscreen": "전체 화면 종료",
-      "fullscreen": "전체 화면"
+      "fullscreen": "전체 화면",
+      "split_panel": "패널 분할"
     },
     "search_docs": "검색",
     "no_results_found": "결과를 찾을 수 없습니다",
@@ -2087,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot을(를) 사용할 수 없습니다",
-          "detail": "AI 공급자가 구성되어 있지 않습니다. 관리자에게 설정해 달라고 요청한 다음 다시 시도하세요.",
-          "retry": "다시 시도"
+          "detail": "AI 공급자가 구성되지 않았습니다. 관리자에게 설정을 요청하세요.",
+          "docs": "문서 보기"
         },
         "thinkingWords": [
           "오케스트레이션",

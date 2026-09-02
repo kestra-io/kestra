@@ -1148,7 +1148,6 @@
   }
 
   .dp-intro-md :deep(pre) {
-    background: var(--ks-bg-base);
     border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-radius-base);
     padding: var(--ks-spacing-3);

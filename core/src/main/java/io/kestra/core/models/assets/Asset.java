@@ -97,6 +97,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.type = allowTypeChange
             ? ObjectUtils.firstNonNull(this.type, previousType)
             : ObjectUtils.firstNonNull(previousType, this.type);
+        // The namespace of an existing asset is immutable, as AssetsController.updateAsset already enforces
+        this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null
@@ -134,6 +136,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withTenantId(String tenantId) {
         this.tenantId = tenantId;
+        return this;
+    }
+
+    public Asset withNamespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 }

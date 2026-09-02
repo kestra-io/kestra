@@ -190,7 +190,9 @@
     }
 
     .current-run {
+        display: flex;
         flex: 1;
+        flex-direction: column;
     }
 
 .extra-options{
@@ -273,6 +275,7 @@
     }
 
     .tab-content{
+        flex: 1;
         overflow: auto;
         padding: 1rem;
         background-color: var(--ks-bg-surface);

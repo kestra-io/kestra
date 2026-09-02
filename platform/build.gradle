@@ -128,7 +128,7 @@ dependencies {
         api "org.opensearch.client:opensearch-java:$opensearchVersion"
         api "org.opensearch.client:opensearch-rest-client:$opensearchRestVersion"
         api "org.opensearch.client:opensearch-rest-high-level-client:$opensearchRestVersion" // used by the elasticsearch plugin
-        api 'org.jsoup:jsoup:1.23.1'
+        api 'org.jsoup:jsoup:1.23.2'
         api "org.xhtmlrenderer:flying-saucer-core:$flyingSaucerVersion"
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api "jakarta.mail:jakarta.mail-api:2.1.5"

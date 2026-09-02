@@ -2,7 +2,7 @@
     <NavBarAction
         v-if="isAllowedEdit"
         :icon="Api"
-        @click="openApi"
+        @click="downloadApi"
     >
         {{ $t("api") }}
     </NavBarAction>
@@ -12,6 +12,8 @@
     import {computed} from "vue"
 
     import {apiUrl} from "override/utils/route"
+
+    import * as Utils from "../../../../../utils/utils"
 
     import {Execution} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
@@ -35,7 +37,10 @@
         )
     })
 
-    const openApi = () => {
-        window.open(`${apiUrl()}/executions/${props.execution.id}`, "_blank", "noopener,noreferrer")
+    const downloadApi = () => {
+        Utils.downloadUrl(
+            `${apiUrl()}/executions/${props.execution.id}`,
+            `execution-${props.execution.id}.json`,
+        )
     }
 </script>

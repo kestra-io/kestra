@@ -78,7 +78,7 @@ jobs:
     - name: Check EE repo for branch with same name
       if: ${{ false && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) }}
       id: check-ee-branch
-      uses: actions/github-script@v9
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       with:
         github-token: ${{ steps.ee-token.outputs.token }}
         script: |

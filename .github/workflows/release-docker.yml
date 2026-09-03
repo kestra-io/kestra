@@ -33,6 +33,7 @@ jobs:
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
       dry-run: ${{ inputs.dry-run }}
+      embed-plugins-schema-bundle: false
       java-version: ${{ inputs.java-version }}
       use-kestra-base-images: true
     secrets: inherit

@@ -21,6 +21,7 @@ import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.schema.ConfigurationSchemaCommand;
 import io.kestra.cli.schema.PluginsSchemaCommand;
 import io.kestra.cli.services.EnvironmentProvider;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
@@ -358,6 +359,8 @@ public class Kestra implements Callable<Integer> {
      */
     private static final class MigrationApplicationContext extends DefaultApplicationContext {
 
+        private static final String KESTRA_CONTEXT_INITIALIZER = KestraContext.Initializer.class.getName();
+
         MigrationApplicationContext(ApplicationContextConfiguration configuration) {
             super(configuration);
         }
@@ -383,6 +386,10 @@ public class Kestra implements Callable<Integer> {
         private static boolean isConditionalKestraStartupBean(BeanDefinitionReference<?> reference) {
             return reference.isContextScope()
                 && reference.getBeanDefinitionName().startsWith("io.kestra")
+                // Exempt: DI infrastructure other beans hard-depend on, rather than a runtime
+                // service. Dropping it left nothing able to take a KestraContext as a constructor
+                // parameter, which broke the whole CLI on EE — kestra-io/kestra-ee#10703.
+                && !KESTRA_CONTEXT_INITIALIZER.equals(reference.getName())
                 && reference.getAnnotationMetadata().hasStereotype(Requires.class);
         }
     }

@@ -7,14 +7,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
@@ -24,28 +25,24 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.GET;
 import static io.micronaut.http.HttpRequest.POST;
-import static io.micronaut.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
 @MicronautTest
 class ErrorControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;
+
     private static InMemoryAppender appender;
 
     @BeforeAll
@@ -63,147 +60,178 @@ class ErrorControllerTest {
     }
 
     @Test
-    void type() throws JsonProcessingException {
+    void shouldReportValidationFailedWithFieldErrorsWhenPluginTypeIsUnknown() throws JsonProcessingException {
+        // Given a flow whose task declares a plugin type that does not exist
         Map<String, Object> flow = ImmutableMap.of(
             "id", IdUtils.create(),
             "namespace", "io.kestra.test",
             "tasks", Collections.singletonList(
-                ImmutableMap.of(
-                    "id", IdUtils.create(),
-                    "type", "io.kestra.invalid"
-                )
+                ImmutableMap.of("id", IdUtils.create(), "type", "io.kestra.invalid")
             )
         );
-        String yaml = JacksonMapper.ofYaml().writeValueAsString(flow);
 
+        // When it is created
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(POST("/api/v1/main/flows", yaml).contentType(MediaType.APPLICATION_YAML_TYPE), Argument.of(Flow.class), Argument.of(Object.class))
+            () -> client.toBlocking().retrieve(postFlow(flow))
         );
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-
-        String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response).contains("Invalid entity: Invalid type: io.kestra.invalid");
-        assertThat(response).contains("io.kestra.core.models.flows.FlowWithSource[\\\"tasks\\\"]->java.util.ArrayList[");
-
-        // missing getter & setter on JsonError
-        // assertThat(exception.getResponse().getBody(JsonError.class).get().getEmbedded().get("errors").get().getFirst().getPath(), containsInAnyOrder("tasks"));
+        // Then the problem names the failure and the offending type, and locates it
+        ProblemDetail problem = Problems.assertProblem(exception, ProblemTypes.VALIDATION_FAILED);
+        assertThat(problem.detail()).contains("io.kestra.invalid");
+        assertThat(problem.instance()).isEqualTo("/api/v1/main/flows");
+        Problems.assertErrors(exception)
+            .isNotEmpty()
+            .anySatisfy(error -> {
+                assertThat(error.detail()).contains("io.kestra.invalid");
+                assertThat(error.pointer()).isNotNull();
+            });
     }
 
     @Test
-    void unknownProperties() {
+    void shouldReportValidationFailedWithFieldErrorsWhenPropertyIsUnknown() throws JsonProcessingException {
+        // Given a flow carrying a property the model does not declare
         Map<String, Object> flow = ImmutableMap.of(
             "id", IdUtils.create(),
             "namespace", "io.kestra.test",
             "unknown", "properties",
             "tasks", Collections.singletonList(
-                ImmutableMap.of(
-                    "id", IdUtils.create(),
-                    "type", Log.class.getName(),
-                    "message", "logging"
-                )
+                ImmutableMap.of("id", IdUtils.create(), "type", Log.class.getName(), "message", "logging")
             )
         );
 
+        // When it is created
         HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                POST("/api/v1/main/flows", JacksonMapper.ofYaml().writeValueAsString(flow)).contentType(MediaType.APPLICATION_YAML),
-                Argument.of(String.class),
-                Argument.of(JsonError.class)
-            )
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(postFlow(flow))
         );
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
-
-        String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response).contains("Invalid entity: Unrecognized field \\\"unknown\\\" (class io.kestra.core.models.flows.FlowWithSource), not marked as ignorable");
-        assertThat(response).contains("\"path\":\"io.kestra.core.models.flows.FlowWithSource[\\\"unknown\\\"]\"");
+        // Then the unknown property is named
+        Problems.assertProblem(exception, ProblemTypes.VALIDATION_FAILED);
+        Problems.assertErrors(exception)
+            .isNotEmpty()
+            .anySatisfy(error -> assertThat(error.detail()).contains("unknown"));
     }
 
     @Test
-    void clientError400() {
+    void shouldNotLeakInternalClassNamesWhenBodyCannotBeDecoded() {
+        // When a body of the wrong shape is posted (kestra-ee#10266)
         HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                GET("/test-utils/failing-with-400-client-error")
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/triggers/backfill/delete", "\"hello\"").contentType(MediaType.APPLICATION_JSON)
             )
         );
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(BAD_REQUEST.getCode());
-
-        String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response).contains("a client error message");
-
-        boolean foundAMatchingErrorLog = appender.getLogs().stream()
-            .anyMatch(
-                log -> log.getLevel() == Level.ERROR &&
-                    log.getFormattedMessage().contains("a client error message")
-            );
-        assertThat(foundAMatchingErrorLog).withFailMessage("Expected no logs for a client error").isEqualTo(false);
+        // Then nothing in the document names the target DTO, and it is reported as a client error
+        String body = exception.getResponse().getBody(String.class).orElseThrow();
+        assertThat(body).doesNotContain("ApiTriggerId");
+        assertThat(body).doesNotContain(ProblemTypes.INTERNAL_ERROR.title());
+        assertThat(exception.getStatus().getCode()).isBetween(400, 499);
     }
 
     @Test
-    void clientError500() {
+    void shouldNotLogWhenClientError() {
+        // When a route rejects the request
         HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                GET("/test-utils/failing-with-500-server-error")
-            )
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/test-utils/failing-with-400-client-error"))
         );
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(INTERNAL_SERVER_ERROR.getCode());
+        // Then the caller is told exactly what went wrong, and nothing is logged as a server error
+        ProblemDetail problem = Problems.assertProblem(exception, ProblemTypes.BAD_REQUEST);
+        assertThat(problem.detail()).isEqualTo("a client error message");
 
-        String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response).contains("an unhandled server error message");
-
-        boolean foundAMatchingErrorLog = appender.getLogs().stream()
-            .anyMatch(
-                log -> log.getLevel() == Level.ERROR &&
-                    log.getFormattedMessage().contains("an unhandled server error message")
-            );
-        assertThat(foundAMatchingErrorLog).withFailMessage("Expected a log for a server error").isEqualTo(true);
+        assertThat(hasErrorLogContaining("a client error message"))
+            .withFailMessage("A client error must not be logged at ERROR")
+            .isFalse();
     }
 
     @Test
-    void clientError500_withNoErrorMessage() {
+    void shouldHideMessageButLogItWithTraceIdWhenServerError() {
+        // When a route fails unexpectedly
         HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                GET("/test-utils/failing-with-server-error-with-no-error-message")
-            )
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/test-utils/failing-with-500-server-error"))
         );
 
-        boolean foundAMatchingErrorLog = appender.getLogs().stream()
-            .anyMatch(
-                log -> log.getLevel() == Level.ERROR &&
-                    log.getFormattedMessage().contains("Server error") && log.getThrowableProxy().getClassName().equals("java.lang.NullPointerException")
-            );
-        assertThat(foundAMatchingErrorLog).withFailMessage("Expected error log not found").isEqualTo(true);
+        // Then the caller gets a fixed, non-revealing detail plus a correlation id
+        ProblemDetail problem = Problems.assertProblem(exception, ProblemTypes.INTERNAL_ERROR);
+        assertThat(problem.detail())
+            .withFailMessage("A server error must not echo its exception message")
+            .doesNotContain("an unhandled server error message");
+        assertThat(problem.traceId()).isNotBlank();
+        assertThat(problem.errors()).isNullOrEmpty();
+
+        // And the real message reached the log, correlated by that same id
+        boolean logged = appender.getLogs().stream().anyMatch(log ->
+            Level.ERROR == log.getLevel()
+                && log.getFormattedMessage().contains("an unhandled server error message")
+                && log.getFormattedMessage().contains(problem.traceId())
+        );
+        assertThat(logged)
+            .withFailMessage("The exception message must reach the log under the traceId returned to the caller")
+            .isTrue();
     }
 
-    @Disabled("Test disabled: no exception thrown when converting to dynamic properties")
     @Test
-    void invalidEnum() {
-        Map<String, Object> flow = ImmutableMap.of(
-            "id", IdUtils.create(),
-            "namespace", "io.kestra.test",
-            "tasks", Collections.singletonList(
-                ImmutableMap.of(
-                    "id", IdUtils.create(),
-                    "type", Log.class.getName(),
-                    "message", "Yeah !",
-                    "level", "WRONG"
-                )
-            )
-        );
-
+    void shouldStillLogWhenServerErrorHasNoMessage() {
+        // When a route throws an exception carrying no message
         HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class))
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/test-utils/failing-with-server-error-with-no-error-message"))
         );
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        // Then the response is still a complete problem document
+        ProblemDetail problem = Problems.assertProblem(exception, ProblemTypes.INTERNAL_ERROR);
+        assertThat(problem.detail()).isNotBlank();
 
-        String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response).contains("Cannot deserialize value of type `org.slf4j.event.Level` from String \\\"WRONG\\\"");
-        assertThat(response).contains("\"path\":\"io.kestra.core.models.flows.Flow[\\\"tasks\\\"] > java.util.ArrayList[0] > io.kestra.plugin.core.log.Log[\\\"level\\\"]\"");
+        // And the throwable is still logged so the cause is recoverable
+        boolean logged = appender.getLogs().stream().anyMatch(log ->
+            Level.ERROR == log.getLevel()
+                && log.getFormattedMessage().contains(problem.traceId())
+                && log.getThrowableProxy() != null
+                && "java.lang.NullPointerException".equals(log.getThrowableProxy().getClassName())
+        );
+        assertThat(logged).withFailMessage("Expected the NullPointerException to be logged").isTrue();
+    }
+
+    @Test
+    void shouldReportNotFoundWhenNoRouteMatches() {
+        // When a request matches no route at all, so there is no exception to map
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/there-is-no-such-route"))
+        );
+
+        // Then it is still a problem document rather than an empty body
+        ProblemDetail problem = Problems.assertProblem(exception, ProblemTypes.NOT_FOUND);
+        assertThat(problem.detail()).isNotBlank();
+        assertThat(problem.instance()).isEqualTo("/api/v1/main/there-is-no-such-route");
+    }
+
+    @Test
+    void shouldReportMethodNotAllowedWithAllowHeaderWhenMethodIsWrong() {
+        // When a known route is called with the wrong method
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(POST("/test-utils/failing-with-400-client-error", ""))
+        );
+
+        // Then the problem says so, and the response still advertises what would have worked
+        Problems.assertProblem(exception, ProblemTypes.METHOD_NOT_ALLOWED);
+        assertThat(exception.getResponse().getHeaders().get("Allow")).contains("GET");
+    }
+
+    private static io.micronaut.http.HttpRequest<String> postFlow(Map<String, Object> flow) throws JsonProcessingException {
+        return POST("/api/v1/main/flows", JacksonMapper.ofYaml().writeValueAsString(flow))
+            .contentType(MediaType.APPLICATION_YAML_TYPE);
+    }
+
+    private static boolean hasErrorLogContaining(String text) {
+        return appender.getLogs()
+            .stream()
+            .anyMatch(log -> Level.ERROR == log.getLevel() && log.getFormattedMessage().contains(text));
     }
 
     private static class InMemoryAppender extends AppenderBase<ILoggingEvent> {

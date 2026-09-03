@@ -421,7 +421,7 @@
             coreStore.message = {
                 variant: "error",
                 title: t("block_editor.save_blocked.title"),
-                message: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
+                content: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
             }
         }
     }

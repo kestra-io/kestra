@@ -197,7 +197,7 @@
                 coreStore.message = {
                     variant: "success",
                     title: t("success"),
-                    message: t("copied_logs_to_clipboard"),
+                    content: t("copied_logs_to_clipboard"),
                 }
             })
         })

@@ -27,6 +27,7 @@
             :maxVisible="6"
             center
             :chart="ksPieRef"
+            :formatValue="isDuration ? durationUtils.humanDuration : undefined"
         />
     </div>
 </template>

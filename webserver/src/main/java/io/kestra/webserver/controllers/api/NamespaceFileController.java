@@ -31,8 +31,10 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
@@ -291,17 +293,6 @@ public class NamespaceFileController {
                     }
                 }));
 
-            flowService.findByNamespaceWithSource(tenantId, namespace).forEach(throwConsumer(flowWithSource ->
-            {
-                try {
-                    archive.putNextEntry(new ZipEntry(FLOWS_FOLDER + "/" + flowWithSource.getId() + ".yml"));
-                    archive.write(flowWithSource.getSource().getBytes());
-                    archive.closeEntry();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }));
-
             archive.finish();
 
             return HttpResponse.ok(bos.toByteArray()).header("Content-Disposition", "attachment; filename=\"" + namespace + "_files.zip\"");
@@ -379,6 +370,10 @@ public class NamespaceFileController {
     private void forbiddenPathsGuard(URI path) {
         if (path == null) {
             return;
+        }
+
+        if (path.getPath() == null) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The path '%s' is not a valid hierarchical path.".formatted(path));
         }
 
         if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {

@@ -55,8 +55,8 @@ jobs:
             git commit -m "chore(plugins): update the plugin catalog count baseline" -m "Weekly refresh of the offline fallback for the catalog-wide plugin count shown in the Plugins page search placeholder and the in-app documentation."
             # the chore branch is bot-owned and rebuilt from the default branch on every run
             git push --force -u origin $BRANCH_NAME
-            if [ -z "$(gh pr list --head $BRANCH_NAME --base ${{ github.ref_name }} --state open --json number --jq '.[].number')" ]; then
-              PR_URL=$(gh pr create --title "chore(plugins): update the plugin catalog count baseline" --body $'This PR was created automatically by [.github/workflows/update-plugin-count.yml](https://github.com/kestra-io/kestra/blob/develop/.github/workflows/update-plugin-count.yml).\n\nIt refreshes the offline fallback for the catalog-wide plugin count (Plugins page search placeholder and in-app docs). Someone from the @kestra-io/plugins team needs to review and merge.' --base ${{ github.ref_name }} --head $BRANCH_NAME)
+            if [ -z "$(gh pr list --head $BRANCH_NAME --base "$GITHUB_REF_NAME" --state open --json number --jq '.[].number')" ]; then
+              PR_URL=$(gh pr create --title "chore(plugins): update the plugin catalog count baseline" --body $'This PR was created automatically by [.github/workflows/update-plugin-count.yml](https://github.com/kestra-io/kestra/blob/develop/.github/workflows/update-plugin-count.yml).\n\nIt refreshes the offline fallback for the catalog-wide plugin count (Plugins page search placeholder and in-app docs). Someone from the @kestra-io/plugins team needs to review and merge.' --base "$GITHUB_REF_NAME" --head $BRANCH_NAME)
               gh pr edit "$PR_URL" --add-reviewer kestra-io/plugins || echo "::warning::Could not request review from kestra-io/plugins; please assign manually."
             else
               echo "Open PR for $BRANCH_NAME already exists; the branch update refreshed it."

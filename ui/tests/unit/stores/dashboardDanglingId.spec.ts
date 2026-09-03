@@ -34,7 +34,6 @@ vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
     dashboard: (...args: any[]) => dashboardFn(...args),
 }))
 
-// chart data is an Enterprise-only route, so the store reaches it through the raw client
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(), post: (...args: any[]) => dashboardChartDataFn(...args), put: vi.fn(), delete: vi.fn()}),
 }))

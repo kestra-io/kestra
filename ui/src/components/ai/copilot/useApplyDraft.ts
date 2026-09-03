@@ -138,8 +138,7 @@ export function useApplyDraft() {
         applying.value = true
         try {
             // Create, falling back to update if the id already exists — same no-probe rationale as flows.
-            // Writing a dashboard is an Enterprise route, absent from the OSS SDK, so go through the
-            // raw client to stay edition-agnostic (same approach as the dashboard store).
+            /** Raw client because dashboard writes are Enterprise-only routes, absent from the OSS SDK; see the dashboard store. */
             const yaml = {...silent, headers: {"Content-Type": "application/x-yaml"}} as AxiosLikeConfig
             try {
                 await useClient().post(`${apiUrl()}/dashboards`, draft.yaml, yaml)

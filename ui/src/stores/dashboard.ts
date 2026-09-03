@@ -91,10 +91,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return dashboardList.value
     }
 
+    /** Loads the tenant default dashboards; an instance that cannot store dashboards has none and does not serve the route. */
     async function loadDefaults() {
-        // A tenant default can only name a stored dashboard, so an instance that cannot store any
-        // has nothing to answer and does not serve the route. Resolving a dashboard id consults the
-        // defaults before anything else does, which is earlier than the callers can guard.
         if (useMiscStore().configs?.isCustomDashboardsEnabled === false) {
             defaultDashboards.value = {}
             return defaultDashboards.value
@@ -237,10 +235,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return activeDashboard.value
     }
 
-    // Storing dashboards of one's own, and authoring their charts, are Enterprise features, so these
-    // routes exist only in the EE API and are absent from the OSS SDK. Go through the raw client to stay edition-agnostic
-    // (same approach as loadDefaults), so the EE components sharing this store keep working.
-    // x-yaml is what MediaType.APPLICATION_YAML resolves to; "application/yaml" matches no route.
+    /** Dashboard writes are Enterprise-only routes, absent from the OSS SDK, so they go through the raw client; the backend only routes application/x-yaml, not application/yaml. */
     const yaml = {headers: {"Content-Type": "application/x-yaml"}}
 
     async function create(source: Dashboard["sourceCode"]) {

@@ -40,7 +40,6 @@ vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
     dashboard: (...args: any[]) => dashboardFn(...args),
 }))
 
-// update and validate are Enterprise-only routes, so the store reaches them through the raw client
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
         get: vi.fn(),

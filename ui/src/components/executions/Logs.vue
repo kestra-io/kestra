@@ -77,8 +77,15 @@
                 :targetFlow="executionsStore.flow"
                 :showProgressBar="false"
                 :fullHeight="fullscreenModalOpen"
+                @scroll.capture.passive="rememberLogScroll"
             />
-            <KsCard v-else class="attempt-wrapper" style="--kel-card-padding: 0">
+            <KsCard
+                v-else
+                class="attempt-wrapper"
+                :class="{'fullscreen-attempt-wrapper': fullscreenModalOpen}"
+                :bodyStyle="fullscreenModalOpen ? FULLSCREEN_CARD_BODY_STYLE : undefined"
+                style="--kel-card-padding: 0"
+            >
                 <KsNoData
                     v-if="!logsLoading && temporalLogs.length === 0"
                     :title="$t('no_logs_data_title')"
@@ -93,9 +100,10 @@
                     class="log-lines temporal"
                     data-test="logs-scroller"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :style="{maxHeight: `calc(100vh - ${fullscreenModalOpen ? '250px' : '335px'})`, marginTop: '0.5rem'}"
+                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px)', marginTop: '0.5rem'}"
                     :buffer="200"
                     :prerender="20"
+                    @scroll.capture.passive="rememberLogScroll"
                 >
                     <template #default="{item, active}">
                         <DynamicScrollerItem
@@ -174,6 +182,13 @@
         [key: string]: unknown
     }
 
+    const FULLSCREEN_CARD_BODY_STYLE = {
+        display: "flex",
+        flexDirection: "column",
+        flex: "1",
+        minHeight: "0",
+    }
+
     // Cast helper for DynamicScroller slot items which lose type info
     function asLog(item: unknown): TemporalLog {
         return item as TemporalLog
@@ -249,11 +264,24 @@
     const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
     const inlineLogsTarget = useTemplateRef<HTMLElement>("inlineLogsTarget")
     const fullscreenLogsTarget = useTemplateRef<HTMLElement>("fullscreenLogsTarget")
+    const preservedLogScrollPositions = new Map<HTMLElement, number>()
+    let restoringLogScroll = false
     const logsTarget = computed(() =>
         fullscreenModalOpen.value
             ? fullscreenLogsTarget.value ?? inlineLogsTarget.value
             : inlineLogsTarget.value,
     )
+
+    watch(fullscreenModalOpen, () => {
+        restoringLogScroll = true
+        nextTick(() => requestAnimationFrame(() => {
+            restoreLogScroll()
+            setTimeout(() => {
+                restoreLogScroll()
+                restoringLogScroll = false
+            })
+        }))
+    }, {flush: "sync"})
 
     const executionId = computed(() => executionsStore.execution?.id)
 
@@ -273,6 +301,7 @@
         const results = current.concat(sseBuffer)
         sseBuffer = []
         executionsStore.logs = {total: results.length, results}
+        logsLoading.value = false
     }
 
     const closeLogsSSE = () => {
@@ -285,10 +314,12 @@
             sseFlushTimer = undefined
         }
         sseBuffer = []
+        logsLoading.value = false
     }
 
     const streamLogs = () => {
         closeLogsSSE()
+        logsLoading.value = true
         executionsStore.logs = {total: 0, results: []}
         executionsStore.followLogs({
             id: executionId.value!,
@@ -310,6 +341,8 @@
             sse.onerror = () => {
                 closeLogsSSE()
             }
+        }).catch(() => {
+            logsLoading.value = false
         })
     }
 
@@ -478,6 +511,7 @@
 
     function toggleViewType() {
         logCursor.value = undefined
+        preservedLogScrollPositions.clear()
         raw_view.value = !raw_view.value
         localStorage.setItem(storageKeys.LOGS_VIEW_TYPE, String(raw_view.value))
     }
@@ -521,6 +555,19 @@
 
     function scrollToLog(index: string) {
   ;(logScroller.value as any)?.scrollToItem(index)
+    }
+
+    function rememberLogScroll(event: Event) {
+        if (!restoringLogScroll) {
+            const scroller = event.target as HTMLElement
+            preservedLogScrollPositions.set(scroller, scroller.scrollTop)
+        }
+    }
+
+    function restoreLogScroll() {
+        for (const [scroller, scrollTop] of preservedLogScrollPositions) {
+            scroller.scrollTop = scrollTop
+        }
     }
 
     function toggleFullscreenModal() {
@@ -593,6 +640,13 @@
   }
 
   .fullscreen-logs-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .fullscreen-attempt-wrapper {
     display: flex;
     flex-direction: column;
     flex: 1;

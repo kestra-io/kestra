@@ -1259,6 +1259,9 @@ export type InputObject = {
      * The dependencies of the input.
      */
     dependsOn?: DependsOn;
+    /**
+     * Whether the input is required.
+     */
     required?: boolean;
     /**
      * The default value to use if no value is specified.

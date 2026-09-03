@@ -369,7 +369,9 @@ If your `<style>` block needs to exist:
 | `KsDateAgo` | Relative time display ("2 hours ago") |
 | `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
+| `KsFileTag` | Storage URI rendered as a file reference: symbol picked from the extension, plus a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
 | `KsTree` | Hierarchical tree view |
+| `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
 | `KsExecutionStatus` | Execution / task status badge with icon and color |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
@@ -402,6 +404,7 @@ If your `<style>` block needs to exist:
 - `dateUtils` — `dateFilter()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
+- `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.

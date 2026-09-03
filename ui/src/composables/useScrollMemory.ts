@@ -37,7 +37,7 @@ export function useScrollMemory(keyRef: Ref<string>, elementRef?: Ref<HTMLElemen
     } else {
         useScroll(elementRef || ref(null), {
             throttle: 16,
-            onScroll: () => { if (elementRef?.value) throttledSave(elementRef.value.scrollTop) }
+            onScroll: () => { if (elementRef?.value) throttledSave(elementRef.value.scrollTop) },
         })
         watch([keyRef, () => elementRef?.value], ([newKey, newElement]) => {
             if (newElement && newKey) nextTick(restoreScroll)

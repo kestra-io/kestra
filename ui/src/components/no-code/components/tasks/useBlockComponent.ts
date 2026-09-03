@@ -1,20 +1,38 @@
 import {h, inject, onMounted, ref} from "vue"
-import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
+import {KsSkeleton} from "@kestra-io/design-system"
+import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
+
+type TaskComponents = typeof import("./getTaskComponent")
+
+let loaded: TaskComponents | undefined
+let loading: Promise<TaskComponents> | undefined
+
+function loadTaskComponents(): Promise<TaskComponents> {
+    loading ??= import("./getTaskComponent").then((module) => {
+        loaded = module
+        return module
+    })
+    return loading
+}
 
 export function useBlockComponent() {
-    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY);
-    const definitions = definitionsRef?.value ?? {};
+    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY)
+    const definitions = definitionsRef?.value ?? {}
 
-    const getBlockComponent = ref<(property: any, key?: string) => any>(() => {
-        return h("div", {class: "no-code-skeleton"}, "Loading...");
-    })
-    
+    const resolve = (module: TaskComponents) =>
+        (property: any, key?: string, siblingKeys?: string[]) =>
+            module.getTaskComponent(property, definitions, key, siblingKeys)
+
+    const getBlockComponent = ref<(property: any, key?: string, siblingKeys?: string[]) => any>(
+        loaded ? resolve(loaded) : () => h(KsSkeleton, {rows: 1, animated: true}),
+    )
+
     onMounted(async () => {
-        const module = await import("./getTaskComponent");
-        getBlockComponent.value = (property: any, key?: string) => module.getTaskComponent(property, definitions, key);
+        if (loaded) return
+        getBlockComponent.value = resolve(await loadTaskComponents())
     })
 
     return {
-        getBlockComponent
+        getBlockComponent,
     }
 }

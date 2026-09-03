@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -7,23 +8,32 @@ import java.util.stream.Collectors;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.FlowMetaStores;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
+import io.kestra.plugin.core.trigger.WebhookInputRenderException;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -31,17 +41,20 @@ import io.micronaut.http.sse.Event;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
-
-import static io.kestra.core.models.Label.CORRELATION_ID;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Singleton
 public class WebhookService {
+    public static final String TEST_EVENT_HEADER = "X-Kestra-Test-Event";
+
+    private static final String FROM_TEST_EVENT = "testEvent";
+
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -58,13 +71,25 @@ public class WebhookService {
     private UriProvider uriProvider;
 
     @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
+    private ExecutionOutputService executionOutputService;
+
+    @Inject
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private AsyncOperationWaiter asyncOperationWaiter;
+
+    @Inject
+    private AsyncOperationsConfiguration asyncOperationsConfiguration;
+
+    @Inject
+    private FlowMetaStoreInterface flowMetaStore;
 
     /**
      * Parse query parameters from the webhook request URI.
@@ -85,40 +110,63 @@ public class WebhookService {
             );
     }
 
+    private static boolean isTestEvent(WebhookContext context) {
+        if (context.request() == null || context.request().getHeaders() == null) {
+            return false;
+        }
+
+        return context.request().getHeaders()
+            .firstValue(TEST_EVENT_HEADER)
+            .map(Boolean::parseBoolean)
+            .orElse(false);
+    }
+
     /**
      * Prepare the execution checking conditions, and injecting inputs.
      *
      * @param context The webhook context containing request, path, flow, and services
      * @param trigger The webhook trigger
      * @param output The trigger output to attach to the execution
-     * @return The prepared execution, or empty if conditions are not met
+     * @return The prepared execution, or empty if the trigger conditions are not met
+     * @throws WebhookInputRenderException if the trigger inputs cannot be rendered or processed
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
+        // the trigger is matched on the raw flow, but the execution is built from the flow the executor will run
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, context.flow());
+        FlowInterface resolvedFlow = processedFlow.flow();
+
         Execution execution = Execution.builder()
-            .id(IdUtils.create())
+            // The caller mints the id before reading the request so that files stored for the call already live
+            // under this execution; it is only null for a context built without one.
+            .id(Optional.ofNullable(context.executionId()).orElseGet(IdUtils::create))
             .tenantId(context.flow().getTenantId())
             .namespace(context.flow().getNamespace())
             .flowId(context.flow().getId())
             .flowRevision(context.flow().getRevision())
             .inputs(trigger.getInputs())
-            .variables(context.flow().getVariables())
+            .variables(resolvedFlow.getVariables())
             .state(new State())
             .trigger(ExecutionTrigger.of(trigger, output))
             .build();
 
-        // Add labels
-        List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, "trigger"));
-        labels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
-        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
-            labels.add(new Label(CORRELATION_ID, execution.getId()));
-        }
+        var runContext = runContext(flow, execution);
 
-        execution = execution.withLabels(labels);
+        List<Label> contributed = new ArrayList<>();
+        contributed.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
+        // The trigger's own labels, as the other trigger types get them through TriggerService
+        contributed.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
+
+        execution = execution.withLabels(
+            LabelService.forExecution(
+                resolvedFlow,
+                LabelService.withoutPinned(contributed, processedFlow.pinnedLabelKeys()),
+                execution.getId()
+            )
+        );
 
         // Check conditions
-        var runContext = runContext(flow, execution);
         if (!conditionService.isValid(trigger, flow, runContext)) {
+            deleteStoredFiles(runContext, execution);
             return Optional.empty(); // Conditions not met
         }
 
@@ -129,8 +177,11 @@ public class WebhookService {
                 renderedInputs = readExecutionInputs(flow, execution, renderedInputs);
                 execution = execution.withInputs(renderedInputs);
             } catch (Exception e) {
-                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
-                return Optional.empty(); // Input rendering failed
+                // Distinct from "conditions not met": a rendering failure is a real error and must
+                // not be silently turned into a 204, so we surface it to the caller.
+                log.warn("Unable to render the webhook inputs", e);
+                deleteStoredFiles(runContext, execution);
+                throw new WebhookInputRenderException("Unable to render the webhook inputs", e);
             }
         }
 
@@ -138,27 +189,60 @@ public class WebhookService {
     }
 
     /**
-     * Start the execution by injecting trace context and emitting it to the execution queue.
+     * Delete the files the request was stored under, for a call that ends without creating an execution.
+     * Nothing would ever purge them otherwise, as the execution they are scoped to will not exist.
+     */
+    private void deleteStoredFiles(RunContext runContext, Execution execution) {
+        try {
+            runContext.storage().deleteExecutionFiles();
+        } catch (IOException e) {
+            log.warn("Unable to delete the files stored for the webhook execution {}", execution.getId(), e);
+        }
+    }
+
+    /**
+     * Start the execution by injecting trace context, emitting a {@link Create} command to the
+     * execution queue tagged with an {@code operationId}, and waiting asynchronously for the
+     * executor to confirm processing via {@link AsyncOperationProcessedEvent}.
      *
      * @param execution The execution to start
-     * @throws QueueException If there is an error emitting to the queue
+     * @return a {@link Mono} that completes with the processed event once the executor confirms,
+     *         or signals a {@link java.util.concurrent.TimeoutException} if no confirmation
+     *         arrives within the configured timeout
      */
-    public void startExecution(Execution execution) throws QueueException {
-        // inject the traceparent into the execution
-        Optional<TextMapPropagator> propagator = openTelemetry
+    public Mono<AsyncOperationProcessedEvent> startExecution(Execution execution) {
+        Optional<String> traceParent = openTelemetry
             .map(OpenTelemetry::getPropagators)
-            .map(ContextPropagators::getTextMapPropagator);
+            .map(ContextPropagators::getTextMapPropagator)
+            .map(propagator ->
+            {
+                Map<String, String> carrier = new HashMap<>();
+                propagator.inject(Context.current(), carrier, Map::put);
+                return carrier.get("traceparent");
+            });
 
-        propagator.ifPresent(
-            textMapPropagator -> textMapPropagator.inject(
-                Context.current(),
-                execution,
-                ExecutionTextMapSetter.INSTANCE
-            )
+        Create command = Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+            .withKind(execution.getKind())
+            .withTrigger(execution.getTrigger())
+            .withLabels(execution.getLabels())
+            .withInputs(execution.getInputs())
+            .withTraceParent(traceParent.orElse(null));
+
+        return asyncOperationWaiter.submit(
+            execution.getId(),
+            operationId ->
+            {
+                try {
+                    executionCommandQueue.emit(command.withOperationId(operationId));
+                    eventPublisher.publishEvent(CrudEvent.create(execution));
+                } catch (Exception e) {
+                    // Exceptions.propagate rethrows a runtime as-is and wraps a checked one, so a MessageTooBigException
+                    // stays its real type and the ErrorController handler can map it to 413.
+                    throw Exceptions.propagate(e);
+                }
+            },
+            asyncOperationsConfiguration.waitTimeout()
         );
-
-        executionQueue.emit(execution);
-        eventPublisher.publishEvent(CrudEvent.create(execution));
     }
 
     /**
@@ -190,11 +274,22 @@ public class WebhookService {
      * @param execution The execution to create the response from
      * @return The WebhookResponse
      */
-    public WebhookResponse executionResponse(Execution execution) {
+    public WebhookResponse executionResponse(Execution execution) throws InternalException {
         return WebhookResponse.fromExecution(
             execution,
+            executionOutputService.getOutputs(execution),
             uriProvider.executionUrl(execution)
         );
+    }
+
+    /**
+     * Get the flow-level outputs of an execution, they are stored outside of the execution.
+     *
+     * @param execution The execution to read the outputs from
+     * @return The execution outputs, or null if the execution has none
+     */
+    public Map<String, Object> executionOutputs(Execution execution) throws InternalException {
+        return executionOutputService.getOutputs(execution);
     }
 
     /**

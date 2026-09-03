@@ -24,7 +24,7 @@ export const SECTIONS = {
     "Manage Kestra": [
         "Administrator Guide",
         "Migration Guide",
-        "Performance"
+        "Performance",
     ],
     "Reference Docs": [
         "Configuration",
@@ -39,5 +39,146 @@ export const DISABLED_PAGES = [
     "docs/api-reference",
     "docs/terraform/data-sources",
     "docs/terraform/guides",
-    "docs/terraform/resources"
+    "docs/terraform/resources",
 ]
+
+export interface DocsTocItem {
+    path: string;
+    title: string;
+    sidebarTitle?: string;
+    children?: DocsTocItem[];
+}
+
+export function buildDocsToc(rawStructure: Record<string, any> | undefined): DocsTocItem[] | undefined {
+    if (rawStructure === undefined) {
+        return undefined
+    }
+
+    const childrenWithMetadata = Object.entries(rawStructure)
+        .filter(([path]) => path.startsWith("docs/") && !path.endsWith(".png") && !path.endsWith(".svg"))
+        .reduce((acc: Record<string, DocsTocItem>, [url, metadata]) => {
+            if (!metadata || metadata.hideSidebar) {
+                return acc
+            }
+
+            const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "")
+            acc[cleanUrl] = {...metadata, path: cleanUrl}
+
+            return acc
+        }, {})
+
+    for (const url in childrenWithMetadata) {
+        const split = url.split("/")
+        const parent = childrenWithMetadata[split.slice(0, split.length - 1).join("/")]
+        if (parent !== undefined) {
+            parent.children = [...(parent.children ?? []), childrenWithMetadata[url]]
+        }
+    }
+
+    return Object.values(childrenWithMetadata)
+}
+
+/**
+ * Matches every {@link SECTIONS} entry against the top-level docs pages only, so a nested page
+ * sharing a title with a section entry cannot be listed twice.
+ */
+export function buildDocsSections(toc: DocsTocItem[] | undefined): {section: string, children: DocsTocItem[]}[] | undefined {
+    if (toc === undefined) {
+        return undefined
+    }
+
+    return Object.entries(SECTIONS).map(([section, childrenTitles]) => ({
+        section,
+        children: childrenTitles
+            .map(name => toc.find(({title, sidebarTitle, path}) =>
+                path.split("/").length === 2 && (sidebarTitle === name || title === name),
+            ))
+            .filter((item): item is DocsTocItem => !!item),
+    }))
+}
+
+export function removeMDXImports(content: string): string {
+    // we want to only remove lines that are not in a code block
+    // so we isolate code blocks first
+    const contentArray = content.split("```")
+    for(let i = 0; i < contentArray.length; i++){
+        // if the index is even, it's outside a code block
+        if(i % 2 === 0){
+            // remove lines that start with `import`
+            // to keep compatibility with mdx files
+            // without splitting and rejoining since it would
+            // create huge arrays just to destroy them right after
+            contentArray[i] = contentArray[i].replaceAll(/import [\s\S]+? from ['"][\s\S]+?['"];?/g, "")
+        }
+    }
+    return contentArray.join("```")
+}
+
+export function extractMultilineJSXComponents(content: string) {
+    // first, find every line that start with < and a capital letter, and that doesn't end with />
+    const lines = content.split("\n")
+    const linesToRemove: number[] = []
+    const removedComponents: Record<number, string> = {}
+    let startOfBlockLine = -1
+    let componentName = ""
+    let insideCodeBlock = false
+    let currentBlockLines: number[] = []
+
+    for(let i = 0; i < lines.length; i++){
+        if(insideCodeBlock){
+            if(lines[i].match(/^```/)){
+                insideCodeBlock = false
+            }
+            continue
+        } else {
+            if(lines[i].match(/^```/)){
+                insideCodeBlock = true
+                continue
+            }
+        }
+
+        if(startOfBlockLine > -1){
+            // if an empty line appears, MDX will consider it a stop in the JSX
+            if(lines[i].trim() === ""){
+                startOfBlockLine = -1
+                componentName = ""
+                currentBlockLines = []
+                continue
+            }
+
+            currentBlockLines.push(i)
+
+            // if we have started a block, let's check if this line is the end of it.
+            // if so, we remove it and stop the next iterations until we find a new block
+            if(lines[i].match(/^\/>/)){
+                removedComponents[startOfBlockLine] = lines.slice(startOfBlockLine, i).join("\n") + `\n></${componentName}>`
+                startOfBlockLine = -1
+                componentName = ""
+                // and only once we are sure the block is closed,
+                // do we add the lines to remove
+                linesToRemove.push(...currentBlockLines)
+                currentBlockLines = []
+            }
+        }
+
+        if(lines[i].match(/^<([A-Z][\w]*)\b(?![^>]*\/>).*$/)){
+            componentName = lines[i].match(/^<([A-Z][\w]*)/)?.[1] ?? ""
+            startOfBlockLine = i
+        }
+    }
+
+    // in place of each removed block, we add a placeholder with the component name to keep track of where it was in the doc
+    for(const lineIndex in removedComponents){
+        lines[lineIndex] = `<!-- ${removedComponents[lineIndex]} -->`
+    }
+    return {
+        content: lines.filter((_, i) => !linesToRemove.includes(i)).join("\n"),
+        removedComponents: removedComponents,
+    }
+}
+
+export function replaceSelfClosingTagsWithOpenClose(content: string): string {
+    // we want to replace every self closing tag with an open and close tag
+    // to keep compatibility with mdx files that use self closing tags for custom components
+    return content.replaceAll(/<([A-Z][\w]*)\b([^>]*)\/>/g, "<$1$2></$1>\n")
+}

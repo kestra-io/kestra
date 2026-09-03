@@ -14,7 +14,6 @@ import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.*;
@@ -65,7 +64,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     private RecoverMissedSchedules recoverMissedSchedules;
 
     @Override
-    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
+    public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
 
         ZonedDateTime lastEvaluation = triggerContext.getDate();
@@ -79,15 +78,15 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
                 ? JacksonMapper.toMap(rawVariables, ZoneId.of(runContext.render(timezone)))
                 : JacksonMapper.toMap(rawVariables);
 
-            Execution execution = SchedulableExecutionFactory.createExecution(
-                this,
-                conditionContext,
-                triggerContext,
-                variables,
-                nextDate.orElse(null)
+            return Optional.of(
+                SchedulableExecutionFactory.createExecution(
+                    this,
+                    conditionContext,
+                    triggerContext,
+                    variables,
+                    nextDate.orElse(null)
+                )
             );
-
-            return Optional.of(execution);
         }
 
         return Optional.empty();

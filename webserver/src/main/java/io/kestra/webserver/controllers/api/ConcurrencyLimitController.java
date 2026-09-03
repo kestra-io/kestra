@@ -15,6 +15,7 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 
 @Controller("/api/v1/{tenant}/concurrency-limit")
 public class ConcurrencyLimitController {
@@ -33,13 +34,31 @@ public class ConcurrencyLimitController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{namespace}/{flowId}")
+    @Operation(tags = { "Flows" }, summary = "Get the concurrency limit of a flow")
+    public HttpResponse<ConcurrencyLimit> getConcurrencyLimit(String namespace, String flowId) {
+        return concurrencyLimitRepository.findById(tenantService.resolveTenant(), namespace, flowId)
+            .map(HttpResponse::ok)
+            .orElseGet(HttpResponse::notFound);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Put("/{namespace}/{flowId}")
     @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
-    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body ConcurrencyLimit concurrencyLimit) {
-        var existing = concurrencyLimitRepository.findById(concurrencyLimit.getTenantId(), concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId());
+    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(String namespace, String flowId, @Body @Valid ConcurrencyLimit concurrencyLimit) {
+        String tenantId = tenantService.resolveTenant();
+        var existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
         if (existing.isEmpty()) {
             return HttpResponse.notFound();
         }
-        return HttpResponse.ok(concurrencyLimitRepository.update(concurrencyLimit));
+
+        // The path identifies the resource; a body naming another flow must not retarget it.
+        ConcurrencyLimit toUpdate = ConcurrencyLimit.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .flowId(flowId)
+            .running(concurrencyLimit.getRunning())
+            .build();
+        return HttpResponse.ok(concurrencyLimitRepository.update(toUpdate));
     }
 }

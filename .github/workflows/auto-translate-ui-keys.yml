@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       retranslate_modified_keys:
-        description: "Whether to re-translate modified keys even if they already have translations."
+        description: "Force a full re-translation of every key, ignoring the fingerprints. Keys whose English source changed are re-translated automatically without this."
         type: choice
         options:
           - "false"
@@ -14,34 +14,37 @@ on:
         default: "false"
         required: false
 
+# Scheduled runs fire every three hours and each one opens its own timestamped branch. Without a
+# concurrency group two overlapping runs generate the same change and open two PRs for it, leaving
+# the loser with an empty diff once the winner merges — see kestra-io/kestra#17822.
+concurrency:
+  group: auto-translate-ui-keys-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   translations:
     name: Translations
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@v7
           name: Checkout
           with:
             fetch-depth: 0
 
-        - name: Set up Python
-          uses: actions/setup-python@v6
+        - name: Set up Node
+          uses: actions/setup-node@v7
           with:
-            python-version: "3.x"
+            node-version: "24.x"
 
-        - name: Install Python dependencies
-          run: pip install gitpython openai
+        - name: Install Node dependencies
+          run: npm ci
+          working-directory: ui
 
         - name: Generate translations
-          run: python ui/src/translations/generate_translations.py ${{ github.event.inputs.retranslate_modified_keys }}
+          run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ github.event.inputs.retranslate_modified_keys }}
           env:
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-        - name: Set up Node
-          uses: actions/setup-node@v6
-          with:
-            node-version: "20.x"
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
         - name: Set up Git
           run: |
@@ -54,14 +57,55 @@ jobs:
           run: |
             BRANCH_NAME="chore/update-translations-$(date +%s)"
             git checkout -b $BRANCH_NAME
-            git add ui/src/translations/*.json
+            # The fingerprints record what each translation was generated from; committing the
+            # languages without them would leave every regenerated key looking stale forever, so the
+            # next run would translate it again and open the same PR in a loop. The design-system
+            # locale files are phase 2 of the same generator and were never committed at all.
+            git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+            git add ':(glob)ui/packages/design-system/**/*.locale.ts'
             if git diff --cached --quiet; then
               echo "No changes to commit. Exiting with success."
               exit 0
             fi
+            # The staged fingerprint diff is exactly the set of keys this run (re)translated.
+            FINGERPRINTS="ui/scripts/translations/fingerprints.json ui/scripts/translations/fingerprints-design-system.json"
+            git diff --cached -U0 -- $FINGERPRINTS | sed -n 's/^+[[:space:]]*"\([^"]*\)":.*/\1/p' | sort -u > "$RUNNER_TEMP/added"
+            git diff --cached -U0 -- $FINGERPRINTS | sed -n 's/^-[[:space:]]*"\([^"]*\)":.*/\1/p' | sort -u > "$RUNNER_TEMP/removed"
+            {
+              comm -23 "$RUNNER_TEMP/added" "$RUNNER_TEMP/removed" | sed 's/.*/- `&` (new)/'
+              comm -12 "$RUNNER_TEMP/added" "$RUNNER_TEMP/removed" | sed 's/.*/- `&` (re-translated)/'
+              comm -13 "$RUNNER_TEMP/added" "$RUNNER_TEMP/removed" | sed 's/.*/- `&` (removed)/'
+            } > "$RUNNER_TEMP/keys"
+            # The last commit that touched the fingerprints is the previous generation, so every
+            # commit after it that touched an English source is what this run translates.
+            SINCE=$(git log -1 --format=%H -- $FINGERPRINTS)
+            git log --format='- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))' "${SINCE:-HEAD}..HEAD" -- ui/src/translations/en.json ':(glob)ui/packages/design-system/**/*.locale.ts' > "$RUNNER_TEMP/sources"
+            {
+              echo "This PR was created automatically by a GitHub Action."
+              echo
+              echo "### Translated keys"
+              head -100 "$RUNNER_TEMP/keys"
+              KEY_COUNT=$(wc -l < "$RUNNER_TEMP/keys")
+              if [ "$KEY_COUNT" -gt 100 ]; then
+                echo "- ... and $((KEY_COUNT - 100)) more keys"
+              fi
+              echo
+              echo "### Commits that introduced the English changes"
+              if [ -s "$RUNNER_TEMP/sources" ]; then
+                cat "$RUNNER_TEMP/sources"
+              else
+                echo "_No commit touched the English sources since the last run; this is a forced or catch-up re-translation._"
+              fi
+              echo
+              echo "Someone from the @kestra-io/frontend team needs to review and merge."
+            } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
             git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
-            gh pr create --title "Translations from en.json" --body $'This PR was created automatically by a GitHub Action.\n\nSomeone from the @kestra-io/frontend team needs to review and merge.' --base ${{ github.ref_name }} --head $BRANCH_NAME
+            PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base ${{ github.ref_name }} --head $BRANCH_NAME)
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              gh pr edit "$PR_URL" --add-reviewer "${{ github.actor }}" || echo "Could not request a review from ${{ github.actor }} on $PR_URL"
+            fi
 
         - name: Check keys matching
-          run: node ui/src/translations/check.js
+          run: npm run translations:check
+          working-directory: ui

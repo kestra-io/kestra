@@ -1,11 +1,11 @@
-import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
-import {useValues} from "../composables/useValues";
-import {useI18n} from "vue-i18n";
-import {useExecutionsStore} from "../../../stores/executions";
+import {computed, ComputedRef} from "vue"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import {useValues} from "../composables/useValues"
+import {useI18n} from "vue-i18n"
+import {useExecutionsStore} from "../../../stores/executions"
 
 export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
         return {
@@ -16,18 +16,22 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.EQUALS],
+                    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.LESS_THAN_OR_EQUAL_TO],
+                    comparatorLabels: {
+                        [Comparators.GREATER_THAN_OR_EQUAL_TO]: "At or Above",
+                        [Comparators.LESS_THAN_OR_EQUAL_TO]: "At or Below",
+                    },
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("logs");
-                        return VALUES.LEVELS;
+                        const {VALUES} = useValues("logs")
+                        return VALUES.LEVELS
                     },
                     defaultValue: () => (
                         typeof window !== "undefined"
                             ? localStorage.getItem("defaultLogLevel") || "INFO"
                             : "INFO"
                     ),
-                    visibleByDefault: true
+                    visibleByDefault: true,
                 },
                 {
                     key: "state",
@@ -36,11 +40,12 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.EXECUTION_STATES;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.EXECUTION_STATES
                     },
                     showComparatorSelection: true,
-                    searchable: true
+                    searchable: true,
+                    colored: true,
                 },
                 {
                     key: "task",
@@ -49,15 +54,15 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const taskRuns = useExecutionsStore().execution?.taskRunList ?? [];
+                        const taskRuns = useExecutionsStore().execution?.taskRunList ?? []
                         return taskRuns.map((taskRun) => ({
                             label: taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}` : ""),
-                            value: taskRun.id
-                        }));
+                            value: taskRun.id,
+                        }))
                     },
-                    searchable: true
-                }
-            ]
-        };
-    });
-};
+                    searchable: true,
+                },
+            ],
+        }
+    })
+}

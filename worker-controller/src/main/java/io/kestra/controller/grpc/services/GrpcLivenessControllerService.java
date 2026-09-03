@@ -1,6 +1,7 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.HeartbeatMessage;
 import io.kestra.controller.messages.HeartbeatMessageReply;
@@ -9,11 +10,11 @@ import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
+
+import io.grpc.stub.StreamObserver;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class GrpcLivenessControllerService extends LivenessControllerServiceGrpc.LivenessControllerServiceImplBase implements WorkerControllerService {

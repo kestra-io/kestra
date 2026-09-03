@@ -26,6 +26,9 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -131,9 +134,9 @@ public abstract class AbstractTaskRunnerTest {
                     "cat " + wdir + "{{internalStorageFile}} && echo",
                     "cat " + wdir + "hello.txt && echo",
                     "cat " + wdir + "hello.txt > " + wdir + "output.txt",
-                    "echo -n 'file from output dir' > {{outputDir}}/file.txt",
+                    "printf '%s' 'file from output dir' > {{outputDir}}/file.txt",
                     "mkdir {{outputDir}}/nested",
-                    "echo -n 'nested file from output dir' > {{outputDir}}/nested/file.txt",
+                    "printf '%s' 'nested file from output dir' > {{outputDir}}/nested/file.txt",
                     "echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'"
                 )
             ),
@@ -226,6 +229,44 @@ public abstract class AbstractTaskRunnerTest {
         result = taskRunner2.run(runContext, commands, Collections.emptyList());
         assertThat(result).isNotNull();
         assertThat(result.getExitCode()).isZero();
+    }
+
+    /**
+     * A rendered command echoing an {@code encryptedOutputs} marker must never appear in clear text in a runner's
+     * own logs (e.g. a "Starting command ..." debug line) — the whole point of the marker is that the value it
+     * carries is sensitive. Every task runner logging its rendered command, in this repo or in an external plugin
+     * repo, must call {@link TaskLogLineMatcher#redactEncryptedOutputs(String)} on it first; this test fails until
+     * it does.
+     */
+    @Test
+    protected void shouldNotLogEncryptedOutputsWhenStartingCommand() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+        var commands = initScriptCommands(runContext);
+        String secret = "hunter2";
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(
+                ScriptService.scriptCommands(
+                    List.of("/bin/sh", "-c"),
+                    Collections.emptyList(),
+                    List.of("echo '::{\"encryptedOutputs\":{\"secret\":\"" + secret + "\"}}::'")
+                )
+            )
+        );
+
+        var listAppender = new ListAppender<ILoggingEvent>();
+        listAppender.start();
+        var logger = (ch.qos.logback.classic.Logger) runContext.logger();
+        logger.setLevel(Level.TRACE);
+        logger.addAppender(listAppender);
+
+        var taskRunner = taskRunner();
+        var result = taskRunner.run(runContext, commands, Collections.emptyList());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+        assertThat(listAppender.list)
+            .extracting(ILoggingEvent::getFormattedMessage)
+            .noneMatch(message -> message != null && message.contains(secret));
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory) {

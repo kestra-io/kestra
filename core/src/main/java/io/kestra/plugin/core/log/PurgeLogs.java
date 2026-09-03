@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.log;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.event.Level;
@@ -9,10 +8,12 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionLogService;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -70,7 +71,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
+public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output>, SystemTask {
     @Schema(
         title = "Namespace of logs that need to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
@@ -150,8 +151,8 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
             runContext.render(flowId).as(String.class).orElse(null),
             runContext.render(executionId).as(String.class).orElse(null),
             logLevelsRendered.isEmpty() ? null : logLevelsRendered,
-            renderedDate != null ? ZonedDateTime.parse(renderedDate) : null,
-            ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
+            TypeConverter.toZonedDateTime(renderedDate),
+            TypeConverter.toZonedDateTime(runContext.render(endDate).as(String.class).orElseThrow()),
             execLogs,
             nonExecLogs,
             runContext.render(this.batchSize).as(Integer.class).orElse(null)

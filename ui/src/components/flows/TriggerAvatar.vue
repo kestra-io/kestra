@@ -1,6 +1,6 @@
 <template>
     <div class="trigger">
-        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
+        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon" @click.stop>
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <KsPopover
                     :ref="(el: any) => setPopoverRef(el, trigger)"
@@ -13,7 +13,7 @@
                     @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <KsTaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
+                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :loadIcon="pluginsStore.loadIcon" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
@@ -24,15 +24,15 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed, ref, nextTick} from "vue";
-    import {useRoute} from "vue-router";
-    import {usePluginsStore} from "../../stores/plugins";
-    import Utils from "../../utils/utils";
-    import TriggerVars from "./TriggerVars.vue";
-    import {KsTaskIcon} from "@kestra-io/design-system";
-    import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
-    import {Execution} from "../../stores/executions";
+    import {computed, ref, nextTick} from "vue"
+    import {usePluginsStore} from "../../stores/plugins"
+    import * as Utils from "../../utils/utils"
+    import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
+    import TriggerVars from "./TriggerVars.vue"
+    import TaskIcon from "../plugins/TaskIcon.vue"
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../utils/toast"
+    import {Execution} from "../../stores/executions"
 
     interface Flow {
         namespace: string;
@@ -52,32 +52,31 @@
         flow?: Flow;
         execution?: Execution;
         triggerId?: string;
-    }>();
+    }>()
 
-    const pluginsStore = usePluginsStore();
-    const route = useRoute();
+    const pluginsStore = usePluginsStore()
 
-    const popoverRefs = ref<Map<string, any>>(new Map());
+    const popoverRefs = ref<Map<string, any>>(new Map())
 
     const triggers = computed<Trigger[]>(() => {
         if (props.flow && props.flow.triggers) {
             return props.flow.triggers.filter(
-                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id
-            );
+                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id,
+            )
         } else if (props.execution && props.execution.trigger) {
-            return [props.execution.trigger];
+            return [props.execution.trigger]
         } else {
-            return [];
+            return []
         }
-    });
+    })
 
     function uid(trigger: Trigger): string {
-        return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id;
+        return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id
     }
 
     function setPopoverRef(el: any, trigger: Trigger) {
         if (el) {
-            popoverRefs.value.set(uid(trigger), el);
+            popoverRefs.value.set(uid(trigger), el)
         }
     }
 
@@ -85,26 +84,23 @@
         nextTick(() => {
             popoverRefs.value.forEach((popover) => {
                 if (popover?.popperRef?.popperInstanceRef) {
-                    popover.popperRef.popperInstanceRef.update();
+                    popover.popperRef.popperInstanceRef.update()
                 }
-            });
-        });
+            })
+        })
     }
 
-    const {t} = useI18n();
-    const toast = useToast();
+    const {t} = useI18n()
+    const toast = useToast()
 
     async function copyLink(trigger: Trigger) {
-        if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && props.flow) {
-            const tenant = route.params.tenant ? route.params.tenant + "/" : "";
-            const url =
-                new URL(window.location.href).origin +
-                `/api/v1/${tenant}executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
+        if (trigger?.type === WEBHOOK_TRIGGER_TYPE && trigger.key && props.flow) {
+            const url = webhookUrl({namespace: props.flow.namespace, id: props.flow.id, key: trigger.key})
             try {
-                await Utils.copy(url);
-                toast.success(t("webhook link copied"));
+                await Utils.copy(url)
+                toast.success(t("webhook link copied"))
             } catch (error) {
-                console.error(error);
+                console.error(error)
             }
         }
     }
@@ -118,17 +114,12 @@
     }
 
     .trigger-icon {
-        display: inline-flex !important;
+        display: inline-flex;
         align-items: center;
-        margin-right: .25rem;
-        border: none;
-        background-color: transparent;
-        padding: 2px;
-        cursor: default;
-    }
-
-    :deep(div.wrapper) {
+        justify-content: center;
         width: var(--ks-font-size-lg);
         height: var(--ks-font-size-lg);
+        margin-right: var(--ks-spacing-1);
+        cursor: default;
     }
 </style>

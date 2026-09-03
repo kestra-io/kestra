@@ -44,12 +44,14 @@
     @use 'element-plus/theme-chalk/src/checkbox';
 
     .kel-checkbox {
-        --kel-checkbox-text-color: var(--ks-content-primary);
-        --kel-checkbox-checked-text-color: var(--ks-content-primary);
+        --kel-checkbox-text-color: var(--ks-text-primary);
+        --kel-checkbox-checked-text-color: var(--ks-text-primary);
         --kel-checkbox-font-size: var(--ks-font-size-base);
-
-        html.dark & {
-            --kel-checkbox-bg-color: var(--ks-background-input);
-        }
+        --kel-checkbox-font-weight: var(--kbs-body-font-weight);
+        --kel-checkbox-input-width: 1rem;
+        --kel-checkbox-input-height: 1rem;
+        --kel-checkbox-border-radius: var(--ks-radius-xs);
+        --kel-checkbox-input-border: 1px solid var(--ks-border-strong);
+        --kel-checkbox-bg-color: transparent;
     }
 </style>

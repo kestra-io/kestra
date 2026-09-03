@@ -6,14 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
-import com.google.common.base.Throwables;
-
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.utils.Logs;
@@ -33,7 +31,7 @@ public class SchedulableEvaluator {
         this.runContextInitializer = runContextInitializer;
     }
 
-    public Optional<Execution> evaluate(Schedulable schedulable, TriggerContext context, ConditionContext conditionContext) {
+    public Optional<TriggerEvaluationResult> evaluate(Schedulable schedulable, TriggerContext context, ConditionContext conditionContext) {
         return metricRegistry
             .timer(
                 MetricRegistry.METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION_DESCRIPTION,
@@ -50,7 +48,7 @@ public class SchedulableEvaluator {
                         (AbstractTrigger) schedulable
                     );
 
-                    Optional<Execution> evaluate = schedulable.evaluate(conditionContext, context);
+                    Optional<TriggerEvaluationResult> evaluationResult = schedulable.eval(conditionContext, context);
 
                     if (log.isDebugEnabled()) {
                         Logs.logTrigger(
@@ -58,28 +56,32 @@ public class SchedulableEvaluator {
                             Level.DEBUG,
                             "[type: {}] {}",
                             ((AbstractTrigger) schedulable).getType(),
-                            evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                            evaluationResult.map(eval -> "New execution '" + eval.executionId() + "'").orElse("Empty evaluation")
                         );
                     }
 
                     conditionContext.getRunContext().cleanup();
 
-                    return evaluate;
+                    return evaluationResult;
                 } catch (Exception e) {
                     Logger logger = runContext.logger();
+                    log.error(
+                        "Failed to evaluate trigger '{}' on flow '{}.{}': {}",
+                        context.getTriggerId(),
+                        context.getNamespace(),
+                        context.getFlowId(),
+                        e.getMessage(),
+                        e
+                    );
                     Logs.logTrigger(
                         context,
                         logger,
-                        Level.WARN,
-                        "[date: {}] Evaluate Failed with error '{}'",
+                        Level.ERROR,
+                        "[date: {}] Evaluation failed: {}",
                         context.getDate(),
                         e.getMessage(),
                         e
                     );
-
-                    if (logger.isTraceEnabled()) {
-                        logger.trace(Throwables.getStackTraceAsString(e));
-                    }
                     return Optional.empty();
                 }
             });

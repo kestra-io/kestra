@@ -31,8 +31,13 @@ public class FlowWithException extends FlowWithSource {
             .namespace(flow.getNamespace())
             .revision(flow.getRevision())
             .deleted(flow.isDeleted())
+            .disabled(flow.isDisabled())
             .exception(exception.getMessage())
             .tasks(List.of())
+            // an execution is still created for a blocked flow and then failed, so it must keep carrying these:
+            // dropping them leaves label-based filtering, notifications and SLA alerting blind to the failure
+            .labels(flow.getLabels())
+            .variables(flow.getVariables())
             .source(flow.getSource())
             .build();
     }
@@ -69,6 +74,7 @@ public class FlowWithException extends FlowWithSource {
                 .namespace(jsonNode.get("namespace").asText())
                 .revision(jsonNode.hasNonNull("revision") ? jsonNode.get("revision").asInt() : 1)
                 .deleted(jsonNode.hasNonNull("deleted") && jsonNode.get("deleted").asBoolean())
+                .disabled(jsonNode.hasNonNull("disabled") && jsonNode.get("disabled").asBoolean())
                 .exception(exception.getMessage())
                 .tasks(List.of())
                 .source(jsonNode.hasNonNull("source") ? jsonNode.get("source").asText() : null)

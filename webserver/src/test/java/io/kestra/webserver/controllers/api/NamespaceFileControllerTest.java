@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,19 +19,20 @@ import org.junit.jupiter.api.function.Executable;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.flow.Subflow;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -139,6 +142,19 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void getRevisionsWithoutLeadingSlash() throws IOException, URISyntaxException {
+        // The UI's file explorer builds paths without a leading slash (e.g. "test.txt" for a root-level file),
+        // while namespace file metadata is always stored with a normalized leading slash ("/test.txt").
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
+
+        List<NamespaceFileRevision> res = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/revisions?path=test.txt"), Argument.of(List.class, NamespaceFileRevision.class));
+        assertThat(res).containsExactlyInAnyOrder(new NamespaceFileRevision(1));
+    }
+
+    @Test
     void namespaceRootGetFileMetadatasWithoutPreCreation() {
         String namespace = TestsUtils.randomNamespace();
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats"), TestFileAttributes.class);
@@ -215,6 +231,46 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void createNamespaceDirectoryWithOpaqueUriPathReturns422() {
+        String namespace = TestsUtils.randomNamespace();
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client
+                .toBlocking()
+                .exchange(
+                    HttpRequest.POST(
+                        "/api/v1/main/namespaces/" + namespace + "/files/directory?path=a:b",
+                        null
+                    )
+                )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("a non-hierarchical path is a validation error, not an unhandled 500")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void moveFileDirectoryWithOpaqueUriFromReturns422() {
+        String namespace = TestsUtils.randomNamespace();
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client
+                .toBlocking()
+                .exchange(
+                    HttpRequest.PUT(
+                        "/api/v1/main/namespaces/" + namespace + "/files?from=a:b&to=/x.txt",
+                        null
+                    )
+                )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("a non-hierarchical 'from' is a validation error, not an unhandled 500")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
     void createGetFileContent() throws IOException {
         String namespace = TestsUtils.randomNamespace();
         MultipartBody body = MultipartBody.builder()
@@ -233,6 +289,89 @@ class NamespaceFileControllerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         );
         assertNamespaceGetFileContentContent(namespace, URI.create("/_flowsFile"), "Hello");
+    }
+
+    @Test
+    void getFileContentOnDirectoryReturnsCleanNotFound() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Is a directory");
+    }
+
+    @Test
+    void createFileUnderAnExistingFileReturnsCleanConflict() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "child.txt", "Hello".getBytes())
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/t.txt/child.txt", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Internal server error");
+    }
+
+    @Test
+    void createFileWithTooLongNameReturnsCleanError() {
+        String namespace = TestsUtils.randomNamespace();
+        String longName = "x".repeat(300) + ".txt";
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "data", "Hello".getBytes())
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/" + longName, body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        // Clean 422 (not a 500), and the body must not leak the absolute internal-storage filesystem path
+        // (previously the ENAMETOOLONG IOException surfaced the "..._files/..." absolute path in the body).
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).contains("maximum length");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Internal server error");
+    }
+
+    @Test
+    void createFileWithLongButValidComponentsSucceeds() throws IOException {
+        // The limit is per path component: a multi-segment path whose total length exceeds 255 but whose
+        // individual segments are each <= 255 must be accepted (it would succeed on the filesystem),
+        // i.e. validation must not reject on the whole-path length.
+        String namespace = TestsUtils.randomNamespace();
+        String segment = "a".repeat(150);
+        String path = "/" + segment + "/" + segment + ".txt";
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "data", "Hello".getBytes())
+            .build();
+
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=" + path, body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+        assertNamespaceGetFileContentContent(namespace, URI.create(path), "Hello");
     }
 
     @Test
@@ -276,22 +415,28 @@ class NamespaceFileControllerTest {
     @LoadFlows({ "flows/valids/task-flow.yaml" })
     void createGetFileContent_ExtractZip() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
         String namespaceToExport = "io.kestra.tests";
+        Namespace exportedStorage = namespaceFactory.of(TENANT_ID, namespaceToExport, storageInterface);
 
-        namespaceStorage.putFile(Path.of("/file.txt"), new ByteArrayInputStream("file".getBytes()));
-        namespaceStorage.putFile(Path.of("/another_file.txt"), new ByteArrayInputStream("another_file".getBytes()));
-        namespaceStorage.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("folder_file".getBytes()));
-        storageInterface.createDirectory(TENANT_ID, namespace, toNamespacedStorageUri(namespaceToExport, URI.create("/empty_folder")));
+        exportedStorage.putFile(Path.of("/file.txt"), new ByteArrayInputStream("file".getBytes()));
+        exportedStorage.putFile(Path.of("/another_file.txt"), new ByteArrayInputStream("another_file".getBytes()));
+        exportedStorage.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("folder_file".getBytes()));
+        storageInterface.createDirectory(TENANT_ID, namespaceToExport, toNamespacedStorageUri(namespaceToExport, URI.create("/empty_folder")));
 
         byte[] zip = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/" + namespaceToExport + "/files/export"),
             Argument.of(byte[].class)
         );
+
+        try (ZipInputStream archive = new ZipInputStream(new ByteArrayInputStream(zip))) {
+            ZipEntry entry;
+            while ((entry = archive.getNextEntry()) != null) {
+                assertThat(entry.getName()).doesNotStartWith("_flows/");
+            }
+        }
+
         File temp = File.createTempFile("files", ".zip");
         Files.write(temp.toPath(), zip);
-
-        assertThat(flowRepository.findById(TENANT_ID, namespace, "task-flow").isEmpty()).isTrue();
 
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "files.zip", temp)
@@ -308,9 +453,7 @@ class NamespaceFileControllerTest {
         // Highlights the fact that we currently don't export / import empty folders (would require adding a method to storages to also retrieve folders)
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/empty_folder")))).isFalse();
 
-        Flow retrievedFlow = flowRepository.findById(TENANT_ID, namespace, "task-flow").get();
-        assertThat(retrievedFlow.getNamespace()).isEqualTo(namespace);
-        assertThat(((Subflow) retrievedFlow.getTasks().getFirst()).getNamespace()).isEqualTo(namespaceToExport);
+        assertThat(flowRepository.findById(TENANT_ID, namespace, "task-flow").isEmpty()).isTrue();
     }
 
     private void assertNamespaceGetFileContentContent(String namespace, URI fileUri, String expectedContent) throws IOException {
@@ -355,6 +498,52 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldNotCollideSpaceAndPlusInFileName() throws IOException {
+        // Given: two distinct filenames — one with a space, one with a literal '+'
+        String namespace = TestsUtils.randomNamespace();
+        MultipartBody spaceBody = MultipartBody.builder()
+            .addPart("fileContent", "a b.txt", "SPACE-version".getBytes())
+            .build();
+        MultipartBody plusBody = MultipartBody.builder()
+            .addPart("fileContent", "a+b.txt", "PLUS-version".getBytes())
+            .build();
+
+        // When: upload both files (%20 = space, %2B = literal '+' in the query param)
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/c/a%20b.txt", spaceBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/c/a%2Bb.txt", plusBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+
+        // Then: reading back each file via the HTTP API returns its own distinct content
+        String spaceContent = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/c/a%20b.txt")
+        );
+        assertThat(spaceContent)
+            .as("file with space in name should return SPACE-version, not be silently overwritten by the '+' file")
+            .isEqualTo("SPACE-version");
+
+        String plusContent = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/c/a%2Bb.txt")
+        );
+        assertThat(plusContent)
+            .as("file with literal '+' in name should return PLUS-version")
+            .isEqualTo("PLUS-version");
+
+        // And: the directory listing shows two distinct entries with the correct displayed names
+        List<Map<String, Object>> listing = (List<Map<String, Object>>) JacksonMapper.toObject(
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/c"))
+        );
+        assertThat(listing).hasSize(2);
+        assertThat(listing.stream().map(e -> (String) e.get("fileName")).toList())
+            .containsExactlyInAnyOrder("a b.txt", "a+b.txt");
+    }
+
+    @Test
     void forbiddenPaths() {
         String namespace = TestsUtils.randomNamespace();
         assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/test.yml")));
@@ -367,9 +556,67 @@ class NamespaceFileControllerTest {
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/test.txt", null)));
     }
 
+    @Test
+    void pathTraversalShouldBeRejected() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        // Path traversal via ".." should be rejected on all mutating / read endpoints
+        Assertions
+            .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt")));
+        Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/foo/../../test.txt"), TestFileAttributes.class)
+        );
+        Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/foo/../.."), TestFileAttributes[].class)
+        );
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt", null))
+        );
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo/../../test.txt&to=/bar", null))
+        );
+    }
+
+    @Test
+    void shouldRejectForwardSlashPathTraversalOnWriteAndDelete() throws IOException, URISyntaxException {
+        // GHSA-h7c7-3mfc-m7pj: the old guard used File.separator ('\' on Windows) to build
+        // its check strings, so forward-slash HTTP URI payloads like /x/../../../foo.txt were
+        // never matched on a Windows JVM, allowing arbitrary file write and delete.
+        // Verify that POST (write) and DELETE are both rejected with the fixed guard.
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/safe.txt"), new ByteArrayInputStream("safe".getBytes()));
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "x.txt", "OWNED via path traversal".getBytes())
+            .build();
+
+        // Write primitive: POST with a forward-slash traversal path must be rejected
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/x/../../../escaped.txt", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        // Delete primitive: DELETE with a forward-slash traversal path must be rejected
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/x/../../../safe.txt", null)
+            )
+        );
+
+        // The legitimate file must be unaffected
+        assertThat(namespaceStorage.exists(Path.of("/safe.txt"))).isTrue();
+    }
+
     private void assertForbiddenErrorThrown(Executable executable) {
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, executable);
-        assertThat(httpClientResponseException.getMessage()).startsWith("Illegal argument: Forbidden path: ");
+        assertThat(Problems.detail(httpClientResponseException)).startsWith("Forbidden path: ");
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {

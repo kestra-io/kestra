@@ -9,17 +9,19 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.metrics.MetricConfig;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Either;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,14 +34,19 @@ class AbstractSubscriberTest {
     @BeforeEach
     void setUp() {
         queueService = mock(QueueService.class);
-        metricRegistry = mock(MetricRegistry.class);
+        metricRegistry = new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig());
         ignoreExecutionService = mock(IgnoreExecutionService.class);
-        when(metricRegistry.timer(anyString(), anyString(), anyString(), anyString()))
-            .thenReturn(mock(io.micrometer.core.instrument.Timer.class));
     }
 
     private TestSubscriber createSubscriber() {
         return new TestSubscriber(queueService, metricRegistry, ignoreExecutionService);
+    }
+
+    private Consumer<Either<TestEvent, DeserializationException>> failingConsumer() {
+        return ignored ->
+        {
+            throw new RuntimeException("Boom");
+        };
     }
 
     @Test
@@ -457,7 +464,7 @@ class AbstractSubscriberTest {
         var subscriber = createSubscriber();
         subscriber.markReady();
         var noOpContext = new NoOpShutdownContext(new AtomicBoolean(false));
-        KestraContext.setContext(noOpContext);
+        when(queueService.getKestraContext()).thenReturn(noOpContext);
 
         // When
         subscriber.markEnd(new RuntimeException("test error"));
@@ -472,7 +479,7 @@ class AbstractSubscriberTest {
         // Given
         var subscriber = createSubscriber();
         subscriber.markReady();
-        KestraContext.setContext(new NoOpShutdownContext(new AtomicBoolean(false)));
+        when(queueService.getKestraContext()).thenReturn(new NoOpShutdownContext(new AtomicBoolean(false)));
 
         // When
         subscriber.markEnd(new RuntimeException("test error"));
@@ -487,7 +494,7 @@ class AbstractSubscriberTest {
         var subscriber = createSubscriber();
         subscriber.markReady();
         var noOpContext = new NoOpShutdownContext(new AtomicBoolean(false));
-        KestraContext.setContext(noOpContext);
+        when(queueService.getKestraContext()).thenReturn(noOpContext);
 
         // When
         subscriber.markEnd(new RuntimeException("first"));
@@ -498,6 +505,32 @@ class AbstractSubscriberTest {
         // shutdown() is called twice because markEnd(Throwable) always calls it,
         // but KestraContext.Initializer.shutdown() itself is idempotent via AtomicBoolean
         assertThat(noOpContext.isShutdownCalled()).isTrue();
+    }
+
+    @Test
+    void shouldRethrowWhenConsumerFailsAndFailFastEnabled() {
+        // Given
+        var subscriber = createSubscriber();
+        byte[] message = "irrelevant".getBytes();
+        when(queueService.deserialize(TestEvent.class, message)).thenReturn(Either.left(new TestEvent("key1")));
+        when(queueService.failFast()).thenReturn(true);
+
+        // When/Then
+        assertThatThrownBy(() -> subscriber.processMessage(message, failingConsumer()))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Boom");
+    }
+
+    @Test
+    void shouldSwallowExceptionWhenConsumerFailsAndFailFastDisabled() {
+        // Given
+        var subscriber = createSubscriber();
+        byte[] message = "irrelevant".getBytes();
+        when(queueService.deserialize(TestEvent.class, message)).thenReturn(Either.left(new TestEvent("key1")));
+        when(queueService.failFast()).thenReturn(false);
+
+        // When/Then
+        assertThatNoException().isThrownBy(() -> subscriber.processMessage(message, failingConsumer()));
     }
 
     /**

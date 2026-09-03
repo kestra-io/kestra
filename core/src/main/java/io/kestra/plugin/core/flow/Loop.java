@@ -1,6 +1,17 @@
 package io.kestra.plugin.core.flow;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -19,21 +30,13 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.GraphUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -56,8 +59,7 @@ import java.util.Optional;
         @Example(
             full = true,
             title = """
-                The `{{ item.value }}` from the `loop` task is available only to direct child tasks \
-                such as the `before_if` and the `if` tasks.""",
+                The `{{ item.value }}` from the `loop` task is available to all tasks of the loop, even nested.""",
             code = """
                 id: for_loop_example
                 namespace: company.team
@@ -238,7 +240,8 @@ public class Loop extends AbstractBranch<Loop.Output> {
     private Boolean transmitFailed = true;
 
     @Schema(
-        title = "Output values available and exposed outside the loop."
+        title = "Output values available and exposed outside the loop.",
+        description = "They can be fetched from the execution context using the `outputs` output of the loop task run."
     )
     @PluginProperty(dynamic = true)
     @Valid
@@ -278,7 +281,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!isMySubExecution(execution, parentTaskRun)) {
-            // Not in this loop's own sub-execution — state is managed by the TerminatedLoopExecutionMessageHandler.
+            // Not in this loop's own sub-execution — state is managed by the LoopExecutionEventMessageHandler.
             return Optional.empty();
         }
 
@@ -352,14 +355,37 @@ public class Loop extends AbstractBranch<Loop.Output> {
         @Schema(title = "The count of running iterations")
         private Integer runningIterations;
 
-        @Schema(title = "The count of terminated iterations")
-        private Integer terminatedIterations;
+        @Schema(title = "The count of terminated iterations per terminal state")
+        private Map<State.Type, Integer> terminatedIterations;
 
         @Schema(
-            title = "The outputs of the loop, accessible outside of the loop for subsequent tasks",
+            title = "The list of loop iteration (task runs) outputs, accessible outside of the loop for subsequent tasks",
             description = "Outputs must first be defined using the `outputs` property."
         )
+        private List<LoopOutput> outputs;
+    }
+
+    @Builder
+    @Getter
+    public static class LoopOutput {
+        @Schema(title = "The task run item information")
+        private LoopItem item;
+
+        @Schema(title = "The task run outputs")
         private Map<String, Object> outputs;
+    }
+
+    @Builder
+    @Getter
+    public static class LoopItem {
+        @Schema(title = "The task run value")
+        private String value;
+
+        @Schema(title = "The task run iteration number")
+        private Integer iteration;
+
+        @Schema(title = "The task run key, if applicable")
+        private String key;
     }
 
     public boolean isMySubExecution(Execution execution, TaskRun parentTaskRun) {
@@ -372,7 +398,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
      * Reads the first batch of values and counts the total in a single file pass.
      *
      * @param runContext the run context
-     * @param valuesUri  the rendered URI pointing to the ION file
+     * @param valuesUri the rendered URI pointing to the ION file
      * @return a {@link UriInit} holding totalCount, active limit, first batch of values, and next byte offset
      */
     public UriInit initFromUri(RunContext runContext, String valuesUri) throws IOException, IllegalVariableEvaluationException {
@@ -398,10 +424,16 @@ public class Loop extends AbstractBranch<Loop.Output> {
     }
 
     /** Holds initialization data computed from a URI-backed ION file. */
-    public record UriInit(int totalCount, int limit, List<String> values, long nextOffset) {}
+    public record UriInit(int totalCount, int limit, List<String> values, long nextOffset) {
+    }
 
     /** Holds initialization data computed from in-memory (list or map) values. */
-    public record ValuesInit(int totalCount, int limit, Either<List<String>, List<Pair<String, String>>> values) {}
+    public record ValuesInit(int totalCount, int limit, Either<List<String>, List<Pair<String, String>>> values) {
+    }
 
-    public enum FetchType { AUTO, FETCH, STORE }
+    public enum FetchType {
+        AUTO,
+        FETCH,
+        STORE
+    }
 }

@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-    import ClockOutline from "vue-material-design-icons/ClockOutline.vue";
+    import ClockOutline from "vue-material-design-icons/ClockOutline.vue"
 
     interface Option {
         value?: string;
@@ -33,9 +33,9 @@
         options: Option[],
         tooltip?: string,
         clearable?: boolean
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "change", value: string | undefined): void
-    }>();
+    }>()
 </script>

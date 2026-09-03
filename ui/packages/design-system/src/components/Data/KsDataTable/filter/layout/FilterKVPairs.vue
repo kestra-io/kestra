@@ -53,70 +53,87 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {ref, watch} from "vue"
+    import {Comparators} from "../utils/filterTypes"
 
     const props = withDefaults(defineProps<{
         modelValue: string[];
+        comparator: Comparators;
     }>(), {
-    });
+    })
 
     const emits = defineEmits<{
         "update:modelValue": [value: string[]];
-    }>();
+    }>()
 
-    const newKey = ref("");
-    const newValue = ref("");
-    const detailPairs = ref<Array<{ key: string; value: string }>>([]);
+    const newKey = ref("")
+    const newValue = ref("")
+    const detailPairs = ref<Array<{ key: string; value: string }>>([])
 
     // For Auditlogs Details KV pairs parsing and serialization
     const parseDetailPairs = (values: string[]) =>
         values?.map(value => {
-            const [key, ...valueParts] = value?.split(":") ?? [];
-            return {key: key ?? "", value: valueParts?.join(":") ?? ""};
-        }).filter(pair => pair.key && pair.value) ?? [];
+            const [key, ...valueParts] = value?.split(":") ?? []
+            return {key: key ?? "", value: valueParts?.join(":") ?? ""}
+        }).filter(pair => pair.key && pair.value) ?? []
 
     const serializeDetailPairs = (pairs: typeof detailPairs.value) =>
-        pairs.map(pair => `${pair.key}:${pair.value}`);
+        pairs.map(pair => `${pair.key}:${pair.value}`)
 
     const addPair = () => {
-        const key = newKey.value.trim(), value = newValue.value.trim();
-        if (!key || !value) return;
+        const key = newKey.value.trim(), value = newValue.value.trim()
+        if (!key || !value) return
 
-        const existingIndex = detailPairs.value.findIndex(pair => pair.key === key);
+        const isMultiValueComparator = props.comparator === Comparators.IN || props.comparator === Comparators.NOT_IN
+        const existingIndex = detailPairs.value.findIndex(pair =>
+            pair.key === key && (!isMultiValueComparator || pair.value === value),
+        )
         if (existingIndex !== -1) {
-            detailPairs.value[existingIndex].value = value;
+            detailPairs.value[existingIndex].value = value
+            if (!isMultiValueComparator) detailPairs.value = detailPairs.value.filter((pair, index) => pair.key !== key || index === existingIndex)
         } else {
-            detailPairs.value.push({key, value});
+            detailPairs.value.push({key, value})
         }
 
-        emits("update:modelValue", serializeDetailPairs(detailPairs.value));
-        newKey.value = newValue.value = "";
-    };
+        emits("update:modelValue", serializeDetailPairs(detailPairs.value))
+        newKey.value = newValue.value = ""
+    }
 
     const removePair = (index: number) => {
-        detailPairs.value.splice(index, 1);
-        emits("update:modelValue", serializeDetailPairs(detailPairs.value));
-    };
+        detailPairs.value.splice(index, 1)
+        emits("update:modelValue", serializeDetailPairs(detailPairs.value))
+    }
 
-    watch(() => props.modelValue, (newValue) => {
-        detailPairs.value = newValue ? parseDetailPairs(newValue) : [];
-    }, {immediate: true});
+    watch(() => props.modelValue, (val) => {
+        detailPairs.value = val ? parseDetailPairs(val) : []
+    }, {immediate: true})
+
+    watch(() => props.comparator, (comparator) => {
+        if (comparator === Comparators.IN || comparator === Comparators.NOT_IN) return
+
+        const pairsByKey = new Map<string, {key: string; value: string}>()
+        detailPairs.value.forEach(pair => pairsByKey.set(pair.key, pair))
+        if (pairsByKey.size === detailPairs.value.length) return
+
+        detailPairs.value = [...pairsByKey.values()]
+        emits("update:modelValue", serializeDetailPairs(detailPairs.value))
+    })
 </script>
 
 <style lang="scss" scoped>
 .active-pairs {
     padding: 1rem;
-    border-bottom: 1px solid var(--ks-border-primary);
+    border-bottom: 1px solid var(--ks-border-default);
 
     .section-title {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xs);
         font-weight: 500;
         margin-bottom: 8px;
     }
 
     .empty-state {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
         font-style: italic;
     }
@@ -132,9 +149,9 @@
             max-width: 270px;
             padding: 3px 6px;
             border-radius: 16px;
-            border: 1px solid var(--ks-badge-border);
-            background-color: var(--ks-badge-background);
-            color: var(--ks-badge-content);
+            border: 1px solid var(--ks-border-info);
+            background-color: var(--ks-bg-info);
+            color: var(--ks-text-info);
             font-size: var(--ks-font-size-xs);
 
             :deep(.kel-tag__content) {
@@ -147,7 +164,7 @@
         }
 
         :deep(.kel-tag__close) {
-            color: var(--ks-badge-content);
+            color: var(--ks-text-info);
             background: transparent;
         }
 
@@ -182,7 +199,7 @@
             margin-bottom: 6px;
             font-size: var(--ks-font-size-xs);
             font-weight: 500;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 
@@ -194,9 +211,5 @@
 
 :deep(.kel-input__inner) {
     font-size: var(--ks-font-size-sm);
-
-    &::placeholder {
-        color: var(--ks-content-tertiary);
-    }
 }
 </style>

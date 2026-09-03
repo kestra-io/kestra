@@ -1,6 +1,6 @@
 <template>
     <div class="search-container" ref="searchContainer">
-        <KsInput
+        <KsSearch
             v-model="searchQuery"
             :placeholder="$t('search_docs')"
             class="search-input"
@@ -8,13 +8,7 @@
             @keydown.enter.prevent="handleEnterKey"
             @keydown.up.prevent="handleKeyUp"
             @keydown.down.prevent="handleKeyDown"
-            :loading="loading"
-            type="search"
-        >
-            <template #prefix>
-                <Magnify class="search-icon" />
-            </template>
-        </KsInput>
+        />
         <div v-if="loading" class="loading-indicator">
             {{ $t('searching') }}
         </div>
@@ -22,10 +16,10 @@
             <template v-if="searchResults.length > 0">
                 <ContextDocsLink
                     v-for="(result, index) in searchResults"
-                    :key="result.url"
+                    :key="result.parsedUrl"
                     class="search-result"
                     :class="{'selected': index === selectedIndex}"
-                    :href="result.parsedUrl.replace(/^docs\//, '')"
+                    :href="result.parsedUrl"
                     useRaw
                     :data-index="index"
                     @click="resetSearch"
@@ -46,141 +40,108 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onUnmounted} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-    import ContextDocsLink from "./ContextDocsLink.vue";
-    import {debounce} from "lodash-es";
+    import {ref, computed, onMounted, onUnmounted} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import ContextDocsLink from "./ContextDocsLink.vue"
+    import {debounce} from "lodash-es"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
-    const searchQuery = ref("");
-    const searchResults = ref<Array<{ title: string; preview: string; url: string; parsedUrl: string }>>([]);
-    const loading = ref(false);
-    const selectedIndex = ref(0);
-    const searchContainer = ref<HTMLDivElement | null>(null);
+    const searchQuery = ref("")
+    const searchResults = ref<Array<{ title: string; preview: string; parsedUrl: string }>>([])
+    const loading = ref(false)
+    const selectedIndex = ref(0)
+    const searchContainer = ref<HTMLDivElement | null>(null)
 
     const showResults = computed(() => {
-        return searchQuery.value.trim().length > 0;
-    });
+        return searchQuery.value.trim().length > 0
+    })
 
     const handleKeyUp = (e: KeyboardEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (searchResults.value.length > 0) {
-            selectedIndex.value = Math.max(0, selectedIndex.value - 1);
+            selectedIndex.value = Math.max(0, selectedIndex.value - 1)
         }
-    };
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (searchResults.value.length > 0) {
-            selectedIndex.value = Math.min(searchResults.value.length - 1, selectedIndex.value + 1);
+            selectedIndex.value = Math.min(searchResults.value.length - 1, selectedIndex.value + 1)
         }
-    };
+    }
 
     const handleEnterKey = (e: KeyboardEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (searchResults.value.length > 0) {
-            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`) as HTMLElement;
+            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`) as HTMLElement
             if (selectedResult) {
-                selectedResult.click();
+                selectedResult.click()
             }
         }
-    };
+    }
 
     const resetSearch = () => {
-        searchQuery.value = "";
-        searchResults.value = [];
-    };
+        searchQuery.value = ""
+        searchResults.value = []
+    }
 
     const performSearch = async (query: string) => {
         if (!query) {
-            searchResults.value = [];
-            selectedIndex.value = 0;
-            return;
+            searchResults.value = []
+            selectedIndex.value = 0
+            return
         }
 
         try {
-            loading.value = true;
-            const results = await docStore.search({q: query, scoredSearch: true});
+            loading.value = true
+            const results = await docStore.search({q: query, scoredSearch: true})
 
-            const processedResults = (results || []).slice(0, 10);
-            searchResults.value = processedResults;
-            selectedIndex.value = 0;
+            const processedResults = (results || []).slice(0, 10)
+            searchResults.value = processedResults
+            selectedIndex.value = 0
         } catch (error) {
-            console.error("Error searching docs:", error);
-            searchResults.value = [];
-            selectedIndex.value = 0;
+            console.error("Error searching docs:", error)
+            searchResults.value = []
+            selectedIndex.value = 0
         } finally {
-            loading.value = false;
+            loading.value = false
         }
-    };
+    }
 
-    const debouncedSearch = debounce(performSearch, 500);
+    const debouncedSearch = debounce(performSearch, 500)
 
     const handleSearch = () => {
-        debouncedSearch(searchQuery.value.trim());
-    };
+        debouncedSearch(searchQuery.value.trim())
+    }
 
     const handleClickOutside = (event: MouseEvent) => {
         if (searchContainer.value && !searchContainer.value.contains(event.target as Node)) {
-            resetSearch();
+            resetSearch()
         }
-    };
+    }
 
     onMounted(() => {
-        document.addEventListener("click", handleClickOutside);
-    });
+        document.addEventListener("click", handleClickOutside)
+    })
 
     onUnmounted(() => {
-        document.removeEventListener("click", handleClickOutside);
-        debouncedSearch.cancel();
-    });
+        document.removeEventListener("click", handleClickOutside)
+        debouncedSearch.cancel()
+    })
 </script>
 
 <style scoped lang="scss">
     .search-container {
         position: relative;
+        flex: 1;
+        min-width: 0;
         margin-bottom: 0;
         z-index: 1001;
-        padding-top: 12px;
-        padding-left: 28px;
-        padding-right: 28px;
     }
 
     .search-input {
         width: 100%;
-    }
-    .kel-input__wrapper {
-        background-color: var(--ks-background-input);
-        box-shadow: 0 0 0 1px var(--ks-border-color);
-        border-radius: 6px;
-        padding: 0.5rem;
-        transition: box-shadow 0.2s ease;
-
-        &.is-focus {
-            box-shadow: 0 0 0 1px var(--ks-primary);
-        }
-    }
-
-    .kel-input__inner {
-        color: var(--ks-content-primary);
-        font-size: var(--ks-font-size-sm);
-        height: 1.25rem;
-        background: transparent;
-    }
-
-    .kel-input__inner::placeholder {
-        color: var(--ks-content-secondary);
-    }
-
-    .kel-input__prefix {
-        margin-right: 0.5rem;
-    }
-
-    .search-icon {
-        font-size: var(--ks-font-size-base);
-        color: var(--ks-content-tertiary);
     }
 
     .loading-indicator {
@@ -188,16 +149,16 @@
         right: 2rem;
         top: 60%;
         transform: translateY(-50%);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
     }
 
     .search-results {
         position: absolute;
         top: 100%;
-        left: 26px;
-        right: 26px;
-        background-color: var(--ks-background-card);
+        left: 0;
+        right: 0;
+        background-color: var(--ks-bg-surface);
         border-radius: 6px;
         margin-top: 4px;
         max-height: 400px;
@@ -213,11 +174,11 @@
         display: block;
         text-decoration: none;
         color: inherit;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         transition: background-color 0.2s;
 
         &:hover {
-            background: var(--ks-background-hover);
+            background: var(--ks-bg-hover);
             text-decoration: none;
             color: inherit;
         }
@@ -229,21 +190,21 @@
 
         .result-title {
             font-weight: 400;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             margin-bottom: 2px;
             font-size: var(--ks-font-size-sm);
         }
 
         .result-preview {
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin: 0;
             opacity: 0.8;
         }
     }
 
     .no-results {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         text-align: center;
         cursor: default;
         padding: 6px 12px;

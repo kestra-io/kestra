@@ -55,6 +55,11 @@ final class MonitoredQueueSubscriber<T extends Event> implements QueueSubscriber
     }
 
     @Override
+    public boolean isPaused() {
+        return delegate.isPaused();
+    }
+
+    @Override
     public void resume() {
         resumeCounter.increment();
         delegate.resume();

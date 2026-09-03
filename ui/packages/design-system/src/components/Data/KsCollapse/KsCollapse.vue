@@ -39,13 +39,13 @@
     @use 'element-plus/theme-chalk/src/collapse';
 
     .kel-collapse {
-        --kel-collapse-content-text-color: var(--ks-content-primary);
-        --kel-collapse-header-text-color: var(--ks-content-primary);
-        --kel-collapse-header-border-color: var(--ks-border-primary);
+        --kel-collapse-content-text-color: var(--ks-text-primary);
+        --kel-collapse-header-text-color: var(--ks-text-primary);
+        --kel-collapse-header-border-color: var(--ks-border-default);
         --kel-collapse-header-height: auto;
         --kel-collapse-header-font-size: var(--ks-font-size-base);
         --kel-collapse-content-font-size: var(--ks-font-size-base);
-        --kel-collapse-border-color: var(--ks-border-primary);
+        --kel-collapse-border-color: var(--ks-border-default);
 
         border: none;
 

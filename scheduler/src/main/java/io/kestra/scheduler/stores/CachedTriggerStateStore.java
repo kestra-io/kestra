@@ -156,7 +156,7 @@ public class CachedTriggerStateStore implements TriggerStateStore {
 
     private void loadCacheForAllVNodes(final Set<Integer> vNodes) {
         long start = System.currentTimeMillis();
-        LOG.info("Loading trigger states for vnodes {}", vNodes);
+        LOG.debug("Loading trigger states for vnodes {}", vNodes);
         // Create or warm up caches for new vNodes
         AtomicInteger count = new AtomicInteger(0);
         for (Integer vnode : vNodes) {
@@ -171,11 +171,11 @@ public class CachedTriggerStateStore implements TriggerStateStore {
                 return cache;
             });
         }
-        LOG.info("Loaded {} trigger states for vnoded {} in {}ms", count, vNodes, System.currentTimeMillis() - start);
+        LOG.debug("Loaded {} trigger states for vnoded {} in {}ms", count, vNodes, System.currentTimeMillis() - start);
     }
 
     public void clear() {
-        LOG.info("Clearing all trigger state caches (no assigned vNodes)");
+        LOG.debug("Clearing all trigger state caches (no assigned vNodes)");
         partitionedCache.values().forEach(Cache::invalidateAll);
         partitionedCache.clear();
     }

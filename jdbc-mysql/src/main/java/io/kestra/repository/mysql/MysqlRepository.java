@@ -32,6 +32,7 @@ import jakarta.inject.Inject;
 
 @SuppressWarnings("this-escape")
 @Requires(condition = MysqlRepository.MysqlCondition.class)
+@Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 
@@ -55,7 +56,9 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         Condition likeCondition = DSL.falseCondition();
         for (String fieldName : fields) {
             Field<String> f = DSL.field(fieldName, String.class);
-            likeCondition = likeCondition.or(f.like(pattern, '\\'));
+            // COALESCE ensures NULL fields evaluate to false rather than NULL,
+            // so NOT(...LIKE...) works correctly for nullable columns like execution_id.
+            likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).like(pattern, '\\'));
         }
 
         String booleanQuery = Arrays.stream(query.split("\\p{IsPunct}|\\s+"))

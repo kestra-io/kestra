@@ -1,87 +1,37 @@
 @font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src:
-    local('Public Sans Light'),
-    local('PublicSans-Light'),
-    url('../fonts/public-sans/public-sans-v21-latin-300.woff2') format('woff2');
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src:
+        local('Inter'),
+        local('InterVar'),
+        url('../fonts/inter/Inter-VF.woff2') format('woff2-variations'),
+        url('../fonts/inter/Inter-VF.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    local('Public Sans Regular'),
-    local('PublicSans-Regular'),
-    url('../fonts/public-sans/public-sans-v21-latin-regular.woff2') format('woff2');
+    font-family: 'Inter';
+    font-style: italic;
+    font-weight: 100 900;
+    font-display: swap;
+    src:
+        local('Inter'),
+        local('InterVar'),
+        url('../fonts/inter/Inter-Italic-VF.woff2') format('woff2-variations'),
+        url('../fonts/inter/Inter-Italic-VF.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Public Sans';
+  font-family: 'JetBrains Mono';
   font-style: normal;
-  font-weight: 600;
+  font-weight: 100 800;
   font-display: swap;
   src:
-    local('Public Sans SemiBold'),
-    local('PublicSans-SemiBold'),
-    url('../fonts/public-sans/public-sans-v21-latin-600.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src:
-    local('Public Sans Bold'),
-    local('PublicSans-Bold'),
-    url('../fonts/public-sans/public-sans-v21-latin-700.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src:
-    local('Public Sans ExtraBold'),
-    local('PublicSans-ExtraBold'),
-    url('../fonts/public-sans/public-sans-v21-latin-800.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Source Code Pro';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    local('Source Code Pro Regular'),
-    local('SourceCodePro-Regular'),
-    url('../fonts/source-code-pro/source-code-pro-v31-latin-regular.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Source Code Pro';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src:
-    local('Source Code Pro Bold'),
-    local('SourceCodePro-Bold'),
-    url('../fonts/source-code-pro/source-code-pro-v31-latin-700.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Source Code Pro';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src:
-    local('Source Code Pro ExtraBold'),
-    local('SourceCodePro-ExtraBold'),
-    url('../fonts/source-code-pro/source-code-pro-v31-latin-800.woff2') format('woff2');
+    local('JetBrains Mono'),
+    local('JetBrainsMono'),
+    url('../fonts/jetbrains-mono/JetBrainsMono-VF.woff2') format('woff2-variations'),
+    url('../fonts/jetbrains-mono/JetBrainsMono-VF.woff2') format('woff2');
 }

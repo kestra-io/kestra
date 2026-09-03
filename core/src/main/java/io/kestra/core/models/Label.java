@@ -33,6 +33,23 @@ public record Label(
     public static final String FROM = SYSTEM_PREFIX + "from";
     public static final String KILL_SWITCH = SYSTEM_PREFIX + "killSwitch";
 
+    /** Known values for the {@link #FROM} system label. */
+    public enum FromLabel {
+        API("api"),
+        UI("ui"),
+        TRIGGER("trigger"),
+        MCP("mcp"),
+        SUBFLOW("subflow");
+
+        public final String value;
+
+        FromLabel(String value) {
+            this.value = value;
+        }
+    }
+    public static final String MCP_SERVER_ID = SYSTEM_PREFIX + "mcpServerId";
+    public static final String MCP_SESSION_ID = SYSTEM_PREFIX + "mcpSessionId";
+
     /**
      * Static helper method for converting a list of labels to a nested map.
      *

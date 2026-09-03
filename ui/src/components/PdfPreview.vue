@@ -23,112 +23,112 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, shallowRef, computed, onMounted} from "vue";
-    import * as pdfjs from "pdfjs-dist";
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import {ref, shallowRef, computed, onMounted} from "vue"
+    import * as pdfjs from "pdfjs-dist"
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
     const props = defineProps({
         source: {
             type: String,
-            required: true
-        }
-    });
+            required: true,
+        },
+    })
 
-    const pdfDoc = shallowRef<pdfjs.PDFDocumentProxy | undefined>(undefined);
-    const canvasRef = ref<HTMLCanvasElement | null>(null);
+    const pdfDoc = shallowRef<pdfjs.PDFDocumentProxy | undefined>(undefined)
+    const canvasRef = ref<HTMLCanvasElement | null>(null)
 
-    const pageNum = ref(1);
-    const rendered = ref(false);
-    const pageRendering = ref(false);
-    const pageNumPending = ref<number | undefined>(undefined);
-    const scale = ref(1.5);
+    const pageNum = ref(1)
+    const rendered = ref(false)
+    const pageRendering = ref(false)
+    const pageNumPending = ref<number | undefined>(undefined)
+    const scale = ref(1.5)
 
     const context = computed(() => {
-        return canvasRef.value?.getContext("2d") as CanvasRenderingContext2D;
-    });
+        return canvasRef.value?.getContext("2d") as CanvasRenderingContext2D
+    })
 
     const getWorkerUrl = (): string => {
         return new URL(
             "pdfjs-dist/build/pdf.worker.min.mjs",
-            import.meta.url
-        ).toString();
-    };
+            import.meta.url,
+        ).toString()
+    }
 
-    const renderPage = (pageNum: number): void => {
-        pageRendering.value = true;
+    const renderPage = (num: number): void => {
+        pageRendering.value = true
 
-        pdfDoc.value?.getPage(pageNum).then((page) => {
-            const viewport = page.getViewport({scale: scale.value});
+        pdfDoc.value?.getPage(num).then((page) => {
+            const viewport = page.getViewport({scale: scale.value})
             
             if (canvasRef.value) {
-                canvasRef.value.height = viewport.height;
-                canvasRef.value.width = viewport.width;
+                canvasRef.value.height = viewport.height
+                canvasRef.value.width = viewport.width
 
                 const renderContext = {
                     canvasContext: context.value,
                     viewport: viewport,
-                    canvas: canvasRef.value
-                };
-                const renderTask = page.render(renderContext);
+                    canvas: canvasRef.value,
+                }
+                const renderTask = page.render(renderContext)
 
                 renderTask.promise.then(() => {
-                    rendered.value = true;
-                    pageRendering.value = false;
+                    rendered.value = true
+                    pageRendering.value = false
 
                     if (pageNumPending.value !== undefined) {
-                        renderPage(pageNumPending.value);
-                        pageNumPending.value = undefined;
+                        renderPage(pageNumPending.value)
+                        pageNumPending.value = undefined
                     }
-                });
+                })
             }
-        });
-    };
+        })
+    }
 
     const initRender = (): void => {
-        const binaryString = atob(props.source);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
+        const binaryString = atob(props.source)
+        const len = binaryString.length
+        const bytes = new Uint8Array(len)
         for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
+            bytes[i] = binaryString.charCodeAt(i)
         }
 
         pdfjs.getDocument({data: bytes}).promise.then((pdf) => {
-            pdfDoc.value = pdf;
-            renderPage(pageNum.value);
+            pdfDoc.value = pdf
+            renderPage(pageNum.value)
         }, (error) => {
-            console.error("Failed to render PDF", error);
-        });
-    };
+            console.error("Failed to render PDF", error)
+        })
+    }
 
-    const queueRenderPage = (pageNum: number): void => {
+    const queueRenderPage = (num: number): void => {
         if (pageRendering.value) {
-            pageNumPending.value = pageNum;
+            pageNumPending.value = num
         } else {
-            renderPage(pageNum);
+            renderPage(num)
         }
-    };
+    }
 
     const onPrevPage = (): void => {
         if (pageNum.value <= 1) {
-            return;
+            return
         }
-        pageNum.value--;
-        queueRenderPage(pageNum.value);
-    };
+        pageNum.value--
+        queueRenderPage(pageNum.value)
+    }
 
     const onNextPage = (): void => {
         if (pdfDoc.value && pageNum.value >= pdfDoc.value.numPages) {
-            return;
+            return
         }
-        pageNum.value++;
-        queueRenderPage(pageNum.value);
-    };
+        pageNum.value++
+        queueRenderPage(pageNum.value)
+    }
 
     onMounted(() => {
-        pdfjs.GlobalWorkerOptions.workerSrc = getWorkerUrl();
-        initRender();
-    });
+        pdfjs.GlobalWorkerOptions.workerSrc = getWorkerUrl()
+        initRender()
+    })
 </script>
 
 <style scoped lang="scss">

@@ -2,11 +2,9 @@ package io.kestra.core.runners;
 
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -94,8 +92,7 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
-    @FlakyTest(description = "Depending on the load on the CI, this test can have unpredictable number of retries")
-    @ExecuteFlow("flows/valids/retry-failed-flow-duration.yml")
+    @ExecuteFlow(value = "flows/valids/retry-failed-flow-duration.yml", tenantId = "retry-flow-duration")
     void retryFailedFlowDuration(Execution execution) {
         retryCaseTest.retryFailedFlowDuration(execution);
     }
@@ -113,9 +110,9 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/retry-subflow.yaml")
-    void retrySubflow(Execution execution) {
-        retryCaseTest.retrySubflow(execution);
+    @LoadFlows(value = { "flows/valids/retry-subflow.yaml", "flows/valids/failed-first.yaml" }, tenantId = "retrysubflowtenant")
+    void retrySubflow() throws TimeoutException, QueueException {
+        retryCaseTest.retrySubflow("retrysubflowtenant");
     }
 
     @Test
@@ -132,7 +129,6 @@ public abstract class AbstractRunnerRetryTest {
 
     @Test
     @ExecuteFlow("flows/valids/retry-flowable-parallel.yaml")
-    @Disabled("this feature is not yet implemented")
     void retryFlowableParallel(Execution execution) {
         retryCaseTest.retryFlowableParallel(execution);
     }
@@ -143,7 +139,6 @@ public abstract class AbstractRunnerRetryTest {
         retryCaseTest.retryDynamicTask(execution);
     }
 
-    @FlakyTest(description = "it seems this flow sometimes stay stuck in RUNNING")
     @Test
     @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
     void retryWithFlowableErrors(Execution execution) {

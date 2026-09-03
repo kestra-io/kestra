@@ -13,25 +13,25 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onBeforeUnmount, ref, watch} from "vue";
+    import {nextTick, onBeforeUnmount, ref, watch} from "vue"
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
         text?: string;
     }>(), {
         text: "Flow Executed!",
-    });
+    })
 
     const emit = defineEmits<{
         "update:modelValue": [boolean];
         finished: [];
-    }>();
+    }>()
 
-    const canvasEl = ref<HTMLCanvasElement | null>(null);
+    const canvasEl = ref<HTMLCanvasElement | null>(null)
 
-    let running = false;
-    let animationFrame: number | null = null;
-    let completionTimeout: number | null = null;
+    let running = false
+    let animationFrame: number | null = null
+    let completionTimeout: number | null = null
 
     type Particle = {
         x: number;
@@ -49,55 +49,55 @@
         circ: boolean;
     };
 
-    let particles: Particle[] = [];
+    let particles: Particle[] = []
 
-    const PALETTE = ["#A950FF", "#F62E76", "#CD88FF", "#E9C1FF", "#ffffff", "#c084fc"];
+    const PALETTE = ["#A950FF", "#F62E76", "#CD88FF", "#E9C1FF", "#ffffff", "#c084fc"]
 
     function clearAnimationFrame() {
         if (animationFrame !== null) {
-            cancelAnimationFrame(animationFrame);
-            animationFrame = null;
+            cancelAnimationFrame(animationFrame)
+            animationFrame = null
         }
     }
 
     function clearCompletionTimeout() {
         if (completionTimeout !== null) {
-            window.clearTimeout(completionTimeout);
-            completionTimeout = null;
+            window.clearTimeout(completionTimeout)
+            completionTimeout = null
         }
     }
 
     function resizeCanvas() {
-        const canvas = canvasEl.value;
-        if (!canvas) return;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const canvas = canvasEl.value
+        if (!canvas) return
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
     }
 
     function resetElements() {
-        clearAnimationFrame();
-        clearCompletionTimeout();
-        particles = [];
-        running = false;
+        clearAnimationFrame()
+        clearCompletionTimeout()
+        particles = []
+        running = false
 
-        const ctx = canvasEl.value?.getContext("2d");
+        const ctx = canvasEl.value?.getContext("2d")
         if (ctx && canvasEl.value) {
-            ctx.clearRect(0, 0, canvasEl.value.width, canvasEl.value.height);
+            ctx.clearRect(0, 0, canvasEl.value.width, canvasEl.value.height)
         }
     }
 
     function spawnConfetti() {
-        const canvas = canvasEl.value;
-        if (!canvas) return;
+        const canvas = canvasEl.value
+        if (!canvas) return
 
-        particles = [];
+        particles = []
         for (let i = 0; i < 80; i++) {
-            const fromLeft = i < 40;
-            const w = 4 + Math.random() * 6;
-            const h = 3 + Math.random() * 4;
-            const x = fromLeft ? -10 - Math.random() * 40 : canvas.width + 10 + Math.random() * 40;
-            const y = canvas.height * (0.1 + Math.random() * 0.5);
-            const speed = 8 + Math.random() * 6;
+            const fromLeft = i < 40
+            const w = 4 + Math.random() * 6
+            const h = 3 + Math.random() * 4
+            const x = fromLeft ? -10 - Math.random() * 40 : canvas.width + 10 + Math.random() * 40
+            const y = canvas.height * (0.1 + Math.random() * 0.5)
+            const speed = 8 + Math.random() * 6
 
             particles.push({
                 x,
@@ -113,83 +113,83 @@
                 wobble: Math.random() * Math.PI * 2,
                 wobbleSpeed: 0.03 + Math.random() * 0.03,
                 circ: Math.random() < 0.3,
-            });
+            })
         }
     }
 
     function confettiLoop() {
-        const canvas = canvasEl.value;
-        const ctx = canvas?.getContext("2d");
-        if (!canvas || !ctx) return;
+        const canvas = canvasEl.value
+        const ctx = canvas?.getContext("2d")
+        if (!canvas || !ctx) return
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles = particles.filter(particle => particle.y < canvas.height + 20);
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        particles = particles.filter(particle => particle.y < canvas.height + 20)
 
         for (const particle of particles) {
-            particle.wobble += particle.wobbleSpeed;
-            particle.x += particle.vx + Math.sin(particle.wobble) * 0.8;
-            particle.y += particle.vy;
-            particle.vy += particle.gravity;
-            particle.vx *= 0.97;
-            particle.rot += particle.rotV;
+            particle.wobble += particle.wobbleSpeed
+            particle.x += particle.vx + Math.sin(particle.wobble) * 0.8
+            particle.y += particle.vy
+            particle.vy += particle.gravity
+            particle.vx *= 0.97
+            particle.rot += particle.rotV
 
-            ctx.save();
-            ctx.globalAlpha = 0.85;
-            ctx.fillStyle = particle.color;
-            ctx.translate(particle.x, particle.y);
-            ctx.rotate((particle.rot * Math.PI) / 180);
+            ctx.save()
+            ctx.globalAlpha = 0.85
+            ctx.fillStyle = particle.color
+            ctx.translate(particle.x, particle.y)
+            ctx.rotate((particle.rot * Math.PI) / 180)
             if (particle.circ) {
-                ctx.beginPath();
-                ctx.arc(0, 0, particle.w / 2, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath()
+                ctx.arc(0, 0, particle.w / 2, 0, Math.PI * 2)
+                ctx.fill()
             } else {
-                ctx.fillRect(-particle.w / 2, -particle.h / 2, particle.w, particle.h);
+                ctx.fillRect(-particle.w / 2, -particle.h / 2, particle.w, particle.h)
             }
-            ctx.restore();
+            ctx.restore()
         }
 
         if (particles.length > 0) {
-            animationFrame = requestAnimationFrame(confettiLoop);
+            animationFrame = requestAnimationFrame(confettiLoop)
         } else {
-            animationFrame = null;
+            animationFrame = null
         }
     }
 
     function launchConfetti() {
-        spawnConfetti();
-        confettiLoop();
+        spawnConfetti()
+        confettiLoop()
     }
 
     async function runAnimation() {
-        if (running) return;
+        if (running) return
 
-        await nextTick();
-        resizeCanvas();
-        resetElements();
-        running = true;
+        await nextTick()
+        resizeCanvas()
+        resetElements()
+        running = true
 
-        launchConfetti();
+        launchConfetti()
         completionTimeout = window.setTimeout(() => {
-            emit("update:modelValue", false);
-            emit("finished");
-        }, 1800);
+            emit("update:modelValue", false)
+            emit("finished")
+        }, 1800)
     }
 
     watch(
         () => props.modelValue,
         value => {
             if (value) {
-                void runAnimation();
+                void runAnimation()
             } else {
-                resetElements();
+                resetElements()
             }
         },
         {immediate: true},
-    );
+    )
 
     onBeforeUnmount(() => {
-        resetElements();
-    });
+        resetElements()
+    })
 </script>
 
 <style scoped lang="scss">

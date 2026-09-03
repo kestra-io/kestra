@@ -2,12 +2,15 @@ package io.kestra.webserver.utils;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,9 +35,68 @@ class PageableUtilsTest {
 
         assertFalse(paged.isUnpaged());
         assertFalse(paged.isSorted());
+    }
 
-        assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1, List.of("key:asc"), toUpper));
-        assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1, List.of("key:asc")));
-        assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1));
+    @Test
+    void shouldThrowWhenPageIsBelowOne() {
+        // page=0 previously reached the repository and produced a 500 leaking the SQL query
+        // (kestra-io/kestra-ee#10223) — it must now be rejected with a clean 422
+        for (int page : new int[]{0, -1}) {
+            HttpStatusException e = assertThrows(
+                HttpStatusException.class,
+                () -> PageableUtils.from(page, 10)
+            );
+            assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+            assertThat(e.getMessage()).contains("greater than or equal to 1");
+        }
+    }
+
+    @Test
+    void shouldThrowWhenSizeIsBelowOne() {
+        for (int size : new int[]{0, -1, -10}) {
+            HttpStatusException e = assertThrows(
+                HttpStatusException.class,
+                () -> PageableUtils.from(1, size)
+            );
+            assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+            assertThat(e.getMessage()).contains("greater than or equal to 1");
+        }
+    }
+
+    @Test
+    void shouldThrowWhenSizeExceedsMaxPageSize() {
+        // When a size above the cap is requested
+        HttpStatusException e = assertThrows(
+            HttpStatusException.class,
+            () -> PageableUtils.from(1, PageableUtils.MAX_PAGE_SIZE + 1)
+        );
+
+        // Then a 422 is returned
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+        assertThat(e.getMessage()).contains(String.valueOf(PageableUtils.MAX_PAGE_SIZE));
+    }
+
+    @Test
+    void shouldAllowSizeEqualToMaxPageSize() {
+        final Pageable pageable = PageableUtils.from(1, PageableUtils.MAX_PAGE_SIZE);
+
+        assertFalse(pageable.isUnpaged());
+        assertThat(pageable.getSize()).isEqualTo(PageableUtils.MAX_PAGE_SIZE);
+    }
+
+    @Test
+    void shouldThrowWhenSortFieldIsUnknown() {
+        // Given a mapper that only knows "id" — any other field returns null
+        Function<String, String> mapper = Map.of("id", "id")::get;
+
+        // When an unknown sort field is supplied
+        HttpStatusException e = assertThrows(
+            HttpStatusException.class,
+            () -> PageableUtils.from(1, 10, List.of("unknownColumn:asc"), mapper)
+        );
+
+        // Then a 422 is returned with the unknown field name
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+        assertThat(e.getMessage()).contains("unknownColumn");
     }
 }

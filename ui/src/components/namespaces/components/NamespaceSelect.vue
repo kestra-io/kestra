@@ -1,27 +1,37 @@
 <template>
     <KsSelect
-        class="fit-text"
+        :class="{'fit-text': !fit && !multiple}"
         v-model="modelValue"
         :multiple
-        collapseTags
+        :singleLineTags="multiple"
+
         :disabled="readOnly"
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
+        :fit="fit"
         :placeholder="placeholder ?? $t('namespaces')"
         :suffixIcon="suffixIcon"
     >
         <template #tag>
             <KsTag
-                v-for="(value, index) in validValues"
-                :key="index"
-                class="namespace-tag"
+                v-for="value in visibleTags"
+                :key="value"
                 closable
+                type="info"
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
-                <FolderOpenOutline class="tag-icon" />
-                {{ value }}
+                <FolderOpenOutline />
+                <span class="tag-label" :title="value">{{ value }}</span>
             </KsTag>
+            <KsTooltip v-if="hiddenTags.length > 0" placement="top">
+                <template #content>
+                    <div v-for="value in hiddenTags" :key="value">{{ value }}</div>
+                </template>
+                <KsTag class="tag-counter">
+                    +{{ hiddenTags.length }}
+                </KsTag>
+            </KsTooltip>
         </template>
         <KsOption
             v-for="item in options"
@@ -35,9 +45,9 @@
 <script setup lang="ts">
     import {computed, onMounted} from "vue"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import {defaultNamespace} from "../../../composables/useNamespaces";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import {defaultNamespace} from "../../../composables/useNamespaces"
 
     const props = withDefaults(defineProps<{
         multiple?: boolean,
@@ -45,25 +55,34 @@
         clearable?: boolean,
         taggable?: boolean
         placeholder?: string | undefined
+        fit?: boolean
+        autoDefault?: boolean
+        maxVisibleTags?: number
     }>(), {
         multiple: false,
         clearable: true,
-        placeholder: undefined
-    });
-
-    const suffixIcon = computed(() => props.readOnly ? Lock : undefined);
-
-    defineOptions({
-        inheritAttrs: false
+        placeholder: undefined,
+        autoDefault: true,
+        maxVisibleTags: 3,
     })
 
-    const modelValue = defineModel<string | string[]>();
+    const suffixIcon = computed(() => props.readOnly ? Lock : undefined)
 
-    const namespacesStore = useNamespacesStore();
+    defineOptions({
+        inheritAttrs: false,
+    })
+
+    const modelValue = defineModel<string | string[]>()
+
+    const namespacesStore = useNamespacesStore()
 
     const validValues = computed(() =>
-        [modelValue.value].flat().filter(Boolean)
+        [modelValue.value].flat().filter(Boolean) as string[],
     )
+
+    const visibleTags = computed(() => validValues.value.slice(0, props.maxVisibleTags))
+
+    const hiddenTags = computed(() => validValues.value.slice(props.maxVisibleTags))
 
     const options = computed(() => {
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
@@ -73,40 +92,32 @@
     })
 
     onMounted(() => {
-        namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []});
+        const ids = [modelValue.value].flat().filter(Boolean) as string[]
+        namespacesStore.loadAutocomplete({ids})
 
-        if (modelValue.value === undefined || modelValue.value.length === 0) {
-            const defaultNamespaceVal = defaultNamespace();
+        if (props.autoDefault && (modelValue.value === undefined || modelValue.value.length === 0)) {
+            const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {
-                    modelValue.value = [defaultNamespaceVal];
+                    modelValue.value = [defaultNamespaceVal]
                 }
             } else {
-                modelValue.value = defaultNamespaceVal ?? modelValue.value;
+                modelValue.value = defaultNamespaceVal ?? modelValue.value
             }
         }
     })
 </script>
 
 <style scoped lang="scss">
-    .namespace-tag {
-        background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-log-content-debug);
-        border: 1px solid var(--ks-log-border-debug);
-        padding: 0 6px;
+    .tag-label {
+        max-width: 12.5rem;
+        min-width: 5ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-        :deep(.kel-tag__content) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        :deep(.kel-tag__close) {
-            color: var(--ks-log-content-debug);
-
-            &:hover {
-                background-color: transparent;
-            }
-        }
+    .tag-counter {
+        flex-shrink: 0;
     }
 </style>

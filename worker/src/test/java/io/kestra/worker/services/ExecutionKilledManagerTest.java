@@ -1,41 +1,44 @@
 package io.kestra.worker.services;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.ExecutionKilledTaskRuns;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 
-import io.micrometer.core.instrument.Counter;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link ExecutionKilledManager}.
  */
+@MicronautTest
 class ExecutionKilledManagerTest {
 
+    @Inject
     private MetricRegistry metricRegistry;
+
     private ExecutionKilledManager manager;
 
     @BeforeEach
     void setUp() {
-        metricRegistry = mock(MetricRegistry.class);
-        Counter mockCounter = mock(Counter.class);
-        when(metricRegistry.counter(anyString(), anyString())).thenReturn(mockCounter);
-
         manager = new ExecutionKilledManager(metricRegistry);
     }
 
@@ -98,7 +101,7 @@ class ExecutionKilledManagerTest {
         WorkerTask mockTask = createMockWorkerTask("exec-1", "tenant-1");
 
         // When
-        manager.register("job-1", mockTask, () ->
+        manager.register("job-1", mockTask, state ->
         {
         });
 
@@ -118,7 +121,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTask mockTask = createMockWorkerTask("exec-1", null);
-        manager.register("job-1", mockTask, () -> killed.set(true));
+        manager.register("job-1", mockTask, state -> killed.set(true));
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -136,7 +139,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTask mockTask = createMockWorkerTask("exec-2", null);
-        manager.register("job-1", mockTask, () -> killed.set(true));
+        manager.register("job-1", mockTask, state -> killed.set(true));
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -160,9 +163,9 @@ class ExecutionKilledManagerTest {
         WorkerTask task2 = createMockWorkerTask("exec-1", null);
         WorkerTask task3 = createMockWorkerTask("exec-other", null);
 
-        manager.register("job-1", task1, () -> killed1.set(true));
-        manager.register("job-2", task2, () -> killed2.set(true));
-        manager.register("job-3", task3, () -> killed3.set(true));
+        manager.register("job-1", task1, state -> killed1.set(true));
+        manager.register("job-2", task2, state -> killed2.set(true));
+        manager.register("job-3", task3, state -> killed3.set(true));
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -182,7 +185,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTask mockTask = createMockWorkerTask("exec-1", null);
-        manager.register("job-1", mockTask, () -> killed.set(true));
+        manager.register("job-1", mockTask, state -> killed.set(true));
         manager.unregister("job-1");
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
@@ -201,7 +204,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTask mockTask = createMockWorkerTask("exec-1", "tenant-A");
-        manager.register("job-1", mockTask, () -> killed.set(true));
+        manager.register("job-1", mockTask, state -> killed.set(true));
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -220,7 +223,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTask mockTask = createMockWorkerTask("exec-1", "tenant-A");
-        manager.register("job-1", mockTask, () -> killed.set(true));
+        manager.register("job-1", mockTask, state -> killed.set(true));
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -236,15 +239,11 @@ class ExecutionKilledManagerTest {
 
     @Test
     void shouldIncrementMetricOnKill() {
-        // Given
-        Counter mockCounter = mock(Counter.class);
-        when(
-            metricRegistry.counter(
-                eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT),
-                eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION)
-            )
-        ).thenReturn(mockCounter);
+        double count = metricRegistry.findCounter(
+            MetricRegistry.METRIC_WORKER_KILLED_COUNT
+        ).count();
 
+        // Given
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
             .build();
@@ -253,7 +252,10 @@ class ExecutionKilledManagerTest {
         manager.onKillReceived(killEvent);
 
         // Then
-        verify(mockCounter).increment();
+        double newCount = metricRegistry.findCounter(
+            MetricRegistry.METRIC_WORKER_KILLED_COUNT
+        ).count();
+        assertThat(newCount).isEqualTo(count + 1);
     }
 
     // --- onKillReceived - ExecutionKilledTrigger ---
@@ -263,7 +265,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTrigger mockTrigger = createMockWorkerTrigger("ns", "flow-1", "trigger-1", null);
-        manager.register("job-1", mockTrigger, () -> killed.set(true));
+        manager.register("job-1", mockTrigger, state -> killed.set(true));
 
         ExecutionKilledTrigger killEvent = ExecutionKilledTrigger.builder()
             .namespace("ns")
@@ -283,7 +285,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTrigger mockTrigger = createMockWorkerTrigger("ns", "flow-1", "trigger-1", null);
-        manager.register("job-1", mockTrigger, () -> killed.set(true));
+        manager.register("job-1", mockTrigger, state -> killed.set(true));
 
         ExecutionKilledTrigger killEvent = ExecutionKilledTrigger.builder()
             .namespace("ns")
@@ -303,7 +305,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTask mockTask = createMockWorkerTask("exec-1", null);
-        manager.register("job-1", mockTask, () -> killed.set(true));
+        manager.register("job-1", mockTask, state -> killed.set(true));
 
         ExecutionKilledTrigger killEvent = ExecutionKilledTrigger.builder()
             .namespace("ns")
@@ -323,7 +325,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTrigger mockTrigger = createMockWorkerTrigger("ns", "flow-1", "trigger-1", null);
-        manager.register("job-1", mockTrigger, () -> killed.set(true));
+        manager.register("job-1", mockTrigger, state -> killed.set(true));
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -357,7 +359,7 @@ class ExecutionKilledManagerTest {
         // Given
         AtomicBoolean killed = new AtomicBoolean(false);
         WorkerTask mockTask = createMockWorkerTask("exec-1", null);
-        manager.register("job-1", mockTask, () -> killed.set(true));
+        manager.register("job-1", mockTask, state -> killed.set(true));
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -379,7 +381,7 @@ class ExecutionKilledManagerTest {
     void shouldPreserveKilledStateAfterJobUnregisters() {
         // Given
         WorkerTask mockTask = createMockWorkerTask("exec-1", null);
-        manager.register("job-1", mockTask, () ->
+        manager.register("job-1", mockTask, state ->
         {
         });
 
@@ -395,10 +397,121 @@ class ExecutionKilledManagerTest {
         assertThat(manager.isExecutionKilled("exec-1")).isTrue();
     }
 
+    // --- onKillReceived - ExecutionKilledTaskRuns ---
+
+    @Test
+    void shouldInterruptOnlyMatchingTaskRunsOnExecutionKilledTaskRuns() {
+        // Given
+        AtomicBoolean interrupted1 = new AtomicBoolean(false);
+        AtomicBoolean interrupted2 = new AtomicBoolean(false);
+        WorkerTask task1 = createMockWorkerTask("exec-1", null, "taskrun-1");
+        WorkerTask task2 = createMockWorkerTask("exec-1", null, "taskrun-2");
+        manager.register("job-1", task1, state -> interrupted1.set(true));
+        manager.register("job-2", task2, state -> interrupted2.set(true));
+
+        ExecutionKilledTaskRuns event = ExecutionKilledTaskRuns.builder()
+            .executionId("exec-1")
+            .taskRunIds(List.of("taskrun-1"))
+            .taskRunState(State.Type.CANCELLED)
+            .build();
+
+        // When
+        manager.onKillReceived(event);
+
+        // Then
+        assertThat(interrupted1.get()).isTrue();
+        assertThat(interrupted2.get()).isFalse();
+    }
+
+    @Test
+    void shouldPassTheConfiguredStateToTheInterruptAction() {
+        // Given
+        AtomicReference<State.Type> reportedState = new AtomicReference<>();
+        WorkerTask task = createMockWorkerTask("exec-1", null, "taskrun-1");
+        manager.register("job-1", task, reportedState::set);
+
+        ExecutionKilledTaskRuns event = ExecutionKilledTaskRuns.builder()
+            .executionId("exec-1")
+            .taskRunIds(List.of("taskrun-1"))
+            .taskRunState(State.Type.FAILED)
+            .build();
+
+        // When
+        manager.onKillReceived(event);
+
+        // Then
+        assertThat(reportedState.get()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldNotAffectKilledExecutionsCacheOnTaskRunsEvent() {
+        // Given
+        ExecutionKilledTaskRuns event = ExecutionKilledTaskRuns.builder()
+            .executionId("exec-1")
+            .taskRunIds(List.of("taskrun-1"))
+            .taskRunState(State.Type.CANCELLED)
+            .build();
+
+        // When
+        manager.onKillReceived(event);
+
+        // Then: an ExecutionKilledTaskRuns must never poison the whole-execution kill cache,
+        // otherwise every other task of the same execution would be treated as killed too
+        assertThat(manager.isExecutionKilled("exec-1")).isFalse();
+    }
+
+    @Test
+    void shouldRememberPendingInterruptAndApplyOnLateRegister() {
+        // Given: the interrupt arrives before the matching job is registered on this worker
+        ExecutionKilledTaskRuns event = ExecutionKilledTaskRuns.builder()
+            .executionId("exec-1")
+            .taskRunIds(List.of("taskrun-1"))
+            .taskRunState(State.Type.CANCELLED)
+            .build();
+        manager.onKillReceived(event);
+
+        // When
+        AtomicReference<State.Type> reportedState = new AtomicReference<>();
+        WorkerTask task = createMockWorkerTask("exec-1", null, "taskrun-1");
+        manager.register("job-1", task, reportedState::set);
+
+        // Then
+        assertThat(reportedState.get()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldNotReapplyPendingInterruptOnASecondRegister() {
+        // Given
+        ExecutionKilledTaskRuns event = ExecutionKilledTaskRuns.builder()
+            .executionId("exec-1")
+            .taskRunIds(List.of("taskrun-1"))
+            .taskRunState(State.Type.CANCELLED)
+            .build();
+        manager.onKillReceived(event);
+
+        AtomicInteger callCount = new AtomicInteger(0);
+        WorkerTask task = createMockWorkerTask("exec-1", null, "taskrun-1");
+        manager.register("job-1", task, state -> callCount.incrementAndGet());
+        assertThat(callCount.get()).isEqualTo(1);
+
+        // When: the same task run registers again (e.g. re-dispatched)
+        manager.register("job-1", task, state -> callCount.incrementAndGet());
+
+        // Then: the pending entry was already consumed, so this is a no-op
+        assertThat(callCount.get()).isEqualTo(1);
+    }
+
     // --- Helper methods ---
 
+    private static final AtomicInteger TASK_RUN_ID_SEQUENCE = new AtomicInteger();
+
     private static WorkerTask createMockWorkerTask(String executionId, String tenantId) {
+        return createMockWorkerTask(executionId, tenantId, "taskrun-" + TASK_RUN_ID_SEQUENCE.incrementAndGet());
+    }
+
+    private static WorkerTask createMockWorkerTask(String executionId, String tenantId, String taskRunId) {
         TaskRun taskRun = mock(TaskRun.class);
+        when(taskRun.getId()).thenReturn(taskRunId);
         when(taskRun.getExecutionId()).thenReturn(executionId);
         when(taskRun.getTenantId()).thenReturn(tenantId);
 

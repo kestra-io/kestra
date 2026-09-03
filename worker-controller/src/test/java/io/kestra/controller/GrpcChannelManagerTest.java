@@ -2,7 +2,10 @@ package io.kestra.controller;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,15 +21,37 @@ import io.kestra.controller.config.WorkerControllersConfiguration.Endpoint;
 import io.kestra.controller.config.WorkerControllersConfiguration.HealthCheck;
 import io.kestra.controller.config.WorkerControllersConfiguration.LoadBalancing;
 import io.kestra.controller.config.WorkerControllersConfiguration.StaticConfig;
+import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
+import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
+import io.kestra.controller.grpc.KVMetadataServiceGrpc;
+import io.kestra.controller.grpc.LivenessControllerServiceGrpc;
+import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc;
+import io.kestra.controller.grpc.WorkerControllerServiceGrpc;
+import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc;
+import io.kestra.controller.grpc.WorkerReportingServiceGrpc;
 import io.kestra.core.contexts.KestraContext;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
+import io.grpc.MethodDescriptor;
+import io.grpc.ServiceDescriptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrpcChannelManagerTest {
+
+    /** Every service a worker calls, so the retry allow-list can be checked against all of them. */
+    private static final List<ServiceDescriptor> WORKER_FACING_SERVICES = List.of(
+        WorkerControllerServiceGrpc.getServiceDescriptor(),
+        ConnectControllerServiceGrpc.getServiceDescriptor(),
+        LivenessControllerServiceGrpc.getServiceDescriptor(),
+        WorkerFlowMetaStoreServiceGrpc.getServiceDescriptor(),
+        KVMetadataServiceGrpc.getServiceDescriptor(),
+        NamespaceFileMetadataServiceGrpc.getServiceDescriptor(),
+        ExecutionLogsServiceGrpc.getServiceDescriptor(),
+        WorkerReportingServiceGrpc.getServiceDescriptor()
+    );
 
     private GrpcChannelManager channelManager;
 
@@ -87,24 +112,9 @@ class GrpcChannelManagerTest {
     }
 
     @Test
-    void shouldCreateChannelWithDnsSrvConfiguration() {
+    void shouldCreateChannelWithDnsConfiguration() {
         // Given
-        WorkerControllersConfiguration config = createDnsSrvConfig("kestra-controller.default.svc.cluster.local");
-        GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-
-        // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
-        channelManager.init();
-
-        // Then
-        Channel channel = channelManager.getDefaultChannel();
-        assertThat(channel).isNotNull();
-    }
-
-    @Test
-    void shouldCreateChannelWithDnsARecordConfiguration() {
-        // Given
-        WorkerControllersConfiguration config = createDnsARecordConfig("controllers.example.com", 9096);
+        WorkerControllersConfiguration config = createDnsConfig("controllers.example.com", 9096);
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
@@ -156,7 +166,7 @@ class GrpcChannelManagerTest {
         WorkerControllersConfiguration config = new WorkerControllersConfiguration(
             DiscoveryType.DNS,
             null,
-            new DnsConfig("", 9096, DnsConfig.DnsRecordType.SRV, Duration.ofSeconds(30)),
+            new DnsConfig("", 9096, Duration.ofSeconds(30)),
             null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
@@ -385,9 +395,9 @@ class GrpcChannelManagerTest {
     void shouldApplyChannelConfiguration() {
         // Given
         GrpcChannelConfiguration channelConfig = new GrpcChannelConfiguration(
-            5, // maxRetryAttempts
             Duration.ofMinutes(30), // keepAliveTime
-            Duration.ofSeconds(15) // shutdownTimeout
+            Duration.ofSeconds(15), // shutdownTimeout
+            defaultRetryConfig()
         );
         WorkerControllersConfiguration config = createStaticConfig(
             List.of(new Endpoint("localhost", 9096))
@@ -413,32 +423,220 @@ class GrpcChannelManagerTest {
     }
 
     @Test
-    void shouldUnregisterResolverOnClose() {
-        // Given - create two channel managers with static config
-        WorkerControllersConfiguration config = createStaticConfig(
-            List.of(new Endpoint("localhost", 9096))
-        );
+    void shouldSupportManagersWithOverlappingLifetimesAndDifferentEndpoints() {
+        // Given - two channel managers with static configs pointing at different controllers,
+        // alive at the same time in the same JVM (as happens with successive test contexts).
+        // The shared, stateless name resolver must serve both channels from their own target URI.
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
+        GrpcChannelManager manager1 = new GrpcChannelManager(
+            channelConfig, createDefaultGrpcConfig(),
+            createStaticConfig(List.of(new Endpoint("localhost", 9096))), null
+        );
+        GrpcChannelManager manager2 = new GrpcChannelManager(
+            channelConfig, createDefaultGrpcConfig(),
+            createStaticConfig(List.of(new Endpoint("localhost", 9097))), null
+        );
 
-        // First manager registers the resolver
-        GrpcChannelManager manager1 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
+        // When - both initialize, then the first one closes
         manager1.init();
-
-        // Close first manager - should unregister resolver
+        manager2.init();
         manager1.close();
 
-        // Second manager should be able to register a new resolver
-        GrpcChannelManager manager2 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
-        manager2.init();
-
-        // Then - both should work without conflict
+        // Then - the surviving manager's channel is unaffected by the other's lifecycle
         assertThat(manager2.getDefaultChannel()).isNotNull();
+        assertThat(((ManagedChannel) manager2.getDefaultChannel()).isShutdown()).isFalse();
+
+        // And a manager created after a close still works (the resolver stays registered JVM-wide)
+        GrpcChannelManager manager3 = new GrpcChannelManager(
+            channelConfig, createDefaultGrpcConfig(),
+            createStaticConfig(List.of(new Endpoint("localhost", 9098))), null
+        );
+        manager3.init();
+        assertThat(manager3.getDefaultChannel()).isNotNull();
 
         // Cleanup
         manager2.close();
+        manager3.close();
+    }
+
+    @Test
+    void shouldInstallHealthCheckAndRetryPolicyInOneServiceConfig() {
+        // Given
+        channelManager = newManager(createDefaultChannelConfig(), new HealthCheck(true));
+
+        // When
+        Map<String, Object> serviceConfig = channelManager.serviceConfig();
+
+        // Then — a second defaultServiceConfig() call would replace the first, so both must share one map
+        assertThat(serviceConfig).containsKey("healthCheckConfig").containsKey("methodConfig");
+        assertThat(retryPolicy(serviceConfig))
+            .containsEntry("maxAttempts", 4.0)
+            .containsEntry("initialBackoff", "0.5s")
+            .containsEntry("maxBackoff", "5s")
+            .containsEntry("backoffMultiplier", 2.0)
+            .containsEntry("retryableStatusCodes", List.of("UNAVAILABLE"));
+    }
+
+    @Test
+    void shouldRetryOnlyReplaySafeRpcs() {
+        // Given
+        channelManager = newManager(createDefaultChannelConfig(), new HealthCheck(true));
+
+        // When
+        Set<String> covered = coveredMethods(channelManager.serviceConfig());
+
+        // Then — every entry names a single RPC, so a service can never be allow-listed wholesale
+        assertThat(nameEntries(channelManager.serviceConfig())).allSatisfy(name -> assertThat(name).containsKey("method"));
+        assertThat(covered).contains(
+            KVMetadataServiceGrpc.getFindMethod().getFullMethodName(),
+            NamespaceFileMetadataServiceGrpc.getFindByPathMethod().getFullMethodName(),
+            ExecutionLogsServiceGrpc.getErrorLogsMethod().getFullMethodName(),
+            WorkerFlowMetaStoreServiceGrpc.getIsNamespaceExistsMethod().getFullMethodName()
+        );
+        assertThat(covered).doesNotContain(
+            KVMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
+            KVMetadataServiceGrpc.getDeleteByNameMethod().getFullMethodName(),
+            NamespaceFileMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
+            WorkerControllerServiceGrpc.getSendWorkerLogEntriesMethod().getFullMethodName(),
+            WorkerControllerServiceGrpc.getStreamWorkerJobsMethod().getFullMethodName(),
+            ConnectControllerServiceGrpc.getConnectMethod().getFullMethodName(),
+            // The fixed-rate liveness schedule is the retry for these; see GrpcChannelManager
+            LivenessControllerServiceGrpc.getHeartbeatMethod().getFullMethodName(),
+            LivenessControllerServiceGrpc.getGetMaintenanceModeMethod().getFullMethodName()
+        );
+    }
+
+    /**
+     * Guard against the allow-list decaying: every worker-facing RPC must be either retryable or explicitly
+     * recorded as unsafe to replay. A newly added RPC fails here until someone classifies it.
+     */
+    @Test
+    void shouldClassifyEveryRpcAsRetryableOrKnownUnsafe() {
+        // Given
+        Set<String> knownUnsafe = Set.of(
+            KVMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
+            KVMetadataServiceGrpc.getDeleteByNameMethod().getFullMethodName(),
+            NamespaceFileMetadataServiceGrpc.getSaveMethod().getFullMethodName(),
+            WorkerControllerServiceGrpc.getStreamWorkerJobsMethod().getFullMethodName(),
+            WorkerControllerServiceGrpc.getSendWorkerTaskResultsMethod().getFullMethodName(),
+            WorkerControllerServiceGrpc.getSendWorkerTriggerResultsMethod().getFullMethodName(),
+            WorkerControllerServiceGrpc.getSendWorkerMetricEntriesMethod().getFullMethodName(),
+            WorkerControllerServiceGrpc.getSendWorkerLogEntriesMethod().getFullMethodName(),
+            WorkerReportingServiceGrpc.getSendReportMethod().getFullMethodName(),
+            ConnectControllerServiceGrpc.getConnectMethod().getFullMethodName(),
+            LivenessControllerServiceGrpc.getHeartbeatMethod().getFullMethodName(),
+            LivenessControllerServiceGrpc.getGetMaintenanceModeMethod().getFullMethodName()
+        );
+        channelManager = newManager(createDefaultChannelConfig(), new HealthCheck(true));
+        Set<String> covered = coveredMethods(channelManager.serviceConfig());
+
+        // When
+        List<String> allRpcs = WORKER_FACING_SERVICES.stream()
+            .flatMap(service -> service.getMethods().stream())
+            .map(MethodDescriptor::getFullMethodName)
+            .toList();
+
+        // Then
+        assertThat(allRpcs).allSatisfy(rpc ->
+            assertThat(covered.contains(rpc) || knownUnsafe.contains(rpc))
+                .withFailMessage("RPC %s is neither retryable nor recorded as unsafe to replay. Classify it in GrpcChannelManager.", rpc)
+                .isTrue()
+        );
+        assertThat(covered).doesNotContainAnyElementsOf(knownUnsafe);
+        // No stale entries: everything listed as unsafe must still exist
+        assertThat(allRpcs).containsAll(knownUnsafe);
+    }
+
+    @Test
+    void shouldOmitRetryPolicyWhenRetryDisabled() {
+        // Given
+        GrpcChannelConfiguration channelConfig = new GrpcChannelConfiguration(
+            Duration.ofHours(1), Duration.ofSeconds(30),
+            new GrpcChannelConfiguration.Retry(false, 4, Duration.ofMillis(500), Duration.ofSeconds(5), 2.0)
+        );
+
+        // When
+        channelManager = newManager(channelConfig, new HealthCheck(true));
+
+        // Then
+        assertThat(channelManager.serviceConfig()).containsKey("healthCheckConfig").doesNotContainKey("methodConfig");
+    }
+
+    @Test
+    void shouldOmitRetryPolicyWhenMaxAttemptsBelowSpecMinimum() {
+        // Given — a single attempt is a legitimate way to ask for no retry, and the gRPC spec rejects it
+        GrpcChannelConfiguration channelConfig = new GrpcChannelConfiguration(
+            Duration.ofHours(1), Duration.ofSeconds(30),
+            new GrpcChannelConfiguration.Retry(true, 1, Duration.ofMillis(500), Duration.ofSeconds(5), 2.0)
+        );
+
+        // When
+        channelManager = newManager(channelConfig, new HealthCheck(true));
+
+        // Then — retries stay off and the channel still builds, instead of failing the server at startup
+        assertThat(channelManager.serviceConfig()).containsKey("healthCheckConfig").doesNotContainKey("methodConfig");
+        channelManager.init();
+        assertThat(channelManager.getDefaultChannel()).isNotNull();
+    }
+
+    @Test
+    void shouldStillInstallRetryPolicyWhenHealthCheckDisabled() {
+        // Given
+        channelManager = newManager(createDefaultChannelConfig(), new HealthCheck(false));
+
+        // When
+        Map<String, Object> serviceConfig = channelManager.serviceConfig();
+
+        // Then
+        assertThat(serviceConfig).doesNotContainKey("healthCheckConfig").containsKey("methodConfig");
+    }
+
+    @Test
+    void shouldBuildChannelWithAValidServiceConfig() {
+        // Given
+        channelManager = newManager(createDefaultChannelConfig(), new HealthCheck(true));
+
+        // When — gRPC validates the service config as the channel is built, so a bad entry throws here
+        channelManager.init();
+
+        // Then
+        assertThat(channelManager.getDefaultChannel()).isNotNull();
     }
 
     // Helper methods
+
+    private static GrpcChannelManager newManager(GrpcChannelConfiguration channelConfig, HealthCheck healthCheck) {
+        WorkerControllersConfiguration config = new WorkerControllersConfiguration(
+            DiscoveryType.STATIC,
+            new StaticConfig(List.of(new Endpoint("localhost", 9096))),
+            null,
+            null,
+            new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
+            healthCheck,
+            new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
+        );
+        return new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> retryPolicy(Map<String, Object> serviceConfig) {
+        List<Map<String, Object>> methodConfig = (List<Map<String, Object>>) serviceConfig.get("methodConfig");
+        assertThat(methodConfig).hasSize(1);
+        return (Map<String, Object>) methodConfig.getFirst().get("retryPolicy");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, String>> nameEntries(Map<String, Object> serviceConfig) {
+        List<Map<String, Object>> methodConfig = (List<Map<String, Object>>) serviceConfig.get("methodConfig");
+        return (List<Map<String, String>>) methodConfig.getFirst().get("name");
+    }
+
+    /** The full method names the service config's {@code name} entries cover. */
+    private static Set<String> coveredMethods(Map<String, Object> serviceConfig) {
+        return nameEntries(serviceConfig).stream()
+            .map(name -> name.get("service") + "/" + name.get("method"))
+            .collect(Collectors.toSet());
+    }
 
     private static WorkerControllersConfiguration createStaticConfig(List<Endpoint> endpoints) {
         return new WorkerControllersConfiguration(
@@ -480,23 +678,11 @@ class GrpcChannelManagerTest {
         );
     }
 
-    private static WorkerControllersConfiguration createDnsSrvConfig(String hostname) {
+    private static WorkerControllersConfiguration createDnsConfig(String hostname, int defaultPort) {
         return new WorkerControllersConfiguration(
             DiscoveryType.DNS,
             null,
-            new DnsConfig(hostname, 9096, DnsConfig.DnsRecordType.SRV, Duration.ofSeconds(30)),
-            null,
-            new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
-            new HealthCheck(true),
-            new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
-        );
-    }
-
-    private static WorkerControllersConfiguration createDnsARecordConfig(String hostname, int defaultPort) {
-        return new WorkerControllersConfiguration(
-            DiscoveryType.DNS,
-            null,
-            new DnsConfig(hostname, defaultPort, DnsConfig.DnsRecordType.A, Duration.ofSeconds(30)),
+            new DnsConfig(hostname, defaultPort, Duration.ofSeconds(30)),
             null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
@@ -506,10 +692,14 @@ class GrpcChannelManagerTest {
 
     private static GrpcChannelConfiguration createDefaultChannelConfig() {
         return new GrpcChannelConfiguration(
-            10, // maxRetryAttempts
             Duration.ofHours(1), // keepAliveTime
-            Duration.ofSeconds(30) // shutdownTimeout
+            Duration.ofSeconds(30), // shutdownTimeout
+            defaultRetryConfig()
         );
+    }
+
+    private static GrpcChannelConfiguration.Retry defaultRetryConfig() {
+        return new GrpcChannelConfiguration.Retry(true, 4, Duration.ofMillis(500), Duration.ofSeconds(5), 2.0);
     }
 
     private static GrpcConfiguration createDefaultGrpcConfig() {

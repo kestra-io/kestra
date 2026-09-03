@@ -1,6 +1,26 @@
-import Triggers from "../../../../src/components/admin/Triggers.vue";
+import {vi} from "vitest";
+
+// triggerStore.search(), flowStore.findFlows() and pluginsStore.listTriggers() all call their
+// generated SDK submodule functions directly, which go through the SDK's own internal client
+// rather than the axios instance setMockClient() swaps - so each has to be intercepted at the
+// submodule level. The Template below still uses setMockClient() as a catch-all for anything
+// exercised by user interaction (unlock/restart/backfill actions), since this story has no
+// play() function driving those paths.
+const mockState = vi.hoisted(() => ({triggers: []}))
+vi.mock("@kestra-io/kestra-sdk/triggers", () => ({
+    searchTriggers: async () => ({results: mockState.triggers, total: mockState.triggers.length}),
+}))
+vi.mock("@kestra-io/kestra-sdk/flows", () => ({
+    searchFlows: async () => ({results: [], total: 0}),
+}))
+vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
+    listTriggerPlugins: async () => ({results: [], total: 0}),
+}))
+
+import Triggers from "../../../../src/components/admin/triggers/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
+import {mockClientFallback} from "../../../../.storybook/apiMock";
 
 const meta = {
     title: "Components/Admin/Triggers",
@@ -10,6 +30,11 @@ const meta = {
             {
                 path: "/",
                 name: "home",
+                component: {template: "<div>home</div>"}
+            },
+            {
+                path: "/:tab?",
+                name: "admin/triggers",
                 component: Triggers
             },
             {
@@ -25,90 +50,81 @@ export default meta;
 
 const triggersData = [
     {
-        "abstractTrigger": {
+        "trigger": {
             "id": "every10min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": true,
             "cron": "10 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "company.team",
             "flowId": "trigger_test_foo",
             "triggerId": "every10min",
-            "date": "2025-04-15T14:34:19+02:00",
-            "disabled": true
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": true,
+            "locked": false
         }
     },
     {
-        "abstractTrigger": {
+        "trigger": {
             "id": "every5min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": false,
             "cron": "5 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "io.kestra.company",
             "flowId": "trigger_tests_bar",
             "triggerId": "every5min",
-            "disabled": false
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": false,
+            "locked": false
         }
     },
     {
-        "abstractTrigger": {
+        "trigger": {
             "backfill": true,
             "id": "every1min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": false,
             "cron": "1 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "io.kestra.company",
             "flowId": "trigger_tests_backfill_running",
             "triggerId": "every1min",
-            "disabled": false
-        },
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": false,
+            "locked": true
+        }
     },
     {
-        "abstractTrigger": {
+        "trigger": {
             "backfill": {
                 "paused": true
             },
             "id": "every1min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": false,
             "cron": "1 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "io.kestra.company",
             "flowId": "trigger_tests_backfill_paused",
             "triggerId": "every1min",
-            "disabled": false
-        },
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": false,
+            "locked": false
+        }
     }
 ]
 
 const Template = (args) => ({
     setup() {
-        const store = useAxios()
+        mockState.triggers = args.triggers
+
+        const store = {}
         store.get = async function (uri) {
-            if (uri.includes("/triggers/search")) {
-                return {
-                    data: {
-                        results: args.triggers,
-                        total: args.triggers.length,
-                    }
-                }
-            }
-
-            if (uri.includes("/flows/search")) {
-                return {
-                    data: {
-                        results: [],
-                        total: 0,
-                    }
-                }
-            }
-
             if (uri.includes("/distinct-namespaces")) {
                 return {
                     data: [
@@ -120,19 +136,20 @@ const Template = (args) => ({
                 }
             }
 
-            console.log("get request", uri)
-            return {data: {}}
+            // Anything this story doesn't answer itself falls back to the shared table in
+            // .storybook/apiMock.js, which reports the route if nothing there covers it either.
+            return mockClientFallback("GET", uri)
         }
 
-        store.post = async function (uri) {
-            console.log("post request", uri)
-            return {data: {}}
+        store.post = async function (uri, data) {
+            return mockClientFallback("POST", uri, data)
         }
 
-        store.put = async function (uri) {
-            console.log("put request", uri)
-            return {data: {}}
+        store.put = async function (uri, data) {
+            return mockClientFallback("PUT", uri, data)
         }
+
+        setMockClient(store);
 
         return () =>
             <Triggers />

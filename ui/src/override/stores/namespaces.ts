@@ -1,10 +1,10 @@
-import {defineStore} from "pinia";
-import {useBaseNamespacesStore} from "../../composables/useBaseNamespaces";
+import {defineStore} from "pinia"
+import {useBaseNamespacesStore} from "../../composables/useBaseNamespaces"
 
 export const useNamespacesStore = defineStore("namespaces", () => {
-    const ossStore = useBaseNamespacesStore();
+    const ossStore = useBaseNamespacesStore()
 
     return {
         ...ossStore,
     }
-});
+})

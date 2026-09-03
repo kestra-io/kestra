@@ -12,18 +12,9 @@
     defineProps<{
         label: string;
         textValue: string;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "update:textValue": [value: string];
-    }>();
+    }>()
 </script>
-
-<style lang="scss" scoped>
-    :deep(.kel-input__inner) {
-        &::placeholder {
-            color: var(--ks-content-tertiary);
-            font-size: var(--ks-font-size-sm);
-        }
-    }
-</style>

@@ -1,53 +1,71 @@
 <template>
     <div v-if="name" id="environment">
-        <strong>{{ name }}</strong>
+        <span class="dot" />
+        <span class="name" :title="name">{{ name }}</span>
+        <span class="label">{{ $t("environment") }}</span>
     </div>
 </template>
 
 <script setup lang="ts">
     import {cssVar} from "@kestra-io/design-system"
-    import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "override/stores/misc";
-    import {computed} from "vue";
+    import {useLayoutStore} from "../../stores/layout"
+    import {useMiscStore} from "override/stores/misc"
+    import {computed} from "vue"
 
-    const layoutStore = useLayoutStore();
-    const miscStore = useMiscStore();
+    const layoutStore = useLayoutStore()
+    const miscStore = useMiscStore()
 
     const name = computed(() => {
-        return layoutStore.envName || miscStore.configs?.environment?.name;
+        return layoutStore.envName || miscStore.configs?.environment?.name
     })
 
     const color = computed(() => {
         if (layoutStore.envColor) {
-            return layoutStore.envColor;
+            return layoutStore.envColor
         }
 
         if (miscStore.configs?.environment?.color) {
-            return miscStore.configs.environment.color;
+            return miscStore.configs.environment.color
         }
 
-        return cssVar("--ks-content-info");
+        return cssVar("--ks-status-info")
     })
 
 </script>
 
 <style scoped lang="scss">
 #environment {
-    margin-bottom: 1.5rem;
-    text-align: center;
-    margin-top: -1.25rem;
+    display: flex;
+    align-items: baseline;
+    gap: var(--ks-spacing-1);
+    border: 1px solid v-bind('color');
+    border-radius: var(--ks-radius-sm);
+    padding: 0.125rem var(--ks-spacing-2);
 
-    strong {
-        border: 1px solid v-bind('color');
-        border-radius: var(--kel-border-radius-base);
-        color: var(--ks-content-primary);
-        padding: 0.125rem 0.25rem;
-        font-size: var(--ks-font-size-sm);
+    .dot {
+        align-self: center;
+        flex-shrink: 0;
+        width: 0.25rem;
+        height: 0.25rem;
+        border-radius: 50%;
+        background-color: v-bind('color');
+    }
+
+    .name {
+        flex: 1;
+        min-width: 0;
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-xs);
         white-space: nowrap;
-        text-overflow: ellipsis;
         overflow: hidden;
-        max-width: 90%;
-        display: inline-block;
+        text-overflow: ellipsis;
+    }
+
+    .label {
+        flex-shrink: 0;
+        color: var(--ks-text-inactive);
+        font-size: var(--ks-font-size-2xs);
+        white-space: nowrap;
     }
 }
 </style>

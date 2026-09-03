@@ -23,6 +23,30 @@ describe("KsTabs", () => {
         expect(wrapper.find(".kel-tabs--card").exists()).toBe(true)
     })
 
+    test("segmented type applies correct class", () => {
+        const wrapper = mount(KsTabs, {
+            props: {modelValue: "tab1", type: "segmented"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-tabs--segmented").exists()).toBe(true)
+    })
+
+    test("paneScroll applies the pane-scroll class", () => {
+        const wrapper = mount(KsTabs, {
+            props: {modelValue: "tab1", paneScroll: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-tabs--pane-scroll").exists()).toBe(true)
+    })
+
+    test("omits the pane-scroll class by default", () => {
+        const wrapper = mount(KsTabs, {
+            props: {modelValue: "tab1"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-tabs--pane-scroll").exists()).toBe(false)
+    })
+
     test("renders tab panes", () => {
         const wrapper = mount({
             components: {KsTabs, KsTabPane},

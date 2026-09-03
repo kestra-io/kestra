@@ -30,7 +30,7 @@
             </KsCollapseItem>
             <div v-else>
                 <slot v-bind="child" :class="`depth-${depth}`">
-                    <RouterLink :to="{path: '/' + child.path}">
+                    <RouterLink :to="{path: '/' + child.path}" :class="`depth-${depth}`">
                         {{ child.title.capitalize() }}
                     </RouterLink>
                 </slot>
@@ -40,11 +40,11 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {DISABLED_PAGES} from "./docsUtils";
+    import {computed, ref} from "vue"
+    import {DISABLED_PAGES} from "./docsUtils"
 
     defineOptions({
-        name: "RecursiveToc"
+        name: "RecursiveToc",
     })
 
     defineSlots<{
@@ -67,22 +67,25 @@
         makeIndexNavigable?: boolean
     }>(), {
         makeIndexNavigable: true,
-        depth: 0
+        depth: 0,
     })
 
     const filteredChildren = computed(() => {
         return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})))
     })
 
-    const openedDocs = ref<string>("");
+    const openedDocs = ref<string>("")
 </script>
 
 <style scoped lang="scss">
     .kel-collapse {
         --kel-collapse-header-font-size: var(--ks-font-size-sm);
         --kel-collapse-header-height: auto;
+        --kel-collapse-header-bg-color: transparent;
+        --kel-collapse-content-bg-color: transparent;
         border-top: none;
         border-bottom: none;
+        background-color: transparent;
 
         > * {
             font-size: var(--kel-collapse-header-font-size);
@@ -105,7 +108,7 @@
             }
 
             a {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
 
                 &.RouterLink-exact-active {
                     font-weight: 700;

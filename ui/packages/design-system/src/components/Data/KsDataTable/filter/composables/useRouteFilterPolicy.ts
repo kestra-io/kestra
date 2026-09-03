@@ -1,11 +1,11 @@
-import {computed, ref, watch} from "vue";
+import {computed, onScopeDispose, ref, watch} from "vue"
 import {
     type LocationQuery,
     type LocationQueryRaw,
     useRoute,
-    useRouter
-} from "vue-router";
-import type {AppliedFilter} from "../utils/filterTypes";
+    useRouter,
+} from "vue-router"
+import type {AppliedFilter} from "../utils/filterTypes"
 
 type QueryLike = LocationQuery | LocationQueryRaw | Record<string, any>;
 
@@ -21,99 +21,147 @@ interface UseRouteFilterPolicyOptions<T> {
     readFromAppliedFilters?: (filters: AppliedFilter[]) => T | undefined;
     shouldSyncFromAppliedFilters?: (filters: AppliedFilter[], routeQuery: Record<string, any>) => boolean;
 }
+/**
+ * Compare two policy values by content, not identity. Policy values may be objects
+ * (e.g. the log level's {value, direction}); a reference check would never match two
+ * freshly-built objects and would fire a redundant `router.replace` on every sync.
+ */
+const isSameValue = <T>(a: T | undefined, b: T | undefined): boolean => {
+    if (a === b) return true
+    if (a == null || b == null) return false
+    if (typeof a !== "object" || typeof b !== "object") return false
+    return JSON.stringify(a) === JSON.stringify(b)
+}
+
 export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>) {
-    const route = useRoute();
-    const router = useRouter();
-    const normalizedOnce = ref(false);
+    const route = useRoute()
+    const router = useRouter()
+    const normalizedOnce = ref(false)
+    const normalizationPending = ref(false)
 
-    const isEnabled = () => options.enabled?.() ?? true;
-    const shouldApplyDefaultIfMissing = () => options.applyDefaultIfMissing?.() ?? false;
+    const isEnabled = () => options.enabled?.() ?? true
+    const shouldApplyDefaultIfMissing = () => options.applyDefaultIfMissing?.() ?? false
 
-    const routeValue = computed(() => options.readFromRoute(route.query));
-    const explicitValue = computed(() => options.explicitValue?.());
+    const routeValue = computed(() => options.readFromRoute(route.query))
+    const explicitValue = computed(() => options.explicitValue?.())
     const hasUnsupportedRouteValue = computed(
-        () => options.hasUnsupportedRouteValue?.(route.query) ?? false
-    );
+        () => options.hasUnsupportedRouteValue?.(route.query) ?? false,
+    )
 
     const effectiveValue = computed(() => {
         if (!isEnabled()) {
-            return options.fallbackValue?.();
+            return options.fallbackValue?.()
         }
 
         if (routeValue.value !== undefined) {
-            return routeValue.value;
+            return routeValue.value
         }
 
         if (explicitValue.value !== undefined) {
-            return explicitValue.value;
+            return explicitValue.value
         }
 
         if (!normalizedOnce.value && shouldApplyDefaultIfMissing()) {
-            return options.defaultValue?.();
+            return options.defaultValue?.()
         }
 
-        return options.fallbackValue?.();
-    });
+        return options.fallbackValue?.()
+    })
+
+    /**
+     * `isRouteSettled` stays false until the normalized query lands, so a consumer can hold its
+     * first load back instead of running it against the URL the defaults are about to replace.
+     * The navigation can also never land — a route guard aborts it, or one that supersedes it
+     * drops the value again — and a consumer waiting on it would then show nothing at all, with
+     * no request in flight and nothing to retry it. Give up after a grace period: by then the
+     * single load the gate buys is lost anyway, and loading the URL's own filters beats that.
+     */
+    const SETTLE_TIMEOUT_MS = 2000
+    let settleTimer: ReturnType<typeof setTimeout> | undefined
+
+    const settleNow = () => {
+        clearTimeout(settleTimer)
+        settleTimer = undefined
+        normalizationPending.value = false
+    }
+
+    const startSettleTimeout = () => {
+        clearTimeout(settleTimer)
+        settleTimer = setTimeout(settleNow, SETTLE_TIMEOUT_MS)
+    }
+
+    onScopeDispose(() => clearTimeout(settleTimer))
 
     watch(
         [routeValue, explicitValue, hasUnsupportedRouteValue],
         ([routeValueNow, explicitValueNow, hasUnsupportedNow]) => {
             if (normalizedOnce.value || !isEnabled() || !shouldApplyDefaultIfMissing()) {
-                return;
+                return
             }
 
-            normalizedOnce.value = true;
+            normalizedOnce.value = true
 
             if (routeValueNow !== undefined && !hasUnsupportedNow) {
-                return;
+                return
             }
 
-            const nextValue = routeValueNow ?? explicitValueNow ?? options.defaultValue?.();
+            const nextValue = routeValueNow ?? explicitValueNow ?? options.defaultValue?.()
             if (nextValue === undefined) {
-                return;
+                return
             }
 
+            normalizationPending.value = true
+            startSettleTimeout()
             router.replace({
-                query: options.writeToRoute(route.query as Record<string, any>, nextValue)
-            });
+                query: options.writeToRoute(route.query as Record<string, any>, nextValue),
+            })
         },
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
     const setRouteValue = (value: T | undefined) => {
         if (!isEnabled()) {
-            return;
+            return
         }
 
-        if (value === routeValue.value && !hasUnsupportedRouteValue.value) {
-            return;
+        if (isSameValue(value, routeValue.value) && !hasUnsupportedRouteValue.value) {
+            return
         }
 
         router.replace({
-            query: options.writeToRoute(route.query as Record<string, any>, value)
-        });
-    };
+            query: options.writeToRoute(route.query as Record<string, any>, value),
+        })
+    }
 
     const syncFromAppliedFilters = (filters: AppliedFilter[]) => {
         if (!isEnabled() || !options.readFromAppliedFilters) {
-            return;
+            return
         }
 
         if (
             options.shouldSyncFromAppliedFilters &&
             !options.shouldSyncFromAppliedFilters(filters, route.query as Record<string, any>)
         ) {
-            return;
+            return
         }
 
-        setRouteValue(options.readFromAppliedFilters(filters));
-    };
+        setRouteValue(options.readFromAppliedFilters(filters))
+    }
+
+    watch(routeValue, (value) => {
+        if (value !== undefined) {
+            settleNow()
+        }
+    }, {flush: "sync"})
+
+    const isRouteSettled = computed(() => !normalizationPending.value)
 
     return {
         routeValue,
         effectiveValue,
+        isRouteSettled,
         hasUnsupportedRouteValue,
         syncFromAppliedFilters,
-        setRouteValue
-    };
+        setRouteValue,
+    }
 }

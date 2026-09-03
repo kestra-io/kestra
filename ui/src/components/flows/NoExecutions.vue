@@ -1,98 +1,83 @@
 <template>
-    <EmptyTemplate>
+    <EmptyTemplate plain>
         <div class="content">
             <img
-                :src="noexecutionimg"
+                :src="executeimg"
                 alt="Kestra"
-                class="logo img-fluid"
+                class="img-fluid"
             >
             <h2 class="title">
                 {{ $t("no-executions-view.title") }}
             </h2>
             <p class="desc">
-                {{ isNamespace ? $t("no-executions-view.namespace_sub_title") : $t("no-executions-view.sub_title") }}
+                {{
+                    isNamespace
+                        ? $t("no-executions-view.namespace_sub_title")
+                        : $t("no-executions-view.sub_title")
+                }}
             </p>
-            <div v-if="flow && !flow.deleted" class="trigger">
-                <TriggerFlow
-                    type="primary"
-                    :disabled="flow.disabled"
-                    :flowId="flow.id"
-                    :namespace="flow.namespace"
-                    :flowSource="flow.source"
-                />
-            </div>
         </div>
-        <KsDivider>
-            {{ isNamespace ? $t("no-executions-view.namespace_guidance_desc") : $t("welcome_page.guide") }}
-        </KsDivider>
-        <OverviewBottom class="bottom" :isNamespace />
+        <div class="bottom">
+            <p class="label">
+                {{ $t("no-executions-view.need_help") }}
+            </p>
+            <OverviewBottom :isNamespace />
+        </div>
     </EmptyTemplate>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue"
-    import OverviewBottom from "../onboarding/execution/OverviewBottom.vue";
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
-    import noexecutionimg from "../../assets/onboarding/noexecution.svg"
-    import {useFlowStore} from "../../stores/flow"
-    //@ts-expect-error no declaration file
-    import TriggerFlow from "../flows/TriggerFlow.vue"
+    import OverviewBottom from "../onboarding/execution/OverviewBottom.vue"
+    import EmptyTemplate from "../layout/EmptyTemplate.vue"
+    import executeimg from "../../assets/onboarding/execute.svg"
 
-    withDefaults(defineProps<{topbar?: boolean; isNamespace?: boolean}>(), {
-        topbar: true,
-        isNamespace: false,
-    })
-
-    const flowStore = useFlowStore();
-    const flow = computed(() => flowStore.flow)
+    defineProps<{isNamespace?: boolean}>()
 </script>
 
 <style scoped lang="scss">
-.content {
-    width: 100%;
+.empty-template {
+    min-height: calc(100vh - 174px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 434px;
-    margin: 4rem auto;
+    justify-content: center;
+    gap: var(--ks-spacing-10);
 
-    .title {
-        line-height: var(--kel-font-line-height-primary);
-        text-align: center;
-        font-size: var(--ks-font-size-xl);
-        font-weight: 600;
-        color: var(--ks-content-primary);
-    }
+    .content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        max-width: 590px;
 
-    .desc {
-        line-height: var(--kel-font-line-height-primary);
-        font-weight: 300;
-        font-size: var(--ks-font-size-base);
-        line-height: 28px;
-        text-align: center;
-        color: var(--ks-content-primary);
-    }
+        .title {
+            margin: 0;
+            line-height: var(--ks-line-height-base);
+            text-align: center;
+            font-size: var(--ks-font-size-xl);
+            font-weight: var(--ks-font-weight-semibold);
+            color: var(--ks-text-primary);
+        }
 
-    .trigger {
-        :deep(.kel-button) {
-            width: 226px;
-            height: 45px;
+        .desc {
+            margin: 0;
+            font-weight: var(--ks-font-weight-regular);
+            font-size: var(--ks-font-size-md);
+            text-align: center;
+            color: var(--ks-text-secondary);
         }
     }
-}
 
-:deep(.kel-divider) {
-    max-width: 746px;
-    margin: 0 auto;
-}
+    .bottom {
+        width: 100%;
+        max-width: 590px;
 
-:deep(.kel-divider__text) {
-    color: var(--ks-content-secondary);
-    white-space: nowrap;
-    font-size: var(--ks-font-size-xs);
-}
-
-.bottom {
-    max-width: 746px;
-    margin: 2rem auto;
+        .label {
+            margin-bottom: var(--ks-spacing-3);
+            text-align: left;
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-secondary);
+        }
+    }
 }
 </style>

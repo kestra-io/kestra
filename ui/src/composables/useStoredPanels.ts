@@ -1,6 +1,6 @@
-import {useStorage} from "@vueuse/core";
-import {EditorElement, Panel, Tab} from "../utils/multiPanelTypes";
-import {ref} from "vue";
+import {useStorage} from "@vueuse/core"
+import {EditorElement, Panel, Tab} from "../utils/multiPanelTypes"
+import {ref} from "vue"
 
 interface PreSerializedPanel {
     tabs: string[];
@@ -13,7 +13,7 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
         tabs: p.tabs.map(t => t.uid),
         activeTab: p.activeTab?.uid,
         size: p.size,
-    })));
+    })))
 
     /**
      * function called on mount to deserialize tabs from storage
@@ -24,24 +24,24 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
     function deserializeTabTags(uids: string[]): Tab[] {
         return uids.map(uid => {
             for (const element of editorElements) {
-                const deserializedTab = element.deserialize(uid, false);
+                const deserializedTab = element.deserialize(uid, false)
                 if (deserializedTab) {
-                    return deserializedTab;
+                    return deserializedTab
                 }
             }
-        }).filter(t => t !== undefined);
+        }).filter(t => t !== undefined)
     }
 
     const initialPanels = deserializeTabTags(defaultPanels).map((t) => {
             return {
                 activeTab: t,
                 tabs: [t],
-                size: 100 / defaultPanels.length
-            };
-        });
+                size: 100 / defaultPanels.length,
+            }
+        })
 
     function write(v: Panel[]){
-        return JSON.stringify(preSerializePanelsFn(v));
+        return JSON.stringify(preSerializePanelsFn(v))
     }
 
     const panels = key ? useStorage<Panel[]>(
@@ -52,32 +52,32 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
             serializer: {
                 write,
                 read(v?: string) {
-                    if(!v) return [];
-                    const rawPanels: PreSerializedPanel[] = JSON.parse(v);
+                    if(!v) return []
+                    const rawPanels: PreSerializedPanel[] = JSON.parse(v)
                     const convertedPanels = rawPanels
                         .filter((p) => p.tabs.length)
                         .map((p):Panel => {
-                            const tabsConverted = deserializeTabTags(p.tabs);
-                            const activeTab = tabsConverted.find((t) => t.uid === p.activeTab) ?? tabsConverted[0];
+                            const tabsConverted = deserializeTabTags(p.tabs)
+                            const activeTab = tabsConverted.find((t) => t.uid === p.activeTab) ?? tabsConverted[0]
                             return {
                                 activeTab,
                                 tabs: tabsConverted,
-                                size: p.size
-                            };
-                        });
+                                size: p.size,
+                            }
+                        })
 
                     return convertedPanels
-                }
+                },
             },
-        }
-    ) : ref(initialPanels);
+        },
+    ) : ref(initialPanels)
 
     function saveState(altKey: string | undefined) {
         if (altKey) {
             // Save the current state to local storage
-            localStorage.setItem(altKey, write(panels.value));
+            localStorage.setItem(altKey, write(panels.value))
         }
     }
 
-    return {panels, saveState};
+    return {panels, saveState}
 }

@@ -9,18 +9,18 @@
 </template>
 
 <script lang="ts" setup>
-    import {Schema} from "./getTaskComponent";
+    import {Schema} from "./getTaskComponent"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     defineProps<{
         disabled?: boolean;
         schema?: Schema;
         root?: string;
         task?: any;
-    }>();
+    }>()
 
-    const modelValue = defineModel<string>({default: ""});
+    const modelValue = defineModel<string>({default: ""})
 </script>
 
 <style scoped lang="scss">
@@ -28,11 +28,11 @@
     display: flex;
     align-items: stretch;
     justify-content: stretch;
-    border-radius: 0.25rem;
-    border: 1px solid var(--ks-border-primary);
+    border-radius: var(--ks-radius-base);
+    border: 1px solid var(--ks-border-default);
     width: 100%;
 
-    :deep(.kel-input__wrapper),
+    :deep(.kel-textarea__inner),
     :deep(.editor-container) {
         box-shadow: none;
     }

@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
@@ -11,11 +12,11 @@ import io.kestra.core.models.TenantInterface;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadata>, TenantInterface, HasUID {
     @With
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     private String tenantId;
 
     @NotNull
@@ -40,8 +41,11 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
 
     private String parentPath;
 
+    // Field renamed to 'revision' but the persisted JSON key stays "version" (frozen via @JsonProperty)
+    // to avoid a JSONB backfill on existing installs; see VersionJsonKeyFreezeTest.
     @NotNull
-    private Integer version;
+    @JsonProperty("version")
+    private Integer revision;
 
     @Builder.Default
     private boolean last = true;
@@ -58,13 +62,14 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
     private boolean deleted;
 
     @JsonCreator
-    public NamespaceFileMetadata(String tenantId, String namespace, String path, String parentPath, Integer version, boolean last, Long size, Instant created, @Nullable Instant updated,
+    public NamespaceFileMetadata(String tenantId, String namespace, String path, String parentPath, @JsonProperty("version") Integer revision, boolean last, Long size, Instant created,
+        @Nullable Instant updated,
         boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
         this.path = path;
         this.parentPath = parentPath(path);
-        this.version = version;
+        this.revision = revision;
         this.last = last;
         this.size = size;
         this.created = created;
@@ -96,7 +101,7 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
             .tenantId(tenantId)
             .namespace(namespaceFile.namespace())
             .path(namespaceFile.filePath().toString())
-            .version(namespaceFile.version())
+            .revision(namespaceFile.revision())
             .build();
     }
 
@@ -108,7 +113,7 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
             .created(Instant.ofEpochMilli(fileAttributes.getCreationTime()))
             .updated(Instant.ofEpochMilli(fileAttributes.getLastModifiedTime()))
             .size(fileAttributes.getSize())
-            .version(1)
+            .revision(1)
             .build();
     }
 
@@ -124,7 +129,7 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
 
     @Override
     public String uid() {
-        return IdUtils.fromParts(getTenantId(), getNamespace(), getPath(), String.valueOf(getVersion()));
+        return IdUtils.fromParts(getTenantId(), getNamespace(), getPath(), String.valueOf(getRevision()));
     }
 
     @JsonIgnore

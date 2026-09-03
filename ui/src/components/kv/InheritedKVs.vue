@@ -2,7 +2,12 @@
     <KsTable :data="store.inheritedKVs" tableLayout="auto">
         <KsTableColumn prop="namespace" :label="$t('namespace')">
             <template #default="scope">
-                <code>{{ scope.row.namespace }}</code>
+                <KsEntityLink
+                    v-if="scope.row.namespace"
+                    entity="namespace"
+                    :value="scope.row.namespace"
+                    :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                />
             </template>
         </KsTableColumn>
 
@@ -33,20 +38,20 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted} from "vue";
+    import {onMounted} from "vue"
 
-    import {useNamespacesStore} from "override/stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces"
 
     interface Props {
         namespace: string;
     }
 
-    const props = defineProps<Props>();
+    const props = defineProps<Props>()
 
-    const store = useNamespacesStore();
+    const store = useNamespacesStore()
 
     const loadItem = (): void => {
-        store.loadInheritedKVs(props.namespace);
-    };
-    onMounted(() => loadItem());
+        store.loadInheritedKVs(props.namespace)
+    }
+    onMounted(() => loadItem())
 </script>

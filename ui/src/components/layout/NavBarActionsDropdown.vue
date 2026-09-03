@@ -1,5 +1,5 @@
 <template>
-    <KsDropdown trigger="click">
+    <KsDropdown trigger="click" persistent>
         <KsIconButton :ariaLabel="$t('actions')">
             <DotsVertical />
         </KsIconButton>
@@ -12,9 +12,9 @@
 </template>
 
 <script setup lang="ts">
-    import {provide} from "vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import {asItemKey} from "./navBarActionsContext";
+    import {provide} from "vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import {asItemKey} from "./navBarActionsContext"
 
-    provide(asItemKey, true);
+    provide(asItemKey, true)
 </script>

@@ -2,13 +2,17 @@
     <div class="property-detail">
         <div v-if="subtype">
             <span>SubType</span>
-            <a v-if="subtype.startsWith('#')" :href="subtype" @click.stop>
-                <KsButton class="ref-type-button">
-                    <span class="ref-type">{{ className(subtype) }}</span>
-                    <EyeOutline />
-                </KsButton>
+            <a v-if="subtype.startsWith('#')" :href="subtype" class="ref-type-link" @click.stop>
+                <KsTag type="info">
+                    {{ className(subtype) }}
+                    <template #icon>
+                        <EyeOutline />
+                    </template>
+                </KsTag>
             </a>
-            <span v-else class="type-box">{{ subtype }}</span>
+            <KsTag v-else>
+                {{ subtype }}
+            </KsTag>
         </div>
 
         <template v-for="row in VALUE_ROWS" :key="row.label">
@@ -23,9 +27,9 @@
         <div v-if="enumValues !== undefined">
             <span>Possible Values</span>
             <div class="enum-values">
-                <code v-for="(possibleValue, index) in enumValues" :key="index" class="value-pill">
+                <KsTag v-for="(possibleValue, index) in enumValues" :key="index">
                     {{ possibleValue }}
-                </code>
+                </KsTag>
             </div>
         </div>
 
@@ -42,7 +46,7 @@
                     :content="sanitizeForMarkdown(property.description)"
                 />
                 <div v-if="property['$internalStorageURI']">
-                    <KsAlert type="info" showIcon :closable="false">
+                    <KsAlert type="info" :closable="false">
                         <slot
                             name="markdown"
                             :content="INTERNAL_STORAGE_URI_HINT"
@@ -55,11 +59,11 @@
 </template>
 
 <script setup lang="ts">
-    import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils";
-    import {KsAlert, KsButton} from "@kestra-io/design-system";
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
+    import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils"
+    import {KsAlert, KsTag} from "@kestra-io/design-system"
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
 
-    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`.";
+    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`."
 
     type ValueRow = {
         key: keyof JSONProperty;
@@ -81,22 +85,22 @@
         {key: "maximum", label: "Maximum", format: (value) => `<= ${value}`},
         {key: "exclusiveMaximum", label: "Maximum", format: (value) => `< ${value}`},
         {key: "format", label: "Format"},
-    ];
+    ]
 
-    const props = defineProps<{property: JSONProperty}>();
+    const props = defineProps<{property: JSONProperty}>()
 
-    const subtype = extractTypeInfo(props.property).subType;
-    const enumValues = extractEnumValues(props.property);
+    const subtype = extractTypeInfo(props.property).subType
+    const enumValues = extractEnumValues(props.property)
 
     const isVisible = (row: ValueRow) => {
-        const value = props.property[row.key];
-        return value !== undefined && (row.show?.(value) ?? true);
-    };
+        const value = props.property[row.key]
+        return value !== undefined && (row.show?.(value) ?? true)
+    }
 
     const formatValue = (row: ValueRow) => {
-        const value = props.property[row.key];
-        return row.format ? row.format(value) : value;
-    };
+        const value = props.property[row.key]
+        return row.format ? row.format(value) : value
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -106,7 +110,7 @@
         align-items: center;
         gap: var(--spacer);
         padding: 1rem 0;
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
 
         span, .property-description:deep(p) {
             line-height: 1.5rem;
@@ -114,12 +118,12 @@
         }
 
         .property-description {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         code {
-            color: var(--ks-content-primary);
-            background: var(--ks-background-card) !important;
+            color: var(--ks-text-primary);
+            background: var(--ks-bg-surface) !important;
         }
 
         &:first-child {
@@ -136,36 +140,17 @@
         }
     }
 
-    .ref-type-button {
-        display: flex;
-        align-items: center;
-        font-weight: 700;
-        font-size: var(--ks-font-size-xs);
-        line-height: 1;
-        padding: 0.25rem 0.5rem;
-        border: 1px solid var(--ks-border-info);
-        border-radius: 0.25rem;
-        background: transparent;
-        color: var(--ks-tag-content);
-        cursor: pointer;
-    }
-
-    .type-box {
-        font-size: var(--ks-font-size-xs);
-        line-height: 1;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        background-color: var(--ks-tag-background-active);
-        color: var(--ks-tag-content);
-        text-transform: capitalize;
+    .ref-type-link {
+        display: inline-flex;
+        text-decoration: none;
     }
 
     .value-pill {
         font-size: var(--ks-font-size-xs);
         line-height: 1;
         padding: 0.25rem 0.5rem;
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 0.25rem;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
     }
 
     .enum-values {

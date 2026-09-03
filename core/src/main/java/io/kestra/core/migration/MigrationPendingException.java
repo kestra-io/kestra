@@ -1,13 +1,14 @@
 package io.kestra.core.migration;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
-
 import java.util.List;
+
+import io.kestra.core.exceptions.KestraRuntimeException;
 
 /**
  * Thrown at startup when pending migrations exist and automatic migration is disabled.
  *
- * <p>Used by the EE migration runner override when {@code kestra.migration.auto=false}
+ * <p>
+ * Used by the EE migration runner override when {@code kestra.migration.auto=false}
  * (the EE default) and there are unapplied migration scripts. The application refuses to start
  * until the operator either runs {@code kestra migrate run} or sets
  * {@code kestra.migration.auto=true}.
@@ -39,11 +40,11 @@ public class MigrationPendingException extends KestraRuntimeException {
 
     private static String buildMessage(final List<String> pendingScriptIds) {
         return """
-            Database migrations are pending and automatic migration is disabled.
-            Pending scripts: %s
-            To apply migrations, either:
+            Kestra cannot start: one or more database schema migrations are needed first.
+            Migration scripts to apply: %s
+            To run the migrations, either:
               - Run: kestra migrate run
-              - Or set: kestra.migration.auto=true
+              - Or enable automatic migration by setting: kestra.migration.auto=true
             """.formatted(pendingScriptIds);
     }
 }

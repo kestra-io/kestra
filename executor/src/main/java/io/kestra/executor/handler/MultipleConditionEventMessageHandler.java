@@ -1,6 +1,12 @@
 package io.kestra.executor.handler;
 
+import java.time.DateTimeException;
+import java.util.List;
+
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -15,22 +21,45 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class MultipleConditionEventMessageHandler implements MessageHandler<MultipleConditionEvent> {
-    @Inject
-    private FlowTriggerService flowTriggerService;
+    private final FlowTriggerService flowTriggerService;
+    private final MultipleConditionStateStore multipleConditionStateStore;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
-    private MultipleConditionStateStore multipleConditionStateStore;
-
-    @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
+    public MultipleConditionEventMessageHandler(
+        FlowTriggerService flowTriggerService,
+        MultipleConditionStateStore multipleConditionStateStore,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
+        this.flowTriggerService = flowTriggerService;
+        this.multipleConditionStateStore = multipleConditionStateStore;
+        this.executionCommandQueue = executionCommandQueue;
+    }
 
     @Override
     public void handle(MultipleConditionEvent message) {
-        flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(message.execution(), message.flow(), multipleConditionStateStore)
+        final List<Execution> executions;
+        try {
+            executions = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(message.execution(), message.flow(), multipleConditionStateStore);
+        } catch (DateTimeException | ArithmeticException e) {
+            log.error("Skipping flow-trigger evaluation for flow '{}': the trigger window is out of the supported range.", message.flow().getId(), e);
+            return;
+        }
+
+        executions
             .forEach(exec ->
             {
                 try {
-                    executionQueue.emit(exec);
+                    Create cmd = Create.of(new ExecutionId(exec.getTenantId(), exec.getNamespace(), exec.getFlowId(), exec.getId(), exec.getFlowRevision()))
+                        .withKind(exec.getKind())
+                        .withTrigger(exec.getTrigger())
+                        .withLabels(exec.getLabels())
+                        .withInputs(exec.getInputs())
+                        .withExecutionDepth(exec.getMetadata().getExecutionDepth());
+                    // Preserve terminal state (e.g. FAILED when trigger input rendering fails).
+                    if (exec.getState().isTerminated()) {
+                        cmd = cmd.withStateType(exec.getState().getCurrent());
+                    }
+                    executionCommandQueue.emit(cmd);
                 } catch (QueueException e) {
                     log.error("Unable to emit the execution {}", exec.getId(), e);
                 }

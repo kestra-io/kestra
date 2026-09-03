@@ -1,7 +1,5 @@
 package io.kestra.webserver.utils;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -9,11 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.flows.FlowScope;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 
 import io.micronaut.http.exceptions.HttpStatusException;
 
@@ -82,86 +76,6 @@ class RequestUtilsTest {
     void toMapTrimWorks() {
         final Map<String, String> resultMap = RequestUtils.toMap(List.of(" key : value "));
         assertThat(resultMap).containsEntry("key", "value");
-    }
-
-    @Test
-    void testMapLegacyParamsToFilters() {
-        ZonedDateTime startDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
-        ZonedDateTime endDate = ZonedDateTime.parse("2024-01-02T10:00:00Z");
-        List<State.Type> state = List.of(State.Type.RUNNING, State.Type.FAILED);
-
-        List<QueryFilter> filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            null,
-            "test-query",
-            "test-namespace",
-            "test-flow",
-            "test-trigger",
-            null,
-            startDate,
-            endDate,
-            null,
-            List.of("key:value"),
-            null,
-            ExecutionRepositoryInterface.ChildFilter.MAIN,
-            state,
-            "worker-1",
-            "test_trigger_id"
-        );
-
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.QUERY && f.value().equals("test-query")));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.NAMESPACE && f.value().equals("test-namespace")));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.FLOW_ID && f.value().equals("test-flow")));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.TRIGGER_ID && f.value().equals("test-trigger")));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.START_DATE && f.value().equals(startDate.toString())));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.END_DATE && f.value().equals(endDate.toString())));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.STATE && f.value().equals(state)));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == Field.TRIGGER_EXECUTION_ID && f.value().equals("test_trigger_id")));
-    }
-
-    @Test
-    void testMapLegacyParamsToFilters_timerangeShouldBeTransformedToStartdateFilter() {
-        Duration timeRange = Duration.ofHours(24);
-
-        List<QueryFilter> filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            timeRange,
-            null,
-            null,
-            null,
-            null
-        );
-
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.START_DATE && f.value() != null));
-        assertTrue(filters.stream().noneMatch(f -> f.field() == QueryFilter.Field.END_DATE));
-        assertTrue(filters.stream().noneMatch(f -> f.field() == QueryFilter.Field.TIME_RANGE));
-    }
-
-    @Test
-    void testMapLegacyParamsToFiltersHandlesNulls() {
-        List<QueryFilter> filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            null, null, null, null, null, null, null, null, null, null, null, null
-        );
-
-        assertTrue(filters.isEmpty(), "Filters should be empty.");
-    }
-
-    @Test
-    void testMapLegacyParamsToFiltersHandlesNulls_withDate() {
-        List<QueryFilter> filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
-        );
-
-        assertTrue(filters.size() == 1, "Filters should only contain default startDate filter when all inputs are null.");
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.START_DATE && f.value() != null));
     }
 
     @Test

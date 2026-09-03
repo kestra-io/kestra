@@ -45,13 +45,29 @@ public interface QueueSubscriber<T extends Event> {
      * <p>
      * This method is idempotent: calling it when already paused has no effect.
      * Messages will not be consumed until {@link #resume()} is called.
+     *
+     * @see #isPaused()
+     * @see #resume()
      */
     void pause();
+
+    /**
+     * Whether this subscriber is currently paused.
+     *
+     * @return true if the subscriber is paused, false otherwise.
+     *
+     * @see #pause()
+     * @see #resume()
+     */
+    boolean isPaused();
 
     /**
      * Resumes this subscriber if currently paused.
      * <p>
      * This method is idempotent: calling it when already running has no effect.
+     *
+     * @see #isPaused()
+     * @see #pause()
      */
     void resume();
 

@@ -1,34 +1,50 @@
 <template>
     <template v-if="flow">
-        <KsAlert v-if="flow.disabled" type="warning" showIcon :closable="false">
+        <KsAlert v-if="flow.disabled" type="warning" :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </KsAlert>
+        <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
+            <strong>{{ $t('draft') }}</strong><br>
+            {{ $t('draft_flow_warning') }}
+            <div v-if="canPublishDraft" class="draft-publish-action">
+                <KsButton type="primary" size="small" :loading="publishing" data-test="publish-draft" @click="onPublishDraft">
+                    {{ $t('publish_draft') }}
+                </KsButton>
+            </div>
+        </KsAlert>
         <div class="flow-execution-checks-alerts">
-            <KsAlert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
+            <KsAlert v-for="alert in checks || []" :type="toAlertType(alert.style)" :closable="false" :key="alert.message">
                 {{ alert.message }}
             </KsAlert>
         </div>
         <KsForm labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm
-                ref="inputsFormRef"
-                :initialInputs="flow.inputs"
-                :selectedTrigger="selectedTrigger"
-                :flow="flow"
-                v-model="inputs"
-                :executeClicked="executeClicked"
-                @confirm="onSubmit($refs.form)"
-                @update:model-value-no-default="values => inputsNoDefaults=values"
-                @update:checks="values => checks=values"
-            />
-
-            <KsCollapse v-model="collapseName">
-                <KsCollapseItem :title="$t('advanced configuration')" name="advanced">
+            <KsTabs v-model="openTab" type="segmented">
+                <KsTabPane name="inputs" :label="$t('inputs')" class="execution-pane">
+                    <InputsForm
+                        v-if="flow.inputs?.length"
+                        ref="inputsFormRef"
+                        :initialInputs="flow.inputs"
+                        :selectedTrigger="selectedTrigger"
+                        :flow="flow"
+                        mode="wizard"
+                        v-model="inputs"
+                        :executeClicked="executeClicked"
+                        @confirm="onSubmit"
+                        @ready="onInputsFormReady"
+                        @update:model-value-no-default="values => inputsNoDefaults=values"
+                        @update:checks="onChecksUpdate"
+                        @update:on-recap="value => inputsOnRecap = value"
+                    />
+                    <KsText v-else type="info">
+                        {{ $t('no inputs') }}
+                    </KsText>
+                </KsTabPane>
+                <KsTabPane name="labels" :label="$t('advanced configuration')" class="execution-pane">
                     <KsFormItem
                         :label="$t('execution labels')"
                     >
                         <LabelInput
-                            :key="executionLabels"
                             v-model:labels="executionLabels"
                         />
                     </KsFormItem>
@@ -40,14 +56,31 @@
                             type="datetime"
                         />
                     </KsFormItem>
-                </KsCollapseItem>
-                <KsCollapseItem :title="$t('curl.command')" name="curl">
+                    <KsFormItem
+                        :label="$t('breakpoints')"
+                    >
+                        <KsSelect
+                            v-model="breakpoints"
+                            multiple
+                            filterable
+                            :placeholder="$t('breakpoints')"
+                        >
+                            <KsOption
+                                v-for="taskId in taskIds"
+                                :key="taskId"
+                                :label="taskId"
+                                :value="taskId"
+                            />
+                        </KsSelect>
+                    </KsFormItem>
+                </KsTabPane>
+                <KsTabPane name="curl" :label="$t('curl.command')" class="execution-pane">
                     <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
-                </KsCollapseItem>
-                <KsCollapseItem v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
+                </KsTabPane>
+                <KsTabPane v-if="hasWebhookTriggers" name="webhookCurl" :label="$t('webhook.curl_command')" class="execution-pane">
                     <WebhookCurl :flow="flow" />
-                </KsCollapseItem>
-            </KsCollapse>
+                </KsTabPane>
+            </KsTabs>
 
             <div class="bottom-buttons" v-if="!embed">
                 <div class="left-align">
@@ -57,248 +90,400 @@
                         </KsButton>
                     </KsFormItem>
                 </div>
-                <div class="right-align">
-                    <KsFormItem class="submit">
-                        <span data-onboarding-target="flow-execute-confirm-button">
-                            <KsButton
-                                :icon="buttonIcon"
-                                :disabled="!flowCanBeExecuted || hasBlockingChecks()"
-                                class="flow-run-trigger-button"
-                                type="primary"
-                                nativeType="submit"
-                                @click.prevent="onSubmit($refs.form); executeClicked = true;"
-                            >
-                                {{ $t(buttonText) }}
-                            </KsButton>
-                        </span>
-                        <KsText v-if="haveBadLabels" type="danger" size="small">
-                            {{ $t('wrong labels') }}
-                        </KsText>
-                    </KsFormItem>
+                <div class="right-align execute-row" v-if="!hasFormInputs || inputsOnRecap">
+                    <ValidationMessages :messages="validationMessages" />
+                    <span data-onboarding-target="flow-execute-confirm-button">
+                        <KsButton
+                            :icon="buttonIcon"
+                            :disabled="!flowCanBeExecuted || hasBlockingChecks"
+                            :data-test="buttonTestId"
+                            class="flow-run-trigger-button"
+                            type="primary"
+                            nativeType="submit"
+                            @click.prevent="() => { onSubmit(); executeClicked = true; }"
+                        >
+                            {{ $t(buttonText) }}
+                        </KsButton>
+                    </span>
                 </div>
             </div>
         </KsForm>
     </template>
 </template>
 
-<script setup>
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Play from "vue-material-design-icons/Play.vue";
-</script>
-
-<script>
-    import moment from "moment-timezone";
-    import {mapStores} from "pinia";
-    import {useCoreStore} from "../../stores/core";
-    import {useApiStore} from "../../stores/api";
-    import {useMiscStore} from "override/stores/misc";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {usePlaygroundStore} from "../../stores/playground";
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue"
+    import type {Component} from "vue"
+    import {useRouter, useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../utils/toast"
+    import moment from "moment-timezone"
+    import {useCoreStore} from "../../stores/core"
+    import {useApiStore} from "../../stores/api"
+    import {useMiscStore} from "override/stores/misc"
+    import {useExecutionsStore} from "../../stores/executions"
+    import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import type {Label, Execution, Check} from "../../stores/executions"
+    import type {Flow} from "../../stores/flow"
+    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {executeTask} from "../../utils/submitTask"
-    import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
-    import {normalize} from "../../utils/inputs";
-    import Curl from "./Curl.vue";
-    import WebhookCurl from "./WebhookCurl.vue";
-    import InputsForm from "../../components/inputs/InputsForm.vue";
-    import LabelInput from "../../components/labels/LabelInput.vue";
+    import {getAllTaskIds} from "../../utils/flowUtils"
+    import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
+    import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
+    import {flattenInputs} from "../../utils/inputs"
+    import get from "lodash/get"
+    import type {FormInstance} from "@kestra-io/design-system"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Play from "vue-material-design-icons/Play.vue"
+    import Curl from "./Curl.vue"
+    import WebhookCurl from "./WebhookCurl.vue"
+    import InputsForm from "../../components/inputs/InputsForm.vue"
+    import LabelInput from "../../components/labels/LabelInput.vue"
+    import ValidationMessages from "./ValidationMessages.vue"
 
-    export default {
-        components: {
-            LabelInput,
-            InputsForm,
-            Curl,
-            WebhookCurl
-        },
-        props: {
-            redirect: {type: Boolean, default: true},
-            embed: {type: Boolean, default: false},
-            replaySubmit: {type: Function, default: null},
-            selectedTrigger: {type: Object, default: undefined},
-            buttonText: {type: String, default: "launch execution"},
-            buttonIcon: {type: [Object, Function], default: () => Play},
-            buttonTestId: {type: String, default: "execute-dialog-button"},
-        },
-        data() {
-            return {
-                inputs: {},
-                inputsNoDefaults: {},
-                inputNewLabel: "",
-                executionLabels: [],
-                scheduleDate: undefined,
-                inputVisible: false,
-                collapseName: undefined,
-                newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB,
-                executeClicked: false,
-                checks: []
-            };
-        },
-        emits: ["executionTrigger", "updateInputs", "updateLabels"],
-        computed: {
-            ...mapStores(useApiStore, useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
-            flow() {
-                return this.executionsStore.flow
-            },
-            execution() {
-                return this.executionsStore.execution
-            },
-            haveBadLabels() {
-                return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
-            },
-            flowCanBeExecuted() {
-                return this.flow && !this.flow.disabled && !this.haveBadLabels;
-            },
-            hasWebhookTriggers() {
-                if (!this.flow?.triggers) {
-                    return false;
-                }
-                return this.flow.triggers.some(trigger =>
-                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
-                    (trigger.disabled === undefined || trigger.disabled === false)
-                );
+    type AlertType = "success" | "warning" | "info" | "error"
+    
+    function toAlertType(style: string): AlertType {
+        return style.toLowerCase() as AlertType
+    }
+
+    export interface ReplaySubmitOptions {
+        formRef: FormInstance
+        id: string
+        namespace: string
+        inputs: Record<string, unknown>
+        labels: string[]
+        scheduleDate: string | undefined
+        breakpoints?: string[]
+    }
+
+    export interface SelectedTrigger {
+        inputs?: Record<string, unknown>
+    }
+
+    const props = withDefaults(defineProps<{
+        redirect?: boolean
+        embed?: boolean
+        replaySubmit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
+        selectedTrigger?: SelectedTrigger
+        buttonText?: string
+        buttonIcon?: Component
+        buttonTestId?: string
+        autoPrefill?: boolean
+    }>(), {
+        redirect: true,
+        embed: false,
+        replaySubmit: null,
+        selectedTrigger: undefined,
+        buttonText: "launch execution",
+        buttonIcon: () => Play as Component,
+        buttonTestId: "execute-dialog-button",
+        autoPrefill: false,
+    })
+
+    const emit = defineEmits<{
+        executionTrigger: []
+        updateInputs: [inputs: Record<string, unknown>]
+        updateInputsNoDefault: [inputs: Record<string, unknown>]
+        updateLabels: [labels: Label[]]
+    }>()
+
+    const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
+    const router = useRouter()
+    const route = useRoute()
+    const apiStore = useApiStore()
+    const coreStore = useCoreStore()
+    const miscStore = useMiscStore()
+    const executionsStore = useExecutionsStore()
+    const flowStore = useFlowStore()
+    const authStore = useAuthStore()
+
+    const openTab = ref("inputs")
+    const inputs = ref<Record<string, unknown>>({})
+    const inputsNoDefaults = ref<Record<string, unknown>>({})
+    const executionLabels = ref<Label[]>([])
+    const scheduleDate = ref<string | undefined>(undefined)
+    const breakpoints = ref<string[]>([])
+    const taskIds = computed(() => {
+        return getAllTaskIds(flow.value)
+    })
+    const newTab = ref(localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB)
+    const executeClicked = ref(false)
+    const checks = ref<Check[]>([])
+    // wizard recap state: the footer Execute button only appears once every step is filled
+    const inputsOnRecap = ref(false)
+
+    const form = ref<FormInstance | null>(null)
+    const inputsFormRef = ref<InstanceType<typeof InputsForm> | null>(null)
+    const publishing = ref(false)
+
+    const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
+    const execution = computed<Execution | undefined>(() => executionsStore.execution)
+
+    const canPublishDraft = computed(() =>
+        Boolean(flow.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value.namespace)),
+    )
+
+    async function onPublishDraft() {
+        if (!flow.value) return
+        publishing.value = true
+        try {
+            const {namespace, id} = flow.value
+            const outcome = await flowStore.publishDraft(flow.value)
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
             }
-        },
-        methods: {
-            hasBlockingChecks() {
-                return this.checks.filter(check => check.behavior === "BLOCK_EXECUTION").length > 0;
-            },
-            getExecutionLabels() {
-                if (!this.execution.labels) {
-                    return [];
-                }
-                if (!this.flow.labels) {
-                    return this.execution.labels;
-                }
-                return this.execution.labels.filter(label => {
-                    return !this.flow.labels.some(flowLabel => flowLabel.key === label.key && flowLabel.value === label.value);
-                });
-            },
-            hasExecutionLabels() {
-                return this.getExecutionLabels().length > 0;
-            },
-            fillInputsFromExecution(){
-                // Add all labels except the one from flow to prevent duplicates
-                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
-                this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
-
-                const inputsForm = this.$refs.inputsFormRef;
-                if (!inputsForm || !this.flow.inputs) {
-                    return;
-                }
-
-                const nonEmptyInputNames = Object.keys(this.execution.inputs);
-                this.flow.inputs
-                    .filter(input => nonEmptyInputNames.includes(input.id))
-                    .forEach(input => {
-                        let value = this.execution.inputs[input.id];
-                        inputsForm.inputsValues[input.id] = normalize(input.type, value);
-                        const meta = inputsForm.inputsMetaData.find(m => m.id === input.id);
-                        if (meta) {
-                            meta.isDefault = false;
-                        }
-                    });
-            },
-            onSubmit(formRef) {
-                if (formRef && this.flowCanBeExecuted) {
-                    this.apiStore.posthogEvents({
-                        type: "FLOW_EXECUTION",
-                        action: "submit",
-                    });
-                    this.checks = [];
-                    this.executeClicked = false;
-                    this.coreStore.message = null;
-                    formRef.validate((valid) => {
-                        if (!valid) {
-                            return false;
-                        }
-
-                        if (this.replaySubmit) {
-                            this.replaySubmit({
-                                formRef,
-                                id: this.flow.id,
-                                namespace: this.flow.namespace,
-                                inputs: this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults,
-                                labels: [...new Set(
-                                    this.executionLabels
-                                        .filter(label => label.key && label.value)
-                                        .map(label => `${label.key}:${label.value}`)
-                                ), "system.from:ui"],
-                                scheduleDate: this.scheduleDate
-                            });
-                        } else {
-                            const shouldShowOnboardingSuccessAnimation = this.$route.query.onboardingPreset === "true";
-
-                            executeTask(this, this.flow, this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults, {
-                                redirect: this.redirect,
-                                newTab: this.newTab,
-                                id: this.flow.id,
-                                namespace: this.flow.namespace,
-                                labels: [...new Set(
-                                    this.executionLabels
-                                        .filter(label => label.key && label.value)
-                                        .map(label => `${label.key}:${label.value}`)
-                                ), "system.from:ui"],
-                                scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
-                                nextStep: true,
-                                query: shouldShowOnboardingSuccessAnimation ? {
-                                    autoExpandGantt: "true",
-                                    onboardingSuccess: "true",
-                                } : undefined,
-                            });
-                        }
-                        this.executeClicked = true;
-                        this.$emit("executionTrigger");
-                    });
-                }
-            },
-            state(input) {
-                const required = input.required === undefined ? true : input.required;
-
-                if (!required && input.value === undefined) {
-                    return null;
-                }
-
-                if (required && input.value === undefined) {
-                    return false;
-                }
-
-                return true;
-            },
-        },
-        watch: {
-            inputs: {
-                handler() {
-                    this.$emit("updateInputs", this.inputs);
-                },
-                deep: true
-            },
-            executionLabels: {
-                handler() {
-                    this.$emit("updateLabels", this.executionLabels);
-                },
-                deep: true
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000})
             }
+        } finally {
+            publishing.value = false
         }
-    };
+    }
+
+    // a flow with FORM inputs renders the wizard; the footer Execute is gated on the recap step
+    const hasFormInputs = computed(() => (flow.value?.inputs ?? []).some((input: {type?: string}) => input.type === "FORM"))
+
+    const haveBadLabels = computed(() =>
+        executionLabels.value.some(label => (label.key && !label.value) || (!label.key && label.value)),
+    )
+
+    const haveForbiddenSystemLabels = computed(() =>
+        hasForbiddenUserSystemLabels(executionLabels.value),
+    )
+
+    const haveInvalidLabelKeys = computed(() =>
+        hasInvalidLabelKeys(executionLabels.value),
+    )
+
+    const validationMessages = computed(() => {
+        const messages: string[] = []
+        if (haveBadLabels.value) {
+            messages.push(t("wrong labels"))
+        }
+        if (haveForbiddenSystemLabels.value) {
+            messages.push(t("forbidden system labels"))
+        }
+        if (haveInvalidLabelKeys.value) {
+            messages.push(t("invalid label key"))
+        }
+        return messages
+    })
+
+    const flowCanBeExecuted = computed(() =>
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value),
+    )
+
+    const isDirty = computed(() =>
+        Object.keys(inputsNoDefaults.value).length > 0 ||
+        executionLabels.value.some(label => label.key || label.value) ||
+        scheduleDate.value !== undefined,
+    )
+
+    const hasWebhookTriggers = computed(() => {
+        if (!flow.value?.triggers) {
+            return false
+        }
+        return flow.value.triggers.some(trigger =>
+            trigger.type === WEBHOOK_TRIGGER_TYPE &&
+            ("disabled" in trigger ? trigger.disabled === undefined || trigger.disabled === false : true),
+        )
+    })
+
+    const hasBlockingChecks = computed(() =>
+        checks.value.some(check => check.behavior === "BLOCK_EXECUTION"),
+    )
+
+    // The dialog-footer Execute (FlowRunActions) must follow the wizard: hidden until the recap when
+    // the flow has FORM inputs, so only one primary button shows (Next in-step, Execute on recap).
+    const showExecuteButton = computed(() => !hasFormInputs.value || inputsOnRecap.value)
+
+    const canPrefill = computed(() =>
+        Boolean(execution.value && (execution.value.inputs || hasExecutionLabels())),
+    )
+
+    function submit() {
+        onSubmit()
+        executeClicked.value = true
+    }
+
+    defineExpose({
+        isDirty,
+        submit,
+        prefill: fillInputsFromExecution,
+        canPrefill,
+        flowCanBeExecuted,
+        hasBlockingChecks,
+        showExecuteButton,
+        validationMessages,
+        buttonText: props.buttonText,
+        buttonIcon: props.buttonIcon,
+        buttonTestId: props.buttonTestId,
+    })
+
+    function getExecutionLabels(): Label[] {
+        if (!execution.value?.labels) {
+            return []
+        }
+        const flowLabels = flow.value?.labels
+        if (!flowLabels) {
+            return execution.value.labels
+        }
+        return execution.value.labels.filter(label =>
+            !flowLabels.some(flowLabel => flowLabel.key === label.key && flowLabel.value === label.value),
+        )
+    }
+
+    function hasExecutionLabels() {
+        return getExecutionLabels().length > 0
+    }
+
+    function onChecksUpdate(values: Check[]) {
+        checks.value = values
+    }
+
+    let autoPrefilled = false
+    function onInputsFormReady() {
+        if (props.autoPrefill && !autoPrefilled && canPrefill.value) {
+            autoPrefilled = true
+            fillInputsFromExecution()
+        }
+    }
+
+    function fillInputsFromExecution() {
+        // Add all labels except the one from flow to prevent duplicates
+        const toIgnore: string[] = miscStore.configs?.hiddenLabelsPrefixes ?? []
+        executionLabels.value = getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)))
+
+        const inputsForm = inputsFormRef.value
+        if (!inputsForm || !flow.value?.inputs) {
+            return
+        }
+
+        // execution.inputs is nested (FORM groups -> {environment:{region:"EU"}}); the model is
+        // flat-keyed by dotted leaf id, so walk each leaf's dotted path into the nested inputs.
+        const executionInputs = execution.value?.inputs ?? {}
+        flattenInputs(flow.value.inputs)
+            .forEach(leaf => {
+                const value = get(executionInputs, leaf.id)
+                if (value === undefined) {
+                    return
+                }
+                inputsForm.prefillInputValue(leaf, value)
+            })
+    }
+
+    // Adapter object for the legacy executeTask utility
+    const submitor = {
+        $moment: moment,
+        $router: router,
+        $route: route,
+        $toast: () => toast,
+        $t: t,
+    }
+
+    function onSubmit() {
+        if (form.value && flowCanBeExecuted.value) {
+            checks.value = []
+            executeClicked.value = false
+            coreStore.message = undefined
+            form.value.validate(async (valid: boolean) => {
+                if (!valid) {
+                    return
+                }
+
+                apiStore.posthogEvents({
+                    type: "FLOW_EXECUTION",
+                    action: "submit",
+                    // Replay-with-inputs bypasses triggerExecution, so it never emits a matching
+                    // `executed`: flagged so it can be excluded from the submit/executed funnel.
+                    is_replay: Boolean(props.replaySubmit),
+                })
+
+                const mergedInputs = props.selectedTrigger?.inputs
+                    ? {...props.selectedTrigger.inputs, ...inputsNoDefaults.value}
+                    : inputsNoDefaults.value
+
+                const labelStrings = buildExecutionLabelStrings(executionLabels.value)
+
+                try {
+                    if (props.replaySubmit) {
+                        await props.replaySubmit({
+                            formRef: form.value!,
+                            id: flow.value!.id,
+                            namespace: flow.value!.namespace,
+                            inputs: mergedInputs,
+                            labels: labelStrings,
+                            scheduleDate: scheduleDate.value,
+                            breakpoints: breakpoints.value,
+                        })
+                    } else {
+                        if (flow.value) {
+                            await executeTask(submitor, flow.value, mergedInputs, {
+                                redirect: props.redirect,
+                                newTab: newTab.value,
+                                id: flow.value.id,
+                                namespace: flow.value.namespace,
+                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                revision: flow.value.draft ? undefined : flow.value.revision,
+                                labels: labelStrings,
+                                scheduleDate: moment(scheduleDate.value)
+                                    .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
+                                    .toISOString(true),
+                                nextStep: true,
+                                breakpoints: breakpoints.value,
+                            })
+                        }
+                    }
+                    executeClicked.value = true
+                    emit("executionTrigger")
+                } catch {
+                    // API errors are surfaced by the global axios error handler
+                }
+            })
+        }
+    }
+
+    watch(inputs, () => {
+        emit("updateInputs", inputs.value)
+    }, {deep: true})
+
+    watch(inputsNoDefaults, () => {
+        emit("updateInputsNoDefault", inputsNoDefaults.value)
+    }, {deep: true})
+
+    watch(executionLabels, () => {
+        emit("updateLabels", executionLabels.value)
+    }, {deep: true})
 </script>
 
 <style scoped lang="scss">
     .flow-execution-checks-alerts {
         margin-bottom: 1rem;
     }
+
+    .draft-publish-action {
+        margin-top: var(--ks-spacing-2);
+    }
     :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);
-        border: 1px solid var(--ks-border-primary);
-        background: var(--ks-tag-background);
+        border: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-tag);
 
         .kel-collapse-item__header {
             background: transparent;
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
             font-size: var(--ks-font-size-sm);
         }
 
         .kel-collapse-item__content {
-            background: var(--ks-tag-background);
-            border-bottom: 1px solid var(--ks-border-primary);
+            background: var(--ks-bg-tag);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         .kel-collapse-item__header, .kel-collapse-item__content {
@@ -320,5 +505,21 @@
         100% {
             box-shadow: 0px 0px 50px 2px #8405FF;
         }
+    }
+
+    .right-align{
+        text-align: right;
+    }
+
+    .execute-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+    }
+
+    .execution-pane {
+        margin-top: 1rem;
     }
 </style>

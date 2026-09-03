@@ -3,10 +3,10 @@
 </template>
 
 <script lang="ts" setup>
-    import DotsCircleIcon from "vue-material-design-icons/DotsCircle.vue";
+    import DotsCircleIcon from "vue-material-design-icons/DotsCircle.vue"
     defineProps<{
         alt?: string;
-    }>();
+    }>()
 </script>
 
 <style lang="scss" scoped>

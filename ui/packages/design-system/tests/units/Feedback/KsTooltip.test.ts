@@ -1,4 +1,4 @@
-import {afterEach, beforeAll, describe, expect, test, vi} from "vitest"
+import {afterAll, afterEach, beforeAll, describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {nextTick} from "vue"
 import KestraDesignSystem from "../../../src/index"
@@ -26,6 +26,10 @@ beforeAll(() => {
     )
 })
 
+afterAll(() => {
+    vi.unstubAllGlobals()
+})
+
 describe("KsTooltip", () => {
     test("renders tooltip trigger element", () => {
         const wrapper = mount(KsTooltip, {
@@ -51,10 +55,10 @@ describe("KsTooltip — default effect", () => {
         document.documentElement.classList.remove("dark")
     })
 
-    test("defaults to dark effect on light theme", () => {
+    test("defaults to light effect on light theme", () => {
         const wrapper = mount(KsTooltip, {global: globalConfigWithStub})
 
-        expect(wrapper.findComponent(ElTooltipStub).props("effect")).toBe("dark")
+        expect(wrapper.findComponent(ElTooltipStub).props("effect")).toBe("light")
     })
 
     test("defaults to light effect on dark theme", async () => {
@@ -65,8 +69,7 @@ describe("KsTooltip — default effect", () => {
         expect(wrapper.findComponent(ElTooltipStub).props("effect")).toBe("light")
     })
 
-    test("explicit effect prop overrides theme default", async () => {
-        document.documentElement.classList.add("dark")
+    test("explicit effect prop overrides default", async () => {
         const wrapper = mount(KsTooltip, {
             props: {effect: "dark"},
             global: globalConfigWithStub,

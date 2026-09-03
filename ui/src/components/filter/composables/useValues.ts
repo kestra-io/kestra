@@ -1,39 +1,38 @@
-import {useI18n} from "vue-i18n";
-import {computed} from "vue";
-import {useMiscStore} from "override/stores/misc";
-import {FilterValue} from "@kestra-io/design-system";
+import {useI18n} from "vue-i18n"
+import {computed} from "vue"
+import {useMiscStore} from "override/stores/misc"
+import {FilterValue} from "@kestra-io/design-system"
 
-import {State} from "@kestra-io/design-system";
-import {auditLogTypes} from "../../../models/auditLogTypes";
-import permission from "../../../models/permission";
-import action from "../../../models/action";
+import {State} from "@kestra-io/design-system"
+import resource from "../../../models/resource"
+import action from "../../../models/action"
 
 const capitalize = (str: string): string => {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-};
+    return str.charAt(0).toUpperCase() + str.slice(1)
+}
 
 const buildFromArray = (values: string[], isCapitalized = false): FilterValue[] =>
     values.map((value) => ({
         label: isCapitalized ? capitalize(value) : value,
         value,
-    }));
+    }))
 
 const buildFromObject = (object: object): FilterValue[] =>
     Object.entries(object).map(([key, value]) => ({
         label: key,
         value,
-    }));
+    }))
 
 export function useValues(label: string | undefined, t?: ReturnType<typeof useI18n>["t"]) {
     if (t === undefined) {
-        t = useI18n({useScope: "global"}).t;
+        t = useI18n({useScope: "global"}).t
     }
 
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     // Override for the scope labels on the dashboard
-    const DASHBOARDS = ["dashboard", "custom_dashboard"];
-    const SCOPE_LABEL = label === undefined || DASHBOARDS.includes(label) ? t("executions") : label;
+    const DASHBOARDS = ["dashboard", "custom_dashboard"]
+    const SCOPE_LABEL = label === undefined || DASHBOARDS.includes(label) ? t("executions") : label
 
     const RELATIVE_DATE = [
         {label: t("datepicker.last5minutes"), value: "PT5M"},
@@ -45,12 +44,26 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last7days"), value: "PT168H"},
         {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
-    ];
+    ]
+
+    // Future-direction interval labels — used by filters whose selected date field points to a future
+    // event (e.g. the trigger Interval filter when "Apply to" is set to "Next execution date").
+    const RELATIVE_DATE_NEXT = [
+        {label: t("datepicker.next5minutes"), value: "PT5M"},
+        {label: t("datepicker.next15minutes"), value: "PT15M"},
+        {label: t("datepicker.next1hour"), value: "PT1H"},
+        {label: t("datepicker.next12hours"), value: "PT12H"},
+        {label: t("datepicker.next24hours"), value: "PT24H"},
+        {label: t("datepicker.next48hours"), value: "PT48H"},
+        {label: t("datepicker.next7days"), value: "PT168H"},
+        {label: t("datepicker.next30days"), value: "PT720H"},
+        {label: t("datepicker.next365days"), value: "PT8760H"},
+    ]
 
     const getRelativeDateLabel = (value: string): string => {
-        const item = RELATIVE_DATE.find((item) => item.value === value);
-        return item ? item.label : value;
-    };
+        const found = RELATIVE_DATE.find((item) => item.value === value)
+        return found ? found.label : value
+    }
 
     const VALUES = {
         EXECUTION_STATES: buildFromArray(
@@ -82,9 +95,19 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         ],
         KINDS: [
             {
+                label: t("filter.execution_kind.normal"),
+                description: t("filter.execution_kind.normal_description"),
+                value: "NORMAL",
+            },
+            {
                 label: t("filter.execution_kind.playground"),
                 description: t("filter.execution_kind.playground_description"),
                 value: "PLAYGROUND",
+            },
+            {
+                label: t("filter.execution_kind.loop"),
+                description: t("filter.execution_kind.loop_description"),
+                value: "LOOP",
             },
             ...(isOSS.value ? [] : [{
                 label: t("filter.execution_kind.test"),
@@ -95,10 +118,9 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         LEVELS: ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"].map(level => ({
             label: level,
             value: level,
-            color: `var(--ks-log-border-${level.toLowerCase()})`,
+            color: `var(--ks-log-${level.toLowerCase()})`,
         })),
-        TYPES: auditLogTypes,
-        PERMISSIONS: buildFromObject(permission),
+        PERMISSIONS: buildFromObject(resource),
         ACTIONS: buildFromObject({
             ...action,
             LOGIN: "LOGIN",
@@ -107,11 +129,24 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE,
+        RELATIVE_DATE_NEXT,
         TRIGGER_STATES:[
         {label: t("filter.triggerState.enabled"), value: "enabled"},
-        {label: t("filter.triggerState.disabled"), value: "disabled"}
-    ]
-    };
+        {label: t("filter.triggerState.disabled"), value: "disabled"},
+    ],
+        // Stringified booleans: the filter query serializer calls `toString()` on the value, and the
+        // backend parses it back with `Boolean.parseBoolean`.
+        TRIGGER_LOCK_STATES: [
+            {label: t("filter.triggerLocked.locked"), value: "true"},
+            {label: t("filter.triggerLocked.unlocked"), value: "false"},
+        ],
+        // Mirrors the scheduler's TriggerType enum, exposed by the trigger API as `state.kind`.
+        TRIGGER_KINDS: [
+            {label: t("filter.triggerKind.schedule"), value: "SCHEDULE"},
+            {label: t("filter.triggerKind.polling"), value: "POLLING"},
+            {label: t("filter.triggerKind.realtime"), value: "REALTIME"},
+        ],
+    }
 
-    return {VALUES, getRelativeDateLabel};
+    return {VALUES, getRelativeDateLabel}
 }

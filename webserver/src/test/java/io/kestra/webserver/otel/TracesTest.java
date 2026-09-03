@@ -1,5 +1,6 @@
 package io.kestra.webserver.otel;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -20,12 +21,14 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.test.annotation.MockBean;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,9 +68,14 @@ public class TracesTest {
         );
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        List<SpanData> spans = otelTesting.getSpans().stream().filter(span -> tenantId.equals(span.getAttributes().get(TraceUtils.ATTR_TENANT_ID))).toList();
-        assertThat(spans).hasSizeGreaterThanOrEqualTo(6); // rarely, CI shows 6 traces and not 7 and even sometimes 14, probably due to asynchronicity
-        assertThat(spans).extracting(SpanData::getName).contains("EXECUTOR - %s_io.kestra.tests_trace-parent".formatted(tenantId), "WORKER - io.kestra.plugin.core.output.OutputValues");
+        // spans are ended and exported asynchronously to the execution completion, so wait until the expected ones are visible
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+            assertThat(spansForTenant(tenantId))
+                .extracting(SpanData::getName)
+                .contains("EXECUTOR - %s_io.kestra.tests_trace-parent".formatted(tenantId), "WORKER - io.kestra.plugin.core.output.OutputValues")
+        );
+
+        List<SpanData> spans = spansForTenant(tenantId);
         Attributes attributes = spans.getFirst().getAttributes();
         assertThat(attributes.size()).isEqualTo(5);
         assertThat(attributes.get(TraceUtils.ATTR_TENANT_ID)).isEqualTo(tenantId);
@@ -75,6 +83,42 @@ public class TracesTest {
         assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("trace-parent");
         assertThat(attributes.get(TraceUtils.ATTR_EXECUTION_ID)).isEqualTo(result.getId());
         assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.executor.DefaultExecutor");
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/traces-failed.yaml" })
+    void failedExecutionShouldGenerateErrorSpans(String tenantId) {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        // running a flow until completion (it will fail)
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/trace-failed?wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // spans are ended and exported asynchronously to the execution completion, so wait until the expected ones are visible
+        // Both the WORKER task span and the EXECUTOR span must have Status=Error
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+        {
+            List<SpanData> spans = spansForTenant(tenantId);
+
+            List<SpanData> workerSpans = spans.stream().filter(s -> s.getName().startsWith("WORKER - ")).toList();
+            assertThat(workerSpans).isNotEmpty();
+            assertThat(workerSpans).allMatch(s -> s.getStatus().getStatusCode() == StatusCode.ERROR);
+
+            List<SpanData> executorSpans = spans.stream().filter(s -> s.getName().startsWith("EXECUTOR - ")).toList();
+            assertThat(executorSpans).isNotEmpty();
+            assertThat(executorSpans).anyMatch(s -> s.getStatus().getStatusCode() == StatusCode.ERROR);
+        });
+    }
+
+    private List<SpanData> spansForTenant(String tenantId) {
+        return otelTesting.getSpans().stream()
+            .filter(span -> tenantId.equals(span.getAttributes().get(TraceUtils.ATTR_TENANT_ID)))
+            .toList();
     }
 
     @MockBean

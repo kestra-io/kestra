@@ -20,10 +20,10 @@
             </RouterLink>
         </template>
     </KsAutocomplete>
-    <ul class="list-unstyled d-flex flex-column gap-3">
-        <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
+    <ul class="toc d-flex flex-column gap-3">
+        <li v-for="{section, children} in sectionsWithChildren" :key="section">
             <span class="text-secondary">
-                {{ sectionName.toUpperCase() }}
+                {{ section.toUpperCase() }}
             </span>
             <RecursiveToc :parent="{children}" />
         </li>
@@ -31,106 +31,106 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import RecursiveToc from "./RecursiveToc.vue";
-    import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-
-    interface TocItem {
-        title: string;
-        sidebarTitle?: string;
-        path: string;
-        hideSidebar?: boolean;
-        children?: TocItem[];
-    }
+    import {ref, computed, watch} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import RecursiveToc from "./RecursiveToc.vue"
+    import {buildDocsSections, buildDocsToc} from "./docsUtils"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     interface SearchResult {
         parsedUrl: string;
         title: string;
     }
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
-    const sections = {
-        "Get Started with Kestra": [
-            "Getting Started",
-            "Tutorial",
-            "Architecture",
-            "Installation Guide",
-            "User Interface"
-        ],
-        "Build with Kestra": [
-            "Concepts",
-            "Workflow Components",
-            "Expressions",
-            "Version Control & CI/CD",
-            "Plugin Developer Guide",
-            "How-to Guides"
-        ],
-        "Scale with Kestra": [
-            "Enterprise Edition",
-            "Task Runners",
-            "Best Practices"
-        ],
-        "Manage Kestra": [
-            "Administrator Guide",
-            "Configuration Guide",
-            "Migration Guide",
-            "Terraform Provider",
-            "API Reference"
-        ]
-    };
+    const rawStructure = ref<Record<string, any> | undefined>(undefined)
+    const query = ref<string>("")
 
-    const rawStructure = ref<any>(undefined);
-    const query = ref<string>("");
+    const sectionsWithChildren = computed(() => buildDocsSections(buildDocsToc(rawStructure.value)))
 
-    const toc = computed((): TocItem[] | undefined => {
-        if (rawStructure.value === undefined) {
-            return undefined;
-        }
+    watch(
+        () => docStore.resourceUrlTemplate,
+        async (resourceUrlTemplate) => {
+            if (!resourceUrlTemplate) return
+            rawStructure.value = await docStore.children()
+        },
+        {immediate: true},
+    )
 
-        let childrenWithMetadata: Record<string, TocItem> = Object.fromEntries(Object.entries(rawStructure.value)
-            .filter(([_, metadata]: [string, any]) => !metadata.hideSidebar)
-            .map(([url, metadata]: [string, any]) => [url, {
-                ...metadata,
-                path: url
-            } as TocItem]));
-        Object.entries(childrenWithMetadata)
-            .forEach(([url, metadata]: [string, any]) => {
-                const split = url.split("/");
-                const parentUrl = split.slice(0, split.length - 1).join("/");
-                const parent = childrenWithMetadata[parentUrl];
-                if (parent !== undefined) {
-                    parent.children = [...(parent.children ?? []), metadata];
-                }
-            });
-
-        return Object.values(childrenWithMetadata);
-    });
-
-    const sectionsWithChildren = computed((): [string, TocItem[]][] | undefined => {
-        if (toc.value === undefined) {
-            return undefined;
-        }
-
-        return Object.entries(sections).map(([section, childrenTitles]) => [
-            section,
-            toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title))
-        ]);
-    });
-
-    onMounted(async () => {
-        rawStructure.value = await docStore.children();
-    });
-
-    const search = async (query: string, cb: (results: SearchResult[]) => void) => {
-        cb(await docStore.search({q: query}));
-    };
+    const search = async (q: string, cb: (results: SearchResult[]) => void) => {
+        cb(await docStore.search({q}))
+    }
 </script>
 
 <style lang="scss" scoped>
+    .toc {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        list-style: none;
+        padding-left: 0;
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+
+        &::-webkit-scrollbar {
+            width: 6px !important;
+        }
+
+        &::-webkit-scrollbar-track,
+        &::-webkit-scrollbar-thumb {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        &:hover {
+            scrollbar-color: var(--ks-border-default) transparent;
+
+            &::-webkit-scrollbar-thumb {
+                background: var(--ks-border-default) !important;
+            }
+        }
+    }
+
     ul > li > span:first-child {
+        display: block;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
+        letter-spacing: 0.05em;
+    }
+
+    .toc :deep(a[class*="depth-"]), .toc :deep(span[class*="depth-"]) {
+        display: block;
+        width: 100%;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        margin-bottom: 0.125rem;
+        border-radius: var(--ks-radius-base);
+        color: var(--ks-text-primary);
+        text-decoration: none;
+
+        @for $i from 0 through 5 {
+            &.depth-#{$i} {
+                padding-left: calc(var(--ks-spacing-2) + #{$i} * var(--ks-spacing-4));
+
+                @if $i == 0 {
+                    font-weight: var(--ks-font-weight-medium);
+                } @else {
+                    font-size: var(--ks-font-size-xs);
+                    color: var(--ks-text-secondary);
+                }
+            }
+        }
+
+        &:hover {
+            color: var(--ks-text-link);
+            background-color: var(--ks-bg-hover);
+        }
+
+        &.router-link-exact-active {
+            color: var(--ks-text-link);
+            font-weight: var(--ks-font-weight-semibold);
+            background-color: var(--ks-bg-hover);
+        }
     }
 </style>

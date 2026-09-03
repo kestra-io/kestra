@@ -11,8 +11,8 @@
     withDefaults(defineProps<{
         link?: boolean
     }>(), {
-        link: false
-    });
+        link: false,
+    })
 </script>
 
 <style scoped lang="scss">

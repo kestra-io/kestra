@@ -2,12 +2,12 @@
     <KsDialog
         v-model="isVisible"
         :title="$t('setup.titles.survey')"
-        width="550px"
         :showClose="true"
         :closeOnClickModal="false"
         :closeOnPressEscape="true"
         @close="handleClose"
         customClass="hello-survey-dialog"
+        scrollable
     >
         <div class="survey-content">
             <div class="question-section">
@@ -75,7 +75,7 @@
     }
 
     const props = withDefaults(defineProps<Props>(), {
-        visible: false
+        visible: false,
     })
 
     const emit = defineEmits<{
@@ -100,7 +100,7 @@
         {value: "11-50", labelKey: "setup.survey.company_11_50"},
         {value: "50-250", labelKey: "setup.survey.company_50_250"},
         {value: "250+", labelKey: "setup.survey.company_250_plus"},
-        {value: "personal", labelKey: "setup.survey.company_personal"}
+        {value: "personal", labelKey: "setup.survey.company_personal"},
     ]
 
     const useCaseOptions = [
@@ -108,14 +108,14 @@
         {value: "business", labelKey: "setup.survey.use_case_business"},
         {value: "data", labelKey: "setup.survey.use_case_data"},
         {value: "ml", labelKey: "setup.survey.use_case_ml"},
-        {value: "other", labelKey: "setup.survey.use_case_other"}
+        {value: "other", labelKey: "setup.survey.use_case_other"},
     ]
 
     const isVisible = computed({
         get: () => props.visible,
         set: (value: boolean) => {
             if (!value) emit("close")
-        }
+        },
     })
 
     const handleClose = () => {
@@ -126,7 +126,7 @@
         trackSurveyEvent("survey_skipped", {
             company_size: companySize.value || undefined,
             use_cases: useCases.value.length > 0 ? useCases.value : undefined,
-            newsletter_subscribed: subscribeNewsletter.value
+            newsletter_subscribed: subscribeNewsletter.value,
         })
         emit("skip")
         emit("close")
@@ -136,13 +136,13 @@
         const surveyData = {
             companySize: companySize.value,
             useCases: useCases.value,
-            subscribeNewsletter: subscribeNewsletter.value
+            subscribeNewsletter: subscribeNewsletter.value,
         }
 
         trackSurveyEvent("survey_submitted", {
             company_size: surveyData.companySize,
             use_cases: surveyData.useCases,
-            newsletter_subscribed: surveyData.subscribeNewsletter
+            newsletter_subscribed: surveyData.subscribeNewsletter,
         })
 
         emit("submit", surveyData)
@@ -156,7 +156,7 @@
             type: eventName,
             instance_id: configs?.uuid,
             survey_context: "standalone_dialog",
-            ...additionalData
+            ...additionalData,
         })
     }
 </script>
@@ -164,19 +164,19 @@
 <style scoped lang="scss">
 :deep(.hello-survey-dialog) {
     border-radius: 8px;
-    border: 1px solid var(--ks-dialog-border, #404559);
+    border: 1px solid var(--ks-border-default, #404559);
 
     .kel-dialog {
         border-radius: 8px;
     }
 
     .kel-dialog__header {
-        background-color: var(--ks-background-card, #2c2f36);
-        border-bottom: 1px solid var(--ks-border-primary, #404559);
+        background-color: var(--ks-bg-surface, #2c2f36);
+        border-bottom: 1px solid var(--ks-border-default, #404559);
         padding: 20px 24px;
 
         .kel-dialog__title {
-            color: var(--ks-content-primary, #ffffff);
+            color: var(--ks-text-primary, #ffffff);
             font-size: var(--ks-font-size-md);
             font-weight: 600;
         }
@@ -184,12 +184,12 @@
 
     .kel-dialog__body {
         padding: 24px;
-        background-color: var(--ks-background-card, #2c2f36);
+        background-color: var(--ks-bg-surface, #2c2f36);
     }
 
     .kel-dialog__footer {
-        background-color: var(--ks-background-card, #2c2f36);
-        border-top: 1px solid var(--ks-border-primary, #404559);
+        background-color: var(--ks-bg-surface, #2c2f36);
+        border-top: 1px solid var(--ks-border-default, #404559);
         padding: 20px 24px;
     }
 }
@@ -201,7 +201,7 @@
         margin-bottom: 32px;
 
         h4 {
-            color: var(--ks-content-primary, #ffffff);
+            color: var(--ks-text-primary, #ffffff);
             font-size: var(--ks-font-size-base);
             font-weight: 700;
             margin: 0 0 16px 0;
@@ -252,7 +252,7 @@
                 }
 
                 .kel-radio__label {
-                    color: var(--ks-content-primary, #ffffff);
+                    color: var(--ks-text-primary, #ffffff);
                     padding-left: 8px;
                     font-size: var(--ks-font-size-sm);
                 }
@@ -288,13 +288,13 @@
                     }
 
                     &.is-checked .kel-checkbox__inner {
-                        background-color: var(--ks-button-background-primary, #7c3aed);
-                        border-color: var(--ks-button-background-primary, #7c3aed);
+                        background-color: var(--ks-btn-primary-bg-default, #7c3aed);
+                        border-color: var(--ks-btn-primary-bg-default, #7c3aed);
                     }
                 }
 
                 .kel-checkbox__label {
-                    color: var(--ks-content-primary, #ffffff);
+                    color: var(--ks-text-primary, #ffffff);
                     padding-left: 10px;
                     font-size: var(--ks-font-size-sm);
                     line-height: 22px;
@@ -325,13 +325,13 @@
                 }
 
                 &.is-checked .kel-checkbox__inner {
-                    background-color: var(--ks-button-background-primary, #7c3aed);
-                    border-color: var(--ks-button-background-primary, #7c3aed);
+                    background-color: var(--ks-btn-primary-bg-default, #7c3aed);
+                    border-color: var(--ks-btn-primary-bg-default, #7c3aed);
                 }
             }
 
             .kel-checkbox__label {
-                color: var(--ks-content-secondary, #9ca3af);
+                color: var(--ks-text-secondary, #9ca3af);
                 font-size: var(--ks-font-size-sm);
                 line-height: 22px;
                 padding-left: 10px;

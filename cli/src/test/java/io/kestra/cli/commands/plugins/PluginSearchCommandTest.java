@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
@@ -17,7 +18,7 @@ import io.micronaut.context.env.Environment;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@WireMockTest(httpPort = 28181)
+@WireMockTest
 class PluginSearchCommandTest {
     private ByteArrayOutputStream outputStreamCaptor;
     private final PrintStream originalOut = System.out;
@@ -34,7 +35,7 @@ class PluginSearchCommandTest {
     }
 
     @Test
-    void searchWithExactMatch() {
+    void searchWithExactMatch(WireMockRuntimeInfo wmInfo) {
         stubFor(
             get(urlEqualTo("/v1/plugins"))
                 .willReturn(
@@ -61,7 +62,7 @@ class PluginSearchCommandTest {
 
         try (
             ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
-                .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
+                .properties(Map.of("micronaut.http.services.api.url", wmInfo.getHttpBaseUrl()))
                 .start()
         ) {
             String[] args = { "notifications" };
@@ -75,7 +76,7 @@ class PluginSearchCommandTest {
     }
 
     @Test
-    void searchWithEmptyQuery() {
+    void searchWithEmptyQuery(WireMockRuntimeInfo wmInfo) {
         stubFor(
             get(urlEqualTo("/v1/plugins"))
                 .willReturn(
@@ -102,7 +103,7 @@ class PluginSearchCommandTest {
 
         try (
             ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
-                .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
+                .properties(Map.of("micronaut.http.services.api.url", wmInfo.getHttpBaseUrl()))
                 .start()
         ) {
 

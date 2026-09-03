@@ -33,8 +33,10 @@ jobs:
             exit 1;
           fi
       # Checkout
-      - uses: actions/checkout@v6
+      - uses: kestra-io/actions/composite/checkout-and-auth@main
         with:
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           fetch-depth: 0
           path: kestra
 
@@ -55,8 +57,6 @@ jobs:
 
       # Execute
       - name: Run Gradle Release
-        env:
-          GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
           # Extract the major and minor versions
           BASE_VERSION=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+)\..*/\1/')

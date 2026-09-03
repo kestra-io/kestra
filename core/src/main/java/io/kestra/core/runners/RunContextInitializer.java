@@ -3,12 +3,12 @@ package io.kestra.core.runners;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
@@ -23,11 +23,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 
-import io.kestra.core.encryption.EncryptionConfig;
-
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -56,18 +52,10 @@ public class RunContextInitializer {
     protected NamespaceService namespaceService;
 
     @Inject
-    protected EncryptionConfig encryptionConfig;
-
-    @Inject
     protected RunContextCache runContextCache;
 
-    @Value("${kestra.environment.name}")
-    @Nullable
-    protected String kestraEnvironment;
-
-    @Value("${kestra.url}")
-    @Nullable
-    protected String kestraUrl;
+    @Inject
+    protected KestraConfiguration kestraConfiguration;
 
     /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTask} for executor.
@@ -148,18 +136,12 @@ public class RunContextInitializer {
             variables.put("taskrun", taskrun);
         }
 
-        // Rehydrate outputs (EE override point)
-        Object outputs = variables.getOrDefault("outputs", Map.of());
-        if (outputs instanceof Map) {
-            variables.put("outputs", rehydrateOutputs((Map<String, Object>) outputs));
-        }
-
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTask);
         addSecretConsumer(variables, runContextLogger);
 
         variables = variablesModifier.apply(variables);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent(), workingDir);
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.traceParent(), workingDir);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
@@ -173,21 +155,13 @@ public class RunContextInitializer {
      */
     private Map<String, String> buildKestraConfig() {
         Map<String, String> kestra = HashMap.newHashMap(2);
-        if (kestraEnvironment != null) {
-            kestra.put("environment", kestraEnvironment);
+        if (kestraConfiguration.environment() != null && kestraConfiguration.environment().name() != null) {
+            kestra.put("environment", kestraConfiguration.environment().name());
         }
-        if (kestraUrl != null) {
-            kestra.put("url", kestraUrl);
+        if (kestraConfiguration.url() != null) {
+            kestra.put("url", kestraConfiguration.url());
         }
         return kestra;
-    }
-
-    /**
-     * Rehydrate outputs from internal storage if enabled.
-     * As outputs in internal storage is an EE feature, this is a no-op in OSS.
-     */
-    protected Map<String, Object> rehydrateOutputs(Map<String, Object> outputs) {
-        return outputs;
     }
 
     /**
@@ -233,8 +207,9 @@ public class RunContextInitializer {
         }
 
         outputs.put(workerTaskResult.getTaskRun().getTaskId(), result);
-        variables.put("outputs", new Secret(encryptionConfig.asOptional(), runContext::logger).decrypt(outputs));
-        variables.put("trigger", new Secret(encryptionConfig.asOptional(), runContext::logger).decrypt(triggerOutputs));
+        // a subtask can return an encrypted output, which the run context decrypts when these variables are read
+        variables.put("outputs", outputs);
+        variables.put("trigger", triggerOutputs);
 
         runContext.setVariables(variables);
         return runContext;
@@ -286,7 +261,7 @@ public class RunContextInitializer {
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTrigger.triggerId(), trigger);
         addSecretConsumer(variables, runContextLogger);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent(), null);
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.traceParent(), null);
         configureTrigger(runContext, runContextLogger, workerTrigger.triggerId(), trigger);
 
         return ConditionContext.builder()
@@ -321,12 +296,10 @@ public class RunContextInitializer {
      *        when non-null, {@code init()} will keep it instead of creating a new one.
      */
     private DefaultRunContext buildAndInitRunContext(Map<String, Object> variables,
-        List<String> secretInputs,
         String traceParent,
         WorkingDir workingDir) {
         var builder = new DefaultRunContext.Builder()
-            .withVariables(variables)
-            .withSecretInputs(secretInputs);
+            .withVariables(variables);
         if (workingDir != null) {
             builder = builder.withWorkingDir(workingDir);
         }

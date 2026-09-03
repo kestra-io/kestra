@@ -3,9 +3,12 @@ package io.kestra.core.docs;
 import java.lang.reflect.*;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.classmate.ResolvedType;
@@ -50,7 +53,9 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.AdditionalPlugin;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.validations.TimezoneId;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -76,6 +81,16 @@ public class JsonSchemaGenerator {
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
 
+    private static final List<String> AVAILABLE_ZONE_IDS = Stream
+        .concat(ZoneId.getAvailableZoneIds().stream(), ZoneId.SHORT_IDS.keySet().stream())
+        .distinct()
+        .sorted()
+        .toList();
+
+    // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
+    // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
+    private static final String TIMEZONE_OFFSET_PATTERN = "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
+
     private final PluginRegistry pluginRegistry;
 
     @Inject
@@ -83,7 +98,7 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new HashMap<>();
+    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
@@ -126,9 +141,170 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
+            // Strip edition-restricted input types before collapsing discriminator wrappers: the
+            // strip logic removes a whole allOf branch (the one carrying the `type` const), which
+            // only works while that branch is still a separate array entry. Collapsing first would
+            // inline it into a flat object, leaving no branch for the strip step to remove.
+            Map<String, Object> schema = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
+            stripEditionRestrictedInputTypes(schema, cls);
+
+            objectNode = MAPPER.convertValue(schema, ObjectNode.class);
+            collapseSingleUseDiscriminatorWrappers(objectNode);
+
             return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
+        }
+    }
+
+    /**
+     * Strip edition-restricted input types (those excluded by {@link #includeInputSubtype}, i.e. {@code @EeOnly} ones
+     * such as {@code REUSABLE_INPUTS}) from the generated flow schema. The {@code Type} enum is carried in two places:
+     * the {@code enum} arrays (the {@code type} discriminator and {@code ArrayInput.itemType}) AND the polymorphic
+     * {@code anyOf}/{@code oneOf}/{@code allOf} discriminator branches ({@code {properties:{type:{const:...}}}}); both
+     * must be pruned. Open-source removes the {@code @EeOnly} types; the Enterprise override of
+     * {@code includeInputSubtype} keeps them all, so the excluded set is empty here (no-op).
+     */
+    private void stripEditionRestrictedInputTypes(Object node, Class<?> cls) {
+        Set<String> excluded = this.excludedInputTypes(cls);
+
+        if (!excluded.isEmpty()) {
+            stripEditionRestrictedInputTypes(node, excluded);
+        }
+    }
+
+    /**
+     * The input type names to strip from the schema generated for {@code cls}, by default the ones
+     * {@link #includeInputSubtype} rejects for this edition. Override to exclude a type for one schema only; it is
+     * applied before discriminator wrappers are collapsed, which a caller stripping the returned map cannot do.
+     */
+    protected Set<String> excludedInputTypes(Class<?> cls) {
+        return Arrays.stream(io.kestra.core.models.flows.Type.values())
+            .filter(type -> !this.includeInputSubtype(type.cls()))
+            .map(Enum::name)
+            .collect(Collectors.toSet());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded) {
+        if (node instanceof Map<?, ?> rawMap) {
+            Map<String, Object> map = (Map<String, Object>) rawMap;
+
+            if (map.get("enum") instanceof List<?> enumValues) {
+                enumValues.removeIf(value -> excluded.contains(String.valueOf(value)));
+            }
+            for (String key : List.of("anyOf", "oneOf", "allOf")) {
+                if (map.get(key) instanceof List<?> branches) {
+                    branches.removeIf(branch -> isExcludedDiscriminatorBranch(branch, excluded));
+                }
+            }
+            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+        } else if (node instanceof List<?> list) {
+            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isExcludedDiscriminatorBranch(Object branch, Set<String> excluded) {
+        if (
+            branch instanceof Map<?, ?> map
+                && ((Map<String, Object>) map).get("properties") instanceof Map<?, ?> properties
+                && ((Map<String, Object>) properties).get("type") instanceof Map<?, ?> type
+        ) {
+            return excluded.contains(String.valueOf(((Map<String, Object>) type).get("const")));
+        }
+        return false;
+    }
+
+    /**
+     * For a polymorphic property, the generator emits two definitions per subtype: a plain
+     * {@code <Class>} object, and a {@code <Class>-2} wrapper ({@code allOf: [{$ref: <Class>-1}, {
+     * required: ["type"], ...}]}) carrying the discriminator {@code required} needed to use it as
+     * an {@code anyOf} branch. When the plain definition is referenced from nowhere else, keeping
+     * it separate only adds an indirection with no reuse benefit — inline it into its wrapper and
+     * drop it, cutting the schema's definition count without changing what it validates.
+     */
+    private void collapseSingleUseDiscriminatorWrappers(ObjectNode objectNode) {
+        if (!(objectNode.get("definitions") instanceof ObjectNode definitions)) {
+            return;
+        }
+
+        Map<String, Integer> refCounts = new HashMap<>();
+        countRefs(objectNode, refCounts);
+
+        List<String> baseKeysToRemove = new ArrayList<>();
+        definitions.properties().forEach(entry ->
+        {
+            String wrapperKey = entry.getKey();
+            if (
+                !(entry.getValue() instanceof ObjectNode wrapper)
+                    || !(wrapper.get("allOf") instanceof ArrayNode allOf) || allOf.size() != 2
+                    || !(allOf.get(0) instanceof ObjectNode firstBranch) || firstBranch.size() != 1
+                    || !(firstBranch.get("$ref") instanceof TextNode refNode)
+                    || !(allOf.get(1) instanceof ObjectNode extra)
+            ) {
+                return;
+            }
+
+            String ref = refNode.asText();
+            String baseKey = ref.substring(ref.lastIndexOf('/') + 1);
+            if (
+                baseKey.equals(wrapperKey)
+                    || !(definitions.get(baseKey) instanceof ObjectNode base)
+                    || refCounts.getOrDefault(ref, 0) != 1
+            ) {
+                return;
+            }
+
+            definitions.set(wrapperKey, mergeAllOfBranches(base, extra));
+            baseKeysToRemove.add(baseKey);
+        });
+
+        baseKeysToRemove.forEach(definitions::remove);
+    }
+
+    /** Merges {@code extra} onto a copy of {@code base}, unioning {@code properties}/{@code required} instead of overwriting them. */
+    private static ObjectNode mergeAllOfBranches(ObjectNode base, ObjectNode extra) {
+        ObjectNode merged = base.deepCopy();
+        extra.properties().forEach(entry ->
+        {
+            String key = entry.getKey();
+            JsonNode extraValue = entry.getValue();
+
+            if (key.equals("properties") && merged.get("properties") instanceof ObjectNode baseProps && extraValue instanceof ObjectNode extraProps) {
+                ObjectNode mergedProps = baseProps.deepCopy();
+                extraProps.properties().forEach(p -> mergedProps.set(p.getKey(), p.getValue()));
+                merged.set("properties", mergedProps);
+            } else if (key.equals("required") && merged.get("required") instanceof ArrayNode baseRequired && extraValue instanceof ArrayNode extraRequired) {
+                ArrayNode mergedRequired = baseRequired.deepCopy();
+                Set<String> existing = new HashSet<>();
+                mergedRequired.forEach(n -> existing.add(n.asText()));
+                extraRequired.forEach(n ->
+                {
+                    if (existing.add(n.asText())) {
+                        mergedRequired.add(n);
+                    }
+                });
+                merged.set("required", mergedRequired);
+            } else {
+                merged.set(key, extraValue);
+            }
+        });
+        return merged;
+    }
+
+    private static void countRefs(JsonNode node, Map<String, Integer> counts) {
+        if (node instanceof ObjectNode obj) {
+            obj.properties().forEach(entry ->
+            {
+                if (entry.getKey().equals("$ref") && entry.getValue() instanceof TextNode ref) {
+                    counts.merge(ref.asText(), 1, Integer::sum);
+                } else {
+                    countRefs(entry.getValue(), counts);
+                }
+            });
+        } else if (node instanceof ArrayNode arr) {
+            arr.forEach(child -> countRefs(child, counts));
         }
     }
 
@@ -296,8 +472,10 @@ public class JsonSchemaGenerator {
                 @Override
                 protected List<ResolvedType> resolveTargetTypeOverrides(MemberScope<?, ?> member) {
                     Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
-                    if (schema != null && schema.implementation() == Object.class
-                        && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class) {
+                    if (
+                        schema != null && schema.implementation() == Object.class
+                            && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class
+                    ) {
                         return null;
                     }
                     return super.resolveTargetTypeOverrides(member);
@@ -468,6 +646,25 @@ public class JsonSchemaGenerator {
             } else if (member.getDeclaredType().isInstanceOf(Data.class)) {
                 memberAttributes.put("$dynamic", false);
             }
+        });
+
+        // On @TimezoneId-annotated fields, expose ZoneId IDs for autocomplete while still accepting offset forms
+        // (e.g. `+02:00`, `GMT-05:00`) that ZoneId.of() parses but that are not in getAvailableZoneIds().
+        builder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) ->
+        {
+            if (member.getAnnotationConsideringFieldAndGetter(TimezoneId.class) == null) {
+                return;
+            }
+            ArrayNode enumNode = context.getGeneratorConfig().createArrayNode();
+            AVAILABLE_ZONE_IDS.forEach(enumNode::add);
+            ObjectNode enumBranch = context.getGeneratorConfig().createObjectNode();
+            enumBranch.set("enum", enumNode);
+            ObjectNode patternBranch = context.getGeneratorConfig().createObjectNode();
+            patternBranch.put("pattern", TIMEZONE_OFFSET_PATTERN);
+            ArrayNode anyOf = context.getGeneratorConfig().createArrayNode();
+            anyOf.add(enumBranch);
+            anyOf.add(patternBranch);
+            memberAttributes.set("anyOf", anyOf);
         });
 
         // Add Plugin annotation special docs
@@ -792,7 +989,7 @@ public class JsonSchemaGenerator {
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
-        } else if (AdditionalPlugin.class.isAssignableFrom(declaredType.getErasedType())) { // base type for addition plugin is not AdditionalPlugin but a subtype of AdditionalPlugin.
+        } else if (AdditionalPlugin.class.isAssignableFrom(declaredType.getErasedType())) { // base type for additional plugin is not AdditionalPlugin but a subtype of AdditionalPlugin.
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getAdditionalPlugins().stream())
@@ -800,6 +997,14 @@ public class JsonSchemaGenerator {
                 .filter(cls -> declaredType.getErasedType().isAssignableFrom(cls))
                 .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(cls -> cls != declaredType.getErasedType())
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .map(typeContext::resolve)
+                .toList();
+        } else if (declaredType.getErasedType() == FileRenderer.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
@@ -863,9 +1068,30 @@ public class JsonSchemaGenerator {
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
+        } else if (declaredType.getErasedType() == io.kestra.core.models.flows.Input.class) {
+            // Resolve the input subtypes from the @JsonSubTypes registry, filtering out edition-restricted ones
+            // (e.g. REUSABLE_INPUTS) so they don't appear in the open-source flow schema. EE includes them all.
+            com.fasterxml.jackson.annotation.JsonSubTypes subTypes = io.kestra.core.models.flows.Input.class.getAnnotation(com.fasterxml.jackson.annotation.JsonSubTypes.class);
+            if (subTypes == null) {
+                return null;
+            }
+            return java.util.Arrays.stream(subTypes.value())
+                .map(com.fasterxml.jackson.annotation.JsonSubTypes.Type::value)
+                .filter(this::includeInputSubtype)
+                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .collect(Collectors.toList());
         }
 
         return null;
+    }
+
+    /**
+     * Whether the given {@link io.kestra.core.models.flows.Input} subtype should appear in the generated flow
+     * schema. The open-source generator hides {@link io.kestra.core.models.flows.input.EeOnly}-annotated inputs;
+     * the EE generator overrides this to include them.
+     */
+    protected boolean includeInputSubtype(Class<?> subtype) {
+        return !subtype.isAnnotationPresent(io.kestra.core.models.flows.input.EeOnly.class);
     }
 
     protected static Optional<ResolvedType> safelyResolveSubtype(ResolvedType declaredType, Class<?> clz, TypeContext typeContext) {
@@ -950,11 +1176,7 @@ public class JsonSchemaGenerator {
             }
         }
 
-        if (!defaultInstances.containsKey(baseCls)) {
-            defaultInstances.put(baseCls, buildDefaultInstance(baseCls));
-        }
-
-        Object instance = defaultInstances.get(baseCls);
+        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
 
         return instance == null ? null : defaultValue(instance, baseCls, target.getName());
     }

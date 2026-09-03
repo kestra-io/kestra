@@ -12,7 +12,7 @@ describe("KsExecutionStatus", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".ks-execution-status").exists()).toBe(true)
-        expect(wrapper.text()).toContain("SUCCESS")
+        expect(wrapper.text()).toContain("Success")
     })
 
     test("applies status class", () => {
@@ -64,11 +64,61 @@ describe("KsExecutionStatus", () => {
         expect(wrapper.find(".ks-execution-status__icon").exists()).toBe(false)
     })
 
+    test("is not clickable by default", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--clickable").exists()).toBe(false)
+    })
+
+    test("applies clickable class when clickable prop is true", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS", clickable: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--clickable").exists()).toBe(true)
+    })
+
+    test("emits a native click when clickable", async () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "FAILED", clickable: true},
+            global: globalConfig,
+        })
+        await wrapper.find("button").trigger("click")
+        expect(wrapper.emitted("click")).toHaveLength(1)
+    })
+
+    test("renders native disabled attribute when disabled prop is true", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS", disabled: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find("button").attributes("disabled")).toBeDefined()
+    })
+
+    test("does not render disabled attribute by default", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("button").attributes("disabled")).toBeUndefined()
+    })
+
+    test("drops clickable affordance when disabled is true", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS", clickable: true, disabled: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--clickable").exists()).toBe(false)
+        expect(wrapper.find("button").attributes("disabled")).toBeDefined()
+    })
+
     test("renders all status variants", () => {
         const statuses = [
-            "CREATED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",
+            "CREATED", "SUBMITTED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",
             "KILLED", "WARNING", "FAILED", "PAUSED", "CANCELLED",
-            "SKIPPED", "QUEUED", "RETRYING", "RETRIED", "BREAKPOINT"
+            "SKIPPED", "QUEUED", "RETRYING", "RETRIED", "BREAKPOINT",
         ] as const
 
         for (const status of statuses) {

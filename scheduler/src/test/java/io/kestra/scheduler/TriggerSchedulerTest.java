@@ -12,35 +12,31 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
-import io.kestra.core.models.triggers.RecoverMissedSchedules;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerService;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
+import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher.PublishedExecution;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
@@ -70,7 +66,7 @@ class TriggerSchedulerTest {
     ConditionService conditionService;
 
     @Inject
-    PluginDefaultService pluginDefaultService;
+    FlowParsingService flowParsingService;
 
     @Inject
     SchedulableEvaluator schedulableEvaluator;
@@ -89,6 +85,14 @@ class TriggerSchedulerTest {
         SchedulerClock.setClock(initialSchedulerClock);
         triggerStateStore = new InMemoryTriggerStateStore();
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
+    }
+
+    @AfterEach
+    void restoreSchedulerClock() {
+        // SchedulerClock is a JVM-wide static: without a restore, the last fixed clock set by a
+        // test here leaks into every later test class of the fork, whose trigger dates are then
+        // computed against a frozen past instant.
+        SchedulerClock.setClock(Clock.systemDefaultZone());
     }
 
     @Test
@@ -115,7 +119,6 @@ class TriggerSchedulerTest {
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
         // endregion [GIVEN]
-
         // WHEN
         SchedulerClock.offset(Duration.ofMinutes(15));
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
@@ -131,11 +134,14 @@ class TriggerSchedulerTest {
         // Check that an execution was created
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-        Execution execution = triggerExecutionPublisher.executions().getFirst();
-        assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-        assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-        assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-        assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+        PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+        assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+        assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+        assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+        assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
+
+        // The locking execution id is persisted on the trigger state (allowConcurrent defaults to false).
+        assertThat(state.getExecutionId()).isEqualTo(execution.evaluation().executionId());
     }
 
     @Test
@@ -215,6 +221,31 @@ class TriggerSchedulerTest {
         assertThat(state.isLocked()).isTrue();
         assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now().toInstant());
         assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().toInstant());
+    }
+
+    @Test
+    void shouldNotLockTriggerWhenWorkerJobIsNotDispatched() throws Exception {
+        // region [GIVEN]
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestRealTimeTrigger.builder()
+                .id("realtime")
+                .type(TestRealTimeTrigger.class.getName())
+                .build()
+        );
+        TriggerWorkerJobPublisher publisher = Mockito.mock(TriggerWorkerJobPublisher.class);
+        Mockito.when(publisher.send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(false);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow), publisher);
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN — the trigger must stay unlocked so it is retried at its next evaluation date
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("realtime")).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isLocked()).isFalse();
+        assertThat(state.getLastTriggeredDate()).isNull();
     }
 
     @Test
@@ -312,7 +343,8 @@ class TriggerSchedulerTest {
         SchedulerClock.setClock(Clock.fixed(friday.toInstant(), ZoneId.systemDefault()));
 
         FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(
-            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY
+        );
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
@@ -369,11 +401,11 @@ class TriggerSchedulerTest {
                 // Check an execution was created
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-                Execution execution = triggerExecutionPublisher.executions().getFirst();
-                assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-                assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+                assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+                assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+                assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+                assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
                 // Simulate execution completed
                 completeExecution();
@@ -427,16 +459,16 @@ class TriggerSchedulerTest {
                 assertThat(currentTriggerState.isLocked()).isTrue();
                 assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(expectedNextEvaluationNDate.minusMinutes(15).toInstant());
                 assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(expectedNextEvaluationNDate);
+                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate.toInstant());
 
                 // Assert NO Execution
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-                Execution execution = triggerExecutionPublisher.executions().getFirst();
-                assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-                assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+                assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+                assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+                assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+                assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
                 // Simulate execution completed
                 completeExecution();
@@ -530,7 +562,7 @@ class TriggerSchedulerTest {
 
         // THEN
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
+        assertThat(triggerExecutionPublisher.executions().getFirst().triggerId().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
     }
 
     @Test
@@ -549,7 +581,7 @@ class TriggerSchedulerTest {
 
         // THEN - a FAILED execution is sent due to the render exception
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(triggerExecutionPublisher.executions().getFirst().evaluation().stateType()).isEqualTo(State.Type.FAILED);
     }
 
     @Test
@@ -648,11 +680,11 @@ class TriggerSchedulerTest {
             // Check an execution was created
             assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-            Execution execution = triggerExecutionPublisher.executions().getFirst();
-            assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-            assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-            assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-            assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+            PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+            assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+            assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+            assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+            assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
             // Simulate execution completed
             completeExecution();
@@ -671,6 +703,52 @@ class TriggerSchedulerTest {
         });
 
         // endregion [WHEN]
+    }
+
+    @Test
+    void shouldNotScheduleExecutionWhenBackfillIsPausedGivenScheduleOnDatesTrigger() {
+        assertNoExecutionScheduledWhileBackfillIsPaused(
+            Fixtures.flowWithScheduleOnDate(
+                TEST_TZ,
+                List.of(
+                    SchedulerClock.now().minusHours(2),
+                    SchedulerClock.now().minusHours(1),
+                    SchedulerClock.now().plusHours(1)
+                )
+            )
+        );
+    }
+
+    @Test
+    void shouldNotScheduleExecutionWhenBackfillIsPausedGivenScheduleTrigger() {
+        assertNoExecutionScheduledWhileBackfillIsPaused(Fixtures.flowWithSchedulePT15M(TEST_TZ));
+    }
+
+    private void assertNoExecutionScheduledWhileBackfillIsPaused(FlowWithSource flow) {
+        // region [GIVEN]
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(2));
+        TriggerState triggerState = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).paused(true).build())
+        );
+        // endregion [GIVEN]
+
+        // WHEN
+        for (int i = 0; i < 5; i++) {
+            scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+            completeExecution();
+            SchedulerClock.offset(Duration.ofSeconds(1));
+        }
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        assertThat(state.getBackfill().getCurrentDate()).isEqualTo(backfillStart);
     }
 
     @Test
@@ -699,17 +777,24 @@ class TriggerSchedulerTest {
     }
 
     private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows) {
-        InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, flows);
+        return newTriggerScheduler(flows, triggerWorkerJobPublisher);
+    }
+
+    private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows, TriggerWorkerJobPublisher workerJobPublisher) {
+        return newTriggerScheduler(new InMemoryFlowMetaStore(1, flows), workerJobPublisher);
+    }
+
+    private TriggerScheduler newTriggerScheduler(InMemoryFlowMetaStore flowMetaStore, TriggerWorkerJobPublisher workerJobPublisher) {
         return new TriggerScheduler(
             triggerStateStore,
             flowMetaStore,
             metricRegistry,
             runContextFactory,
             conditionService,
-            pluginDefaultService,
+            flowParsingService,
             schedulableEvaluator,
-            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
-            triggerWorkerJobPublisher,
+            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
+            workerJobPublisher,
             triggerExecutionPublisher,
             new SchedulerConfiguration(1, Duration.ZERO, 100)
         );
@@ -727,8 +812,8 @@ class TriggerSchedulerTest {
         private Property<String> value;
 
         @Override
-        public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
-            return Optional.of(TriggerService.generateExecution(this, conditionContext, context, Map.of()));
+        public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            return Optional.of(TriggerService.generateEvaluationResult(this, conditionContext, Map.of()));
         }
     }
 
@@ -742,8 +827,8 @@ class TriggerSchedulerTest {
         private Property<String> value;
 
         @Override
-        public Publisher<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
-            return Mono.just(TriggerService.generateExecution(this, conditionContext, context, Map.of()));
+        public Publisher<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            return Mono.just(TriggerService.generateRealtimeEvaluationResult(this, conditionContext, null));
         }
     }
 }

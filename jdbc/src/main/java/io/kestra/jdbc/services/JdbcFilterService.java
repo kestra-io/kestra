@@ -5,6 +5,7 @@ import java.util.Map;
 import org.jooq.*;
 import org.jooq.Record;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.filters.*;
@@ -29,11 +30,12 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     public AggregateFunction<?> buildAggregation(Field<?> field, AggregationType agg) {
 
+        // coerce instead of cast: a SQL cast renders as CAST(... AS DECIMAL) on MySQL, which has scale 0 and rounds every value to an integer
         return switch (agg) {
-            case AVG -> avg(field.cast(Double.class));
-            case MAX -> max(field.cast(Double.class));
-            case MIN -> min(field.cast(Double.class));
-            case SUM -> sum(field.cast(Double.class));
+            case AVG -> avg(field.coerce(Double.class));
+            case MAX -> max(field.coerce(Double.class));
+            case MIN -> min(field.coerce(Double.class));
+            case SUM -> sum(field.coerce(Double.class));
             case COUNT -> field != null ? count(field) : count();
         };
     }
@@ -52,6 +54,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
             case IS_TRUE -> isTrueCondition(fieldsMapping.get(filter.getField()), (IsTrue<F>) filter);
             case LESS_THAN -> lessThanCondition(fieldsMapping.get(filter.getField()), (LessThan<F>) filter);
             case LESS_THAN_OR_EQUAL_TO -> lessThanOrEqualToCondition(fieldsMapping.get(filter.getField()), (LessThanOrEqualTo<F>) filter);
+            case NOT_CONTAINS -> notContainsCondition(fieldsMapping.get(filter.getField()), (NotContains<F>) filter);
             case NOT_EQUAL_TO -> notEqualToCondition(fieldsMapping.get(filter.getField()), (NotEqualTo<F>) filter);
             case NOT_IN -> notInCondition(fieldsMapping.get(filter.getField()), (NotIn<F>) filter);
             case OR -> orCondition(fieldsMapping, (Or<F>) filter);
@@ -127,6 +130,11 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     @Override
+    protected <F extends Enum<F>> SelectConditionStep<Record> notContains(SelectConditionStep<Record> query, String field, NotContains<F> filter) {
+        return query.and(field(field).contains(filter.getValue().toString()).not());
+    }
+
+    @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> notIn(SelectConditionStep<Record> query, String field, NotIn<F> filter) {
         return query.and(field(field).notIn(filter.getValues()));
     }
@@ -142,7 +150,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> regex(SelectConditionStep<Record> query, String field, Regex<F> filter) {
-        return query.and(field(field).likeRegex(filter.getValue()));
+        return query.and(regexCondition(field, filter));
     }
 
     @Override
@@ -156,8 +164,8 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition containsCondition(String field, Contains<F> filter) {
-        if (filter.getLabelKey() != null) {
-            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getLabelKey(), filter.getValue())), QueryFilter.Op.EQUALS);
+        if (filter.getKey() != null) {
+            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getKey(), filter.getValue())), QueryFilter.Op.EQUALS);
         }
 
         return field(field).contains(filter.getValue().toString());
@@ -179,8 +187,20 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return field(field).ge(filter.getValue());
     }
 
+    private boolean isLabelField(String field) {
+        return "labels".equals(field);
+    }
+
     private <F extends Enum<F>> org.jooq.Condition inCondition(String field, In<F> filter) {
-        return field(field).in(filter.getValues());
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValues())),
+                    QueryFilter.Op.NOT_IN
+                );
+        }
+
+        return field(field).notIn(filter.getValues());
     }
 
     private <F extends Enum<F>> org.jooq.Condition isFalseCondition(String field, IsFalse<F> filter) {
@@ -188,10 +208,26 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition isNotNullCondition(String field, IsNotNull<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.right(filter.getKey()),
+                    QueryFilter.Op.IS_NOT_NULL
+                );
+        }
+
         return field(field).isNotNull();
     }
 
     private <F extends Enum<F>> org.jooq.Condition isNullCondition(String field, IsNull<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.right(filter.getKey()),
+                    QueryFilter.Op.IS_NULL
+                );
+        }
+
         return field(field).isNull();
     }
 
@@ -211,7 +247,27 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return field(field).ne(filter.getValue());
     }
 
+    private <F extends Enum<F>> org.jooq.Condition notContainsCondition(String field, NotContains<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValue())),
+                    QueryFilter.Op.NOT_EQUALS
+                );
+                
+        }
+        return field(field).ne(filter.getValue());
+    }
+
     private <F extends Enum<F>> org.jooq.Condition notInCondition(String field, NotIn<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValues())),
+                    QueryFilter.Op.NOT_IN
+                );
+        }
+
         return field(field).notIn(filter.getValues());
     }
 
@@ -224,6 +280,9 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition regexCondition(String field, Regex<F> filter) {
+        if (filter.getValue() == null) {
+            throw new InvalidQueryFiltersException("REGEX operation requires a non-null value");
+        }
         return field(field).likeRegex(filter.getValue());
     }
 

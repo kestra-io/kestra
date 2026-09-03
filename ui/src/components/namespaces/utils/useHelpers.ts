@@ -1,13 +1,15 @@
-import {Component, computed, Ref} from "vue";
-import {useRoute} from "vue-router";
-import {useI18n} from "vue-i18n";
+import {Component, computed, Ref} from "vue"
+import {useRoute} from "vue-router"
+import {useI18n} from "vue-i18n"
+import {NAMESPACE_PARENT_ROUTE} from "../../../utils/namespaceTabRoutes"
 
-import BlueprintsBrowser from "../../flows/blueprints/BlueprintsBrowser.vue";
-import Flows from "../../../components/flows/Flows.vue";
-import Executions from "../../../components/executions/Executions.vue";
-import Dependencies from "../../../components/dependencies/Dependencies.vue";
-import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue";
-import NamespaceOverview from "../../../components/namespaces/components/NamespaceOverview.vue";
+import SystemBlueprintsTab from "../../flows/SystemBlueprintsTab.vue"
+import Flows from "../../../components/flows/Flows.vue"
+import Executions from "../../../components/executions/Executions.vue"
+import Dependencies from "../../../components/dependencies/Dependencies.vue"
+import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue"
+import NamespaceOverview from "../../../components/namespaces/components/NamespaceOverview.vue"
+import {useSystemNamespace} from "../../../composables/useSystemNamespace"
 
 export interface Tab {
     locked?: boolean;
@@ -18,6 +20,7 @@ export interface Tab {
     component: Component;
     props?: Record<string, any>;
     count?: number;
+    fullContainer?: boolean;
 }
 
 export interface Breadcrumb {
@@ -26,7 +29,6 @@ export interface Breadcrumb {
         name?: string,
         params?: {
             id: string,
-            tab: string,
         }
     },
     disabled?: boolean;
@@ -48,20 +50,22 @@ export const ORDER = [
     "credentials",
     "assets",
     "variables",
-    "plugin-defaults",
+    "policies",
     "kv",
+    "reusable-inputs",
     "files",
     "history",
     "audit-logs",
-];
+]
 
 export function useHelpers() {
-    const route = useRoute();
-    const {t} = useI18n({useScope: "global"});
+    const route = useRoute()
+    const {t} = useI18n({useScope: "global"})
 
-    const namespace = computed(() => route.params?.id) as Ref<string>;
+    const namespace = computed(() => route.params?.id) as Ref<string>
+    const systemNamespace = useSystemNamespace()
 
-    const parts = computed(() => namespace.value?.split(".") ?? []);
+    const parts = computed(() => namespace.value?.split(".") ?? [])
     const details: Ref<Details> = computed(() => ({
         title: parts.value.at(-1) || t("namespaces"),
         breadcrumb: [
@@ -69,24 +73,22 @@ export function useHelpers() {
             ...parts.value.slice(0, -1).map((_: string, index: number): Breadcrumb => ({
                 label: parts.value[index],
                 link: {
-                    name: "namespaces/update",
+                    name: `${NAMESPACE_PARENT_ROUTE}/overview`,
                     params: {
                         id: parts.value.slice(0, index + 1).join("."),
-                        tab: "overview",
                     },
                 },
             })),
         ],
-    }));
+    }))
 
-    const tabs: Tab[] = [
-        // If it's a system namespace, include the blueprints tab
-        ...(namespace.value === "system" ? [
+    const tabs = computed<Tab[]>(() => [
+        ...(namespace.value === systemNamespace.value ? [
             {
                 name: "blueprints",
-                title: t("blueprints.title"),
-                component: BlueprintsBrowser,
-                props: {tab: "community", system: true},
+                title: t("recipe.section_title"),
+                component: SystemBlueprintsTab,
+                props: {namespace: namespace.value},
             },
         ]
             : []),
@@ -103,8 +105,11 @@ export function useHelpers() {
             props: {
                 namespace: namespace.value,
                 topbar: false,
+                fitHeight: true,
                 defaultScopeFilter: false,
+                embed: true,
             },
+            fullContainer: true,
         },
         {
             name: "executions",
@@ -113,10 +118,12 @@ export function useHelpers() {
             props: {
                 namespace: namespace.value,
                 topbar: false,
+                fitHeight: true,
                 visibleCharts: true,
-                embed: false,
+                embed: true,
                 defaultScopeFilter: false,
             },
+            fullContainer: true,
         },
         {
             name: "dependencies",
@@ -131,7 +138,7 @@ export function useHelpers() {
             props: {namespace: namespace.value},
             maximized: true,
         },
-    ];
+    ])
 
-    return {details, tabs};
+    return {details, tabs}
 }

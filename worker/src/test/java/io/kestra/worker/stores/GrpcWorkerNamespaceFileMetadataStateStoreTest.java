@@ -12,11 +12,13 @@ import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.utils.TestsUtils;
 
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@Property(name = "test.context.id", value = "grpc-ns-file")
 class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
 
     @Inject
@@ -51,7 +53,7 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         assertThat(result.get().getNamespace()).isEqualTo(namespace);
         assertThat(result.get().getPath()).isEqualTo("/scripts/main.py");
         assertThat(result.get().getSize()).isEqualTo(42L);
-        assertThat(result.get().getVersion()).isEqualTo(1);
+        assertThat(result.get().getRevision()).isEqualTo(1);
     }
 
     @Test
@@ -87,7 +89,7 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
 
         // Then
         assertThat(result).isPresent();
-        assertThat(result.get().getVersion()).isEqualTo(1);
+        assertThat(result.get().getRevision()).isEqualTo(1);
     }
 
     @Test
@@ -271,7 +273,7 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
 
         // Then
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(NamespaceFileMetadata::getVersion).containsExactlyInAnyOrder(1, 2);
+        assertThat(result).extracting(NamespaceFileMetadata::getRevision).containsExactlyInAnyOrder(1, 2);
     }
 
     @Test
@@ -314,7 +316,7 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         assertThat(result.getNamespace()).isEqualTo(namespace);
         assertThat(result.getPath()).isEqualTo("/saved.py");
         assertThat(result.getSize()).isEqualTo(42L);
-        assertThat(result.getVersion()).isEqualTo(1);
+        assertThat(result.getRevision()).isEqualTo(1);
     }
 
     @Test

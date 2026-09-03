@@ -14,12 +14,12 @@ import java.util.concurrent.Callable;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.cli.commands.servers.ServerCommandInterface;
-import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.plugins.ExternalPluginsPath;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.core.migration.MigrationRunner;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
@@ -30,20 +30,6 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.utils.Rethrow;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -61,8 +47,10 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     @Inject
     private io.kestra.core.utils.VersionProvider versionProvider;
 
+    // Resolved lazily: an Optional here builds the whole webserver bean graph for every command,
+    // and a configuration declaring kestra.server-type makes that graph reach the database.
     @Inject
-    private Optional<EmbeddedServer> embeddedServer;
+    protected BeanProvider<EmbeddedServer> embeddedServer;
 
     @Inject
     private BeanProvider<FlowAutoLoader> flowAutoLoaderService;
@@ -79,13 +67,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
 
     @Option(names = { "-p", "--plugins" }, description = "Path to plugins directory")
-    protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
-
-    @SuppressWarnings("unused")
-    public static Map<String, Object> propertiesOverrides() {
-        MigrationRunner.setSkipAutoRun(true);
-        return Map.of();
-    }
+    protected Path pluginsPath = ExternalPluginsPath.fromEnvironment().orElse(null);
 
     @Override
     public Integer call() throws Exception {
@@ -188,10 +170,8 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                     } catch (URISyntaxException e) {
                         e.printStackTrace();
                     }
-                    log.info("Main server is running at {}, management server at {}", server.getURL(), managementEndpoint);
+                    log.info("Management server running at {}", managementEndpoint);
                     log.info("Health endpoint is available at {}", healthEndpoint);
-                } else {
-                    log.info("Server is running at {}", server.getURL());
                 }
 
                 if (isFlowAutoLoadEnabled()) {
@@ -221,6 +201,10 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                 "command-shutdown"
             )
         );
+    }
+
+    void setConfig(Path config) {
+        this.config = config;
     }
 
     @SuppressWarnings({ "unused" })

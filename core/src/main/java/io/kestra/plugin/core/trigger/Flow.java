@@ -1,11 +1,9 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.Window;
-import io.kestra.core.utils.*;
 import org.apache.commons.lang3.stream.Streams;
 import org.slf4j.Logger;
 
@@ -14,18 +12,22 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.models.triggers.Window;
+import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
+import io.kestra.core.utils.*;
 import io.kestra.core.validations.FlowTriggerValidation;
 
 import io.micronaut.core.annotation.Nullable;
@@ -114,7 +116,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM Paris time.
 
                 ```yaml
                 id: bronze_layer
@@ -139,6 +141,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     type: io.kestra.plugin.core.trigger.Flow
                     window:
                       deadline: "09:00:00"
+                      timezone: Europe/Paris
                     dependsOn:
                       - namespace: company.team
                         flowId: bronze_layer
@@ -167,7 +170,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     states:
                       - FAILED
                       - WARNING
-                    when: "{{execution.namespace | startsWith 'company'}}\""""
+                    when: "{{flow.namespace | startsWith('company')}}\""""
         ),
         @Example(
             full = true,
@@ -296,55 +299,63 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Positive
     private Integer minSatisfied;
 
-    public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
+    /**
+     * Evaluates this trigger against a terminated execution.
+     *
+     * @param executionOutputs the flow-level outputs of the terminated execution, they are stored outside of the
+     *        execution so they must be loaded by the caller via the
+     *        {@link io.kestra.core.services.ExecutionOutputService}.
+     */
+    public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current,
+        Map<String, Object> executionOutputs) {
         Logger logger = runContext.logger();
 
-        // merge outputs from all the matched executions
-        Map<String, Object> outputs = current.getOutputs();
+        // merge outputs from all the matched executions, keeping them null when there is none so 'trigger.outputs' stays undefined
+        Map<String, Object> outputs = MapUtils.isEmpty(executionOutputs) ? null : executionOutputs;
         if (multipleConditionWindow.isPresent()) {
             outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
         }
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, this);
+        var executionTrigger = ExecutionTrigger.of(
+            this,
+            Output.builder()
+                .executionId(current.getId())
+                .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
+                .namespace(current.getNamespace())
+                .flowId(current.getFlowId())
+                .flowRevision(current.getFlowRevision())
+                .state(current.getState().getCurrent())
+                .startDate(current.getState().getStartDate())
+                .endDate(current.getState().getEndDate().orElse(null))
+                .firstFailedTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).stream().filter(t -> t.getState().getCurrent().isFailed()).map(TaskRun::getTaskId).findFirst().orElse(null))
+                .lastTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).reversed().stream().map(TaskRun::getTaskId).findFirst().orElse(null))
+                .outputs(outputs)
+                .build()
+        );
+
+        List<Label> labels = LabelService.fromTrigger(runContext, this, Map.of("trigger", executionTrigger.getVariables()));
         Streams.of(current.getLabels())
             .filter(label -> label.key().equals(Label.CORRELATION_ID))
             .findFirst()
             .ifPresent(label -> labels.add(label));
 
-        Execution.ExecutionBuilder builder = Execution.builder()
-            .id(IdUtils.create())
-            .tenantId(flow.getTenantId())
-            .namespace(flow.getNamespace())
-            .flowId(flow.getId())
-            .flowRevision(flow.getRevision())
-            .labels(labels)
-            .state(new State())
-            .trigger(
-                ExecutionTrigger.of(
-                    this,
-                    Output.builder()
-                        .executionId(current.getId())
-                        .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
-                        .namespace(current.getNamespace())
-                        .flowId(current.getFlowId())
-                        .flowRevision(current.getFlowRevision())
-                        .state(current.getState().getCurrent())
-                        .outputs(outputs)
-                        .build()
-                )
-            );
+        // the execution snapshots the flow labels and variables, so it is built through the same factory as
+        // every other creation path rather than field by field, which is how flow variables went missing here
+        Execution execution = Execution.newExecution(flow, labels).withTrigger(executionTrigger);
+        execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(current.getMetadata().executionDepthOrZero() + 1));
 
         try {
+            Map<String, Object> renderedInputs;
             if (this.inputs != null) {
                 if (outputs != null && !outputs.isEmpty()) {
-                    builder.inputs(runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs))));
+                    renderedInputs = runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs)));
                 } else {
-                    builder.inputs(runContext.render(this.inputs));
+                    renderedInputs = runContext.render(this.inputs);
                 }
             } else {
-                builder.inputs(new HashMap<>());
+                renderedInputs = new HashMap<>();
             }
-            return Optional.of(builder.build());
+            return Optional.of(execution.withInputs(renderedInputs));
         } catch (Exception e) {
             logger.warn(
                 "Failed to trigger flow {}.{} for trigger {}, invalid inputs",
@@ -353,8 +364,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 this.getId(),
                 e
             );
-            var failedExecution = builder.build().withState(State.Type.FAILED);
-            return Optional.of(failedExecution);
+            return Optional.of(execution.withState(State.Type.FAILED));
         }
     }
 
@@ -450,7 +460,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             this.minSatisfied = minSatisfied;
         }
 
-
         @Override
         public String getId() {
             return DEPENDS_ON_CONDITION_PREFIX + id;
@@ -459,11 +468,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Override
         public TimeWindow getTimeWindow() {
             return window == null ? TimeWindow.builder().build() : window.toTimeWindow();
-        }
-
-        @Override
-        public Boolean getResetOnSuccess() {
-            return window == null ? Boolean.TRUE : window.isFireOnce();
         }
 
         @Override
@@ -499,8 +503,9 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 "_", // avoid possible mismatch between namespace and flowId
                 dependency.flowId,
                 dependency.when != null ? dependency.when.toString() : null,
-                ListUtils.emptyOnNull(dependency.states).stream().sorted().map(Enum::name).collect(Collectors.joining(",")),
-                MapUtils.emptyOnNull(dependency.labels).entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(","))
+                ListUtils.emptyOnNull(dependency.states).stream().map(Enum::name).sorted().collect(Collectors.joining(",")),
+                MapUtils.emptyOnNull(dependency.labels).entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getKey() + ":" + entry.getValue())
+                    .collect(Collectors.joining(","))
             );
         }
     }
@@ -521,33 +526,64 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
 
         @Schema(
             title = "The execution labels that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private Map<String, Object> executionLabels;
 
         @Schema(
             title = "The execution state",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private State.Type state;
 
         @Schema(
+            title = "The execution start date",
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
+        @NotNull
+        private Instant startDate;
+
+        @Schema(
+            title = "The execution end date",
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
+        @NotNull
+        private Instant endDate;
+
+        @Schema(
             title = "The namespace of the flow that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private String namespace;
 
         @Schema(
             title = "The flow ID whose execution triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private String flowId;
 
         @Schema(
             title = "The flow revision that triggered the current flow",
-            description = "In case multiple executions triggered the current flow, this will be the last one.")
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private Integer flowRevision;
+
+        @Schema(
+            title = "The first failed task ID from the execution that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
+        private String firstFailedTaskId;
+
+        @Schema(
+            title = "The last task ID from the execution that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
+        private String lastTaskId;
 
         @Schema(
             title = "The extracted outputs from the flows that triggered the current flow",

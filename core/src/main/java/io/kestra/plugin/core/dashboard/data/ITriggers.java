@@ -6,7 +6,6 @@ import java.util.List;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.EqualTo;
 
 public interface ITriggers extends IData<ITriggers.Fields> {
 
@@ -23,7 +22,7 @@ public interface ITriggers extends IData<ITriggers.Fields> {
             updatedWhere.removeIf(filter -> filter.getField().equals(ITriggers.Fields.NAMESPACE));
             namespaceFilters.forEach(f ->
             {
-                updatedWhere.add(EqualTo.<ITriggers.Fields> builder().field(ITriggers.Fields.NAMESPACE).value(f.value()).build());
+                updatedWhere.add(f.toDashboardFilterBuilder(ITriggers.Fields.NAMESPACE, f.value()));
             });
         }
 

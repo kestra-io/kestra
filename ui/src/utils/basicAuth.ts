@@ -1,19 +1,43 @@
-export function logout() {
-    document.cookie = "BASIC_AUTH=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;samesite=strict";
-    return true;
+import {apiUrlWithoutTenants} from "override/utils/route"
+import {getCsrfToken} from "./csrf"
+import {useClient} from "@kestra-io/kestra-sdk"
+
+// The BASIC_AUTH cookie itself is HttpOnly and issued by the server (see MiscController#login/#logout).
+// The server also issues this non-HttpOnly cookie in lockstep, mirroring whether BASIC_AUTH is set;
+const AUTH_FLAG_COOKIE_NAME = "kestraBasicAuthenticated"
+
+export async function logout() {
+    try {
+        await fetch(`${apiUrlWithoutTenants()}/logout`, {
+            method: "POST",
+            credentials: "include",
+            headers: {"X-CSRF-TOKEN": getCsrfToken() ?? ""},
+        })
+    } catch {
+        // best-effort: if this fails, the cookies (and thus isLoggedIn()) remain as the server last set them
+    }
+    return true
 }
 
-export function signIn(username: string, password: string) {
-    const trimmedUsername = username.trim();
-    const credentials = btoa(`${trimmedUsername}:${password}`)
-    document.cookie = `BASIC_AUTH=${credentials};path=/;samesite=strict`;
-    return true;
+export async function signIn(credentials: {username: string, password: string}) {
+    const {username, password} = credentials
+    const trimmedUsername = username.trim()
+    await validateCredentials(trimmedUsername, password)
+    return {username: trimmedUsername}
 }
 
 export function isLoggedIn() {
-    return Boolean(credentials())
+    return document.cookie
+        .split("; ")
+        .includes(`${AUTH_FLAG_COOKIE_NAME}=true`)
 }
 
-export function credentials() {
-    return document.cookie.split("BASIC_AUTH=")?.[1]?.split(";")?.[0];
+async function validateCredentials(username: string, password: string) {
+    try {
+        const axios = useClient()
+        await axios.post(`${apiUrlWithoutTenants()}/login`, {username, password}, {timeout: 10000, withCredentials: true})
+    } catch(e) {
+        await logout()
+        throw e
+    }
 }

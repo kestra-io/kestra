@@ -1,5 +1,7 @@
 package io.kestra.core.services;
 
+import java.util.Optional;
+
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
@@ -7,8 +9,6 @@ import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 @Singleton
 @Slf4j

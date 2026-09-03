@@ -2,7 +2,11 @@
     <ElTabs
         v-model="model"
         :type="type"
-        :class="{'kel-tabs--box': props.type === 'box'}"
+        :class="{
+            'kel-tabs--box': props.type === 'box',
+            'kel-tabs--segmented': props.type === 'segmented',
+            'kel-tabs--pane-scroll': paneScroll,
+        }"
         v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default>
@@ -21,7 +25,8 @@
     const model = defineModel<string>()
 
     const props = defineProps<{
-        type?: "" | "card" | "border-card" | "box"
+        type?: "" | "card" | "border-card" | "box" | "segmented"
+        paneScroll?: boolean
     }>()
 
     defineSlots<{
@@ -29,10 +34,10 @@
     }>()
 
     const type = computed(() =>
-        (props.type === "box" ? "" : props.type)
+        (props.type === "box" || props.type === "segmented" ? "" : props.type),
     )
 
-    const filteredProps = useFilteredProps(props, ["type"])
+    const filteredProps = useFilteredProps(props, ["type", "paneScroll"])
 </script>
 
 <style lang="scss">
@@ -44,22 +49,34 @@
             color: currentColor;
         }
 
+        &.kel-tabs--pane-scroll {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+
+            .kel-tabs__content {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+            }
+        }
+
         .kel-tabs__active-bar {
             height: 4px;
-            background-color: var(--ks-button-background-primary);
+            background-color: var(--ks-btn-primary-bg-default);
         }
 
         .kel-tabs__item {
             padding: 1rem 1.5rem !important;
-            transition: all 0.3s ease;
-            color: var(--ks-content-secondary);
+            transition: color 0.3s ease;
+            color: var(--ks-text-secondary);
 
             &:hover {
-                color: var(--ks-content-link-hover);
+                color: var(--ks-text-link);
             }
 
             &.is-disabled {
-                color: var(--ks-content-inactive) !important;
+                color: var(--ks-text-inactive) !important;
             }
         }
 
@@ -74,20 +91,14 @@
                 }
 
                 &.is-active {
-                    background-color: var(--ks-button-background-primary);
-                    color: var(--ks-button-content-primary);
+                    background-color: var(--ks-btn-primary-bg-default);
+                    color: var(--ks-btn-primary-text);
                 }
             }
         }
 
-        &.kel-tabs--box {
-            background: var(--ks-background-card);
-            border-bottom: 1px solid var(--ks-border-primary);
-            padding: .5rem;
-            position: sticky;
-            top: var(--top-navbar-height);
-            z-index: 1000;
-
+        &.kel-tabs--box,
+        &.kel-tabs--segmented {
             .kel-tabs__active-bar {
                 display: none;
             }
@@ -100,8 +111,56 @@
                 margin-bottom: 0;
             }
 
+            .kel-tabs__nav {
+                gap: var(--ks-spacing-1);
+                padding: var(--ks-spacing-2);
+            }
+
+            .kel-tabs__item {
+                min-width: 45px;
+                max-width: fit-content;
+                height: 28px;
+                padding: var(--ks-spacing-2) var(--ks-spacing-3) !important;
+                font-size: var(--ks-font-size-xs);
+                color: var(--ks-text-secondary);
+                border: 0.5px solid transparent;
+                border-radius: 6px;
+                transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+                &.is-active {
+                    background: var(--ks-btn-secondary-bg-active);
+                    color: var(--ks-text-primary);
+                    border-color: var(--ks-btn-secondary-border-active);
+                }
+
+                &:hover {
+                    color: var(--ks-text-primary);
+                }
+
+                &.is-disabled {
+                    background: transparent;
+                    border-color: transparent;
+                }
+            }
+        }
+
+        &.kel-tabs--box {
+            position: sticky;
+            z-index: 1000;
+
             .kel-tabs__nav-scroll {
-                padding: 0 15px;
+                display: flex;
+                align-items: center;
+                height: 44px;
+            }
+
+            .kel-tabs__item {
+                padding: 4px 8px !important;
+            }
+
+            .kel-tabs__nav-wrap {
+                background: var(--ks-bg-surface);
+                border-bottom: var(--ks-border-width-thin) solid var(--ks-border-default);
             }
 
             .kel-tabs__nav-prev {
@@ -112,7 +171,7 @@
                     right: -10px;
                     height: 100%;
                     width: 10px;
-                    background: linear-gradient(90deg, var(--ks-background-card) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(90deg, var(--ks-bg-input) 0%, rgba(0, 0, 0, 0) 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
@@ -125,21 +184,30 @@
                     left: -15px;
                     height: 100%;
                     width: 15px;
-                    background: linear-gradient(-90deg, var(--ks-background-card) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(-90deg, var(--ks-bg-input) 0%, rgba(0, 0, 0, 0) 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
+        }
 
-            .kel-tabs__item {
-                padding: .5rem 1rem !important;
+        &.kel-tabs--segmented {
+            .kel-tabs__nav-wrap {
+                background: transparent;
+                border-bottom: none;
+            }
 
-                &.is-active {
-                    background: var(--ks-button-background-secondary-hover);
-                    color: var(--ks-content-link);
-                    border-radius: var(--kel-border-radius-base);
-                }
+            .kel-tabs__nav {
+                width: fit-content;
+                padding: 4px;
+                background: var(--ks-bg-tabs-default);
+                border-radius: var(--ks-radius-lg);
+                border: var(--ks-border-width-thin) solid var(--ks-border-default);
+            }
+
+            .kel-tabs__item.is-active {
+                background: var(--ks-btn-secondary-bg-default);
+                border-color: var(--ks-btn-secondary-border-active);
             }
         }
     }
-
 </style>

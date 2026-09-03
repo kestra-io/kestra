@@ -22,7 +22,13 @@ public record ServerConfig(
     @Bindable(defaultValue = "AFTER_TERMINATION_GRACE_PERIOD")
     @Nullable WorkerTaskRestartStrategy workerTaskRestartStrategy,
 
-    Liveness liveness
+    Liveness liveness,
+
+    @Nullable Preview preview,
+
+    @Nullable Standalone standalone,
+
+    @Nullable Service service
 
 ) {
 
@@ -51,5 +57,31 @@ public record ServerConfig(
         @NotNull @Bindable(defaultValue = "45s") Duration timeout,
         @NotNull @Bindable(defaultValue = "45s") Duration initialDelay,
         @NotNull @Bindable(defaultValue = "3s") Duration heartbeatInterval) {
+    }
+
+    @ConfigurationProperties("preview")
+    public record Preview(
+        @Bindable(defaultValue = "100") Integer initialRows,
+        @Bindable(defaultValue = "5000") Integer maxRows) {
+    }
+
+    @ConfigurationProperties("standalone")
+    public record Standalone(
+        @Nullable Running running) {
+
+        @ConfigurationProperties("running")
+        public record Running(
+            @Bindable(defaultValue = "PT1M") Duration timeout) {
+        }
+    }
+
+    @ConfigurationProperties("service")
+    public record Service(
+        @Nullable Purge purge) {
+
+        @ConfigurationProperties("purge")
+        public record Purge(
+            @Nullable Duration retention) {
+        }
     }
 }

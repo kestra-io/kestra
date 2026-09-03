@@ -3,7 +3,6 @@ import {within, userEvent, expect} from "storybook/test"
 import {ref} from "vue"
 import KsIconButton from "../../../src/components/Basic/KsIconButton/KsIconButton.vue"
 
-// Inline SVG icons to avoid external dependencies
 const TrashIcon = {
     template: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14H6L5 6\"/><path d=\"M10 11v6\"/><path d=\"M14 11v6\"/><path d=\"M9 6V4h6v2\"/></svg>",
 }
@@ -29,6 +28,7 @@ const meta: Meta<typeof KsIconButton> = {
         },
         ariaLabel: {control: "text"},
         disabled: {control: "boolean"},
+        filled: {control: "boolean"},
     },
     parameters: {
         docs: {
@@ -134,6 +134,26 @@ export const ActionGroup: Story = {
         await expect(buttons).toHaveLength(3)
         await userEvent.click(buttons[0])
         await expect(canvas.getByText(/Last action: copy/)).toBeTruthy()
+    },
+}
+
+/** Filled – keeps a persistent background while staying centered */
+export const Filled: Story = {
+    render: () => ({
+        components: {KsIconButton, EditIcon},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;align-items:center">
+                <ks-icon-button filled tooltip="Default" ariaLabel="Default"><edit-icon /></ks-icon-button>
+                <ks-icon-button filled type="primary" tooltip="Active" ariaLabel="Active"><edit-icon /></ks-icon-button>
+            </div>
+        `,
+    }),
+    parameters: {
+        docs: {
+            description: {
+                story: "`filled` keeps KsIconButton's centering but lets the button `type` background show through — default is the secondary box, `type=\"primary\"` gives the active fill. Used for persistent icon toggles such as the no-code Pebble switch.",
+            },
+        },
     },
 }
 

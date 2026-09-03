@@ -1,8 +1,9 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -11,28 +12,39 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.utils.IdUtils;
 
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
+@Property(name = "kestra.execution.depth.max-depth", value = "3")
 class SubflowRunnerTest {
 
     @Inject
@@ -45,13 +57,22 @@ class SubflowRunnerTest {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
+    private FlowMetaStoreInterface flowMetaStore;
+
+    @Inject
+    protected BroadcastQueueInterface<FlowInterface> flowQueue;
+
+    @Inject
     protected BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
 
     @Inject
-    protected DispatchQueueInterface<Execution> executionQueue;
+    protected DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private TaskOutputService taskOutputService;
+
+    @Inject
+    private DispatchQueueInterface<LogEntry> logQueue;
 
     @Test
     @LoadFlows({ "flows/valids/subflow-inherited-labels-child.yaml", "flows/valids/subflow-inherited-labels-parent.yaml" })
@@ -133,19 +154,48 @@ class SubflowRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/subflow-nullable-input-parent.yaml", "flows/valids/subflow-nullable-input-child.yaml" })
+    void shouldPassNullableInputFromParentToSubflow() throws QueueException, TimeoutException, io.kestra.core.exceptions.InternalException {
+        // Given — the parent flow has an optional INT input provided as an empty string, reproducing
+        // the case where a user leaves an optional input blank in the UI (or the API sends "").
+        // The Subflow task forwards it via "{{ inputs.integerValue }}", which Pebble renders to "".
+        // Without the fix this fails with "Invalid input for integerValue, For input string: \"\"";
+        // with the fix both parent and child should reach SUCCESS.
+
+        // When
+        Execution parentExecution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests", "subflow-nullable-input-parent",
+            null, (f, e) -> Map.of("integerValue", "")
+        );
+
+        // Then — parent reaches SUCCESS
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        String childExecutionId = (String) taskOutputService.getOutputs(
+            parentExecution.findTaskRunsByTaskId("subflow").getFirst()
+        ).get("executionId");
+        assertThat(childExecutionId).isNotBlank();
+
+        Execution childExecution = executionRepository.findById(MAIN_TENANT, childExecutionId).orElseThrow();
+
+        // Then — child also reaches SUCCESS with null input
+        assertThat(childExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml" })
     void subflowShouldTransmitKind() throws QueueException, io.kestra.core.exceptions.InternalException {
         Flow parent = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "subflow-parent").orElseThrow();
-        Execution execution = Execution.newExecution(
-            parent,
-            (f, e) -> Collections.emptyMap(),
-            Collections.emptyList(),
-            Optional.empty(),
-            ExecutionKind.TEST
+        String executionId = IdUtils.create();
+        executionCommandQueue.emit(
+            Create.of(new ExecutionId(parent.getTenantId(), parent.getNamespace(), parent.getId(), executionId, parent.getRevision()))
+                .withKind(ExecutionKind.TEST)
         );
-        executionQueue.emit(execution);
 
-        Execution parentExecution = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), execution);
+        Execution parentExecution = runnerUtils.awaitFlowExecution(
+            e -> executionId.equals(e.getId()) && e.getState().isTerminated(),
+            MAIN_TENANT, "io.kestra.tests", "subflow-parent"
+        );
         assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(parentExecution.getTaskRunList()).hasSize(1);
         String childExecutionId = (String) taskOutputService.getOutputs(parentExecution.findTaskRunsByTaskId("subflow").getFirst()).get("executionId");
@@ -162,5 +212,63 @@ class SubflowRunnerTest {
         assertTrue(grandChildExecution.isPresent());
         assertThat(grandChildExecution.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(grandChildExecution.get().getTaskRunList()).hasSize(1);
+    }
+
+    @Test
+    void shouldFailRatherThanRecurseForeverWhenTwoFlowsSubflowEachOther() throws QueueException, TimeoutException {
+        // Given two flows that Subflow-call each other. FlowService.create() now rejects this shape (see FlowServiceTest),
+        // so the pair is seeded directly through the repository and flow queue, bypassing that save-time check.
+        String flowAId = IdUtils.create();
+        String flowBId = IdUtils.create();
+        Flow flowA = Flow.builder()
+            .id(flowAId)
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.tests")
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace("io.kestra.tests").flowId(flowBId).build()))
+            .build();
+        Flow flowB = Flow.builder()
+            .id(flowBId)
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.tests")
+            .tasks(List.of(Subflow.builder().id("call").type(Subflow.class.getName()).namespace("io.kestra.tests").flowId(flowAId).build()))
+            .build();
+        flowRepository.create(GenericFlow.of(flowA));
+        flowRepository.create(GenericFlow.of(flowB));
+        flowQueue.emit(flowA);
+        flowQueue.emit(flowB);
+        await().atMost(Duration.ofSeconds(10)).until(
+            () -> flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowAId))
+                && flowMetaStore.allLastVersion().stream().anyMatch(f -> f.getId().equals(flowBId))
+        );
+
+        // When
+        Execution execution = runnerUtils.runOne(flowA, null);
+
+        // Then the chain is stopped rather than left to recurse forever
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/subflow-secret-output-parent.yaml", "flows/valids/subflow-secret-output-child.yaml" })
+    void shouldMaskSecretWhenParentLogsSubflowSecretOutput() throws QueueException, TimeoutException, InterruptedException, io.kestra.core.exceptions.InternalException {
+        // Given — a listener on the log queue for the parent's `log` task
+        AtomicReference<LogEntry> logEntry = new AtomicReference<>();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        logQueue.addListener(left ->
+        {
+            if (left.getFlowId().equals("subflow-secret-output-parent") && left.getTaskId().equals("log")) {
+                logEntry.set(left);
+                countDownLatch.countDown();
+            }
+        });
+
+        // When — the parent flow logs a SECRET-typed output produced by its subflow
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-secret-output-parent");
+
+        // Then — the parent's log task masks the decrypted secret instead of printing it in plaintext
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        assertThat(logEntry.get()).isNotNull();
+        assertThat(logEntry.get().getMessage()).isEqualTo("secret is ******");
     }
 }

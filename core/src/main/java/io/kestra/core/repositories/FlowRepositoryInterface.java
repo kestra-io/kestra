@@ -122,9 +122,41 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     Optional<FlowWithSource> findByIdWithSourceWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision);
 
+    /**
+     * Returns the latest non-draft revision of the given flow, or {@link Optional#empty()} if every revision
+     * is a draft (or the flow does not exist). This is the lookup used when starting a new execution without
+     * an explicit revision (webhooks, schedules, subflows, manual triggers).
+     */
+    Optional<Flow> findByIdForExecution(String tenantId, String namespace, String id);
+
+    /**
+     * Same as {@link #findByIdForExecution(String, String, String)} but bypasses ACL checks.
+     * Used in execution paths that have already been authorized at the controller layer.
+     */
+    Optional<Flow> findByIdForExecutionWithoutAcl(String tenantId, String namespace, String id);
+
+    /**
+     * Same as {@link #findByIdForExecution(String, String, String)} but returns the source as well.
+     */
+    Optional<FlowWithSource> findByIdWithSourceForExecution(String tenantId, String namespace, String id);
+
+    /**
+     * Same as {@link #findByIdWithSourceForExecution(String, String, String)} but bypasses ACL checks.
+     * Used by the scheduler and other internal components that have no user context.
+     */
+    Optional<FlowWithSource> findByIdWithSourceForExecutionWithoutAcl(String tenantId, String namespace, String id);
+
+    /**
+     * Returns the latest non-draft revision of every flow across all tenants. Used by the scheduler to
+     * decide which flows have triggers to register.
+     */
+    List<FlowWithSource> findAllWithSourceForExecutionForAllTenants();
+
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted);
 
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
+
+    List<FlowWithSource> findRevisionsWithoutAcl(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
 
     Integer lastRevision(String tenantId, String namespace, String id);
 
@@ -150,6 +182,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix);
 
+    /**
+     * Lists flows in a namespace that are eligible for execution, i.e., excluding deleted and disabled flows.
+     */
     List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace);
 
     List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace);
@@ -167,15 +202,54 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         String namespace,
         @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
 
+    ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
+
+    /**
+     * Finds flows by trigger class without applying user-facing ACL restrictions.
+     * Intended exclusively for internal authorization checks (e.g. MCP server access control) where
+     * all flows referencing a given server must be visible regardless of the caller's permissions.
+     *
+     * @throws UnsupportedOperationException if the repository implementation does not support this operation
+     */
+    ArrayListTotal<Flow> findWithNoAcl(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
+
     ArrayListTotal<FlowWithSource> findWithSource(
         Pageable pageable,
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
 
-    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace);
+    /**
+     * Same as {@link #findWithSource(Pageable, String, List)} but resolves each flow to its most
+     * recent non-draft revision. A flow whose latest revision is a draft therefore yields the last
+     * revision that was actually saved, and a flow with only draft revisions yields nothing.
+     * <p>
+     * Intended for consumers that must not observe drafts, such as exporting sources to Git. The
+     * revision fallback matters: returning nothing for a draft-headed flow that also has a saved
+     * revision would make external sync treat it as deleted.
+     * <p>
+     * The default implementation does not filter drafts. Implementations that track draft
+     * revisions should override it.
+     */
+    default ArrayListTotal<FlowWithSource> findWithSourceExcludingDrafts(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters) {
+        return this.findWithSource(pageable, tenantId, filters);
+    }
+
+    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace);
 
     List<String> findDistinctNamespace(String tenantId);
 
+    /**
+     * Lists distinct namespaces that contain at least one executable flow, i.e., excluding deleted and disabled flows
+     */
     List<String> findDistinctNamespaceExecutable(String tenantId);
 
     default List<String> findDistinctNamespace(String tenantId, String prefix) {

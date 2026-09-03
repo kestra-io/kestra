@@ -45,7 +45,7 @@ export const Types: Story = {
                         <td class="kel-table__cell"><ks-tag effect="dark" type="danger">Danger</ks-tag></td>
                     </tr>
                     <tr>
-                        <td class="kel-table__cell">Light (default)</td>
+                        <td class="kel-table__cell">Light</td>
                         <td class="kel-table__cell"><ks-tag effect="light">Default</ks-tag></td>
                         <td class="kel-table__cell"><ks-tag effect="light" type="primary">Primary</ks-tag></td>
                         <td class="kel-table__cell"><ks-tag effect="light" type="success">Success</ks-tag></td>
@@ -54,7 +54,7 @@ export const Types: Story = {
                         <td class="kel-table__cell"><ks-tag effect="light" type="danger">Danger</ks-tag></td>
                     </tr>
                     <tr>
-                        <td class="kel-table__cell">Plain</td>
+                        <td class="kel-table__cell">Plain (default)</td>
                         <td class="kel-table__cell"><ks-tag effect="plain">Default</ks-tag></td>
                         <td class="kel-table__cell"><ks-tag effect="plain" type="primary">Primary</ks-tag></td>
                         <td class="kel-table__cell"><ks-tag effect="plain" type="success">Success</ks-tag></td>

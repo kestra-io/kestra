@@ -73,6 +73,8 @@ class TriggerSchedulingLoopTest {
         loop.pause();
         verify(triggerScheduler, times(1)).onStart(any(), any(), eq(Set.of(1)));
         verify(triggerScheduler, atLeast(2)).onSchedule(any(), any(), eq(Set.of(1)));
+        Thread.sleep(500); // let any in-flight iteration complete after pause
+        Mockito.clearInvocations(triggerScheduler);
         Thread.sleep(2000);
 
         // THEN

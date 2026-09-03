@@ -1,5 +1,5 @@
 // inspired from https://kerkour.com/vuejs-3-router-links-dynamic-vhtml
-import type {Router} from "vue-router";
+import type {Router} from "vue-router"
 
 /**
  * Converts [[link execution="..." flowId="..." namespace="..."]] patterns
@@ -7,33 +7,33 @@ import type {Router} from "vue-router";
  */
 export function processLinkTags(message: string): string {
     return message.replace(/\[\[link\s+([^[\]]+)\]\]/g, (match, attrs) => {
-        const attrMap: Record<string, string> = {};
-        const attrRegex = /(\w+)="([^"]*)"/g;
-        let attrMatch;
+        const attrMap: Record<string, string> = {}
+        const attrRegex = /(\w+)="([^"]*)"/g
+        let attrMatch
         while ((attrMatch = attrRegex.exec(attrs)) !== null) {
-            attrMap[attrMatch[1]] = attrMatch[2];
+            attrMap[attrMatch[1]] = attrMatch[2]
         }
-        const {execution, flowId, namespace} = attrMap;
+        const {execution, flowId, namespace} = attrMap
         if (!execution || !flowId || !namespace) {
-            return match;
+            return match
         }
-        return `<router-md execution="${execution}" flowId="${flowId}" namespace="${namespace}"></router-md>`;
-    });
+        return `<router-md execution="${execution}" flowId="${flowId}" namespace="${namespace}"></router-md>`
+    })
 }
 
 function gotoRoute(event: MouseEvent, route: any, router: Router) {
-  const {altKey, ctrlKey, metaKey, shiftKey, button} = event;
+  const {altKey, ctrlKey, metaKey, shiftKey, button} = event
   // ignore with control keys
   if (metaKey || altKey || ctrlKey || shiftKey) {
-    return;
+    return
   }
 
   // ignore right clicks
   if (button !== undefined && button !== 0) {
-    return;
+    return
   }
-  event.preventDefault();
-  router.push(route);
+  event.preventDefault()
+  router.push(route)
 }
 
 /**
@@ -45,16 +45,16 @@ export default function linkify(element?: HTMLElement, router?: Router) {
   if (!element || !router) {
     return
   }
-  const links = element?.getElementsByTagName("router-md") ?? [];
+  const links = element?.getElementsByTagName("router-md") ?? []
 
   Array.from(links).forEach((link: Element) => {
     if (!(link instanceof HTMLElement)) {
-      return;
+      return
     }
 
-    const execution = link.getAttribute("execution");
-    const namespace = link.getAttribute("namespace");
-    const flowId = link.getAttribute("flowId");
+    const execution = link.getAttribute("execution")
+    const namespace = link.getAttribute("namespace")
+    const flowId = link.getAttribute("flowId")
 
     const executionRoute = {name: "executions/update", params: {id: execution, namespace: namespace, flowId: flowId}}
     const executionUrl = router.resolve(executionRoute)
@@ -62,23 +62,23 @@ export default function linkify(element?: HTMLElement, router?: Router) {
     const flowUrl = router.resolve(flowRoute)
 
     // we create the anchor nodes
-    const anchorNodeExection = document.createElement("a");
-    anchorNodeExection.href = executionUrl.href;
-    anchorNodeExection.textContent = execution;
+    const anchorNodeExection = document.createElement("a")
+    anchorNodeExection.href = executionUrl.href
+    anchorNodeExection.textContent = execution
     anchorNodeExection.onclick = (event: MouseEvent) => {
-        gotoRoute(event, executionRoute, router);
+        gotoRoute(event, executionRoute, router)
     }
 
-    const anchorNodeFlow = document.createElement("a");
-    anchorNodeFlow.href = flowUrl.href;
-    anchorNodeFlow.textContent = `${namespace}.${flowId}`;
+    const anchorNodeFlow = document.createElement("a")
+    anchorNodeFlow.href = flowUrl.href
+    anchorNodeFlow.textContent = `${namespace}.${flowId}`
     anchorNodeFlow.onclick = (event: MouseEvent) => {
-      gotoRoute(event, flowRoute, router);
+      gotoRoute(event, flowRoute, router)
     }
 
     // finally we rebuild the router-md component with the new links
-    link.replaceWith(anchorNodeExection);
-    anchorNodeExection.after(anchorNodeFlow);
-    anchorNodeExection.after(document.createTextNode(" for flow "));
-  });
+    link.replaceWith(anchorNodeExection)
+    anchorNodeExection.after(anchorNodeFlow)
+    anchorNodeExection.after(document.createTextNode(" for flow "))
+  })
 }

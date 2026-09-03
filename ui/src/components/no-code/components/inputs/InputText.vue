@@ -9,47 +9,58 @@
             :id="uid"
             :placeholder
             :disabled
-            :type="disabled ? '' : 'textarea'"
+            :readonly="readonly"
+            :type="(disabled || readonly) ? '' : 'textarea'"
             :autosize="{minRows: 1}"
-            :inputStyle="haveError ? {boxShadow: '0 0 6px #ab0009'} : {}"
-            :suffixIcon="disabled ? Lock : undefined"
+            :inputStyle="{...(haveError ? {boxShadow: '0 0 6px #ab0009'} : {}), ...inputStyle}"
+            :suffixIcon="SuffixIcon"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {useId, computed, useTemplateRef} from "vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
+    import {useId, computed, useTemplateRef} from "vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
 
-    defineOptions({inheritAttrs: false});
+    const SuffixIcon = computed(() => {
+        if (props.disabled || props.readonly) {
+            return Lock
+        }
 
-    const uid = useId();
-    const elInputRef = useTemplateRef("elInputRef");
+        return undefined
+    })
 
-    const emits = defineEmits(["update:modelValue"]);
+    defineOptions({inheritAttrs: false})
+
+    const uid = useId()
+    const elInputRef = useTemplateRef("elInputRef")
+
+    const emits = defineEmits(["update:modelValue"])
     const props = defineProps({
         modelValue: {type: [String, Number, Boolean], default: undefined},
         label: {type: String, default: undefined},
         placeholder: {type: String, default: ""},
         required: {type: Boolean, default: false},
         disabled: {type: Boolean, default: false},
+        readonly: {type: Boolean, default: false},
         margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
-        haveError: {type: Boolean, default: false}
-    });
+        haveError: {type: Boolean, default: false},
+        inputStyle: {type: Object, default: () => ({})},
+    })
 
     const input = computed({
         get: () => props.modelValue,
         set: (value) => {
-            emits("update:modelValue", value);
-        }
-    });
+            emits("update:modelValue", value)
+        },
+    })
 
     defineExpose({
         focus: () => {
-            (elInputRef.value as any)?.focus?.();
-        }
-    });
+            (elInputRef.value as any)?.focus?.()
+        },
+    })
 </script>
 
 <style scoped lang="scss">
@@ -57,7 +68,7 @@
 
 :deep(.kel-input__icon) {
     .lock-icon {
-        color: var(--ks-content-inactive);
+        color: var(--ks-text-inactive);
     }
 }
 </style>

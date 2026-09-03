@@ -16,31 +16,24 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.4.1"
+    id "com.gradleup.shadow" version "9.6.1"
     id "application"
 
     // test
-    id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.2.3.7755"
+    id "org.sonarqube" version "7.4.0.8496"
     id 'jacoco-report-aggregation'
-
-    // helper
-    id "com.github.ben-manes.versions" version "0.54.0"
-
-    // front
-    id 'com.github.node-gradle.node' version '7.1.0'
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.7"
+    id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.36.0"
+    id "com.vanniktech.maven.publish" version "0.37.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.2.1" apply false
+    id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.1.0"
+    id "io.kestra.gradle.spotless-conventions" version "1.2.10"
 }
 
 idea {
@@ -62,18 +55,6 @@ application {
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
-    }
-}
-
-
-abstract class GenericLocationProvider implements CommandLineArgumentProvider {
-    @InputFile
-    @PathSensitive(PathSensitivity.RELATIVE)
-    abstract RegularFileProperty getDistribution()
-
-    @Override
-    Iterable<String> asArguments() {
-        ["-javaagent:${distribution.get().asFile.absolutePath}"]
     }
 }
 
@@ -152,35 +133,36 @@ allprojects {
             implementation "org.slf4j:slf4j-api"
             implementation "ch.qos.logback:logback-classic"
             implementation "org.codehaus.janino:janino"
-            implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j'
-            implementation group: 'org.slf4j', name: 'jul-to-slf4j'
-            implementation group: 'org.slf4j', name: 'jcl-over-slf4j'
-            implementation group: 'org.fusesource.jansi', name: 'jansi'
+            implementation "org.apache.logging.log4j:log4j-to-slf4j"
+            implementation "org.slf4j:jul-to-slf4j"
+            implementation "org.slf4j:jcl-over-slf4j"
+            implementation "org.fusesource.jansi:jansi"
 
             // OTEL
             implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
             // jackson
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core'
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations'
-            implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
-            implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
-            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
-            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
-            implementation group: 'com.fasterxml.uuid', name: 'java-uuid-generator'
+            implementation "com.fasterxml.jackson.core:jackson-core"
+            implementation "com.fasterxml.jackson.core:jackson-databind"
+            implementation "com.fasterxml.jackson.core:jackson-annotations"
+            implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
+            implementation "com.fasterxml.jackson.module:jackson-module-parameter-names"
+            implementation "com.fasterxml.jackson.datatype:jackson-datatype-guava"
+            implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+            implementation "com.fasterxml.uuid:java-uuid-generator"
 
             // kestra
-            implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
-            implementation (group: 'net.thisptr', name: 'jackson-jq') {
+            implementation "com.devskiller.friendly-id:friendly-id"
+            implementation ("net.thisptr:jackson-jq") {
                 exclude group: 'com.fasterxml.jackson.core'
             }
 
             // exposed utils
-            api group: 'com.google.guava', name: 'guava'
-            api group: 'commons-io', name: 'commons-io'
-            api group: 'org.apache.commons', name: 'commons-lang3'
+            api "com.google.guava:guava"
+            api "commons-io:commons-io"
+            api "org.apache.commons:commons-lang3"
             api "io.swagger.core.v3:swagger-annotations"
+            api "com.google.code.findbugs:jsr305" // brings @CheckReturnValue and already in path in core
         }
     }
 }
@@ -188,11 +170,29 @@ allprojects {
 /**********************************************************************************************************************\
  * Test
  **********************************************************************************************************************/
+
+// Per-module test heap, sized from measured peak GC heap occupancy (dev-tools/analyze-test-heap.sh,
+// run with -PprofileHeap) plus ~30% headroom. A single blanket value either wastes memory on small
+// modules or starves large ones — re-profile and bump a module's entry here if it starts failing
+// with OutOfMemoryError / GC overhead limit exceeded.
+ext.testHeapSizes = [
+    'processor'        : '256m',
+    'executor'         : '768m',
+    'scheduler'        : '768m',
+    'worker'           : '768m',
+    'jdbc-mysql'       : '768m',
+    'jdbc-postgres'    : '1024m',
+    'tests'            : '1024m',
+    'cli'              : '1280m',
+    'jdbc-h2'          : '1280m',
+    'webserver'        : '1280m',
+    'core'             : '2560m',
+]
+
 subprojects {subProj ->
 
     if (subProj.name != 'platform' && subProj.name != 'jmh-benchmarks') {
 
-        apply plugin: "com.adarshr.test-logger"
         apply plugin: 'jacoco'
 
         java {
@@ -202,11 +202,19 @@ subprojects {subProj ->
         }
 
         configurations {
-            agent {
-                canBeResolved = true
-                canBeConsumed = true
-            }
             mockitoAgent
+            // Exposes this project's compiled test classes/resources to other projects, replacing the
+            // Gradle 9.5-incompatible `project(':x').sourceSets.test.output` cross-project script access.
+            testArtifacts {
+                canBeConsumed = true
+                canBeResolved = false
+            }
+        }
+
+        artifacts {
+            sourceSets.test.output.files.each { dir ->
+                testArtifacts(dir) { builtBy tasks.named('testClasses') }
+            }
         }
 
         dependencies {
@@ -242,26 +250,35 @@ subprojects {subProj ->
             // awaitility
             testImplementation 'org.awaitility:awaitility'
 
-            agent "org.aspectj:aspectjweaver:1.9.25.1"
-
-            testImplementation platform("io.qameta.allure:allure-bom")
-            testImplementation "io.qameta.allure:allure-junit5"
         }
 
         def commonTestConfig = { Test t ->
             t.timeout = java.time.Duration.ofMinutes(
                 (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
             )
+            // Bounds a single test method so it fails by itself, rather than a hung test consuming
+            // the module's whole Gradle-level timeout above and discarding every test's JUnit XML.
+            t.systemProperty 'junit.jupiter.execution.timeout.default',
+                System.getenv('JUNIT_TEST_TIMEOUT_MIN') ? "${System.getenv('JUNIT_TEST_TIMEOUT_MIN')} m" : '5 m'
             t.finalizedBy jacocoTestReport
-            t.doFirst {
-                logger.lifecycle("[TASK START] ${t.path}")
-            }
-            t.doLast {
-                logger.lifecycle("[TASK END]   ${t.path}")
+
+
+            // -PprofileHeap: raise the ceiling so no module is heap-starved, and log real GC
+            // occupancy per module so per-module maxHeapSize can be set from measurements
+            // instead of guessed. See dev-tools/analyze-test-heap.sh.
+            if (project.hasProperty('profileHeap')) {
+                t.maxHeapSize = '8g'
+                def heapProfileDir = "${rootDir}/heap-profile"
+                mkdir(heapProfileDir)
+                t.jvmArgs += ["-Xlog:gc:file=${heapProfileDir}/${project.name}-gc.log:time,uptime,level,tags"]
+            } else {
+                t.maxHeapSize = rootProject.ext.testHeapSizes.getOrDefault(project.name, '512m')
             }
 
-            // set Xmx for test workers
-            t.maxHeapSize = '4g'
+            // By default a thread that hits OutOfMemoryError just dies silently (JVM default
+            // UncaughtExceptionHandler) while the rest of the JVM limps on in a degraded state.
+            // Exit immediately instead.
+            t.jvmArgs += ["-XX:+ExitOnOutOfMemoryError"]
 
             // configure en_US default locale for tests
             t.systemProperty 'user.language', 'en'
@@ -274,16 +291,6 @@ subprojects {subProj ->
             t.environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
             t.environment 'ENV_TEST1', "true"
             t.environment 'ENV_TEST2', "Pass by env"
-
-
-            // these modules tests were battle tested by @nkwiatkowski so we can allow to try to enable parallel testing on them
-            if (subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
-                // JUnit 5 parallel settings
-                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
-                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
-            }
         }
 
         tasks.register('integrationTest', Test) { Test t ->
@@ -373,34 +380,90 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
             commonTestConfig(t)
-            jvmArgumentProviders.add(
-                objects.newInstance(GenericLocationProvider).tap {
-                    distribution = configurations.mockitoAgent.singleFile
-                }
-            )
-
-            jvmArgumentProviders.add(
-                objects.newInstance(GenericLocationProvider).tap {
-                    distribution = configurations.agent.singleFile
-                }
-            )
+            jvmArgs "-javaagent:${configurations.mockitoAgent.singleFile}"
         }
 
         tasks.named('check') {
             dependsOn(tasks.named('test'))// default behaviour
             dependsOn(tasks.named('flakyTest'))
         }
+    }
+}
 
-        testlogger {
-            theme = 'mocha-parallel'
-            showExceptions = true
-            showFullStackTraces = true
-            showCauses = true
-            slowThreshold = 2000
-            showStandardStreams = true
-            showPassedStandardStreams = false
-            showSkippedStandardStreams = true
+// Collect test task outcomes as they execute (for test-metadata.json)
+def testTaskOutcomes = new java.util.concurrent.ConcurrentHashMap<String, String>()
+gradle.taskGraph.afterTask { Task task ->
+    if (task instanceof Test) {
+        def state = task.state
+        String outcome
+        if (state.noSource) {
+            outcome = 'NO_SOURCE'
+        } else if (state.failure != null) {
+            outcome = 'FAILED'
+        } else if (state.didWork) {
+            outcome = 'SUCCESS'
+        } else if (state.upToDate) {
+            outcome = 'UP_TO_DATE'
+        } else if (state.skipped) {
+            outcome = 'SKIPPED'
+        } else {
+            outcome = 'FROM_CACHE'
         }
+        testTaskOutcomes.put(task.project.name + ':' + task.name, outcome)
+    }
+}
+
+// Workaround for https://github.com/gradle/gradle/issues/36699
+// Gradle's test task `timeout` kills the JVM hard, so JUnit XML reports are never
+// generated for timed-out modules. This task captures per-module task states so that
+// kestra-devtools can detect missing results and report them in PR comments.
+// Remove this task once Gradle supports graceful test task timeouts.
+tasks.register('generateTestMetadata') {
+    group = 'verification'
+    description = 'Generates build/test-metadata.json with per-module test task states for CI reporting.'
+    mustRunAfter(subprojects.collectMany { it.tasks.withType(Test) })
+    def outputFile = layout.buildDirectory.file('test-metadata.json')
+    outputs.file(outputFile)
+    outputs.upToDateWhen { false }
+    doLast {
+        def timeoutMin = (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+        def modules = new LinkedHashMap<String, Object>()
+        subprojects.each { sub ->
+            def hasTestSources = sub.file('src/test/java').isDirectory() &&
+                sub.fileTree('src/test/java').files.size() > 0
+            if (!hasTestSources && sub.file('src/test/kotlin').isDirectory()) {
+                hasTestSources = sub.fileTree('src/test/kotlin').files.size() > 0
+            }
+            def xmlDir = sub.file("build/test-results/test")
+            def hasXmlResults = xmlDir.isDirectory() &&
+                sub.fileTree(dir: xmlDir, includes: ['TEST-*.xml']).files.size() > 0
+            def state = testTaskOutcomes.getOrDefault(sub.name + ':test', 'NOT_RUN')
+
+            modules.put(sub.name, [
+                state: state,
+                hasTestSources: hasTestSources,
+                hasXmlResults: hasXmlResults
+            ])
+        }
+        def metadata = [
+            modules: modules,
+            timeoutMinutes: timeoutMin
+        ]
+        def json = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+        outputFile.get().asFile.parentFile.mkdirs()
+        outputFile.get().asFile.text = json
+        logger.lifecycle("Test metadata written to ${outputFile.get().asFile.path}")
+    }
+}
+
+// Finalize every Test task (not just `check`) with generateTestMetadata. When a module's
+// test task exceeds its timeout, Gradle aborts the build before `check` runs, so a finalizer
+// of `check` is skipped and the metadata file is never written — leaving kestra-devtools to
+// silently report success for the timed-out module. A finalizer of the Test task itself still
+// runs on timeout (same as jacocoTestReport above), guaranteeing test-metadata.json is written.
+subprojects {
+    tasks.withType(Test).configureEach {
+        finalizedBy rootProject.tasks.named('generateTestMetadata')
     }
 }
 
@@ -408,6 +471,7 @@ tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
     dependsOn(tasks.named('flakyTest'))
     finalizedBy jacocoTestReport
+    finalizedBy tasks.named('generateTestMetadata')
 }
 
 tasks.register('unitTest') {
@@ -428,6 +492,27 @@ tasks.register('flakyTest') {
 
 tasks.named('testCodeCoverageReport') {
     dependsOn ':core:copyGradleProperties'
+}
+
+/**********************************************************************************************************************\
+ * Allure Reports
+ **********************************************************************************************************************/
+subprojects {
+    plugins.withId('java') {
+        dependencies {
+            testImplementation "io.qameta.allure:allure-junit5"
+        }
+
+        test {
+            // allure-junit5 writes results as a side effect of the test JVM, invisible to Gradle's
+            // dependency tracking. Without declaring it as a task output, a build-cache hit on :test
+            // (org.gradle.caching=true) restores build/test-results/ but skips the JVM entirely, so
+            // no allure-results are ever produced for that run.
+            def allureResultsDir = layout.buildDirectory.dir("allure-results")
+            systemProperty 'allure.results.directory', allureResultsDir.get().asFile.absolutePath
+            outputs.dir(allureResultsDir)
+        }
+    }
 }
 
 /**********************************************************************************************************************\
@@ -498,7 +583,10 @@ run.jvmArgs(
     "-noverify",
     "-XX:TieredStopAtLevel=1",
     "-Dcom.sun.management.jmxremote",
-    '-Dmicronaut.environments=dev,override'
+    '-Dmicronaut.environments=dev,override',
+    // Silence the sun.misc.Unsafe memory-access startup warning (JEP 498) triggered by
+    // com.google.protobuf.UnsafeUtil (pulled in by gRPC), see https://github.com/kestra-io/kestra/issues/16513
+    '--sun-misc-unsafe-memory-access=allow'
 )
 
 /**********************************************************************************************************************\
@@ -527,7 +615,6 @@ distZip.dependsOn shadowJar
 distTar.dependsOn shadowJar
 startScripts.dependsOn shadowJar
 startShadowScripts.dependsOn jar
-shadowJar.dependsOn 'ui:assembleFrontend'
 shadowJar.dependsOn jar
 
 /**********************************************************************************************************************\
@@ -586,7 +673,7 @@ tasks.register('runLocal') {
 
 tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server standalone"
+    description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     dependsOn ':cli:runStandalone'
 }
 
@@ -609,12 +696,10 @@ subprojects {subProject ->
 
         tasks.register('sourcesJar', Jar) {
             dependsOn = [':core:copyGradleProperties']
-            dependsOn = [':ui:assembleFrontend']
             archiveClassifier.set('sources')
             from sourceSets.main.allSource
         }
         sourcesJar.dependsOn ':core:copyGradleProperties'
-        sourcesJar.dependsOn ':ui:assembleFrontend'
 
         tasks.register('javadocJar', Jar) {
             archiveClassifier.set('javadoc')

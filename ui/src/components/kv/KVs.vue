@@ -3,30 +3,30 @@
         <template #actions>
             <ul>
                 <li>
-                    <KsButton :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
+                    <KsButton :icon="Plus" type="primary" data-test="kv-add" @click="namespacesStore.addKvModalVisible = true">
                         {{ $t("kv.add") }}
                     </KsButton>
                 </li>
             </ul>
         </template>
     </TopNavBar>
-    <section class="d-flex flex-column fill-height container padding-bottom">
+    <section class="full-container">
         <KVTable />
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useNamespacesStore} from "override/stores/namespaces";
-    import useRouteContext from "../../composables/useRouteContext";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import KVTable from "./KVTable.vue";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useNamespacesStore} from "override/stores/namespaces"
+    import useRouteContext from "../../composables/useRouteContext"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import KVTable from "./KVTable.vue"
 
-    const namespacesStore = useNamespacesStore();
+    const namespacesStore = useNamespacesStore()
 
-    const {t} = useI18n({useScope: "global"});
-    const routeInfo = computed(() => ({title: t("kv.name")}));
-    useRouteContext(routeInfo);
+    const {t} = useI18n({useScope: "global"})
+    const routeInfo = computed(() => ({title: t("kv.name")}))
+    useRouteContext(routeInfo)
 </script>

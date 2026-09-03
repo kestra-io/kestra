@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -10,12 +9,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -33,6 +35,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Max;
 
 @Controller("/api/v1/{tenant}")
 public class KVController {
@@ -43,11 +46,41 @@ public class KVController {
     @Inject
     protected TenantService tenantService;
 
+    /**
+     * Maps a sortable name to the {@link PersistedKvMetadata} property the repositories sort on:
+     * JDBC turns the value into a column by camel-to-snake conversion, Elasticsearch uses it
+     * verbatim as the document field. Four {@link KVEntry} field names differ from their property,
+     * so an unmapped sort resolved to nothing and failed the query with a 500 — {@code updateDate}
+     * being the one the UI exposes.
+     *
+     * <p>{@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
+     * holding the uid, so that mapping prevents an ordering on the wrong data rather than a failure.
+     *
+     * <p>Both spellings are accepted. {@link KVEntry} field names are the documented contract, but
+     * the KV table has always sorted on the properties directly — its default sort is
+     * {@code name:asc} — so rejecting those would break every existing client. Anything outside
+     * both sets yields {@code null}, which {@link PageableUtils} answers with a 422 rather than
+     * letting an unknown column reach the query; that still rules out internal columns such as
+     * {@code last} and {@code deleted}.
+     */
+    private static final Map<String, String> SORT_FIELDS = Map.ofEntries(
+        // KVEntry field -> PersistedKvMetadata property
+        Map.entry("namespace", "namespace"),
+        Map.entry("key", "name"),
+        Map.entry("revision", "version"),
+        Map.entry("description", "description"),
+        Map.entry("creationDate", "created"),
+        Map.entry("updateDate", "updated"),
+        Map.entry("expirationDate", "expirationDate"),
+        // the four properties whose name differs, accepted under their own name too
+        Map.entry("name", "name"),
+        Map.entry("version", "version"),
+        Map.entry("created", "created"),
+        Map.entry("updated", "updated")
+    );
+
     private String sortMapper(String key) {
-        if (key != null && key.equals("key")) {
-            return "name";
-        }
-        return key;
+        return key == null ? null : SORT_FIELDS.get(key);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -55,14 +88,15 @@ public class KVController {
     @Operation(tags = { "KV" }, summary = "List all keys")
     public PagedResults<KVEntry> listAllKeys(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
                 @ExampleObject(name = "Sort by key in ascending order", value = "key:asc"),
                 @ExampleObject(name = "Sort by description in descending order", value = "description:desc"),
             }
         ) @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat List<QueryFilter> filters) throws IOException {
+        @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat(Resource.KV_METADATA) List<QueryFilter> filters)
+        throws IOException {
         return PagedResults.of(kvStoreService.list(PageableUtils.from(page, size, sort, this::sortMapper), tenantService.resolveTenant(), null, filters));
     }
 
@@ -114,7 +148,7 @@ public class KVController {
         // Should never throw as the above verifies the KV entry existence
         KVEntry kvEntry = nsKvStore.get(key).orElseThrow();
 
-        return new KvDetail(KVType.from(value), value, kvEntry.version(), kvEntry.updateDate());
+        return new KvDetail(KVType.from(value), value, kvEntry.revision(), kvEntry.updateDate());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -127,7 +161,7 @@ public class KVController {
         @RequestBody(description = "The value of the key") @Body String value) throws IOException {
         String description = httpHeaders.get("description");
         String ttl = httpHeaders.get("ttl");
-        KVMetadata metadata = new KVMetadata(description, ttl == null ? null : Duration.parse(ttl));
+        KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
         try {
             // use ION mapper to properly handle timestamp
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);

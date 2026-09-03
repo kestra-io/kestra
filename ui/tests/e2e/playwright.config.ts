@@ -1,9 +1,10 @@
 import dotenv from "dotenv"
-const __dirname = new URL(".", import.meta.url).pathname;
-dotenv.config({path: __dirname + "/.env"});
+const __dirname = new URL(".", import.meta.url).pathname
+dotenv.config({path: __dirname + "/.env"})
 
-import type {PlaywrightTestConfig} from "@playwright/test";
-import {devices} from "@playwright/test";
+import type {PlaywrightTestConfig} from "@playwright/test"
+import {devices} from "@playwright/test"
+import {STORAGE_STATE} from "./fixtures/auth"
 
 
 /**
@@ -33,10 +34,19 @@ const config: PlaywrightTestConfig = {
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
-    /* Retry on CI only */
-    retries: process.env.CI ? 5 : 0,
-    /* Opt out of parallel tests on CI. */
-    workers: process.env.CI ? 1 : "50%",
+    /* Retry on CI only. Kept low: a genuinely broken test costs a full run per retry. */
+    retries: process.env.CI ? 2 : 0,
+    /*
+     * The CI runner has 4 vCPUs and also hosts the Kestra JVM and Postgres, so the
+     * browsers compete with the backend under test. Two is the sweet spot; more makes the
+     * execution-heavy specs slower and flakier rather than faster.
+     */
+    workers: process.env.CI ? 2 : "50%",
+    /*
+     * Fail with an HTML report rather than being killed by the job's own 30-minute ceiling
+     * (set in kestra-io/actions), which leaves no artefacts at all.
+     */
+    globalTimeout: process.env.CI ? 20 * 60 * 1000 : undefined,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
         ["html", {open: "never"}],
@@ -48,22 +58,28 @@ const config: PlaywrightTestConfig = {
         /* Base URL to use in actions like `await page.goto("/")`. */
         baseURL: process.env.E2E_BASE_URL ?? "http://localhost:9011",
 
-        /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-        trace: "retain-on-failure",
+        /*
+         * `on-first-retry` rather than `retain-on-failure`: the latter records a
+         * screencast and trace snapshots for *every* test and throws them away on
+         * pass, which every green test pays for.
+         */
+        trace: "on-first-retry",
         /* Capture screenshot after each test failure */
         screenshot: "only-on-failure",
-        /* Collect video when retrying the failed test */
-        video: "retain-on-failure",
-        launchOptions: {
-            slowMo: 100,
-        },
+        video: "on-first-retry",
     },
 
     /* Configure projects for major browsers */
     projects: [
+        /* Signs in once and parks the cookie jar the other projects reuse. */
+        {
+            name: "setup",
+            testMatch: /auth\.setup\.ts/,
+        },
         {
             name: "chromium",
-            use: {...devices["Desktop Chrome"]},
+            use: {...devices["Desktop Chrome"], storageState: STORAGE_STATE},
+            dependencies: ["setup"],
         },
     ],
 
@@ -73,6 +89,6 @@ const config: PlaywrightTestConfig = {
     //   port: 8080,
     //   reuseExistingServer: !process.env.CI,
     // },
-};
+}
 
-export default config;
+export default config

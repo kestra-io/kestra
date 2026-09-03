@@ -21,7 +21,7 @@ import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_P
  * Supports three discovery strategies:
  * <ul>
  * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
- * <li>DNS: DNS SRV/A record resolution with gRPC load-balancing</li>
+ * <li>DNS: DNS A-record resolution with gRPC load-balancing</li>
  * <li>STORAGE: Dynamic discovery via Kestra internal storage (controllers self-register)</li>
  * </ul>
  * <p>
@@ -42,6 +42,12 @@ public record WorkerControllersConfiguration(
     @Valid HealthCheck healthCheck,
 
     @Valid WaitForReady waitForReady) {
+
+    /**
+     * Default interval at which DNS/storage discovery re-resolves controller endpoints.
+     */
+    public static final String DEFAULT_REFRESH_INTERVAL = "PT30S";
+
     /**
      * Service discovery type.
      */
@@ -81,6 +87,11 @@ public record WorkerControllersConfiguration(
 
     /**
      * DNS-based discovery configuration.
+     * <p>
+     * Resolution uses the gRPC DNS name resolver, which performs A/AAAA record lookups of
+     * {@code hostname} and connects to each resolved address on {@code defaultPort}. SRV-record
+     * discovery is not supported: the gRPC DNS resolver does not query {@code _grpc._tcp.<host>}
+     * SRV records, so no SRV record type is offered.
      */
     @ConfigurationProperties("dns")
     @Requires(property = "kestra.worker.controllers.type", value = "DNS")
@@ -89,22 +100,7 @@ public record WorkerControllersConfiguration(
 
         @Bindable(defaultValue = DEFAULT_GRPC_PORT_STRING) int defaultPort,
 
-        @Bindable(defaultValue = "SRV") DnsRecordType recordType,
-
-        @Bindable(defaultValue = "PT30S") Duration refreshInterval) {
-        /**
-         * DNS record type for discovery.
-         */
-        public enum DnsRecordType {
-            /**
-             * SRV records (includes port information).
-             */
-            SRV,
-            /**
-             * A records (requires default port).
-             */
-            A
-        }
+        @Bindable(defaultValue = DEFAULT_REFRESH_INTERVAL) Duration refreshInterval) {
     }
 
     /**
@@ -113,7 +109,7 @@ public record WorkerControllersConfiguration(
     @ConfigurationProperties("storage")
     @Requires(property = "kestra.worker.controllers.type", value = "STORAGE")
     public record StorageConfig(
-        @Bindable(defaultValue = "PT30S") Duration refreshInterval) {
+        @Bindable(defaultValue = DEFAULT_REFRESH_INTERVAL) Duration refreshInterval) {
     }
 
     /**

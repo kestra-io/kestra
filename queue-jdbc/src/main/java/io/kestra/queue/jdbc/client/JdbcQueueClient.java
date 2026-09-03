@@ -1,13 +1,12 @@
 package io.kestra.queue.jdbc.client;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.zip.CRC32;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
@@ -33,13 +32,19 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
 @Singleton
 public class JdbcQueueClient {
-    private static final Map<String, Integer> QUEUE_NAME_CRC32 = new ConcurrentHashMap<>();
-    private static final List<Field<Object>> COLUMNS = List.of(
-        field("type"),
-        field("routing_key"),
-        field("key"),
-        field("value"),
-        field("created")
+    public static final Field<String> TYPE = field("type", String.class);
+    public static final Field<String> ROUTING_KEY = field("routing_key", String.class);
+    public static final Field<String> KEY = field("key", String.class);
+    public static final Field<JSONB> VALUE = field("value", JSONB.class);
+    public static final Field<Instant> CREATED = field("created", Instant.class);
+    public static final Field<Long> OFFSET = field("offset", Long.class);
+
+    private static final List<Field<?>> COLUMNS = List.of(
+        TYPE,
+        ROUTING_KEY,
+        KEY,
+        VALUE,
+        CREATED
     );
 
     private final AbstractJdbcRepository<JdbcQueueItem> jdbcRepository;
@@ -56,26 +61,18 @@ public class JdbcQueueClient {
         this.configuration = configuration;
     }
 
-    public static Integer queueNameToType(String value) {
-        return QUEUE_NAME_CRC32.computeIfAbsent(value, s ->
-        {
-            CRC32 crc32 = new CRC32();
-            crc32.update(value.getBytes());
-
-            return (int) crc32.getValue();
-        });
-    }
-
     private boolean isUnsupportedUnicode(DataException e) {
         Throwable current = e;
         while (current != null) {
             String message = current.getMessage();
             if (message != null) {
                 String lower = message.toLowerCase();
-                if (message.contains("unsupported Unicode escape sequence") ||
-                    lower.contains("surrogate") ||
-                    lower.contains("unicode escape") ||
-                    lower.contains("invalid unicode")) {
+                if (
+                    message.contains("unsupported Unicode escape sequence") ||
+                        lower.contains("surrogate") ||
+                        lower.contains("unicode escape") ||
+                        lower.contains("invalid unicode")
+                ) {
                     return true;
                 }
             }
@@ -92,12 +89,12 @@ public class JdbcQueueClient {
             {
                 DSLContext context = DSL.using(configuration);
 
-                Map<Field<Object>, Object> fields = HashMap.newHashMap(5);
-                fields.put(field("type"), queueNameToType(queue));
-                fields.put(field("routing_key"), (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
-                fields.put(field("key"), key);
-                fields.put(field("value"), JdbcJsonbUtils.valueOf(value));
-                fields.put(field("created"), Instant.now());
+                Map<Field<?>, Object> fields = LinkedHashMap.newLinkedHashMap(5); // Use a linked hash map for a predictable iteration order
+                fields.put(TYPE, queue);
+                fields.put(ROUTING_KEY, (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
+                fields.put(KEY, key);
+                fields.put(VALUE, JdbcJsonbUtils.valueOf(value));
+                fields.put(CREATED, Instant.now());
 
                 var insert = context
                     .insertInto(jdbcRepository.getTable())
@@ -121,11 +118,11 @@ public class JdbcQueueClient {
         {
             DSLContext ctx = DSL.using(configuration);
 
-            var condition = field("type").eq(queueNameToType(queue));
+            var condition = TYPE.eq(queue);
             if (routingKey != null && !routingKey.isEmpty()) {
-                condition = condition.and(field("routing_key").eq(routingKey));
+                condition = condition.and(ROUTING_KEY.eq(routingKey));
             } else {
-                condition = condition.and(field("routing_key").isNull());
+                condition = condition.and(ROUTING_KEY.isNull());
             }
 
             return ctx.selectCount()
@@ -148,11 +145,10 @@ public class JdbcQueueClient {
                     .insertInto(jdbcRepository.getTable())
                     .columns(COLUMNS);
 
-                // TODO check if we should not do a batch insert instead
                 Instant now = Instant.now();
                 for (PublishedMessage entry : messages) {
                     insert = insert.values(
-                        queueNameToType(entry.queue),
+                        entry.queue,
                         (entry.routingKey == null || entry.routingKey.isEmpty()) ? null : entry.routingKey,
                         entry.key,
                         JdbcJsonbUtils.valueOf(entry.value),
@@ -178,18 +174,18 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
-            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
+            var select = context.select(OFFSET, VALUE)
                 .from(this.jdbcRepository.getTable())
-                .where(field("type").eq(queueNameToType(queue)));
+                .where(TYPE.eq(queue));
 
             if (routingKeys != null && !routingKeys.isEmpty()) {
-                select = select.and(field("routing_key").in(routingKeys));
+                select = select.and(ROUTING_KEY.in(routingKeys));
             } else {
-                select = select.and(field("routing_key").isNull());
+                select = select.and(ROUTING_KEY.isNull());
             }
 
-            Result<Record2<Object, Object>> result = select
-                .orderBy(field("offset").asc())
+            var result = select
+                .orderBy(OFFSET.asc())
                 .limit(configuration.pollSize())
                 .forUpdate()
                 .skipLocked()
@@ -200,15 +196,14 @@ public class JdbcQueueClient {
                     .stream()
                     .map(record ->
                     {
-                        consumer.accept(record.get("value").toString().getBytes());
-                        return record.get("offset", Long.class);
+                        consumer.accept(record.get(VALUE).data().getBytes(StandardCharsets.UTF_8));
+                        return record.get(OFFSET);
                     })
-                    .filter(Objects::nonNull)
                     .toList();
 
                 if (!processedItems.isEmpty()) {
                     DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
-                        .where(field("offset", Long.class).in(processedItems));
+                        .where(OFFSET.in(processedItems));
 
                     delete.execute();
                 }
@@ -223,33 +218,33 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
-            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
+            var select = context.select(OFFSET, VALUE)
                 .from(this.jdbcRepository.getTable())
-                .where(field("type").eq(queueNameToType(queue)));
+                .where(TYPE.eq(queue));
 
             if (routingKeys != null && !routingKeys.isEmpty()) {
-                select = select.and(field("routing_key").in(routingKeys));
+                select = select.and(ROUTING_KEY.in(routingKeys));
             } else {
-                select = select.and(field("routing_key").isNull());
+                select = select.and(ROUTING_KEY.isNull());
             }
 
-            Result<Record2<Object, Object>> result = select
-                .orderBy(field("offset").asc())
+            var result = select
+                .orderBy(OFFSET.asc())
                 .limit(configuration.pollSize())
                 .forUpdate()
                 .skipLocked()
                 .fetch();
 
             if (!result.isEmpty()) {
-                consumer.accept(result.stream().map(record -> record.get("value").toString().getBytes()).toList());
+                consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)).toList());
 
                 List<Long> processedItems = result
                     .stream()
-                    .map(record -> record.get("offset", Long.class))
+                    .map(record -> record.get(OFFSET))
                     .toList();
 
                 DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
-                    .where(field("offset", Long.class).in(processedItems));
+                    .where(OFFSET.in(processedItems));
                 delete.execute();
             }
 
@@ -262,9 +257,12 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
-            return context.select(DSL.max(field("offset")))
+            // Filters identically to subscribeBroadcast/subscribeBroadcastBatch so the seeded
+            // offset and the poll queries always operate over the same row set.
+            return context.select(DSL.max(OFFSET))
                 .from(this.jdbcRepository.getTable())
-                .where(field("type").eq(queueNameToType(queue)))
+                .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull())
                 .fetchAny("max", Long.class);
         });
 
@@ -277,25 +275,29 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 
-            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
+            // Broadcast messages are always published with a null routing key. Binding it explicitly here
+            // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
+            // seek on offset instead of a full scan of every retained row for this type on each poll.
+            var select = context.select(OFFSET, VALUE)
                 .from(this.jdbcRepository.getTable())
-                .where(field("type").eq(queueNameToType(queue)));
+                .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull());
 
             if (maxOffset != null) {
-                select = select.and(field("offset").gt(maxOffset));
+                select = select.and(OFFSET.gt(maxOffset));
             }
 
-            Result<Record2<Object, Object>> result = select
-                .orderBy(field("offset").asc())
+            var result = select
+                .orderBy(OFFSET.asc())
                 .limit(configuration.pollSize())
                 .fetch();
 
             if (!result.isEmpty()) {
-                result.forEach(record -> consumer.accept(record.get("value").toString().getBytes()));
+                result.forEach(record -> consumer.accept(record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)));
 
                 maxOffsetResult = result
                     .stream()
-                    .map(record -> record.get("offset", Long.class))
+                    .map(record -> record.get(OFFSET))
                     .max(Long::compareTo)
                     .orElse(null);
             }
@@ -310,25 +312,29 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 
-            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
+            // Broadcast messages are always published with a null routing key. Binding it explicitly here
+            // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
+            // seek on offset instead of a full scan of every retained row for this type on each poll.
+            var select = context.select(OFFSET, VALUE)
                 .from(this.jdbcRepository.getTable())
-                .where(field("type").eq(queueNameToType(queue)));
+                .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull());
 
             if (maxOffset != null) {
-                select = select.and(field("offset").gt(maxOffset));
+                select = select.and(OFFSET.gt(maxOffset));
             }
 
-            Result<Record2<Object, Object>> result = select
-                .orderBy(field("offset").asc())
+            var result = select
+                .orderBy(OFFSET.asc())
                 .limit(configuration.pollSize())
                 .fetch();
 
             if (!result.isEmpty()) {
-                consumer.accept(result.stream().map(record -> record.get("value").toString().getBytes()).toList());
+                consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)).toList());
 
                 maxOffsetResult = result
                     .stream()
-                    .map(record -> record.get("offset", Long.class))
+                    .map(record -> record.get(OFFSET))
                     .max(Long::compareTo)
                     .orElse(null);
             }

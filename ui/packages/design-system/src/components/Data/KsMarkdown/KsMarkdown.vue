@@ -12,13 +12,14 @@
     import remarkGfm from "remark-gfm"
     import remarkDirective from "remark-directive"
     import type {Root, RootContent} from "mdast"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue";
-    import xss, {escapeAttrValue} from "xss";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Check from "vue-material-design-icons/Check.vue"
+    import xss, {escapeAttrValue} from "xss"
     import KsAlert from "../../Feedback/KsAlert.vue"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
-    import {getShiki} from "./shikiHighlighter"
+    import {getShiki, loadLanguageOnDemand} from "./shikiHighlighter"
+    import {copyToClipboard} from "../../../utils/clipboard"
 
     const props = withDefaults(
         defineProps<{
@@ -34,8 +35,8 @@
             html: true,
             xssProtection: true,
             components: () => ({}),
-        }
-    );
+        },
+    )
 
     const containerRef = ref<HTMLElement | null>(null)
     // Reactive cache: "lang::value" → Shiki-generated HTML
@@ -79,6 +80,39 @@
         return result
     }
 
+    // Raw HTML video embeds in docs are YouTube-only; restrict `iframe src` to YouTube's
+    // own embed hosts so the shared xss whitelist below can't be used to embed arbitrary sites.
+    const IFRAME_ALLOWED_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com"]
+
+    function isAllowedIframeSrc(value: string): boolean {
+        try {
+            const url = new URL(value)
+            return url.protocol === "https:" && IFRAME_ALLOWED_HOSTS.includes(url.hostname)
+        } catch {
+            return false
+        }
+    }
+
+    // Markdown-native links and images never go through the raw-HTML `xss` whitelist below,
+    // so their URL needs its own scheme allowlist — otherwise `[x](javascript:…)` renders as a
+    // live anchor and executes in the viewer's session (stored XSS).
+    const ALLOWED_URL_SCHEMES = ["http:", "https:", "mailto:", "tel:", "ftp:"]
+
+    function sanitizeUrl(url: unknown): string | undefined {
+        if (typeof url !== "string") return undefined
+
+        const value = url.trim()
+        if (!value) return undefined
+
+        // Whitespace and control characters are dropped before the scheme is matched, so that
+        // neither "java\tscript:" nor a newline-split scheme can smuggle a rejected scheme through.
+        const compacted = Array.from(value).filter((char) => char.charCodeAt(0) > 0x20).join("")
+        const scheme = compacted.match(/^([a-z][a-z0-9+.-]*):/i)
+        if (!scheme) return value // relative URL, fragment or query-only link
+
+        return ALLOWED_URL_SCHEMES.includes(scheme[1].toLowerCase() + ":") ? value : undefined
+    }
+
     function htmlEscape(content: string): string {
         return xss(content, {
             whiteList: {
@@ -95,6 +129,7 @@
                 h1: ["id", "class"], h2: ["id", "class"], h3: ["id", "class"],
                 h4: ["id", "class"], h5: ["id", "class"], h6: ["id", "class"],
                 hr: [],
+                iframe: ["src", "title", "width", "height", "allow", "allowfullscreen", "referrerpolicy", "frameborder", "class"],
                 img: ["src", "alt", "title", "width", "height", "class"],
                 kbd: [],
                 li: ["class"], ol: ["start", "class"], ul: ["class"],
@@ -114,45 +149,51 @@
                 button: ["type", "class", "aria-label"],
             },
             stripIgnoreTag: true,
+            onTagAttr: function (tag: string, name: string, value: string) {
+                if (tag === "iframe" && name === "src" && !isAllowedIframeSrc(value)) {
+                    return ""
+                }
+                return undefined
+            },
             onIgnoreTagAttr: function (_tag: string, name: string, value: string) {
                 if (name.startsWith("data-")) {
-                    return name + "=\"" + escapeAttrValue(value) + "\"";
+                    return name + "=\"" + escapeAttrValue(value) + "\""
                 }
                 if (name.startsWith("aria-")) {
-                    return name + "=\"" + escapeAttrValue(value) + "\"";
+                    return name + "=\"" + escapeAttrValue(value) + "\""
                 }
-                return undefined;
+                return undefined
             },
-        });
+        })
     }
 
     function parseHtmlAttributes(attrsStr: string): Record<string, unknown> {
-        const attrs: Record<string, unknown> = {};
-        const re = /(\w[\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
-        let m: RegExpExecArray | null;
+        const attrs: Record<string, unknown> = {}
+        const re = /(\w[\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g
+        let m: RegExpExecArray | null
         while ((m = re.exec(attrsStr)) !== null) {
-            const key = m[1];
-            attrs[key] = m[2] ?? m[3] ?? m[4] ?? true;
+            const key = m[1]
+            attrs[key] = m[2] ?? m[3] ?? m[4] ?? true
         }
-        return attrs;
+        return attrs
     }
 
     function tryRenderCustomComponent(html: string): VNode | null {
-        if (!props.components || Object.keys(props.components).length === 0) return null;
+        if (!props.components || Object.keys(props.components).length === 0) return null
 
         // Match <ComponentName attrs>inner</ComponentName> or <ComponentName attrs></ComponentName>
         const match = html.trim().match(/^<([A-Za-z][A-Za-z0-9]*)(\s[^>]*)?>(?:([\s\S]*?)<\/\1>)?$/)
-        if (!match) return null;
+        if (!match) return null
 
-        const [, tagName, attrsStr = "", innerHtml = ""] = match;
-        const component = props.components[tagName];
-        if (!component) return null;
+        const [, tagName, attrsStr = "", innerHtml = ""] = match
+        const component = props.components[tagName]
+        if (!component) return null
 
-        const attrs = parseHtmlAttributes(attrsStr.trim());
+        const attrs = parseHtmlAttributes(attrsStr.trim())
         const slots = innerHtml.trim()
-            ? {default: () => [h("span", {innerHTML: innerHtml})]}
-            : undefined;
-        return h(component as any, attrs, slots);
+            ? {default: () => [h("span", {innerHTML: props.xssProtection ? htmlEscape(innerHtml) : innerHtml})]}
+            : undefined
+        return h(component as any, attrs, slots)
     }
 
     function renderNode(node: any): VNode | string | null {
@@ -193,23 +234,20 @@
             const highlightedHtml = codeHighlights.value.get(key)
 
             return h("div", {class: "ks-markdown__code-block"}, [
-                h("div", {class: "ks-markdown__code-header"}, [
-                    lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
-                    h("button", {
-                        class: "ks-markdown__copy-btn",
-                        type: "button",
-                        title: "Copy to clipboard",
-                        onClick: (e: MouseEvent) => {
-                            const btn = e.currentTarget as HTMLButtonElement
-                            navigator.clipboard.writeText(value).then(() => {
-                                btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.add("opacity-100");
-                                setTimeout(() => {
-                                    btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.remove("opacity-100");
-                                }, 2000)
-                            }).catch(() => { /* clipboard unavailable */ })
-                        },
-                    }, [h(CheckCircleOutline, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy)]),
-                ]),
+                lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
+                h("button", {
+                    class: "ks-markdown__copy-btn",
+                    type: "button",
+                    title: "Copy to clipboard",
+                    onClick: (e: MouseEvent) => {
+                        const btn = e.currentTarget as HTMLButtonElement
+                        copyToClipboard(value).then(() => {
+                            // Swap the copy glyph for the check (not overlay it) for the confirm window.
+                            btn.classList.add("is-copied")
+                            setTimeout(() => btn.classList.remove("is-copied"), 2000)
+                        }).catch(() => { /* clipboard unavailable */ })
+                    },
+                }, [h(Check, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy, {class: "ks-markdown__copy-btn-icon"})]),
                 highlightedHtml
                     ? h("div", {class: "ks-markdown__code-shiki", innerHTML: highlightedHtml})
                     : h("pre", {class: "ks-markdown__code-plain"}, [
@@ -239,12 +277,12 @@
 
             // Column labels extracted from the header row
             const headers = (headerRow.children as any[]).map((cell: any) =>
-                extractText(cell.children as RootContent[])
+                extractText(cell.children as RootContent[]),
             )
 
             // Pre-render all cell content: cellGrid[rowIdx][colIdx] = VNodes
             const cellGrid = (bodyRows as any[]).map((row: any) =>
-                (row.children as any[]).map((cell: any) => renderNodes(cell.children))
+                (row.children as any[]).map((cell: any) => renderNodes(cell.children)),
             )
 
             const data = cellGrid.map((_, i) => ({_idx: i}))
@@ -256,6 +294,7 @@
                     // align is not in KsTableColumn's defineProps but is forwarded via $attrs
                     ...(cellAlign ? {align: cellAlign} : {}),
                 } as any, {
+                    // oxlint-disable-next-line no-underscore-dangle
                     default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
                 })
             })
@@ -266,7 +305,7 @@
         }
 
         case "link": {
-            const url = node.url as string
+            const url = sanitizeUrl(node.url)
             if (props.components?.a) {
                 return h(props.components.a as any, {
                     href: url,
@@ -275,7 +314,7 @@
                 }, {default: () => renderNodes(node.children)})
             }
 
-            const isExternal = url.startsWith("http://") || url.startsWith("https://")
+            const isExternal = url !== undefined && (url.startsWith("http://") || url.startsWith("https://"))
             return h("a", {
                 href: url,
                 title: node.title ?? undefined,
@@ -285,20 +324,22 @@
             }, renderNodes(node.children))
         }
 
-        case "image":
+        case "image": {
+            const src = sanitizeUrl(node.url)
             if (props.components?.img) {
                 return h(props.components.img as any, {
-                    src: node.url as string,
+                    src,
                     alt: (node.alt ?? "") as string,
                 })
             }
 
             return h("img", {
-                src: node.url as string,
+                src,
                 alt: (node.alt ?? "") as string,
                 title: node.title ?? undefined,
                 class: "ks-markdown__image",
             })
+        }
 
         case "strong":
             return h("strong", renderNodes(node.children))
@@ -389,9 +430,8 @@
 
             let lang = block.lang
             if (lang && !(hl.getLoadedLanguages() as string[]).includes(lang)) {
-                try {
-                    await hl.loadLanguage(lang as any)
-                } catch {
+                // Not pre-registered: fetch it from Shiki's full bundle, or render as plain text.
+                if (!await loadLanguageOnDemand(hl, lang)) {
                     lang = ""
                 }
             }
@@ -440,9 +480,8 @@
     .ks-markdown__code-shiki {
         .shiki {
             margin: 0;
-            padding: 2rem;
+            padding: var(--ks-spacing-3);
             overflow-x: auto;
-            background-color: var(--kel-bg-color-overlay);
             border-radius: var(--kel-border-radius-base);
 
             span { color: var(--shiki-light); }
@@ -458,7 +497,8 @@
     }
 
     .ks-markdown {
-        color: var(--ks-content-default);
+        color: var(--ks-text-primary);
+        line-height: var(--ks-line-height-loose);
 
         h1, h2, h3, h4, h5, h6 {
             &.ks-markdown__heading {
@@ -484,7 +524,6 @@
         }
 
         p {
-            margin: 0.75rem 0;
             &:first-child { margin-top: 0; }
             &:last-child { margin-bottom: 0; }
         }
@@ -492,56 +531,82 @@
         .ks-markdown__blockquote {
             margin: 1rem 0;
             padding: 0.5rem 1rem;
-            border-left: 4px solid var(--ks-border-primary);
-            color: var(--ks-content-secondary);
+            border-left: 4px solid var(--ks-border-default);
+            color: var(--ks-text-secondary);
             background-color: var(--kel-bg-color-overlay);
             border-radius: var(--kel-border-radius-base);
         }
 
         .ks-markdown__code-block {
             margin: 1rem 0;
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             position: relative;
 
-            .ks-markdown__code-header {
+            .ks-markdown__code-lang {
                 position: absolute;
-                display: flex;
-                width: 100%;
-                align-items: center;
-                justify-content: flex-end;
-                padding: 4px 8px;
-                background-color: var(--ks-background-tertiary);
-                gap: 8px;
+                top: var(--ks-spacing-1);
+                right: var(--ks-spacing-1);
+                padding: var(--ks-spacing-1);
                 font-size: var(--ks-font-size-xs);
                 font-family: var(--kel-font-family-monospace), monospace;
                 color: var(--kel-text-color-placeholder);
+                transition: opacity 0.15s ease;
+            }
 
-                .ks-markdown__code-lang {
-                    flex: 1;
+            .ks-markdown__copy-btn {
+                position: absolute;
+                top: var(--ks-spacing-1);
+                right: var(--ks-spacing-1);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.15s ease;
+                padding: var(--ks-spacing-1);
+                border: 0;
+                border-radius: var(--kel-border-radius-base);
+                background: var(--ks-bg-base);
+                cursor: pointer;
+                color: var(--kel-text-color-placeholder);
+                display: grid;
+                place-items: center;
+
+                &:hover {
+                    color: var(--kel-text-color-primary);
                 }
 
-                .ks-markdown__copy-btn {
-                    padding-right: 0;
-                    right: -2px;
-                    top: 2px;
-                    position: relative;
-                    border: 0;
-                    background: var(--ks-background-default);
-                    cursor: pointer;
-                    color: var(--kel-text-color-placeholder);
+                /* The copy glyph and the confirm check occupy the same cell; only one is
+                   visible at a time (swapped via the .is-copied state), never overlaid. */
+                > * {
+                    grid-area: 1 / 1;
+                    transition: opacity 0.15s ease;
+                }
 
-                    &:hover {
-                        color: var(--kel-text-color-primary);
+                .ks-markdown__copy-btn-ok {
+                    color: var(--ks-text-success);
+                    opacity: 0;
+                }
+
+                &.is-copied {
+                    .ks-markdown__copy-btn-icon {
+                        opacity: 0;
                     }
 
                     .ks-markdown__copy-btn-ok {
-                        transition: opacity 0.15s ease;
-                        margin-right: 0.25rem;
-                        color: var(--ks-content-success);
-                        opacity: 0;
+                        opacity: 1;
                     }
+                }
+            }
+
+            &:hover,
+            &:focus-within {
+                .ks-markdown__code-lang {
+                    opacity: 0;
+                }
+
+                .ks-markdown__copy-btn {
+                    opacity: 1;
+                    pointer-events: auto;
                 }
             }
 
@@ -565,7 +630,7 @@
             padding: 0.15rem 0.4rem;
             border-radius: var(--kel-border-radius-base);
             background-color: var(--kel-bg-color-overlay);
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
         }
 
         .ks-markdown__list {
@@ -581,7 +646,7 @@
         }
 
         .ks-markdown__link {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
             text-decoration: none;
 
             &:hover { text-decoration: underline; }
@@ -595,7 +660,7 @@
         .ks-markdown__hr {
             margin: 1.5rem 0;
             border: none;
-            border-top: 1px solid var(--ks-border-primary);
+            border-top: 1px solid var(--ks-border-default);
         }
 
         .ks-markdown__mermaid {

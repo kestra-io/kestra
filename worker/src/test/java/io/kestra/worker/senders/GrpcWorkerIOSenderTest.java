@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -18,8 +19,11 @@ import io.kestra.controller.grpc.services.GrpcWorkerControllerService;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.worker.Controller;
@@ -32,7 +36,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -50,11 +53,13 @@ class GrpcWorkerIOSenderTest {
     ApplicationContext applicationContext;
 
     @Inject
-    @Named("taskResultSender")
     GrpcWorkerIOSender<WorkerTaskResult> taskResultSender;
 
     @Inject
     GrpcWorkerControllerService grpcWorkerControllerService;
+
+    @Inject
+    LogEntryEmitter logEntryEmitter;
 
     private Controller controller;
 
@@ -64,6 +69,11 @@ class GrpcWorkerIOSenderTest {
         // bindService() must work so the gRPC server can route incoming calls to mock methods
         when(mock.bindService()).thenCallRealMethod();
         return mock;
+    }
+
+    @MockBean(LogEntryEmitter.class)
+    LogEntryEmitter logEntryEmitter() {
+        return mock(LogEntryEmitter.class);
     }
 
     @BeforeEach
@@ -79,7 +89,7 @@ class GrpcWorkerIOSenderTest {
 
         controller = applicationContext.createBean(Controller.class);
         controller.start();
-        taskResultSender.init(new WorkerContext("test-worker", null, 1));
+        taskResultSender.init(new WorkerContext("test-worker", "", 1));
     }
 
     @AfterEach
@@ -109,7 +119,10 @@ class GrpcWorkerIOSenderTest {
         // 2 MB payload — exceeds the 1 MB server-side limit set via @Property
         char[] largePayload = new char[2 * 1024 * 1024];
         Arrays.fill(largePayload, 'a');
-        WorkerTaskResult large = buildTaskResult(Map.of("output", new String(largePayload)));
+        TaskRun taskRun = buildTaskResult(Map.of()).getTaskRun()
+            .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .withState(State.Type.SUCCESS);
+        WorkerTaskResult large = new WorkerTaskResult(taskRun, Map.of("output", new String(largePayload)));
 
         taskResultSender.send(List.of(large));
 
@@ -124,13 +137,25 @@ class GrpcWorkerIOSenderTest {
         assertThat(received.getTaskRun().getId()).isEqualTo(large.getTaskRun().getId());
         assertThat(received.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(received.getOutputs()).isNull();
+        assertThat(received.getTaskRun().getAttempts()).hasSize(1);
+        assertThat(received.getTaskRun().lastAttempt().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        ArgumentCaptor<LogEntry> logCaptor = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logEntryEmitter).emits(logCaptor.capture());
+
+        LogEntry logEntry = logCaptor.getValue();
+        assertThat(logEntry.getLevel()).isEqualTo(Level.ERROR);
+        assertThat(logEntry.getTaskRunId()).isEqualTo(taskRun.getId());
+        assertThat(logEntry.getAttemptNumber()).isZero();
+        assertThat(logEntry.getMessage()).contains("kestra.grpc.max-inbound-message-size");
     }
 
     @Test
     void shouldRetryOnceOnUnauthenticatedError() {
         // Given - first call fails with UNAUTHENTICATED, second succeeds
         AtomicInteger callCount = new AtomicInteger(0);
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             if (callCount.getAndIncrement() == 0) {
@@ -151,7 +176,8 @@ class GrpcWorkerIOSenderTest {
         ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
         await()
             .atMost(Duration.ofSeconds(3))
-            .untilAsserted(() -> {
+            .untilAsserted(() ->
+            {
                 verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
                     .sendWorkerTaskResults(captor.capture(), any());
             });
@@ -160,6 +186,92 @@ class GrpcWorkerIOSenderTest {
         WorkerTaskResult received = deserialize(captor.getAllValues().getLast()).records().getFirst();
         assertThat(received.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
         assertThat(received.getOutputs()).isEqualTo(Map.of("key", "value"));
+    }
+
+    @Test
+    void shouldRequeueAndRedeliverWhenSendFailsWithRetryableError() throws Exception {
+        // Given - first send fails with UNAVAILABLE (controller unreachable), subsequent sends succeed
+        AtomicInteger callCount = new AtomicInteger(0);
+        doAnswer(inv ->
+        {
+            OpaqueData req = inv.getArgument(0);
+            StreamObserver<OpaqueData> obs = inv.getArgument(1);
+            if (callCount.getAndIncrement() == 0) {
+                obs.onError(new StatusRuntimeException(Status.UNAVAILABLE.withDescription("controller unreachable")));
+            } else {
+                obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
+                obs.onCompleted();
+            }
+            return null;
+        }).when(grpcWorkerControllerService).sendWorkerTaskResults(any(), any());
+
+        WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
+
+        // When - the first send fails and the result is re-queued instead of dropped.
+        taskResultSender.send(List.of(result));
+
+        // Then - the loop redrives until the controller receives the result (initial attempt +
+        // redelivery). doOnLoop() runs inside the await because the first send fails asynchronously
+        // on a gRPC callback thread, so a single redrive could poll before the item is re-queued.
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .untilAsserted(() ->
+            {
+                taskResultSender.doOnLoop();
+                verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
+                    .sendWorkerTaskResults(captor.capture(), any());
+            });
+
+        WorkerTaskResult redelivered = deserialize(captor.getAllValues().getLast()).records().getFirst();
+        assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
+        assertThat(redelivered.getOutputs()).isEqualTo(Map.of("key", "value"));
+    }
+
+    @Test
+    void shouldRedeliverFallbackResultWhenFallbackResendFailsWithRetryableError() throws Exception {
+        // Given - the initial send is rejected with RESOURCE_EXHAUSTED (outputs too large), so the fallback
+        // mapper fires and resends a stripped failed-state result; that fallback resend then fails once with
+        // UNAVAILABLE (transient partition) before finally succeeding on redelivery.
+        AtomicInteger callCount = new AtomicInteger(0);
+        doAnswer(inv ->
+        {
+            OpaqueData req = inv.getArgument(0);
+            StreamObserver<OpaqueData> obs = inv.getArgument(1);
+            int call = callCount.getAndIncrement();
+            if (call == 0) {
+                obs.onError(new StatusRuntimeException(Status.RESOURCE_EXHAUSTED.withDescription("outputs exceeds maximum size")));
+            } else if (call == 1) {
+                obs.onError(new StatusRuntimeException(Status.UNAVAILABLE.withDescription("controller unreachable")));
+            } else {
+                obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
+                obs.onCompleted();
+            }
+            return null;
+        }).when(grpcWorkerControllerService).sendWorkerTaskResults(any(), any());
+
+        WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
+
+        // When - RESOURCE_EXHAUSTED triggers the fallback resend, which fails transiently and is re-queued.
+        taskResultSender.send(List.of(result));
+
+        // Then - the loop redrives until the failed-state result (no outputs) is delivered rather than
+        // dropped. doOnLoop() runs inside the await because the failures arrive asynchronously on gRPC
+        // callback threads, so a single redrive could poll before the fallback result is re-queued.
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .untilAsserted(() ->
+            {
+                taskResultSender.doOnLoop();
+                verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(3))
+                    .sendWorkerTaskResults(captor.capture(), any());
+            });
+
+        WorkerTaskResult redelivered = deserialize(captor.getAllValues().getLast()).records().getFirst();
+        assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
+        assertThat(redelivered.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(redelivered.getOutputs()).isNull();
     }
 
     private static WorkerTaskResult buildTaskResult(Map<String, Object> outputs) {

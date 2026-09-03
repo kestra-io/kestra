@@ -4,9 +4,9 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import io.kestra.core.contexts.KestraConfig;
-import io.kestra.core.services.FlowAutoLoader;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.VersionProvider;
@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -48,7 +49,7 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
     protected HttpClient httpClient;
 
     @Inject
-    protected KestraConfig kestraConfig;
+    protected SystemFlowsConfiguration systemFlowsConfiguration;
 
     @Inject
     private VersionProvider versionProvider;
@@ -80,11 +81,14 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
                     {
                         String body = response.body();
                         if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
-                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + kestraConfig.getSystemFlowNamespace());
+                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + systemFlowsConfiguration.namespace());
                         }
                         return body;
                     })
                 )
+                // Hop off the HTTP client's event loop: flowService.create() may block on plugin
+                // auto-install, and parking an event-loop thread starves the client itself.
+                .publishOn(Schedulers.boundedElastic())
                 .map(throwFunction(source ->
                 {
                     GenericFlow flow = GenericFlow.fromYaml(tenantService.resolveTenant(), source);
@@ -101,11 +105,15 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
                 .reduce(Integer::sum)
                 .blockOptional()
                 .orElse(0);
-            log.info(
-                "Loaded {} \"Getting Started\" flows from community blueprints. " +
-                    "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.",
-                count
-            );
+            if (count > 0) {
+                log.info(
+                    "Loaded {} \"Getting Started\" flows from community blueprints. " +
+                        "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.",
+                    count
+                );
+            } else {
+                log.debug("No \"Getting Started\" flows found in community blueprints to load.");
+            }
         } catch (Exception e) {
             // Kestra's API is likely to be unavailable.
             log.warn(

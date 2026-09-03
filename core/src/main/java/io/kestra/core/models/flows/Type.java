@@ -17,12 +17,15 @@ public enum Type {
     DURATION(DurationInput.class.getName()),
     FILE(FileInput.class.getName()),
     JSON(JsonInput.class.getName()),
+    ION(IonInput.class.getName()),
     URI(URIInput.class.getName()),
     SECRET(SecretInput.class.getName()),
     ARRAY(ArrayInput.class.getName()),
     MULTISELECT(MultiselectInput.class.getName()),
     YAML(YamlInput.class.getName()),
-    EMAIL(EmailInput.class.getName());
+    EMAIL(EmailInput.class.getName()),
+    FORM(FormInput.class.getName()),
+    REUSABLE_INPUTS(ReusableInputsInput.class.getName());
 
     private final String clsName;
 

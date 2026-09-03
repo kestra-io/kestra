@@ -4,7 +4,8 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
@@ -17,18 +18,20 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
+import io.kestra.core.validations.TimezoneId;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import lombok.*;
-import lombok.AccessLevel;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -124,6 +127,25 @@ import lombok.extern.slf4j.Slf4j;
             full = true
         ),
         @Example(
+            title = "Schedule a flow on the last working day of the month at 6:00 AM.",
+            code = """
+                id: monthly_last_working_day
+                namespace: company.team
+
+                tasks:
+                  - id: log_hello_world
+                    type: io.kestra.plugin.core.log.Log
+                    message: Running on the last working day of the month!
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 6 * * MON-FRI"
+                    when: "{{ isLastWorkingDay(trigger.date) }}"
+                """,
+            full = true
+        ),
+        @Example(
             title = "Schedule a flow every day at 9:00 AM and pause a schedule trigger after a failed execution using the `stopAfter` property.",
             full = true,
             code = """
@@ -163,6 +185,11 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private static final CronParser CRON_PARSER = new CronParser(CRON_DEFINITION_BUILDER.instance());
     private static final CronParser CRON_PARSER_WITH_SECONDS = new CronParser(CRON_DEFINITION_BUILDER.withSeconds().withValidRange(0, 59).withStrictRange().and().instance());
 
+    // Caps the when-condition tick walk below so a frequent cron (e.g. per-second) paired with a
+    // rarely-matching `when` can't pin the scheduling-loop thread rendering millions of ticks
+    // synchronously. 10 years of even a daily cron (~3650 ticks) stays well under this.
+    private static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
+
     @NotNull
     @Schema(
         title = "The cron expression.",
@@ -191,6 +218,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private Boolean withSeconds = false;
 
     @PluginProperty
+    @TimezoneId
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
@@ -206,6 +234,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         description = "If the scheduled execution didn't start after this delay (e.g. due to infrastructure issues), the execution will be skipped."
     )
     @PluginProperty
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration lateMaximumDelay;
 
     @Getter(AccessLevel.NONE)
@@ -311,7 +340,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     @Override
-    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
+    public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTime executionTime = this.executionTime();
         ZonedDateTime currentDateTimeExecution = convertDateTime(triggerContext.getDate());
@@ -319,9 +348,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         final Backfill backfill = triggerContext.getBackfill();
 
         if (backfill != null) {
-            if (backfill.getPaused()) {
-                return Optional.empty();
-            }
             currentDateTimeExecution = convertDateTime(backfill.getCurrentDate());
         }
 
@@ -357,7 +383,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
-                return Optional.of(SchedulableExecutionFactory.createFailedExecution(this, conditionContext, triggerContext));
+                return Optional.of(
+                    SchedulableExecutionFactory.createExecution(this, conditionContext, triggerContext, null, null)
+                        .withState(State.Type.FAILED)
+                );
             }
         }
 
@@ -368,15 +397,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             variables = scheduleDates.toMap();
         }
 
-        Execution execution = SchedulableExecutionFactory.createExecution(
-            this,
-            conditionContext,
-            triggerContext,
-            variables,
-            null
+        return Optional.of(
+            SchedulableExecutionFactory.createExecution(
+                this,
+                conditionContext,
+                triggerContext,
+                variables,
+                null
+            )
         );
-
-        return Optional.of(execution);
     }
 
     /**
@@ -462,13 +491,14 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     /**
      * Walks forward from {@code fromDate} through successive cron executions and returns the
-     * first one where all schedule conditions match. Gives up after 10 years of lookahead.
+     * first one where all schedule conditions match. Gives up after 10 years of lookahead, or
+     * {@value #MAX_WHEN_CONDITION_ITERATIONS} ticks, whichever comes first.
      */
     @VisibleForTesting
     Optional<ZonedDateTime> findNextDateMatchingConditions(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime fromDate) throws InternalException {
         int upperYearBound = SchedulerClock.now().getYear() + 10;
 
-        while (fromDate.getYear() < upperYearBound) {
+        for (int iteration = 0; fromDate.getYear() < upperYearBound && iteration < MAX_WHEN_CONDITION_ITERATIONS; iteration++) {
             Optional<ZonedDateTime> candidate = executionTime.nextExecution(fromDate);
             if (candidate.isEmpty()) {
                 return candidate;
@@ -491,13 +521,14 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     /**
      * Walks backward from {@code fromDate} through preceding cron executions and returns the
-     * first one where all schedule conditions match. Gives up after 10 years of lookback.
+     * first one where all schedule conditions match. Gives up after 10 years of lookback, or
+     * {@value #MAX_WHEN_CONDITION_ITERATIONS} ticks, whichever comes first.
      */
     @VisibleForTesting
     Optional<ZonedDateTime> findPreviousDateMatchingConditions(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime fromDate) throws InternalException {
         int lowerYearBound = SchedulerClock.now().getYear() - 10;
 
-        while (fromDate.getYear() > lowerYearBound) {
+        for (int iteration = 0; fromDate.getYear() > lowerYearBound && iteration < MAX_WHEN_CONDITION_ITERATIONS; iteration++) {
             Optional<ZonedDateTime> candidate = executionTime.lastExecution(fromDate);
             if (candidate.isEmpty()) {
                 return candidate;

@@ -133,17 +133,20 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                   - id: loop
                     type: io.kestra.plugin.core.flow.Loop
                     values: ["value1", "value2", "value3"]
+                    outputs:
+                      - id: file
+                        type: STRING
+                        value: "{{outputs.start_api_call.outputFiles['data.txt']}}"
                     tasks:
                       - id: start_api_call
                         type: io.kestra.plugin.scripts.shell.Commands
                         commands:
-                          - echo {{ taskrun.value }} > data.txt
+                          - echo {{ item.value }} > data.txt
                         outputFiles:
                           - data.txt
-
                   - id: concat_foreach_manual
                     type: io.kestra.plugin.core.storage.Concat
-                    files: "{{ outputs.start_api_call | jq('.[].outputFiles.generated') }}"
+                    files: "{{ outputs.loop.outputs | jq('.[].outputs.file') }}"
                 """
         )
     }

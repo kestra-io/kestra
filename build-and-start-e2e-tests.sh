@@ -15,8 +15,29 @@ start_time=$(date +%s)
 
 echo ""
 echo "Building the image for this current repository"
-make clean
-make build-docker VERSION=$LOCAL_IMAGE_VERSION
+
+# Pull the images needed later (docker build base + compose services) in the
+# background so the downloads overlap with the Gradle/npm build instead of
+# sitting on the critical path.
+BASE_IMAGE="$(sed -n 's/^ARG BASE_IMAGE="\(.*\)"/\1/p' Dockerfile)"
+docker pull -q "${BASE_IMAGE:-ghcr.io/kestra-io/kestra-base:latest-no-plugins}" > /dev/null 2>&1 &
+docker pull -q postgres > /dev/null 2>&1 &
+
+if [ "${E2E_USE_PREBUILT_EXE:-false}" = "true" ]; then
+  # CI already downloaded a prebuilt executable into build/executable
+  # (the Build Artifacts job's artifact), so only the image remains to build.
+  make build-docker-from-exec VERSION=$LOCAL_IMAGE_VERSION
+elif [ -n "$CI" ]; then
+  # CI runners start from a fresh checkout (nothing to clean) and the workflow
+  # has already run `npm ci`, so skip both.
+  make build-docker VERSION=$LOCAL_IMAGE_VERSION SKIP_NPM_CI=true
+else
+  ./gradlew clean -q
+  make build-docker VERSION=$LOCAL_IMAGE_VERSION
+fi
+
+# Let any still-running background pull finish before compose starts.
+wait
 
 end_time=$(date +%s)
 elapsed=$(( end_time - start_time ))
@@ -29,8 +50,6 @@ start_time2=$(date +%s)
 
 echo "cd ./ui"
 cd ./ui
-echo "npm ci"
-npm ci
 
 echo 'sh ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"'
 ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"

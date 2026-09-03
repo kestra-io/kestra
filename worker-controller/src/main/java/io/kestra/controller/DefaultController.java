@@ -1,18 +1,25 @@
 package io.kestra.controller;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerService;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.AbstractService;
+import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.worker.Controller;
@@ -22,13 +29,13 @@ import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerCredentials;
+import io.grpc.ServerServiceDefinition;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 
 /**
  * The Controller service that manages worker nodes.
@@ -41,6 +48,7 @@ public class DefaultController extends AbstractService implements Controller {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultController.class);
 
     /**
+     * 
      * Service name used for health checks.
      */
     protected static final String HEALTH_SERVICE_NAME = "kestra.controller";
@@ -55,16 +63,20 @@ public class DefaultController extends AbstractService implements Controller {
 
     protected final GrpcConfiguration grpcConfiguration;
 
+    protected final MetricRegistry metricRegistry;
+
     @Inject
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
         GrpcConfiguration grpcConfiguration,
         ControllerConfiguration controllerConfiguration,
+        MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
         super(ServiceType.CONTROLLER, eventPublisher);
         this.grpcConfiguration = grpcConfiguration;
         this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
+        this.metricRegistry = metricRegistry;
         this.healthStatusManager = new HealthStatusManager();
         setState(ServiceState.CREATED);
     }
@@ -73,11 +85,36 @@ public class DefaultController extends AbstractService implements Controller {
      * {@inheritDoc}
      */
     @Override
-    public void start() {
-        if (getState() != ServiceState.CREATED) {
-            throw new IllegalStateException("Controller is already started or stopped");
+    public Set<Metric> getMetrics() {
+        if (this.metricRegistry == null) {
+            return Set.of();
         }
+        Stream<String> metrics = Stream.of(
+            MetricRegistry.METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_ALLOCATED,
+            MetricRegistry.METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_USED,
+            MetricRegistry.METRIC_CONTROLLER_CAPACITY_SHARED_ALLOCATED,
+            MetricRegistry.METRIC_CONTROLLER_CAPACITY_SHARED_USED,
+            MetricRegistry.METRIC_CONTROLLER_WORKER_GROUP_JOB_INFLIGHT
+        );
+        return metrics
+            .flatMap(metric -> metricRegistry.findGauges(metric).stream())
+            .map(Metric::of)
+            .collect(Collectors.toSet());
+    }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void start() {
+        guardedStart(this::doStart, () ->
+        {
+            setState(ServiceState.RUNNING);
+            LOG.info("Controller started, listening on {}", controllerConfiguration.port());
+        });
+    }
+
+    private void doStart() {
         LOG.info("Starting Controller");
         int port = controllerConfiguration.port();
         try {
@@ -88,8 +125,6 @@ public class DefaultController extends AbstractService implements Controller {
         } catch (IOException e) {
             throw new UncheckedIOException("Error while building gRPC server", e);
         }
-        LOG.info("Controller started, listening on {}", port);
-        setState(ServiceState.RUNNING);
     }
 
     /**
@@ -133,9 +168,15 @@ public class DefaultController extends AbstractService implements Controller {
 
         serverBuilder.maxInboundMessageSize(grpcConfiguration.maxInboundMessageSize());
 
+        List<String> serviceNames = new ArrayList<>(workerControllerServices.size());
         for (WorkerControllerService service : workerControllerServices) {
-            serverBuilder = serverBuilder.addService(service);
+            ServerServiceDefinition definition = service.bindService();
+            serviceNames.add(definition.getServiceDescriptor().getName());
+            serverBuilder = serverBuilder.addService(definition);
         }
+        // Logged because a service missing from the context is otherwise only visible to workers as an UNIMPLEMENTED error at task runtime.
+        LOG.debug("Controller registered {} gRPC services: {}", serviceNames.size(), serviceNames.stream().sorted().toList());
+
         return serverBuilder;
     }
 

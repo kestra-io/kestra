@@ -4,21 +4,21 @@ import java.net.URI;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 
-import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class UriProvider {
-    @Nullable
-    @Value("${kestra.url:}")
-    String uri;
+    @Inject
+    KestraConfiguration kestraConfiguration;
 
     protected URI build(String url) {
+        String uri = kestraConfiguration.url();
         if (uri == null || uri.isEmpty()) {
             return null;
         }
@@ -31,13 +31,17 @@ public class UriProvider {
     }
 
     public URI executionUrl(Execution execution) {
+        return executionUrl(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId());
+    }
+
+    public URI executionUrl(String tenantId, String namespace, String flowId, String id) {
         return this.build(
             "/ui/" +
-                (execution.getTenantId() != null ? execution.getTenantId() + "/" : "") +
+                (tenantId != null ? tenantId + "/" : "") +
                 "executions/" +
-                execution.getNamespace() + "/" +
-                execution.getFlowId() + "/" +
-                execution.getId()
+                namespace + "/" +
+                flowId + "/" +
+                id
         );
     }
 

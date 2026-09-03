@@ -1,5 +1,8 @@
 <template>
-    <ElFormItem v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElFormItem
+        :class="{'is-inline-row': inline}"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -13,29 +16,35 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem} from "element-plus"
+    import {ElFormItem, type FormItemRule} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         label?: string
+        /** Id of the control the label points at. Pass an empty string when the label slot is a header strip rather than a caption: the label renders as a plain div, so clicking it no longer focuses the control. */
+        for?: string
         prop?: string | string[]
-        rules?: any | any[]
+        rules?: FormItemRule[]
         required?: boolean
         labelWidth?: string | number
         error?: string
         showMessage?: boolean
+        /** Lay the item out as a single row: label on the left, control pushed to the right. */
+        inline?: boolean
     }>(), {
         label: undefined,
+        for: undefined,
         prop: undefined,
         rules: undefined,
         labelWidth: undefined,
         error: undefined,
         showMessage: undefined,
+        inline: false,
     })
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["inline"])
 
     defineSlots<{
         default?(): unknown
@@ -48,6 +57,10 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/form-item';
     .kel-form-item {
+        &:has(.kel-switch:not(.is-disabled)) .kel-form-item__label {
+            cursor: pointer;
+        }
+
         .kel-form-item__error {
             &.kel-form-item__error--inline {
                 margin-top: 3px;
@@ -58,7 +71,24 @@
 
         .kel-input-group__append, .kel-input-group__prepend {
             background-color: transparent;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
+        }
+
+        &.is-inline-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-4);
+
+            .kel-form-item__label {
+                width: auto;
+                margin: 0;
+                padding: 0;
+            }
+
+            .kel-form-item__content {
+                flex: 0 0 auto;
+            }
         }
     }
 </style>

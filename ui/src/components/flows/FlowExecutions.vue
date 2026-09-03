@@ -4,15 +4,20 @@
         :flowId="flowStore.flow?.id"
         :topbar="false"
         :defaultScopeFilter="false"
+        :embed="embed"
         filter
     />
 </template>
 
 <script setup lang="ts">
-    import Executions from "../executions/Executions.vue";
+    import Executions from "../executions/Executions.vue"
 
-    import {useFlowStore} from "../../stores/flow";
-    const flowStore = useFlowStore();
+    import {useFlowStore} from "../../stores/flow"
+    const flowStore = useFlowStore()
 
-    defineOptions({inheritAttrs: false});
+    defineProps<{
+        embed?: boolean;
+    }>()
+
+    defineOptions({inheritAttrs: false})
 </script>

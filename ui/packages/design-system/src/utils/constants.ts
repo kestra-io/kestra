@@ -2,7 +2,7 @@ export const SECTIONS = {
   TASKS: "TASKS",
   TRIGGERS: "TRIGGERS",
   TASK_RUNNERS: "TASK_RUNNERS",
-} as const;
+} as const
 
 export const EVENTS = {
   EDIT: "edit",
@@ -19,9 +19,9 @@ export const EVENTS = {
   EXPAND_DEPENDENCIES: "expandDependencies",
   SHOW_CONDITION: "showCondition",
   RUN_TASK: "runTask",
-} as const;
+} as const
 
-export const CLUSTER_PREFIX = "cluster_";
+export const CLUSTER_PREFIX = "cluster_"
 
 export const NODE_SIZES = {
   TASK_WIDTH: 184,
@@ -34,4 +34,4 @@ export const NODE_SIZES = {
   COLLAPSED_CLUSTER_HEIGHT: 44,
   TRIGGER_CLUSTER_WIDTH: 350,
   TRIGGER_CLUSTER_HEIGHT: 180,
-} as const;
+} as const

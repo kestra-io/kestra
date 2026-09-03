@@ -2,6 +2,7 @@
     <button
         type="button"
         :class="classes"
+        :disabled="disabled"
     >
         <component
             v-if="icon"
@@ -20,41 +21,49 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {EXECUTION_STATUSES, type ExecutionStatus} from "./types";
+    import {computed} from "vue"
+    import {EXECUTION_STATUSES, type ExecutionStatus} from "./types"
 
     const props = withDefaults(defineProps<{
         status: ExecutionStatus;
         title?: string;
         icon?: boolean;
         size?: "large" | "default" | "small";
+        glow?: boolean;
+        clickable?: boolean;
+        disabled?: boolean;
     }>(), {
-        icon: false,
+        icon: true,
         size: "default",
         title: undefined,
-    });
+        glow: false,
+        clickable: false,
+        disabled: false,
+    })
 
     defineSlots<{
         title?: unknown
     }>()
 
     const statusIcon = computed(() => {
-        return EXECUTION_STATUSES[props.status]?.icon;
-    });
+        return EXECUTION_STATUSES[props.status]?.icon
+    })
 
     const displayText = computed(() => {
-        return props.title ?? props.status;
-    });
+        return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase())
+    })
 
     const classes = computed(() => [
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
-        props.size !== "default" && `ks-execution-status--${props.size}`
-    ].filter(Boolean));
+        props.size !== "default" && `ks-execution-status--${props.size}`,
+        props.glow && "ks-execution-status--glow",
+        props.clickable && !props.disabled && "ks-execution-status--clickable",
+    ].filter(Boolean))
 </script>
 
 <style scoped lang="scss">
-$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
+$statusList: created, submitted, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
 
 .ks-execution-status {
     display: inline-flex;
@@ -62,7 +71,6 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     align-items: center;
     line-height: 1;
     white-space: nowrap;
-    cursor: default;
     text-align: center;
     box-sizing: border-box;
     outline: none;
@@ -72,25 +80,24 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     user-select: none;
     vertical-align: middle;
     appearance: none;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
+    border: none;
+    border-radius: var(--ks-radius-sm);
+    background: var(--ks-bg-badge);
     font-family: inherit;
     height: 2rem;
     padding: 0.5rem 0.9375rem;
     font-size: var(--ks-font-size-sm);
-    min-width: 7rem;
     gap: 0.375rem;
 
     .ks-execution-status__icon {
         display: inline-flex;
         align-items: center;
-        font-size: 1.10rem;
+        font-size: var(--ks-font-size-xl);
     }
 
     .ks-execution-status__text {
         display: inline-flex;
         align-items: center;
-        text-transform: uppercase;
     }
 
     &::-moz-focus-inner {
@@ -106,17 +113,45 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 
     &.ks-execution-status--small {
         height: 1.5rem;
-        padding: 0.3125rem 0.6875rem;
+        padding: 0 var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         gap: 0.25rem;
+    }
+
+    /* Bootstrap's reboot puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties
+       with this scoped block's `.ks-execution-status[data-v-hash]` at (0,2,0) and wins on source
+       order — so the badge advertised a click it does not handle. The extra `:not()` breaks the
+       tie. `inherit` rather than `default`: a badge is often the target inside a clickable row,
+       and pinning `default` would leave a dead patch in the middle of it. */
+    &:not(.ks-execution-status--clickable) {
+        cursor: inherit;
+    }
+
+    &.ks-execution-status--clickable {
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            box-shadow: inset 0 0 0 1px currentColor;
+        }
     }
 }
 
 @each $status in $statusList {
     .ks-execution-status--#{$status} {
-        color: var(--ks-content-#{$status});
-        border-color: var(--ks-border-#{$status});
-        background-color: var(--ks-background-#{$status});
+        color: var(--ks-status-#{$status});
+        background-color: var(--ks-status-background-#{$status});
+
+        &.ks-execution-status--glow {
+            box-shadow: 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+        }
+
+        &.ks-execution-status--glow.ks-execution-status--clickable {
+            &:hover,
+            &:focus-visible {
+                box-shadow: inset 0 0 0 1px currentColor, 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+            }
+        }
     }
 }
 </style>

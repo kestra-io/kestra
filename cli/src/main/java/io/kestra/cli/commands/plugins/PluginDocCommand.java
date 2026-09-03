@@ -11,6 +11,7 @@ import java.util.List;
 import com.google.common.io.Files;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.docs.DocumentationGenerator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -26,11 +27,11 @@ import static io.kestra.core.models.Plugin.isDeprecated;
     name = "doc",
     description = "Generate documentation for all plugins currently installed"
 )
-public class PluginDocCommand extends AbstractCommand {
+public class PluginDocCommand extends AbstractCommand implements NoDatabaseCommandInterface {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Parameters(index = "0", description = "Path to write documentation files")
+    @CommandLine.Parameters(index = "0", arity = "0..1", description = "Path to write documentation files (default: ${DEFAULT-VALUE})")
     private Path output = Paths.get(System.getProperty("user.dir"), "docs");
 
     @CommandLine.Option(names = { "--core" }, description = "Also write core tasks docs files")

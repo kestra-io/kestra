@@ -11,8 +11,10 @@
         <template v-if="$slots.default" #default>
             <slot />
         </template>
-        <template v-if="$slots.empty" #empty>
-            <slot name="empty" />
+        <template #empty>
+            <slot name="empty">
+                <KsNoData :title="emptyText" />
+            </slot>
         </template>
     </ElTable>
 </template>
@@ -20,7 +22,9 @@
 <script setup lang="ts">
     import {ref} from "vue"
     import {ElTable} from "element-plus"
+    import type {TableInstance} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -53,7 +57,7 @@
     const emit = defineEmits<{
         selectionChange: [selection: any[]]
         select: [selection: any[], row: any]
-        sortChange: [sort: {column: any; prop: string; order: string | null}]
+        sortChange: [sort: {column: any; prop: string | null; order: string | null}]
         rowClick: [row: any, column: any, event: Event]
         rowDblclick: [row: any, column: any, event: Event]
     }>()
@@ -63,7 +67,7 @@
         empty?(): unknown
     }>()
 
-    const tableRef = ref<InstanceType<typeof ElTable>>()
+    const tableRef = ref<TableInstance>()
 
     const filteredProps = useFilteredProps(props)
 
@@ -84,26 +88,28 @@
     @use 'element-plus/theme-chalk/src/table';
 
     .kel-table {
-        --kel-table-border-color: var(--ks-border-primary);
-        --kel-table-border: 1px solid var(--ks-border-primary);
+        --kel-table-border-color: transparent;
+        --kel-table-border: none;
 
-        --kel-table-header-text-color: var(--ks-content-primary);
-        --kel-table-header-bg-color: var(--ks-background-table-header);
-        --kel-table-row-hover-bg-color: var(--ks-background-table-row-hover);
-        --kel-table-tr-bg-color: var(--ks-background-table-row);
+        --kel-table-bg-color: var(--ks-bg-overlay);
+        --kel-table-header-text-color: var(--ks-text-secondary);
+        --kel-table-header-bg-color: var(--ks-bg-overlay);
+        --kel-table-row-hover-bg-color: var(--ks-bg-hover);
+        --kel-table-tr-bg-color: var(--ks-bg-overlay);
+        --kel-table-current-row-bg-color: var(--ks-bg-overlay);
 
-        outline: 1px solid var(--ks-border-primary);
-        border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-background-body);
-        border-bottom-width: 0;
+        border-radius: 0;
+        background-color: var(--ks-bg-overlay);
+        border: none;
         font-size: var(--ks-font-size-sm);
+        height: 100%;
 
         &--striped {
             .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {
-                background: var(--ks-tag-background);
+                background: var(--ks-bg-tag);
 
                 html.dark & {
-                    background: var(--ks-background-body);
+                    background: var(--ks-bg-base);
                 }
             }
         }
@@ -112,6 +118,7 @@
             padding: 0 8px;
             word-break: break-word;
             font-weight: 400;
+            font-size: var(--ks-font-size-sm);
         }
 
         .kel-table__inner-wrapper::before {
@@ -119,15 +126,28 @@
         }
 
         .kel-table__empty-text {
-            color: var(--ks-content-tertiary) !important;
+            color: var(--ks-text-dim) !important;
+        }
+
+        .kel-table__body tr:hover > td.kel-table__cell,
+        .kel-table__body tr.hover-row > td.kel-table__cell {
+            background-color: var(--ks-table-row-hover-bg, var(--ks-bg-hover));
         }
 
         th {
             white-space: nowrap;
+            background-color: var(--ks-bg-overlay);
+            border-bottom: 1px solid var(--ks-border-default);
+            color: var(--ks-text-secondary);
+            font-weight: 600;
+            font-size: var(--ks-font-size-sm);
 
             div.cell {
                 word-break: normal;
                 white-space: nowrap;
+                font-weight: 600;
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
             }
         }
 
@@ -139,7 +159,7 @@
             }
 
             a, button, .kicon, .kel-button {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 width: 24px;
                 height: 24px;
                 border-radius: var(--kel-border-radius-base);
@@ -153,11 +173,10 @@
                 padding: 0;
                 cursor: pointer;
 
-                .material-design-icon__svg {
-                    bottom: 0;
-                    width: 16px;
-                    height: 16px;
-                    transform: translateY(1px) translateX(-0.5px);
+                .material-design-icon,
+                .material-design-icon > .material-design-icon__svg {
+                    width: var(--ks-icon-size-sm);
+                    height: var(--ks-icon-size-sm);
                 }
             }
 
@@ -165,7 +184,7 @@
             button:hover,
             .kicon:hover,
             .kel-button:hover {
-                background-color: var(--ks-tag-background);
+                background-color: var(--ks-bg-tag);
             }
 
         }
@@ -199,8 +218,9 @@
                 margin-right: .3rem;
             }
 
-            a {
-                color: var(--ks-content-primary);
+            // Plain links only: an <a> rendered by KsButton (tag="a") must keep its button styling.
+            a:not(.kel-button) {
+                color: var(--ks-text-primary);
                 &:hover{
                     text-decoration: underline;
                 }

@@ -32,6 +32,15 @@ public @interface KestraTest {
 
     boolean startWorkerController() default true;
 
+    /**
+     * Whether the embedded {@code SystemWorker} should be started by
+     * {@link io.kestra.core.runners.TestRunner}. Defaults to {@code false}
+     * so test runs that don't exercise SystemTasks don't pay for the
+     * SystemWorker's thread pool and queue subscriptions. Tests that exercise
+     * a SystemTask must opt in.
+     */
+    boolean startSystemWorker() default false;
+
     Class<?> application() default void.class;
 
     String[] environments() default {};

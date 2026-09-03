@@ -1,10 +1,12 @@
 package io.kestra.core.docs;
 
 import java.net.URISyntaxException;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -36,6 +38,8 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.storage.Reverse;
+import io.kestra.plugin.core.trigger.Schedule;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
@@ -52,6 +56,26 @@ class JsonSchemaGeneratorTest {
 
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void selectInputValuesAcceptsStringOrObject() {
+        Map<String, Object> properties = jsonSchemaGenerator.properties(
+            io.kestra.core.models.flows.Input.class,
+            io.kestra.core.models.flows.input.SelectInput.class
+        );
+        var props = (Map<String, Map<String, Object>>) properties.get("properties");
+        var values = props.get("values");
+        assertThat((String) values.get("type"), is("array"));
+
+        // items must accept either a plain string or an object with label/value.
+        // Swagger2Module emits the anyOf when @Schema(anyOf=...) is set on the referenced type.
+        Map<String, Object> items = (Map<String, Object>) values.get("items");
+        String rendered = items.toString();
+        assertThat(rendered, anyOf(containsString("anyOf"), containsString("oneOf")));
+        assertThat(rendered, containsString("string"));
+        assertThat(rendered, anyOf(containsString("label"), containsString("ValueOption")));
+    }
 
     @Inject
     PluginRegistry pluginRegistry;
@@ -125,6 +149,45 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @Test
+    void flowSchemaExcludesEeOnlyInputTypes() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            String schema = jsonSchemaGenerator.schemas(Flow.class).toString();
+
+            // @EeOnly input types (e.g. REUSABLE_INPUTS) must not surface in the open-source flow schema — neither in
+            // the polymorphic anyOf/const subtype branches nor in the type/itemType enum arrays (REUSABLE_INPUTS was
+            // leaking through the latter).
+            assertThat(schema, not(containsString("REUSABLE_INPUTS")));
+            // sanity: ordinary input types are still present
+            assertThat(schema, containsString("EMAIL"));
+        });
+    }
+
+    @Test
+    void excludedInputTypesAreStrippedForTheTargetedSchemaOnly() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator standard = applicationContext.getBean(JsonSchemaGenerator.class);
+            JsonSchemaGenerator excludingEmail = new JsonSchemaGenerator(applicationContext.getBean(PluginRegistry.class)) {
+                @Override
+                protected Set<String> excludedInputTypes(Class<?> cls) {
+                    return Flow.class.equals(cls) ? Set.of("EMAIL") : super.excludedInputTypes(cls);
+                }
+            };
+
+            // the default generator offers EMAIL, so its absence below is the override's doing and not a schema change
+            assertThat(standard.schemas(Flow.class).toString(), containsString("EMAIL"));
+            // the strip has to run before discriminator wrappers collapse: afterwards the subtype is a flat definition
+            // reached by $ref, with no branch left to remove, and EMAIL would survive here
+            assertThat(excludingEmail.schemas(Flow.class).toString(), not(containsString("EMAIL")));
+            // a class the override does not target keeps the default (empty) exclusion set
+            assertThat(excludingEmail.schemas(Dashboard.class).toString(), is(standard.schemas(Dashboard.class).toString()));
+        });
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void task() throws URISyntaxException {
@@ -137,6 +200,34 @@ class JsonSchemaGeneratorTest {
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
             var task = definitions.get(Task.class.getName());
             Assertions.assertNotNull(task.get("anyOf"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void taskSchemaCollapsesSingleUseDiscriminatorWrapper() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            String base = "io.kestra.core.http.client.configurations.BasicAuthConfiguration";
+            assertThat(
+                "the plain definition, only ever used by its own wrapper, must be inlined away instead of kept as a separate entry",
+                definitions.containsKey(base + "-1"), is(false)
+            );
+
+            var wrapper = definitions.get(base + "-2");
+            assertThat("the wrapper must survive, carrying its own discriminator addition", wrapper, is(notNullValue()));
+            assertThat((List<String>) wrapper.get("required"), hasItem("type"));
+
+            var properties = (Map<String, Object>) wrapper.get("properties");
+            assertThat(
+                "the original class's own properties must not be lost in the merge",
+                properties.keySet(), hasItems("username", "password")
+            );
         });
     }
 
@@ -188,6 +279,34 @@ class JsonSchemaGeneratorTest {
                 )
             );
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeAvailableZoneIdsAndOffsetPatternWhenFieldIsAnnotatedWithTimezoneId() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(AbstractTrigger.class, Schedule.class);
+
+        Map<String, Object> timezone = ((Map<String, Map<String, Object>>) generate.get("properties")).get("timezone");
+        assertThat(timezone, is(not(nullValue())));
+
+        // The schema is `anyOf: [{enum: [...zoneIds]}, {pattern: ...offset...}]` so YAML editors get autocomplete
+        // from the enum branch while still accepting offset-style timezones (e.g. `+02:00`, `GMT-05:00`).
+        List<Map<String, Object>> anyOf = (List<Map<String, Object>>) timezone.get("anyOf");
+        assertThat(anyOf, is(not(nullValue())));
+        assertThat(anyOf, hasSize(2));
+
+        List<String> enumValues = (List<String>) anyOf.get(0).get("enum");
+        assertThat(enumValues, hasItems("UTC", "Europe/Paris", "Asia/Tokyo", "America/New_York", "EST"));
+        assertThat(enumValues.size(), greaterThanOrEqualTo(ZoneId.getAvailableZoneIds().size()));
+
+        String pattern = (String) anyOf.get(1).get("pattern");
+        assertThat(pattern, is(not(nullValue())));
+        assertThat("+02:00".matches(pattern), is(true));
+        assertThat("-05:30".matches(pattern), is(true));
+        assertThat("Z".matches(pattern), is(true));
+        assertThat("GMT+01:00".matches(pattern), is(true));
+        assertThat("UTC-05:00".matches(pattern), is(true));
+        assertThat("not-a-timezone".matches(pattern), is(false));
     }
 
     @SuppressWarnings("unchecked")
@@ -284,6 +403,14 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("description"), is("integerPropertyWithDefault description"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("$deprecated"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is("10000"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldDisplayReverseSeparatorDefaultAsEscapedNewline() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, Reverse.class);
+
+        assertThat(properties(generate).get("separator").get("default"), is("\\n"));
     }
 
     @SuppressWarnings("unchecked")
@@ -606,8 +733,10 @@ class JsonSchemaGeneratorTest {
             var defProps = (Map<String, Map<String, Object>>) taskDef.get("properties");
 
             // $group must be at top level so the no-code editor can pick it up
-            assertThat("properties() path: $group must be at top level for Property<Boolean>",
-                prop.get("$group"), is("reliability"));
+            assertThat(
+                "properties() path: $group must be at top level for Property<Boolean>",
+                prop.get("$group"), is("reliability")
+            );
 
             // Check schemas() path — what does the definition actually look like?
             Map<String, Object> taskDefFailOnMissing = null;
@@ -626,8 +755,10 @@ class JsonSchemaGeneratorTest {
             assertThat("schemas() path: failOnMissing definition must be found", taskDefFailOnMissing, is(notNullValue()));
 
             // $group must be at top level in the full schemas() path too
-            assertThat("schemas() path: $group must be at top level for Property<Boolean>",
-                taskDefFailOnMissing.get("$group"), is("reliability"));
+            assertThat(
+                "schemas() path: $group must be at top level for Property<Boolean>",
+                taskDefFailOnMissing.get("$group"), is("reliability")
+            );
         });
     }
 

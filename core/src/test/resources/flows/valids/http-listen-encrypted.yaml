@@ -7,7 +7,7 @@ triggers:
     encryptBody: true
     uri: https://api.chucknorris.io/jokes/random
     responseCondition: "{{ fromJson(response.body).id is not null }}"
-    interval: PT10S
+    interval: PT1S
 
 tasks:
   - id: hello

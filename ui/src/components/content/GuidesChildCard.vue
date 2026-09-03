@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-    import ChildCard from "./ChildCard.vue";
+    import ChildCard from "./ChildCard.vue"
 
-    defineProps<{ pageUrl?: string }>();
+    defineProps<{ pageUrl?: string }>()
 </script>

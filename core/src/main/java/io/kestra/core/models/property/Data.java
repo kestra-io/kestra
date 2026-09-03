@@ -1,8 +1,7 @@
 package io.kestra.core.models.property;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
@@ -103,13 +102,13 @@ public class Data {
             if (URIFetcher.supports(renderedString)) {
                 var uri = URIFetcher.of(runContext.render(str));
                 try {
-                    var reader = new BufferedReader(new InputStreamReader(uri.fetch(runContext)), FileSerde.BUFFER_SIZE);
-                    return FileSerde.readAll(reader, clazz)
+                    var inputStream = new BufferedInputStream(uri.fetch(runContext), FileSerde.BUFFER_SIZE);
+                    return FileSerde.readAll(inputStream, clazz)
                         .publishOn(Schedulers.boundedElastic())
                         .doFinally(signalType ->
                         {
                             try {
-                                reader.close();
+                                inputStream.close();
                             } catch (IOException e) {
                                 throw new UncheckedIOException(e);
                             }

@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import io.kestra.core.models.hierarchies.AbstractGraph;
-import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.utils.GraphUtils;
 import org.slf4j.Logger;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -20,14 +16,23 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.AbstractGraph;
+import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.validator.constraints.time.DurationMin;
+
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -86,6 +91,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
     )
     @Builder.Default
     @PluginProperty
+    @Valid
     private CheckFrequency checkFrequency = CheckFrequency.builder().build();
 
     @Override
@@ -228,7 +234,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
         );
 
         return Output.builder()
-            .iterationCount(Integer.parseInt(value) + 1)
+            .iterationCount(TypeConverter.toInteger(value) + 1)
             .build();
     }
 
@@ -246,19 +252,19 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
             title = "Maximum count of iterations",
             description = "If not set, defines an unlimited number of iterations."
         )
-        private Property<Integer> maxIterations;
+        private Property<@Positive Integer> maxIterations;
 
         @Schema(
             title = "Maximum duration of the task",
             description = "If not set, defines an unlimited maximum duration of iterations."
         )
-        private Property<Duration> maxDuration;
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> maxDuration;
 
         @Schema(
             title = "Interval between each iteration"
         )
         @NotNull
         @Builder.Default
-        private Property<Duration> interval = Property.ofValue(Duration.ofMinutes(1));
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> interval = Property.ofValue(Duration.ofMinutes(1));
     }
 }

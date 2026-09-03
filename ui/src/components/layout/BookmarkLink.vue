@@ -1,8 +1,8 @@
 <template>
-    <div class="wrapper vsm--item" :class="{editing}">
+    <div class="bookmark-link" :class="{editing}">
         <div v-if="editing" class="edit-row">
             <KsInput
-                class="vsm--input"
+                class="bookmark-input"
                 ref="titleInput"
                 v-model="updatedTitle"
                 @keyup.enter="renameBookmark"
@@ -11,14 +11,12 @@
             <CheckCircle @click.stop="renameBookmark" class="save" />
         </div>
         <template v-else>
-            <a
-                class="vsm--link vsm--link_level-2"
-                :href="href"
-                :title="updatedTitle"
+            <router-link
+                class="bookmark-anchor"
+                :to="href"
+                :title="title"
             >
-                <div class="vsm--title">
-                    <span>{{ updatedTitle }}</span>
-                </div>
+                <span class="bookmark-title">{{ title }}</span>
                 <div class="buttons">
                     <PencilOutline
                         @click.stop.prevent="startEditBookmark"
@@ -29,31 +27,31 @@
                         :title="$t('delete')"
                     />
                 </div>
-            </a>
+            </router-link>
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
     import {nextTick, ref} from "vue"
-    import {useI18n} from "vue-i18n";
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
-    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-    import {KsMessageBox} from "@kestra-io/design-system";
-    import {useBookmarksStore} from "../../stores/bookmarks";
+    import {useI18n} from "vue-i18n"
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
+    import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
+    import {KsMessageBox} from "@kestra-io/design-system"
+    import {useBookmarksStore} from "../../stores/bookmarks"
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
     const props = defineProps<{
         href: string
         title: string
     }>()
-    const bookmarksStore = useBookmarksStore();
+    const bookmarksStore = useBookmarksStore()
 
-    const editing = ref(false);
-    const updatedTitle = ref(props.title);
-    const titleInput = ref<{ focus: () => void; select: () => void } | null>(null);
+    const editing = ref(false)
+    const updatedTitle = ref("")
+    const titleInput = ref<{ focus: () => void; select: () => void } | null>(null)
 
     function deleteBookmark() {
         KsMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
@@ -61,51 +59,51 @@
             confirmButtonText: t("ok"),
             cancelButtonText: t("close"),
         }).then(() => {
-            bookmarksStore.remove({path: props.href});
-        });
+            bookmarksStore.remove({path: props.href})
+        })
     }
 
     function startEditBookmark() {
-        editing.value = true;
+        // Seed the buffer here rather than at setup: the stored label can change under us when
+        // the page it points at is revisited in another language.
+        updatedTitle.value = props.title
+        editing.value = true
         nextTick(() => {
-            titleInput.value?.focus();
-            titleInput.value?.select();
-        });
+            titleInput.value?.focus()
+            titleInput.value?.select()
+        })
     }
     function renameBookmark() {
         bookmarksStore.rename({
             path: props.href,
-            label: updatedTitle.value
+            label: updatedTitle.value,
         })
         editing.value = false
     }
 </script>
 
 <style scoped>
-.wrapper {
-    position: relative;
+.bookmark-link {
     display: flex;
     align-items: center;
-    padding: 0.25rem 0.5rem;
-    overflow: hidden;
-    border-radius: 0.25rem;
+    padding: 0.25rem 0;
+    border-radius: var(--ks-radius-base);
     box-sizing: border-box;
 }
 
 .buttons {
-    position: absolute;
-    right: 2rem;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
+    align-items: center;
     gap: 0.25rem;
+    margin-left: auto;
+    padding-right: var(--ks-spacing-2);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.15s ease;
-    z-index: 10;
+    flex-shrink: 0;
 }
 
-.vsm--input {
+.bookmark-input {
     flex: 1;
     font-size: var(--ks-font-size-sm);
 }
@@ -119,31 +117,31 @@
 
 .save {
     cursor: pointer;
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 }
 
-.vsm--link {
-    position: relative;
-    z-index: 1;
-    display: inline-flex;
-    max-width: 100%;
+.bookmark-anchor {
+    display: flex;
+    align-items: center;
     width: 100%;
+    min-width: 0;
     text-decoration: none;
-    color: var(--ks-content-primary);
-    font-size: var(--ks-font-size-sm);
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-xs);
+    font-weight: 600;
 }
 
-.wrapper:not(.editing) .vsm--link:hover .buttons {
-    margin-right: 1rem;
+.bookmark-link:not(.editing) .bookmark-anchor:hover .buttons {
     opacity: 1;
     visibility: visible;
 }
 
-.vsm--title {
+.bookmark-title {
+    flex: 1 1 auto;
+    min-width: 0;
     overflow: hidden;
     white-space: nowrap;
     padding: 0.25rem 0.5rem;
     text-overflow: ellipsis;
-    max-width: calc(100% - 2.5rem);
 }
 </style>

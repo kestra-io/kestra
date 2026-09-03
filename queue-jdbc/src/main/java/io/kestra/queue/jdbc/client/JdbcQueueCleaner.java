@@ -10,6 +10,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.annotations.RequiresExecutor;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @JdbcQueueEnabled
+@RequiresExecutor
 @Slf4j
 public class JdbcQueueCleaner {
     private static final Field<Object> CREATED_FIELD = AbstractJdbcRepository.field("created");
@@ -51,17 +53,13 @@ public class JdbcQueueCleaner {
     @Scheduled(initialDelay = "${kestra.jdbc.queue.cleaner.initial-delay:1h}", fixedDelay = "${kestra.jdbc.queue.cleaner.fixed-delay:1h}")
     public long deleteQueue() {
         LongAdder totalDeleted = new LongAdder();
-        broadcastQueues.forEach(queue ->
+        broadcastQueues.forEach(queue -> dslContextWrapper.transaction(configuration ->
         {
-            Integer queueType = JdbcQueueClient.queueNameToType(queue.queueName());
-            dslContextWrapper.transaction(configuration ->
-            {
-                var condition = CREATED_FIELD.lessOrEqual(period(configuration, retention)).and(TYPE_FIELD.eq(queueType));
-                int deleted = delete(configuration, condition);
-                log.info("Cleaned {} records for the '{}' queue", deleted, queue.queueName());
-                totalDeleted.add(deleted);
-            });
-        });
+            var condition = CREATED_FIELD.lessOrEqual(period(configuration, retention)).and(TYPE_FIELD.eq(queue.queueName()));
+            int deleted = delete(configuration, condition);
+            log.info("Cleaned {} records for the '{}' queue", deleted, queue.queueName());
+            totalDeleted.add(deleted);
+        }));
 
         return totalDeleted.longValue();
     }

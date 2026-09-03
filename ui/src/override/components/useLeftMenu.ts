@@ -1,47 +1,44 @@
-import {computed, onMounted, ref} from "vue";
+import {computed} from "vue"
 
-import {useRoute, useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router"
 import type {
     RouteLocationRaw,
     RouteLocationNamedRaw,
     RouteRecordNameGeneric,
-} from "vue-router";
+} from "vue-router"
 
-import {useI18n} from "vue-i18n";
-
-import {useMiscStore} from "override/stores/misc";
-
-import {shouldShowWelcome} from "../../utils/welcomeGuard";
+import {useI18n} from "vue-i18n"
 
 // Main icons
-import AiMenuIcon from "../../components/ai/AiMenuIcon.vue";
-import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
-import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
-import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
-import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
-import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
-import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
-import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue";
-import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
-import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
-import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue";
-import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue";
-
-// Blueprints icons
-import Wrench from "vue-material-design-icons/Wrench.vue";
+import AiMenuIcon from "../../components/ai/AiMenuIcon.vue"
+import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
+import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
+import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
+import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
+import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
+import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue"
+import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
+import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
+import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
+import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
 
 // Tenant Administration icons
-import Monitor from "vue-material-design-icons/Monitor.vue";
-import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
-import LockOutline from "vue-material-design-icons/LockOutline.vue";
-import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-import Battery40 from "vue-material-design-icons/Battery40.vue";
-import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue";
+import Monitor from "vue-material-design-icons/Monitor.vue"
+import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
+import LockOutline from "vue-material-design-icons/LockOutline.vue"
+import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
+import Battery40 from "vue-material-design-icons/Battery40.vue"
+import Gauge from "vue-material-design-icons/Gauge.vue"
+import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
+import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
+import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
+import McpIcon from "../../components/McpIcon.vue"
 
 export type MenuItem = {
     id?: string; // Generated at the end of menu computation
     title: string;
+    header?: boolean;
     routes?: RouteRecordNameGeneric[];
     href?: RouteLocationRaw;
     icon?: {
@@ -58,25 +55,10 @@ export type MenuItem = {
 };
 
 export function useLeftMenu() {
-    const $route = useRoute();
-    const $router = useRouter();
+    const $route = useRoute()
+    const $router = useRouter()
 
-    const {t} = useI18n({useScope: "global"});
-
-    const configs = useMiscStore().configs;
-    const showWelcomeLink = ref(false);
-
-    const loadWelcomeLink = async () => {
-        try {
-            showWelcomeLink.value = await shouldShowWelcome();
-        } catch {
-            showWelcomeLink.value = false;
-        }
-    };
-
-    onMounted(() => {
-        void loadWelcomeLink();
-    });
+    const {t} = useI18n({useScope: "global"})
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -90,7 +72,7 @@ export function useLeftMenu() {
             .filter(
                 (r) => typeof r.name === "string" && r.name.startsWith(route),
             )
-            .map((r) => r.name);
+            .map((r) => r.name)
     }
 
     /**
@@ -105,191 +87,177 @@ export function useLeftMenu() {
     const flatten = (items: MenuItem[]): MenuItem[] => {
         return items.flatMap((item) =>
             item.child ? [item, ...flatten(item.child)] : [item],
-        );
-    };
+        )
+    }
 
     const menu = computed<MenuItem[]>(() => {
         const generated = [
             {
-                title: t("ai.flow.title"),
-                routes: routeStartWith("welcome"),
-                href: {
-                    name: "welcome",
-                },
-                icon: {
-                    element: AiMenuIcon,
-                },
-            },
-            {
-                title: t("dashboards.labels.plural"),
-                routes: routeStartWith("home"),
-                href: {
-                    name: "home",
-                },
-                icon: {
-                    element: ChartLineVariant,
-                },
-            },
-            {
-                title: t("flows"),
-                routes: routeStartWith("flows"),
-                href: {
-                    name: "flows/list",
-                },
-                icon: {
-                    element: FileTreeOutline,
-                },
-            },
-            {
-                title: t("apps"),
-                routes: routeStartWith("apps"),
-                href: {
-                    name: "apps/list",
-                },
-                icon: {
-                    element: LayersTripleOutline,
-                },
-                attributes: {
-                    locked: true,
-                },
-            },
-            {
-                title: t("executions"),
-                routes: routeStartWith("executions"),
-                href: {
-                    name: "executions/list",
-                },
-                icon: {
-                    element: PlayOutline,
-                },
-            },
-            {
-                title: t("logs"),
-                routes: routeStartWith("logs"),
-                href: {
-                    name: "logs/list",
-                },
-                icon: {
-                    element: FileDocumentOutline,
-                },
-            },
-            {
-                title: t("demos.tests.label"),
-                routes: routeStartWith("tests"),
-                href: {
-                    name: "tests/list",
-                },
-                icon: {
-                    element: FlaskOutline,
-                },
-                attributes: {
-                    locked: true,
-                },
-            },
-            {
-                title: t("demos.assets.label"),
-                routes: routeStartWith("assets"),
-                href: {
-                    name: "assets/list",
-                },
-                icon: {
-                    element: PackageVariantClosed,
-                },
-                attributes: {
-                    locked: true,
-                },
-            },
-            {
-                title: t("namespaces"),
-                routes: routeStartWith("namespaces"),
-                href: {
-                    name: "namespaces/list",
-                },
-                icon: {
-                    element: FolderOpenOutline,
-                },
-            },
-            {
-                title: t("plugins.names"),
-                routes: routeStartWith("plugins"),
-                href: {
-                    name: "plugins/list",
-                },
-                icon: {
-                    element: PuzzleOutline,
-                },
-            },
-            {
-                title: t("blueprints.title"),
-                icon: {
-                    element: ShapePlusOutline,
-                },
+                id: "workspace",
+                title: "Workspace",
                 child: [
                     {
-                        title: t("blueprints.custom"),
-                        routes: routeStartWith("blueprints/flow/custom"),
+                        id: "dashboards",
+                        title: t("dashboards.labels.plural"),
+                        routes: routeStartWith("home"),
                         href: {
-                            name: "blueprints",
-                            params: {
-                                kind: "flow",
-                                tab: "custom",
-                            },
+                            name: "home",
                         },
                         icon: {
-                            element: Wrench,
-                        },
-                        attributes: {
-                            locked: true,
+                            element: ChartLineVariant,
                         },
                     },
                     {
-                        title: t("blueprints.flows"),
-                        routes: routeStartWith("blueprints/flow/community"),
+                        id: "ai-flow",
+                        title: t("ai.flow.title"),
+                        routes: routeStartWith("ai"),
                         href: {
-                            name: "blueprints",
-                            params: {
-                                kind: "flow",
-                                tab: "community",
-                            },
+                            name: "ai",
+                        },
+                        icon: {
+                            element: AiMenuIcon,
+                        },
+                    },
+                    {
+                        id: "flows",
+                        title: t("flows"),
+                        routes: routeStartWith("flows"),
+                        href: {
+                            name: "flows/list",
                         },
                         icon: {
                             element: FileTreeOutline,
                         },
                     },
                     {
-                        title: t("blueprints.dashboards"),
-                        routes: routeStartWith("blueprints/dashboard"),
+                        id: "executions",
+                        title: t("executions"),
+                        routes: routeStartWith("executions"),
                         href: {
-                            name: "blueprints",
-                            params: {
-                                kind: "dashboard",
-                                tab: "community",
-                            },
+                            name: "executions/list",
                         },
                         icon: {
-                            element: ChartLineVariant,
+                            element: PlayOutline,
+                        },
+                    },
+                    {
+                        id: "logs",
+                        title: t("logs"),
+                        routes: routeStartWith("logs"),
+                        href: {
+                            name: "logs/list",
+                        },
+                        icon: {
+                            element: FileDocumentOutline,
+                        },
+                    },
+                    {
+                        id: "apps",
+                        title: t("apps"),
+                        routes: routeStartWith("apps"),
+                        href: {
+                            name: "apps/list",
+                        },
+                        icon: {
+                            element: LayersTripleOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "tests",
+                        title: t("demos.tests.label"),
+                        routes: routeStartWith("tests"),
+                        href: {
+                            name: "tests/list",
+                        },
+                        icon: {
+                            element: FlaskOutline,
+                        },
+                        attributes: {
+                            locked: true,
                         },
                     },
                 ],
             },
             {
-                title: t("tenant.name"),
-                routes: [
-                    "admin/stats",
-                    "kv",
-                    "secrets",
-                    "admin/triggers",
-                    "admin/auditlogs",
-                    "admin/iam",
-                    "admin/concurrency-limits",
-                ]
-                    .map(routeStartWith)
-                    .find((routes) => routes.length > 0),
-                icon: {
-                    element: OfficeBuildingOutline,
-                },
+                id: "resources",
+                title: "Resources",
                 child: [
                     {
+                        id: "namespaces",
+                        title: t("namespaces"),
+                        routes: routeStartWith("namespaces"),
+                        href: {
+                            name: "namespaces/list",
+                        },
+                        icon: {
+                            element: FolderOpenOutline,
+                        },
+                    },
+                    {
+                        id: "assets",
+                        title: t("demos.assets.label"),
+                        routes: routeStartWith("assets"),
+                        href: {
+                            name: "assets/list",
+                        },
+                        icon: {
+                            element: PackageVariantClosed,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "cases",
+                        title: t("demos.cases.label"),
+                        routes: routeStartWith("cases"),
+                        href: {
+                            name: "cases/list",
+                        },
+                        icon: {
+                            element: AlertCircleOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "plugins",
+                        title: t("plugins.names"),
+                        routes: routeStartWith("plugins"),
+                        href: {
+                            name: "plugins/list",
+                        },
+                        icon: {
+                            element: PuzzleOutline,
+                        },
+                    },
+                    {
+                        id: "blueprints",
+                        title: t("blueprints.title"),
+                        routes: routeStartWith("blueprints"),
+                        href: {
+                            name: "blueprints",
+                            params: {
+                                kind: "flow",
+                                tab: "community",
+                            },
+                        },
+                        icon: {
+                            element: ShapePlusOutline,
+                        },
+                    },
+                ],
+            },
+            {
+                id: "tenant",
+                title: t("tenant.name"),
+                child: [
+                    {
+                        id: "system-overview",
                         title: t("system overview"),
                         routes: routeStartWith("admin/stats"),
                         href: {
@@ -300,6 +268,21 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "policies",
+                        title: t("demos.policies.label"),
+                        routes: routeStartWith("admin/policies"),
+                        href: {
+                            name: "admin/policies",
+                        },
+                        icon: {
+                            element: ShieldCheckOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "kv",
                         title: t("kv.name"),
                         routes: routeStartWith("kv"),
                         href: {
@@ -310,6 +293,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "secrets",
                         title: t("secret.names"),
                         routes: routeStartWith("secrets"),
                         href: {
@@ -318,11 +302,9 @@ export function useLeftMenu() {
                         icon: {
                             element: LockOutline,
                         },
-                        attributes: {
-                            locked: true,
-                        },
                     },
                     {
+                        id: "triggers",
                         title: t("triggers"),
                         routes: routeStartWith("admin/triggers"),
                         href: {
@@ -333,6 +315,18 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "mcp-servers",
+                        title: t("mcp.servers"),
+                        routes: routeStartWith("admin/mcp-servers"),
+                        href: {
+                            name: "admin/mcp-servers",
+                        },
+                        icon: {
+                            element: McpIcon,
+                        },
+                    },
+                    {
+                        id: "audit-logs",
                         title: t("auditlogs"),
                         routes: routeStartWith("admin/auditlogs"),
                         href: {
@@ -346,6 +340,35 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "promote",
+                        title: t("promote.label"),
+                        routes: routeStartWith("promote"),
+                        href: {
+                            name: "promote/targets",
+                        },
+                        icon: {
+                            element: RocketLaunchOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "quotas",
+                        title: t("quotas"),
+                        routes: routeStartWith("admin/quotas"),
+                        href: {
+                            name: "admin/quotas/list",
+                        },
+                        icon: {
+                            element: Gauge,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "concurrency-limits",
                         title: t("concurrency limits"),
                         routes: routeStartWith("admin/concurrency-limits"),
                         href: {
@@ -354,9 +377,9 @@ export function useLeftMenu() {
                         icon: {
                             element: Battery40,
                         },
-                        hidden: !configs?.isConcurrencyViewEnabled,
                     },
                     {
+                        id: "iam",
                         title: t("iam"),
                         routes: routeStartWith("admin/iam"),
                         href: {
@@ -371,44 +394,33 @@ export function useLeftMenu() {
                     },
                 ],
             },
-            {
-                title: t("instance"),
-                routes: routeStartWith("admin/instance"),
-                href: {
-                    name: "admin/instance",
-                },
-                icon: {
-                    element: ServerNetworkOutline,
-                },
-                attributes: {
-                    locked: true,
-                },
-            },
-        ];
+        ]
 
         flatten(generated).forEach((item: MenuItem) => {
-            item.id = item.title.toLowerCase().replaceAll(" ", "-");
+            if (!item.id) {
+                item.id = item.title.toLowerCase().replaceAll(" ", "-")
+            }
 
-            if (item.icon?.element) item.icon.class = "menu-icon";
+            if (item.icon?.element) item.icon.class = "menu-icon"
 
             if (item.href && typeof item.href !== "string") {
-                const rObject = item.href as RouteLocationNamedRaw;
+                const rObject = item.href as RouteLocationNamedRaw
 
                 // Merge query if route matches
                 if (rObject.name === $route.name) {
                     rObject.query = {
                         ...$route.query,
                         ...rObject.query,
-                    };
+                    }
                 }
 
                 // Convert object href to string path
-                item.href = $router.resolve(rObject).fullPath;
+                item.href = $router.resolve(rObject).fullPath
             }
-        });
+        })
 
-        return generated;
-    });
+        return generated
+    })
 
-    return {menu};
+    return {menu}
 }

@@ -13,7 +13,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -32,6 +32,7 @@ import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.AssetFailureBehavior;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.*;
@@ -48,6 +49,7 @@ import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.models.flows.State.Type.*;
@@ -84,8 +86,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
-        this.workerGroup = workerGroup;
         this.workerId = workerId;
+        this.workerGroup = workerGroup;
         this.serverConfig = serverConfig;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.workerMetricQueue = workerMetricQueue;
@@ -135,7 +137,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 // all tasks will be handled immediately by the worker
                 WorkerTaskResult workerTaskResult = null;
                 try {
-                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getWhen()))) {
+                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
                         workerTaskResult = new WorkerTaskResult(
                             currentWorkerTask.getTaskRun()
                                 .withState(SKIPPED)
@@ -150,7 +152,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     }
                 } catch (IllegalVariableEvaluationException e) {
                     RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
-                    contextLogger.logger().error("Failed evaluating when: {}", e.getMessage(), e);
+                    contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                     workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
                 }
 
@@ -267,9 +269,14 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
 
-            if (isStopped() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
-                // if the Worker is terminating and the task is not in success, it may have been terminated by the worker
-                // in this case; we return immediately without emitting any result as it would be resubmitted (except if WorkerTaskRestartStrategy is NEVER)
+            if (isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+                // The Worker is terminating and forcibly interrupted this still-running task (grace period
+                // elapsed or force shutdown), so its failed state is an artifact of the shutdown, not a real
+                // failure: we return immediately without emitting any result as it will be resubmitted
+                // (except if WorkerTaskRestartStrategy is NEVER).
+                // A task that reached a FAILED state on its own during the drain window is NOT interrupted
+                // (isShutdownInterrupted() is false), so it falls through and its terminal result is emitted —
+                // otherwise its genuine failure would be silently dropped and the execution stuck RUNNING.
                 List<WorkerTaskResult> dynamicWorkerResults = runContext.dynamicWorkerResults();
                 List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
                 return new WorkerTaskResult(taskRunWithOutput.taskRun(), dynamicTaskRuns, taskRunWithOutput.outputs());
@@ -284,6 +291,44 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 state = WARNING;
             }
 
+            if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.DECLARATION_INVALID) {
+                // never rewrite a state that already terminated in error, mirroring AssetFailureBehavior.apply
+                if (!state.isTerminatedInError()) {
+                    runContext.logger().error(
+                        "Task state changed from {} to {} because its asset declaration is invalid, which assetFailureBehavior does not soften",
+                        state, FAILED
+                    );
+                    state = FAILED;
+                }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
+                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
+                AssetFailureBehavior assetFailureBehavior = AssetFailureBehavior.WARN;
+                if (assetsDeclaration != null) {
+                    try {
+                        assetFailureBehavior = runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
+                    } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
+                        // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
+                        runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
+                    }
+                }
+                State.Type newState = assetFailureBehavior.apply(state);
+                if (newState != state) {
+                    runContext.logger().warn(
+                        "Task state changed from {} to {} because an asset failed to be emitted (assetFailureBehavior: {})",
+                        state, newState, assetFailureBehavior
+                    );
+                } else {
+                    runContext.logger().warn(
+                        "An asset failed to be emitted but the task state was not changed (assetFailureBehavior: {})",
+                        assetFailureBehavior
+                    );
+                }
+                state = newState;
+            }
+
+            // allowFailure has final say over any FAILED state reaching this point, whether the task's own
+            // genuine failure or one escalated by assetFailureBehavior; gated on shouldBeRetried so a pending retry
+            // is not prematurely softened
             if (workerTask.getTask().isAllowFailure() && !taskRunWithOutput.taskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
                 state = WARNING;
             }
@@ -314,7 +359,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 ) {
                     var zipEntry = new ZipEntry("outputs.ion");
                     archive.putNextEntry(zipEntry);
-                    archive.write(JacksonMapper.ofIon().writeValueAsBytes(taskRunWithOutput.outputs()));
+                    archive.write(JacksonMapper.ofIonBinary().writeValueAsBytes(taskRunWithOutput.outputs()));
                     archive.closeEntry();
                     archive.finish();
                     Path archiveFile = runContext.workingDir().createTempFile(".zip");
@@ -393,7 +438,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         metricRunningCount.incrementAndGet();
 
         // run it
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
+        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
         io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
 
         metricRunningCount.decrementAndGet();
@@ -418,32 +463,85 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
 
+        TaskRunWithOutput.AssetEmission assetEmission = TaskRunWithOutput.AssetEmission.OK;
         try {
             if (workerTask.getTask().getAssets() != null) {
                 // We need to have the task outputs injected before rendering the assets
                 Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
 
-                List<AssetEmit> assetEmits = runContext.assets().emitted();
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
 
-                taskRun = taskRun.withAssets(
-                    new AssetsInOut(
-                        Stream.concat(
-                            runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap).stream(),
-                            assetEmits.stream().map(AssetEmit::inputs).flatMap(Collection::stream)
-                        ).toList(),
-                        Stream.concat(
-                            runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap).stream(),
-                            assetEmits.stream().map(AssetEmit::outputs).flatMap(Collection::stream)
-                        ).toList()
-                    )
-                );
+                // Rendered independently so an unrenderable output doesn't discard the inputs of the same task.
+                List<AssetIdentifier> declaredInputs = List.of();
+                try {
+                    declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
+                } catch (IllegalVariableEvaluationException e) {
+                    logger.warn("Unable to render the declared asset inputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                }
+
+                List<Asset> declaredOutputs = List.of();
+                try {
+                    declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
+                } catch (IllegalVariableEvaluationException e) {
+                    logger.warn("Unable to render the declared asset outputs of task '{}'", taskRun.getTaskId(), e);
+                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                }
+
+                // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
+                // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
+                List<AssetsInOut> bundles = new ArrayList<>();
+                if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
+                    bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
+                }
+                runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
+
+                if (!bundles.isEmpty()) {
+                    taskRun = taskRun.withAssetEmits(withDefaultNamespace(bundles, taskRun.getNamespace()));
+                }
+            }
+        } catch (ConstraintViolationException e) {
+            // validate() re-checks the whole task bean, so only an assets-scoped violation is the declaration's fault
+            String assetViolations = violationsUnder("assets", e);
+            if (assetViolations.isEmpty()) {
+                logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
+                assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+            } else {
+                logger.error("Invalid asset declaration for taskRun '{}': {}", taskRun.getId(), assetViolations);
+                assetEmission = TaskRunWithOutput.AssetEmission.DECLARATION_INVALID;
             }
         } catch (Exception e) {
-            logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
+            logger.warn("Unable to emit the assets of task '{}'", taskRun.getTaskId(), e);
+            assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
         }
 
-        return new TaskRunWithOutput(taskRun, outputs);
+        return new TaskRunWithOutput(taskRun, outputs, assetEmission);
+    }
+
+    private static String violationsUnder(String propertyPathPrefix, ConstraintViolationException e) {
+        return e.getConstraintViolations().stream()
+            .filter(violation -> violation.getPropertyPath().toString().startsWith(propertyPathPrefix))
+            .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
+            .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * An asset emitted without a namespace belongs to the flow emitting it, and left null it is filtered
+     * out of the view of every user whose asset permission is scoped to namespaces rather than global.
+     */
+    private static List<AssetsInOut> withDefaultNamespace(List<AssetsInOut> bundles, String namespace) {
+        return bundles.stream()
+            .map(
+                bundle -> new AssetsInOut(
+                    bundle.getInputs().stream()
+                        .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
+                        .toList(),
+                    bundle.getOutputs().stream()
+                        .map(output -> output.getNamespace() == null ? output.withNamespace(namespace) : output)
+                        .toList()
+                )
+            )
+            .toList();
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

@@ -16,14 +16,12 @@ import io.micronaut.core.annotation.Nullable;
  * Carries the variables map (minus keys the worker reconstructs locally),
  * plus metadata needed to initialize a {@link RunContext} on the worker side.
  *
- * @param variables The variables map, stripped of worker-reconstructed keys.
- * @param secretInputs List of input keys that are secrets (for log masking).
+ * @param variables The variables map, stripped of worker-reconstructed keys. Secret values are still encrypted.
  * @param traceParent OpenTelemetry trace parent for distributed tracing.
  */
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public record WorkerTaskData(
     @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS) Map<String, Object> variables,
-    List<String> secretInputs,
     @Nullable String traceParent) implements WorkerRunContextData {
 
     /**
@@ -44,7 +42,6 @@ public record WorkerTaskData(
     public static WorkerTaskData from(RunContext runContext) {
         return new WorkerTaskData(
             WorkerRunContextData.filterVariables(runContext, WORKER_RECONSTRUCTED_KEYS),
-            runContext.getSecretInputs(),
             runContext.getTraceParent()
         );
     }

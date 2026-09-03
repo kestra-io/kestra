@@ -30,24 +30,40 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
+      embed-plugins-schema-bundle: true
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
       dry-run: ${{ inputs.dry-run }}
       java-version: ${{ inputs.java-version }}
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+      use-kestra-base-images: true
+    secrets: inherit
 
   helm-release:
     name: Helm release
     needs: publish-docker
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc')
     permissions:
       contents: read
       id-token: write
-    uses: ./.github/workflows/helm-release.yml
+    uses: kestra-io/actions/.github/workflows/kestra-oss-helm-release.yml@main
     with:
-      dry_run: ${{ inputs.dry-run }}
+      dry-run: ${{ inputs.dry-run }}
+
+  otel-export-trace:
+    name: OpenTelemetry - Export Trace
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [ publish-docker, helm-release ]
+    env:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+    steps:
+      - name: OpenTelemetry - Export trace
+        uses: kestra-io/actions/actions/otel-export-trace@main
+        if: ${{ env.OTLP_ENDPOINT != '' }}
+        with:
+          mode: export-all
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          otlp-endpoint: ${{ secrets.OTLP_ENDPOINT }}
+          otlp-headers: "${{ secrets.OTLP_HEADERS }}"
+          logs-enabled: 'true'
+          service-name: "Github Actions - ${{ github.repository }} - ${{ github.workflow }}"

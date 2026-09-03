@@ -1,5 +1,5 @@
-import {RouteLocationRaw} from "vue-router";
-import {Execution} from "../../../../stores/executions";
+import {RouteLocationRaw} from "vue-router"
+import {Execution} from "../../../../stores/executions"
 
 type Types = "namespaces" | "flows" | "executions";
 
@@ -16,26 +16,26 @@ export const createLink = (
     execution: Execution,
     customID?: string,
 ): RouteLocationRaw => {
-    if (!execution) return {};
+    if (!execution) return {}
 
-    const params: Record<string, string> = {tab: "overview"};
+    const params: Record<string, string> = {tab: "overview"}
 
-    if (execution?.tenantId) params.tenant = execution.tenantId;
+    if (execution?.tenantId) params.tenant = execution.tenantId
 
     switch (type) {
         case "namespaces":
-            params.id = execution.namespace;
-            break;
+            params.id = execution.namespace
+            break
         case "flows":
-            params.id = execution.flowId;
-            params.namespace = execution.namespace;
-            break;
+            params.id = execution.flowId
+            params.namespace = execution.namespace
+            break
         case "executions":
-            params.id = customID ?? execution.id; // Use customID if provided, otherwise fallback to execution.id
-            params.namespace = execution.namespace;
-            params.flowId = execution.flowId;
-            break;
+            params.id = customID ?? execution.id // Use customID if provided, otherwise fallback to execution.id
+            params.namespace = execution.namespace
+            params.flowId = execution.flowId
+            break
     }
 
-    return {name: `${type}/update`, params};
-};
+    return {name: `${type}/update`, params}
+}

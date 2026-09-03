@@ -12,9 +12,11 @@ import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Mono;
@@ -42,10 +44,79 @@ class AuthenticationFilterTest {
     private SettingRepositoryInterface settingRepository;
 
     @Test
-    void testConfigEndpointAlwaysOpen() {
+    void testConfigEndpointRequiresAuthentication() {
+        // GHSA fix follow-up: /api/v1/configs discloses sensitive instance metadata
+        // (version, commit id, queue type, plugin hash, ...) so it must no longer be
+        // reachable without valid credentials.
+        HttpClientResponseException httpClientResponseException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"))
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void testLoginConfigEndpointAlwaysOpen() {
+        // Only the minimal login-config endpoint is public; the login/setup UI only needs
+        // isBasicAuthInitialized before the user is authenticated.
         var response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+            .exchange(HttpRequest.GET("/api/v1/configs/login").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void configEndpointShouldBeCheckedExactly() {
+        // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /configs which are not the config endpoint
+        HttpClientResponseException httpClientResponseException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs").basicAuth("anonymous", "hacker"))
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void loginConfigEndpointShouldBeCheckedExactly() {
+        // Same GHSA-5vc5-wxxq-3fjx class of bypass, applied to the new public /configs/login route:
+        // a deeper path merely ending with /configs/login must not be treated as the public endpoint.
+        HttpClientResponseException httpClientResponseException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs/login").basicAuth("anonymous", "hacker"))
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void basicAuthEndpointShouldBeCheckedExactly() {
+        // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /basicAuth which are not the basicAuth endpoint
+        // Use a path with two segments before /basicAuth — the regex only allows zero or one tenant segment
+        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
+        try {
+            HttpClientResponseException httpClientResponseException = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(
+                        HttpRequest.POST("/api/v1/main/namespace/basicAuth", new BasicAuthCredentials(IdUtils.create(), "anonymous", "hacker"))
+                            .basicAuth("anonymous", "hacker")
+                    )
+            );
+            assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void basicAuthValidationErrorsEndpointShouldBeCheckedExactly() {
+        // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /basicAuthValidationErrors which are not the basicAuthValidationErrors endpoint
+        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
+        try {
+            HttpClientResponseException httpClientResponseException = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(HttpRequest.GET("/api/v1/main/basicAuthValidationErrors").basicAuth("anonymous", "hacker"))
+            );
+            assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
     }
 
     @Test
@@ -78,7 +149,8 @@ class AuthenticationFilterTest {
                     "/api/v1/basicAuth", new BasicAuthCredentials(
                         IdUtils.create(),
                         "anonymous@hacker",
-                        "hackerPassword1"
+                        "hackerPassword1",
+                        basicAuthConfiguration.getPassword()
                     )
                 ).basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
             );
@@ -124,7 +196,7 @@ class AuthenticationFilterTest {
     void shouldWorkWithoutPersistedConfiguration() {
         settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
         var response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+            .exchange(HttpRequest.GET("/api/v1/configs/login"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 
@@ -206,6 +278,48 @@ class AuthenticationFilterTest {
         );
 
         assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void webhookOpenUrlShouldNotOpenTheGeneralExecutionRoute() {
+        // GHSA-j5cv-8rw9-vv2p: "/api/v1/main/executions/webhook/" as an open-url prefix also matched
+        // "/api/v1/main/executions/{namespace}/{id}" for a namespace literally named "webhook",
+        // letting anyone create an execution anonymously.
+        TestAuthFilter.ENABLED = false;
+        try {
+            HttpClientResponseException httpClientResponseException = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(
+                        HttpRequest.POST(
+                            "/api/v1/main/executions/webhook/some-flow",
+                            MultipartBody.builder().addPart("string", "myString").build()
+                        ).contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+                    )
+            );
+            assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        } finally {
+            TestAuthFilter.ENABLED = true;
+        }
+    }
+
+    @Test
+    void webhookRouteShouldStayOpenWithAndWithoutTenant() {
+        TestAuthFilter.ENABLED = false;
+        try {
+            HttpClientResponseException tenantFul = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(HttpRequest.GET("/api/v1/main/executions/webhook/io.kestra.tests/unknown-flow/some-key"))
+            );
+            assertThat(tenantFul.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+
+            HttpClientResponseException tenantLess = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(HttpRequest.GET("/api/v1/executions/webhook/io.kestra.tests/unknown-flow/some-key"))
+            );
+            assertThat(tenantLess.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        } finally {
+            TestAuthFilter.ENABLED = true;
+        }
     }
 
     @Test

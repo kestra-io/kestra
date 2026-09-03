@@ -8,11 +8,14 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
+import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
@@ -26,16 +29,21 @@ import io.kestra.webserver.services.ai.AiServiceManager;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.cookie.SameSite;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -68,13 +76,16 @@ public class MiscController {
     Optional<AiServiceManager> aiServiceManager = Optional.empty();
 
     @Inject
-    KestraConfig kestraConfig;
+    SystemFlowsConfiguration systemFlowsConfiguration;
 
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
     private String chartDefaultDuration;
 
-    @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
-    protected Boolean isAnonymousUsageEnabled;
+    @io.micronaut.context.annotation.Value("${kestra.flowTemplate:}")
+    private String flowTemplate;
+
+    @Inject
+    private UsageReportConfig usageReportConfig;
 
     @io.micronaut.context.annotation.Value("${kestra.ui-anonymous-usage-report.enabled:false}")
     protected Boolean isUiAnonymousUsageEnabled;
@@ -108,6 +119,9 @@ public class MiscController {
     private PluginRegistry pluginRegistry;
 
     @Inject
+    private PluginAutoInstallService pluginAutoInstallService;
+
+    @Inject
     private PebbleExpressionService pebbleExpressionService;
 
     @Inject
@@ -115,7 +129,10 @@ public class MiscController {
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    @Operation(
+        tags = { "Misc" }, summary = "Retrieve the instance configuration.",
+        description = "Requires authentication; see /configs/login for the public, unauthenticated subset used by the login page."
+    )
     public Configuration getConfiguration() throws JsonProcessingException { // JsonProcessingException might be thrown in EE
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
@@ -125,7 +142,7 @@ public class MiscController {
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
-            .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
+            .isAnonymousUsageEnabled(this.usageReportConfig.enabled())
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .preview(
                 Preview.builder()
@@ -135,13 +152,14 @@ public class MiscController {
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
-            .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
-            .systemNamespace(kestraConfig.getSystemFlowNamespace())
+            .isBasicAuthInitialized(isBasicAuthInitialized())
+            .systemNamespace(systemFlowsConfiguration.namespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
-            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"));
+            .flowTemplate(this.flowTemplate)
+            .isPluginAutoInstallEnabled(pluginAutoInstallService.isEnabled());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -153,6 +171,20 @@ public class MiscController {
         }
 
         return builder.build();
+    }
+
+    @Get("/configs/login")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Misc" }, summary = "Retrieve the configuration required by the login page.",
+        description = "Public endpoint available to unauthenticated users; exposes only what the login/setup UI needs."
+    )
+    public LoginConfiguration getLoginConfiguration() {
+        return new LoginConfiguration(isBasicAuthInitialized());
+    }
+
+    private boolean isBasicAuthInitialized() {
+        return basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false);
     }
 
     @Get("/{tenant}/usages/all")
@@ -169,14 +201,32 @@ public class MiscController {
 
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
-    public HttpResponse<Void> createBasicAuth(
-        @RequestBody @Body BasicAuthCredentials basicAuthCredentials) {
-        basicAuthService
-            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
-            .save(basicAuthCredentials);
+    @Operation(
+        tags = { "Misc" }, summary = "Configure basic authentication for the instance.",
+        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password."
+    )
+    public MutableHttpResponse<?> createBasicAuth(
+        HttpRequest<?> request,
+        @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
+        BasicAuthService service = basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
 
-        return HttpResponse.noContent();
+        // Being authenticated is not enough to prove the caller still knows the *current*
+        // password: isAuthenticated() caches verified tokens, so a password already rotated on
+        // another webserver node sharing this settings store can still pass it here. Re-checking
+        // directly against the stored credentials closes that window.
+        if (service.isBasicAuthInitialized() && !service.validateCurrentPassword(basicAuthCredentials.getCurrentPassword())) {
+            throw new ValidationErrorException(List.of(
+                "The current password is required and must be correct to change Basic Authentication credentials."
+            ));
+        }
+
+        service.save(basicAuthCredentials);
+
+        // Log the caller in immediately: they just proved they know these credentials by submitting them.
+        return HttpResponse.noContent()
+            .cookie(authCookie(request, basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()))
+            .cookie(authFlagCookie(request));
     }
 
     @Get("/basicAuthValidationErrors")
@@ -186,6 +236,64 @@ public class MiscController {
         return basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
             .validationErrors();
+    }
+
+    @Post("/login")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Misc" }, summary = "Authenticate with basic auth credentials.",
+        description = "On success, issues an HttpOnly session cookie holding the credentials, plus a non-HttpOnly flag cookie the UI reads to know it is logged in."
+    )
+    public MutableHttpResponse<?> login(HttpRequest<?> request, @Body LoginRequest loginRequest) {
+        BasicAuthService service = basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
+
+        String username = loginRequest.username() == null ? null : loginRequest.username().trim();
+        if (!service.validateCredentials(username, loginRequest.password())) {
+            return HttpResponse.unauthorized();
+        }
+
+        return HttpResponse.noContent()
+            .cookie(authCookie(request, username, loginRequest.password()))
+            .cookie(authFlagCookie(request));
+    }
+
+    @Post("/logout")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = { "Misc" }, summary = "Clear the basic auth session cookie.")
+    public MutableHttpResponse<?> logout() {
+        Cookie cookie = Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, "")
+            .path("/")
+            .httpOnly(true)
+            .sameSite(SameSite.Strict)
+            .maxAge(0);
+
+        Cookie flagCookie = Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "")
+            .path("/")
+            .httpOnly(false)
+            .sameSite(SameSite.Strict)
+            .maxAge(0);
+
+        return HttpResponse.noContent().cookie(cookie).cookie(flagCookie);
+    }
+
+    private static Cookie authCookie(HttpRequest<?> request, String username, String password) {
+        return Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, BasicAuthService.encodeToken(username, password))
+            .path("/")
+            .httpOnly(true)
+            .secure(request.isSecure())
+            .sameSite(SameSite.Strict);
+    }
+
+    private static Cookie authFlagCookie(HttpRequest<?> request) {
+        return Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "true")
+            .path("/")
+            .httpOnly(false)
+            .secure(request.isSecure())
+            .sameSite(SameSite.Strict);
+    }
+
+    public record LoginRequest(String username, String password) {
     }
 
     @Get("/pebble/filters")
@@ -216,6 +324,8 @@ public class MiscController {
 
         String chartDefaultDuration;
 
+        String flowTemplate;
+
         ZonedDateTime commitDate;
 
         @JsonInclude
@@ -245,7 +355,7 @@ public class MiscController {
 
         Long pluginsHash;
 
-        Boolean isConcurrencyViewEnabled;
+        Boolean isPluginAutoInstallEnabled;
     }
 
     @Value
@@ -267,5 +377,11 @@ public class MiscController {
     public static class ApiUsage {
         private FlowUsage flows;
         private ExecutionUsage executions;
+    }
+
+    /**
+     * Minimal configuration exposed to unauthenticated callers for the login/setup UI.
+     */
+    public record LoginConfiguration(@JsonInclude Boolean isBasicAuthInitialized) {
     }
 }

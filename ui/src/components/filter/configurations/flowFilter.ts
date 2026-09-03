@@ -1,23 +1,25 @@
-import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
-import permission from "../../../models/permission";
-import action from "../../../models/action";
-import {useNamespacesStore} from "override/stores/namespaces";
-import {useAuthStore} from "override/stores/auth";
-import {useValues} from "../composables/useValues";
-import {useI18n} from "vue-i18n";
-import {useRoute} from "vue-router";
+import {computed, ComputedRef} from "vue"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import resource from "../../../models/resource"
+import action from "../../../models/action"
+import {useNamespacesStore} from "override/stores/namespaces"
+import {useAuthStore} from "override/stores/auth"
+import {useValues} from "../composables/useValues"
+import {useI18n} from "vue-i18n"
+import {useRoute} from "vue-router"
+import {labelComparatorLabels} from "./labelComparatorLabels"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
-    const route = useRoute();
+    const {t} = useI18n()
+    const route = useRoute()
 
     return computed(() => {
         return {
             title: t("filter.titles.flow_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_flows"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),
@@ -30,24 +32,24 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                         ],
                         valueType: "multi-select" as const,
                         valueProvider: async () => {
-                            const user = useAuthStore().user;
-                            if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                                const namespacesStore = useNamespacesStore();
-                                const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
+                            const user = useAuthStore().user
+                            if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
+                                const namespacesStore = useNamespacesStore()
+                                const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
                                 return [...new Set(namespaces
                                     .flatMap(namespace => {
                                         return namespace.split(".").reduce((current: string[], part: string) => {
-                                            const previousCombination = current?.[current.length - 1];
-                                            return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
-                                        }, []);
+                                            const previousCombination = current?.[current.length - 1]
+                                            return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
+                                        }, [])
                                     }))].map(namespace => ({
                                         label: namespace,
-                                        value: namespace
-                                    }));
+                                        value: namespace,
+                                    }))
                             }
-                            return [];
+                            return []
                         },
-                        searchable: true
+                        searchable: true,
                     },
                 ] : []) as any,
                 {
@@ -57,19 +59,29 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "radio",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("flows");
-                        return VALUES.SCOPES;
+                        const {VALUES} = useValues("flows")
+                        return VALUES.SCOPES
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "labels",
                     label: t("filter.labels_flow.label"),
                     description: t("filter.labels_flow.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "key-value",
+                    showComparatorSelection: true,
                 },
-            ]
-        };
-    });
+            ],
+        }
+    })
 }

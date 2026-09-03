@@ -1,58 +1,58 @@
-import {useRoute} from "vue-router";
-import {useApiStore} from "../stores/api";
-import {pageFromRoute} from "../utils/eventsRouter";
-import {FIRST_FLOW_STEP_IDS, type OnboardingStepType} from "../components/onboarding/guides/firstFlowGuide";
+import {useRoute} from "vue-router"
+import {useApiStore} from "../stores/api"
+import {pageFromRoute} from "../utils/eventsRouter"
+import {TOUR_SCENE_IDS} from "../components/onboarding/tour/tourScenes"
 
-export const ONBOARDING_V2_SEMVER = "2.0.0";
-export const ONBOARDING_V2_EXPERIENCE = "first_flow_tutorial";
-export const ONBOARDING_V2_TEMPLATE = "first_flow_tutorial";
+/** Bumped from 2.0.0 with the new tour, so its events are distinguishable from the old guide's. */
+export const TOUR_ANALYTICS_VERSION = "3.0.0"
+export const TOUR_ANALYTICS_EXPERIENCE = "product_tour"
+
+export type OnboardingTourEvent =
+    | "tour_offered"
+    | "tour_started"
+    | "tour_continued"
+    | "tour_completed"
+    | "tour_closed";
 
 interface TrackOnboardingOptions {
-    action: string;
-    mode?: "guided" | "self_serve" | null;
-    stepId?: string | null;
-    stepType?: OnboardingStepType;
-    validationMessage?: string;
+    event: OnboardingTourEvent;
+    action?: string | null;
+    mode?: "guided" | null;
     additional?: Record<string, unknown>;
 }
 
 export function useOnboardingAnalytics() {
-    const apiStore = useApiStore();
-    const route = useRoute();
+    const apiStore = useApiStore()
+    const route = useRoute()
 
     const trackOnboarding = ({
+        event,
         action,
         mode,
-        stepId,
-        stepType,
-        validationMessage,
         additional = {},
     }: TrackOnboardingOptions) => {
-        const step =
-            stepId && FIRST_FLOW_STEP_IDS.includes(stepId)
-                ? FIRST_FLOW_STEP_IDS.indexOf(stepId) + 1
-                : undefined;
+        const step = action && TOUR_SCENE_IDS.includes(action)
+            ? TOUR_SCENE_IDS.indexOf(action) + 1
+            : undefined
 
         apiStore.events({
             type: "ONBOARDING",
             onboarding: {
-                version: ONBOARDING_V2_SEMVER,
-                experience: ONBOARDING_V2_EXPERIENCE,
-                template: ONBOARDING_V2_TEMPLATE,
-                guideId: "first_flow",
-                mode,
+                version: TOUR_ANALYTICS_VERSION,
+                experience: TOUR_ANALYTICS_EXPERIENCE,
+                template: TOUR_ANALYTICS_EXPERIENCE,
+                guideId: "product_tour",
+                event,
                 action,
-                stepId,
-                stepType,
                 step,
-                validationMessage,
+                mode,
                 ...additional,
             },
             page: pageFromRoute(route),
-        });
-    };
+        })
+    }
 
     return {
         trackOnboarding,
-    };
+    }
 }

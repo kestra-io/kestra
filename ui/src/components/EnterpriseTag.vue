@@ -37,19 +37,19 @@
 
     .enterprise-tag::after{
         z-index: -1;
-        background: var(--ks-tag-background);
+        background: var(--ks-bg-tag);
         top: 1px;
         left: 1px;
         bottom: 1px;
         right: 1px;
         html.dark & {
-            background: var(--ks-border-primary);
+            background: var(--ks-border-default);
         }
     }
 
     .enterprise-tag{
         position: relative;
-        background: var(--ks-tag-background-hover);
+        background: var(--ks-bg-tag-hover);
         padding: .125rem 0.5rem !important;
         border-radius: 1rem;
         display: inline-block;
@@ -70,11 +70,11 @@
             right: 0;
             background-image:
                 // vertical flare
-                linear-gradient(0deg, rgba(#cfd3d6, 0) 0%, var(--ks-tag-background-hover) 50%, rgba(#cfd3d6, 0) 100%),
+                linear-gradient(0deg, rgba(#cfd3d6, 0) 0%, var(--ks-bg-tag-hover) 50%, rgba(#cfd3d6, 0) 100%),
                 // horizontal flare
-                linear-gradient(90deg, rgba(#cfd3d6, 0) 0%, var(--ks-tag-background-hover) 50%, rgba(#cfd3d6, 0) 100%),
+                linear-gradient(90deg, rgba(#cfd3d6, 0) 0%, var(--ks-bg-tag-hover) 50%, rgba(#cfd3d6, 0) 100%),
                 // flare effect
-                radial-gradient(circle, var(--ks-tag-background-hover) 0%, rgba(#cfd3d6, .1) 50%,rgba(#cfd3d6, 0) 70%);
+                radial-gradient(circle, var(--ks-bg-tag-hover) 0%, rgba(#cfd3d6, .1) 50%,rgba(#cfd3d6, 0) 70%);
             background-size:  1px 100%, 100% 1px, 40% 40%;
             background-repeat: no-repeat;
             background-position: center, center, center;

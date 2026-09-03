@@ -12,13 +12,13 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
@@ -103,11 +103,11 @@ class ScheduleOnDatesTest {
             .build();
 
         // When
-        Optional<Execution> evaluate = scheduleOnDates.evaluate(conditionContext, triggerContext);
+        Optional<TriggerEvaluationResult> evaluate = scheduleOnDates.eval(conditionContext, triggerContext);
 
         // Then
         assertThat(evaluate).isPresent();
-        Map<String, Object> vars = evaluate.get().getTrigger().getVariables();
+        Map<String, Object> vars = evaluate.get().trigger().getVariables();
         assertThat(vars).containsKey("date");
         var renderedDate = ZonedDateTime.parse((String) vars.get("date"));
         assertThat(renderedDate.toInstant()).isEqualTo(fireDate.toInstant());
@@ -135,11 +135,11 @@ class ScheduleOnDatesTest {
             .build();
 
         // When
-        Optional<Execution> evaluate = scheduleOnDates.evaluate(conditionContext, triggerContext);
+        Optional<TriggerEvaluationResult> evaluate = scheduleOnDates.eval(conditionContext, triggerContext);
 
         // Then - same instant, but rendered in Tokyo (+09:00)
         assertThat(evaluate).isPresent();
-        var renderedDate = ZonedDateTime.parse((String) evaluate.get().getTrigger().getVariables().get("date"));
+        var renderedDate = ZonedDateTime.parse((String) evaluate.get().trigger().getVariables().get("date"));
         assertThat(renderedDate.toInstant()).isEqualTo(fireDateUtc.toInstant());
         assertThat(renderedDate.getOffset()).isEqualTo(ZoneId.of("Asia/Tokyo").getRules().getOffset(fireDateUtc.toInstant()));
     }

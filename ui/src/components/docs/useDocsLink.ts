@@ -1,6 +1,6 @@
-import path from "path-browserify";
-import {computed, Ref} from "vue";
-import {useDocStore} from "../../stores/doc";
+import path from "path-browserify"
+import {computed, Ref} from "vue"
+import {useDocStore} from "../../stores/doc"
 
 /**
  * converts markdown code links path into
@@ -8,7 +8,7 @@ import {useDocStore} from "../../stores/doc";
  * @returns normalized path (not a url)
  */
 function normalizeDocsPath(inputPath:string)  {
-    return inputPath.replaceAll(/(\/|^)\d+?\.(?!\d)/g, "$1").replace(/(?:\/index)?\.md(#.+|$)/, "");
+    return inputPath.replaceAll(/(\/|^)\d+?\.(?!\d)/g, "$1").replace(/(?:\/index)?\.md(#.+|$)/, "")
 }
 
 /**
@@ -29,23 +29,23 @@ function normalizeRemoteHref(href: string) {
 }
 
 export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
-    const pageMetadata = computed(() => docStore.pageMetadata);
-    const isRemote = computed(() => isRemoteLink(hrefInput.value));
+    const pageMetadata = computed(() => docStore.pageMetadata)
+    const isRemote = computed(() => isRemoteLink(hrefInput.value))
     const href = computed(() => {
         if(isRemote.value) {
             return normalizeRemoteHref(hrefInput.value)
         }
-        let relativeLink = normalizeDocsPath(hrefInput.value);
+        let relativeLink = normalizeDocsPath(hrefInput.value)
         if (pageMetadata.value?.isIndex === false) {
-            relativeLink = "../" + relativeLink;
+            relativeLink = "../" + relativeLink
         }
-        return path.normalize(currentPath.value + "/" + relativeLink);
-    });
+        return path.normalize(currentPath.value + "/" + relativeLink)
+    })
 
     return {
         href,
-        isRemote
+        isRemote,
     }
 }

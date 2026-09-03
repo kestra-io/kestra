@@ -39,6 +39,7 @@ public class FlowExecutorExtension extends AbstractLoaderExtension implements Af
     public Object resolveParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
         loadApplicationContext(extensionContext);
+        abortIfContextStopped();
 
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
         String tenantId = executeFlow.tenantId();
@@ -48,6 +49,7 @@ public class FlowExecutorExtension extends AbstractLoaderExtension implements Af
         if (url == null) {
             throw new IllegalArgumentException("Unable to load flow: " + path);
         }
+        createTenant(extensionContext, tenantId);
         LocalFlowRepositoryLoader repositoryLoader = context.getBean(LocalFlowRepositoryLoader.class);
         TestsUtils.loads(tenantId, repositoryLoader, Objects.requireNonNull(url));
 
@@ -58,7 +60,7 @@ public class FlowExecutorExtension extends AbstractLoaderExtension implements Af
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws Exception {
-        if (!context.isRunning()) {
+        if (!isContextRunning()) {
             return;
         }
 
@@ -72,6 +74,8 @@ public class FlowExecutorExtension extends AbstractLoaderExtension implements Af
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
             .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId()))
             .forEach(throwConsumer(flow -> flowService.delete(FlowWithSource.of(flow, "unused"))));
+
+        deleteTenant(executeFlow.tenantId());
     }
 
     private static ExecuteFlow getExecuteFlow(ExtensionContext extensionContext) {

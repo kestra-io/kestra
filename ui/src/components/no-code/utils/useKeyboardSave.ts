@@ -1,21 +1,21 @@
-import {onActivated, onDeactivated} from "vue";
-import {useFlowStore} from "../../../stores/flow";
+import {onActivated, onDeactivated} from "vue"
+import {useFlowEditorActions} from "../../flows/useFlowEditorActions"
 
 export function useKeyboardSave() {
-    const flowStore = useFlowStore();
+    const {save} = useFlowEditorActions()
     const handleKeyboardSave = (e: KeyboardEvent) => {
         if (e.type === "keydown" && e.key === "s" && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            flowStore.save();
+            e.preventDefault()
+            save()
         }
-    };
+    }
 
     onActivated(() => {
-        document.addEventListener("keydown", handleKeyboardSave);
-    });
+        document.addEventListener("keydown", handleKeyboardSave)
+    })
 
 
     onDeactivated(() => {
-        document.removeEventListener("keydown", handleKeyboardSave);
-    });
+        document.removeEventListener("keydown", handleKeyboardSave)
+    })
 }

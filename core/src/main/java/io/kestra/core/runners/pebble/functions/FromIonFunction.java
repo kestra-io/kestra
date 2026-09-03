@@ -1,8 +1,8 @@
 package io.kestra.core.runners.pebble.functions;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +17,7 @@ import reactor.core.publisher.Flux;
 
 public class FromIonFunction implements KestraFunction {
     public static final String NAME = "fromIon";
+
     public List<String> getArgumentNames() {
         return List.of("ion", "allRows");
     }
@@ -35,28 +36,30 @@ public class FromIonFunction implements KestraFunction {
             throw new PebbleException(null, "The 'fromIon' function expects an argument 'ion'.", lineNumber, self.getName());
         }
 
-        if (args.get("ion") == null) {
+        Object ionArg = args.get("ion");
+        if (ionArg == null) {
             return null;
         }
 
-        if (!(args.get("ion") instanceof String)) {
-            throw new PebbleException(null, "The 'fromIon' function expects an argument 'ion' with type string.", lineNumber, self.getName());
+        byte[] ionBytes;
+        if (ionArg instanceof byte[] bytes) {
+            ionBytes = bytes;
+        } else if (ionArg instanceof String str) {
+            ionBytes = str.getBytes(StandardCharsets.UTF_8);
+        } else {
+            throw new PebbleException(null, "The 'fromIon' function expects an argument 'ion' with type string or byte[].", lineNumber, self.getName());
         }
 
         boolean allRows = args.containsKey("allRows") ? (Boolean) args.get("allRows") : false;
 
         try {
-            String ion = (String) args.get("ion");
-            ;
-
-            Flux<Object> flux = FileSerde.readAll(new BufferedReader(new StringReader(ion)));
+            Flux<Object> flux = FileSerde.readAll(new ByteArrayInputStream(ionBytes));
 
             if (!allRows) {
                 flux = flux.take(1);
             }
 
-            Stream<Object> data = flux
-                .toStream();
+            Stream<Object> data = flux.toStream();
 
             if (allRows) {
                 return data.toList();

@@ -1,11 +1,13 @@
 <template>
-    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)" />
+    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)">
+        <slot/>
+    </ElProgress>
 </template>
 
 <script setup lang="ts">
     import {ElProgress} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
-    import {computed} from "vue";
+    import {computed} from "vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -19,6 +21,7 @@
         status?: "" | "success" | "exception" | "warning"
         striped?: boolean
         stripedFlow?: boolean
+        radius?: number | string
     }>(), {
         left: undefined,
         percentage: undefined,
@@ -27,11 +30,18 @@
         color: undefined,
         showText: undefined,
         status: undefined,
+        strokeLinecap: "square",
+        radius: undefined,
     })
 
     const left = computed(() => `${props.left ?? 0}%`)
+    const borderRadius = computed(() =>
+        props.radius === undefined
+            ? "var(--kel-border-radius-small)"
+            : typeof props.radius === "number" ? `${props.radius}px` : props.radius,
+    )
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["radius"])
 </script>
 
 <style lang="scss">
@@ -44,13 +54,13 @@
 
     .kel-progress {
         :deep(.kel-progress-bar__outer) {
-            border-radius: var(--kel-border-radius-small);
+            border-radius: v-bind(borderRadius);
 
-            background-color: var(--ks-scrollbar-background);
+            background-color: var(--ks-bg-hover);
         }
 
         :deep(.kel-progress-bar__inner) {
-            border-radius: var(--kel-border-radius-small);
+            border-radius: v-bind(borderRadius);
             left: v-bind(left);
         }
     }

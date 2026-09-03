@@ -1,15 +1,16 @@
 <template>
-    <div class="tabs-wrapper">
-        <div class="tabs">
+    <div ref="wrapper" class="tabs-wrapper">
+        <div v-if="!isMobile" class="tabs">
             <KsTooltip
                 v-for="element of tabs"
                 :key="element.uid"
-                :content="element.button.label"
+                :content="element.button.disabled ? (element.button.disabledTooltip ?? element.button.label) : element.button.label"
                 placement="bottom"
                 :showAfter="500"
             >
                 <button
                     :class="{active: openTabs.includes(element.uid)}"
+                    :disabled="element.button.disabled"
                     @click="setTabValue(element.uid)"
                 >
                     <component class="tabs-icon" :is="element.button.icon" />
@@ -17,126 +18,139 @@
                 </button>
             </KsTooltip>
         </div>
+        <KsDropdown
+            v-else
+            trigger="click"
+            :hideOnClick="false"
+            class="mobile-tabs-dropdown"
+        >
+            <KsButton>
+                {{ $t("select view") }}
+                <ChevronDown class="chevron" />
+            </KsButton>
+            <template #dropdown>
+                <KsDropdownMenu>
+                    <KsDropdownItem
+                        v-for="element of tabs"
+                        :key="element.uid"
+                        :class="{active: openTabs.includes(element.uid)}"
+                        :disabled="element.button.disabled"
+                        @click="setTabValue(element.uid)"
+                    >
+                        <component class="tabs-icon" :is="element.button.icon" />
+                        <span class="tab-label">{{ element.button.label }}</span>
+                        <Check v-if="openTabs.includes(element.uid)" class="check-icon" />
+                    </KsDropdownItem>
+                </KsDropdownMenu>
+            </template>
+        </KsDropdown>
         <slot />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {Tab} from "../utils/multiPanelTypes";
+    import {computed, ref} from "vue"
+    import {Tab} from "../utils/multiPanelTypes"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import Check from "vue-material-design-icons/Check.vue"
+    import {EDITOR_HEADER_BREAKPOINTS, provideEditorHeaderWidth} from "../composables/useEditorHeaderWidth"
 
     defineProps<{
         tabs: Tab[],
         openTabs: string[];
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "update:tabs", tabValue: string): void;
-    }>();
+    }>()
+
+    const wrapper = ref<HTMLElement>()
+    const headerWidth = provideEditorHeaderWidth(wrapper)
+    const isMobile = computed(() => headerWidth.value <= EDITOR_HEADER_BREAKPOINTS.tabsAsDropdown)
 
     function setTabValue(tabValue: string) {
-        emit("update:tabs", tabValue);
+        emit("update:tabs", tabValue)
     }
 </script>
 
 <style scoped lang="scss">
-    @use "@kestra-io/design-system/src/assets/styles/_color-palette" as colorPalette;
-
     .tabs-wrapper {
+        container: editor-header / inline-size;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-card);
-        background-size: 250% 100%;
-        background-position: 100% 0;
-        transition: background-position .2s;
+        border-bottom: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-surface);
         overflow-x: auto;
         scrollbar-width: none;
-
-        .dark & {
-            background-image: linear-gradient(
-                to right,
-                colorPalette.$base-blue-500 0%,
-                colorPalette.$base-blue-700 35%,
-                rgba(colorPalette.$base-blue-700, .1) 55%,
-                rgba(colorPalette.$base-blue-700, 0) 100%
-            );
-        }
-
-        .playgroundMode & {
-            background-image: linear-gradient(
-                to right,
-                colorPalette.$base-blue-500 0%,
-                colorPalette.$base-blue-500 35%,
-                rgba(colorPalette.$base-blue-500, .1) 55%,
-                rgba(colorPalette.$base-blue-500, 0) 100%
-            );
-        }
     }
 
     .tabs {
-        padding: .5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: .5rem;
+        gap: var(--ks-spacing-1);
 
         > button {
             background: transparent;
             border: 1px solid transparent;
-            border-radius: 6px;
-            padding: 0.35rem 0.75rem;
+            border-radius: var(--ks-radius-base);
+            padding: var(--ks-spacing-1) var(--ks-spacing-2);
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
-            color: var(--ks-color-text-primary);
+            color: var(--ks-text-secondary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease-in-out;
-            gap: 0.4rem;
-            opacity: .7;
+            gap: var(--ks-spacing-2);
 
-            &:hover {
-                background-color: var(--ks-background-body);
-                opacity: 1;
-                .playgroundMode & {
-                    background-color: transparent;
-                    background-color: color-mix(in srgb, var(--ks-background-body) 20%, transparent);
-                }
+            &:hover:not(:disabled) {
+                background-color: var(--ks-bg-base);
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
 
             &.active {
-                background-color: var(--ks-background-body);
-                border-color: var(--ks-border-primary);
-                color: var(--ks-color-text-primary);
+                background-color: var(--ks-btn-secondary-bg-active);
+                color: var(--ks-text-link);
                 opacity: 1;
-                .playgroundMode & {
-                    background-color: transparent;
-                    border-color: color-mix(in srgb, var(--ks-border-primary) 60%, transparent);
-                    background-color: color-mix(in srgb, var(--ks-background-body) 30%, transparent);
-                }
             }
         }
     }
 
     .tabs-icon {
-        font-size: 1.1em;
+        font-size: var(--ks-font-size-lg);
         vertical-align: middle;
         flex-shrink: 0;
     }
 
-    @media (max-width: 1200px) {
-        .tab-label {
+    .mobile-tabs-dropdown {
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+
+        .chevron {
+            margin-left: var(--ks-spacing-1);
+            display: inline-flex;
+            align-items: center;
+        }
+    }
+
+    @container editor-header (max-width: 950px) {
+        .tabs .tab-label {
             display: none;
         }
 
         .tabs {
-            gap: 0.25rem;
-            padding: 0.4rem 0.5rem;
+            gap: var(--ks-spacing-1);
+            padding: var(--ks-spacing-2);
         }
 
         .tabs > button {
-            padding: 0.5rem;
+            padding: var(--ks-spacing-2);
             gap: 0;
             aspect-ratio: 1 / 1;
         }

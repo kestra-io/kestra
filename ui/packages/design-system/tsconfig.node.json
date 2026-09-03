@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": ["es2023"],
+        "moduleDetection": "force",
+        "module": "preserve",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "types": ["node"],
+        "strict": true,
+        "noUnusedLocals": true,
+        "esModuleInterop": true,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "tsdown.config.ts",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "vitest.unit.config.ts",
+        "scripts"
+    ]
+}

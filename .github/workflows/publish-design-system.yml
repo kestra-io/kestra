@@ -41,22 +41,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         
-      - name: Get OIDC Token
-        env:
-          AUDIENCE: "npm:registry.npmjs.org"
-        run: |
-          TOKEN_JSON=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE")
-          ID_TOKEN=$(echo "$TOKEN_JSON" | jq -r .value)
-          echo "$TOKEN_JSON"
-          echo "NODE_AUTH_TOKEN=$ID_TOKEN" >> "$GITHUB_ENV"
-          echo "$ID_TOKEN" | awk -F. '{print $2}' | base64 -d 2>/dev/null | jq -r
-
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: 22.18
+          node-version: "24.x"
           cache: npm
           registry-url: https://registry.npmjs.org
           cache-dependency-path: ui/package-lock.json
@@ -65,6 +55,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
+        if: inputs.skip-test != 'true' && inputs.package == 'design-system'
         run: npx playwright install --with-deps chromium
 
       - name: Run tests
@@ -112,4 +103,4 @@ jobs:
         run: npm publish --workspace @kestra-io/${{ inputs.package }} --access public
       
       - name: Create release tarball
-        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/design-system
+        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/${{ inputs.package }}

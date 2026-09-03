@@ -37,7 +37,6 @@ public abstract class KestraContext {
 
     // Those properties are injected bases on the CLI args.
     private static final String KESTRA_WORKER_MAX_NUM_THREADS = "kestra.worker.max-num-threads";
-    private static final String KESTRA_WORKER_GROUP_KEY = "kestra.worker.group-key";
 
     /**
      * Gets the current {@link KestraContext}.
@@ -75,9 +74,7 @@ public abstract class KestraContext {
 
     public abstract Optional<Integer> getWorkerMaxNumThreads();
 
-    public abstract Optional<String> getWorkerGroupKey();
-
-    public abstract void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey);
+    public abstract void injectWorkerConfigs(Integer maxNumThreads);
 
     /**
      * Returns the Kestra Version.
@@ -102,6 +99,9 @@ public abstract class KestraContext {
 
     /**
      * Shutdowns the Kestra application.
+     * WARNING: this method is not safe to be called from the global KestraContext static instance as in unit test,
+     * this instance may have already been replaced by a fresh one, so you might shut down the next test run!
+     * The safe pattern is to inject a KestraContext instance and call this method on it.
      */
     public void shutdown() {
         // noop
@@ -161,20 +161,10 @@ public abstract class KestraContext {
 
         /** {@inheritDoc} **/
         @Override
-        public Optional<String> getWorkerGroupKey() {
-            return Optional.ofNullable(environment)
-                .flatMap(env -> env.getProperty(KESTRA_WORKER_GROUP_KEY, String.class));
-        }
-
-        /** {@inheritDoc} **/
-        @Override
-        public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) {
+        public void injectWorkerConfigs(Integer maxNumThreads) {
             final Map<String, Object> configs = new HashMap<>();
             Optional.ofNullable(maxNumThreads)
                 .ifPresent(val -> configs.put(KESTRA_WORKER_MAX_NUM_THREADS, val));
-
-            Optional.ofNullable(workerGroupKey)
-                .ifPresent(val -> configs.put(KESTRA_WORKER_GROUP_KEY, val));
 
             if (!configs.isEmpty()) {
                 environment.addPropertySource(PropertySource.of("kestra-runtime", configs));
@@ -204,13 +194,19 @@ public abstract class KestraContext {
         /** {@inheritDoc} **/
         @Override
         public PluginRegistry getPluginRegistry() {
+            if (this.applicationContext == null) {
+                throw new IllegalStateException("ApplicationContext is null");
+            }
             // Lazy init of the PluginRegistry.
             return this.applicationContext.getBean(PluginRegistry.class);
         }
 
         @Override
         public StorageInterface getStorageInterface() {
-            // Lazy init of the PluginRegistry.
+            if (this.applicationContext == null) {
+                throw new IllegalStateException("ApplicationContext is null");
+            }
+            // Lazy init of the StorageInterface.
             return this.applicationContext.getBean(StorageInterface.class);
         }
 

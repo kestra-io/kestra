@@ -1,6 +1,6 @@
 <template>
     <div class="row-link" @click.prevent="$emit('click')" :class="{clickable: clickable}">
-        <KsTaskIcon
+        <TaskIcon
             v-if="icon"
             class="icon"
             :onlyIcon="true"
@@ -13,25 +13,26 @@
 </template>
 
 <script setup lang="ts">
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import {KsTaskIcon} from "@kestra-io/design-system";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import TaskIcon from "../plugins/TaskIcon.vue"
+    import type {PluginIconMap} from "../../utils/pluginUtils"
 
     interface Props {
         icon?: string;
         text: string;
-        icons?: Record<string, {icon: string; flowable: boolean}>;
+        icons?: PluginIconMap;
         clickable?: boolean;
     }
 
     withDefaults(defineProps<Props>(), {
         icon: undefined,
         icons: undefined,
-        clickable: true
-    });
+        clickable: true,
+    })
 
     defineEmits<{
         click: [];
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">
@@ -40,11 +41,11 @@
         align-items: center;
         gap: 1rem;
         padding: 0.5rem 1.5rem;
-        border-top: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-primary);
+        border-top: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-elevated);
 
         &:last-child {
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         &.clickable {
@@ -59,14 +60,14 @@
 
         .text {
             flex: 1;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-transform: capitalize;
             font-size: var(--ks-font-size-base);
         }
 
         .chevron {
             font-size: var(--ks-font-size-xl);
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
     }
 </style>

@@ -1,6 +1,7 @@
 package io.kestra.webserver.services;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -24,7 +25,6 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.InMemorySettingRepository;
 import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.webserver.models.events.Event;
@@ -33,6 +33,7 @@ import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.http.HttpRequest;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -83,7 +84,7 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    @FlakyTest
+    @FlakyTest(description = "Async event propagation race in BasicAuthService initialization")
     void isBasicAuthInitialized() {
         var tmpSettingsRepo = new InMemorySettingRepository();
         var basicAuthConfiguration = new ConfigWrapper(
@@ -252,7 +253,8 @@ class BasicAuthServiceTest {
             .satisfies(credential ->
             {
                 assertThat(credential.getUsername()).isEqualTo("username1@example.com");
-                assertThat(credential.getPassword()).isNotBlank();
+                assertThat(credential.getPassword()).startsWith("$2")
+                    .as("password must be re-hashed with bcrypt on re-init");
             });
     }
 
@@ -338,6 +340,282 @@ class BasicAuthServiceTest {
     }
 
     @Test
+    void shouldStorePasswordAsBcrypt() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+
+        // When
+        basicAuthService.init();
+
+        // Then
+        var credentials = basicAuthService.credentials();
+        assertThat(credentials.getPassword())
+            .as("stored password must be a bcrypt modular-crypt string")
+            .startsWith("$2y$");
+    }
+
+    @Test
+    void shouldNotReSaveCredentials_whenSamePasswordIsUsedOnRestart() {
+        // Given – first startup persists bcrypt credentials
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+        var firstCredentials = basicAuthService.credentials();
+
+        // When – simulate a second startup with the same YAML config
+        basicAuthService.init();
+        var secondCredentials = basicAuthService.credentials();
+
+        // Then – no re-save occurred: the stored hash is identical
+        assertThat(secondCredentials).isEqualTo(firstCredentials);
+    }
+
+    @Test
+    void shouldAuthenticate_withCorrectPassword() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When / Then – correct credentials accepted
+        HttpRequest<?> validRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(validRequest)).isTrue();
+    }
+
+    @Test
+    void shouldNotAuthenticate_withWrongPassword() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When / Then – wrong password rejected
+        HttpRequest<?> badRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "WrongPassword1");
+        assertThat(basicAuthService.isAuthenticated(badRequest)).isFalse();
+    }
+
+    @Test
+    void shouldNotAuthenticate_withUnknownUsername() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When / Then – unknown username rejected
+        HttpRequest<?> badRequest = HttpRequest.GET("/test")
+            .basicAuth("nobody@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(badRequest)).isFalse();
+    }
+
+    @Test
+    void shouldPayBcryptCost_whenUsernameIsUnknown() {
+        // Regression guard for GHSA-38rc-2jxj-2h75: a wrong username used to short-circuit before bcrypt,
+        // making an unknown username roughly 2 orders of magnitude faster to reject than a known username
+        // with a wrong password. Both must now cost roughly the same.
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        HttpRequest<?> knownUsernameWrongPassword = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "WrongPassword1");
+        HttpRequest<?> unknownUsername = HttpRequest.GET("/test")
+            .basicAuth("nobody@kestra.io", "WrongPassword1");
+
+        // Warm up the JIT before measuring.
+        basicAuthService.isAuthenticated(knownUsernameWrongPassword);
+        basicAuthService.isAuthenticated(unknownUsername);
+
+        long baselineNanos = fastestOf(3, () -> basicAuthService.isAuthenticated(knownUsernameWrongPassword));
+        long subjectNanos = fastestOf(3, () -> basicAuthService.isAuthenticated(unknownUsername));
+
+        assertThat(subjectNanos)
+            .as("rejecting an unknown username must pay at least half the bcrypt cost paid for a known username with a wrong password")
+            .isGreaterThanOrEqualTo(baselineNanos / 2);
+    }
+
+    private static long fastestOf(int runs, Runnable action) {
+        long fastest = Long.MAX_VALUE;
+        for (int i = 0; i < runs; i++) {
+            long start = System.nanoTime();
+            action.run();
+            fastest = Math.min(fastest, System.nanoTime() - start);
+        }
+        return fastest;
+    }
+
+    @Test
+    void shouldInvalidateCache_whenPasswordChanges() {
+        // Given – initialised with password "Kestra123"
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        HttpRequest<?> oldPasswordRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+
+        // Cache a positive verification
+        assertThat(basicAuthService.isAuthenticated(oldPasswordRequest)).isTrue();
+
+        // When – password is changed
+        basicAuthService.save(new BasicAuthCredentials(null, "admin@kestra.io", "NewPassword1"));
+
+        // Then – old password no longer accepted (cache must have been invalidated)
+        assertThat(basicAuthService.isAuthenticated(oldPasswordRequest)).isFalse();
+
+        // And new password works
+        HttpRequest<?> newPasswordRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "NewPassword1");
+        assertThat(basicAuthService.isAuthenticated(newPasswordRequest)).isTrue();
+    }
+
+    @Test
+    void shouldRejectRevokedCredential_onPeerNodeSharingSameSettingsStore() {
+        // Given – two BasicAuthService instances simulate two webserver nodes in an HA
+        // deployment sharing one settings store, each with its own in-process cache.
+        var sharedSettingsRepo = new InMemorySettingRepository();
+        var nodeA = new BasicAuthService(sharedSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        var nodeB = new BasicAuthService(sharedSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        nodeA.init();
+
+        HttpRequest<?> oldPasswordRequest = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+
+        // nodeB caches a positive verification for the soon-to-be-revoked password
+        assertThat(nodeB.isAuthenticated(oldPasswordRequest)).isTrue();
+
+        // When – the password is rotated through nodeA only; nodeB's cache is never told
+        nodeA.save(new BasicAuthCredentials(null, "admin@kestra.io", "NewPassword1"));
+
+        // Then – nodeB must not keep accepting the revoked credential from its stale cache
+        assertThat(nodeB.isAuthenticated(oldPasswordRequest))
+            .as("a credential revoked on one node must not remain valid on a peer sharing the same settings store")
+            .isFalse();
+    }
+
+    @Test
+    void shouldRejectAuthentication_withUnmigratedSha512StoredPassword() {
+        // Given – simulate a pre-migration row where the password is stored as plain SHA-512
+        // (as it would be before V2_0_04BasicAuthPasswordMigration runs).
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        String salt = AuthUtils.generateSalt();
+        String sha512Hash = AuthUtils.encodePassword(salt, "Kestra123");
+        tmpSettingsRepo.save(
+            Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new BasicAuthService.SaltedBasicAuthCredentials(salt, "admin@kestra.io", sha512Hash))
+                .build()
+        );
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
+
+        // When / Then – isAuthenticated must fail closed for an unmigrated SHA-512 hash
+        // (AuthUtils.matches wraps OpenBSDBCrypt.checkPassword, which throws for a non-bcrypt stored value;
+        // the exception is caught and returns false so the service denies access rather than crashing)
+        HttpRequest<?> request = HttpRequest.GET("/test")
+            .basicAuth("admin@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(request))
+            .as("pre-migration SHA-512 hash must not grant access (fail closed)")
+            .isFalse();
+    }
+
+    @Test
+    void shouldAuthenticate_usingBase64CookieToken() {
+        // Given
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        // When – token is a Base64-encoded "username:password" (cookie format)
+        String token = Base64.getEncoder().encodeToString("admin@kestra.io:Kestra123".getBytes());
+        HttpRequest<?> cookieRequest = HttpRequest.GET("/test")
+            .cookie(io.micronaut.http.cookie.Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, token));
+
+        // Then
+        assertThat(basicAuthService.isAuthenticated(cookieRequest)).isTrue();
+    }
+
+    @Test
+    void shouldValidateCredentials_withCorrectPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCredentials("admin@kestra.io", "Kestra123")).isTrue();
+    }
+
+    @Test
+    void shouldNotValidateCredentials_withWrongPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCredentials("admin@kestra.io", "WrongPassword1")).isFalse();
+        assertThat(basicAuthService.validateCredentials("nobody@kestra.io", "Kestra123")).isFalse();
+        assertThat(basicAuthService.validateCredentials(null, null)).isFalse();
+    }
+
+    @Test
+    void shouldNotValidateCredentials_whenNotInitialized() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
+
+        assertThat(basicAuthService.validateCredentials("admin@kestra.io", "Kestra123")).isFalse();
+    }
+
+    @Test
+    void shouldValidateCurrentPassword_withCorrectPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCurrentPassword("Kestra123")).isTrue();
+    }
+
+    @Test
+    void shouldNotValidateCurrentPassword_withWrongPassword() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThat(basicAuthService.validateCurrentPassword("WrongPassword1")).isFalse();
+        assertThat(basicAuthService.validateCurrentPassword(null)).isFalse();
+    }
+
+    @Test
+    void shouldNotValidateCurrentPassword_whenNotInitialized() {
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, null, instanceService, ApplicationEventPublisher.noOp());
+
+        assertThat(basicAuthService.validateCurrentPassword("Kestra123")).isFalse();
+    }
+
+    @Test
+    void shouldNotValidateCurrentPassword_forARevokedPassword_evenIfCachedByIsAuthenticated() {
+        // A password already rotated away from must never pass as "current", even though
+        // isAuthenticated() cached it as valid moments earlier: validateCurrentPassword always
+        // re-checks the live stored credentials rather than that cache.
+        var tmpSettingsRepo = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(tmpSettingsRepo, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        HttpRequest<?> oldRequest = HttpRequest.GET("/test").basicAuth("admin@kestra.io", "Kestra123");
+        assertThat(basicAuthService.isAuthenticated(oldRequest)).isTrue();
+
+        basicAuthService.save(new BasicAuthCredentials(null, "admin@kestra.io", "NewPassword1"));
+
+        assertThat(basicAuthService.validateCurrentPassword("Kestra123")).isFalse();
+    }
+
+    @Test
+    void encodeTokenShouldMatchAuthenticationCookieFormat() {
+        String token = BasicAuthService.encodeToken("admin@kestra.io", "Kestra123");
+
+        assertThat(token).isEqualTo(Base64.getEncoder().encodeToString("admin@kestra.io:Kestra123".getBytes()));
+    }
+
+    @Test
     void should_remove_validation_error_when_init_with_correct_config() {
         var settingRepositoryInterface = new InMemorySettingRepository();
         settingRepositoryInterface.save(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).value(List.of("errors")).build());
@@ -350,18 +628,24 @@ class BasicAuthServiceTest {
 
     private void assertConfigurationMatchesApplicationYaml(BasicAuthService basicAuthService, SettingRepositoryInterface settingRepositoryInterface) {
         var actualConfiguration = basicAuthService.credentials();
-        var applicationYamlConfiguration = BasicAuthService.SaltedBasicAuthCredentials.salt(
-            actualConfiguration.getSalt(),
-            basicAuthService.basicAuthConfiguration.getUsername(),
-            basicAuthService.basicAuthConfiguration.getPassword()
-        );
-        assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
+
+        // bcrypt is non-deterministic so we cannot compare hash values directly.
+        // Instead verify that the stored hash is a bcrypt string and that the
+        // original YAML password still verifies correctly against it.
+        assertThat(actualConfiguration.getUsername()).isEqualTo(basicAuthService.basicAuthConfiguration.getUsername());
+        assertThat(actualConfiguration.getPassword()).startsWith("$2");
+        assertThat(
+            AuthUtils.matches(
+                actualConfiguration.getSalt(),
+                basicAuthService.basicAuthConfiguration.getPassword(),
+                actualConfiguration.getPassword()
+            )
+        ).as("stored bcrypt hash must verify against the YAML password").isTrue();
 
         Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(
             BASIC_AUTH_SETTINGS_KEY
         );
         assertThat(maybeSetting.isPresent()).isTrue();
-        assertThat(maybeSetting.get().getValue()).isEqualTo(JacksonMapper.toMap(applicationYamlConfiguration));
     }
 
     private void awaitOssAuthEventApiCall(String email) {

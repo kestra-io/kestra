@@ -1,9 +1,5 @@
 package io.kestra.core.runners;
 
-import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -14,8 +10,7 @@ public record SubflowExecutionEnd(
     String parentExecutionId,
     String taskRunId,
     String taskId,
-    State.Type state,
-    @JsonInclude(JsonInclude.Include.ALWAYS) Map<String, Object> outputs) implements HasUID, DispatchEvent {
+    State.Type state) implements HasUID, DispatchEvent {
 
     public String toStringState() {
         return "SubflowExecutionEnd(" +

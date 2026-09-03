@@ -1,34 +1,30 @@
 <template>
     <TopNavBar :title="routeInfo.title" v-if="!isFullScreen()" />
-    <Layout
-        :title="$t('demos.tenants.title')"
+    <Empty
         type="tenants"
-        :image="{source: sourceImg, alt: $t('demos.tenants.title')}"
-        :video="{
-            source: 'https://www.youtube.com/embed/z4uzAyjKeoc',
-        }"
+        demoCta
+        :title="$t('demos.tenants.title')"
     >
-        <template #message>
+        <template #description>
             {{ $t('demos.tenants.message') }}
         </template>
-    </Layout>
+    </Empty>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import Layout from "./Layout.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import sourceImg from "../../assets/demo/tenants.png";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import Empty from "../layout/empty/Empty.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
-    const routeInfo = computed(() => ({title: t("demos.tenants.title")}));
+    const routeInfo = computed(() => ({title: t("demos.tenants.title")}))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
     function isFullScreen() {
-        return document.getElementsByTagName("html")[0].classList.contains("full-screen");
+        return document.getElementsByTagName("html")[0].classList.contains("full-screen")
     }
 </script>

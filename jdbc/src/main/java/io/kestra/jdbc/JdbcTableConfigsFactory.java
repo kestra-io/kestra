@@ -1,12 +1,18 @@
 package io.kestra.jdbc;
 
+import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.lock.Lock;
+import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpSession;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionOutput;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
@@ -67,6 +73,12 @@ public class JdbcTableConfigsFactory {
     @Named("multipleconditions")
     public InstantiableJdbcTableConfig multipleConditions() {
         return new InstantiableJdbcTableConfig("multipleconditions", MultipleConditionWindow.class, "multipleconditions");
+    }
+
+    @Bean
+    @Named("executionstatistics")
+    public InstantiableJdbcTableConfig executionStatistics() {
+        return new InstantiableJdbcTableConfig("executionstatistics", ExecutionStatistic.class, "execution_statistics");
     }
 
     @Bean
@@ -145,6 +157,36 @@ public class JdbcTableConfigsFactory {
     @Named("taskoutputs")
     public InstantiableJdbcTableConfig outputs() {
         return new InstantiableJdbcTableConfig("taskoutputs", TaskOutput.class, "task_outputs");
+    }
+
+    @Bean
+    @Named("executionoutputs")
+    public InstantiableJdbcTableConfig executionOutputs() {
+        return new InstantiableJdbcTableConfig("executionoutputs", ExecutionOutput.class, "execution_outputs");
+    }
+
+    @Bean
+    @Named("mcp")
+    public InstantiableJdbcTableConfig mcp() {
+        return new InstantiableJdbcTableConfig("mcp", McpServer.class, "mcp");
+    }
+
+    @Bean
+    @Named("mcpsession")
+    public InstantiableJdbcTableConfig mcpSession() {
+        return new InstantiableJdbcTableConfig("mcpsession", McpSession.class, "mcp_session");
+    }
+
+    @Bean
+    @Named("agentthread")
+    public InstantiableJdbcTableConfig agentThread() {
+        return new InstantiableJdbcTableConfig("agentthread", AgentThread.class, "ai_agent_thread");
+    }
+
+    @Bean
+    @Named("agentmessage")
+    public InstantiableJdbcTableConfig agentMessage() {
+        return new InstantiableJdbcTableConfig("agentmessage", AgentMessage.class, "ai_agent_message");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

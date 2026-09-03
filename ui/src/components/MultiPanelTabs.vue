@@ -1,20 +1,57 @@
 <template>
     <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
-        <Empty v-if="!panels.length" type="panels" />
+        <div v-if="!panels.length" class="empty-panels">
+            <KsNoData
+                :icon="ViewArrayOutline"
+                :title="$t('empty.panels.title')"
+                :description="$t('empty.panels.content')"
+            />
+        </div>
         <template v-else>
             <KsSplitterPanel
-                v-for="(panel, panelIndex) in panels"
+                v-for="{panel, panelIndex} in renderedPanels"
                 min="10%"
-                :key="panelIndex"
+                :key="`${panelIndex}:${maximizedPanelIndex === panelIndex}`"
                 :size="panelSizes[panelIndex] ?? panel.size"
                 @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
                 @dragleave.prevent="panelDragLeave"
                 @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
-                :class="{'panel-dragover': panel.dragover}"
+                :class="{
+                    'panel-dragover': panel.dragover,
+                    'panel-maximized': maximizedPanelIndex === panelIndex,
+                    'panel-maximized--left-sliver': maximizedPanelIndex === panelIndex && !!leftNeighbor,
+                    'panel-maximized--right-sliver': maximizedPanelIndex === panelIndex && !!rightNeighbor,
+                }"
             >
+                <template v-if="maximizedPanelIndex === panelIndex">
+                    <button
+                        v-if="leftNeighbor?.activeTab"
+                        type="button"
+                        class="maximized-sliver maximized-sliver--left"
+                        :title="$t('multi_panel_editor.exit_fullscreen')"
+                        :aria-label="$t('multi_panel_editor.exit_fullscreen')"
+                        data-test="maximized-sliver-left"
+                        @click="toggleMaximize(panelIndex)"
+                    >
+                        <component :is="leftNeighbor.activeTab.button.icon" class="maximized-sliver-icon" />
+                        <span class="maximized-sliver-label">{{ leftNeighbor.activeTab.button.label }}</span>
+                    </button>
+                    <button
+                        v-if="rightNeighbor?.activeTab"
+                        type="button"
+                        class="maximized-sliver maximized-sliver--right"
+                        :title="$t('multi_panel_editor.exit_fullscreen')"
+                        :aria-label="$t('multi_panel_editor.exit_fullscreen')"
+                        data-test="maximized-sliver-right"
+                        @click="toggleMaximize(panelIndex)"
+                    >
+                        <component :is="rightNeighbor.activeTab.button.icon" class="maximized-sliver-icon" />
+                        <span class="maximized-sliver-label">{{ rightNeighbor.activeTab.button.label }}</span>
+                    </button>
+                </template>
                 <div class="editor-tabs-container">
                     <KsButton
-                        :icon="DragVertical"
+                        :icon="DotsGrid"
                         link
                         class="tab-icon drag-handle"
                         draggable="true"
@@ -68,10 +105,23 @@
                     </div>
                     <div class="buttons-container">
                         <button
+                            type="button"
+                            class="maximize_panel"
+                            :title="maximizedPanelIndex === panelIndex ? $t('multi_panel_editor.exit_fullscreen') : $t('multi_panel_editor.fullscreen')"
+                            :aria-label="maximizedPanelIndex === panelIndex ? $t('multi_panel_editor.exit_fullscreen') : $t('multi_panel_editor.fullscreen')"
+                            :aria-pressed="maximizedPanelIndex === panelIndex"
+                            data-test="panel-maximize"
+                            @click="toggleMaximize(panelIndex)"
+                        >
+                            <FullscreenExit v-if="maximizedPanelIndex === panelIndex" />
+                            <Fullscreen v-else />
+                        </button>
+                        <button
                             v-if="panel.tabs.filter(t => !t.potential).length > 1"
                             @click="splitPanel(panelIndex)"
                             class="split_right"
-                            title="Split panel"
+                            :title="$t('multi_panel_editor.split_panel')"
+                            :aria-label="$t('multi_panel_editor.split_panel')"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -84,9 +134,9 @@
                         </button>
 
                         <KsDropdown trigger="click" placement="bottom-end">
-                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" />
+                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" :aria-label="$t('panel actions')" />
                             <template #dropdown>
-                                <KsDropdownMenu class="m-2">
+                                <KsDropdownMenu>
                                     <KsDropdownItem
                                         :icon="DockRight"
                                         :disabled="panelIndex === panels.length - 1"
@@ -178,45 +228,46 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw} from "vue";
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount} from "vue"
 
-    import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys";
-    import {useKeyShortcuts} from "../utils/useKeyShortcuts";
-
-    import Empty from "./layout/empty/Empty.vue";
+    import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
+    import {useKeyShortcuts} from "../utils/useKeyShortcuts"
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
-    import DragVertical from "vue-material-design-icons/DragVertical.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import DockLeft from "vue-material-design-icons/DockLeft.vue";
-    import DockRight from "vue-material-design-icons/DockRight.vue";
-    import Close from "vue-material-design-icons/Close.vue";
-    import Keyboard from "vue-material-design-icons/Keyboard.vue";
+    import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import DockLeft from "vue-material-design-icons/DockLeft.vue"
+    import DockRight from "vue-material-design-icons/DockRight.vue"
+    import Close from "vue-material-design-icons/Close.vue"
+    import Keyboard from "vue-material-design-icons/Keyboard.vue"
+    import ViewArrayOutline from "vue-material-design-icons/ViewArrayOutline.vue"
+    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+    import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
 
-    import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
-    import {Panel, Tab, TabLive} from "../utils/multiPanelTypes";
+    import {trackTabOpen, trackTabClose} from "../utils/tabTracking"
+    import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
 
-    const {showKeyShortcuts} = useKeyShortcuts();
+    const {showKeyShortcuts} = useKeyShortcuts()
 
     function throttle(callback: () => void, limit: number): () => void {
-        let waiting = false;
+        let waiting = false
         return function () {
             if (!waiting) {
-                callback();
-                waiting = true;
+                callback()
+                waiting = true
                 setTimeout(function () {
-                    waiting = false;
-                }, limit);
+                    waiting = false
+                }, limit)
             }
         }
     }
 
-    const ComponentCache = new Map<string, any>();
+    const ComponentCache = new Map<string, any>()
 
     const createUniqueComponent = (component: any, key: string) => {
         if(ComponentCache.has(key)){
-            return ComponentCache.get(key);
+            return ComponentCache.get(key)
         }
         const uniqueComponent = markRaw(
             defineComponent({
@@ -224,19 +275,19 @@
                 inheritAttrs: true,
                 render() {
                     return h(component)
-                }
-            })
+                },
+            }),
         )
-        ComponentCache.set(key, uniqueComponent);
-        return uniqueComponent;
+        ComponentCache.set(key, uniqueComponent)
+        return uniqueComponent
     }
 
     function makeNoCodeComponentName(key: string){
-        return `KsNoCode-${key}`;
+        return `KsNoCode-${key}`
     }
 
     const accessibleTabsKeys = computed<string[]>(() => {
-        return panels.value.flatMap(panel => panel.tabs.map(tab => makeNoCodeComponentName(tab.uid)));
+        return panels.value.flatMap(panel => panel.tabs.map(tab => makeNoCodeComponentName(tab.uid)))
     })
 
     interface TabInfo {
@@ -250,76 +301,115 @@
         required: true,
     })
 
-    provide(VISIBLE_PANELS_INJECTION_KEY, panels);
+    provide(VISIBLE_PANELS_INJECTION_KEY, panels)
 
     const emit = defineEmits<{
         removeTab: [tab: string]
     }>()
 
-    const mouseXRef = ref(-1);
-    const movedTabInfo = ref<TabInfo | null>(null);
-    const dragging = ref(false);
-    const tabContainerRefs = ref<HTMLDivElement[]>([]);
-    const draggingPanel = ref<number | null>(null);
-    const realDragging = ref(false);
-    const leftPanelDragover = ref(false);
-    const rightPanelDragover = ref(false);
+    const maximizedPanelIndex = ref<number | null>(null)
+
+    provide(PANEL_MAXIMIZED_INJECTION_KEY, computed(() => maximizedPanelIndex.value !== null))
+
+    const renderedPanels = computed(() => {
+        const index = maximizedPanelIndex.value
+        if (index != null && panels.value[index]) {
+            return [{panel: panels.value[index], panelIndex: index}]
+        }
+        return panels.value.map((panel, panelIndex) => ({panel, panelIndex}))
+    })
+
+    const leftNeighbor = computed(() => {
+        const index = maximizedPanelIndex.value
+        return index != null && index > 0 ? panels.value[index - 1] : null
+    })
+
+    const rightNeighbor = computed(() => {
+        const index = maximizedPanelIndex.value
+        return index != null && index < panels.value.length - 1 ? panels.value[index + 1] : null
+    })
+
+    function toggleMaximize(panelIndex: number) {
+        maximizedPanelIndex.value = maximizedPanelIndex.value === panelIndex ? null : panelIndex
+    }
+
+    watch(() => panels.value.length, (length) => {
+        if (maximizedPanelIndex.value != null && maximizedPanelIndex.value >= length) {
+            maximizedPanelIndex.value = null
+        }
+    })
+
+    function onFullscreenKeydown(event: KeyboardEvent) {
+        if (event.key !== "Escape" || maximizedPanelIndex.value == null) return
+        const target = event.target as HTMLElement | null
+        if (target && (target.closest(".monaco-editor") || ["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable)) return
+        maximizedPanelIndex.value = null
+    }
+
+    onMounted(() => window.addEventListener("keydown", onFullscreenKeydown))
+    onBeforeUnmount(() => window.removeEventListener("keydown", onFullscreenKeydown))
+
+    const mouseXRef = ref(-1)
+    const movedTabInfo = ref<TabInfo | null>(null)
+    const dragging = ref(false)
+    const tabContainerRefs = ref<HTMLDivElement[]>([])
+    const draggingPanel = ref<number | null>(null)
+    const realDragging = ref(false)
+    const leftPanelDragover = ref(false)
+    const rightPanelDragover = ref(false)
 
     const handleTabClick = (panelIndex: number, panel: Panel, tab: Tab) => {
-        trackTabOpen(tab);
+        trackTabOpen(tab)
 
         panel.activeTab = tab
 
-        nextTick(() => ensureActiveTabVisible(panelIndex, tab.uid));
-    };
+        nextTick(() => ensureActiveTabVisible(panelIndex, tab.uid))
+    }
 
     const showDropZones = computed(() =>
         realDragging.value &&
         movedTabInfo.value &&
-        !draggingPanel.value
-    );
+        !draggingPanel.value,
+    )
 
     function onResize(_index: number, sizes: number[]) {
-        const sumSizes = sizes.reduce((a, b) => a + b, 0) / 100;
+        const sumSizes = sizes.reduce((a, b) => a + b, 0) / 100
 
-        // Element Plus resize event provides sizes array and index of the resized panel
         for (let i = 0; i < panels.value.length && i < sizes.length; i++) {
-            panels.value[i].size = sizes[i] / sumSizes;
+            panels.value[i].size = sizes[i] / sumSizes
         }
     }
 
-    // let the panelSizes be dealt with by the el-splitter once set
-    // by the prop
     const panelSizes = computed<number[]>((prevValue) => {
         if(prevValue?.length === panels.value.length){
             return prevValue
         }
-        return panels.value.map(panel => panel.size);
-    });
+        return panels.value.map(panel => panel.size)
+    })
 
     function dragstart(panelIndex: number, tabId: string) {
-        dragging.value = true;
-        const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.uid === tabId);
+        dragging.value = true
+        const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.uid === tabId)
         movedTabInfo.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]}
     }
 
     function cleanUp(){
-        dragging.value = false;
-        realDragging.value = false;
-        mouseXRef.value = -1;
-        leftPanelDragover.value = false;
-        rightPanelDragover.value = false;
+        dragging.value = false
+        realDragging.value = false
+        mouseXRef.value = -1
+        leftPanelDragover.value = false
+        rightPanelDragover.value = false
         nextTick(() => {
             movedTabInfo.value = null
             for(const panel of panels.value) {
-                panel.dragover = false;
+                panel.dragover = false
                 panel.tabs = panel.tabs.filter((tab) => !tab.potential)
             }
         })
     }
 
     function getPanelIndex(e: DragEvent): number {
-        const target = e.currentTarget as HTMLElement;
+        const target = e.currentTarget as HTMLElement
         return parseInt(target.dataset.panelIndex ?? "-1")
     }
 
@@ -330,14 +420,11 @@
     }
 
     function dragover(e: DragEvent) {
-        // Ensure we set the realDragging flag when a drag operation is in progress
         if (movedTabInfo.value) {
-            realDragging.value = true;
-            dragging.value = true;
+            realDragging.value = true
+            dragging.value = true
         }
 
-        // if mouse has not moved vertically, stop the processing
-        // this will be triggered every few ms so perf and readability will be paramount
         if(mouseXRef.value === e.clientX){
             return
         }
@@ -348,65 +435,59 @@
             return
         }
 
-        const panelIndex = getPanelIndex(e);
+        const panelIndex = getPanelIndex(e)
         if(panelIndex === -1) {
             return
         }
 
-        const activePanel = tabContainerRefs.value.find((ref) => ref.dataset.panelIndex === panelIndex.toString());
-        const tabsInPanel = Array.from(activePanel?.querySelectorAll(".editor-tab") || []) as HTMLElement[];
+        const activePanel = tabContainerRefs.value.find((r) => r.dataset.panelIndex === panelIndex.toString())
+        const tabsInPanel = Array.from(activePanel?.querySelectorAll(".editor-tab") || []) as HTMLElement[]
 
         let insertTabAfterIndex = -1
-        let i = 0;
+        let i = 0
         const mouseX = e.clientX
         for(const tab of tabsInPanel){
-            const br = tab.getBoundingClientRect();
-            // get the X position of the middle of the tab
-            const middle = br.left + br.width / 2;
-            // if we are beyond the middle of the last tab
+            const br = tab.getBoundingClientRect()
+            const middle = br.left + br.width / 2
             if(mouseX > middle && i === tabsInPanel.length - 1){
-                insertTabAfterIndex = i;
-                break;
+                insertTabAfterIndex = i
+                break
             } else
-                // if we are before the middle of the first tab
                 if(mouseX < middle && i === 0){
-                    insertTabAfterIndex = i - 1;
-                    break;
+                    insertTabAfterIndex = i - 1
+                    break
                 }else
-                    // figure out if we should insert the tab between the current and the next tab
                     if(mouseX > middle && tabsInPanel[i + 1]){
-                        const nextBr = tabsInPanel[i + 1].getBoundingClientRect();
-                        const middleNext = nextBr.left + nextBr.width / 2;
+                        const nextBr = tabsInPanel[i + 1].getBoundingClientRect()
+                        const middleNext = nextBr.left + nextBr.width / 2
                         if(mouseX < middleNext){
-                            insertTabAfterIndex = i;
-                            break;
+                            insertTabAfterIndex = i
+                            break
                         }
                     }
-            i++;
+            i++
         }
 
-        // if the potential tab is already inserted in the right place
         if(panels.value[panelIndex].tabs[insertTabAfterIndex + 1]?.potential){
             return
         }
 
         removeAllPotentialTabs()
 
-        // then insert the potential tab in the right place
         panels.value[panelIndex].tabs.splice(insertTabAfterIndex + 1, 0, {
             ...movedTabInfo.value.tab,
             uid: `potential-${movedTabInfo.value.tab.uid}`,
             potential: true,
-            fromPanel: panelIndex === movedTabInfo.value.panelIndex
-        });
+            fromPanel: panelIndex === movedTabInfo.value.panelIndex,
+        })
     }
 
     function getTargetTabIndex(targetPanelIndex: number, targetTabId?: string): number {
         const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.uid === targetTabId)
         if(targetTabIndex === -1){
-            return panels.value[targetPanelIndex].tabs.length;
+            return panels.value[targetPanelIndex].tabs.length
         }
-        return targetTabIndex;
+        return targetTabIndex
     }
 
     function drop(){
@@ -414,291 +495,373 @@
             return
         }
 
-        // find potential tab in panels.value tabs
-        const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential));
-        const potentialTabId = panels.value[potentialTabPanelIndex]?.tabs.find((tab) => tab.potential)?.uid;
+        const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential))
+        const potentialTabId = panels.value[potentialTabPanelIndex]?.tabs.find((tab) => tab.potential)?.uid
 
         if(potentialTabId){
-            moveTab(movedTabInfo.value, potentialTabPanelIndex, potentialTabId);
+            moveTab(movedTabInfo.value, potentialTabPanelIndex, potentialTabId)
         }
 
-        cleanUp();
+        cleanUp()
     }
 
-    function moveTab(movedTabInfo: TabInfo, targetPanelIndex: number, targetTabId?: string){
-        const {tab: movedTab, panelIndex: originalPanelIndex, tabIndex} = movedTabInfo
+    function moveTab(movedTabInfoOpt: TabInfo, targetPanelIndex: number, targetTabId?: string){
+        const {tab: movedTab, panelIndex: originalPanelIndex, tabIndex} = movedTabInfoOpt
 
-        const targetTabIndex = getTargetTabIndex(targetPanelIndex, targetTabId);
+        const targetTabIndex = getTargetTabIndex(targetPanelIndex, targetTabId)
 
-        // In case of reordering of tabs we have to
-        // account for cases where potential tabs are present.
-        // They will take a slot in the list
         if(targetPanelIndex === originalPanelIndex){
             if (targetTabIndex === tabIndex || panels.value[targetPanelIndex].tabs.length <= 1) {
                 return
             }
 
             if (targetTabIndex < tabIndex){
-                panels.value[originalPanelIndex].tabs.splice(tabIndex + 1, 1);
+                panels.value[originalPanelIndex].tabs.splice(tabIndex + 1, 1)
             } else {
-                panels.value[originalPanelIndex].tabs.splice(tabIndex, 1);
+                panels.value[originalPanelIndex].tabs.splice(tabIndex, 1)
             }
         } else {
-            // remove the tab from the original panel
-            panels.value[originalPanelIndex].tabs.splice(tabIndex, 1);
+            panels.value[originalPanelIndex].tabs.splice(tabIndex, 1)
 
-            // if the tab has been removed from the panel
-            // we need to select another active tab
             if(panels.value[originalPanelIndex].activeTab.uid === movedTab.uid){
-                // if the tab at the same index is available, select it
                 if(tabIndex >= 0 && panels.value[originalPanelIndex].tabs.length > tabIndex){
-                    panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex];
+                    panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex]
                 } else
-                    // if it would fall out of bounds, use the previous tab
-                    // NOTE: no worries if it is null, it will select null instead
                     if(tabIndex === panels.value[originalPanelIndex].tabs.length){
-                        panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex - 1];
+                        panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex - 1]
                     }
             }
         }
 
         if(targetPanelIndex === originalPanelIndex){
-            // if moving tabs on the same panel, add the tab to the target panel in-place of the hovered potential tab
-            const insertIndex = targetTabIndex < tabIndex ? targetTabIndex + 1 : targetTabIndex;
-            panels.value[targetPanelIndex].tabs.splice(insertIndex, 0, movedTab);
+            const insertIndex = targetTabIndex < tabIndex ? targetTabIndex + 1 : targetTabIndex
+            panels.value[targetPanelIndex].tabs.splice(insertIndex, 0, movedTab)
         } else {
-            // add the tab to the target panel in-place of the hovered potential tab
-            panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
+            panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab)
         }
     }
 
-    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
+    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length))
 
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
-        if (!movedTabInfo.value) return;
+        if (!movedTabInfo.value) return
 
-        const {tab: movedTab} = movedTabInfo.value;
+        const {tab: movedTab} = movedTabInfo.value
 
-        // Create a new panel with the dragged tab
         const newPanel = {
             tabs: [movedTab],
             activeTab: movedTab,
-            size: defaultSize.value
-        };
-
-        // Add the new panel based on the drop direction, not relative to original panel
-        if (direction === "left") {
-            panels.value.splice(0, 0, newPanel);
-        } else {
-            panels.value.push(newPanel);
+            size: defaultSize.value,
         }
 
-        // Remove the tab from the original panel
-        // After adding the new panel, the original panel's index may have changed
-        // Find it again by looking for the tab in all panels
-        for (let i = 0; i < panels.value.length; i++) {
-            const panel = panels.value[i];
-            const tabIndex = panel.tabs.findIndex(t => t.uid === movedTab.uid);
+        if (direction === "left") {
+            panels.value.splice(0, 0, newPanel)
+        } else {
+            panels.value.push(newPanel)
+        }
 
-            if (i === 0 && direction === "left") continue;
-            if (i === panels.value.length - 1 && direction === "right") continue;
+        for (let i = 0; i < panels.value.length; i++) {
+            const panel = panels.value[i]
+            const tabIndex = panel.tabs.findIndex(t => t.uid === movedTab.uid)
+
+            if (i === 0 && direction === "left") continue
+            if (i === panels.value.length - 1 && direction === "right") continue
 
             if (tabIndex !== -1) {
-                panel.tabs.splice(tabIndex, 1);
+                panel.tabs.splice(tabIndex, 1)
 
                 if (panel.activeTab.uid === movedTab.uid && panel.tabs.length > 0) {
                     panel.activeTab = tabIndex > 0
                         ? panel.tabs[tabIndex - 1]
-                        : panel.tabs[0];
+                        : panel.tabs[0]
                 }
-                break;
+                break
             }
         }
 
-        cleanUp();
+        cleanUp()
     }
 
     function closeAllTabs(panelIndex: number){
-        const panel = panels.value[panelIndex];
+        const panel = panels.value[panelIndex]
         panel.tabs.forEach(tab => {
-            trackTabClose(tab);
-        });
+            trackTabClose(tab)
+        })
 
-        panels.value[panelIndex].tabs = [];
+        panels.value[panelIndex].tabs = []
     }
 
     function closeAllPanels(){
-        panels.value = [];
+        panels.value = []
     }
 
     function destroyTab(panelIndex:number, tab: Tab){
-        trackTabClose(tab);
+        trackTabClose(tab)
 
-        const panel = panels.value[panelIndex];
-        const tabIndex = panel.tabs.findIndex((t) => t.uid === tab.uid);
-        panel.tabs.splice(tabIndex, 1);
+        const panel = panels.value[panelIndex]
+        const tabIndex = panel.tabs.findIndex((t) => t.uid === tab.uid)
+        panel.tabs.splice(tabIndex, 1)
         if (panel.activeTab.uid === tab.uid) {
-            panel.activeTab = panel.tabs[tabIndex - 1] ?? panel.tabs[0];
+            panel.activeTab = panel.tabs[tabIndex - 1] ?? panel.tabs[0]
         }
         emit("removeTab", tab.uid)
     }
 
     watch(panels, () => {
-        let index = 0;
-        for (const panel of panels.value) {
-            if (panel.tabs.length === 0) {
-                panels.value.splice(index, 1);
+        for (let index = panels.value.length - 1; index >= 0; index--) {
+            if (panels.value[index].tabs.length === 0) {
+                panels.value.splice(index, 1)
+                if (maximizedPanelIndex.value === index) {
+                    maximizedPanelIndex.value = null
+                } else if (maximizedPanelIndex.value != null && index < maximizedPanelIndex.value) {
+                    maximizedPanelIndex.value--
+                }
             }
-            index++;
         }
     }, {deep: true})
 
     function splitPanel(panelIndex: number){
-        const panel = panels.value[panelIndex];
+        const panel = panels.value[panelIndex]
         const newPanel = {
             tabs: [panel.activeTab],
             activeTab: panel.activeTab,
-            size: defaultSize.value
+            size: defaultSize.value,
         }
         panels.value.splice(panelIndex + 1, 0, newPanel)
 
-        // get index of active tab in the original panel
         const activeTabIndex = panel.tabs.findIndex((tab) => tab.uid === panel.activeTab.uid)
 
-        // set the active tab to the previous tab in the original panel
         panel.activeTab = panel.tabs[activeTabIndex - 1] ?? panel.tabs[activeTabIndex + 1]
 
-        // remove the tab from the original panel
         panel.tabs.splice(activeTabIndex, 1)
     }
 
     function panelDragStart(e: DragEvent, panelIndex: number) {
         if (e.dataTransfer) {
-            e.dataTransfer.effectAllowed = "move";
-            draggingPanel.value = panelIndex;
+            e.dataTransfer.effectAllowed = "move"
+            draggingPanel.value = panelIndex
         }
     }
 
     function panelDragOver(_e: DragEvent, panelIndex: number) {
-        if (draggingPanel.value === null || draggingPanel.value === panelIndex) return;
+        if (draggingPanel.value === null || draggingPanel.value === panelIndex) return
 
-        panels.value.forEach(panel => panel.dragover = false);
-        panels.value[panelIndex].dragover = true;
+        panels.value.forEach(panel => panel.dragover = false)
+        panels.value[panelIndex].dragover = true
     }
 
     function panelDragLeave() {
-        panels.value.forEach(panel => panel.dragover = false);
+        panels.value.forEach(panel => panel.dragover = false)
     }
 
     function panelDrop(_e: DragEvent, targetPanelIndex: number) {
-        if (draggingPanel.value === null || draggingPanel.value === targetPanelIndex) return;
+        if (draggingPanel.value === null || draggingPanel.value === targetPanelIndex) return
 
-        const panelsCopy = [...panels.value];
-        const [movedPanel] = panelsCopy.splice(draggingPanel.value, 1);
-        panelsCopy.splice(targetPanelIndex, 0, movedPanel);
+        const panelsCopy = [...panels.value]
+        const [movedPanel] = panelsCopy.splice(draggingPanel.value, 1)
+        panelsCopy.splice(targetPanelIndex, 0, movedPanel)
 
-        panels.value = panelsCopy;
+        panels.value = panelsCopy
 
-        draggingPanel.value = null;
-        panelDragLeave();
+        draggingPanel.value = null
+        panelDragLeave()
     }
 
     function movePanel(panelIndex: number, direction: "left" | "right") {
-        const newIndex = direction === "left" ? panelIndex - 1 : panelIndex + 1;
-        if (newIndex < 0 || newIndex >= panels.value.length) return;
+        const newIndex = direction === "left" ? panelIndex - 1 : panelIndex + 1
+        if (newIndex < 0 || newIndex >= panels.value.length) return
 
-        const panelsCopy = [...panels.value];
-        const [movedPanel] = panelsCopy.splice(panelIndex, 1);
-        panelsCopy.splice(newIndex, 0, movedPanel);
-        panels.value = panelsCopy;
+        const panelsCopy = [...panels.value]
+        const [movedPanel] = panelsCopy.splice(panelIndex, 1)
+        panelsCopy.splice(newIndex, 0, movedPanel)
+        panels.value = panelsCopy
     }
 
     function rightPanelDragOver() {
-        if (!movedTabInfo.value) return;
-        rightPanelDragover.value = true;
-        leftPanelDragover.value = false;
-        removeAllPotentialTabs();
+        if (!movedTabInfo.value) return
+        rightPanelDragover.value = true
+        leftPanelDragover.value = false
+        removeAllPotentialTabs()
     }
 
     function rightPanelDragLeave() {
-        rightPanelDragover.value = false;
+        rightPanelDragover.value = false
     }
 
     function leftPanelDragOver() {
-        if (!movedTabInfo.value) return;
-        leftPanelDragover.value = true;
-        rightPanelDragover.value = false;
-        removeAllPotentialTabs();
+        if (!movedTabInfo.value) return
+        leftPanelDragover.value = true
+        rightPanelDragover.value = false
+        removeAllPotentialTabs()
     }
 
     function leftPanelDragLeave() {
-        leftPanelDragover.value = false;
+        leftPanelDragover.value = false
     }
 
     function middleMouseClose(event:MouseEvent, panelIndex:number, tab: Tab) {
-        // Middle mouse button
         if (event.button === 1) {
-            event.preventDefault();
-            destroyTab(panelIndex, tab);
+            event.preventDefault()
+            destroyTab(panelIndex, tab)
         }
     }
 
     function onWheelTabScroll(e: WheelEvent){
-        // Make vertical wheel scroll the tab list horizontally (VS Code behavior)
-        const el = e.currentTarget as HTMLElement;
+        const el = e.currentTarget as HTMLElement
         if(!el){
-            return;
+            return
         }
 
-        const overflows = el.scrollWidth > el.clientWidth;
+        const overflows = el.scrollWidth > el.clientWidth
         if(!overflows){
-            return;
+            return
         }
 
-        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-        el.scrollLeft += delta;
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+        el.scrollLeft += delta
     }
 
     function ensureActiveTabVisible(panelIndex: number, tabId: string){
-        const container = tabContainerRefs.value[panelIndex];
+        const container = tabContainerRefs.value[panelIndex]
         if(!container){
-            return;
+            return
         }
-        const safeId = (globalThis as any).CSS?.escape ? (globalThis as any).CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
-        const el = container.querySelector(`.editor-tab[data-tab-id="${safeId}"]`) as HTMLElement | null;
+        const safeId = (globalThis as any).CSS?.escape ? (globalThis as any).CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
+        const el = container.querySelector(`.editor-tab[data-tab-id="${safeId}"]`) as HTMLElement | null
         if(!el){
-            return;
+            return
         }
-        const left = el.offsetLeft;
-        const right = left + el.offsetWidth;
-        const cLeft = container.scrollLeft;
-        const cRight = cLeft + container.clientWidth;
+        const left = el.offsetLeft
+        const right = left + el.offsetWidth
+        const cLeft = container.scrollLeft
+        const cRight = cLeft + container.clientWidth
 
         if (left < cLeft){
-            container.scrollLeft = left - 16; // small padding
+            container.scrollLeft = left - 16 // small padding
         } else if (right > cRight){
-            container.scrollLeft = right - container.clientWidth + 16;
+            container.scrollLeft = right - container.clientWidth + 16
         }
     }
 </script>
 
 <style scoped lang="scss">
+    .panel-maximized {
+        position: relative;
+        background: var(--ks-bg-base);
+    }
+
+    .maximized-sliver {
+        position: absolute;
+        top: var(--ks-spacing-5);
+        bottom: var(--ks-spacing-5);
+        z-index: 2;
+        width: 2vw;
+        min-width: 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-3) 0;
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        color: var(--ks-icon-muted);
+        cursor: pointer;
+        overflow: hidden;
+        transition: background 0.15s ease, color 0.15s ease, width 0.15s ease;
+    }
+
+    .maximized-sliver--left {
+        left: 0;
+        border-left: none;
+        border-top-right-radius: var(--ks-radius-base);
+        border-bottom-right-radius: var(--ks-radius-base);
+    }
+
+    .maximized-sliver--right {
+        right: 0;
+        border-right: none;
+        border-top-left-radius: var(--ks-radius-base);
+        border-bottom-left-radius: var(--ks-radius-base);
+    }
+
+    .maximized-sliver:hover {
+        width: calc(2vw + var(--ks-spacing-3));
+        background: var(--ks-bg-hover-elevated);
+        color: var(--ks-text-primary);
+    }
+
+    .maximized-sliver-icon {
+        flex-shrink: 0;
+        font-size: var(--ks-font-size-md);
+        line-height: 1;
+    }
+
+    .maximized-sliver-label {
+        writing-mode: vertical-rl;
+        font-size: var(--ks-font-size-xs);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 70%;
+    }
+
+    .panel-maximized .editor-tabs-container,
+    .panel-maximized .content-panel {
+        position: relative;
+        z-index: 1;
+        height: calc(100% - var(--ks-spacing-5));
+        background: var(--ks-bg-surface);
+        border-left: 1px solid var(--ks-border-default);
+        border-right: 1px solid var(--ks-border-default);
+        box-shadow: var(--ks-shadow-md);
+    }
+
+    .panel-maximized--left-sliver .editor-tabs-container,
+    .panel-maximized--left-sliver .content-panel {
+        margin-left: calc(2vw + var(--ks-spacing-4));
+    }
+
+    .panel-maximized--right-sliver .editor-tabs-container,
+    .panel-maximized--right-sliver .content-panel {
+        margin-right: calc(2vw + var(--ks-spacing-4));
+    }
+
+    .panel-maximized .editor-tabs-container {
+        margin-top: var(--ks-spacing-5);
+        border-top: 1px solid var(--ks-border-default);
+        border-top-left-radius: var(--ks-radius-base);
+        border-top-right-radius: var(--ks-radius-base);
+    }
+
+    .panel-maximized .content-panel {
+        border-bottom: 1px solid var(--ks-border-default);
+        border-bottom-left-radius: var(--ks-radius-base);
+        border-bottom-right-radius: var(--ks-radius-base);
+    }
+
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;
-        background-color: var(--ks-background-body);
-        border-bottom: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-bg-base);
+        border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
+        padding-top: var(--ks-spacing-2);
+        gap: var(--ks-spacing-1);
 
-        button.split_right{
+        button.split_right,
+        button.maximize_panel{
             border: none;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             background-color: transparent;
-            padding: 0 .5rem;
+            padding: 0 var(--ks-spacing-2);
             line-height: 16px;
+            cursor: pointer;
             svg {
                 height: 16px;
                 width: 16px;
+            }
+            &:hover {
+                color: var(--ks-text-primary);
             }
         }
         .buttons-container{
@@ -707,7 +870,8 @@
         }
         .drag-handle {
             cursor: grab;
-            opacity: 0.5;
+            opacity: 0.7;
+            padding: var(--ks-spacing-2);
             &:hover {
                 opacity: 1;
             }
@@ -735,39 +899,34 @@
         flex: 1;
         align-items: end;
         padding-bottom: 0;
-        font-size: .8rem;
-        border-left: 1px solid var(--ks-border-primary);
+        font-size: var(--ks-font-size-xs);
         line-height: 1.5rem;
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: none;
+        gap: var(--ks-spacing-1);
         &.dragover {
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
     }
 
     .tab-icon{
-        color: var(--ks-content-inactive);
+        color: var(--ks-icon-muted);
     }
 
     .small-text {
-        font-size: .8rem;
-    }
-
-    :deep(.kel-dropdown-menu__item.is-disabled) {
-        color: var(--ks-border-inactive);
+        font-size: var(--ks-font-size-xs);
     }
 
     .editor-tabs .editor-tab{
-        padding: 3px .5rem;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
         border: none;
-        border-right: 1px solid var(--ks-border-primary);
-        border-radius: 2px 2px 0 0;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-lg) var(--ks-radius-lg) 0 0;
         border-bottom: none;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-btn-secondary-bg-default);
         display: flex;
         flex-wrap: nowrap;
-        /* Prevent shrinking so tabs overflow and the container can scroll */
         flex: 0 0 auto;
         min-width: 120px;
         max-width: 240px;
@@ -775,13 +934,12 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         align-items: center;
-        gap: .5rem;
-        color: var(--ks-content-secondary);
-        opacity: .6;
+        gap: var(--ks-spacing-2);
+        color: var(--ks-text-primary);
+        opacity: .5;
 
         &.active {
             opacity: 1;
-            color: var(--ks-content-primary);
         }
 
         .tab-title{
@@ -800,9 +958,11 @@
             flex: 0 0 auto;
             opacity: .6;
             cursor: pointer;
-        }
-        &:hover .close-icon{
-            opacity: 1;
+            color: var(--ks-icon-default);
+
+            &:hover{
+                opacity: 1;
+            }
         }
     }
 
@@ -813,7 +973,7 @@
         background: transparent;
     }
     .editor-tabs::-webkit-scrollbar-thumb {
-        background-color: var(--ks-border-primary);
+        background-color: var(--ks-border-default);
         border-radius: 3px;
     }
 
@@ -832,28 +992,28 @@
         width: 4px;
         transform: translateX(-50%);
         height: 85%;
-        background-color: var(--ks-content-primary);
+        background-color: var(--ks-text-primary);
         pointer-events: none;
     }
 
     .default-theme{
         :deep(.kel-splitter-panel) {
-            background-color: var(--ks-background-panel);
+            background-color: var(--ks-bg-surface);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
         :deep(.kel-splitter__splitter){
-            border-left-color: var(--ks-border-primary);
-            background-color: var(--ks-background-panel);
+            border-left-color: var(--ks-border-default);
+            background-color: var(--ks-bg-surface);
             &:before, &:after{
-                background-color: var(--ks-content-secondary);
+                background-color: var(--ks-text-secondary);
             }
         }
 
-        :deep(.kel-splitter-bar) {
-            z-index: 0;
-        }
+       :deep(.kel-splitter-bar) {
+           z-index: 1;
+       }
     }
 
     .content-panel{
@@ -862,17 +1022,23 @@
         overflow: auto;
     }
 
+    .empty-panels {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+    }
+
     .kel-splitter-panel{
         transition: none;
         &.dragging {
             opacity: 0.5;
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
             transition: opacity 0.2s ease;
         }
     }
 
     .panel-dragover {
-        background-color: var(--ks-background-card-hover);
+        background-color: var(--ks-bg-hover-elevated);
         transition: background-color 0.2s ease;
     }
 
@@ -896,7 +1062,7 @@
         justify-content: center;
         background-color: rgba(30, 30, 30, 0.5);
         transition: all 0.2s ease;
-        border: 2px dashed var(--ks-border-primary, #444);
+        border: 2px dashed var(--ks-border-default, #444);
         border-radius: 4px;
         margin: 8px;
         pointer-events: auto;
@@ -906,7 +1072,7 @@
     .new-panel-drop-zone:hover,
     .new-panel-drop-zone.panel-dragover {
         background-color: rgba(40, 40, 40, 0.8);
-        border-color: var(--ks-border-active, #888);
+        border-color: var(--ks-border-focus, #888);
     }
 
     .left-drop-zone {

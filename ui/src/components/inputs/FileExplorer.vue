@@ -1,5 +1,6 @@
 <template>
     <div
+        ref="sidebar"
         class="p-2 sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
@@ -26,17 +27,18 @@
             </KsSelect>
             <KsButtonGroup class="d-flex">
                 <KsTooltip
-                    :content="$t('namespace files.create.file')"
+                    :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton class="px-2" @click="toggleDialog(true, 'file')">
+                    <KsButton class="px-2" :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
                 <KsTooltip
-                    :content="$t('namespace files.create.folder')"
+                    :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
                         class="px-2"
+                        :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
@@ -60,23 +62,27 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <KsDropdown>
-                    <KsButton>
-                        <PlusBox />
-                    </KsButton>
-                    <template #dropdown>
-                        <KsDropdownMenu>
-                            <KsDropdownItem @click="filePicker?.click()">
-                                {{ $t("namespace files.import.files") }}
-                            </KsDropdownItem>
-                            <KsDropdownItem
-                                @click="folderPicker?.click()"
-                            >
-                                {{ $t("namespace files.import.folder") }}
-                            </KsDropdownItem>
-                        </KsDropdownMenu>
-                    </template>
-                </KsDropdown>
+                <KsTooltip
+                    :content="canManageFiles ? $t('import') : $t('namespace files.read_only')"
+                >
+                    <KsDropdown :disabled="!canManageFiles">
+                        <KsButton :aria-label="$t('import')" :disabled="!canManageFiles">
+                            <PlusBox />
+                        </KsButton>
+                        <template #dropdown>
+                            <KsDropdownMenu>
+                                <KsDropdownItem @click="filePicker?.click()">
+                                    {{ $t("namespace files.import.files") }}
+                                </KsDropdownItem>
+                                <KsDropdownItem
+                                    @click="folderPicker?.click()"
+                                >
+                                    {{ $t("namespace files.import.folder") }}
+                                </KsDropdownItem>
+                            </KsDropdownMenu>
+                        </template>
+                    </KsDropdown>
+                </KsTooltip>
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
@@ -95,17 +101,13 @@
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
-            draggable
+            :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
-            @node-drag-start="
-                nodeBeforeDrag = {
-                    parent: $event.parent.data.id,
-                    path: filesStore.getPath($event.data.id) ?? '',
-                }
-            "
+            :class="{'is-drop-not-allow': isDropOutsideSidebar}"
+            @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
         >
@@ -149,12 +151,14 @@
                         <KsDropdownMenu>
                             <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </KsDropdownItem>
                             <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
@@ -165,11 +169,12 @@
                             <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(data)">
                                 {{ $t("namespace files.export_single") }}
                             </KsDropdownItem>
                             <KsDropdownItem
                                 v-if="data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="
                                     toggleRenameDialog(
                                         true,
@@ -187,7 +192,7 @@
                                     )
                                 }}
                             </KsDropdownItem>
-                            <KsDropdownItem @click="removeSelectedFiles(data, node)">
+                            <KsDropdownItem :disabled="!canManageFiles" @click="removeSelectedFiles(data, node)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -215,7 +220,9 @@
                     : $t('namespace files.create.folder')
             "
             width="500"
-            @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            appendToBody
+            @keydown.enter.prevent="dialog.name?.trim() ? dialogHandler() : undefined"
+            @opened="focusCreationInput"
         >
             <div class="pb-1">
                 <span>
@@ -254,7 +261,7 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!dialog.name"
+                        :disabled="!dialog.name?.trim()"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
@@ -267,8 +274,8 @@
         <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
-            width="500"
             @keydown.enter.prevent="renameItem()"
+            @opened="focusRenamingInput"
         >
             <div class="pb-1">
                 <span>
@@ -288,7 +295,8 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!renameDialog.name"
+                        :disabled="!renameDialog.name || isRenaming"
+                        :loading="isRenaming"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
@@ -300,7 +308,6 @@
         <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
-            width="500"
             @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3" v-html="confirmationLabels.message" />
@@ -319,8 +326,9 @@
         <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
-            width="75%"
             top="10vh"
+            width="min(1200px, 90vw)"
+            appendToBody
         >
             <Revisions
                 v-if="revisionsHistory.visible"
@@ -345,10 +353,10 @@
             }"
             class="tabs-context"
         >
-            <KsMenuItem @click="toggleDialog(true, 'file')">
+            <KsMenuItem :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                 {{ $t("namespace files.create.file") }}
             </KsMenuItem>
-            <KsMenuItem @click="toggleDialog(true, 'folder')">
+            <KsMenuItem :disabled="!canManageFiles" @click="toggleDialog(true, 'folder')">
                 {{ $t("namespace files.create.folder") }}
             </KsMenuItem>
         </KsMenu>
@@ -356,38 +364,47 @@
 </template>
 
 <script lang="ts">
-    import {InjectionKey} from "vue";
-    import {EditorTabProps} from "./EditorWrapper.vue";
+    import {InjectionKey} from "vue"
+    import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
-    export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>;
-    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>;
+    export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
+    /** Returns whether a tab was actually open for that path, so callers can reopen it elsewhere. */
+    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => boolean>
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, nextTick, inject, watch} from "vue";
-    import {useRoute} from "vue-router";
-    import {useNamespacesStore} from "override/stores/namespaces";
-    import Utils from "../../utils/utils";
-    import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-    import FilePlus from "vue-material-design-icons/FilePlus.vue";
-    import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
-    import PlusBox from "vue-material-design-icons/PlusBox.vue";
-    import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
-    import TypeIcon from "../utils/icons/Type.vue";
-    import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
+    import {ref, computed, inject, watch} from "vue"
+    import {useRoute} from "vue-router"
+    import {apiUrl} from "override/utils/route"
+    import {useNamespacesStore} from "override/stores/namespaces"
+    import {safePath} from "../../composables/useBaseNamespaces"
+    import * as Utils from "../../utils/utils"
+    import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
+    import FilePlus from "vue-material-design-icons/FilePlus.vue"
+    import FolderPlus from "vue-material-design-icons/FolderPlus.vue"
+    import PlusBox from "vue-material-design-icons/PlusBox.vue"
+    import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
+    import TypeIcon from "../utils/icons/Type.vue"
+    import escape from "lodash/escape"
+    import {useI18n} from "vue-i18n"
+    import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
+    import {useToast} from "../../utils/toast"
     import {
         ElTreeNode,
         getFileNameWithExtension,
         isDirectory,
         TreeNode,
         TreeNodeFile,
-        useFileExplorerStore
-    } from "../../stores/fileExplorer";
-    import Revisions, {Revision} from "../layout/Revisions.vue";
-    import Crud from "override/components/auth/Crud.vue";
-    import Checkbox from "../layout/Checkbox.vue";
+        useFileExplorerStore,
+    } from "../../stores/fileExplorer"
+    import Revisions, {Revision} from "../layout/Revisions.vue"
+    import {FILES_REFRESH_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
+    import Crud from "override/components/auth/Crud.vue"
+    import Checkbox from "../layout/Checkbox.vue"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -395,37 +412,51 @@
         name: undefined,
         folder: undefined,
         path: undefined,
-    };
+    }
 
     const RENAME_DEFAULTS:Dialog = {
         visible: false,
         type: "file",
         name: undefined,
         old: undefined,
-    };
+    }
 
     const props = defineProps<{
         currentNS?: string | null;
-    }>();
+    }>()
 
-    const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY);
+    const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
+    const refreshTabContent = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined)
 
-    const route = useRoute();
-    const namespacesStore = useNamespacesStore();
-    const filesStore = useFileExplorerStore();
+    // exposed so parents (e.g. the dedicated empty state) can reuse the
+    // create dialog instead of duplicating file-creation logic
+    defineExpose({
+        openCreationDialog: (type: "file" | "folder" = "file") => toggleDialog(true, type),
+    })
+
+    const route = useRoute()
+    const namespacesStore = useNamespacesStore()
+    const filesStore = useFileExplorerStore()
+    const authStore = useAuthStore()
 
     watch(
         () => props.currentNS,
         (newNS) => {
             if(newNS){
                 filesStore.namespaceId = newNS
-                filesStore.loadNodes();
+                filesStore.loadNodes()
             }
         },
-    );
+    )
 
     if(props.currentNS){
         filesStore.namespaceId = props.currentNS
+    }
+
+    interface FileExplorerNode {
+        data: TreeNode;
+        parent: ElTreeNode;
     }
 
     interface Dialog{
@@ -438,126 +469,137 @@
         node?: ElTreeNode;
     }
 
-    const filter = ref<string>("");
-    const dialog = ref<Dialog>({...DIALOG_DEFAULTS});
-    const renameDialog = ref<Dialog>({...RENAME_DEFAULTS});
-    const tree = ref<any>();
-    const filePicker = ref<HTMLInputElement>();
-    const folderPicker = ref<HTMLInputElement>();
-    const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({});
-    const revisionsHistory = ref<{ visible: boolean, path: string, revisions: Revision[] }>({visible: false, path: "", revisions: []});
-    const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
+    const filter = ref<string>("")
+    const dialog = ref<Dialog>({...DIALOG_DEFAULTS})
+    const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
+    const isRenaming = ref(false)
+    const sidebar = ref<HTMLElement>()
+    const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
+    const tree = ref<any>()
+    const filePicker = ref<HTMLInputElement>()
+    const folderPicker = ref<HTMLInputElement>()
+    const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({})
+    const revisionsHistory = ref<{ visible: boolean, path: string, revisions: Revision[] }>({visible: false, path: "", revisions: []})
+    const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}})
     const nodeBeforeDrag = ref<{
         parent: string;
         path: string;
-    }>();
-    const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
-    const selectedNodes = ref<any[]>([]);
-    const selectionMode = computed(() => selectedNodes.value.length > 1);
-    const lastClickedIndex = ref<number | null>(null);
+    }>()
+    const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0})
+    const selectedNodes = ref<any[]>([])
+    const selectionMode = computed(() => selectedNodes.value.length > 1)
+    const lastClickedIndex = ref<number | null>(null)
+    const bulkDragSiblings = ref<{ path: string; fileName: string }[]>()
 
     const selectedFiles = computed(() => {
-        return selectedNodes.value.map(id => filesStore.getPath(id)).filter((p): p is string => !!p);
-    });
+        return selectedNodes.value.map(id => filesStore.getPath(id)).filter((p): p is string => !!p)
+    })
 
     const flatTree = computed(() => {
-        return flattenTree(filesStore.fileTree ?? []);
-    });
+        return flattenTree(filesStore.fileTree ?? [])
+    })
 
-    const {t} = useI18n();
-    const toast = useToast();
+    const {t} = useI18n()
+    const toast = useToast()
 
-    const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string);
+    const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string)
 
-    const multiSelected = computed(() => selectedNodes.value.length > 1);
+    // Namespace files write operations (create / import / rename / delete) all hit
+    // endpoints guarded by NAMESPACE:MANAGE_FILES; gate the matching UI actions so a
+    // read-only user sees them disabled instead of triggering a rejected request.
+    const canManageFiles = computed<boolean>(() =>
+        authStore.user?.isAllowed(resource.NAMESPACE, action.MANAGE_FILES, namespaceId.value) ?? false,
+    )
+
+    const multiSelected = computed(() => selectedNodes.value.length > 1)
 
     const confirmationLabels = computed(() => {
-        const files = confirmation.value.nodes?.filter(n => n.type === "File");
-        const filesCount = files?.length ?? 0;
-        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory");
-        const foldersCount = folders?.length ?? 0;
-        const labels = {title: t("namespace files.dialog.deletion.title"), message: ""};
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: folders?.[0].fileName});
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: files?.[0].fileName});
-        else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount});
-        else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount});
-        else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount});
-        return labels;
-    });
+        const files = confirmation.value.nodes?.filter(n => n.type === "File")
+        const filesCount = files?.length ?? 0
+        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
+        const foldersCount = folders?.length ?? 0
+        const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
+        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escape(folders?.[0].fileName)})
+        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escape(files?.[0].fileName)})
+        else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
+        else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
+        else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
+        return labels
+    })
 
     function nodeClass(data: any) {
         if (selectedNodes.value.includes(data.id)) {
-            return "node selected-tree-node";
+            return "node selected-tree-node"
         }
-        return "node";
+        return "node"
     }
 
     function flattenTree(itemsArr: TreeNode[], parentPath = ""): any[] {
-        const result: any[] = [];
+        const result: any[] = []
         for (const item of itemsArr) {
-            const fullPath = `${parentPath}${item.fileName}`;
-            result.push({path: fullPath, fileName: item.fileName, id: item.id});
+            const fullPath = `${parentPath}${item.fileName}`
+            result.push({path: fullPath, fileName: item.fileName, id: item.id})
             if (isDirectory(item) && item.children?.length > 0) {
-                result.push(...flattenTree(item.children, `${fullPath}/`));
+                result.push(...flattenTree(item.children, `${fullPath}/`))
             }
         }
-        return result.filter(i => i.path);
+        return result.filter(i => i.path)
     }
 
     function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
-        const path = filesStore.getPath(node.data.id) ?? "";
-        const flatList = flatTree.value;
-        const currentIndex = flatList.findIndex(item => item.path === path);
-        if (currentIndex === -1) return;
+        const path = filesStore.getPath(node.data.id) ?? ""
+        const flatList = flatTree.value
+        const currentIndex = flatList.findIndex(item => item.path === path)
+        if (currentIndex === -1) return
 
-        const isCtrl = !!event && (event.ctrlKey || event.metaKey);
-        const isShift = !!event && event.shiftKey;
+        const isCtrl = !!event && (event.ctrlKey || event.metaKey)
+        const isShift = !!event && event.shiftKey
 
         if (isShift) {
-            let anchorIndex = lastClickedIndex.value;
+            let anchorIndex = lastClickedIndex.value
 
             if (anchorIndex === null) {
                 if (selectedNodes.value.length === 1) {
-                    const anchorId = selectedNodes.value[0];
-                    const anchorPath = filesStore.getPath(anchorId) ?? "";
-                    const idx = flatList.findIndex(i => i.path === anchorPath);
-                    anchorIndex = idx !== -1 ? idx : currentIndex;
+                    const anchorId = selectedNodes.value[0]
+                    const anchorPath = filesStore.getPath(anchorId) ?? ""
+                    const idx = flatList.findIndex(i => i.path === anchorPath)
+                    anchorIndex = idx !== -1 ? idx : currentIndex
                 } else {
-                    anchorIndex = currentIndex;
+                    anchorIndex = currentIndex
                 }
             }
 
-            const start = Math.min(anchorIndex, currentIndex);
-            const end = Math.max(anchorIndex, currentIndex);
-            const slice = flatList.slice(start, end + 1);
+            const start = Math.min(anchorIndex, currentIndex)
+            const end = Math.max(anchorIndex, currentIndex)
+            const slice = flatList.slice(start, end + 1)
 
-            selectedNodes.value = slice.map(item => item.id);
+            selectedNodes.value = slice.map(item => item.id)
 
             if (selectedNodes.value.length == 1){
-                tree.value?.setCurrentKey(selectedNodes.value[0]);
+                tree.value?.setCurrentKey(selectedNodes.value[0])
             }
 
-            syncTreeCurrentKey();
-            return;
+            syncTreeCurrentKey()
+            return
         }
 
         if (isCtrl) {
-            const isSelected = selectedNodes.value.includes(node.data.id);
+            const isSelected = selectedNodes.value.includes(node.data.id)
 
             if (isSelected) {
-                selectedNodes.value = selectedNodes.value.filter(id => id !== node.data.id);
+                selectedNodes.value = selectedNodes.value.filter(id => id !== node.data.id)
             } else {
-                selectedNodes.value.push(node.data.id);
+                selectedNodes.value.push(node.data.id)
             }
-            lastClickedIndex.value = currentIndex;
+            lastClickedIndex.value = currentIndex
 
-            syncTreeCurrentKey();
-            return;
+            syncTreeCurrentKey()
+            return
         }
 
-        selectedNodes.value = [node.data.id];
-        lastClickedIndex.value = currentIndex;
-        syncTreeCurrentKey();
+        selectedNodes.value = [node.data.id]
+        lastClickedIndex.value = currentIndex
+        syncTreeCurrentKey()
 
         if (data.leaf) {
             openTab?.({
@@ -566,28 +608,28 @@
                 extension: data.fileName.split(".").pop(),
                 flow: false,
                 dirty: false,
-            });
+            })
         }
     }
 
     function onRowClickWrapper(data: TreeNode, node: ElTreeNode, event: MouseEvent) {
 
-        const target = event.target as HTMLElement;
+        const target = event.target as HTMLElement
         if (target.closest("input, .neon-checkbox, .checkbox")) {
-            return;
+            return
         }
-        const isCtrl = event.ctrlKey || event.metaKey;
-        const isShift = event.shiftKey;
+        const isCtrl = event.ctrlKey || event.metaKey
+        const isShift = event.shiftKey
 
         if (selectionMode.value && !isShift && !isCtrl) {
-            selectedNodes.value = [node.data.id];
+            selectedNodes.value = [node.data.id]
 
-            const flatList = flatTree.value;
+            const flatList = flatTree.value
             lastClickedIndex.value = flatList.findIndex(
-                i => i.id === node.data.id
-            );
+                i => i.id === node.data.id,
+            )
 
-            syncTreeCurrentKey();
+            syncTreeCurrentKey()
 
             if (data.leaf) {
                 openTab?.({
@@ -596,51 +638,51 @@
                     extension: data.fileName.split(".").pop()!,
                     flow: false,
                     dirty: false,
-                });
+                })
             }
-            return;
+            return
         }
-        handleNodeClick(data, node, event);
+        handleNodeClick(data, node, event)
     }
 
     function onRootClick(event: MouseEvent) {
-        const target = event.target as HTMLElement;
+        const target = event.target as HTMLElement
         if (target.closest(".kel-tree-node__content, .kel-tree-node, .filename, .neon-checkbox, button, input, .kel-input")) {
-            return;
+            return
         }
-        selectedNodes.value = [];
-        lastClickedIndex.value = null;
-        syncTreeCurrentKey();
+        selectedNodes.value = []
+        lastClickedIndex.value = null
+        syncTreeCurrentKey()
     }
 
     function syncTreeCurrentKey() {
-        const treeRef = tree.value;
-        if (!treeRef) return;
+        const treeRef = tree.value
+        if (!treeRef) return
 
         if (selectedNodes.value.length === 1) {
-            treeRef.setCurrentKey(selectedNodes.value[0]);
+            treeRef.setCurrentKey(selectedNodes.value[0])
         } else {
-            treeRef.setCurrentKey(null);
+            treeRef.setCurrentKey(null)
         }
     }
 
     function toggleCheckboxSelection(checked: boolean, node: ElTreeNode) {
-        const path = filesStore.getPath(node.data.id) ?? "";
-        const nodeId = node.data.id;
+        const path = filesStore.getPath(node.data.id) ?? ""
+        const nodeId = node.data.id
         if (checked) {
             if (!selectedNodes.value.includes(nodeId)) {
-                selectedNodes.value.push(nodeId);
+                selectedNodes.value.push(nodeId)
             }
-            const flatList = flatTree.value;
-            lastClickedIndex.value = flatList.findIndex(i => i.path === path);
-            syncTreeCurrentKey();
-            return;
+            const flatList = flatTree.value
+            lastClickedIndex.value = flatList.findIndex(i => i.path === path)
+            syncTreeCurrentKey()
+            return
         }
-        selectedNodes.value = selectedNodes.value.filter(id => id !== nodeId);
+        selectedNodes.value = selectedNodes.value.filter(id => id !== nodeId)
         if(selectedNodes.value.length === 0){
-            lastClickedIndex.value = null;
+            lastClickedIndex.value = null
         }
-        syncTreeCurrentKey();
+        syncTreeCurrentKey()
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
@@ -648,97 +690,107 @@
     }
 
     async function restore(source: string) {
+        const path = revisionsHistory.value.path
+
         await namespacesStore.saveOrCreateFile({
             namespace: namespaceId.value,
-            path: revisionsHistory.value.path,
-            content: source
-        });
-
-        toast.success(t("namespace files.revisions.restore.success"));
-
-        closeTab?.({path: revisionsHistory.value.path});
-        openTab?.({
-            name: revisionsHistory.value.path.split("/").pop()!,
-            path: revisionsHistory.value.path,
-            extension: revisionsHistory.value.path.split(".").pop()!,
-            flow: false,
-            dirty: false
+            path,
+            content: source,
         })
 
-        const newRevision = revisionsHistory.value.revisions.map(r => r.revision).sort((a, b) => a - b).reverse()[0] + 1;
+        toast.success(t("namespace files.revisions.restore.success"))
+
+        if (refreshTabContent) {
+            refreshTabContent.value[path] = {content: source}
+        }
+
+        openTab?.({
+            name: path.split("/").pop()!,
+            path,
+            extension: path.split(".").pop()!,
+            flow: false,
+            dirty: false,
+        })
+
+        const newRevision = revisionsHistory.value.revisions.map(r => r.revision).sort((a, b) => a - b).reverse()[0] + 1
         revisionsHistory.value.revisions = [...revisionsHistory.value.revisions, {
             revision: newRevision,
-            source: source
-        }];
+            source: source,
+        }]
     }
 
     async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+        // Guards the keyboard-delete path, which bypasses the disabled context-menu item
+        if (!canManageFiles.value) return
         if (selectedFiles.value.length <= 1 && node) {
-            selectedNodes.value = [node.data.id];
+            selectedNodes.value = [node.data.id]
         }
         const nodes = selectedFiles.value.map((filePath) => {
-            return filesStore.findNodeByPath(filePath);
-        });
-        confirmRemove(nodes);
+            return filesStore.findNodeByPath(filePath)
+        })
+        confirmRemove(nodes)
     }
 
     function chooseSearchResults(item: string) {
         const name = item.split("/").pop()
-        if(!name) return;
+        if(!name) return
         openTab?.({
             name,
             extension: item.split(".").pop()!,
             path: item,
             flow: false,
-            dirty: false
-        });
-        filter.value = "";
+            dirty: false,
+        })
+        filter.value = ""
     }
 
     function toggleDropdown(id: string) {
-        const path = filesStore.getPath(id) ?? "";
+        const path = filesStore.getPath(id) ?? ""
         if (!selectedNodes.value.includes(id)) {
-            selectedNodes.value = [id];
-            const flatList = flatTree.value;
-            lastClickedIndex.value = flatList.findIndex(i => i.path === path);
+            selectedNodes.value = [id]
+            const flatList = flatTree.value
+            lastClickedIndex.value = flatList.findIndex(i => i.path === path)
         }
 
         for(const dd in dropdowns.value){
             if(dd !== id){
-                dropdowns.value[dd]?.handleClose();
+                dropdowns.value[dd]?.handleClose()
             }
         }
-        dropdowns.value[id]?.handleOpen();
+        if(typeof dropdowns.value[id]?.handleOpen === "function") {
+            dropdowns.value[id].handleOpen()
+        }
     }
 
     async function dialogHandler() {
+        if (!canManageFiles.value) return
         if (dialog.value.type === "file") {
-            await addFile({creation: true});
+            await addFile({creation: true})
         } else {
-            await addFolder(undefined, true);
+            await addFolder(undefined, true)
         }
     }
 
     function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: any) {
         if (isShown) {
-            let folder;
+            let folder
             if (node?.data?.leaf === false) {
-                folder = filesStore.getPath(node.data.id);
+                folder = filesStore.getPath(node.data.id)
             } else {
-                const selectedNode = tree.value.getCurrentNode();
-                if (selectedNode?.leaf === false) {
-                    node = selectedNode.id;
-                    folder = filesStore.getPath(selectedNode.id);
+                const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
+                const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
+                if (selectedNode?.data?.leaf === false) {
+                    node = selectedNode.data.id
+                    folder = filesStore.getPath(selectedNode.data.id)
                 }
             }
             if(!type) return
-            dialog.value.visible = true;
-            dialog.value.type = type;
-            dialog.value.folder = folder;
-            focusCreationInput();
+            dialog.value.visible = true
+            dialog.value.type = type
+            dialog.value.folder = folder
         } else {
-            dialog.value.visible = false;
-            dialog.value = {...DIALOG_DEFAULTS};
+            dialog.value.visible = false
+            dialog.value = {...DIALOG_DEFAULTS}
         }
     }
 
@@ -750,98 +802,202 @@
                 name,
                 old: name,
                 node,
-            };
-            focusRenamingInput();
+            }
         } else {
-            renameDialog.value = {...RENAME_DEFAULTS};
+            renameDialog.value = {...RENAME_DEFAULTS}
         }
     }
 
-    function renameItem() {
-        const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : "";
-        const start = path.substring(0, path.lastIndexOf("/") + 1);
-        namespacesStore.renameFileDirectory({
-            namespace: namespaceId.value,
-            old: `${start}${renameDialog.value.old}`,
-            new: `${start}${renameDialog.value.name}`,
-        });
-        tree.value.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name;
-        renameDialog.value = {...RENAME_DEFAULTS};
+    async function renameItem() {
+        // The Enter handler on the dialog is not gated by the button's disabled state, so
+        // without this a second Enter fires a duplicate rename whose `old` path is already gone.
+        if (!canManageFiles.value || isRenaming.value) return
+
+        const {node, old: oldName, name: newName, type} = renameDialog.value
+        if (!newName) return
+
+        const path = node?.data.id ? filesStore.getPath(node.data.id) ?? "" : ""
+        const start = path.substring(0, path.lastIndexOf("/") + 1)
+        const oldPath = `${start}${oldName}`
+        const newPath = `${start}${newName}`
+
+        isRenaming.value = true
+        try {
+            await namespacesStore.renameFileDirectory({
+                namespace: namespaceId.value,
+                old: oldPath,
+                new: newPath,
+            })
+        } catch (error) {
+            // The tree is left untouched on purpose: it used to be renamed before the response
+            // arrived, so a refused rename (an existing name answers 500) still looked applied.
+            console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
+            toast.error(t("namespace files.rename.error", {name: newName}))
+            return
+        } finally {
+            isRenaming.value = false
+        }
+
+        tree.value.getNode(node).data.fileName = newName
+        renameDialog.value = {...RENAME_DEFAULTS}
+
+        // Tabs are keyed by path, so a renamed file left one pointing at a path that no longer
+        // exists — clicking it navigated to a full-page 404. Move it across instead.
+        if (type === "file" && closeTab?.({path: oldPath})) {
+            openTab?.({
+                name: newName,
+                path: newPath,
+                extension: newName.split(".").pop()!,
+                flow: false,
+                dirty: false,
+            })
+        }
+    }
+
+    function onNodeDragStart(draggingNode: FileExplorerNode) {
+        startRestrictDrop()
+
+        nodeBeforeDrag.value = {
+            parent: draggingNode.parent.data.id,
+            path: filesStore.getPath(draggingNode.data.id) ?? "",
+        }
+    
+        bulkDragSiblings.value = undefined
+
+        const isBulkDrag = selectedNodes.value.length > 1 && selectedNodes.value.includes(draggingNode.data.id)
+        if (!isBulkDrag) {
+            return
+        }
+
+        // handle bulk drag
+        const draggedPath = nodeBeforeDrag.value.path
+        const selectedPaths = selectedFiles.value
+
+        if (selectedPaths.some(p => draggedPath.startsWith(`${p}/`))) {
+            return
+        }
+
+        bulkDragSiblings.value = selectedNodes.value
+            // ignore the main node
+            .filter(id => id !== draggingNode.data.id)
+            .map(id => filesStore.getPath(id))
+            .filter((path): path is string => !!path && !selectedPaths.some(p => p !== path && path.startsWith(`${p}/`)))
+            .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
     async function nodeMoved(draggedNode: any) {
+        // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
+        if (!canManageFiles.value) {
+            tree.value.remove(draggedNode.data.id)
+            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            return
+        }
+        const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
+
         try {
             await namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
                 old: nodeBeforeDrag.value?.path ?? "",
-                new: filesStore.getPath(draggedNode.data.id) ?? "",
-            });
+                new: newPath,
+            })
         } catch {
-            tree.value.remove(draggedNode.data.id);
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent);
+            tree.value.remove(draggedNode.data.id)
+            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            bulkDragSiblings.value = undefined
+            return
         }
+
+        const siblings = bulkDragSiblings.value
+        bulkDragSiblings.value = undefined
+        if (!siblings?.length) {
+            return
+        }
+
+        // handle siblings move
+        const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
+        const results = await Promise.allSettled(siblings.map((sibling) =>
+            namespacesStore.moveFileDirectory({
+                namespace: namespaceId.value,
+                old: sibling.path,
+                new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName,
+            }),
+        ))
+
+        await filesStore.loadNodes()
+        selectedNodes.value = []
+        lastClickedIndex.value = null
+
+        const failedCount = results.filter(r => r.status === "rejected").length
+
+        if (failedCount > 0) {
+            return toast.error(t("namespace files.move.bulk_error", {count: failedCount}))
+        }
+        return toast.success(t("namespace files.move.bulk_success"))
     }
 
-    const creation_name = ref<any>();
-    const renaming_name = ref<any>();
+    const creation_name = ref<any>()
+    const renaming_name = ref<any>()
 
     function focusCreationInput() {
-        nextTick(() => {
-            creation_name.value?.focus();
-        });
+        creation_name.value?.$el?.querySelector("input")?.focus()
     }
 
     function focusRenamingInput() {
-        nextTick(() => {
-            renaming_name.value?.focus();
-        });
+        renaming_name.value?.$el?.querySelector("input")?.focus()
     }
 
     async function importFiles(event: Event) {
-        const importedFiles = (event.target as HTMLInputElement).files;
-        if (!importedFiles) return;
+        const importedFiles = (event.target as HTMLInputElement).files
+        if (!importedFiles || !canManageFiles.value) return
         try {
-            filesStore.importFiles(importedFiles);
-            toast.success(t("namespace files.import.success"));
+            // Awaited so the success toast only fires once the upload actually
+            // succeeds; a rejected upload (e.g. missing permission) surfaces the error instead
+            await filesStore.importFiles(importedFiles)
+            toast.success(t("namespace files.import.success"))
         } catch {
-            toast.error(t("namespace files.import.error"));
+            toast.error(t("namespace files.import.error"))
         } finally {
-            (event.target as HTMLInputElement).value = "";
-            dialog.value = {...DIALOG_DEFAULTS};
+            (event.target as HTMLInputElement).value = ""
+            dialog.value = {...DIALOG_DEFAULTS}
+            selectedNodes.value = []
+            lastClickedIndex.value = null
+            syncTreeCurrentKey()
         }
     }
 
     function exportFiles() {
         namespacesStore.exportFileDirectory({
             namespace: namespaceId.value,
-        });
+        })
     }
 
     async function addFile({file, creation, shouldReset = true}: { file?: Omit<TreeNodeFile, "id" | "type">; creation?: boolean; shouldReset?: boolean }) {
-        let FILE: Omit<TreeNodeFile, "id" | "type">;
+        let FILE: Omit<TreeNodeFile, "id" | "type">
         if (creation && dialog.value.name) {
-            const [fileName, extension] = getFileNameWithExtension(dialog.value.name);
-            FILE = {fileName, extension, content: "", leaf: true};
+            const [fileName, extension] = getFileNameWithExtension(dialog.value.name.trim())
+            FILE = {fileName, extension, content: "", leaf: true}
         } else {
-            if(!file) return;
-            FILE = file;
+            if(!file) return
+            FILE = file
         }
 
-        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation)
+        const parentFolder = dialog.value.folder
+        const {path, file: createdFile} = await filesStore.addFile(FILE, parentFolder, creation)
         if (creation) {
-            if(path === undefined || createdFile === undefined) return;
+            if(path === undefined || createdFile === undefined) return
+            reloadFolder(parentFolder)
             openTab?.({
                 name: createdFile.fileName,
                 path,
                 extension: createdFile.extension ?? "",
                 flow: false,
-                dirty: false
-            });
-            dialog.value.folder = path.substring(0, path.lastIndexOf("/"));
+                dirty: false,
+            })
+            dialog.value.folder = path.substring(0, path.lastIndexOf("/"))
         }
 
         if (shouldReset) {
-            dialog.value = {...DIALOG_DEFAULTS};
+            dialog.value = {...DIALOG_DEFAULTS}
         }
     }
 
@@ -849,71 +1005,83 @@
         confirmation.value = {
             visible: true,
             nodes: Array.isArray(nodes) ? nodes : [nodes],
-        };
+        }
     }
 
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY);
-
     async function removeItems() {
-        if(confirmation.value.nodes === undefined) return;
+        if(confirmation.value.nodes === undefined) return
         await Promise.all(confirmation.value.nodes.map(async (node) => {
-            const path = filesStore.getPath(node.id) ?? "";
+            const path = filesStore.getPath(node.id) ?? ""
             try {
                 await namespacesStore.deleteFileDirectory({
                     namespace: props.currentNS ?? route.params.namespace as string,
                     path,
-                });
-                tree.value.remove(node.id);
+                })
+                tree.value.remove(node.id)
                 closeTab?.({
                     path,
-                });
+                })
             } catch (error) {
-                console.error(`Failed to delete file: ${node.fileName}`, error);
-                toast.error(`Failed to delete file: ${node.fileName}`);
+                console.error(`Failed to delete file: ${node.fileName}`, error)
+                toast.error(`Failed to delete file: ${node.fileName}`)
             }
-        }));
-        confirmation.value = {visible: false, nodes: []};
-        toast.success("Selected files deleted successfully.");
+        }))
+        confirmation.value = {visible: false, nodes: []}
+        toast.success("Selected files deleted successfully.")
     }
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {
-        const parentPath = dialog.value.folder || "";
-        filesStore.addFolder({
-            fileName: dialog.value.name ?? "unknown",
+        const parentPath = dialog.value.folder || ""
+        const payload = {
+            fileName: dialog.value.name?.trim() ?? "unknown",
             parentPath,
             ...folder,
-        }, creation)
-        dialog.value = {...DIALOG_DEFAULTS};
+        }
+        dialog.value = {...DIALOG_DEFAULTS}
+        await filesStore.addFolder(payload, creation)
+        reloadFolder(parentPath)
+    }
+
+    /** Re-fetches an already loaded folder, since the tree only diffs its own root level and would otherwise stay stale until a refresh. */
+    function reloadFolder(path?: string) {
+        const node = path ? tree.value?.getNode(filesStore.findNodeByPath(path)?.id) : undefined
+        if (!node?.loaded) {
+            return
+        }
+        node.loaded = false
+        node.expand()
     }
 
     async function showRevisionsHistory(data: TreeNode) {
-        revisionsHistory.value.path = filesStore.getPath(data.id) ?? "";
+        revisionsHistory.value.path = filesStore.getPath(data.id) ?? ""
         revisionsHistory.value.revisions = (await namespacesStore.fileRevisions({
             namespace: namespaceId.value,
-            path: revisionsHistory.value.path
-        }));
-        revisionsHistory.value.visible = true;
+            path: revisionsHistory.value.path,
+        }))
+        revisionsHistory.value.visible = true
     }
 
     function copyPath(name: TreeNode) {
-        const path = filesStore.getPath(name.id) ?? "";
+        const path = filesStore.getPath(name.id) ?? ""
         try {
-            Utils.copy(path);
-            toast.success(t("namespace files.path.success"));
+            Utils.copy(path)
+            toast.success(t("namespace files.path.success"))
         } catch {
-            toast.error(t("namespace files.path.error"));
+            toast.error(t("namespace files.path.error"))
         }
     }
 
-    async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const {content} = await namespacesStore.readFile({
-            path: filesStore.getPath(node.id) ?? "",
-            namespace: namespaceId.value,
-        });
-        if(!content?.length)
-            throw new Error("File is empty or undefined");
-        const blob = new Blob([content], {type: "text/plain"});
-        Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
+    function exportFile(file: TreeNode) {
+        // `getPath` resolves the tree's own uid; it used to be handed Element Plus's numeric
+        // internal node id, which never matched, so the request asked for the namespace root
+        // and silently downloaded nothing.
+        const path = filesStore.getPath(file.id)
+        if (!path) {
+            toast.error(t("namespace files.export_error", {name: file.fileName}))
+            return
+        }
+
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=/${safePath(path)}`, file.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {
@@ -921,33 +1089,35 @@
             visible: true,
             x: event.clientX,
             y: event.clientY,
-        };
-        document.addEventListener("click", hideTabContextMenu);
+        }
+        document.addEventListener("click", hideTabContextMenu)
     }
 
     function hideTabContextMenu() {
-        tabContextMenu.value.visible = false;
-        document.removeEventListener("click", hideTabContextMenu);
+        tabContextMenu.value.visible = false
+        document.removeEventListener("click", hideTabContextMenu)
     }
 
 </script>
 
 <style scoped lang="scss">
 
+.revision-history-dialog-body {
+    // We subtract the dialog margins and title height (78px)
+    height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
+}
+
 .sidebar {
-    background: var(--ks-background-panel);
-    border-right: 1px solid var(--ks-border-primary);
+    background: var(--ks-bg-surface);
+    border-right: 1px solid var(--ks-border-default);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
 
-    :deep(.revision-history-dialog-body) {
-        // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
-    }
-
     .filter{
-        .kel-input__wrapper {
+        :deep(.kel-select__wrapper) {
+            min-height: 32px;
+            height: 32px;
             padding-right: 0px;
         }
     }
@@ -956,7 +1126,7 @@
         position: relative;
         top: 100px;
         text-align: center;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
 
         & img {
             margin-bottom: 2rem;
@@ -966,7 +1136,7 @@
             font-size: var(--ks-font-size-lg);
             font-weight: 500;
             margin-bottom: 0.5rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         & p {
@@ -995,23 +1165,23 @@
         font-size: var(--ks-font-size-sm);
 
         &:hover {
-            color: var(--ks-content-link-hover);
+            color: var(--ks-text-link);
         }
     }
 
     ul.tabs-context {
         position: fixed;
         z-index: 9999;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
 
         & li {
             height: 30px;
             padding: 16px;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
 
             &:hover {
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
             }
         }
     }
@@ -1019,7 +1189,7 @@
     :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
-        background: var(--ks-background-panel);
+        background: var(--ks-bg-surface);
 
         .kel-tree__empty-block {
             height: auto;
@@ -1042,7 +1212,7 @@
 
             &:hover{
                 background: none;
-                border: 1px solid var(--ks-border-active);
+                border: 1px solid var(--ks-border-focus);
             }
         }
 
@@ -1050,24 +1220,24 @@
             .kel-tree-node__children {
                 margin-left: 11px !important;
                 padding-left: 0 !important;
-                border-left: 1px solid var(--ks-border-primary);
+                border-left: 1px solid var(--ks-border-default);
             }
         }
 
         .kel-tree-node.is-current > .kel-tree-node__content {
             min-width: fit-content;
-            border: 1px solid var(--ks-border-active);
-            background: var(--ks-button-background-primary);
+            border: 1px solid var(--ks-border-focus);
+            background: var(--ks-btn-primary-bg-default);
 
             .filename {
-                color: var(--ks-button-content-primary);
+                color: var(--ks-btn-primary-text);
             }
         }
         .kel-tree-node.selected-tree-node > .kel-tree-node__content {
-            background-color: var(--ks-button-background-primary);
+            background-color: var(--ks-btn-primary-bg-default);
             min-width: fit-content;
             .filename {
-                color: var(--ks-button-content-primary);
+                color: var(--ks-btn-primary-text);
             }
         }
     }

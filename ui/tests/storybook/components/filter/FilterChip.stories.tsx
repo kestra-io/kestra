@@ -1,17 +1,17 @@
 import {ref} from "vue";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import FilterChip from "@kestra-io/design-system/src/components/Data/KsDataTable/filter/layout/FilterChip.vue";
-import {useValues} from "../../../../src/components/filter/composables/useValues";
 import type {AppliedFilter, FilterKeyConfig, FilterValue} from "@kestra-io/design-system";
+import {KsFilterChip} from "@kestra-io/design-system";
+import {useValues} from "../../../../src/components/filter/composables/useValues";
 import {Comparators} from "@kestra-io/design-system";
 
 interface StoryFilter extends AppliedFilter {
     filterKey: FilterKeyConfig;
 }
 
-const meta: Meta<typeof FilterChip> = {
+const meta: Meta<typeof KsFilterChip> = {
     title: "Components/Filter/FilterChip",
-    component: FilterChip,
+    component: KsFilterChip,
     parameters: {
         layout: "padded",
     },
@@ -19,7 +19,7 @@ const meta: Meta<typeof FilterChip> = {
 
 export default meta;
 
-type Story = StoryObj<typeof FilterChip>;
+type Story = StoryObj<typeof KsFilterChip>;
 
 const mockFilterKeys = {
     text: {
@@ -185,7 +185,7 @@ export const AllLayout: Story = {
                     </h3>
                     <div>
                         {filters.value.map((filter, index) => (
-                            <FilterChip
+                            <KsFilterChip
                                 key={filter.id}
                                 filter={filter}
                                 filterKey={filter.filterKey}

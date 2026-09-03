@@ -1,113 +1,198 @@
 <template>
-    <span v-if="props.labels.length" class="d-flex gap-1 labels-container">
+    <span v-if="props.labels.length" class="d-flex gap-1 labels-container" :class="{wrap}">
         <KsCheckTag
-            v-for="(label, index) in props.labels"
+            v-for="(label, index) in visibleLabels"
             :key="index"
             :disabled="readOnly"
             :checked="isChecked(label)"
             @change="updateLabel(label)"
-            class="me-0 el-tag label"
+            class="me-0 label"
+            data-test="label"
         >
-            <template v-if="!label.key">{{ label.value }}</template>
-            <template v-else>{{ label.key }}:{{ label.value }}</template>
+            <span class="label-text" :title="wrap ? undefined : text(label)">{{ text(label) }}</span>
         </KsCheckTag>
+        <KsPopover
+            v-if="hiddenLabels.length"
+            trigger="click"
+            placement="top"
+            :width="360"
+        >
+            <Labels
+                :labels="hiddenLabels"
+                :readOnly="readOnly"
+                :filterType="filterType"
+                wrap
+                class="labels-popover"
+                data-test="labels-overflow-content"
+            />
+            <template #reference>
+                <button
+                    type="button"
+                    class="label-more"
+                    :aria-label="$t('show more labels', {count: hiddenLabels.length})"
+                    data-test="labels-overflow"
+                >
+                    +{{ hiddenLabels.length }}
+                </button>
+            </template>
+        </KsPopover>
     </span>
 </template>
 
 <script setup lang="ts">
-    import {watch} from "vue";
+    import {computed, watch} from "vue"
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
+    import {useRouter, useRoute} from "vue-router"
+    const router = useRouter()
+    const route = useRoute()
 
     interface Label {
         key?: string;
         value: string;
+        display?: string;
     }
 
     const props = withDefaults(
         defineProps<{
             labels?: Label[];
             readOnly?: boolean;
-            filterType?: "labels" | "metadata" | "type";
+            filterType?: "labels" | "metadata" | "type" | "details";
+            wrap?: boolean;
+            max?: number;
         }>(),
         {
             labels: () => [],
             readOnly: false,
             filterType: "labels",
+            wrap: false,
+            max: 0,
         },
-    );
+    )
 
-    import {decodeSearchParams} from "@kestra-io/design-system";
-    let query: any[] = [];
+    // Collapsing a single extra label costs more room than showing it, so `max` is a soft cap:
+    // the popover only appears once it hides at least two.
+    const overflows = computed(() => props.max > 0 && props.labels.length > props.max + 1)
+    const visibleLabels = computed(() => (overflows.value ? props.labels.slice(0, props.max) : props.labels))
+    const hiddenLabels = computed(() => (overflows.value ? props.labels.slice(props.max) : []))
+
+    const text = (label: Label) => {
+        const value = label.display ?? label.value
+        return label.key ? `${label.key}:${value}` : value
+    }
+
+    import {decodeSearchParams} from "@kestra-io/design-system"
+    let query: any[] = []
     watch(
         () => route.query,
         (q) => (query = decodeSearchParams(q)),
         {immediate: true},
-    );
+    )
 
     const isChecked = (label: Label) => {
         return query.some((l) => {
             if (props.filterType === "type") {
-                return l.field === props.filterType && l.operation === "EQUALS" && typeof l.value === "string" && l.value === label.value;
+                return l.field === props.filterType && l.operation === "EQUALS" && typeof l.value === "string" && l.value === label.value
             }
 
-            if (typeof l?.value !== "string") return false;
+            if (typeof l?.value !== "string") return false
 
-            const [key, value] = l.value.split(":");
-            return l.field === props.filterType && l.operation === "EQUALS" && key === label.key && value === label.value;
-        });
-    };
+            const [key, value] = l.value.split(":")
+            return l.field === props.filterType && l.operation === "EQUALS" && key === label.key && value === label.value
+        })
+    }
 
     const updateLabel = (label: Label) => {
         const getKey = (key?: string) => (props.filterType === "type"
             ? `filters[${props.filterType}][EQUALS]`
-            : `filters[${props.filterType}][EQUALS][${key}]`);
+            : `filters[${props.filterType}][EQUALS][${key}]`)
 
         if (isChecked(label)) {
-            const replacementQuery = {...route.query} as Record<string, any>;
-            delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)];
-            replacementQuery.page = "1";
-            router.replace({query: replacementQuery});
+            const replacementQuery = {...route.query} as Record<string, any>
+            delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)]
+            replacementQuery.page = "1"
+            router.replace({query: replacementQuery})
         } else {
-            const newQuery = {...route.query, page: "1"} as Record<string, any>;
+            const newQuery = {...route.query, page: "1"} as Record<string, any>
             if (props.filterType === "type") {
-                newQuery[getKey()] = label.value;
+                newQuery[getKey()] = label.value
             } else {
-                newQuery[getKey(label.key)] = label.value;
+                newQuery[getKey(label.key)] = label.value
             }
-            router.replace({query: newQuery});
+            router.replace({query: newQuery})
         }
-    };
+    }
 </script>
 
 <style scoped lang="scss">
-.label {
-    --ks-tag-background: #ECEBEF;
-    --ks-tag-content: var(--ks-content-primary);
-    --ks-tag-background-active: #414557;
-    --ks-tag-content-active: var(--ks-content-inverse);
+.label.kel-check-tag,
+.label-more {
+    --ks-bg-tag: #7b7b7e45;
+;
+    --ks-bg-tag-active: #414557;
+    --label-text-active: #ffffff;
 
     html.dark & {
-        --ks-tag-background: #5A6079;
-        --ks-tag-background-active: #F2F2F2;
+        --ks-bg-tag: #FFFFFF1A;
+;
+        --ks-bg-tag-active: #F2F2F2;
+        --label-text-active: var(--ks-text-primary);
     }
 
-    background-color: var(--ks-tag-background);
-    font-weight: normal;
-    color: var(--ks-tag-content);
+    background-color: var(--ks-bg-tag);
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-xs);
+    line-height: 1;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-weight: 400;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
 }
 
 .labels-container {
     overflow: hidden;
     flex-wrap: nowrap;
     min-width: 0;
+
+    &.wrap {
+        flex-wrap: wrap;
+        overflow: visible;
+    }
+}
+
+.labels-container:not(.wrap) .label-text {
+    display: inline-block;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+.labels-container:not(.wrap) .label.kel-check-tag {
+    min-width: 0;
+}
+
+.label-more {
+    flex-shrink: 0;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.labels-popover .label.kel-check-tag {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .label.kel-check-tag.is-checked {
-    background-color: var(--ks-tag-background-active);
-    color: var(--ks-tag-content-active);
+    background-color: var(--ks-bg-tag-active);
+    color: var(--ks-black);
+    font-weight: var( --ks-font-weight-medium);
+
+    html.light & {
+        color: var(--label-text-active);
+    }
 }
 </style>

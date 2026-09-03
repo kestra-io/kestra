@@ -15,5 +15,5 @@
         execution: string;
         flowId: string;
         namespace: string;
-    }>();
+    }>()
 </script>

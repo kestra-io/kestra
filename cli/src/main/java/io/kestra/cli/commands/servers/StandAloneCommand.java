@@ -16,19 +16,20 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.services.IgnoreExecutionService;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "standalone",
     description = "Start the standalone all-in-one server"
 )
+@Slf4j
 public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -105,7 +106,7 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.ignoreExecutionService.get().setIgnoredIndexerRecords(ignoreIndexerRecords);
         this.ignoreExecutionService.get().setIgnoredQueueRecords(ignoreQueueRecords);
 
-        KestraContext.getContext().injectWorkerConfigs(workerThread, null);
+        KestraContext.getContext().injectWorkerConfigs(workerThread);
 
         if (tenantId != null) {
             tenantIdSelectorService.get().createTenant(tenantId);
@@ -142,6 +143,8 @@ public class StandAloneCommand extends AbstractServerCommand {
             if (fileWatcher != null) {
                 fileWatcher.startListeningFromConfig();
             }
+
+            embeddedServer.ifPresent(server -> log.info("✅ Kestra is ready! Open the UI at: {}", server.getURL()));
 
             Await.await().forever().until(() -> !this.applicationContext.isRunning());
         }

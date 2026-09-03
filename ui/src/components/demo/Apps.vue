@@ -1,30 +1,39 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    <Layout
-        :title="t(`demos.apps.title`)"
+    <Empty
         type="apps"
-        :image="{source: sourceImg, alt: t(`demos.apps.title`)}"
-        :video="{
-            source: 'https://www.youtube.com/embed/KwBO8mcS3kk',
-        }"
+        demoCta
+        :title="$t(`${keyPrefix}.title`)"
     >
-        <template #message>
-            {{ $t(`demos.apps.message`) }}
+        <template #description>
+            {{ $t(`${keyPrefix}.message`) }}
         </template>
-    </Layout>
+    </Empty>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import Layout from "./Layout.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import sourceImg from "../../assets/demo/apps.png";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import Empty from "../layout/empty/Empty.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const {t} = useI18n();
+    const props = defineProps({
+        blueprints: {
+            type: Boolean,
+            default: false,
+        },
+    })
 
-    const routeInfo = computed(() => ({title: t("demos.apps.title")}));
+    const {t} = useI18n()
 
-    useRouteContext(routeInfo);
+    const keyPrefix = computed(() =>
+        props.blueprints ? "demos.apps.blueprints" : "demos.apps",
+    )
+
+    const routeInfo = computed(() =>
+        ({title: props.blueprints ? t("blueprints.apps") : t("demos.apps.title")}),
+    )
+
+    useRouteContext(routeInfo)
 </script>

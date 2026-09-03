@@ -20,7 +20,7 @@ public interface ServiceLivenessListener {
      * state update has been confirmed (either {@code SUCCEEDED} or recovered via
      * {@code ABORTED}). Not invoked on {@code FAILED} transitions.
      *
-     * @param now      the instant the update happened.
+     * @param now the instant the update happened.
      * @param instance the service instance after the successful update.
      * @param newState the state the instance is in after the update.
      */

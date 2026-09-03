@@ -16,6 +16,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
@@ -72,8 +73,7 @@ public final class ExecutableUtils {
         Map<String, Object> inputs,
         List<Label> labels,
         boolean inheritLabels,
-        Property<ZonedDateTime> scheduleDate,
-        Map<String, Object> outputMap) throws InternalException {
+        Property<ZonedDateTime> scheduleDate) throws InternalException {
 
         // extract a trace context for propagation
         final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).services().tracerFactory()
@@ -106,7 +106,6 @@ public final class ExecutableUtils {
                     }
 
                     if (existingSubflowExecution.isEmpty()) {
-                        // otherwise, we try to find the correct one by searching child executions
                         List<Execution> childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
                             .filter(
                                 e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
@@ -134,10 +133,27 @@ public final class ExecutableUtils {
                         }
                         ExecutionService executionService = ((DefaultRunContext) runContext).services().additionalService(ExecutionService.class);
                         try {
-                            Flow flow = flowMetaStore.findByExecutionThenInjectDefaults(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
-                            Execution restarted = executionService.restart(subflowExecution, flow, null);
+                            Flow flow = flowMetaStore.findByExecutionForRuntime(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
+                            Execution restartedChild = executionService.restart(subflowExecution, flow, null);
+
+                            // In a loop context, the restarted child execution still has trigger variables
+                            // pointing to the old loop execution (from its original creation). Update them
+                            // to the current loop execution so SubflowExecutionEnd routes correctly and
+                            // does not re-process the old (already terminated) loop execution.
+                            if (restartedChild.getTrigger() != null && currentExecution.getLoopRun() != null) {
+                                Map<String, Object> existingVars = restartedChild.getTrigger().getVariables();
+                                Map<String, Object> updatedVars = existingVars != null ? new HashMap<>(existingVars) : new HashMap<>();
+                                updatedVars.put("executionId", currentExecution.getId());
+                                updatedVars.put("taskRunId", currentTaskRun.getId());
+                                restartedChild = restartedChild.withTrigger(
+                                    restartedChild.getTrigger().toBuilder()
+                                        .variables(updatedVars)
+                                        .build()
+                                );
+                            }
 
                             // inject the traceparent into the new execution
+                            final Execution restarted = restartedChild;
                             propagator.ifPresent(pg -> pg.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE));
 
                             return Optional.of(
@@ -158,7 +174,7 @@ public final class ExecutableUtils {
                 String subflowId = runContext.render(currentTask.subflowId().flowId());
                 Optional<Integer> subflowRevision = currentTask.subflowId().revision();
 
-                FlowInterface flow = flowMetaStore.findByIdFromTask(
+                FlowInterface flow = flowMetaStore.findByIdFromTaskForRuntime(
                     currentExecution.getTenantId(),
                     subflowNamespace,
                     subflowId,
@@ -175,13 +191,25 @@ public final class ExecutableUtils {
                     });
 
                 if (flow.isDisabled()) {
-                    String msg = "Cannot execute a flow which is disabled";
+                    String msg = "Cannot execute flow '%s'.'%s': it is disabled.".formatted(subflowNamespace, subflowId);
                     runContext.logger().error(msg);
                     throw new IllegalStateException(msg);
                 }
 
                 if (flow instanceof FlowWithException fwe) {
-                    String msg = "Cannot execute an invalid flow: " + fwe.getException();
+                    // The flow could not be resolved for runtime, either because it is invalid or because
+                    // governance blocks it. Which one it was is in the carried message, so state neither here.
+                    String msg = "Cannot execute flow '%s'.'%s': %s".formatted(subflowNamespace, subflowId, fwe.getException());
+                    runContext.logger().error(msg);
+                    throw new IllegalStateException(msg);
+                }
+
+                int executionDepth = currentExecution.getMetadata().executionDepthOrZero() + 1;
+                int maxDepth = ((DefaultRunContext) runContext).services().additionalService(ExecutionDepthConfiguration.class).maxDepth();
+                if (executionDepth > maxDepth) {
+                    // Backstop against a cross-flow execution cycle that save-time validation cannot see.
+                    String msg = "Cannot execute flow '%s'.'%s': the execution chain exceeded the maximum depth of %d. You can increase this limit via the `kestra.execution.depth.max-depth` configuration property."
+                        .formatted(subflowNamespace, subflowId, maxDepth);
                     runContext.logger().error(msg);
                     throw new IllegalStateException(msg);
                 }
@@ -201,23 +229,29 @@ public final class ExecutableUtils {
                         "taskId", currentTaskRun.getTaskId()
                     )
                 );
-                if (outputMap != null) {
-                    variables.put("taskRunOutputs", outputMap);
-                }
                 if (currentTaskRun.getValue() != null) {
                     variables.put("taskRunValue", currentTaskRun.getValue());
                 }
                 if (currentTaskRun.getIteration() != null) {
                     variables.put("taskRunIteration", currentTaskRun.getIteration());
                 }
+                if (currentExecution.getLoopRun() != null) {
+                    // Store stable loop iteration identifiers so that restarted executions can find this
+                    // subflow even after the loopExecution is recreated with a new ID.
+                    variables.put("loopTaskRunId", currentExecution.getLoopRun().taskRunId());
+                    variables.put("loopIndex", currentExecution.getLoopRun().index());
+                }
 
+                // Subflow executions are independent executions — never LOOP kind
+                // (LOOP is only for virtual loop-iteration executions, not subflow children)
+                ExecutionKind subflowKind = currentExecution.getKind() == ExecutionKind.LOOP ? currentExecution.getLoopRun().parent().getKind() : currentExecution.getKind();
                 Execution execution = Execution
                     .newExecution(
                         flow,
                         (f, e) -> runContext.inputAndOutput().readInputs(f, e, inputs),
                         newLabels,
                         runContext.render(scheduleDate).as(ZonedDateTime.class),
-                        currentExecution.getKind()
+                        subflowKind
                     )
                     .withTrigger(
                         ExecutionTrigger.builder()
@@ -226,6 +260,8 @@ public final class ExecutableUtils {
                             .variables(variables.build())
                             .build()
                     );
+                execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(executionDepth));
+                final Execution executionWithDepth = execution;
 
                 if (execution.getInputs().size() < inputs.size()) {
                     Map<String, Object> resolvedInputs = execution.getInputs();
@@ -243,14 +279,13 @@ public final class ExecutableUtils {
                 }
 
                 // inject the traceparent into the new execution
-                propagator.ifPresent(pg -> pg.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE));
+                propagator.ifPresent(pg -> pg.inject(Context.current(), executionWithDepth, ExecutionTextMapSetter.INSTANCE));
 
                 return Optional.of(
                     SubflowExecution.builder()
                         .parentTask(currentTask)
                         .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
-                        .execution(execution)
-                        .outputs(outputMap)
+                        .execution(executionWithDepth)
                         .build()
                 );
             })
@@ -274,10 +309,10 @@ public final class ExecutableUtils {
     }
 
     public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, FlowInterface flow, Execution execution, ExecutableTask<?> executableTask,
-        TaskRun taskRun, Map<String, Object> outputs) {
+        TaskRun taskRun) {
         try {
             return executableTask
-                .createSubflowExecutionResult(runContext, taskRun, flow, execution, outputs)
+                .createSubflowExecutionResult(runContext, taskRun, flow, execution, null)
                 .orElse(null);
         } catch (Exception e) {
             log.error("Unable to create the Subflow Execution Result", e);
@@ -286,7 +321,6 @@ public final class ExecutableUtils {
                 .executionId(execution.getId())
                 .state(State.Type.FAILED)
                 .parentTaskRun(taskRun.withState(State.Type.FAILED).withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build())))
-                .outputs(outputs)
                 .build();
         }
     }

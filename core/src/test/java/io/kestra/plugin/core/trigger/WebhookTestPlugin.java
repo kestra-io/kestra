@@ -7,7 +7,6 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.http.HttpStatus;
@@ -31,29 +30,30 @@ public class WebhookTestPlugin extends AbstractWebhookTrigger implements Trigger
             throw new Exception("Failed as requested");
         }
 
-        Optional<Execution> maybeExecution = context.webhookService().newExecution(
-            context,
-            context.flow(),
-            this,
-            WebhookTestOutput.builder()
-                .body(JacksonMapper.toMap((String) context.request().getBody().getContent()))
-                .encryptedString(EncryptedString.from("super-secret", context.webhookService().runContext(context.flow(), context.trigger())))
-                .build()
-        );
+        Optional<Execution> maybeExecution;
+        try {
+            maybeExecution = context.webhookService().newExecution(
+                context,
+                context.flow(),
+                this,
+                WebhookTestOutput.builder()
+                    .body(JacksonMapper.toMap((String) context.request().getBody().getContent()))
+                    .encryptedString(EncryptedString.from("super-secret", context.webhookService().runContext(context.flow(), context.trigger())))
+                    .build()
+            );
+        } catch (WebhookInputRenderException e) {
+            return Mono.just(HttpResponse.of(HttpResponse.Status.UNPROCESSABLE_ENTITY));
+        }
 
         if (maybeExecution.isEmpty()) {
-            return Mono.just(HttpResponse.of(HttpResponse.Status.CONFLICT));
+            return Mono.just(HttpResponse.of(HttpResponse.Status.NO_CONTENT));
         }
 
         Execution execution = maybeExecution.get();
 
-        try {
-            context.webhookService().startExecution(execution);
-        } catch (QueueException e) {
-            return Mono.just(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
-        }
-
-        return Mono.just(HttpResponse.of(HttpStatus.OK));
+        return context.webhookService().startExecution(execution)
+            .<HttpResponse<?>> thenReturn(HttpResponse.of(HttpStatus.OK))
+            .onErrorReturn(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
     }
 
     @Builder

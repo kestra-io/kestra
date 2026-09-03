@@ -2,15 +2,14 @@ package io.kestra.jdbc;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sql.DataSource;
 
 import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListener;
+import org.jooq.ExecuteListenerProvider;
 
 import io.kestra.core.metrics.MetricRegistry;
 
@@ -22,18 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Factory
 public class JooqExecuteListenerFactory {
+
     @EachBean(DataSource.class)
-    public org.jooq.ExecuteListenerProvider jooqConfiguration(MetricRegistry metricRegistry) {
-        return new org.jooq.ExecuteListenerProvider() {
+    public ExecuteListenerProvider jooqConfiguration(MetricRegistry metricRegistry, JdbcTableConfigs.MetricConfig metricConfig) {
+        return new ExecuteListenerProvider() {
             @Override
             public @NotNull ExecuteListener provide() {
                 return new ExecuteListener() {
                     private static final AtomicBoolean CONNECTION_CHECKED = new AtomicBoolean(false);
-                    private Long startTime;
+
+                    private long startTime;
 
                     @Override
                     public void executeStart(ExecuteContext ctx) {
-                        startTime = System.currentTimeMillis();
+                        startTime = System.nanoTime();
 
                         // check that isolation level is READ UNCOMMITED, it's the default for Postgres but not for MySQL,
                         // our queue system didn't work correctly otherwise.
@@ -50,21 +51,18 @@ public class JooqExecuteListenerFactory {
 
                     @Override
                     public void executeEnd(ExecuteContext ctx) {
-                        Duration duration = Duration.ofMillis(System.currentTimeMillis() - startTime);
+                        long duration = System.nanoTime() - startTime;
 
-                        List<String> tags = new ArrayList<>();
-                        tags.add("batch");
-                        tags.add(ctx.batchMode().name());
-
-                        // in batch query, the query will be expanded without parameters, and will lead to overflow of metrics
-                        if (ctx.batchMode() != ExecuteContext.BatchMode.MULTIPLE) {
-                            tags.add("sql");
-                            tags.add(ctx.sql());
+                        // Record a timer for the sanitized SQL for queries above the threshold.
+                        // IN-lists collapsed and aliases/sort columns redacted, so the tag stays bounded.
+                        // Exclude batch queries as they will be expanded without parameters.
+                        if (duration > metricConfig.queryDurationThresholdMs() * 1_000_000 && ctx.batchMode() != ExecuteContext.BatchMode.MULTIPLE && ctx.sql() != null) {
+                            String[] tags = { "sql", JdbcSqlSanitizer.sanitize(ctx.sql()) };
+                            metricRegistry.timer(MetricRegistry.METRIC_JDBC_QUERY_DURATION, MetricRegistry.METRIC_JDBC_QUERY_DURATION_DESCRIPTION, tags)
+                                .record(duration, TimeUnit.NANOSECONDS);
                         }
 
-                        metricRegistry.timer(MetricRegistry.METRIC_JDBC_QUERY_DURATION, MetricRegistry.METRIC_JDBC_QUERY_DURATION_DESCRIPTION, tags.toArray(new String[0]))
-                            .record(duration);
-
+                        // logged unsanitized, deliberately: the sanitized tag above loses which column a slow query sorted/filtered by
                         if (log.isTraceEnabled()) {
                             log.trace("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows(), ctx.query());
                         } else if (log.isDebugEnabled()) {

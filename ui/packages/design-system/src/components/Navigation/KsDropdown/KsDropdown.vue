@@ -1,6 +1,8 @@
 <template>
     <ElDropdown
+        ref="dropdown"
         :persistent="false"
+        :popperOptions="POPPER_OPTIONS"
         v-bind="$attrs"
     >
         <template v-if="$slots.default" #default>
@@ -13,24 +15,60 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdown} from "element-plus"
+    import {ref} from "vue"
+    import {ElDropdown, type DropdownInstance} from "element-plus"
 
     defineOptions({inheritAttrs: false})
+
+    const POPPER_OPTIONS = {
+        modifiers: [
+            {name: "flip", options: {rootBoundary: "viewport", padding: 8}},
+            {name: "preventOverflow", options: {rootBoundary: "viewport", padding: 8}},
+        ],
+    }
 
     defineSlots<{
         default?(): unknown
         dropdown?(): unknown
     }>()
+
+    // Forward the underlying ElDropdown open/close controls so callers can dismiss the menu
+    // programmatically — needed when the dropdown holds custom content (not KsDropdownItems,
+    // which auto-close on click).
+    const dropdown = ref<DropdownInstance>()
+    defineExpose({
+        handleOpen: () => dropdown.value?.handleOpen(),
+        handleClose: () => dropdown.value?.handleClose(),
+    })
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/dropdown';
 
+    .kel-dropdown {
+        // Element Plus draws the split-button divider as the border colour at half opacity,
+        // which vanishes against every Kestra button fill; use the strong border token instead
+        .kel-dropdown__caret-button.kel-button::before {
+            background: var(--ks-border-strong);
+            opacity: 1;
+        }
+
+        // a primary button is filled, so use the lighter button-group divide colour instead
+        .kel-dropdown__caret-button.kel-button--primary:not(.is-disabled)::before {
+            background: var(--kel-button-divide-border-color);
+        }
+    }
+
     .kel-dropdown__popper {
-        font-size: var(--ks-font-size-sm);
-        --kel-dropdown-menuItem-hover-fill: var(--ks-dropdown-background-hover);
-        --kel-dropdown-menuItem-hover-color: var(--ks-content-primary);
+        --kel-popper-border-radius: var(--ks-radius-base);
+        --kel-dropdown-menuItem-hover-fill: var(--ks-bg-hover-elevated);
+        --kel-dropdown-menuItem-hover-color: var(--ks-text-primary);
+
+        background: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-strong);
+        box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
+        font-size: var(--ks-font-size-xs);
 
         &.separator-m-0 .kel-dropdown-menu__item--divided {
             margin: 0;
@@ -44,32 +82,45 @@
         }
 
         .kel-dropdown-menu {
-            padding: 0;
-            background-color: var(--ks-dropdown-background);
-            border-radius: 0.5rem;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            padding: var(--ks-spacing-1);
+
+            .kel-dropdown-menu__item + .kel-dropdown-menu__item {
+                margin-top: var(--ks-spacing-1);
+            }
         }
 
-        // no longer require focus to get hover effect on dropdowns
         .kel-dropdown-menu__item {
-            &:first-child {
-                border-top-left-radius: calc(var(--kel-border-radius-base) * 2);
-                border-top-right-radius: calc(var(--kel-border-radius-base) * 2);
-            }
-            &:last-child {
-                border-bottom-left-radius: calc(var(--kel-border-radius-base) * 2);
-                border-bottom-right-radius: calc(var(--kel-border-radius-base) * 2);
-            }
-            &:is(li) {
-                display: flex;
-                gap: .5rem;
+            border-radius: var(--ks-radius-xs);
+            display: flex;
+            gap: var(--ks-spacing-2);
 
-                i {
-                    margin-right: 0;
-                }
+            i {
+                margin-right: 0;
             }
 
-            &:not(.is-disabled):hover {
-                background-color: var(--ks-dropdown-background-hover);
+            &:not(.is-disabled) i {
+                color: var(--ks-icon-muted);
+            }
+
+            &:not(.is-disabled):hover,
+            &:not(.is-disabled):focus {
+                background-color: var(--ks-bg-hover-elevated);
+                outline: none;
+                box-shadow: none;
+            }
+
+            > a,
+            > button {
+                color: inherit;
+                text-decoration: none;
+                background: transparent;
+                border: 0;
+                padding: 0;
+                font: inherit;
+                cursor: pointer;
             }
         }
     }

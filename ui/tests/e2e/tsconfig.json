@@ -1,10 +1,10 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["@playwright/test", "node"],
     "module": "preserve",
     "target": "esnext",
-    "outDir": "dist"
+    "noEmit": true
   },
   "include": ["**/*.ts"]
 }

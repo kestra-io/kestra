@@ -1,39 +1,11 @@
 <template>
-    <KsTooltip
-        v-if="tooltipType === TooltipType.EXTERNAL"
-        trigger="manual"
-        :visible="tooltipVisible"
-        :content="tooltipContent"
-        :rawContent="true"
-        placement="bottom"
-    >
-        <div
-            ref="wrapperRef"
-            v-ks-loading="loading"
-            class="ks-chart-wrapper"
-            v-bind="$attrs"
-            @mouseleave="onMouseleave"
-        >
-            <VChart
-                v-if="canRender"
-                ref="vChartRef"
-                class="ks-chart__inner"
-                :theme="currentTheme"
-                :option="effectiveOption"
-                :initOptions="{renderer: renderer}"
-                autoresize
-                @mouseover="emit('echarts-mouseover', $event)"
-                @mouseout="emit('echarts-mouseout', $event)"
-            />
-        </div>
-    </KsTooltip>
-
     <div
-        v-else
         ref="wrapperRef"
         v-ks-loading="loading"
         class="ks-chart-wrapper"
         v-bind="$attrs"
+        @mousemove="onMousemove"
+        @mouseleave="hide"
     >
         <VChart
             v-if="canRender"
@@ -41,10 +13,26 @@
             class="ks-chart__inner"
             :theme="currentTheme"
             :option="effectiveOption"
-            :initOptions="{renderer: renderer}"
+            :initOptions="initOptions"
             autoresize
-            @mouseover="emit('echarts-mouseover', $event)"
-            @mouseout="emit('echarts-mouseout', $event)"
+            @mouseover="onMouseover"
+            @mouseout="onMouseout"
+            @click="emit('echarts-click', $event)"
+        />
+
+        <KsTooltip
+            v-if="tooltipType === TooltipType.EXTERNAL"
+            trigger="manual"
+            transition="none"
+            :visible="tooltipVisible"
+            :content="tooltipContent"
+            :rawContent="true"
+            :enterable="false"
+            placement="bottom"
+            popperClass="ks-chart-tooltip"
+            :virtualRef="virtualRef"
+            virtualTriggering
+            :popperOptions="tooltipPopperOptions"
         />
     </div>
 </template>
@@ -54,21 +42,14 @@
 
     import {useElementSize} from "@vueuse/core"
     import VChart from "vue-echarts"
-    import {use} from "echarts/core"
-    import type {ECharts} from "echarts/core"
+    import {use, type ECharts} from "echarts/core"
     import {CanvasRenderer, SVGRenderer} from "echarts/renderers"
-    import {
-        GridComponent,
-        TooltipComponent,
-        LegendComponent,
-        DataZoomComponent,
-        GraphicComponent,
-    } from "echarts/components"
+    import {GridComponent, TooltipComponent, LegendComponent, DataZoomComponent, GraphicComponent} from "echarts/components"
 
     import {vKsLoading} from "../Feedback/KsLoading"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
-    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     defineOptions({inheritAttrs: false})
 
@@ -82,6 +63,7 @@
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
+        "echarts-click": [params: unknown]
     }>()
 
     const props = withDefaults(
@@ -92,20 +74,35 @@
             loading?: boolean
             /** Tooltip rendering mode. EXTERNAL uses KsTooltip (ideal for mini/sparkline charts). */
             tooltipType?: TooltipType
+            /** EXTERNAL only: anchor the tooltip below the chart and keep it visible on hover, instead of following the cursor over bars/slices. */
+            stickyTooltip?: boolean
             /** Features to disable (LEGEND, AXIS, AXIS_SPLITLINE, TOOLTIP). */
             disableFeatures?: ChartFeature[]
             /** Raw series data — if not provided as options. */
             data?: KsChartSeriesItem[] | null,
             renderer?: ChartRenderer
+            /** Upper bound for the canvas pixel ratio. Trades a little sharpness on high-DPI screens for a much smaller canvas; leave unset to render at full device resolution. */
+            maxPixelRatio?: number
         }>(),
         {
             loading: false,
             tooltipType: TooltipType.NATIVE,
+            stickyTooltip: false,
             disableFeatures: () => [],
             data: null,
-            renderer: ChartRenderer.CANVAS
+            renderer: ChartRenderer.CANVAS,
+            maxPixelRatio: undefined,
         },
     )
+
+    // A canvas backing store costs width × height × pixelRatio² bytes, so capping the ratio is the cheapest way to keep
+    // a page holding many charts affordable on a high-DPI screen.
+    const initOptions = computed(() => ({
+        renderer: props.renderer,
+        ...(props.maxPixelRatio === undefined
+            ? {}
+            : {devicePixelRatio: Math.min(window.devicePixelRatio || 1, props.maxPixelRatio)}),
+    }))
 
     const isDark = ref(false)
 
@@ -118,10 +115,7 @@
     onMounted(() => {
         detectDark()
         observer = new MutationObserver(detectDark)
-        observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ["class"],
-        })
+        observer.observe(document.documentElement, {attributes: true, attributeFilter: ["class"]})
     })
 
     onUnmounted(() => {
@@ -138,13 +132,11 @@
                 tooltip: {
                     trigger: "axis",
                     ...userTooltip,
-                    // Move the native tooltip offscreen so ECharts still computes
-                    // the axis-pointer snap and calls our formatter, but nothing
-                    // is visible to the user.
+                    confine: false,
                     position: () => [-9999, -9999],
                     formatter: (params: unknown) => {
                         tooltipContent.value = buildContentFromParams(params)
-                        tooltipVisible.value = true
+                        if (props.stickyTooltip) tooltipVisible.value = true
                         return " "
                     },
                 },
@@ -159,7 +151,7 @@
     })
 
     const currentTheme = computed(() => {
-        void isDark.value // reactive dependency — triggers rebuild on theme change
+        void isDark.value
         return KsTheme()
     })
 
@@ -167,13 +159,21 @@
     const wrapperRef = ref<HTMLElement | null>(null)
     const tooltipVisible = ref(false)
     const tooltipContent = ref("")
+    const cursor = ref({x: 0, y: 0})
 
-    // Defer mounting VChart until the wrapper has real dimensions. ECharts
-    // emits "Can't get DOM width or height" if it initializes inside a 0×0
-    // container — common when the chart is revealed by a v-if/v-else flip
-    // (e.g. after async data load) and the parent layout (splitter, flex)
-    // has not resolved yet. One-way latch so a later collapse-to-zero
-    // (splitter dragged shut) does not unmount the chart.
+    const virtualRef = computed(() => ({
+        getBoundingClientRect: () => props.stickyTooltip && wrapperRef.value
+            ? wrapperRef.value.getBoundingClientRect()
+            : new DOMRect(cursor.value.x, cursor.value.y, 0, 0),
+    }))
+
+    const tooltipPopperOptions = {
+        modifiers: [
+            {name: "flip", options: {rootBoundary: "viewport", padding: 8}},
+            {name: "preventOverflow", options: {rootBoundary: "viewport", padding: 8}},
+        ],
+    }
+
     const {width, height} = useElementSize(wrapperRef)
     const canRender = ref(false)
     let stopSizeWatch: (() => void) | null = null
@@ -186,20 +186,28 @@
 
     interface EChartsTooltipParam {
         seriesName?: string
+        seriesType?: string
+        seriesIndex?: number
         name?: string
         value?: unknown
         color?: string
-        /** Pre-built colored-dot HTML provided by ECharts. */
         marker?: string
         /** Present only for pie/donut chart items. */
         percent?: number
     }
 
-    /**
-     * Build tooltip HTML from the params ECharts passes to tooltip.formatter.
-     * This reuses ECharts' own axis-snapping logic and the pre-computed marker
-     * HTML, so no manual data indexing or color look-up is needed.
-     */
+    /** Resolves the standard ECharts per-series `tooltip.valueFormatter` option, honored by the external tooltip. */
+    function seriesValueFormatter(seriesIndex?: number): ((value: unknown) => string) | undefined {
+        if (seriesIndex === undefined) return undefined
+        const series = props.options.series
+        const tooltip = (Array.isArray(series) ? series[seriesIndex] : undefined)?.tooltip as Record<string, unknown> | undefined
+        return typeof tooltip?.valueFormatter === "function" ? tooltip.valueFormatter as (value: unknown) => string : undefined
+    }
+
+    function toCapitalCase(text: string): string {
+        return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    }
+
     function buildContentFromParams(params: unknown): string {
         const list: EChartsTooltipParam[] = Array.isArray(params) ? params : [params as EChartsTooltipParam]
         if (!list.length) return ""
@@ -210,27 +218,64 @@
         const category = list[0]?.name ?? ""
 
         if (category) {
-            rows.push(`<div style="margin-bottom:4px;font-weight:600">${category}</div>`)
+            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? toCapitalCase(category) : category}</div>`)
         }
 
         for (const p of list) {
-            const marker = p.marker ?? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color ?? "currentColor"};margin-right:6px;vertical-align:middle;flex-shrink:0"></span>`
-            const value = Array.isArray(p.value) ? p.value[1] ?? "—" : (p.value ?? "—")
-            // For pie charts, seriesName is generic ("series0"); the meaningful label is
-            // already shown in the header, so we only append the percentage.
-            const label = isPie ? "" : (p.seriesName ?? "")
+            const rawValue = Array.isArray(p.value) ? p.value[1] : p.value
+            if (rawValue === 0 || rawValue === undefined || rawValue === null) {
+                continue
+            }
+            const valueFormatter = seriesValueFormatter(p.seriesIndex)
+            const value = valueFormatter ? valueFormatter(rawValue) : rawValue
+            const swatch = p.seriesType === "line"
+                ? `<span style="display:inline-block;width:10px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
+                : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
+            const label = isPie ? "" : toCapitalCase(p.seriesName ?? "")
             const suffix = isPie ? ` (${p.percent}%)` : ""
             rows.push(
-                `<div style="display:flex;align-items:center;line-height:20px">${marker}<span style="flex:1">${label}</span><span style="margin-left:12px;font-weight:600">${value}${suffix}</span></div>`,
+                `<div style="display:flex;align-items:center;gap:6px;line-height:18px;white-space:nowrap">${swatch}<span style="flex:1">${label}</span><span style="margin-left:12px">${value}${suffix}</span></div>`,
             )
         }
 
-        return rows.join("")
+        return `<div style="font-size:var(--ks-font-size-2xs);color:var(--ks-text-secondary);font-variant-numeric:tabular-nums">${rows.join("")}</div>`
     }
 
-    function onMouseleave() {
+    function onMousemove(event: MouseEvent) {
+        cursor.value = {x: event.clientX, y: event.clientY}
+    }
+
+    function hide() {
         tooltipVisible.value = false
     }
+
+    function onMouseover(params: unknown) {
+        if (!props.stickyTooltip) tooltipVisible.value = true
+        emit("echarts-mouseover", params)
+    }
+
+    function onMouseout(params: unknown) {
+        if (!props.stickyTooltip) hide()
+        emit("echarts-mouseout", params)
+    }
+
+    function onZrMousemove(event: {target?: unknown}) {
+        if (!event.target) hide()
+    }
+
+    let boundZr: ReturnType<ECharts["getZr"]> | null = null
+
+    function bindZr(chart?: ECharts) {
+        boundZr?.off("mousemove", onZrMousemove)
+        boundZr?.off("globalout", hide)
+        boundZr = chart && props.tooltipType === TooltipType.EXTERNAL ? chart.getZr() : null
+        if (!props.stickyTooltip) boundZr?.on("mousemove", onZrMousemove)
+        boundZr?.on("globalout", hide)
+    }
+
+    watch(() => vChartRef.value?.chart as ECharts | undefined, (chart) => bindZr(chart), {immediate: true})
+
+    onUnmounted(() => bindZr())
 
     defineExpose({
         getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as ECharts) ?? null,
@@ -258,5 +303,11 @@
     .ks-chart__inner {
         width: 100%;
         height: 100%;
+    }
+
+    :global(.ks-chart-tooltip) {
+        max-width: min(20rem, 90vw);
+        overflow-wrap: anywhere;
+        pointer-events: none;
     }
 </style>

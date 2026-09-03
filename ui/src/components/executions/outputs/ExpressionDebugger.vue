@@ -1,0 +1,179 @@
+<template>
+    <div class="expression-debugger">
+        <h2>{{ $t("eval.expression") }}</h2>
+        <KsEditor
+            v-bind="editorBindings"
+            v-model="editorValue"
+            :navbar="false"
+            :inline="true"
+            :options="{fullHeight: false, customHeight: 5}"
+            lang="yaml-pebble"
+            class="input"
+            @confirm="onDebug"
+        />
+
+        <KsButton type="primary" class="button" @click="onDebug">
+            {{ $t("eval.title") }}
+        </KsButton>
+
+        <KsAlert
+            v-if="error"
+            type="error"
+            :closable="false"
+            class="error overflow-auto"
+        >
+            <p>
+                <strong>{{ error }}</strong>
+            </p>
+        </KsAlert>
+
+        <template v-else-if="result !== undefined || fileResult !== undefined">
+            <div class="result-section">
+                <span class="result-label">{{ $t("eval.preview") }}</span>
+                <VarValue
+                    v-if="execution && fileResult"
+                    :value="fileResult"
+                    :execution="execution"
+                />
+                <KsEditor
+                    v-else
+                    v-bind="editorBindings"
+                    :readOnly="true"
+                    :inline="true"
+                    :navbar="false"
+                    :options="{showScroll: true, fullHeight: false, customHeight: 8}"
+                    :modelValue="result"
+                    :lang="resultLang"
+                    class="result"
+                />
+            </div>
+        </template>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue"
+
+    import {KsEditor, KsButton, KsAlert} from "@kestra-io/design-system"
+    import {evalExpression} from "@kestra-io/kestra-sdk/executions"
+
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import * as Utils from "../../../utils/utils"
+    import type {Execution} from "../../../stores/executions"
+
+    import VarValue from "../VarValue.vue"
+
+    const props = defineProps<{
+        execution?: Execution;
+        /** Suggested expression to seed the editor with (e.g. `{{ vars.x }}`). */
+        expression?: string;
+        /** File URI of the selected value, previewed without waiting for an evaluation. */
+        fileUri?: string;
+    }>()
+
+    const editorBindings = useEditorBindings()
+
+    const editorValue = ref(props.expression ?? "")
+
+    // Re-seed the editor whenever the parent suggests a new expression
+    // (e.g. when the user selects a different variable).
+    watch(
+        () => props.expression,
+        (value) => {
+            editorValue.value = value ?? ""
+            clear()
+        },
+    )
+
+    const result = ref<string | undefined>(undefined)
+    const resultLang = ref<"json" | "">("")
+    const error = ref<string | undefined>(undefined)
+
+    const fileResult = computed(() => {
+        if (result.value !== undefined) {
+            return Utils.isFile(result.value) ? result.value : undefined
+        }
+        return props.execution ? props.fileUri : undefined
+    })
+
+    function clear() {
+        result.value = undefined
+        error.value = undefined
+    }
+
+    async function onDebug() {
+        const executionId = props.execution?.id
+        if (!executionId || !editorValue.value) return
+
+        clear()
+
+        try {
+            const response = await evalExpression({executionId, body: editorValue.value})
+
+            if (response.error) {
+                error.value = response.error
+                return
+            }
+
+            try {
+                result.value = JSON.stringify(JSON.parse(response.result ?? ""), null, 2)
+                resultLang.value = "json"
+            } catch {
+                result.value = response.result ?? ""
+                resultLang.value = ""
+            }
+        } catch (err) {
+            error.value = (err as Error).message ?? "Failed to evaluate expression"
+        }
+    }
+</script>
+
+<style scoped lang="scss">
+.expression-debugger {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-3);
+
+    .input {
+        min-height: 7rem;
+        border-radius: 8px;
+        border: 1px solid var(--ks-border-default);
+    }
+
+    .button {
+        align-self: stretch;
+    }
+
+    .error {
+        overflow: auto;
+    }
+
+    h2 {
+        margin: 0;
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+    }
+
+    .result-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        border-top: 1px solid var(--ks-border-default);
+        padding-top: var(--ks-spacing-3);
+    }
+
+    .result-label {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .result {
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-spacing-2);
+        background: var(--ks-bg-base);
+    }
+}
+</style>

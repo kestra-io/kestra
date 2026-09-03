@@ -199,7 +199,7 @@ public abstract class WorkerLoop implements Runnable {
 
     /**
      * Stops the WorkerLoop.
-     * 
+     *
      * <p>
      * If the loop is not running, this method returns immediately without any action.
      * If the loop does not complete within the timeout, a warning is logged, but the method returns normally.
@@ -241,5 +241,9 @@ public abstract class WorkerLoop implements Runnable {
 
     public boolean isRunning() {
         return running.get();
+    }
+
+    public boolean isPaused() {
+        return paused.get();
     }
 }

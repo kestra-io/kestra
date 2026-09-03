@@ -8,7 +8,6 @@
     >
         <KsButton
             v-bind="buttonAttrs"
-            class="ks-icon-button"
             :disabled="disabled"
             :aria-label="ariaLabel || tooltip"
             :tag="buttonTag"
@@ -22,7 +21,6 @@
     <KsButton
         v-else
         v-bind="buttonAttrs"
-        class="ks-icon-button"
         :disabled="disabled"
         :aria-label="ariaLabel"
         :tag="buttonTag"
@@ -48,6 +46,7 @@
         disabled?: boolean
         to?: string | Record<string, unknown>
         replace?: boolean
+        filled?: boolean
     }>(), {
         tooltip: "",
         placement: "left",
@@ -55,6 +54,7 @@
         disabled: false,
         to: undefined,
         replace: false,
+        filled: false,
     })
 
     defineSlots<{
@@ -64,7 +64,7 @@
     const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
-        class: [attrs.class],
+        class: ["ks-icon-button", {"ks-icon-button--filled": props.filled}, attrs.class],
     }))
 
     const buttonTag = computed(() => (props.to ? "router-link" : undefined))
@@ -73,7 +73,7 @@
 
 <style scoped lang="scss">
     .ks-icon-button {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         width: 24px;
         height: 24px;
         min-width: 24px;
@@ -82,21 +82,24 @@
         display: inline-flex;
         justify-content: center;
         align-items: center;
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
         padding: 0;
         cursor: pointer;
 
-        &:hover {
-            color: var(--ks-content-primary);
-            background-color: var(--ks-tag-background);
+        :deep(.material-design-icon),
+        :deep(.material-design-icon > .material-design-icon__svg) {
+            width: var(--ks-icon-size-sm);
+            height: var(--ks-icon-size-sm);
         }
+    }
 
-        :deep(.material-design-icon__svg) {
-            width: 16px;
-            height: 16px;
-            transform: translateY(1px) translateX(-0.5px);
+    .ks-icon-button:not(.ks-icon-button--filled) {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+
+        &:hover {
+            color: var(--ks-text-primary);
+            background-color: var(--ks-bg-tag);
         }
     }
 </style>

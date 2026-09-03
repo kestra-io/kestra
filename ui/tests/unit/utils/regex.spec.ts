@@ -1,78 +1,95 @@
 import {describe, expect, it} from "vitest"
-import RegexProvider from "../../../src/utils/regex";
+import RegexProvider from "../../../src/utils/regex"
 
 describe("Regex", () => {
     it("before separator", () => {
-        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a b")?.[1]).eq("a");
-        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a}b")?.[1]).eq("a");
-        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a:b")?.[1]).eq("a");
-        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a\nb")?.[1]).eq("a");
-        expect(new RegExp(RegexProvider.beforeSeparator()).exec("ab c")?.[1]).eq("ab");
-    });
+        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a b")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a}b")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a:b")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.beforeSeparator()).exec("a\nb")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.beforeSeparator()).exec("ab c")?.[1]).eq("ab")
+    })
 
     it("capture pebble var root", () => {
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a")?.[1]).eq("a");
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a.b")).toBeNull();
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot).exec("{{a.b")).toBeNull();
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{.a")).toBeNull();
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a}b")).toBeNull();
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{}a")).toBeNull();
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("a:{{b")?.[1]).eq("b");
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a:b")).toBeNull();
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{:a")).toBeNull();
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a~b")?.[1]).eq("b");
-        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{~a")?.[1]).eq("a");
-    });
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a.b")).toBeNull()
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot).exec("{{a.b")).toBeNull()
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{.a")).toBeNull()
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a}b")).toBeNull()
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{}a")).toBeNull()
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("a:{{b")?.[1]).eq("b")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a:b")).toBeNull()
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{:a")).toBeNull()
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a~b")?.[1]).eq("b")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{~a")?.[1]).eq("a")
+    })
 
     it("capture pebble var parent", () => {
-        let nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{{a.b");
-        expect(nestedFieldMatcher?.[1]).eq("a");
-        expect(nestedFieldMatcher?.[2]).eq("b");
+        let nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{{a.b")
+        expect(nestedFieldMatcher?.[1]).eq("a")
+        expect(nestedFieldMatcher?.[2]).eq("b")
 
-        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("a.b");
-        expect(nestedFieldMatcher).toBeNull();
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("a.b")
+        expect(nestedFieldMatcher).toBeNull()
 
-        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{{a ~ b.c");
-        expect(nestedFieldMatcher?.[1]).eq("b");
-        expect(nestedFieldMatcher?.[2]).eq("c");
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{{a ~ b.c")
+        expect(nestedFieldMatcher?.[1]).eq("b")
+        expect(nestedFieldMatcher?.[2]).eq("c")
     })
 
     it("capture pebble function", () => {
-        let functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(", "myFunc", undefined, undefined]);
+        let functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(", "myFunc", undefined, undefined])
 
         // Missing param value, no match
-        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(myK") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(myK", "myFunc", undefined, "myK"]);
+        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(myK") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(myK", "myFunc", undefined, "myK"])
 
-        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1'") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1'", "myFunc", "my-param_1='value1'", undefined]);
+        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1'") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1'", "myFunc", "my-param_1='value1'", undefined])
 
-        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1=myVar,") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1=myVar,", "myFunc", "my-param_1=myVar,", undefined]);
+        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1=myVar,") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1=myVar,", "myFunc", "my-param_1=myVar,", undefined])
 
-        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1',") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1',", "myFunc", "my-param_1='value1',", undefined]);
+        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1',") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1',", "myFunc", "my-param_1='value1',", undefined])
 
-        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1' , my-param_2=\"value2\",") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1' , my-param_2=\"value2\",", "myFunc", "my-param_1='value1' , my-param_2=\"value2\",", undefined]);
+        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1' , my-param_2=\"value2\",") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1' , my-param_2=\"value2\",", "myFunc", "my-param_1='value1' , my-param_2=\"value2\",", undefined])
 
-        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1', myK") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1', myK", "myFunc", "my-param_1='value1', ", "myK"]);
+        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1', myK") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1', myK", "myFunc", "my-param_1='value1', ", "myK"])
 
-        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1')}} {{mySecondFunc(second-func-param_1='secondFuncValue1', 'to") ?? [];
-        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1')}} {{mySecondFunc(second-func-param_1='secondFuncValue1', 'to", "mySecondFunc", "second-func-param_1='secondFuncValue1', ", "'to"]);
+        functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1')}} {{mySecondFunc(second-func-param_1='secondFuncValue1', 'to") ?? []
+        expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1')}} {{mySecondFunc(second-func-param_1='secondFuncValue1', 'to", "mySecondFunc", "second-func-param_1='secondFuncValue1', ", "'to"])
+    })
+
+    it("does not catastrophically backtrack on long concatenation chains", () => {
+        const chain = Array(30).fill("\"dfasdf\"").join(" ~ ")
+        const patterns = [RegexProvider.capturePebbleVarRoot, RegexProvider.capturePebbleVarParent, RegexProvider.capturePebbleFunction]
+        const start = performance.now()
+        for (const pattern of patterns) {
+            new RegExp(pattern + "$").exec(`{{ ${chain} ~ na`)
+            new RegExp(pattern + "$").exec(`{{ ${chain} }}`)
+            new RegExp(pattern + "$").exec(`{{ fn(x=${chain}, y`)
+        }
+        expect(performance.now() - start).toBeLessThan(500)
+
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec(`{{ ${chain} ~ na`)?.[1]).eq("na")
+        const nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec(`{{ ${chain} ~ inputs.foo`)
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("foo")
     })
 
     it("capture string value", () => {
-        let stringMatcher: RegExpExecArray | [] | null = new RegExp(RegexProvider.captureStringValue).exec("'a'") ?? [];
-        expect([...stringMatcher]).toEqual(["'a'", "a"]);
+        let stringMatcher: RegExpExecArray | [] | null = new RegExp(RegexProvider.captureStringValue).exec("'a'") ?? []
+        expect([...stringMatcher]).toEqual(["'a'", "a"])
 
-        stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("\"a\"") ?? [];
-        expect([...stringMatcher]).toEqual(["\"a\"", "a"]);
+        stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("\"a\"") ?? []
+        expect([...stringMatcher]).toEqual(["\"a\"", "a"])
 
-        stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("a");
-        expect(stringMatcher).toBeNull();
+        stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("a")
+        expect(stringMatcher).toBeNull()
     })
 
     it("multiline function, avoid crashing", () => {
@@ -91,8 +108,8 @@ tasks:
           "\\")) | (.key + \\"->\\" + .value)"
         }}
 `
-        const regex = new RegExp(RegexProvider.capturePebbleFunction + "$");
-        expect(regex.exec(complexMultilineFunctionButClosedPebbleExpression)).eq(null);
+        const regex = new RegExp(RegexProvider.capturePebbleFunction + "$")
+        expect(regex.exec(complexMultilineFunctionButClosedPebbleExpression)).eq(null)
 
         const shouldMatchLastFunction = `id: breaking-ui
 namespace: io.kestra.blx
@@ -117,6 +134,6 @@ tasks:
             "myFunc",
         "my-param_1='value1', my-param_2=\"value2\", ",
             "myK",
-        ]);
+        ])
     })
 })

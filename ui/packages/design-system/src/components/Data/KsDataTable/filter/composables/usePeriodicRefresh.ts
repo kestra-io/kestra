@@ -1,41 +1,41 @@
-import {ref, computed, onUnmounted, watch} from "vue";
-import {useRoute} from "vue-router";
+import {ref, computed, onUnmounted, watch} from "vue"
+import {useRoute} from "vue-router"
 
-const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${routeName}`;
+const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${routeName}`
 
-export {getAutoRefreshEnabledKey};
+export {getAutoRefreshEnabledKey}
 
 export function usePeriodicRefresh() {
-    const route = useRoute();
-    const enabledRef = ref(false);
-    const refreshInterval = ref<number | null>(null);
+    const route = useRoute()
+    const enabledRef = ref(false)
+    const refreshInterval = ref<number | null>(null)
 
-    const enabledKey = computed(() => getAutoRefreshEnabledKey(String(route.name)));
-    const tooltip = computed(() => `Auto refresh every ${intervalSeconds.value} seconds`);
-    const intervalSeconds = computed(() => parseInt(localStorage.getItem("autoRefreshInterval") ?? "10"));
+    const enabledKey = computed(() => getAutoRefreshEnabledKey(String(route.name)))
+    const tooltip = computed(() => `Auto refresh every ${intervalSeconds.value} seconds`)
+    const intervalSeconds = computed(() => parseInt(localStorage.getItem("autoRefreshInterval") ?? "10"))
 
     watch(enabledKey, () => {
-        enabledRef.value = localStorage.getItem(enabledKey.value) === "true";
-    }, {immediate: true});
+        enabledRef.value = localStorage.getItem(enabledKey.value) === "true"
+    }, {immediate: true})
 
     const isEnabled = computed({
         get: () => enabledRef.value,
         set: (value: boolean) => {
-            enabledRef.value = value;
-            localStorage.setItem(enabledKey.value, String(value));
-        }
-    });
+            enabledRef.value = value
+            localStorage.setItem(enabledKey.value, String(value))
+        },
+    })
 
     const toggleRefresh = (enabled: boolean, callback: () => void) => {
-        if (refreshInterval.value) clearInterval(refreshInterval.value);
-        refreshInterval.value = enabled ? window.setInterval(callback, intervalSeconds.value * 1000) : null;
-    };
+        if (refreshInterval.value) clearInterval(refreshInterval.value)
+        refreshInterval.value = enabled ? window.setInterval(callback, intervalSeconds.value * 1000) : null
+    }
 
-    onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value));
+    onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value))
 
     return {
         isEnabled,
         tooltip,
-        toggleRefresh
-    };
+        toggleRefresh,
+    }
 }

@@ -34,11 +34,11 @@
     @use 'element-plus/theme-chalk/src/avatar';
 
     .kel-avatar {
-        --kel-avatar-bg-color: var(--ks-border-primary);
-        --kel-avatar-text-color: var(--ks-content-primary);
+        --kel-avatar-bg-color: var(--ks-border-default);
+        --kel-avatar-text-color: var(--ks-text-primary);
 
         &.kel-avatar--small {
-            font-size: 65%;
+            font-size: var(--ks-font-size-2xs);
         }
 
         html.dark & {

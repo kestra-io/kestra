@@ -1,7 +1,7 @@
 <template>
     <div class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
-            <KsButton @click="isNavbarVisible = !isNavbarVisible">
+            <KsButton :tooltip="$t('toggle menu')" @click="isNavbarVisible = !isNavbarVisible">
                 <MenuIcon />
             </KsButton>
         </div>
@@ -12,14 +12,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import MenuIcon from "vue-material-design-icons/Menu.vue";
+    import {ref} from "vue"
+    import MenuIcon from "vue-material-design-icons/Menu.vue"
 
-    const isNavbarVisible = ref(false);
+    const isNavbarVisible = ref(false)
 </script>
 
 <style scoped lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+    @use '../../styles/responsive' as *;
 
     @include res(sm) {
         :deep(.kel-form--inline) {

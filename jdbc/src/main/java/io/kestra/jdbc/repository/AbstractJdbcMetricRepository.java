@@ -1,10 +1,12 @@
 package io.kestra.jdbc.repository;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
-import java.time.ZoneId;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -175,31 +177,12 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
 
     @Override
     public Integer purge(Execution execution) {
-        return this.jdbcRepository
-
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSLContext context = DSL.using(configuration);
-
-                return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).eq(execution.getId()))
-                    .execute();
-            });
+        return purge(DSL.noCondition(), field("execution_id", String.class).eq(execution.getId()));
     }
 
     @Override
     public Integer purge(List<Execution> executions) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSLContext context = DSL.using(configuration);
-
-                return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
-                    .execute();
-            });
+        return purge(DSL.noCondition(), field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()));
     }
 
     @Override
@@ -288,40 +271,49 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
     private List<MetricAggregation> fillDate(List<MetricAggregation> result, ZonedDateTime startDate, ZonedDateTime endDate) {
         DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
-        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM");
-        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww");
-        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD");
-        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH");
-        } else {
-            return fillDate(result, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm");
-        }
+        return switch (groupByType) {
+            case MONTH -> fillDate(result, startDate, endDate, ChronoUnit.MONTHS);
+            case WEEK -> fillDate(result, startDate, endDate, ChronoUnit.WEEKS);
+            case DAY -> fillDate(result, startDate, endDate, ChronoUnit.DAYS);
+            case HOUR -> fillDate(result, startDate, endDate, ChronoUnit.HOURS);
+            case MINUTE -> fillDate(result, startDate, endDate, ChronoUnit.MINUTES);
+        };
     }
 
     private List<MetricAggregation> fillDate(
         List<MetricAggregation> result,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        ChronoUnit unit,
-        String format) {
+        ChronoUnit unit) {
         List<MetricAggregation> filledResult = new ArrayList<>();
-        ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+        // Floored to the bucket boundary so the generated buckets line up with the calendar-floored
+        // instants AbstractJdbcRepository#getDate reassembles from the SQL year/month/week/day parts;
+        // otherwise the last bucket walked from an unfloored startDate can fall short of endDate and
+        // silently drop the most recent data point.
+        ZonedDateTime currentDate = truncateToBucket(startDate, unit);
         while (currentDate.isBefore(endDate)) {
-            String finalCurrentDate = currentDate.format(formatter);
+            Instant bucketInstant = currentDate.toInstant();
             MetricAggregation metricStat = result.stream()
-                .filter(metric -> formatter.format(metric.date).equals(finalCurrentDate))
+                .filter(metric -> metric.date.equals(bucketInstant))
                 .findFirst()
-                .orElse(MetricAggregation.builder().date(currentDate.toInstant()).value(0.0).build());
+                .orElse(MetricAggregation.builder().date(bucketInstant).value(0.0).build());
 
             filledResult.add(metricStat);
             currentDate = currentDate.plus(1, unit);
         }
 
         return filledResult;
+    }
+
+    private static ZonedDateTime truncateToBucket(ZonedDateTime date, ChronoUnit unit) {
+        ZonedDateTime utc = date.withZoneSameInstant(ZoneOffset.UTC);
+        // MONTHS/WEEKS aren't supported by truncatedTo, and must match AbstractJdbcRepository#getDate's
+        // calendar-floored buckets (first-of-month, Monday-of-week).
+        return switch (unit) {
+            case MONTHS -> utc.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+            case WEEKS -> utc.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
+            default -> utc.truncatedTo(unit);
+        };
     }
 
     @Override
@@ -331,7 +323,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
             "flowId", "flow_id",
             "taskId", "task_id",
             "executionId", "execution_id",
-            "taskrunId", "taskrun_id",
+            "taskRunId", "taskrun_id",
             "name", "metric_name",
             "timestamp", "timestamp",
             "value", "metric_value"

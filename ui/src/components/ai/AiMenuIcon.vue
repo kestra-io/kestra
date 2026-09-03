@@ -28,5 +28,5 @@
     }>(), {
         fillColor: "currentColor",
         size: 24,
-    });
+    })
 </script>

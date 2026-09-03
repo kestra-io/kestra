@@ -9,6 +9,7 @@
             :to="item.to"
             :target="item.href ? '_blank' : undefined"
             :rel="item.href ? 'noreferrer' : undefined"
+            @click="onItemClick(item, $event)"
         >
             <div class="onboarding-resource-item__icon" :class="item.iconClass">
                 <component :is="item.icon" />
@@ -19,13 +20,13 @@
                 <p>{{ $t(item.descriptionKey) }}</p>
             </div>
 
-            <ChevronRight class="onboarding-resource-item__arrow" />
+            <ArrowRight class="onboarding-resource-item__arrow" />
         </component>
     </div>
 </template>
 
 <script setup lang="ts">
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     export interface OnboardingResourceItem {
         titleKey: string;
@@ -38,16 +39,28 @@
 
     defineProps<{
         items: OnboardingResourceItem[];
-    }>();
+    }>()
+
+    const emit = defineEmits<{
+        /** An in-app item was followed, so whatever hosts this list is no longer the user's context. */
+        navigate: [];
+    }>()
+
+    function onItemClick(item: OnboardingResourceItem, event: MouseEvent) {
+        // Modifier set mirrors vue-router's `guardEvent`: those clicks leave the page in place.
+        if (!item.to || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+
+        emit("navigate")
+    }
 </script>
 
 <style scoped lang="scss">
 
     .onboarding-resource-list {
         overflow: hidden;
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 14px;
-        background: var(--ks-background-card);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        background: var(--ks-bg-surface);
     }
 
     .onboarding-resource-item {
@@ -61,11 +74,11 @@
         transition: background-color 0.15s ease;
 
         &:not(:last-child) {
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-subtle);
         }
 
         &:hover {
-            background: var(--ks-button-background-secondary-hover);
+            background: var(--ks-btn-secondary-bg-hover);
             text-decoration: none;
         }
     }
@@ -82,24 +95,20 @@
             height: 22px;
         }
 
-        &.is-tutorial {
-            color: #4dabf7;
-        }
-
         &.is-blueprints {
-            color: #8b5cf6;
+            color: var(--ks-status-info);
         }
 
         &.is-slack {
-            color: #22c55e;
+            color: var(--ks-status-success);
         }
 
         &.is-videos {
-            color: #f87171;
+            color: var(--ks-status-error);
         }
 
         &.is-demo {
-            color: #fb923c;
+            color: var(--ks-status-warning);
         }
     }
 
@@ -109,21 +118,21 @@
 
         h3 {
             margin: 0 0 0.25rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-sm);
             font-weight: 600;
         }
 
         p {
             margin: 0;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
             line-height: 1.4;
         }
     }
 
     .onboarding-resource-item__arrow {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         flex-shrink: 0;
     }
 </style>

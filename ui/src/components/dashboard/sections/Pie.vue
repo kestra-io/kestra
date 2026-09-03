@@ -1,157 +1,174 @@
 <template>
-    <div
-        class="d-flex flex-row align-items-center justify-content-center chart chart-container"
-    >
-        <KsPie
-            v-if="generated !== undefined"
-            ref="ksPieRef"
-            :data="pieData"
-            :loading="false"
-            :donut="chartOptions?.graphStyle !== 'PIE'"
-            :options="pieOptions"
-            :disableFeatures="[ChartFeature.LEGEND]"
-            :tooltipType="TooltipType.EXTERNAL"
-        />
-        <div
-            v-if="generated !== undefined"
-            class="pie-center-label"
-        >
-            {{ totalValue }}
+    <div class="pie">
+        <KsSkeleton v-if="loading && !generated" animated :rows="3" class="empty" />
+        <div v-else-if="generated?.results?.length" class="chart">
+            <KsPie
+                ref="ksPieRef"
+                :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
+                :data="pieData"
+                :loading="false"
+                :donut="chartOptions?.graphStyle !== 'PIE'"
+                :radius="['52%', '80%']"
+                :options="pieOptions"
+                :disableFeatures="[ChartFeature.LEGEND]"
+                :tooltipType="TooltipType.EXTERNAL"
+                @echarts-click="onSegmentClick"
+            />
+            <div class="pie-center-label">
+                <div class="pie-center-label__total">{{ totalValue }}</div>
+                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ $t("success") }}</div>
+            </div>
         </div>
-        <KsEmpty v-else />
+        <KsNoData v-else class="empty" />
+
+        <ChartLegend
+            v-if="legendItems.length"
+            :items="legendItems"
+            :maxVisible="6"
+            center
+            :chart="ksPieRef"
+            :formatValue="isDuration ? durationUtils.humanDuration : undefined"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, PropType, ref, watch} from "vue";
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
 
-    import {Chart, useChartGenerator} from "../composables/useDashboards";
-    import {extractState, getConsistentHEXColor} from "../composables/charts";
-    import {FilterObject} from "../../../utils/filters";
-    import {KsPie, durationUtils} from "@kestra-io/design-system";
-    import type {KsChartSeriesItem} from "@kestra-io/design-system";
-    import {TooltipType, ChartFeature} from "@kestra-io/design-system";
-    import {useMiscStore} from "override/stores/misc";
+    import moment from "moment"
+    import {KsPie, KsSkeleton, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
-    import moment from "moment";
+    import {Chart, useChartGenerator} from "../composables/useDashboards"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor} from "../composables/charts"
+    import {useChartDrillDown} from "../composables/chartDrillDown"
+    import ChartLegend from "./ChartLegend.vue"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    import {useRoute, useRouter} from "vue-router";
+    defineOptions({inheritAttrs: false})
 
-    const route = useRoute();
-    const router = useRouter();
+    const props = withDefaults(defineProps<{
+        dashboardId?: string;
+        chart: Chart;
+        filters?: QueryFilter[];
+        showDefault?: boolean;
+    }>(), {
+        dashboardId: undefined,
+        filters: () => [],
+        showDefault: false,
+    })
 
-    defineOptions({inheritAttrs: false});
-    const props = defineProps({
-        dashboardId: {type: String, required: false, default: undefined},
-        chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
-        showDefault: {type: Boolean, default: false},
-    });
+    const route = useRoute()
 
-    const ksPieRef = ref<InstanceType<typeof KsPie> | null>(null);
+    const {drillDown} = useChartDrillDown(props.chart)
 
-    const {chartOptions} = props.chart;
-    const columns = props.chart.data?.columns ?? {};
-    const isDuration = Object.values(columns).find((c: Record<string, any>) => c.agg !== undefined)?.field === "DURATION";
+    const {chartOptions} = props.chart
+    const columns = props.chart.data?.columns ?? {}
+    const isDuration = Object.values(columns).find((c: Record<string, any>) => c.agg !== undefined)?.field === "DURATION"
 
     const aggregator = Object.entries(columns).reduce<{
         value?: {label: string; key: string};
         field?: {label: string; key: string};
-    }>(
-        (result, [key, column]) => {
-            const col = column as Record<string, any>;
-            const type = "agg" in col ? "value" : "field";
-            result[type] = {label: col.displayName ?? col.agg, key};
-            return result;
-        },
-        {},
-    );
+    }>((result, [key, column]) => {
+        const col = column as Record<string, any>
+        result["agg" in col ? "value" : "field"] = {label: col.displayName ?? col.agg, key}
+        return result
+    }, {})
+
+    const ksPieRef = ref<InstanceType<typeof KsPie> | null>(null)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     function parseValue(value: unknown): string {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
-        return date.isValid() ? date.format("YYYY-MM-DD") : String(value);
+        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+        return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
     }
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
-
     const pieData = computed<KsChartSeriesItem[]>(() => {
-        const rawData = generated.value?.results as Record<string, any>[] | undefined;
-        if (!rawData) return [];
+        const rawData = generated.value?.results as Record<string, any>[] | undefined
+        if (!rawData) return []
 
-        const results: Record<string, number> = Object.create(null);
-        rawData.forEach((value) => {
-            const field = parseValue(value[aggregator.field?.key ?? ""]);
-            const aggregated = value[aggregator.value?.key ?? ""] as number;
-            results[field] = (results[field] || 0) + aggregated;
-        });
+        const results: Record<string, number> = Object.create(null)
+        rawData.forEach((row) => {
+            const field = parseValue(row[aggregator.field?.key ?? ""])
+            results[field] = (results[field] || 0) + (row[aggregator.value?.key ?? ""] as number)
+        })
 
         return Object.entries(results).map(([name, value]) => ({
             name,
             value,
             itemStyle: {color: getConsistentHEXColor("light", name)},
-        }));
-    });
+        }))
+    })
 
-    const totalValue = computed(() => {
-        const total = pieData.value.reduce((acc, item) => acc + Number(item.value), 0);
-        return isDuration ? durationUtils.humanDuration(total) : String(total);
-    });
+    const total = computed(() => pieData.value.reduce((acc, item) => acc + Number(item.value), 0))
 
+    const totalValue = computed(() =>
+        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(),
+    )
 
-    const pieOptions = computed(() => {
-        const opts: Record<string, unknown> = {
-            roseType: "radius",
-            tooltip: {
-                formatter: (params: any) =>
-                    isDuration
-                        ? `${params.name}: ${durationUtils.humanDuration(params.value)} (${params.percent}%)`
-                        : `${params.name}: ${params.value} (${params.percent}%)`,
-            },
-        };
+    const showSuccessRatio = computed(() => !isDuration && pieData.value.some((item) => item.name === "SUCCESS"))
 
-        return opts;
-    });
+    const successRatio = computed(() => {
+        if (!total.value) return "0"
+        const success = Number(pieData.value.find((item) => item.name === "SUCCESS")?.value ?? 0)
+        return ((success / total.value) * 100).toFixed(1)
+    })
 
-    watch(ksPieRef, (newRef) => {
-        if (!newRef) return;
-        const instance = newRef.getEchartsInstance();
-        if (!instance) return;
-        instance.on("click", (params: any) => {
-            if (!params.name) return;
-            router.push({
-                name: "executions/list",
-                params: {tenant: route.params.tenant},
-                query: {
-                    state: extractState(params.name),
-                    scope: "USER",
-                    size: 100,
-                    page: 1,
-                    "filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
-                },
-            });
-        });
-    });
+    const legendItems = computed(() =>
+        pieData.value.map((item) => ({
+            label: String(item.name),
+            color: (item.itemStyle as {color?: string} | undefined)?.color ?? "",
+            count: Number(item.value),
+        })),
+    )
 
-    function refresh() {
-        return generate();
+    const pieOptions = computed(() => ({
+        tooltip: {
+            formatter: (params: any) =>
+                isDuration
+                    ? `${params.name}: ${durationUtils.humanDuration(params.value)} (${params.percent}%)`
+                    : `${params.name}: ${params.value} (${params.percent}%)`,
+        },
+    }))
+
+    const dimensionColumn = computed(() => {
+        const dimensionKey = aggregator.field?.key
+        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; key?: string} | undefined
+    })
+
+    function onSegmentClick(params: any) {
+        if (!params?.name) return
+        drillDown([{column: dimensionColumn.value, value: params.name}])
     }
 
-    defineExpose({
-        refresh
-    });
+    function refresh() {
+        return generate()
+    }
 
-    watch(() => route.params.filters, () => {
-        refresh();
-    }, {deep: true});
+    defineExpose({refresh})
+
+    watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
 <style scoped lang="scss">
-    .chart {
-        height: 231px;
+    .pie {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 
-    .chart-container {
+    .empty {
+        min-height: 200px;
+    }
+
+    .chart {
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 231px;
+        margin-top: -2rem;
+        container-type: inline-size;
     }
 
     .pie-center-label {
@@ -159,10 +176,25 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 22px;
-        color: var(--ks-content-primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         pointer-events: none;
         z-index: 1;
-        white-space: nowrap;
+        max-width: min(52%, 7rem);
+        text-align: center;
+        line-height: 1.2;
+
+        &__total {
+            font-size: var(--ks-font-size-3xl);
+            color: var(--ks-text-primary);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        &__success {
+            font-size: var(--ks-font-size-2xs);
+            color: var(--ks-text-success);
+        }
     }
 </style>

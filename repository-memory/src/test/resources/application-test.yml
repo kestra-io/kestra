@@ -3,11 +3,18 @@ kestra:
     type: memory
   repository:
     type: memory
-  queues:
-    min-poll-interval: 10ms
-    max-poll-interval: 100ms
-    poll-switch-interval: 5s
+  jdbc:
+    queues:
+      min-poll-interval: 10ms
+      max-poll-interval: 100ms
+      poll-switch-interval: 5s
   server:
     liveness:
       enabled: false
     termination-grace-period: 5s
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

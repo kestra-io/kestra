@@ -6,6 +6,7 @@
             v-bind="({...filteredProps(), ...$attrs} as any)"
             @change="emit('change', $event)"
             autosize
+            resize="none"
             type="textarea"
         >
             <template v-if="$slots.prepend" #prepend>
@@ -70,7 +71,7 @@
     }
 
     .ks-password {
-        position: relative; 
+        position: relative;
 
         .hide {
             top: 5px;

@@ -1,0 +1,377 @@
+// Runtime entry of @kestra-io/hey-api-plugin — the universal, everyone-needs-it half of a Kestra
+// SDK. `createConfigureClient` wires a @hey-api/client-fetch `client` singleton for the Kestra API:
+// the string/empty-body-aware body serializer, the QueryFilter-aware query serializer, the
+// Content-Type/Accept request fixes, and Error-normalizing error interceptor. It is the fetch-based
+// `configureClient` from client-sdk's hand-written src/index.ts, lifted out so the OSS UI SDK, the
+// EE UI SDK, and client-sdk all share ONE copy.
+//
+// It is generic over the client and holds NO module state: it just clears + re-installs the
+// interceptors and returns the same `client` instance. The "current instance" singleton and its
+// accessors (useClient / setMockClient, plus the axios-like fetch facade that shares this client's
+// interceptors) are app concerns and live in each app's SDK entry, not here.
+//
+// `formDataBodySerializer` is passed in rather than imported: @hey-api/client-fetch vendors a
+// self-contained `./openapi/core/` into every generated SDK, so the multipart serializer is a
+// per-SDK module instance. The request interceptor detects multipart endpoints by identity against
+// that exact instance, so the caller supplies its own. This keeps the runtime free of any hard
+// dependency (no axios, no @hey-api/*).
+
+import {EnterpriseFeatureError, type EnterpriseFeatureConfig} from "./errors"
+import {KestraProblemError, isProblemDetail, type ProblemDetail} from "./problem"
+
+export {EnterpriseFeatureError} from "./errors"
+export type {EnterpriseFeatureConfig, EnterpriseFeatureMatch} from "./errors"
+
+// Re-exported from the runtime entry (not the package root, which also pulls in the codegen-time
+// config/patch modules) so each SDK can surface problem handling without bundling the generator.
+export {
+    PROBLEM_TYPE_BASE,
+    KestraProblemError,
+    isProblemDetail,
+    parseProblem,
+    asProblem,
+    problemSlug,
+    isProblemType,
+} from "./problem"
+export type {ProblemDetail, ProblemFieldError} from "./problem"
+export {ProblemTypes} from "./problem-types"
+export type {ProblemType} from "./problem-types"
+
+/** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
+interface FetchInterceptor {
+    clear: () => void;
+    use: (fn: (...args: any[]) => any) => void;
+}
+
+/** The subset of a @hey-api/client-fetch client that configureClient touches. */
+export interface ConfigurableFetchClient {
+    setConfig: (config: any) => unknown;
+    interceptors: {
+        request: FetchInterceptor;
+        response: FetchInterceptor;
+        error: FetchInterceptor;
+    };
+}
+
+/** The per-request options bag the fetch client passes to request interceptors. */
+interface ResolvedRequestOptionsLike {
+    bodySerializer?: unknown;
+    parseAs?: "json" | "text" | "blob" | "stream" | "arrayBuffer" | "formData" | (string & {});
+    /** The templated OpenAPI path passed to the SDK call, e.g. "/api/v1/{tenant}/audit-logs/search" — NOT the resolved URL. */
+    url?: string;
+    [key: string]: unknown;
+}
+
+/** The generated SDK's own multipart body serializer (from its vendored core). */
+interface FormDataBodySerializer {
+    bodySerializer: (...args: any[]) => any;
+}
+
+function serializeQueryValue(val: unknown): string | undefined {
+    if (val == null) return undefined
+    const serialized = val.toString()
+    if (serialized === "[object Object]" || serialized === "[object Array]") {
+        return JSON.stringify(val)
+    }
+    return serialized
+}
+
+/**
+ * Build the shared `configureClient` for a @hey-api/client-fetch `client`.
+ *
+ * @param client the SDK's fetch client singleton (from its generated `client.gen`)
+ * @param formDataBodySerializer the SDK's own multipart serializer (from its generated core), used
+ *        to detect multipart endpoints by identity so we don't force `application/json` on them
+ * @param enterpriseFeature optional — when set, a 404 whose route matches
+ *        `enterpriseFeature.matchRoute` throws an {@link EnterpriseFeatureError} instead of the
+ *        generic normalized error below. Only the SDK that spans both editions (client-sdk) needs
+ *        this; the OSS/EE UI SDKs can omit it entirely and behavior is unchanged.
+ * @returns a `configureClient(clientConfig?)` that installs the Kestra setup and returns `client`
+ */
+export function createConfigureClient<TClient extends ConfigurableFetchClient>(
+    client: TClient,
+    formDataBodySerializer: FormDataBodySerializer,
+    enterpriseFeature?: EnterpriseFeatureConfig,
+) {
+    type ClientConfig = Parameters<TClient["setConfig"]>[0];
+
+    return function configureClient(clientConfig: ClientConfig = {} as ClientConfig): TClient {
+        client.interceptors.request.clear()
+        client.interceptors.response.clear()
+        client.interceptors.error.clear()
+
+        client.setConfig({
+            // The default jsonBodySerializer JSON-stringifies everything, including plain string
+            // bodies (YAML, text/plain). Override to pass strings through as-is.
+            bodySerializer: (body: unknown): unknown => {
+                if (typeof body === "string") return body
+                // buildClientParams initialises params.body as {} even for no-body operations.
+                // Return '' so the client treats it as an absent body (no Content-Type, no body sent).
+                if (body !== null && typeof body === "object" && !Array.isArray(body) && Object.keys(body as Record<string, unknown>).length === 0) return ""
+                return JSON.stringify(body, (_key, value) => (typeof value === "bigint" ? value.toString() : value))
+            },
+            querySerializer(query: Record<string, any>) {
+                const queryParameters = new URLSearchParams()
+
+                const isObjectRecord = (input: object): boolean => {
+                    const prototype = Object.getPrototypeOf(input)
+                    return prototype === null || prototype === Object.prototype || !Object.getOwnPropertyDescriptor(prototype, "constructor")
+                }
+
+                const snapshotQueryValue = (
+                    input: any,
+                    seen = new WeakMap<object, any>(),
+                    active = new WeakSet<object>(),
+                    snapshotCustomObject = false,
+                ): any => {
+                    if (input == null || typeof input !== "object") return input
+
+                    const prototype = Object.getPrototypeOf(input)
+                    if (!snapshotCustomObject && !Array.isArray(input) && !isObjectRecord(input)) return input
+                    if (active.has(input)) throw new TypeError("Invalid QueryFilter array")
+
+                    const existing = seen.get(input)
+                    if (existing) return existing
+
+                    active.add(input)
+                    try {
+                        if (Array.isArray(input)) {
+                            const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length")
+                            const length = lengthDescriptor && "value" in lengthDescriptor ? lengthDescriptor.value : undefined
+                            if (!Number.isSafeInteger(length) || length < 0) throw new TypeError("Invalid QueryFilter array")
+
+                            const snapshot = new Array(length)
+                            seen.set(input, snapshot)
+                            for (let index = 0; index < length; index++) {
+                                const descriptor = Object.getOwnPropertyDescriptor(input, String(index))
+                                if (!descriptor || !("value" in descriptor) || !descriptor.enumerable) throw new TypeError("Invalid QueryFilter array")
+                                snapshot[index] = snapshotQueryValue(descriptor.value, seen, active, snapshotCustomObject)
+                            }
+                            return snapshot
+                        }
+
+                        const snapshot = Object.create(snapshotCustomObject ? null : prototype)
+                        seen.set(input, snapshot)
+                        for (const key of Object.keys(input)) {
+                            const descriptor = Object.getOwnPropertyDescriptor(input, key)
+                            if (!descriptor || !("value" in descriptor)) throw new TypeError("Invalid QueryFilter array")
+                            Object.defineProperty(snapshot, key, {
+                                value: snapshotQueryValue(
+                                    descriptor.value,
+                                    seen,
+                                    active,
+                                    snapshotCustomObject && key === "children",
+                                ),
+                                enumerable: true,
+                                configurable: true,
+                                writable: true,
+                            })
+                        }
+                        return snapshot
+                    } finally {
+                        active.delete(input)
+                    }
+                }
+
+                const serializeQueryFilterArray = (filters: any[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
+                    if (filters.length === 0) return undefined
+                    const parameters: Array<[string, string]> = []
+                    for (let index = 0; index < filters.length; index++) {
+                        if (!(index in filters)) return undefined
+                        const serialized = serializeQueryFilter(filters[index], indexed ? `${prefix}[${index}]` : prefix)
+                        if (!serialized) return undefined
+                        parameters.push(...serialized)
+                    }
+                    return parameters
+                }
+
+                const serializeQueryFilter = (filter: any, prefix: string): Array<[string, string]> | undefined => {
+                    if (filter == null || typeof filter !== "object") return undefined
+
+                    const {field, operation, value, logical, children} = filter
+                    if (logical === "and" || logical === "or") {
+                        if (field !== undefined || operation !== undefined || value !== undefined || !Array.isArray(children)) return undefined
+                        return serializeQueryFilterArray(children, `${prefix}[${logical}]`, true)
+                    }
+
+                    if (typeof field !== "string" || typeof operation !== "string" || logical !== undefined || children !== undefined) return undefined
+                    if (Array.isArray(value)) {
+                        if (value.length === 0) return undefined
+                        const serializedValues: string[] = []
+                        for (let index = 0; index < value.length; index++) {
+                            if (!(index in value)) return undefined
+                            const serialized = serializeQueryValue(value[index])
+                            if (serialized === undefined || serialized === "") return undefined
+                            serializedValues.push(serialized)
+                        }
+                        return [[`${prefix}[${field}][${operation}]`, serializedValues.join(",")]]
+                    }
+                    if (typeof value === "object" && value != null && !Array.isArray(value) && isObjectRecord(value)) {
+                        const entries = Object.entries(value)
+                        if (entries.length === 0) return undefined
+                        const parameters: Array<[string, string]> = []
+                        for (const [key, entryValue] of entries) {
+                            const serialized = serializeQueryValue(entryValue)
+                            if (serialized === undefined) return undefined
+                            parameters.push([`${prefix}[${field}][${operation}][${key}]`, serialized])
+                        }
+                        return parameters
+                    }
+
+                    const serialized = serializeQueryValue(value)
+                    const isValueOptional = operation === "IS_NULL" || operation === "IS_NOT_NULL"
+                    if (serialized === undefined && !isValueOptional) return undefined
+                    return [[`${prefix}[${field}][${operation}]`, serialized ?? ""]]
+                }
+
+                for (const key in query) {
+                    const param = query[key]
+                    if (param === undefined) {
+                        continue
+                    }
+                    if (key === "filters" && param !== null && !Array.isArray(param)) {
+                        throw new TypeError("Invalid QueryFilter array")
+                    }
+                    let serializedFilters: Array<[string, string]> | undefined
+                    let fallbackParam = param
+                    if (key === "filters" && Array.isArray(param)) {
+                        fallbackParam = snapshotQueryValue(param, new WeakMap(), new WeakSet(), true)
+                        try {
+                            structuredClone(param)
+                        } catch {
+                            throw new TypeError("Invalid QueryFilter array")
+                        }
+                        try {
+                            serializedFilters = serializeQueryFilterArray(fallbackParam)
+                        } catch {
+                            serializedFilters = undefined
+                        }
+                    }
+
+                    if (serializedFilters) {
+                        for (const [filterKey, filterValue] of serializedFilters) queryParameters.append(filterKey, filterValue)
+                    } else if (key === "filters" && Array.isArray(param) && fallbackParam.length > 0) {
+                        throw new TypeError("Invalid QueryFilter array")
+                    } else if (fallbackParam instanceof Array) {
+                        fallbackParam.forEach((value: any) => {
+                            const ser = serializeQueryValue(value)
+                            if (ser !== undefined) {
+                                queryParameters.append(key, ser)
+                            }
+                        })
+                    } else {
+                        const ser = serializeQueryValue(param)
+                        if (ser !== undefined) {
+                            queryParameters.append(key, ser)
+                        }
+                    }
+                }
+                return queryParameters.toString()
+            },
+            ...clientConfig,
+        })
+
+        // Restore Content-Type for POST/PUT/PATCH and set Accept for non-JSON responses.
+        // The fetch client deletes Content-Type for body-less requests (opts.body === undefined),
+        // but Kestra requires Content-Type: application/json on all POST/PUT/PATCH, even without a body.
+        // Exception: endpoints that use formDataBodySerializer (e.g. createExecution, resumeExecution)
+        // set 'Content-Type: null' to let the browser supply the multipart boundary automatically.
+        // When no body is provided for those endpoints, we must not inject application/json —
+        // Kestra will reject the request with 401 if Content-Type doesn't match multipart/form-data.
+        client.interceptors.request.use((request: Request, opts: ResolvedRequestOptionsLike): Request => {
+            const headers = new Headers(request.headers)
+            let modified = false
+
+            const method = request.method.toLowerCase()
+            const isFormDataEndpoint = opts.bodySerializer === formDataBodySerializer.bodySerializer
+            if (["post", "put", "patch"].includes(method) && !headers.has("content-type") && !isFormDataEndpoint) {
+                headers.set("content-type", "application/json")
+                modified = true
+            }
+
+            if (!headers.has("accept")) {
+                // Every list below must include application/problem+json: errors are served as that type, and
+                // Kestra content-negotiation returns 403 when Accept excludes the produced type — so omitting
+                // it turns any error on these endpoints into a confusing 403.
+                if (opts.parseAs === "blob") {
+                    headers.set("accept", "application/octet-stream, application/problem+json")
+                    modified = true
+                } else if (opts.parseAs === "text") {
+                    // Include application/octet-stream: some endpoints (e.g. exportPluginDefaults)
+                    // advertise octet-stream in the OpenAPI spec but actually return text.
+                    headers.set(
+                        "accept",
+                        "text/csv, text/plain, text/json, application/json, application/octet-stream, application/problem+json",
+                    )
+                    modified = true
+                }
+            }
+
+            return modified ? new Request(request, {headers}) : request
+        })
+
+        // Enrich thrown errors with the HTTP status while preserving Error semantics.
+        // The fetch client throws parsed response data (often plain objects/strings),
+        // but many existing call sites and tests expect thrown values to be Error instances.
+        client.interceptors.error.use((
+            error: unknown,
+            response: Response | undefined,
+            request: Request | undefined,
+            opts: ResolvedRequestOptionsLike | undefined,
+        ): unknown => {
+            if (!response) return error
+
+            const status = response.status
+
+            // An EE-only route 404s on an OSS server the same way a genuinely-missing resource
+            // does — matchRoute is what tells the two apart (it only matches the fixed set of
+            // EE-only routes, never an arbitrary "flow not found").
+            if (status === 404 && enterpriseFeature && request && opts?.url) {
+                const match = enterpriseFeature.matchRoute(request.method, opts.url)
+                if (match) {
+                    return new EnterpriseFeatureError({
+                        feature: match.feature,
+                        docsUrl: enterpriseFeature.docsUrl(match.feature),
+                        contactSalesUrl: enterpriseFeature.contactSalesUrl(match.feature),
+                        status,
+                    })
+                }
+            }
+
+            // RFC 9457 problem document — the shape every Kestra error response uses. Content type is the
+            // primary signal; the structural check covers a proxy that rewrote it, and test fixtures.
+            const contentType = response.headers.get("content-type")
+            if (contentType?.includes("application/problem+json") || isProblemDetail(error)) {
+                return new KestraProblemError(error as ProblemDetail & Record<string, unknown>, status)
+            }
+
+            // Anything else: a body from outside the API surface — Micronaut's own non-API responses, the
+            // Apps runtime error layout, plain text. Flatten it onto an Error as before.
+            const asObject = error !== null && typeof error === "object" ? error as Record<string, unknown> : undefined
+            const rawMessage =
+                (error instanceof Error && error.message) ||
+                (typeof error === "string" ? error : undefined) ||
+                (typeof asObject?.message === "string" ? asObject.message : undefined) ||
+                (typeof asObject?.detail === "string" ? asObject.detail : undefined) ||
+                (typeof asObject?.title === "string" ? asObject.title : undefined) ||
+                response.statusText ||
+                "Request failed"
+
+            const hasStatusPrefix =
+                rawMessage === String(status) ||
+                rawMessage.startsWith(`${status} `) ||
+                rawMessage.startsWith(`${status}:`)
+            const message = hasStatusPrefix ? rawMessage : `${status} ${rawMessage}`
+            const normalizedError = error instanceof Error ? error : new Error(message)
+            if (asObject) {
+                Object.assign(normalizedError as Error & Record<string, unknown>, asObject)
+            }
+            normalizedError.message = message
+            const normalizedWithStatus = normalizedError as Error & { status: number }
+            normalizedWithStatus.status = status
+            return normalizedWithStatus
+        })
+
+        return client
+    }
+}

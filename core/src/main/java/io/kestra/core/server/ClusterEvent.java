@@ -21,6 +21,9 @@ public record ClusterEvent(String uid, EventType eventType, LocalDateTime eventD
         MAINTENANCE_ENTER,
         MAINTENANCE_EXIT,
         PLUGINS_SYNC_REQUESTED,
-        KILL_SWITCH_SYNC_REQUESTED
+        KILL_SWITCH_SYNC_REQUESTED,
+        MCP_SERVER_CHANGED,
+        WORKER_GROUP_SYNC_REQUESTED,
+        WORKER_DISCONNECT_REQUESTED
     }
 }

@@ -15,9 +15,11 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.Logs;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.scheduling.annotation.Scheduled;
@@ -34,26 +36,42 @@ public class TriggerSchedulerMonitor implements Runnable {
     private final MetricRegistry metricRegistry;
     private final ExecutionRepositoryInterface executionRepository;
     private final TriggerStateStore triggerStateStore;
-    private final DefaultScheduler defaultScheduler;
+    private final BeanProvider<DefaultScheduler> defaultSchedulerProvider;
 
     @Inject
     public TriggerSchedulerMonitor(MetricRegistry metricRegistry,
         ExecutionRepositoryInterface executionRepository,
         @Named("cached") TriggerStateStore triggerStateStore,
-        DefaultScheduler defaultScheduler) {
+        BeanProvider<DefaultScheduler> defaultSchedulerProvider) {
         this.metricRegistry = metricRegistry;
         this.executionRepository = executionRepository;
         this.triggerStateStore = triggerStateStore;
-        this.defaultScheduler = defaultScheduler;
+        this.defaultSchedulerProvider = defaultSchedulerProvider;
     }
 
     @Scheduled(fixedDelay = "PT10S", initialDelay = "PT30S")
     @Override
     public void run() {
         try {
-            // Retrieve all locked triggers from all corresponding virtual nodes
+            // Resolved lazily so that a DefaultScheduler construction failure (its VNodesAssigner
+            // subscribes to the event queue from @PostConstruct, which can fail before a JDBC
+            // connection is available) is caught below instead of escalating to Micronaut's
+            // scheduled-task executor, which would otherwise retry constructing this bean's entire
+            // dependency graph on every tick.
+            DefaultScheduler scheduler = defaultSchedulerProvider.get();
+            if (!scheduler.getState().isRunning()) {
+                LOG.debug("Scheduler is not running (state={}). Skip trigger monitoring.", scheduler.getState());
+                return;
+            }
+
+            // Retrieve all locked triggers from all corresponding virtual nodes.
+            // Realtime triggers stay locked for their entire processing lifetime and are not bound to a
+            // single execution lifecycle, so they would otherwise be reported as blocked indefinitely.
             ZonedDateTime now = SchedulerClock.now();
-            List<TriggerState> triggers = this.triggerStateStore.findTriggersEligibleForScheduling(now, defaultScheduler.currentVNodesAssignment(), true);
+            List<TriggerState> triggers = this.triggerStateStore.findTriggersEligibleForScheduling(now, scheduler.currentVNodesAssignment(), true)
+                .stream()
+                .filter(state -> !TriggerType.REALTIME.equals(state.getType()))
+                .toList();
             if (CollectionUtils.isEmpty(triggers)) {
                 LOG.debug("No locked triggers. Skip trigger monitoring.");
                 return;

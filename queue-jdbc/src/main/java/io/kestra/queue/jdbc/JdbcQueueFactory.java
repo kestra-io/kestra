@@ -1,8 +1,14 @@
 package io.kestra.queue.jdbc;
 
-import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.mcp.models.McpSessionEvent;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -15,10 +21,12 @@ import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.queue.QueueBean;
 import io.kestra.queue.QueueFactoryInterface;
 
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Secondary;
 
 @Factory
 @JdbcQueueEnabled
@@ -121,6 +129,15 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
 
     @QueueBean
     @Override
+    public DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue(JdbcDependencies dependencies) {
+        return new JdbcDispatchQueue<>(
+            ExecutionStatistic.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Override
     public BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             FollowExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
@@ -174,9 +191,28 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
 
     @QueueBean
     @Override
-    public DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue(JdbcDependencies dependencies) {
+    public BroadcastQueueInterface<McpSessionEvent> mcpSessionQueue(JdbcDependencies dependencies) {
+        return new JdbcBroadcastQueue<>(
+            McpSessionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Secondary
+    @Override
+    public BroadcastQueueInterface<ClusterEvent> clusterEventQueue(JdbcDependencies dependencies) {
+        return new JdbcBroadcastQueue<>(
+            ClusterEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Override
+    public DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
-            TerminatedLoopExecution.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            LoopExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
             dependencies.ignoreExecutionService()
         );
     }

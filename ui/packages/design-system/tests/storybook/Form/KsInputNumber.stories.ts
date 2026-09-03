@@ -87,3 +87,19 @@ export const Disabled: Story = {
         template: "<div style=\"padding:24px\"><ks-input-number v-model=\"value\" disabled /></div>",
     }),
 }
+
+export const Sizes: Story = {
+    render: () => ({
+        components: {KsInputNumber},
+        setup() {
+            return {v1: ref(1), v2: ref(2), v3: ref(3)}
+        },
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:300px">
+                <ks-input-number v-model="v1" size="large" />
+                <ks-input-number v-model="v2" />
+                <ks-input-number v-model="v3" size="small" />
+            </div>
+        `,
+    }),
+}

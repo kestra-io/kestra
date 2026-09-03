@@ -6,6 +6,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
@@ -24,7 +25,8 @@ public abstract class MysqlFlowRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val(value, String.class));
+                Field<Boolean> valueField = DSL
+                    .field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val(value, String.class));
                 conditions.add(valueField.eq(value != null));
             });
         }
@@ -55,24 +57,82 @@ public abstract class MysqlFlowRepositoryService {
 
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
         List<Condition> conditions = new ArrayList<>();
+        List<Condition> inConditions = new ArrayList<>();
 
-        if (labels instanceof Map<?, ?> labelValues) {
+        if (labels instanceof String label) {
+            switch (operation) {
+                case CONTAINS -> conditions.add(labelContainsCondition(label));
+                case NOT_CONTAINS -> conditions.add(labelContainsCondition(label).not());
+                case IS_NULL -> conditions.add(labelKeyCondition(label).not());
+                case IS_NOT_NULL -> conditions.add(labelKeyCondition(label));
+                default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+            }
+        } else if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
-                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val((String) value, String.class));
+                Field<Boolean> valueField = DSL.field(
+                    "JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val((String) value, String.class)
+                );
+                Field<Boolean> labelMatches = DSL.coalesce(valueField, false);
                 if (operation.equals(EQUALS))
-                    conditions.add(valueField.eq(value != null));
+                    conditions.add(labelMatches.eq(value != null));
+                else if (operation.equals(QueryFilter.Op.IN))
+                    inConditions.add(labelMatches.eq(value != null));
+                else if (operation.equals(QueryFilter.Op.NOT_IN))
+                    conditions.add(labelMatches.ne(value != null));
                 else if (operation.equals(NOT_EQUALS)) {
-                    // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
-                    String extractValueSqlTemplate = "JSON_UNQUOTE(JSON_EXTRACT(`value`, REPLACE(JSON_UNQUOTE(JSON_SEARCH(`value`, 'one', {0}, NULL, '$.labels[*].key')), '.key', '.value')))";
-                    Field<String> extractedValue = DSL.field(extractValueSqlTemplate, String.class, DSL.val(key));
-
-                    conditions.add(
-                        extractedValue.isNull().or(extractedValue.ne(DSL.val(value, String.class)))
-                    );
+                    conditions.add(labelMatches.ne(value != null));
+                } else if (operation.equals(QueryFilter.Op.CONTAINS)) {
+                    conditions.add(labelValueContainsCondition((String) key, (String) value));
+                } else if (operation.equals(QueryFilter.Op.NOT_CONTAINS)) {
+                    conditions.add(labelValueContainsCondition((String) key, (String) value).not());
+                } else if (operation.equals(QueryFilter.Op.IS_NULL)) {
+                    conditions.add(labelKeyCondition((String) key).not());
+                } else if (operation.equals(QueryFilter.Op.IS_NOT_NULL)) {
+                    conditions.add(labelKeyCondition((String) key));
+                } else {
+                    throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
                 }
             });
         }
+        if (!inConditions.isEmpty()) {
+            conditions.add(DSL.or(inConditions));
+        }
         return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
+    }
+
+    private static Condition labelContainsCondition(String query) {
+        return DSL.condition(
+            "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].key') IS NOT NULL", query
+        )
+            .or(
+                DSL.condition(
+                    "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].value') IS NOT NULL", query
+                )
+            );
+    }
+
+    private static Condition labelValueContainsCondition(String key, String value) {
+        return DSL.condition(
+            """
+            EXISTS (
+                SELECT 1
+                FROM JSON_TABLE(value, '$.labels[*]' COLUMNS (
+                    label_key VARCHAR(255) PATH '$.key',
+                    label_value VARCHAR(255) PATH '$.value'
+                )) AS labels
+                WHERE labels.label_key = ?
+                  AND LOWER(labels.label_value) LIKE LOWER(CONCAT('%', ?, '%'))
+            )
+            """,
+            key,
+            value
+        );
+    }
+
+    private static Condition labelKeyCondition(String key) {
+        return DSL.condition(
+            "JSON_SEARCH(value, 'one', ?, NULL, '$.labels[*].key') IS NOT NULL", key
+        );
     }
 }

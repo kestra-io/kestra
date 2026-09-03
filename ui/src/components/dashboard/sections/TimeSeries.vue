@@ -1,113 +1,155 @@
 <template>
+    <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
+
     <div
-        v-if="generated?.total > 0"
-        :class="[props.short ? 'short-chart' : props.execution ? 'execution-chart' : 'chart', (!props.short && !props.execution && chartOptions?.legend?.enabled) ? 'with-legend' : '']"
+        v-else-if="generated?.total > 0"
+        class="chart"
+        :class="{short: props.short, execution: props.execution}"
     >
+        <ChartLegend
+            v-if="showLegend"
+            :items="legendStatuses"
+            :durationLabel="yBShown ? durationLabel : undefined"
+            :chart="ksEchartRef"
+            @toggle="onLegendToggle"
+        />
+
         <KsEchart
             ref="ksEchartRef"
+            :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
+            class="canvas"
             :options="echartsOption"
             :loading="false"
-            :disableFeatures="[ChartFeature.AXIS_SPLITLINE]"
             :tooltipType="TooltipType.EXTERNAL"
+            :stickyTooltip="props.short"
+            @echarts-click="onChartClick"
         />
     </div>
-    <KsEmpty v-else-if="!props.short || (props.execution && generated?.total === 0)" />
+    <KsNoData
+        v-else-if="!props.short || (props.execution && generated?.total === 0)"
+        :class="{empty: !props.short && !props.execution}"
+    />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, PropType} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import moment from "moment";
-    import * as echarts from "echarts/core";
-    import {use} from "echarts/core";
-    import {BarChart, LineChart} from "echarts/charts";
-    import {Chart, useChartGenerator} from "../composables/useDashboards";
-    import {extractState, getConsistentHEXColor} from "../composables/charts";
-    import KestraUtils, {useTheme} from "../../../utils/utils";
-    import {FilterObject} from "../../../utils/filters";
-    import {KsEchart, cssVar, durationUtils} from "@kestra-io/design-system";
-    import {TooltipType, ChartFeature} from "@kestra-io/design-system";
-    import {useMiscStore} from "override/stores/misc";
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
 
-    use([BarChart, LineChart]);
+    import moment from "moment"
+    import {use, graphic} from "echarts/core"
+    import {BarChart, LineChart} from "echarts/charts"
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
+    import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+    import {Chart, useChartGenerator} from "../composables/useDashboards"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {useChartDrillDown} from "../composables/chartDrillDown"
+    import ChartLegend from "./ChartLegend.vue"
+    import {getDateGrouping, useTheme} from "../../../utils/utils"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const route = useRoute();
-    const router = useRouter();
+    use([BarChart, LineChart])
 
-    defineOptions({inheritAttrs: false});
-    const props = defineProps({
-        dashboardId: {type: String, required: false, default: undefined},
-        chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
-        showDefault: {type: Boolean, default: false},
-        short: {type: Boolean, default: false},
-        execution: {type: Boolean, default: false},
-        flow: {type: String, default: undefined},
-        namespace: {type: String, default: undefined},
-    });
+    defineOptions({inheritAttrs: false})
 
-    const {data, chartOptions} = props.chart;
+    const props = withDefaults(defineProps<{
+        dashboardId?: string;
+        chart: Chart;
+        filters?: QueryFilter[];
+        showDefault?: boolean;
+        short?: boolean;
+        execution?: boolean;
+        flow?: string;
+        namespace?: string;
+    }>(), {
+        dashboardId: undefined,
+        filters: () => [],
+        showDefault: false,
+        short: false,
+        execution: false,
+        flow: undefined,
+        namespace: undefined,
+    })
+
+    const route = useRoute()
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
+
+    const {drillDown} = useChartDrillDown(props.chart)
+
+    const {data, chartOptions} = props.chart
 
     const aggregator = computed(() => {
         return Object.entries(data?.columns ?? {})
             .filter(([_, v]) => v.agg)
             .sort((a, b) => {
-                const aStyle = a[1].graphStyle || "";
-                const bStyle = b[1].graphStyle || "";
-                return aStyle.localeCompare(bStyle);
-            });
-    });
+                const aStyle = a[1].graphStyle || ""
+                const bStyle = b[1].graphStyle || ""
+                return aStyle.localeCompare(bStyle)
+            })
+    })
 
-    const yBShown = computed(() => aggregator.value.length === 2);
+    const yBShown = computed(() => aggregator.value.length === 2)
 
-    const theme = useTheme();
+    const theme = useTheme()
+
+    const {onLegendToggle, legendSelected} = useLegendToggle()
 
     function isDuration(field: string | undefined): boolean {
-        return field === "DURATION";
+        return field === "DURATION"
     }
 
-    const parseValue = (value: unknown): unknown => {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
+    const grouping = computed(() => {
         const query = {
-            ...Object.fromEntries(props.filters.map(({field, value, operation}) => [`filters[${field}][${operation}]`, value])),
-            ...route.query
-        };
-        return date.isValid() ? date.format(KestraUtils.getDateFormat(
+            ...Object.fromEntries(
+                props.filters.map(({field, value: filterValue, operation}) =>
+                    [`filters[${field}][${operation}]`, filterValue]),
+            ),
+            ...route.query,
+        }
+        return getDateGrouping(
             (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
             (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
-            query["filters[timeRange][EQUALS]"] as string | undefined
-        )) : value;
-    };
+            query["filters[timeRange][EQUALS]"] as string | undefined,
+        )
+    })
+
+    const parseValue = (value: unknown): unknown => {
+        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+        return date.isValid() ? date.format(grouping.value.format) : value
+    }
+
+    const shortAxisLabel = (value: string): string => {
+        if (typeof value !== "string") return value
+        const [datePart, timePart] = value.split(" ")
+        if (timePart) return timePart
+        const segments = datePart.split("-")
+        return segments.length === 3 ? segments.slice(1).join("-") : datePart
+    }
 
     const parsedData = computed(() => {
-        const rawData = generated.value.results as Record<string, any>[] | undefined;
-        const xAxis = (() => {
-            const values = rawData?.map((v: Record<string, any>) => {
-                return parseValue(v[chartOptions?.column ?? ""]);
-            });
+        const rawData = generated.value.results as Record<string, any>[] | undefined
+        // fill the buckets between the earliest and latest returned dates so gaps stay visible on the axis
+        const xAxis = fillTimeBucketLabels(
+            rawData?.map((v: Record<string, any>) => v[chartOptions?.column ?? ""]) ?? [],
+            grouping.value,
+        )
 
-            return Array.from(new Set(values)).sort();
-        })();
-
-        const aggregatorKeys = aggregator.value.map(([key]) => key);
+        const aggregatorKeys = aggregator.value.map(([key]) => key)
 
         const reducer = (array: Record<string, any>[] | undefined, field: string, yAxisID: string) => {
-            if (!array?.length) return;
+            if (!array?.length) return
 
-            const columns = data?.columns ?? {};
-            const column = chartOptions?.column ?? "";
-            const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined;
+            const columns = data?.columns ?? {}
+            const column = chartOptions?.column ?? ""
+            const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
                 .filter(key => !aggregatorKeys.includes(key))
-                .filter(key => key !== column);
+                .filter(key => key !== column)
 
             return array.reduce((acc: any, {...params}) => {
-                const stack = fields.map((field) => params[field]).join(", ");
+                const stack = fields.map((f) => params[f]).join(", ")
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -121,62 +163,63 @@
                             colorByColumn ? params[colorByColumn] : undefined,
                         ),
                         unique: new Set(),
-                    };
+                    }
                 }
 
-                const current = acc[stack];
-                const parsedDate = parseValue(params[column]);
+                const current = acc[stack]
+                const parsedDate = parseValue(params[column])
 
                 // Check if the date is already processed
                 if (!current.unique.has(parsedDate)) {
-                    current.unique.add(parsedDate);
+                    current.unique.add(parsedDate)
                     current.data.push({
                         x: parsedDate,
                         y: params[field],
-                    });
+                    })
                 } else {
                     // Update existing stack value for the same date
-                    const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate);
-                    if (existing) existing.y += params[field];
+                    const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate)
+                    if (existing) existing.y += params[field]
                 }
 
-                return acc;
-            }, {});
-        };
+                return acc
+            }, {})
+        }
 
         const getData = (_field: string, object: Record<string, any> = {}) => {
             return Object.values(object).map((dataset: any) => {
-                const data = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel);
-                    return temp ? temp.y : 0;
-                });
+                const datasetData = xAxis.map((xAxisLabel) => {
+                    const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel)
+                    return temp ? temp.y : 0
+                })
 
-                return {...dataset, data};
-            });
-        };
+                return {...dataset, data: datasetData}
+            })
+        }
 
-        const yDataset = reducer(rawData, aggregator.value[0][0], "y");
+        const yDataset = reducer(rawData, aggregator.value[0][0], "y")
 
         // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) =>
-            (a.label ?? "").localeCompare(b.label ?? "")
-        );
+            (a.label ?? "").localeCompare(b.label ?? ""),
+        )
 
-        const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field;
+        const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field
 
-        let duration: number[] = [];
+        let duration: number[] = []
         if(yBShown.value){
-            const helper = Array.from(new Set(rawData?.map((v: Record<string, any>) => parseValue(v.date)))).sort();
+            const column = chartOptions?.column ?? ""
+            const durationKey = aggregator.value[1][0]
 
             // Step 1: Group durations by formatted date
-            const groupedDurations: Record<string, number> = {};
+            const groupedDurations: Record<string, number> = {}
             rawData?.forEach((item: Record<string, any>) => {
-                const formattedDate = parseValue(item.date) as string;
-                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
-            });
+                const formattedDate = parseValue(item[column]) as string
+                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item[durationKey]
+            })
 
-            // Step 2: Map to target dates
-            duration = helper.map(date => groupedDurations[date as string] || 0);
+            // Step 2: Map onto the x-axis labels so the line stays aligned with the bars
+            duration = xAxis.map(date => groupedDurations[date] || 0)
         }
 
         return {
@@ -188,46 +231,68 @@
                         type: "line",
                         data: duration,
                         label: label,
-                        borderColor: cssVar("--ks-gray-100"),
-                        smooth: true,
+                        borderColor: cssVar("--ks-chart-duration"),
+                        smooth: false,
                         areaStyle: {
-                            opacity: 0.2,
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            color: new graphic.LinearGradient(0, 0, 0, 1, [
                                 {
                                     offset: 0,
-                                    color: cssVar("--ks-gray-100")
+                                    color: cssVar("--ks-chart-duration", 0.3),
                                 },
                                 {
                                     offset: 1,
-                                    color: cssVar("--ks-gray-900")
-                                }
-                            ])
+                                    color: cssVar("--ks-chart-duration", 0),
+                                },
+                            ]),
                         },
                     },
                     ...yDatasetData,
                 ]
                 : yDatasetData,
-        };
-    });
+        }
+    })
 
     const echartsOption = computed((): Record<string, unknown> => {
-        const pd = parsedData.value;
-        const xAxisData = pd.labels as string[];
-        const isCompact = props.short || props.execution;
-        const showAxes = !isCompact && !verticalLayout.value;
+        const pd = parsedData.value
+        const xAxisData = pd.labels as string[]
+        const isCompact = props.short || props.execution
+        const showAxes = !isCompact && !verticalLayout.value
 
-        const barSeries = (pd.datasets as any[])
-            .filter((ds) => ds.type !== "line")
-            .map((ds) => ({
-                type: "bar",
-                name: ds.label,
-                data: ds.data,
-                stack: "total",
-                yAxisIndex: 0,
-                itemStyle: {color: ds.backgroundColor},
-                barMaxWidth: props.short ? 8 : props.execution ? 24 : 48,
-                ...(props.short ? {barCategoryGap: "0%"} : {}),
-            }));
+        const barDatasets = (pd.datasets as any[]).filter((ds) => ds.type !== "line")
+        const radius = props.short ? 0.5 : 2
+
+        // format duration values in the tooltip as human durations instead of raw seconds
+        const durationTooltip = (fieldIndex: number) =>
+            isDuration(aggregator.value[fieldIndex]?.[1]?.field)
+                ? {tooltip: {valueFormatter: (value: unknown) => durationUtils.humanDuration(Number(value))}}
+                : {}
+
+        /**
+         * ECharts has no native gap for stacked segments — faked with a transparent border.
+         * Lowest non-zero segment per x gets a flat bottom to sit on the axis; rest are pills.
+         */
+        const barSeries = barDatasets.map((ds, index) => ({
+            type: "bar",
+            name: ds.label,
+            stack: "total",
+            yAxisIndex: 0,
+            data: (ds.data as number[]).map((value, x) => ({
+                value,
+                itemStyle: {
+                    borderRadius: index === barDatasets.findIndex((d) => (d.data[x] ?? 0) > 0)
+                        ? [radius, radius, 0, 0]
+                        : radius,
+                },
+            })),
+            itemStyle: {
+                color: ds.backgroundColor,
+                borderColor: "transparent",
+                borderWidth: props.short ? 0 : 2,
+            },
+            barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
+            ...(props.short ? {barCategoryGap: "0%"} : {}),
+            ...durationTooltip(0),
+        }))
 
         const lineSeries = (pd.datasets as any[])
             .filter((ds) => ds.type === "line")
@@ -236,107 +301,133 @@
                 name: ds.label,
                 data: ds.data,
                 yAxisIndex: yBShown.value ? 1 : 0,
-                smooth: true,
+                smooth: false,
                 showSymbol: false,
                 z: 1,
                 lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},
                 ...(ds.areaStyle ? {areaStyle: ds.areaStyle} : {}),
-            }));
+                ...durationTooltip(yBShown.value ? 1 : 0),
+            }))
+
+        const axisLabelStyle = {
+            color: cssVar("--ks-text-secondary"),
+            fontSize: 10,
+        }
 
         const yAxisConfig = (position: "left" | "right", fieldIndex: number) => ({
             type: "value",
             show: showAxes,
             position,
-            axisLabel: isDuration(aggregator.value[fieldIndex]?.[1]?.field)
-                ? {formatter: (v: number) => durationUtils.humanDuration(v)}
-                : {},
-        });
+            splitNumber: 5,
+            splitLine: {
+                show: showAxes && position === "left",
+                lineStyle: {type: "dashed", color: cssVar("--ks-border-subtle"), width: 1},
+            },
+            axisLabel: {
+                ...axisLabelStyle,
+                ...(position === "left" ? {align: "left"} : {}),
+                ...(isDuration(aggregator.value[fieldIndex]?.[1]?.field)
+                    ? {formatter: (v: number) => durationUtils.humanDuration(v)}
+                    : {}),
+            },
+        })
 
         const yAxis = yBShown.value
             ? [yAxisConfig("left", 0), yAxisConfig("right", 1)]
-            : yAxisConfig("left", 0);
+            : yAxisConfig("left", 0)
 
         return {
             grid: isCompact
-                ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: "3%", right: "4%", bottom: "3%", top: chartOptions?.legend?.enabled ? "60px" : "5%", containLabel: true},
+                ? {top: 2, right: 2, bottom: 2, left: 2, outerBoundsMode: "none"}
+                : {left: 0, right: 0, bottom: "3%", top: "5%", outerBoundsMode: "same"},
             xAxis: {
                 type: "category",
                 data: xAxisData,
                 show: !isCompact,
+                axisLine: {lineStyle: {color: cssVar("--ks-border-default")}},
+                axisLabel: {...axisLabelStyle, formatter: shortAxisLabel},
             },
             yAxis,
-            legend: (!isCompact && chartOptions?.legend?.enabled) ? {
-                "top": "10px",
-                "right": "10px",
-            } : {show: false},
+            legend: {
+                show: false,
+                selected: legendSelected([...barSeries, ...lineSeries].map((s) => s.name)),
+            },
+            tooltip: {axisPointer: {type: "none"}},
             series: [...barSeries, ...lineSeries],
-        };
-    });
+        }
+    })
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
-    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null);
+    const showLegend = computed(() => !props.short && !props.execution && !!chartOptions?.legend?.enabled)
 
-    // Register click handler when the chart mounts (after data loads and v-if becomes true)
-    watch(ksEchartRef, (newRef) => {
-        if (!newRef) return;
-        const instance = newRef.getEchartsInstance();
-        if (!instance) return;
-        instance.on("click", (params: any) => {
-            if (data?.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) return;
+    const legendStatuses = computed(() =>
+        (parsedData.value.datasets as any[])
+            .filter((ds) => ds.type !== "line")
+            .map((ds) => ({
+                label: ds.label as string,
+                color: ds.backgroundColor as string,
+                count: (ds.data as number[]).reduce((sum, n) => sum + (n || 0), 0),
+            })),
+    )
 
-            const state = params.seriesName;
-            const query: Record<string, any> = {};
-            if (state) {
-                query.state = extractState(state);
-                query.scope = "USER";
-                query.size = 100;
-                query.page = 1;
-            }
-            if (route.query.namespace) query.namespace = route.query.namespace;
-            if (route.query.q) query.q = route.query.q;
+    const durationLabel = computed(() =>
+        (parsedData.value.datasets as any[]).find((ds) => ds.type === "line")?.label ?? "Duration",
+    )
 
-            router.push({
-                name: "executions/list",
-                params: {tenant: route.params.tenant},
-                query: {
-                    ...query,
-                    ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
-                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {}),
-                    "filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
-                },
-            });
-        });
-    });
+    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
-    function refresh(customFilters?: FilterObject[]) {
-        return generate(undefined, customFilters);
+    const dimensionColumn = computed(() => {
+        const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
+        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
+    })
+
+    function onChartClick(params: any) {
+        if (params.seriesType !== "bar" || props.execution) return
+
+        drillDown([
+            {column: dimensionColumn.value, value: params.seriesName},
+            ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
+            ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
+        ])
+    }
+
+    function refresh(customFilters?: QueryFilter[]) {
+        return generate(undefined, customFilters)
     }
 
     defineExpose({
-        refresh
-    });
+        refresh,
+        total: computed(() => generated.value?.total ?? 0),
+    })
 
-    watch(() => route.params.filters, () => {
-        refresh();
-    }, {deep: true});
+    watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
 <style scoped lang="scss">
     .chart {
-        height: 231px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 200px;
 
-        &.with-legend {
-            height: 200px;
+        &.short {
+            height: 40px;
+            min-height: 0;
+        }
+
+        &.execution {
+            height: 120px;
+            min-height: 0;
+        }
+
+        .canvas {
+            flex: 1;
+            min-height: 0;
         }
     }
 
-    .short-chart {
-        height: 40px;
-    }
-
-    .execution-chart {
-        height: 120px;
+    .empty {
+        min-height: 200px;
     }
 </style>

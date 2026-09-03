@@ -10,28 +10,90 @@ export enum Comparators {
     STARTS_WITH = "^=",
     ENDS_WITH = "$=",
     CONTAINS = "*=",
+    NOT_CONTAINS = "!*=",
+    IS_NULL = "IS_NULL",
+    IS_NOT_NULL = "IS_NOT_NULL",
     REGEX = "~=",
     PREFIX = "^.=",
 }
 
-export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS];
+export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN]
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
-    Comparators.ENDS_WITH, 
-    Comparators.STARTS_WITH, 
-];
+    Comparators.NOT_CONTAINS,
+    Comparators.ENDS_WITH,
+    Comparators.STARTS_WITH,
+]
+export const NULL_COMPARATORS = [Comparators.IS_NULL, Comparators.IS_NOT_NULL]
+// Range/threshold comparators always target a single bound value
+export const RANGE_COMPARATORS = [
+    Comparators.GREATER_THAN,
+    Comparators.LESS_THAN,
+    Comparators.GREATER_THAN_OR_EQUAL_TO,
+    Comparators.LESS_THAN_OR_EQUAL_TO,
+]
+
+export interface DateFilterOption {
+    value: string;
+    label: string;
+}
+
+/**
+ * Extra metadata attached to an applied filter. Currently only carries the value selected from
+ * {@link FilterKeyConfig.dateFilterOptions} for timeRange-like filters that target different date
+ * fields (e.g. "Last triggered" vs "Next execution"). Add new optional keys here as more
+ * meta-driven filters appear.
+ */
+export interface FilterMeta {
+    dateFilter?: string;
+}
 
 export interface FilterKeyConfig {
     key: string;
     label: string;
     description?: string;
     searchable?: boolean;
-    comparators: Comparators[];
+    comparators: [Comparators, ...Comparators[]];
     showComparatorSelection?: boolean;
-    valueProvider?: () => Promise<FilterValue[]>;
-    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
+    /**
+     * Returns the dropdown options for a filter.
+     * Declare an `options` parameter (any name) to opt into server-side search:
+     * the multi-select will call `valueProvider({search})` on user input instead
+     * of filtering the loaded list client-side. Server-side support is detected
+     * via `valueProvider.length > 0`, so avoid default-valued or rest params.
+     */
+    valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
+    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
+    /**
+     * Only meaningful for {@link valueType} === "time-range". Controls the custom (non-predefined)
+     * mode of the time-range picker on an arbitrary date field:
+     *   - "single" — pick one absolute date (encoded as one comparator on the field key).
+     *   - "range"  — pick a start/end range (encoded as GREATER_THAN_OR_EQUAL_TO + LESS_THAN_OR_EQUAL_TO
+     *                on the field key, and decoded back into a single range chip).
+     * Defaults to "single" when omitted. Note: a time-range field must NOT be keyed "startDate" or
+     * "endDate" — those names are reserved for the dedicated `timeRange` filter encoding.
+     */
+    customDateMode?: "single" | "range";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
+    /**
+     * When `false`, the filter is a global AND scope: it cannot be added to or moved into a
+     * conditional group, and is omitted from the "add field" menu. Defaults to `true`.
+     */
+    groupable?: boolean;
+    /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
+    dateFilterOptions?: DateFilterOption[];
+    /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
+    keyLabelProvider?: (meta?: FilterMeta) => string;
+    /**
+     * Per-field override for comparator labels. When provided, supersedes
+     * the global COMPARATOR_LABELS for this filter only. Useful when the
+     * generic label doesn't fit the domain (e.g. "At or Above" for a log
+     * level filter rather than "Greater Than or Equal").
+     */
+    comparatorLabels?: Partial<Record<Comparators, string>>;
+    /** When `true`, renders colored status tags in multi-select value display. */
+    colored?: boolean;
 }
 
 export interface FilterValue {
@@ -50,7 +112,36 @@ export interface AppliedFilter {
     comparator: Comparators;
     comparatorLabel: string;
     value: string | string[] | Date | {startDate: Date; endDate: Date};
+    /** Extra metadata (e.g. dateFilter for timeRange filters). See {@link FilterMeta}. */
+    meta?: FilterMeta;
 }
+
+export type LogicalOperator = "AND" | "OR";
+
+export interface LeafFilterGroup {
+    id: string;
+    kind?: "leaf";
+    filters: AppliedFilter[];
+}
+
+export interface WrapperGroup {
+    id: string;
+    kind: "wrapper";
+    logical: LogicalOperator;
+    children: LeafFilterGroup[];
+}
+
+export type FilterGroup = LeafFilterGroup | WrapperGroup;
+
+export const isWrapperGroup = (g: FilterGroup): g is WrapperGroup =>
+    g.kind === "wrapper"
+
+export const isLeafGroup = (g: FilterGroup): g is LeafFilterGroup =>
+    g.kind !== "wrapper"
+
+/** Returns the operator opposite to the given one. */
+export const flipLogical = (op: LogicalOperator): LogicalOperator =>
+    op === "AND" ? "OR" : "AND"
 
 export interface SavedFilter {
     id: string;
@@ -59,6 +150,8 @@ export interface SavedFilter {
     global?: boolean;
     description?: string;
     filters: AppliedFilter[];
+    groups?: FilterGroup[];
+    topLogical?: LogicalOperator;
 }
 
 export interface FilterConfiguration {
@@ -76,17 +169,17 @@ export interface TableProperties {
 }
 
 export interface TableOptions {
-    chart?: { 
-        shown?: boolean; 
-        value?: boolean; 
-        callback?: (value: boolean) => void 
+    chart?: {
+        shown?: boolean;
+        value?: boolean;
+        callback?: (value: boolean) => void
     };
     columns?: {
         shown?: boolean
     };
-    refresh?: { 
-        shown?: boolean; 
-        callback?: () => void 
+    refresh?: {
+        shown?: boolean;
+        callback?: () => void
     };
 }
 
@@ -102,9 +195,12 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.STARTS_WITH]: "Starts With",
     [Comparators.ENDS_WITH]: "Ends With",
     [Comparators.CONTAINS]: "Contains",
+    [Comparators.NOT_CONTAINS]: "Does Not Contain",
+    [Comparators.IS_NULL]: "Is Not Set",
+    [Comparators.IS_NOT_NULL]: "Is Set",
     [Comparators.REGEX]: "Matches Pattern",
     [Comparators.PREFIX]: "Prefix",
-};
+}
 
 export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.EQUALS]: "filter.comparator_descriptions.EQUALS",
@@ -118,6 +214,9 @@ export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.STARTS_WITH]: "filter.comparator_descriptions.STARTS_WITH",
     [Comparators.ENDS_WITH]: "filter.comparator_descriptions.ENDS_WITH",
     [Comparators.CONTAINS]: "filter.comparator_descriptions.CONTAINS",
+    [Comparators.NOT_CONTAINS]: "filter.comparator_descriptions.NOT_CONTAINS",
+    [Comparators.IS_NULL]: "filter.comparator_descriptions.IS_NULL",
+    [Comparators.IS_NOT_NULL]: "filter.comparator_descriptions.IS_NOT_NULL",
     [Comparators.REGEX]: "filter.comparator_descriptions.REGEX",
     [Comparators.PREFIX]: "filter.comparator_descriptions.PREFIX",
-};
+}

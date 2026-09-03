@@ -24,6 +24,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -119,7 +120,8 @@ class FileExistsFunctionTest {
         );
 
         var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileExists('unsupported://path-to/file.txt') }}", variables));
-        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("Cannot process the URI unsupported://path-to/file.txt: scheme not supported.");
     }
 
     @Test
@@ -217,7 +219,7 @@ class FileExistsFunctionTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("%s-file".formatted(IdUtils.create()), ".txt");
+        File tempFile = Files.createTempFile(Path.of("/tmp"), "%s-file".formatted(IdUtils.create()), ".txt").toFile();
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

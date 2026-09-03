@@ -4,6 +4,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.flows.State;
@@ -15,6 +16,8 @@ import io.kestra.worker.processors.internals.AbstractWorkerCallable;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 
 public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements WorkerJobProcessor<T> {
 
@@ -28,7 +31,14 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     private final AtomicReference<WorkerJob> currentWorkerJob = new AtomicReference<>();
     private final AtomicReference<AbstractWorkerCallable> currentWorkerCallable = new AtomicReference<>();
 
+    // Bound once instead of passed as `this::interrupt` on every process() call: `this` never
+    // changes across the many jobs a single processor instance handles, so re-capturing it as a
+    // fresh lambda per call was pure allocation churn.
+    private final Consumer<State.Type> interruptAction = this::interrupt;
+
     private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final AtomicReference<State.Type> pendingInterruptState = new AtomicReference<>();
+    private final AtomicBoolean shutdownInterrupted = new AtomicBoolean(false);
 
     public AbstractWorkerJobProcessor(String workerGroup,
         MetricRegistry metricRegistry,
@@ -48,7 +58,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     @Override
     public void process(final T job) {
         if (currentWorkerJob.compareAndSet(null, job)) {
-            executionKilledManager.register(job.uid(), job, this::kill);
+            executionKilledManager.register(job.uid(), job, interruptAction);
             try {
                 doProcess(job);
             } finally {
@@ -65,12 +75,25 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     protected io.kestra.core.models.flows.State.Type callJob(AbstractWorkerCallable workerJobCallable) {
         this.currentWorkerCallable.set(workerJobCallable);
+        // Propagate an interrupt that arrived before currentWorkerCallable was set
+        // (between register() and here, interrupt() was a no-op).
+        State.Type pendingState = pendingInterruptState.get();
+        if (pendingState != null) {
+            workerJobCallable.kill(pendingState);
+        }
         try {
             return tracer.inCurrentContext(
                 workerJobCallable.getRunContext(),
                 workerJobCallable.getType(),
                 Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
-                () -> workerSecurityService.callInSecurityContext(workerJobCallable)
+                () ->
+                {
+                    var state = workerSecurityService.callInSecurityContext(workerJobCallable);
+                    if (state != null && state.isTerminatedInError()) {
+                        Span.current().setStatus(StatusCode.ERROR, "Task ended in state " + state.name());
+                    }
+                    return state;
+                }
             );
         } catch (Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
@@ -91,10 +114,32 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     @Override
     public void kill() {
-        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::kill);
+        interrupt(State.Type.KILLED);
+    }
+
+    /**
+     * Interrupts the currently running job, marking it to report {@code state} as its outcome.
+     * Used both for a real kill ({@code KILLED}) and for a fail-fast interrupt targeting a
+     * caller-chosen state (e.g. {@code CANCELLED}).
+     */
+    protected void interrupt(State.Type state) {
+        pendingInterruptState.set(state);
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(callable -> callable.kill(state));
+    }
+
+    @Override
+    public void signalShutdownInterrupt() {
+        shutdownInterrupted.set(true);
+        // interrupt() (not kill()) so the callable still reports FAILED rather than KILLED;
+        // the shutdownInterrupted flag is what tells the processor to drop/defer the result.
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::interrupt);
     }
 
     protected boolean isStopped() {
         return this.stopped.get();
+    }
+
+    protected boolean isShutdownInterrupted() {
+        return this.shutdownInterrupted.get();
     }
 }

@@ -1,0 +1,10 @@
+id: sequential-sleep
+namespace: io.kestra.tests
+
+tasks:
+  - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: sleep
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT30S

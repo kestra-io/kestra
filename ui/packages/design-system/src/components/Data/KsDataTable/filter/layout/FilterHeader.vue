@@ -4,24 +4,27 @@
             <label class="filter-label">{{ label }}</label>
             <small v-if="description" class="filter-description">{{ description }}</small>
         </div>
-        <KsButton
-            link
-            size="small"
-            :icon="Close"
-            @click="emits('close')"
-        />
+        <div class="filter-header-trailing">
+            <slot name="trailing" />
+            <KsButton
+                link
+                size="small"
+                :icon="Close"
+                @click="emits('close')"
+            />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {Close} from "../utils/icons";
+    import {Close} from "../utils/icons"
 
     defineProps<{
         label: string;
         description?: string;
-    }>();
+    }>()
 
-    const emits = defineEmits<{close: []}>();
+    const emits = defineEmits<{close: []}>()
 </script>
 
 <style lang="scss" scoped>
@@ -30,7 +33,7 @@
     align-items: flex-start;
     justify-content: space-between;
     padding: 1rem 1rem 0 1rem;
-    gap: 0.5rem;
+    gap: var(--ks-spacing-2);
 
     .filter-title {
         min-width: 0;
@@ -42,24 +45,31 @@
         font-size: var(--ks-font-size-base);
         margin: 0;
         font-weight: 600;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .filter-description {
         margin-top: 0.25rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
         line-height: 1.2;
+    }
+
+    .filter-header-trailing {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        flex-shrink: 0;
     }
 
     :deep(.close-icon) {
         font-size: var(--ks-font-size-base);
         padding-right: 0;
         cursor: pointer;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
 
         &:hover {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 }

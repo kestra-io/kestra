@@ -12,9 +12,9 @@
 </template>
 
 <script setup lang="ts">
-    import GithubIcon from "vue-material-design-icons/Github.vue";
-    import SlackIcon from "vue-material-design-icons/Slack.vue";
-    import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue";
+    import GithubIcon from "vue-material-design-icons/Github.vue"
+    import SlackIcon from "vue-material-design-icons/Slack.vue"
+    import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue"
 
     defineProps<{
         title: string
@@ -51,11 +51,11 @@ h2.support-title{
     margin-top: 3rem;
     margin-bottom: 1rem;
     padding: 0;
-    font-weight: 400;
+    font-weight: var(--ks-font-weight-semibold);
 }
 .support-links-row{
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     margin-bottom: 3rem;
 }

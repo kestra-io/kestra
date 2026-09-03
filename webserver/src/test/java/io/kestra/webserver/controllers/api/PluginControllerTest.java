@@ -1,7 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Manifest;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -13,14 +15,23 @@ import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
+import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -46,10 +57,11 @@ class PluginControllerTest {
 
     @Test
     void plugins() {
-        List<Plugin> list = client.toBlocking().retrieve(
+        PagedResults<Plugin> page = client.toBlocking().retrieve(
             HttpRequest.GET(PATH),
-            Argument.listOf(Plugin.class)
+            Argument.of(PagedResults.class, Plugin.class)
         );
+        List<Plugin> list = page.getResults();
 
         assertThat(list.size()).isEqualTo(3);
 
@@ -76,10 +88,11 @@ class PluginControllerTest {
         assertThat(core.getCategories()).containsExactlyInAnyOrder(PluginSubGroup.PluginCategory.CORE);
 
         // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
-        list = client.toBlocking().retrieve(
+        PagedResults<Plugin> page2 = client.toBlocking().retrieve(
             HttpRequest.GET(PATH),
-            Argument.listOf(Plugin.class)
+            Argument.of(PagedResults.class, Plugin.class)
         );
+        list = page2.getResults();
 
         assertThat(list.size()).isEqualTo(3);
     }
@@ -91,17 +104,136 @@ class PluginControllerTest {
             Argument.mapOf(String.class, PluginIcon.class)
         );
 
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals(Log.class.getName()))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon log = list.get(Log.class.getName());
+        assertThat(log).isNotNull();
+        assertThat(log.getHash()).isNotBlank();
         // test an alias
-        assertThat(
-            list.entrySet().stream()
-                .filter(e -> e.getKey().equals("io.kestra.core.runners.test.task.Alias"))
-                .findFirst().orElseThrow().getValue().getIcon()
-        ).isNotNull();
+        PluginIcon alias = list.get("io.kestra.core.runners.test.task.Alias");
+        assertThat(alias).isNotNull();
+        assertThat(alias.getHash()).isNotBlank();
+    }
+
+    @Test
+    void shouldNotInlineIconBytesInIconsIndex() {
+        Map<String, PluginIcon> list = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(list).isNotEmpty();
+        assertThat(list.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
+    }
+
+    @Test
+    void shouldAnswerGroupsRatherThanClassesForGroupIcons() {
+        // Ask for the class index first: both indexes are keyed by no argument, so before they were split apart
+        // this call is what filled the shared cache key that the group index then answered from. Without it the
+        // assertions below would pass against the unsplit code whenever this test happened to run first.
+        client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        Map<String, PluginIcon> groups = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/groups"),
+            Argument.mapOf(String.class, PluginIcon.class)
+        );
+
+        assertThat(groups).isNotEmpty();
+        assertThat(groups).doesNotContainKey(Log.class.getName());
+        assertThat(groups.values()).allSatisfy(icon -> assertThat(icon.getIcon()).isNull());
+    }
+
+    @Test
+    void iconByClass() {
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getIcon()).isNotNull();
+        assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
+        assertThat(response.icon().getMonochrome()).isFalse();
+        assertThat(response.icon().getHash()).isNotBlank();
+    }
+
+    @Test
+    void iconHashIsStableAndContentAddressed() {
+        PluginController.PluginIconResponse first = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse second = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse other = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Return.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(first.icon().getHash()).isEqualTo(second.icon().getHash());
+        assertThat(first.icon().getHash()).isNotEqualTo(other.icon().getHash());
+    }
+
+    @Test
+    void iconSvg() {
+        PluginController.PluginIconResponse jsonResponse = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName() + "/icon.svg"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("image/svg+xml");
+        assertThat(response.body()).isEqualTo(Base64.getDecoder().decode(jsonResponse.icon().getIcon()));
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).contains("immutable");
+    }
+
+    @Test
+    void iconSvgNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task/icon.svg"),
+                byte[].class
+            )
+        );
+
+        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void iconByClassNotFound() {
+        // must answer 200 with a null icon, not 404: the frontend's shared HTTP client treats
+        // any 404 as a global error and would otherwise take over the whole page for what's just
+        // a normal "this class has no icon" outcome.
+        HttpResponse<PluginController.PluginIconResponse> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task"),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.body().icon()).isNull();
+    }
+
+    @Test
+    void iconByClassFallsBackToPluginDefault() {
+        // A registered class that ships no class- or package-specific icon still resolves one:
+        // it inherits its plugin's default (plugin-icon.svg), so hasIcon is truthful and matches
+        // what the icon.svg endpoint actually serves.
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/io.kestra.core.plugins.test.SuperclassTask"),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getIcon()).isNotNull();
+        assertThat(response.icon().getName()).isEqualTo("SuperclassTask");
     }
 
     @SuppressWarnings("unchecked")
@@ -180,7 +312,7 @@ class PluginControllerTest {
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(properties.size()).isEqualTo(19);
+        assertThat(properties.size()).isEqualTo(20);
         assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
@@ -196,13 +328,43 @@ class PluginControllerTest {
     }
 
     @Test
+    void flowSchemaIsRevalidatedWithEtag() {
+        // The flow schema depends on the installed plugin set, which can change while the server runs, so it
+        // must be revalidated on every use (ETag) instead of being cached blindly for an hour — otherwise the
+        // editor keeps completing/validating against a stale schema after a plugin is added or removed (#12102).
+        HttpResponse<Map<String, Object>> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/schemas/flow"),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
+        String etag = response.getHeaders().get(HttpHeaders.ETAG);
+        assertThat(etag).isNotBlank();
+
+        // A conditional request carrying the current ETag is answered 304 Not Modified (no re-download).
+        HttpResponse<?> conditional;
+        try {
+            conditional = client.toBlocking().exchange(
+                HttpRequest.GET(PATH + "/schemas/flow").header(HttpHeaders.IF_NONE_MATCH, etag)
+            );
+        } catch (HttpClientResponseException e) {
+            conditional = e.getResponse();
+        }
+        assertThat(conditional.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
+    }
+
+    @Test
     void flowProperties() {
         Map<String, Object> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/properties/flow"),
             Argument.mapOf(String.class, Object.class)
         );
 
-        assertThat((Map<String, Object>) doc.get("properties")).hasSize(22);
+        assertThat((Map<String, Object>) doc.get("properties"))
+            .as("flow schema exposes every flow property, including the draft revision flag")
+            .hasSize(24)
+            .containsKey("draft");
         assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 
@@ -217,13 +379,26 @@ class PluginControllerTest {
     }
 
     @Test
+    void catalogMergedSchemaRevalidatesViaEtagLikeTheLocalOnlySchema() {
+        HttpResponse<Map> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
+        HttpResponse<Map> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
+
+        // Both variants revalidate on every use via ETag (no-cache, see #12102); the merged tag also
+        // covers the bundle fingerprint so it changes when a different bundle is loaded.
+        assertThat(local.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("ETag")).isNotNull();
+        assertThat(merged.header("ETag")).isNotEqualTo(local.header("ETag"));
+    }
+
+    @Test
     void inputs() {
         List<InputType> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/inputs"),
             Argument.listOf(InputType.class)
         );
 
-        assertThat(doc.size()).isEqualTo(17);
+        assertThat(doc.size()).isEqualTo(19);
     }
 
     @SuppressWarnings("unchecked")
@@ -255,23 +430,48 @@ class PluginControllerTest {
         assertThat(manifest.manifest()).containsKey("io.kestra.plugin.redis.list.ListPop");
         List<PluginUiModuleWithGroup> pluginUiModules = manifest.manifest().get("io.kestra.plugin.redis.list.ListPop");
         assertThat(pluginUiModules).containsExactly(
-            new PluginUiModuleWithGroup("topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css")),
-            new PluginUiModuleWithGroup("log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"))
+            new PluginUiModuleWithGroup(
+                "topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                PluginDistribution.OSS
+            ),
+            new PluginUiModuleWithGroup(
+                "log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", PluginDistribution.OSS
+            )
         );
     }
 
     @Test
-    void should_not_get_plugin_manifest_for_groups() {
-        HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.POST(
-                    PATH + "/pluginUiManifest",
-                    List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
-                ),
-                PluginUiManifest.class
-            )
+    void shouldReturnEmptyManifestGivenUnresolvedClasses() {
+        // A group name (not a task class) does not resolve to any task; the endpoint must
+        // return an empty manifest with HTTP 200 rather than a hard 404.
+        PluginUiManifest manifest = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest",
+                List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
+            ),
+            PluginUiManifest.class
         );
-        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+
+        assertThat(manifest.manifest()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyManifestGivenPluginsNotInstalled() {
+        // Blueprints may reference plugins that aren't installed on this instance; the
+        // endpoint must degrade gracefully (empty manifest, HTTP 200) so the UI keeps
+        // rendering instead of navigating to the global "Page not found" page.
+        PluginUiManifest manifest = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest",
+                List.of(
+                    new TaskWithVersion("io.kestra.plugin.ai.rag.IngestDocument", null),
+                    new TaskWithVersion("io.kestra.plugin.slack.notifications.SlackIncomingWebhook", null)
+                )
+            ),
+            PluginUiManifest.class
+        );
+
+        assertThat(manifest.manifest()).isEmpty();
     }
 
     @Test
@@ -293,5 +493,68 @@ class PluginControllerTest {
             )
         );
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void should_list_plugins() {
+        PagedResults<ApiTriggerPlugin> result = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/triggers"),
+            Argument.of(PagedResults.class, PluginController.ApiTriggerPlugin.class)
+
+        );
+
+        assertThat(result.getTotal()).isGreaterThan(0);
+        assertThat(result.getResults())
+            .map(ApiTriggerPlugin::name)
+            .contains("Webhook");
+    }
+
+    @Test
+    void triggerPluginTitleDisambiguatesPluginsThatShareAPackageSegment() {
+        // Regression test for the "Add Trigger" picker showing colliding, wrongly-cased labels for
+        // unrelated plugins whose package happens to share a segment (e.g. io.kestra.plugin.mongodb
+        // vs io.kestra.plugin.debezium.mongodb, both conventionally named `Trigger`). The picker label
+        // must come from each plugin's own declared title, not from the trigger class' package name -
+        // this only exercises the resolution, using two real trigger classes as arbitrary stand-ins.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin mongodb = pluginWithTitle("MongoDB");
+        RegisteredPlugin debeziumMongodb = pluginWithTitle("Debezium MongoDB");
+
+        ApiTriggerPlugin mongodbTrigger = controller.toApiTriggerPlugin(mongodb, Schedule.class);
+        ApiTriggerPlugin debeziumMongodbTrigger = controller.toApiTriggerPlugin(debeziumMongodb, Webhook.class);
+
+        assertThat(mongodbTrigger.pluginTitle()).isEqualTo("MongoDB");
+        assertThat(debeziumMongodbTrigger.pluginTitle()).isEqualTo("Debezium MongoDB");
+        assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
+        assertThat(mongodbTrigger.pluginGroupTitle()).isEqualTo("MongoDB");
+    }
+
+    @Test
+    void shouldReturnASingleCatalogEntryPerTriggerTypeWhenAPluginIsRegisteredInSeveralVersions() {
+        // Regression test for https://github.com/kestra-io/kestra/issues/18419: a plugin installed
+        // in several versions registers one RegisteredPlugin per version, and the duplicated trigger
+        // types corrupted the "Add Trigger" grid, which keys its cards by type.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin plugin = pluginWithTriggers(Schedule.class, Webhook.class);
+        RegisteredPlugin samePluginOtherVersion = pluginWithTriggers(Schedule.class, Webhook.class);
+
+        List<ApiTriggerPlugin> catalog = controller.toTriggerPluginCatalog(List.of(plugin, samePluginOtherVersion));
+
+        assertThat(catalog).map(ApiTriggerPlugin::type).containsExactlyInAnyOrder(Schedule.class.getName(), Webhook.class.getName());
+    }
+
+    private static RegisteredPlugin pluginWithTitle(String title) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", title);
+        return RegisteredPlugin.builder().manifest(manifest).build();
+    }
+
+    @SafeVarargs
+    private static RegisteredPlugin pluginWithTriggers(Class<? extends AbstractTrigger>... triggers) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", "Core");
+        return RegisteredPlugin.builder().manifest(manifest).triggers(List.of(triggers)).build();
     }
 }

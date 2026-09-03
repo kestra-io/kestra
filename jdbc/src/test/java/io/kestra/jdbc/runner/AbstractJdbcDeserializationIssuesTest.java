@@ -18,11 +18,12 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.DefaultFlowMetaStore;
 import io.kestra.core.runners.DeserializationIssuesCaseTest;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.kestra.queue.jdbc.client.JdbcQueueClient;
+import io.kestra.queue.QueueService;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
@@ -76,7 +77,7 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     protected Map<Field<Object>, Object> fields(DeserializationIssuesCaseTest.QueueMessage queueMessage) {
         String queueName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, queueMessage.type().getSimpleName());
         Map<Field<Object>, Object> fields = new HashMap<>();
-        fields.put(AbstractJdbcRepository.field("type"), JdbcQueueClient.queueNameToType(queueName));
+        fields.put(AbstractJdbcRepository.field("type"), queueName);
         fields.put(AbstractJdbcRepository.field("key"), queueMessage.key() != null ? queueMessage.key() : IdUtils.create());
         fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(queueMessage.value()));
         fields.put(AbstractJdbcRepository.field("created"), LocalDateTime.now());
@@ -104,7 +105,18 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
             }
 
             @Override
-            public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
+            public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant,
+                String fromNamespace, String fromId) {
                 return Optional.empty();
             }
         };

@@ -26,6 +26,7 @@ import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -94,9 +95,56 @@ class ScriptServiceTest {
     }
 
     @Test
+    void shouldAcceptOutputFileWithEmoji() throws IOException {
+        ScriptService.validateStoragePath("file🐸name.txt");
+    }
+
+    @Test
+    void shouldRejectOutputFileWithUnsupportedChars() {
+        assertThatThrownBy(() -> ScriptService.validateStoragePath("file name.txt"))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("unsupported characters");
+    }
+
+    @Test
+    void shouldAcceptOutputFileWithSupportedSpecialChars() throws IOException {
+        ScriptService.validateStoragePath("file,name.txt");
+        ScriptService.validateStoragePath("file:name.txt");
+        ScriptService.validateStoragePath("file;name.txt");
+        ScriptService.validateStoragePath("path/to/file.txt");
+        ScriptService.validateStoragePath("file-name_v2.txt");
+        // '%' must be accepted so that percent-encoded kestra URIs (e.g. report%231.csv) survive INTERNAL_STORAGE_PATTERN
+        ScriptService.validateStoragePath("file%20name.txt");
+    }
+
+    @Test
+    void shouldRejectOutputFileWithHash() {
+        // '#' is a URI fragment delimiter: 'report#1.csv' is silently stored as 'report',
+        // causing distinct files to collide and overwrite each other.
+        assertThatThrownBy(() -> ScriptService.validateStoragePath("report#1.csv"))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("unsupported characters");
+    }
+
+    @Test
+    void shouldMatchPercentEncodedUriWithInternalStoragePattern() {
+        // After the InternalStorage fix, '#' in a filename is percent-encoded to '%23' in the URI.
+        // INTERNAL_STORAGE_PATTERN must match such URIs so replaceInternalStorage can resolve them.
+        Pattern pattern = Pattern.compile("(kestra:\\/\\/[" + "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;" + "]*)",
+            Pattern.UNICODE_CHARACTER_CLASS);
+        String encodedUri = "kestra:///ns/exec/task/report%231.csv";
+        assertThat(pattern.matcher(encodedUri).find()).isTrue();
+    }
+
+
+    @Test
     void uploadInputFiles() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
+
+        // Colon (:) is also supported by the regex but can't be tested here:
+        // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
+        // which is consistent between read/write in production but breaks test files created directly on disk.
 
         Path path = createFile(tenant, "file");
 
@@ -136,6 +184,45 @@ class ScriptServiceTest {
         } finally {
             filesToDelete.forEach(File::delete);
             path.toFile().delete();
+        }
+    }
+
+    @Test
+    void shouldReplaceInternalStorageWithSpecialChars() throws IOException {
+        String tenant = IdUtils.create();
+        var runContext = runContextFactory.of("id", "namespace", tenant);
+        
+        // Colon (:) is also supported by the regex but can't be tested here:
+        // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
+        // which is consistent between read/write in production but breaks test files created directly on disk.
+        Map<String, String> specialCharFiles = Map.of(
+            "file,name", "kestra://some/file,name.txt",
+            "file;name", "kestra://some/file;name.txt"
+        );
+
+        for (var entry : specialCharFiles.entrySet()) {
+            Path path = createFile(tenant, entry.getKey());
+            File localFile = null;
+            try {
+                var command = ScriptService.replaceInternalStorage(
+                    runContext,
+                    "my command with an internal storage file: " + entry.getValue(),
+                    false
+                );
+
+                Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
+                assertThat(matcher.matches())
+                    .as("URI with special char should be matched: " + entry.getValue())
+                    .isTrue();
+                Path absoluteLocalFilePath = Path.of(matcher.group(1));
+                localFile = absoluteLocalFilePath.toFile();
+                assertThat(localFile.exists()).isTrue();
+            } finally {
+                if (localFile != null) {
+                    localFile.delete();
+                }
+                path.toFile().delete();
+            }
         }
     }
 
@@ -208,6 +295,14 @@ class ScriptServiceTest {
 
         // Assert the truncated prefix is correct
         assertThat(baseName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylong");
+
+        // A 43-char namespace yields a 55-char base name ("<43 chars>-flowid-task"), which is
+        // exactly one over the 54-char budget (63 total - 8 suffix - 1 hyphen). Assert it is
+        // still truncated so the total stays within the 63-char Kubernetes limit.
+        runContext = runContext(runContextFactory, "a".repeat(43));
+        jobName = ScriptService.jobName(runContext);
+        assertThat(jobName.length()).isEqualTo(63);
+        assertThat(jobName.substring(jobName.lastIndexOf('-') + 1).length()).isEqualTo(8);
     }
 
     @Test
@@ -255,7 +350,7 @@ class ScriptServiceTest {
     private static Path createFile(String tenant, String fileName) throws IOException {
         Path path = Path.of("/tmp/unittest/%s/%s.txt".formatted(tenant, fileName));
         if (!path.toFile().exists()) {
-            Files.createDirectory(Path.of("/tmp/unittest/%s".formatted(tenant)));
+            Files.createDirectories(Path.of("/tmp/unittest/%s".formatted(tenant)));
             Files.createFile(path);
         }
         return path;

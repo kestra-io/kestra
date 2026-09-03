@@ -5,7 +5,9 @@ import java.util.concurrent.ExecutorService;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -35,26 +37,42 @@ public class QueueService {
     private final int vNodeCount;
 
     @Getter
-    protected final ExecutorService executorService;
+    protected final ExecutorService subscriberExecutorService;
 
     @Getter
     protected final QueueConfiguration queueConfiguration;
 
+    // The context captured at construction time. Subscribers use it for emergency shutdowns instead of the static context
+    // returned by KestraContext.getContext() might change if the context is restarted inside the same JVM, which can occur at least in tests.
+    @Getter
+    private volatile KestraContext kestraContext; // volatile field as tests swap it
+
     @Inject
-    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry, SchedulerConfiguration schedulerConfiguration) {
-        this.executorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
+    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry, SchedulerConfiguration schedulerConfiguration,
+        KestraContext kestraContext) {
+        // this executor service is used to execute subscribers, as subscribers can be CPU bound, it is not a good idea to use a virtual thread here
+        this.subscriberExecutorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
         this.queueConfiguration = queueConfiguration;
         this.metricRegistry = metricRegistry;
         this.vNodeCount = schedulerConfiguration.vnodes();
+        this.kestraContext = kestraContext;
     }
 
     @PreDestroy
     void close() {
-        this.executorService.shutdown();
+        this.subscriberExecutorService.shutdown();
+    }
+
+    /**
+     * Allows tests to intercept the emergency shutdown triggered by subscribers on fatal errors.
+     */
+    @VisibleForTesting
+    void setKestraContext(KestraContext kestraContext) {
+        this.kestraContext = kestraContext;
     }
 
     public void execute(Runnable runnable) {
-        this.executorService.execute(runnable);
+        this.subscriberExecutorService.execute(runnable);
     }
 
     public int computeVNode(String key) {
@@ -77,6 +95,10 @@ public class QueueService {
                 if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
                     throw new MessageTooBigException(
                         "[" + cls.getSimpleName() + "] message of size " + serialize.length + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit()
+                            + ".\n" +
+                            " Please consider increasing the limit using 'kestra.queue.message-protection.limit'. Even if not recommended, you can also disable message protection by setting 'kestra.queue.message-protection.enabled=false'.\n"
+                            +
+                            " For worker task result messages, consider storing outputs inside the internal storage by setting 'kestra.task.outputs.limit'."
                     );
                 }
             }
@@ -93,5 +115,12 @@ public class QueueService {
         } catch (IOException e) {
             return Either.right(new DeserializationException(e, new String(record)));
         }
+    }
+
+    /**
+     * @return true if the fail-fast mode is enabled (true by default)
+     */
+    public boolean failFast() {
+        return Boolean.TRUE.equals(queueConfiguration.getFailFast());
     }
 }

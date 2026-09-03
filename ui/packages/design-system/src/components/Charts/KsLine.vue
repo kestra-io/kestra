@@ -23,7 +23,7 @@
 
     import KsEchart from "./KsEchart.vue"
     import type {KsChartSeriesItem} from "./KsEchart.vue"
-    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     use([LineChart])
 
@@ -81,10 +81,10 @@
 
     const mergedOption = computed(() => {
         const base: Record<string, unknown> = {
-            grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
+            grid: {left: "3%", right: "4%", bottom: "3%", outerBoundsMode: "same"},
             xAxis: {type: "category", boundaryGap: false, data: props.categories},
             yAxis: {type: "value"},
-            tooltip: {trigger: "axis"},
+            tooltip: {trigger: "axis", confine: true},
             legend: {},
             series: ((effectiveData.value ?? []) as KsChartSeriesItem[]).map((s) => ({
                 type: "line",

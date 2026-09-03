@@ -120,4 +120,17 @@ class PluginDocCommandTest {
             assertThat(new String(Files.readAllBytes(reportingGuide))).contains("This is the reporting of the plugin:");
         }
     }
+
+    @Test
+    void shouldUseDefaultOutputPathWhenNotProvided() throws IOException {
+        Path pluginsPath = Files.createTempDirectory("PluginDocCommandTest_defaultOutput_pluginsPath_");
+        pluginsPath.toFile().deleteOnExit();
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString() };
+            Integer exitCode = PicocliRunner.call(PluginDocCommand.class, ctx, args);
+
+            assertThat(exitCode).isEqualTo(0);
+        }
+    }
 }

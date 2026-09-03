@@ -29,6 +29,8 @@ export const Default: Story = {
             <div style="padding:24px;display:flex;gap:16px">
                 <ks-radio v-model="value" value="A" v-bind="args">Option A</ks-radio>
                 <ks-radio v-model="value" value="B" v-bind="args">Option B</ks-radio>
+            </div>
+            <div style="padding:24px;display:flex;gap:16px">
                 <span style="font-size:13px;opacity:0.6">Selected: {{ value }}</span>
             </div>
         `,
@@ -96,6 +98,21 @@ export const Sizes: Story = {
                     <ks-radio-button value="b">Small B</ks-radio-button>
                 </ks-radio-group>
             </div>
+
+            <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+                <ks-radio-group v-model="v1" size="large">
+                    <ks-radio value="a">Large A</ks-radio>
+                    <ks-radio value="b">Large B</ks-radio>
+                </ks-radio-group>
+                <ks-radio-group v-model="v2">
+                    <ks-radio value="a">Default A</ks-radio>
+                    <ks-radio value="b">Default B</ks-radio>
+                </ks-radio-group>
+                <ks-radio-group v-model="v3" size="small">
+                    <ks-radio value="a">Small A</ks-radio>
+                    <ks-radio value="b">Small B</ks-radio>
+                </ks-radio-group>
+            </div>
         `,
     }),
 }
@@ -106,9 +123,16 @@ export const Disabled: Story = {
         setup() { return {value: ref("B")} },
         template: `
             <div style="padding:24px">
-                <ks-radio-group v-model="value" disabled>
-                    <ks-radio value="A">Option A</ks-radio>
-                    <ks-radio value="B">Option B</ks-radio>
+                <ks-radio-group v-model="value">
+                    <ks-radio disabled value="A">Option A</ks-radio>
+                    <ks-radio disabled value="B">Option B</ks-radio>
+                </ks-radio-group>
+            </div>
+
+            <div style="padding:24px">
+                <ks-radio-group v-model="value">
+                    <ks-radio-button disabled value="A">Option A</ks-radio-button>
+                    <ks-radio-button disabled value="B">Option B</ks-radio-button>
                 </ks-radio-group>
             </div>
         `,

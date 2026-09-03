@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
+import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowId;
@@ -26,7 +27,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.SchedulableTriggerFetcher;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
@@ -46,16 +48,16 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
     // Stores
     private final TriggerStateStore triggerStateStore;
     private final FlowMetaStore flowMetaStore;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
 
     public DefaultSchedulableTriggerFetcher(RunContextFactory runContextFactory,
         @Named("cached") TriggerStateStore triggerStateStore,
         FlowMetaStore flowMetaStore,
-        PluginDefaultService pluginDefaultService) {
+        FlowParsingService flowParsingService) {
         this.runContextFactory = runContextFactory;
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
     }
 
     /**
@@ -67,6 +69,9 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
 
         return triggers.stream()
             .filter(triggerState -> !triggerState.isDisabled())
+            // A paused backfill freezes the trigger's next evaluation date, so the trigger stays eligible on
+            // every loop: evaluating it would re-create an execution for the same date about once per second.
+            .filter(triggerState -> !triggerState.hasPausedBackfill())
             .map(triggerState ->
             {
                 Optional<FlowWithSource> maybeFlowTrigger = flowMetaStore.find(
@@ -84,7 +89,15 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                     return null;
                 }
 
-                final FlowWithSource flow = pluginDefaultService.injectAllDefaults(maybeFlowTrigger.get(), LOG);
+                final FlowWithSource rawFlow = maybeFlowTrigger.get();
+                final FlowWithSource flow;
+                try {
+                    flow = TriggerFlowParser.parseForTrigger(flowParsingService, rawFlow, LOG);
+                } catch (FlowBlockedException e) {
+                    // Skip the flow: it is blocked by governance and must not run.
+                    logBlockedByGovernance(rawFlow, triggerState, e);
+                    return null;
+                }
 
                 // Validate that the trigger still exists and is enabled before processing. This check covers several cases:
                 // 1. The overall Flow might be disabled 
@@ -95,6 +108,8 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 // has not yet been processed. In these cases, 
                 final String triggerId = triggerState.getTriggerId();
                 Optional<AbstractTrigger> maybeTrigger = flow.getTriggers().stream().filter(it -> it.getId().equals(triggerId)).findFirst();
+                // Drafts are resolved away by the meta-store (find(revision=null) returns the latest
+                // non-draft revision), so no draft check is needed here — a draft never reaches this point.
                 if (flow.isDisabled() || maybeTrigger.isEmpty() || maybeTrigger.get().isDisabled()) {
                     // Skip processing this trigger to avoid acting on stale or invalid trigger.
                     return null;
@@ -141,6 +156,26 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
         } catch (DateTimeException e) {
             throw new InvalidTriggerConfigurationException();
         }
+    }
+
+    /**
+     * Reports a governance block in the trigger's own logs. Skipping is otherwise invisible to the user: the
+     * trigger simply stops firing, and the only trace is a server-side log they cannot reach.
+     */
+    private void logBlockedByGovernance(final FlowWithSource flow, final TriggerState triggerState, final FlowBlockedException e) {
+        ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(it -> it.getId().equals(triggerState.getTriggerId()))
+            .findFirst()
+            .ifPresent(trigger ->
+                Logs.logExecution(
+                    flow,
+                    runContextFactory.of(flow, trigger).logger(),
+                    Level.WARN,
+                    "[trigger: {}] Skipped: {}",
+                    trigger.getId(),
+                    e.getMessage()
+                )
+            );
     }
 
     private void logError(final ZonedDateTime now, ConditionContext conditionContext, FlowInterface flow, AbstractTrigger trigger, Throwable e) {

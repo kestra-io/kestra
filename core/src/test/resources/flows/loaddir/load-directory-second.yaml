@@ -1,0 +1,7 @@
+id: load-directory-second
+namespace: io.kestra.tests.loaddir
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: second

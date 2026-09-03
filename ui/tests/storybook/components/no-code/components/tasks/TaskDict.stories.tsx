@@ -80,7 +80,8 @@ export const TestDoubleKey: Story = {
                 throw new Error("Monaco editor not initialized for tests");
             }
             return mon;
-        });
+        // KsEditor is an async component: Monaco's chunk has to load before it mounts.
+        }, {timeout: 15000});
         monacoEditor?.__setValueInTests("newValue");
 
         // if the field disappears because of duplication,
@@ -90,7 +91,7 @@ export const TestDoubleKey: Story = {
 
         await waitFor(function valueUpdated() {
             expect(canvas.getByTestId("sb-meta-data-result")?.innerText).toContain("\"newKey\": \"newValue\"");
-        });
+        }, {timeout: 15000});
     }
 }
 
@@ -127,7 +128,7 @@ export const ValuesAsObjects: Story = {
                             }} onUpdate:modelValue={val => model.value = val}/>
                         }}
                     </Wrapper>
-                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-background-card)", padding: "10px", borderRadius: "4px", width: "100%"}}>
+                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-bg-surface)", padding: "10px", borderRadius: "4px", width: "100%"}}>
                         {JSON.stringify(model.value, null, 2)}
                     </pre>
                 </div>
@@ -169,10 +170,10 @@ export const ValuesAsTaskLists: Story = {
                                 additionalProperties: {
                                     type: "array",
                                     items: {
-                                        anyOf: [   
-                                            "Python", 
-                                            "Bash", 
-                                            "JavaScript", 
+                                        anyOf: [
+                                            "Python",
+                                            "Bash",
+                                            "JavaScript",
                                         ].map(lang => ({
                                             type: "object",
                                             properties: {
@@ -185,7 +186,7 @@ export const ValuesAsTaskLists: Story = {
                             }} onUpdate:modelValue={val => model.value = val}/>
                         }}
                     </Wrapper>
-                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-background-card)", padding: "10px", borderRadius: "4px", width: "100%"}}>
+                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-bg-surface)", padding: "10px", borderRadius: "4px", width: "100%"}}>
                         {JSON.stringify(model.value, null, 2)}
                     </pre>
                 </div>

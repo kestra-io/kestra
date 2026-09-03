@@ -1,89 +1,94 @@
 <template>
-    <div
-        v-for="(column, index) in orderedColumns"
-        :key="column.prop"
-        draggable="true"
-        @dragstart="handleDragStart($event, index)"
-        @dragover="handleDragOver($event, index)"
-        @drop="onDrop($event, index)"
-        @dragend="handleDragEnd"
-        class="column-item"
-        :class="{
-            'dragging': draggedIndex === index,
-            'drag-over': dragOverIndex === index
-        }"
-        @click.stop="handleToggle(column)"
+    <Reorder.Group
+        as="div"
+        axis="y"
+        :values="visibleItems"
+        @update:values="onReorder"
     >
-        <div class="column-info">
-            <Drag class="drag-handle" />
-            <div class="column-text">
-                <span class="column-label">
-                    {{ column.label }}
-                </span>
-                <small>{{ column.description }}</small>
+        <Reorder.Item
+            v-for="column in visibleItems"
+            :key="column.prop"
+            :value="column"
+            as="div"
+            class="column-item"
+            :whileDrag="{scale: 1.02}"
+        >
+            <div class="column-info">
+                <DotsGrid class="drag-handle" :size="18" />
+                <div class="column-text">
+                    <span class="column-label">
+                        {{ column.label }}
+                    </span>
+                    <small>{{ column.description }}</small>
+                </div>
             </div>
-        </div>
 
-        <KsButton
-            link
-            size="default"
-            :icon="isVisible(column) ? EyeOutline : EyeOffOutline"
-            :class="isVisible(column) ? 'selected' : 'unselected'"
-            @click.stop="handleToggle(column)"
-        />
-    </div>
+            <KsSwitch
+                :modelValue="isVisible(column)"
+                :aria-label="column.label"
+                @click.stop
+                @update:modelValue="() => handleToggle(column)"
+            />
+        </Reorder.Item>
+    </Reorder.Group>
 </template>
 
 <script setup lang="ts">
-    import {EyeOutline, EyeOffOutline} from "./utils/icons";
-    import {useDragAndDrop} from "./composables/useDragAndDrop";
-    import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns";
-    import Drag from "vue-material-design-icons/Drag.vue";
+    import {ref, computed, onMounted, watch} from "vue"
+    import {Reorder} from "motion-v"
+    import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
+    import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
+
+    const passesCondition = (column: ColumnConfig) => !column.condition || column.condition()
 
     const props = defineProps<{
         columns: ColumnConfig[];
         visibleColumns: string[];
         storageKey: string;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         updateColumns: [columns: string[]];
-    }>();
+        resolved: [columns: string[]];
+    }>()
 
     const {
         visibleColumns: localVisibleColumns,
         orderedColumns,
         isVisible,
         toggleColumn,
-        reorderColumns
+        setColumnOrder,
     } = useTableColumns({
         columns: props.columns,
         storageKey: props.storageKey,
-        initialVisibleColumns: props.visibleColumns
-    });
+        initialVisibleColumns: props.visibleColumns,
+    })
 
-    const {
-        draggedIndex,
-        dragOverIndex,
-        handleDragStart,
-        handleDragOver,
-        handleDrop,
-        handleDragEnd
-    } = useDragAndDrop();
+    const orderedItems = ref<ColumnConfig[]>(orderedColumns.value.slice())
+
+    onMounted(() => emits("resolved", localVisibleColumns.value))
+
+    watch(orderedColumns, (cols) => {
+        if (cols.map(c => c.prop).join() !== orderedItems.value.map(c => c.prop).join()) {
+            orderedItems.value = cols.slice()
+        }
+    })
+
+    const visibleItems = computed(() => orderedItems.value.filter(passesCondition))
+
+    const onReorder = (items: ColumnConfig[]) => {
+        if (items.map(c => c.prop).join() === visibleItems.value.map(c => c.prop).join()) return
+        let visibleIndex = 0
+        const rebuilt = orderedItems.value.map(column => passesCondition(column) ? items[visibleIndex++] : column)
+        orderedItems.value = rebuilt
+        setColumnOrder(rebuilt.map(c => c.prop))
+        emits("updateColumns", localVisibleColumns.value)
+    }
 
     const handleToggle = (column: ColumnConfig) => {
-        toggleColumn(column);
-        emits("updateColumns", localVisibleColumns.value);
-    };
-
-    const handleReorder = (fromIndex: number, toIndex: number) => {
-        reorderColumns(fromIndex, toIndex);
-        emits("updateColumns", localVisibleColumns.value);
-    };
-
-    const onDrop = (event: DragEvent, targetIndex: number) => {
-        handleDrop(event, targetIndex, handleReorder);
-    };
+        toggleColumn(column)
+        emits("updateColumns", localVisibleColumns.value)
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -92,24 +97,17 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.375rem 1rem;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid var(--ks-border-primary);
-    cursor: move;
+    border-bottom: 1px solid var(--ks-border-default);
+    cursor: grab;
+    user-select: none;
+    background: var(--ks-bg-surface);
 
-    &:hover {
-        background-color: var(--ks-dropdown-background-hover);
+    &:active {
+        cursor: grabbing;
     }
 
     &:last-child {
         border-bottom: none;
-    }
-
-    &.dragging {
-        opacity: 0.5;
-    }
-
-    &.drag-over {
-        background-color: var(--ks-background-secondary);
     }
 
     .column-info {
@@ -118,7 +116,8 @@
 
         .drag-handle {
             margin-right: 0.5rem;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
+            flex-shrink: 0;
         }
 
         .column-text {
@@ -126,7 +125,7 @@
             flex-direction: column;
 
             small {
-                color: var(--ks-content-tertiary);
+                color: var(--ks-text-dim);
                 font-size: var(--ks-font-size-xs);
                 font-weight: 400;
             }

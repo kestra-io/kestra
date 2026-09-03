@@ -14,7 +14,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
@@ -22,17 +22,19 @@ import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Plugin
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 abstract public class AbstractTrigger implements TriggerInterface {
+    @Size(max = 256, message = "Trigger id must be at most 256 characters")
     protected String id;
 
     protected String type;
@@ -59,18 +61,26 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @Valid
     @PluginProperty(hidden = true, group = "execution")
-    private WorkerGroup workerGroup;
+    @Schema(description = "Routing requirements (tags + fallback) for this trigger.")
+    private WorkerSelector workerSelector;
+
+    @PluginProperty(hidden = true, group = "advanced")
+    @Schema(
+        description = "Identifiers of `enforcement: REFERENCE` governance policies to attach to this trigger and everything nested under it (Enterprise Edition; ignored in the open-source edition)."
+    )
+    private List<String> policyRefs;
 
     @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;
 
     @Schema(
         title = "The labels to pass to the execution created.",
+        description = "Label values are dynamic and can reference trigger variables.",
         implementation = Object.class, oneOf = { List.class, Map.class }
     )
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    @PluginProperty(hidden = true, group = "advanced")
+    @PluginProperty(hidden = true, group = "advanced", dynamic = true)
     private List<@NoSystemLabelValidation Label> labels;
 
     @PluginProperty(group = "reliability")

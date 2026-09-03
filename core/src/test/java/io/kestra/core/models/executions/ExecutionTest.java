@@ -3,17 +3,53 @@ package io.kestra.core.models.executions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ExecutionTest {
+
+    @Test
+    void findTaskRunByTaskRunIdIfPresentShouldReturnEmptyWhenTaskRunNotFound() {
+        // Given
+        Execution execution = Execution.builder()
+            .id("executionId")
+            .taskRunList(List.of(TaskRun.builder().id("existing").state(new State()).build()))
+            .state(new State())
+            .build();
+
+        // When
+        Optional<TaskRun> result = execution.findTaskRunByTaskRunIdIfPresent("missing");
+
+        // Then
+        assertThat(result).isEqualTo(Optional.empty());
+    }
+
+    @Test
+    void findTaskRunByTaskRunIdShouldThrowWhenTaskRunNotFound() {
+        // Given
+        Execution execution = Execution.builder()
+            .id("executionId")
+            .taskRunList(List.of(TaskRun.builder().id("existing").state(new State()).build()))
+            .state(new State())
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> execution.findTaskRunByTaskRunId("missing"))
+            .isInstanceOf(InternalException.class)
+            .hasMessageContaining("Can't find taskrun with taskrunId 'missing'");
+    }
 
     @Test
     void hasTaskRunJoinableTrue() {
@@ -201,6 +237,62 @@ class ExecutionTest {
     }
 
     @Test
+    void shouldFindLastNotTerminatedWhenLastTaskRunIsTerminated() {
+        // Given a task run list whose last run is terminated (SUCCESS) but is preceded by a running one
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
+            .build();
+
+        // When looking for the last not terminated task run
+
+        // Then the running run is returned, not the trailing terminated one
+        assertThat(execution.findLastNotTerminated())
+            .isPresent()
+            .get()
+            .extracting(TaskRun::getId)
+            .isEqualTo("running");
+    }
+
+    @Test
+    void shouldFindLastNotTerminatedWhenLastTaskRunIsPaused() {
+        // Given a task run list whose last run is paused but is preceded by a running one
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
+            ))
+            .build();
+
+        // When looking for the last not terminated task run
+
+        // Then the paused run is skipped and the running run is returned
+        assertThat(execution.findLastNotTerminated())
+            .isPresent()
+            .get()
+            .extracting(TaskRun::getId)
+            .isEqualTo("running");
+    }
+
+    @Test
+    void shouldNotFindLastNotTerminatedWhenAllTaskRunsAreTerminated() {
+        // Given a task run list where every run is terminated
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
+            .build();
+
+        // When looking for the last not terminated task run
+
+        // Then no task run is returned
+        assertThat(execution.findLastNotTerminated()).isEmpty();
+    }
+
+    @Test
     void originalId() {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
@@ -283,5 +375,66 @@ class ExecutionTest {
             null
         );
         assertThat(executionNew.getLabels()).containsExactly(new Label("test", "value2"));
+    }
+
+    @Test
+    void shouldGuessCancelledWhenTaskRunCancelled() {
+        // Given a flow whose single task run ended CANCELLED (e.g. workerSelector fallback: CANCEL)
+        Flow flow = flowWithTask("will-cancel");
+        Execution execution = executionWithTaskRun("will-cancel", State.Type.CANCELLED);
+
+        // When guessing the final state
+
+        // Then the execution must not be silently reported as SUCCESS
+        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldGuessFailedWhenTaskRunFailedTakesPrecedenceOverCancelled() {
+        // Given one FAILED and one CANCELLED task run
+        Return failed = Return.builder().id("failed").type(Return.class.getName()).build();
+        Return cancelled = Return.builder().id("cancelled").type(Return.class.getName()).build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.test")
+            .tasks(List.of(failed, cancelled))
+            .build();
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
+                    TaskRun.builder().id(IdUtils.create()).taskId("cancelled").state(new State(State.Type.CANCELLED, new State())).build()
+                )
+            )
+            .build();
+
+        // When guessing the final state
+
+        // Then FAILED takes precedence over CANCELLED
+        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.FAILED);
+    }
+
+    private static Flow flowWithTask(String taskId) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.test")
+            .tasks(List.of(Return.builder().id(taskId).type(Return.class.getName()).build()))
+            .build();
+    }
+
+    private static Execution executionWithTaskRun(String taskId, State.Type state) {
+        return Execution.builder()
+            .id(IdUtils.create())
+            .taskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id(IdUtils.create())
+                        .taskId(taskId)
+                        .state(new State(state, new State()))
+                        .build()
+                )
+            )
+            .build();
     }
 }

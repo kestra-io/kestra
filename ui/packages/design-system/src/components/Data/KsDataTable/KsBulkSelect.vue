@@ -5,7 +5,7 @@
             @change="toggle"
             :indeterminate="partialCheck"
         >
-            <span v-html="t('selected', {count: selectAll && total !== undefined ? total : selectionCount})" />
+            <span v-html="$t('ks_bulk_select.selected', {count: selectAll && total !== undefined ? total : selectionCount})" />
         </KsCheckbox>
         <KsButtonGroup>
             <KsButton
@@ -13,7 +13,7 @@
                 @click="toggleAll"
                 v-if="total !== undefined && selectionCount < total"
             >
-                <span v-html="t('all', {count: total!})" />
+                <span v-html="$t('ks_bulk_select.all', {count: total!})" />
             </KsButton>
             <slot />
         </KsButtonGroup>
@@ -22,14 +22,6 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
-    import locale from "./KsBulkSelect.locale.ts"
-
-    const {t} = useI18n({
-        useScope: "local",
-        inheritLocale: true,
-        messages: locale
-    })
 
     const props = withDefaults(defineProps<{
         total?: number

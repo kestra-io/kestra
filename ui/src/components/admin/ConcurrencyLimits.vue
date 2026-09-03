@@ -1,12 +1,11 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    
-    <section class="container">
-        <KsDataTable :total="data?.total ?? 0">
+
+    <Empty v-if="data?.results === undefined || data?.results.length === 0" type="concurrency_limits" />
+    <section v-else class="full-container">
+        <KsDataTable :total="data?.total ?? 0" fitHeight>
             <template #table>
-                <KsEmpty v-if="data?.results === undefined || data?.results.length === 0" />
                 <KsTable
-                    v-else
                     :data="data?.results"
                     stripe
                 >
@@ -29,8 +28,8 @@
                 </KsTable>
             </template>
         </KsDataTable>
-        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
-            <KsAlert type="warning" :closable="false" showIcon>
+        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" :beforeClose="beforeEditClose">
+            <KsAlert type="warning" :closable="false">
                 {{ $t("concurrency_limit.warning") }}
             </KsAlert>
             <br>
@@ -48,21 +47,27 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref} from "vue";
-    import {useI18n} from "vue-i18n";
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import useRouteContext from "../../composables/useRouteContext";
-    import {useAxios} from "../../utils/axios";
-    import IconEdit from "vue-material-design-icons/Pencil.vue";
-    import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import Empty from "../layout/empty/Empty.vue"
+    import useRouteContext from "../../composables/useRouteContext"
+    import {useClient} from "@kestra-io/kestra-sdk"
+    import IconEdit from "vue-material-design-icons/Pencil.vue"
+    import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
+    const route = useRoute()
+
+    const baseUrl = computed(() => apiUrlWithTenant(route))
 
     const routeInfo = computed(() => {
         return {
             title: t("concurrency limits"),
-        };
-    });
+        }
+    })
 
     interface ConcurrencyLimit {
         tenantId: string
@@ -71,45 +76,48 @@
         running: number
     }
 
-    const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"];
+    const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
 
-    const axios = useAxios();
-    const data = ref<{ 
-        total: number; 
-        results: ConcurrencyLimit[] 
-    }>();
+    const axios = useClient()
+    const data = ref<{
+        total: number;
+        results: ConcurrencyLimit[]
+    }>()
 
     async function loadData(){
-        const response = await axios.get(`${apiUrl()}/concurrency-limit/search`);
+        const response = await axios.get(`${baseUrl.value}/concurrency-limit/search`)
         if(response?.status !== 200){
-            throw new Error(`Failed to load concurrency limits: ${response?.statusText}`);
+            throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }
-        data.value = response.data;
+        data.value = response.data
     }
 
-    const editRunning = ref(false);
-    const newRunningCount = ref(0);
-    const editingRow = ref<ConcurrencyLimit|null>(null);
+    const editRunning = ref(false)
+    const newRunningCount = ref(0)
+    const editingRow = ref<ConcurrencyLimit|null>(null)
+
+    const {guardedClose} = useDiscardGuard(
+        () => editingRow.value != null && newRunningCount.value !== editingRow.value.running,
+    )
+    const beforeEditClose = (done: () => void) => guardedClose(() => done())
 
     function openDialog(row: ConcurrencyLimit){
-        editRunning.value = true;
-        newRunningCount.value = row.running;
-        editingRow.value = row;
+        editRunning.value = true
+        newRunningCount.value = row.running
+        editingRow.value = row
     }
 
     async function saveEditRunning(){
         if(editingRow.value){
-            editingRow.value.running = newRunningCount.value;
-            await axios.put(`${apiUrlWithoutTenants()}/${editingRow.value.tenantId}/concurrency-limit/${editingRow.value.namespace}/${editingRow.value.flowId}`, editingRow.value);
+            editingRow.value.running = newRunningCount.value
+            await axios.put(`${apiUrlWithoutTenants()}/${editingRow.value.tenantId}/concurrency-limit/${editingRow.value.namespace}/${editingRow.value.flowId}`, editingRow.value)
         }
-        editRunning.value = false;
+        editRunning.value = false
     }
 
-    onMounted(() => {
-        loadData();
-    });
+    watch(baseUrl, () => loadData(), {immediate: true})
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 </script>
 
 <style lang="scss" scoped>
@@ -121,7 +129,7 @@
         align-items: center;
         border-radius: 4px;
         &:hover{
-            border-color: var(--ks-border-primary);
+            border-color: var(--ks-border-default);
         }
     }
 </style>

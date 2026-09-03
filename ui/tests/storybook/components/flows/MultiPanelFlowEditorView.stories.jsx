@@ -1,9 +1,10 @@
 import {vueRouter} from "storybook-vue3-router";
 import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPanelFlowEditorView.vue";
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 import flowSchema from "../../../../src/stores/flow-schema.json";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
+import {mockClientFallback} from "../../../../.storybook/apiMock";
 import {useFlowStore} from "../../../../src/stores/flow";
 
 
@@ -28,7 +29,7 @@ export default {
 
 const Template = (args) => ({
     setup() {
-        const axios = useAxios()
+        const axios = {}
         const flowStore = useFlowStore()
         axios.get = async (uri) => {
             if (uri.endsWith("/plugins")) {
@@ -40,22 +41,20 @@ const Template = (args) => ({
             if (uri.endsWith("/distinct-namespaces")) {
                 return {data: ["sanitychecks.flows.blueprints", "tutorial"]}
             }
-            if (uri.endsWith("/subgroups")) {
-                return {data: []}
-            }
-            console.log("get request", uri)
-            return {data: {}}
+            // Anything this story doesn't answer itself falls back to the shared table in
+            // .storybook/apiMock.js, which reports the route if nothing there covers it either.
+            return mockClientFallback("GET", uri)
         }
-        axios.post = async (uri) => {
+        axios.post = async (uri, data) => {
             if (uri.endsWith("/graph")) {
                 return {data: allowFailureDemo}
             }
             if (uri.endsWith("/validate")) {
                 return {data: {}}
             }
-            console.log("post request", uri)
-            return {data: {}}
+            return mockClientFallback("POST", uri, data)
         }
+        setMockClient(axios);
 
         const flow = YAML_UTILS.parse(args.flow)
         flow.source = args.flow

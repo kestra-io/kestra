@@ -48,8 +48,9 @@
 
     .kel-date-editor.kel-input {
         --kel-date-editor-width: 100%;
-        --kel-input-border-color: var(--ks-border-primary);
-        --kel-input-bg-color: var(--ks-background-panel);
+        --kel-input-border-color: var(--ks-border-default);
+        --kel-input-bg-color: var(--ks-bg-base);
+        --kel-input-hover-border-color: var(--ks-border-strong);
 
         .kel-input__icon {
             margin-right: .25rem;
@@ -58,15 +59,20 @@
 
     .kel-date-table td.disabled .kel-date-table-cell {
         background: none;
-        color: var(--ks-content-inactive);
+        color: var(--ks-text-inactive);
+    }
+
+    .kel-date-picker,
+    .kel-date-range-picker {
+        --kel-datepicker-hover-text-color: var(--ks-text-link);
     }
 
     .kel-date-range-picker {
-        --kel-datepicker-border-color: var(--ks-border-primary);
-        --kel-datepicker-inner-border-color: var(--ks-border-primary);
+        --kel-datepicker-border-color: var(--ks-border-default);
+        --kel-datepicker-inner-border-color: var(--ks-border-default);
 
         .kel-date-table th {
-            border-bottom-color: var(--ks-border-primary);
+            border-bottom-color: var(--ks-border-default);
         }
     }
 </style>

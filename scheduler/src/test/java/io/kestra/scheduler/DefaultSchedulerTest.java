@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import io.kestra.core.async.AsyncOperationService;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -39,7 +38,7 @@ import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.MaintenanceService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
@@ -77,7 +76,7 @@ class DefaultSchedulerTest {
     ConditionService conditionService;
 
     @Inject
-    PluginDefaultService pluginDefaultService;
+    FlowParsingService flowParsingService;
 
     @Inject
     SchedulableEvaluator schedulableEvaluator;
@@ -148,7 +147,7 @@ class DefaultSchedulerTest {
             // WHEN - THEN
             assertThatThrownBy(() -> scheduler.start(2))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Scheduler already started");
+                .hasMessage("Service already started");
         }
     }
 
@@ -219,27 +218,87 @@ class DefaultSchedulerTest {
     }
 
     @Test
-    @FlakyTest
     void shouldStopAndRestartSchedulingLoopWhenEnteringAndExitingMaintenanceMode() {
         // GIVEN
         try (DefaultScheduler scheduler = createDefaultScheduler();) {
             scheduler.start(2);
             serviceLivenessStore.put(scheduler);
-            vNodeController.checkServicesAndRebalanceVNodes(); // manually rebalance vNodes
+            vNodeController.checkServicesAndRebalanceVNodes();
+
+            // WHEN — enter maintenance
+            maintenanceService.setMaintenanceMode(true);
+
+            // THEN — loops stop asynchronously, poll until they're all stopped
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
+                assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+            });
+
+            // WHEN — exit maintenance
+            maintenanceService.setMaintenanceMode(false);
+
+            // THEN — loops restart asynchronously, poll until they're all running
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
+                assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
+            });
+        }
+    }
+
+    @Test
+    void shouldRestoreVNodesAssignmentsOnSchedulingLoopsWhenExitingMaintenanceMode() {
+        // GIVEN
+        try (DefaultScheduler scheduler = createDefaultScheduler();) {
+            scheduler.start(2);
+            serviceLivenessStore.put(scheduler);
+            vNodeController.checkServicesAndRebalanceVNodes();
 
             // WHEN
             maintenanceService.setMaintenanceMode(true);
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+                assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning))
+            );
+            maintenanceService.setMaintenanceMode(false);
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+                assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning)
+            );
 
             // THEN
-            assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
-            assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+            Set<Integer> loopAssignments = scheduler.schedulingLoops()
+                .stream()
+                .flatMap(loop -> loop.assignments().stream())
+                .collect(Collectors.toSet());
+            assertThat(loopAssignments).isEqualTo(scheduler.currentVNodesAssignment());
+        }
+    }
+
+    @Test
+    void shouldAssignAllVNodesToSchedulingLoopsWhenMaxThreadsIsGreaterThanAssignedVNodes() {
+        // GIVEN
+        try (DefaultScheduler scheduler1 = createDefaultScheduler();
+            DefaultScheduler scheduler2 = createDefaultScheduler();
+            DefaultScheduler scheduler3 = createDefaultScheduler();) {
+            scheduler1.start(8);
+            scheduler2.start(8);
+            scheduler3.start(8);
+            serviceLivenessStore.put(scheduler1);
+            serviceLivenessStore.put(scheduler2);
+            serviceLivenessStore.put(scheduler3);
 
             // WHEN
-            maintenanceService.setMaintenanceMode(false);
+            vNodeController.checkServicesAndRebalanceVNodes();
 
             // THEN
-            assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
-            assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
+            List.of(scheduler1, scheduler2, scheduler3).forEach(scheduler ->
+            {
+                Set<Integer> loopAssignments = scheduler.schedulingLoops()
+                    .stream()
+                    .flatMap(loop -> loop.assignments().stream())
+                    .collect(Collectors.toSet());
+                assertThat(loopAssignments).isEqualTo(scheduler.currentVNodesAssignment());
+            });
         }
     }
 
@@ -250,9 +309,9 @@ class DefaultSchedulerTest {
             metricRegistry,
             runContextFactory,
             conditionService,
-            pluginDefaultService,
+            flowParsingService,
             schedulableEvaluator,
-            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
+            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
             triggerWorkerJobPublisher,
             triggerExecutionPublisher,
             SCHEDULER_CONFIGURATION

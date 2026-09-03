@@ -6,9 +6,9 @@
             @click="() => executionsStore.execution = execution"
             :class="{active: executionsStore.execution?.id === execution.id}"
         >
-            <p>{{ date(execution.state.startDate) }}</p>
+            <p>{{ date(execution.state.startDate ?? "") }}</p>
             <p class="playground-duration">
-                {{ humanizeDuration(execution.state.duration) }}
+                {{ humanizeDuration(execution.state.duration ?? "") }}
             </p>
             <div class="playground-status">
                 <KsExecutionStatus :status="execution.state.current" size="small" />
@@ -18,19 +18,19 @@
 </template>
 
 <script setup lang="ts">
-    import {KsExecutionStatus} from "@kestra-io/design-system";
-    import {date, humanizeDuration} from "../../../utils/filters";
-    import {Execution, useExecutionsStore} from "../../../stores/executions";
+    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {date, humanizeDuration} from "../../../utils/filters"
+    import {Execution, useExecutionsStore} from "../../../stores/executions"
 
-    const executionsStore = useExecutionsStore();
+    const executionsStore = useExecutionsStore()
 
     defineProps<{
         executions: Execution[];
-    }>();
+    }>()
 
     defineEmits<{
         (e: "click", executionId: string): void;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">
@@ -45,7 +45,7 @@
         display: grid;
         border: none;
         width: 284px;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         text-align: left;
         padding: .3rem .5rem;
         font-size: var(--ks-font-size-sm);
@@ -60,7 +60,7 @@
             padding: 0;
         }
         &.active{
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
     }
     .playground-status {
@@ -72,6 +72,6 @@
     }
     .playground-duration {
         grid-area: duration;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

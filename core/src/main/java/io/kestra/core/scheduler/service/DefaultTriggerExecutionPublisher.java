@@ -3,14 +3,16 @@ package io.kestra.core.scheduler.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.kestra.core.events.CrudEvent;
-import io.kestra.core.models.executions.Execution;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContextLoggerFactory;
 
-import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -19,39 +21,55 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultTriggerExecutionPublisher.class);
 
-    private final ApplicationEventPublisher<CrudEvent<Execution>> executionEventPublisher;
-    private final DispatchQueueInterface<Execution> executionQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
-    public DefaultTriggerExecutionPublisher(ApplicationEventPublisher<CrudEvent<Execution>> executionEventPublisher,
-        DispatchQueueInterface<Execution> executionQueue,
+    public DefaultTriggerExecutionPublisher(DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         RunContextLoggerFactory runContextLoggerFactory) {
-        this.executionEventPublisher = executionEventPublisher;
-        this.executionQueue = executionQueue;
+        this.executionCommandQueue = executionCommandQueue;
         this.runContextLoggerFactory = runContextLoggerFactory;
     }
 
-    public void send(final Execution execution) {
+    @Override
+    public void send(final TriggerId triggerId, final TriggerEvaluationResult evaluation) {
+        Create command = toCreate(triggerId, evaluation);
         try {
-            this.executionQueue.emit(execution);
-            this.executionEventPublisher.publishEvent(CrudEvent.create(execution));
+            this.executionCommandQueue.emit(command);
         } catch (QueueException e) {
+            // The command queue is down, so attach the cause to the execution before retrying a FAILED one:
+            // logs go through their own queue and are often the only trace the user gets.
+            runContextLoggerFactory.create(command.executionFullId(), command.kind(), command.labels())
+                .logger()
+                .error("Unable to emit the execution to the executor.", e);
             try {
-                Execution failedExecution = fail(execution, e);
-                this.executionQueue.emit(failedExecution);
-                this.executionEventPublisher.publishEvent(CrudEvent.create(execution));
+                this.executionCommandQueue.emit(command.withStateType(State.Type.FAILED));
             } catch (QueueException ex) {
                 LOG.error("Unable to emit the execution", ex);
             }
         }
     }
 
-    private Execution fail(Execution message, Exception e) {
-        var failedExecution = message.failedExecutionFromExecutor(e);
-        var logger = runContextLoggerFactory.create(message);
-        logger.emitLogs(failedExecution.logs());
-        return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
-    }
+    private Create toCreate(TriggerId triggerId, TriggerEvaluationResult evaluation) {
+        ExecutionId executionId = new ExecutionId(
+            triggerId.getTenantId(),
+            triggerId.getNamespace(),
+            triggerId.getFlowId(),
+            evaluation.executionId(),
+            evaluation.flowRevision()
+        );
 
+        // A non-terminal evaluation leaves the state unset so the executor starts the execution from CREATED;
+        // a terminal one (e.g. input rendering failed) is preserved so the executor doesn't restart it.
+        State.Type stateType = evaluation.stateType() != null && evaluation.stateType().isTerminated()
+            ? evaluation.stateType()
+            : null;
+
+        return Create.of(executionId)
+            .withStateType(stateType)
+            .withTrigger(evaluation.trigger())
+            .withLabels(evaluation.labels())
+            .withInputs(evaluation.inputs())
+            .withScheduleDate(evaluation.scheduleDate());
+    }
 }

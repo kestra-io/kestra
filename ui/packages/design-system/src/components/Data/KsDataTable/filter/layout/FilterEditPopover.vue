@@ -29,78 +29,89 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, onUnmounted, ref} from "vue";
-    import type {AppliedFilter, FilterKeyConfig} from "../utils/filterTypes";
-    import FilterEditPopper from "./FilterEditPopper.vue";
+    import {nextTick, onMounted, onUnmounted, ref} from "vue"
+    import type {AppliedFilter, FilterKeyConfig} from "../utils/filterTypes"
+    import FilterEditPopper from "./FilterEditPopper.vue"
 
-    defineProps<{
+    const props = defineProps<{
         filter: AppliedFilter;
         filterKey?: FilterKeyConfig | null;
         shouldShowComparatorInPopper?: boolean;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         update: [filter: AppliedFilter];
         remove: [filterId: string];
-    }>();
+    }>()
 
-    const containerRef = ref<HTMLElement | null>(null);
-    const positionStyle = ref({});
-    const isDialogVisible = ref(false);
+    const containerRef = ref<HTMLElement | null>(null)
+    const positionStyle = ref({})
+    const isDialogVisible = ref(false)
 
     const updatePosition = () => {
-        if (!containerRef.value) return;
+        if (!containerRef.value) return
 
-        const chipElement = containerRef.value.closest(".chip");
-        if (!chipElement) return;
+        const chipElement = containerRef.value.closest(".chip")
+        if (!chipElement) return
 
-        const chipRect = chipElement.getBoundingClientRect();
-        const scrollY = window.scrollY;
-        const scrollX = window.scrollX;
-        const popupWidth = 300;
+        const chipRect = chipElement.getBoundingClientRect()
+        const scrollY = window.scrollY
+        const scrollX = window.scrollX
+        const popupWidth = 300
 
         positionStyle.value = {
             position: "absolute",
             top: `${chipRect.bottom + scrollY + 8}px`,
             left: `${chipRect.left + scrollX}px`,
-            width: `${popupWidth}px`
-        };
-    };
+            "min-width": `${popupWidth}px`,
+        }
+    }
 
     const toggleDialog = () => {
-        isDialogVisible.value = !isDialogVisible.value;
-        if (isDialogVisible.value) nextTick(updatePosition);
-    };
+        if (isDialogVisible.value) {
+            closeDialog()
+        } else {
+            isDialogVisible.value = true
+            nextTick(updatePosition)
+        }
+    }
+
+    const isEmptyValue = (value: AppliedFilter["value"]) =>
+        value == null || value === "" || (Array.isArray(value) && value.length === 0)
 
     const closeDialog = () => {
-        isDialogVisible.value = false;
-    };
+        // Clean up a filter left empty on close, unless it's shown by default (stays as "in any").
+        if (props.filter && isEmptyValue(props.filter.value) && !props.filterKey?.visibleByDefault) {
+            emits("remove", props.filter.id)
+        }
+        isDialogVisible.value = false
+    }
 
     const handleUpdate = (updatedFilter: AppliedFilter) => {
-        emits("update", updatedFilter);
-        closeDialog();
-    };
+        // Live apply: keep the popover open so the user can keep adjusting; close is explicit.
+        emits("update", updatedFilter)
+    }
 
     const handleRemove = (filterId: string) => {
-        emits("remove", filterId);
-        closeDialog();
-    };
+        emits("remove", filterId)
+        isDialogVisible.value = false
+    }
 
     onMounted(() => {
         const handleResize = () => {
-            if (isDialogVisible.value) updatePosition();
-        };
+            if (isDialogVisible.value) updatePosition()
+        }
 
-        window.addEventListener("resize", handleResize);
-        window.addEventListener("scroll", handleResize, true);
+        window.addEventListener("resize", handleResize)
+        window.addEventListener("scroll", handleResize, true)
 
         onUnmounted(() => {
-            window.removeEventListener("resize", handleResize);
-            window.removeEventListener("scroll", handleResize, true);
-        });
-    });
+            window.removeEventListener("resize", handleResize)
+            window.removeEventListener("scroll", handleResize, true)
+        })
+    })
 
-    defineExpose({toggleDialog, isDialogVisible});
+    defineExpose({toggleDialog, isDialogVisible})
 </script>
 <style lang="scss" scoped>
 .edit-container {
@@ -116,12 +127,13 @@
     z-index: 1000;
 
     .edit-popup {
-        background: var(--ks-dropdown-background);
-        border: 1px solid var(--ks-border-primary);
+        background: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-default);
         border-radius: 8px;
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
         padding: 0;
         min-height: var(--ks-font-size-lg);
+        max-width: 480px;
         position: relative;
     }
 }

@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -64,7 +65,7 @@ public abstract class AbstractKvMetadataRepositoryTest {
         kvMetadataRepositoryInterface.save(metadata);
 
         String changedDescription = "Changed description";
-        kvMetadataRepositoryInterface.save(metadata.toBuilder().description(changedDescription).version(2).build());
+        kvMetadataRepositoryInterface.save(metadata.toBuilder().description(changedDescription).revision(2).build());
 
         Optional<PersistedKvMetadata> found = kvMetadataRepositoryInterface.findByName(
             tenantId,
@@ -75,7 +76,7 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo(key);
         assertThat(found.get().getDescription()).isEqualTo(changedDescription);
-        assertThat(found.get().getVersion()).isEqualTo(2);
+        assertThat(found.get().getRevision()).isEqualTo(2);
         assertThat(found.get().isLast()).isTrue();
         assertThat(found.get().isDeleted()).isFalse();
     }
@@ -89,7 +90,7 @@ public abstract class AbstractKvMetadataRepositoryTest {
             .tenantId(tenantId)
             .namespace(namespace)
             .name(key)
-            .version(1)
+            .revision(1)
             .build();
 
         kvMetadataRepositoryInterface.save(metadata);
@@ -117,7 +118,7 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo(key);
         // Soft delete
-        assertThat(found.get().getVersion()).isEqualTo(1);
+        assertThat(found.get().getRevision()).isEqualTo(1);
         assertThat(found.get().isLast()).isTrue();
         assertThat(found.get().isDeleted()).isTrue();
         assertThat(found.get().getUpdated()).isAfter(beforeDeleteUpdateDate);
@@ -136,11 +137,11 @@ public abstract class AbstractKvMetadataRepositoryTest {
             .description(originalDescription)
             .build();
 
-        assertThat(metadata.getVersion()).isNull();
-        assertThat(kvMetadataRepositoryInterface.save(metadata).getVersion()).isEqualTo(1);
+        assertThat(metadata.getRevision()).isNull();
+        assertThat(kvMetadataRepositoryInterface.save(metadata).getRevision()).isEqualTo(1);
         String changedDescription = "Changed description";
         metadata = kvMetadataRepositoryInterface.save(metadata.toBuilder().description(changedDescription).build());
-        assertThat(metadata.getVersion()).isEqualTo(2);
+        assertThat(metadata.getRevision()).isEqualTo(2);
 
         String anotherNamespace = TestsUtils.randomNamespace();
         String anotherNamespaceDeletedKey = "test-another-kv";
@@ -178,7 +179,7 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(found.getTotal()).isEqualTo(4);
         List<PersistedKvMetadata> versionsForKey = found.stream().filter(kv -> kv.getName().equals(key)).toList();
         assertThat(versionsForKey.size()).isEqualTo(2);
-        assertThat(versionsForKey.stream().map(PersistedKvMetadata::getVersion)).containsExactlyInAnyOrder(1, 2);
+        assertThat(versionsForKey.stream().map(PersistedKvMetadata::getRevision)).containsExactlyInAnyOrder(1, 2);
         assertThat(versionsForKey.stream().map(PersistedKvMetadata::getDescription)).containsExactlyInAnyOrder(originalDescription, changedDescription);
 
         // We get all versions but latest if we put FetchVersion.OLD
@@ -186,7 +187,7 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(found).hasSize(1);
         assertThat(found.getTotal()).isEqualTo(1);
         assertThat(found.getFirst().getDescription()).isEqualTo(originalDescription);
-        assertThat(found.getFirst().getVersion()).isEqualTo(1);
+        assertThat(found.getFirst().getRevision()).isEqualTo(1);
         assertThat(found.getFirst().isLast()).isFalse();
 
         found = kvMetadataRepositoryInterface.find(
@@ -242,11 +243,11 @@ public abstract class AbstractKvMetadataRepositoryTest {
             .description("Some description")
             .build();
 
-        assertThat(metadata.getVersion()).isNull();
-        assertThat(kvMetadataRepositoryInterface.save(metadata).getVersion()).isEqualTo(1);
+        assertThat(metadata.getRevision()).isNull();
+        assertThat(kvMetadataRepositoryInterface.save(metadata).getRevision()).isEqualTo(1);
         String changedDescription = "Changed description";
         metadata = kvMetadataRepositoryInterface.save(metadata.toBuilder().description(changedDescription).build());
-        assertThat(metadata.getVersion()).isEqualTo(2);
+        assertThat(metadata.getRevision()).isEqualTo(2);
 
         Integer purgedAmount = kvMetadataRepositoryInterface.purge(
             List.of(
@@ -262,13 +263,31 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(kvMetadataRepositoryInterface.findByName(tenantId, namespace, key).isPresent()).isFalse();
     }
 
+    @Test
+    void findDistinctNamespace() throws IOException {
+        String tenantId = TestsUtils.randomTenant();
+        String namespace1 = TestsUtils.randomNamespace();
+        String namespace2 = TestsUtils.randomNamespace();
+        String deletedNamespace = TestsUtils.randomNamespace();
+
+        kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, namespace1, "key1"));
+        kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, namespace2, "key2"));
+        PersistedKvMetadata deletedEntry = kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, deletedNamespace, "key3"));
+        kvMetadataRepositoryInterface.delete(deletedEntry);
+
+        Set<String> namespaces = kvMetadataRepositoryInterface.findDistinctNamespace(tenantId);
+
+        assertThat(namespaces).containsExactlyInAnyOrder(namespace1, namespace2);
+        assertThat(namespaces).doesNotContain(deletedNamespace);
+    }
+
     protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {
         return PersistedKvMetadata.builder()
             .tenantId(tenantId)
             .namespace(namespace)
             .name(key)
             .description("Test kv description")
-            .version(1)
+            .revision(1)
             .expirationDate(Instant.now().plus(5, ChronoUnit.MINUTES))
             .build();
     }

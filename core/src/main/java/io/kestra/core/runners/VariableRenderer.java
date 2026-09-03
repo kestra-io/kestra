@@ -6,11 +6,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.*;
 import io.kestra.core.serializers.JacksonMapper;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
@@ -18,12 +17,12 @@ import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
+    public static final String RENDER_DEPTH_VAR = "__kestra_render_depth";
 
     private volatile PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
@@ -105,13 +104,14 @@ public class VariableRenderer {
             PebbleTemplate compiledTemplate = this.pebbleEngine().getLiteralTemplate((String) result);
 
             try {
-                OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
+                long maxOutputSize = this.variableConfiguration.getMaxOutputSize();
+                OutputWriter writer = stringify ? new JsonWriter(maxOutputSize) : new TypedObjectWriter(maxOutputSize);
                 compiledTemplate.evaluate(writer, variables);
                 result = writer.output();
             } catch (IllegalArgumentException e) {
                 //can happen in case of mixed type in string
                 if (!stringify) {
-                    JsonWriter fallbackWriter = new JsonWriter();
+                    JsonWriter fallbackWriter = new JsonWriter(this.variableConfiguration.getMaxOutputSize());
                     compiledTemplate.evaluate(fallbackWriter, variables);
                     Object rendered = fallbackWriter.output();
 
@@ -221,6 +221,14 @@ public class VariableRenderer {
         return Optional.ofNullable(object);
     }
 
+    /**
+     * Renders an object while tracking render() nesting depth to prevent infinite recursion.
+     */
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive, int renderDepth) throws IllegalVariableEvaluationException {
+        variables.put(RENDER_DEPTH_VAR, renderDepth);
+        return renderObject(object, variables, recursive);
+    }
+
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return this.renderList(list, variables, this.variableConfiguration.getRecursiveRendering());
     }
@@ -259,19 +267,5 @@ public class VariableRenderer {
         }
 
         return result;
-    }
-
-    @Getter
-    @ConfigurationProperties("kestra.variables")
-    public static class VariableConfiguration {
-        public VariableConfiguration() {
-            this.cacheEnabled = true;
-            this.cacheSize = 1000;
-            this.recursiveRendering = false;
-        }
-
-        Boolean cacheEnabled;
-        Integer cacheSize;
-        Boolean recursiveRendering;
     }
 }

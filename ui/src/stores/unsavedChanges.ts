@@ -1,33 +1,33 @@
-import {defineStore} from "pinia";
-import {ref} from "vue";
+import {defineStore} from "pinia"
+import {ref} from "vue"
 
 export const useUnsavedChangesStore = defineStore("unsavedChanges", () => {
-    const isDialogVisible = ref(false);
-    let resolveCallback: ((value: boolean) => void) | null = null;
+    const isDialogVisible = ref(false)
+    let resolveCallback: ((value: boolean) => void) | null = null
     const unsavedChange = ref(false)
     
     const showDialog = () => {
         return new Promise((resolve) => {
-            isDialogVisible.value = true;
-            resolveCallback = resolve;
-        });
-    };
+            isDialogVisible.value = true
+            resolveCallback = resolve
+        })
+    }
 
     const handleLeave = () => {
-        isDialogVisible.value = false;
+        isDialogVisible.value = false
         if (resolveCallback) {
-            resolveCallback(true);
-            resolveCallback = null;
+            resolveCallback(true)
+            resolveCallback = null
         }
-    };
+    }
 
     const handleCancel = () => {
-        isDialogVisible.value = false;
+        isDialogVisible.value = false
         if (resolveCallback) {
-            resolveCallback(false);
-            resolveCallback = null;
+            resolveCallback(false)
+            resolveCallback = null
         }
-    };
+    }
 
     return {
         isDialogVisible,
@@ -35,5 +35,5 @@ export const useUnsavedChangesStore = defineStore("unsavedChanges", () => {
         handleLeave,
         handleCancel,
         unsavedChange,
-    };
-});
+    }
+})

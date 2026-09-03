@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-    import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
+    import Blueprints from "override/components/flows/blueprints/Blueprints.vue"
     defineOptions({
         inheritAttrs: false,
     })

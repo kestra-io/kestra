@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class KVStoreServiceTest {
@@ -50,6 +51,13 @@ class KVStoreServiceTest {
     }
 
     @Test
+    void shouldDenyKVStoreAccessWhenAccessingFromPrefixSiblingNamespace() {
+        assertThatThrownBy(() -> storeService.get(MAIN_TENANT, "prod", "prod2"))
+            .isInstanceOf(KVStoreException.class)
+            .hasMessageContaining("Access to 'prod' namespace is not allowed from 'prod2'");
+    }
+
+    @Test
     void shouldGetKVStoreFromNonExistingNamespaceWithAKV() throws IOException {
         KVStore kvStore = new InternalKVStore(MAIN_TENANT, "system", storageInterface, kvMetadataStateStore);
         kvStore.put("key", new KVValueAndMetadata(new KVMetadata("myDescription", Duration.ofHours(1)), "value"));
@@ -74,7 +82,7 @@ class KVStoreServiceTest {
 
         List<KVEntry> kvEntries = storeService.listAll(MAIN_TENANT, kvStore.namespace());
         assertThat(kvEntries).hasSize(1);
-        assertThat(kvEntries.getFirst().version()).isEqualTo(2);
+        assertThat(kvEntries.getFirst().revision()).isEqualTo(2);
     }
 
     @MockBean(NamespaceService.class)
@@ -87,6 +95,12 @@ class KVStoreServiceTest {
         @Override
         public boolean isNamespaceExists(String tenant, String namespace) {
             return namespace.equals(TEST_EXISTING_NAMESPACE);
+        }
+
+        /** Emulates an EE allow-list where every namespace allows only itself, which OSS never denies. */
+        @Override
+        public boolean isAllowedNamespace(String tenant, String namespace, String fromTenant, String fromNamespace) {
+            return namespace.equals(fromNamespace);
         }
     }
 }

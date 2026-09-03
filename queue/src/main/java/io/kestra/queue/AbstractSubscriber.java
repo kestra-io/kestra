@@ -8,7 +8,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
@@ -82,24 +81,30 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             try {
                 consumer.accept(event);
             } catch (Exception e) {
+                String redeliver = queueService.failFast() ? "Message will be redelivered" : "Message will be lost as fail-fast is disabled (kestra.queue.fail-fast=false)!";
                 if (event.isLeft()) {
                     log.error(
-                        "{} failed to process message with key '{}'. Message will be redelivered. You can ignore this message by starting Kestra with `--ignore-queue-records {}`.",
+                        "{} failed to process message with key '{}'. {}. You can ignore this message by starting Kestra with `--ignore-queue-records {}`.",
                         logPrefix,
                         event.getLeft().key(),
+                        redeliver,
                         event.getLeft().key(),
                         e
                     );
                     log.debug(new String(message));
                 } else {
                     log.error(
-                        "{} failed to process message (deserialization error). Message will be redelivered.",
+                        "{} failed to process message (deserialization error). {}.",
                         logPrefix,
+                        redeliver,
                         e
                     );
                     log.debug(new String(message));
                 }
-                throw e;
+
+                if (queueService.failFast()) {
+                    throw e;
+                }
             }
         });
     }
@@ -180,7 +185,8 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         return this.active.get();
     }
 
-    protected boolean isPaused() {
+    @Override
+    public boolean isPaused() {
         return this.paused.get();
     }
 
@@ -248,7 +254,8 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         log.error("{} fatal error while consuming messages. Initiating application shutdown.", logPrefix, cause);
         this.markEnd();
         try {
-            KestraContext.getContext().shutdown();
+            // shutdown the context owning this subscriber.
+            this.queueService.getKestraContext().shutdown();
         } catch (Exception e) {
             log.warn("{} failed to initiate shutdown.", logPrefix, e);
         }

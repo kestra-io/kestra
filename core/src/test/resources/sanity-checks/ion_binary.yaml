@@ -1,0 +1,165 @@
+id: ion_binary
+namespace: sanitychecks.core
+description: |
+  Sanity check validating ION binary serialization across core storage tasks.
+  Verifies text ION input, binary ION output after processing, and fromIon() decoding.
+
+tasks:
+  # === DATA GENERATION (text ION via Write) ===
+
+  - id: write_ion_data
+    type: io.kestra.plugin.core.storage.Write
+    content: |
+      {"id":1,"name":"alice","city":"paris","score":95.5}
+      {"id":2,"name":"bob","city":"london","score":82.3}
+      {"id":3,"name":"charlie","city":"paris","score":91.0}
+      {"id":4,"name":"diana","city":"berlin","score":78.9}
+      {"id":5,"name":"eve","city":"london","score":88.1}
+    extension: .ion
+
+  # === RAW READ: text ION is human-readable (Write stores raw bytes) ===
+
+  - id: raw_read_ion
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ read(outputs.write_ion_data.uri) }}"
+
+  - id: assert_raw_read_is_text_ion
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.raw_read_ion.value contains 'alice' }}"
+      - "{{ outputs.raw_read_ion.value contains 'eve' }}"
+      - "{{ outputs.raw_read_ion.value contains 'paris' }}"
+
+  # === DECODED READ: fromIon decodes text ION ===
+
+  - id: decoded_read_ion
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ fromIon(read(outputs.write_ion_data.uri)) }}"
+
+  - id: decoded_read_all_rows
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ fromIon(read(outputs.write_ion_data.uri), allRows=true) }}"
+
+  - id: assert_decoded_first_row
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.decoded_read_ion.value contains 'alice' }}"
+      - "{{ outputs.decoded_read_ion.value contains 'paris' }}"
+      - "{{ outputs.decoded_read_ion.value contains '95.5' }}"
+
+  - id: assert_decoded_all_rows
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.decoded_read_all_rows.value contains 'alice' }}"
+      - "{{ outputs.decoded_read_all_rows.value contains 'bob' }}"
+      - "{{ outputs.decoded_read_all_rows.value contains 'charlie' }}"
+      - "{{ outputs.decoded_read_all_rows.value contains 'diana' }}"
+
+  # === STORAGE TASKS (read text ION in, write binary ION out) ===
+
+  - id: size_ion
+    type: io.kestra.plugin.core.storage.Size
+    uri: "{{ outputs.write_ion_data.uri }}"
+
+  - id: assert_size_nonzero
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.size_ion.size > 0 }}"
+
+  - id: split_ion
+    type: io.kestra.plugin.core.storage.Split
+    from: "{{ outputs.write_ion_data.uri }}"
+    rows: 2
+
+  - id: assert_split_chunks
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.split_ion.uris | length == 3 }}"
+
+  - id: concat_ion
+    type: io.kestra.plugin.core.storage.Concat
+    files:
+      - "{{ outputs.split_ion.uris[0] }}"
+      - "{{ outputs.split_ion.uris[1] }}"
+      - "{{ outputs.split_ion.uris[2] }}"
+    extension: ".ion"
+
+  - id: decoded_concat
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ fromIon(read(outputs.concat_ion.uri), allRows=true) }}"
+
+  - id: assert_concat_complete
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.decoded_concat.value contains 'alice' }}"
+      - "{{ outputs.decoded_concat.value contains 'eve' }}"
+      - "{{ outputs.decoded_concat.value contains 'berlin' }}"
+
+  - id: reverse_ion
+    type: io.kestra.plugin.core.storage.Reverse
+    from: "{{ outputs.write_ion_data.uri }}"
+
+  - id: decoded_reverse
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ fromIon(read(outputs.reverse_ion.uri)) }}"
+
+  - id: assert_reverse_order
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.decoded_reverse.value contains 'eve' }}"
+
+  - id: dedup_ion
+    type: io.kestra.plugin.core.storage.DeduplicateItems
+    from: "{{ outputs.write_ion_data.uri }}"
+    expr: "{{ city }}"
+
+  - id: decoded_dedup
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ fromIon(read(outputs.dedup_ion.uri), allRows=true) }}"
+
+  - id: assert_dedup_cities
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.decoded_dedup.value contains 'paris' }}"
+      - "{{ outputs.decoded_dedup.value contains 'london' }}"
+      - "{{ outputs.decoded_dedup.value contains 'berlin' }}"
+
+  - id: filter_ion
+    type: io.kestra.plugin.core.storage.FilterItems
+    from: "{{ outputs.write_ion_data.uri }}"
+    filterCondition: "{{ city == 'paris' }}"
+    filterType: INCLUDE
+
+  - id: decoded_filter
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ fromIon(read(outputs.filter_ion.uri), allRows=true) }}"
+
+  - id: assert_filter_paris_only
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.decoded_filter.value contains 'alice' }}"
+      - "{{ outputs.decoded_filter.value contains 'charlie' }}"
+
+  # === WORKING DIRECTORY ===
+
+  - id: working_directory_test
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: wd_write
+        type: io.kestra.plugin.core.storage.Write
+        content: |
+          {"wd_key":"wd_value","num":42}
+        extension: .ion
+      - id: wd_read_back
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ read(outputs.wd_write.uri) }}"
+
+  # === LOOP ===
+
+  - id: loop_test
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["alice", "bob", "charlie"]
+    tasks:
+      - id: loop_item
+        type: io.kestra.plugin.core.debug.Return
+        format: "Hello {{ item.value }}!"

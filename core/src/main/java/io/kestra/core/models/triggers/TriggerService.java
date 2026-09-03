@@ -11,7 +11,6 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.ListUtils;
 
 public abstract class TriggerService {
 
@@ -59,14 +58,16 @@ public abstract class TriggerService {
         AbstractTrigger trigger,
         ExecutionTrigger executionTrigger,
         ConditionContext conditionContext) {
-        List<Label> labels = buildLabels(id, trigger, conditionContext);
+        List<Label> labels = buildLabels(id, trigger, conditionContext, executionTrigger.getVariables());
 
         return new TriggerEvaluationResult(
             id,
             State.Type.CREATED,
             executionTrigger,
             labels,
-            conditionContext.getFlow().getRevision()
+            conditionContext.getFlow().getRevision(),
+            null,
+            null
         );
     }
 
@@ -121,7 +122,7 @@ public abstract class TriggerService {
         TriggerContext context,
         ExecutionTrigger executionTrigger,
         ConditionContext conditionContext) {
-        List<Label> executionLabels = buildLabels(id, trigger, conditionContext);
+        List<Label> executionLabels = buildLabels(id, trigger, conditionContext, executionTrigger.getVariables());
         return Execution.builder()
             .id(id)
             .namespace(context.getNamespace())
@@ -135,14 +136,15 @@ public abstract class TriggerService {
             .build();
     }
 
-    private static List<Label> buildLabels(String id, AbstractTrigger trigger, ConditionContext conditionContext) {
-        List<Label> labels = new ArrayList<>(ListUtils.emptyOnNull(trigger.getLabels()));
-        labels.add(new Label(Label.FROM, "trigger"));
-        if (labels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
-            labels.add(new Label(Label.CORRELATION_ID, id));
-        }
-        // include non-system flow labels (previously added in WorkerTriggerProcessor)
-        labels.addAll(LabelService.labelsExcludingSystem(conditionContext.getFlow().getLabels()));
-        return labels;
+    /**
+     * Builds the labels the trigger itself contributes, deliberately without the flow's own labels: the
+     * execution is created from the flow processed for runtime and picks those up there, so carrying the
+     * raw flow's here would let them win the creation-time merge and pin back a value governance overrides.
+     */
+    private static List<Label> buildLabels(String id, AbstractTrigger trigger, ConditionContext conditionContext, Map<String, Object> variables) {
+        List<Label> labels = LabelService.fromTrigger(conditionContext.getRunContext(), trigger, Map.of("trigger", variables));
+        labels.add(new Label(Label.FROM, Label.FromLabel.TRIGGER.value));
+
+        return LabelService.withCorrelationId(labels, id);
     }
 }

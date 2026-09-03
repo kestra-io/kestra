@@ -47,6 +47,8 @@ public final class TriggerState implements TriggerId {
     // the last-event id that mutate this state.
     private final EventId lastEventId;
     private final Instant lastTriggeredDate;
+    private final String executionId;
+    private final long dispatchEpoch;
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -100,7 +102,9 @@ public final class TriggerState implements TriggerId {
             null,
             type,
             null,
-            null
+            null,
+            null,
+            0L
         );
     }
 
@@ -169,6 +173,18 @@ public final class TriggerState implements TriggerId {
     }
 
     /**
+     * Records the id of the execution currently holding this trigger's lock.
+     * <p>
+     * Set only for non-concurrent triggers (allowConcurrent=false); pass {@code null} to clear.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState executionId(final Clock clock, String executionId) {
+        return update(clock).executionId(executionId).build();
+    }
+
+    /**
      * Locks this trigger state.
      *
      * @param clock the scheduler clock.
@@ -215,8 +231,10 @@ public final class TriggerState implements TriggerId {
             backfill = backfill
                 .toBuilder()
                 .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now(clock))
-                .currentDate(backfill.getStart())
-                .previousNextExecutionDate(toZonedDateTime(nextEvaluationDate))
+                .currentDate(backfill.getCurrentDate() != null ? backfill.getCurrentDate() : backfill.getStart())
+                // captured once, on backfill creation: pausing re-enters this method while
+                // nextEvaluationDate points inside the backfill window.
+                .previousNextExecutionDate(backfill.getPreviousNextExecutionDate() != null ? backfill.getPreviousNextExecutionDate() : toZonedDateTime(nextEvaluationDate))
                 .build();
         }
         return update(clock).backfill(backfill).build();
@@ -251,7 +269,11 @@ public final class TriggerState implements TriggerId {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
         boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : isDisabled();
 
-        return update(clock).disabled(disabled).build();
+        return update(clock)
+            .disabled(disabled)
+            .executionId(null)
+            .workerId(null)
+            .build();
     }
 
     /**
@@ -265,6 +287,7 @@ public final class TriggerState implements TriggerId {
             .nextEvaluationDate(null)
             .locked(false)
             .workerId(null)
+            .executionId(null)
             .build();
     }
 
@@ -300,9 +323,33 @@ public final class TriggerState implements TriggerId {
             .build();
     }
 
+    /**
+     * Bumps the dispatch generation, marking a new dispatch to a worker.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState nextDispatchEpoch(final Clock clock) {
+        return update(clock)
+            .dispatchEpoch(dispatchEpoch + 1)
+            .build();
+    }
+
+    /**
+     * Checks whether this state carries a backfill that is currently paused.
+     * <p>
+     * A paused backfill freezes its {@code currentDate}, hence the trigger's next evaluation date, so such a
+     * trigger must not be evaluated until the backfill is resumed.
+     *
+     * @return {@code true} if the backfill is paused.
+     */
+    public boolean hasPausedBackfill() {
+        return backfill != null && Boolean.TRUE.equals(backfill.getPaused());
+    }
+
     private Backfill getBackFillForNextEvaluationDate(final Instant nextEvaluationDate) {
         final ZonedDateTime localNextEvaluationDate = toZonedDateTime(nextEvaluationDate);
-        if (backfill != null && !backfill.getPaused()) {
+        if (backfill != null && !hasPausedBackfill()) {
             if (localNextEvaluationDate.isAfter(backfill.getEnd())) {
                 return null;
             } else {
@@ -333,7 +380,9 @@ public final class TriggerState implements TriggerId {
             .disabled(disabled)
             .type(type)
             .lastEventId(lastEventId)
-            .lastTriggeredDate(lastTriggeredDate);
+            .lastTriggeredDate(lastTriggeredDate)
+            .executionId(executionId)
+            .dispatchEpoch(dispatchEpoch);
     }
 
     // Lombok hack to properly generate Javadoc

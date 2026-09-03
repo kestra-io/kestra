@@ -5,14 +5,14 @@ import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
@@ -24,6 +24,8 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.NonSortableFields;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.data.model.Pageable;
@@ -37,7 +39,16 @@ import static io.kestra.core.utils.CaseUtils.camelToSnake;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
 
 public abstract class AbstractJdbcRepository<T> {
-    protected static final ObjectMapper MAPPER = JdbcMapper.of();
+    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
+    /**
+     * Columns never exposed as a sort key, on top of whatever the metadata check in {@link #sort} rejects because
+     * it does not exist. Derived from {@link NonSortableFields#DEFAULT}, converted to the snake_case column names
+     * this backend compares against, so the JDBC and Elasticsearch backends refuse the same sort fields.
+     */
+    private static final Set<String> NON_SORTABLE_COLUMNS = NonSortableFields.DEFAULT.stream()
+        .map(field -> camelToSnake(field).toLowerCase())
+        .collect(Collectors.toUnmodifiableSet());
 
     protected final Class<T> cls;
 
@@ -49,6 +60,9 @@ public abstract class AbstractJdbcRepository<T> {
 
     @Getter
     protected Table<Record> table;
+
+    /** Lazily loaded and cached by {@link #sortableColumns()}: the schema does not change at runtime. */
+    private volatile Map<String, String> sortableColumns;
 
     @SuppressWarnings("unchecked")
     public AbstractJdbcRepository(
@@ -87,7 +101,8 @@ public abstract class AbstractJdbcRepository<T> {
         // So to avoid the case where no record exists and two threads insert concurrently, in H2, we select/insert and if the insert fails, select again.
         // Anyway, this would only occur once in a record lifecycle, so even if it's not elegant, it should work.
         // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in Postgres and MySQL, so we're sure it works there also, and it's better than relying on exception.
-        return fetcher.get().orElseGet(() -> {
+        return fetcher.get().orElseGet(() ->
+        {
             try {
                 T entity = defaultEntity.get();
                 Map<Field<Object>, Object> fields = this.persistFields(entity);
@@ -121,16 +136,46 @@ public abstract class AbstractJdbcRepository<T> {
             );
     }
 
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T, Map)
+     * @see #persist(T, DSLContext, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity) {
         this.persist(entity, null);
     }
 
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T)
+     * @see #persist(T, DSLContext, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity, Map<Field<Object>, Object> fields) {
         dslContextWrapper.transaction(
             configuration -> this.persist(entity, DSL.using(configuration), fields)
         );
     }
 
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T)
+     * @see #persist(T, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
@@ -139,7 +184,69 @@ public abstract class AbstractJdbcRepository<T> {
             .set(KEY_FIELD, key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
+            .set(excluded(finalFields))
+            .execute();
+    }
+
+    /**
+     * Turns a column-to-value map into a column-to-{@code EXCLUDED}/{@code VALUES(...)} map, so the
+     * update clause of an upsert re-references the row already bound by the insert clause instead of
+     * binding the (potentially large) value a second time. jOOQ renders this per-dialect: the
+     * {@code EXCLUDED} pseudo-table on PostgreSQL, {@code VALUES(column)} on MySQL/MariaDB.
+     */
+    protected static Map<Field<Object>, Object> excluded(Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> excluded = HashMap.newHashMap(fields.size());
+        fields.keySet().forEach(field -> excluded.put(field, DSL.excluded(field)));
+        return excluded;
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object, Map)
+     * @see #update(Object, DSLContext, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity) {
+        this.persist(entity, null);
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object)
+     * @see #update(Object, DSLContext, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity, Map<Field<Object>, Object> fields) {
+        dslContextWrapper.transaction(
+            configuration -> this.persist(entity, DSL.using(configuration), fields)
+        );
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object)
+     * @see #update(Object, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
+
+        dslContext
+            .update(table)
             .set(finalFields)
+            .where(KEY_FIELD.eq(key(entity)))
             .execute();
     }
 
@@ -175,7 +282,7 @@ public abstract class AbstractJdbcRepository<T> {
             .set(KEY_FIELD, key(entity))
             .set(fields)
             .onDuplicateKeyUpdate()
-            .set(fields);
+            .set(excluded(fields));
     }
 
     public int delete(T entity) {
@@ -212,6 +319,15 @@ public abstract class AbstractJdbcRepository<T> {
 
     }
 
+    /**
+     * Reassembles an {@link Instant} from the SQL-extracted date parts (year/month/day/hour/minute)
+     * produced by {@code AbstractJdbcRepository#groupByFields}.
+     * <p>
+     * Those parts are UTC wall-clock values — the date columns hold UTC (H2 and MySQL store UTC
+     * wall-clock directly; Postgres is normalised via {@code groupByTimestampField}) — so they must
+     * be reassembled in UTC. Using the JVM default zone here would shift every bucket by the local
+     * UTC offset on a non-UTC host.
+     */
     public <R extends Record> Instant getDate(R record, String groupByType) {
         List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
         Integer minute = fields.contains("minute") ? record.get("minute", Integer.class) : 0;
@@ -223,20 +339,24 @@ public abstract class AbstractJdbcRepository<T> {
 
         switch (groupByType) {
             case "minute" -> {
-                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "hour" -> {
-                return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "day" -> {
-                return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "week" -> {
-                LocalDate weekDate = LocalDate.ofYearDay(year, week * 7);
-                return weekDate.atStartOfDay().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant(ZonedDateTime.now().getOffset());
+                // week * 7 can fall outside the 1..365/366 day-of-year range (e.g. week 53 -> 371, or
+                // week 0 returned by some SQL WEEK() modes), which would make ofYearDay throw, so clamp it.
+                int maxDayOfYear = LocalDate.of(year, 12, 31).getDayOfYear();
+                int dayOfYear = Math.min(Math.max(week * 7, 1), maxDayOfYear);
+                LocalDate weekDate = LocalDate.ofYearDay(year, dayOfYear).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                return weekDate.atStartOfDay(ZoneOffset.UTC).toInstant();
             }
             case "month" -> {
-                return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             default -> throw new IllegalArgumentException("Invalid groupByType: " + groupByType);
         }
@@ -280,44 +400,28 @@ public abstract class AbstractJdbcRepository<T> {
             .where(DSL.noCondition());
     }
 
-    @SneakyThrows
-    public List<String> fragments(String query, String yaml) {
-        List<String> split = Arrays.asList(StringUtils.split(yaml, "\n"));
-
-        int first = IntStream.range(0, split.size())
-            .filter(index -> StringUtils.indexOfIgnoreCase(split.get(index), query) >= 0)
-            .findFirst()
-            .orElse(0);
-
-        int min = Math.max(0, first - 1);
-        int max = Math.min(split.size(), min + 4);
-
-        List<String> fragments = split
-            .subList(min, max)
-            .stream()
-            .map(r ->
-            {
-                int i = StringUtils.indexOfIgnoreCase(r, query);
-
-                if (i < 0) {
-                    return r;
-                } else {
-                    return r.substring(0, i) + "[mark]" + r.substring(i, i + query.length()) + "[/mark]" + r.substring(i + query.length());
-                }
-            })
-            .toList();
-
-        return Collections.singletonList(String.join("\n", fragments));
-    }
-
     public <R extends Record> SelectConditionStep<R> sort(SelectConditionStep<R> select, Pageable pageable) {
         if (pageable != null && pageable.getSort().isSorted()) {
+            Map<String, String> sortableColumns = this.sortableColumns();
+
             pageable
                 .getSort()
                 .getOrderBy()
                 .forEach(order ->
                 {
-                    String column = camelToSnake(order.getProperty());
+                    String property = order.getProperty();
+                    if (property == null || property.isBlank()) {
+                        throw new IllegalArgumentException("Invalid sort field");
+                    }
+
+                    String column = sortableColumns.get(camelToSnake(property).toLowerCase());
+                    if (column == null) {
+                        column = sortableColumns.get(property.toLowerCase());
+                    }
+                    if (column == null) {
+                        throw new IllegalArgumentException("The sort field '%s' does not exist on this resource.".formatted(property));
+                    }
+
                     Field<Object> field = DSL.field(DSL.name(column));
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());
@@ -325,6 +429,48 @@ public abstract class AbstractJdbcRepository<T> {
         }
 
         return select;
+    }
+
+    /**
+     * The columns of {@link #table} that a client may sort on, keyed by their lowercased name, excluding {@link #NON_SORTABLE_COLUMNS}.
+     */
+    private Map<String, String> sortableColumns() {
+        Map<String, String> columns = this.sortableColumns;
+        if (columns == null) {
+            synchronized (this) {
+                columns = this.sortableColumns;
+                if (columns == null) {
+                    columns = this.sortableColumns = this.loadSortableColumns();
+                }
+            }
+        }
+
+        return columns;
+    }
+
+    private Map<String, String> loadSortableColumns() {
+        return this.dslContextWrapper.transactionResult(configuration ->
+        {
+            String tableName = this.table.getName();
+            Map<String, String> columns = new HashMap<>();
+            // Matching by name ourselves, case-insensitively, rather than relying on Meta#getTables(String) —
+            // dialects disagree on the case a bare (unquoted) table name is reported back in, e.g. H2 reports
+            // "FLOWS" for a table created as "flows".
+            for (Table<?> metaTable : DSL.using(configuration).meta().getTables()) {
+                if (!metaTable.getName().equalsIgnoreCase(tableName)) {
+                    continue;
+                }
+
+                for (Field<?> field : metaTable.fields()) {
+                    String name = field.getName();
+                    if (!NON_SORTABLE_COLUMNS.contains(name.toLowerCase())) {
+                        columns.put(name.toLowerCase(), name);
+                    }
+                }
+            }
+
+            return columns;
+        });
     }
 
     protected <R extends Record> Select<R> limit(SelectConditionStep<R> select, Pageable pageable) {

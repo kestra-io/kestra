@@ -1,7 +1,10 @@
 package io.kestra.core.models.triggers;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.models.Label;
@@ -9,6 +12,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 
 /**
@@ -21,10 +25,12 @@ import jakarta.annotation.Nullable;
  * Flow-level variables are NOT transported — the executor resolves them
  * directly from the {@code Flow} via {@code RunVariables}.
  *
- * @param executionId  the generated execution ID.
- * @param stateType    the execution state type (CREATED or FAILED).
- * @param trigger      the execution trigger metadata containing plugin output variables and log file URI.
- * @param labels       the execution labels including system labels (FROM, CORRELATION_ID).
+ * @param executionId the generated execution ID.
+ * @param stateType the execution state type (CREATED or FAILED).
+ * @param trigger the execution trigger metadata containing plugin output variables and log file URI.
+ * @param labels the labels the trigger contributes, including system labels (FROM, CORRELATION_ID). The flow's
+ *        own labels are deliberately absent: the execution takes those from the flow processed for runtime when
+ *        it is created, so carrying the raw flow's here would let them override governance.
  * @param flowRevision the flow revision at evaluation time.
  */
 public record TriggerEvaluationResult(
@@ -32,8 +38,10 @@ public record TriggerEvaluationResult(
     @JsonProperty State.Type stateType,
     @JsonProperty ExecutionTrigger trigger,
     @JsonProperty @Nullable List<Label> labels,
-    @JsonProperty @Nullable Integer flowRevision
-) {
+    @JsonProperty @Nullable Integer flowRevision,
+    @JsonProperty @Nullable Instant scheduleDate,
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(implementation = Object.class) Map<String, Object> inputs) {
 
     /**
      * Extracts a lightweight result from a full {@link Execution} (worker-side).
@@ -47,7 +55,9 @@ public record TriggerEvaluationResult(
             execution.getState().getCurrent(),
             execution.getTrigger(),
             execution.getLabels(),
-            execution.getFlowRevision()
+            execution.getFlowRevision(),
+            execution.getScheduleDate(),
+            execution.getInputs()
         );
     }
 
@@ -55,7 +65,14 @@ public record TriggerEvaluationResult(
      * Returns a copy with a different state type.
      */
     public TriggerEvaluationResult withState(State.Type state) {
-        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision);
+        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision, scheduleDate, inputs);
+    }
+
+    /**
+     * Returns a copy with a different schedule date.
+     */
+    public TriggerEvaluationResult withScheduleDate(Instant scheduleDate) {
+        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs);
     }
 
     /**
@@ -78,6 +95,8 @@ public record TriggerEvaluationResult(
             .state(state)
             .trigger(trigger)
             .labels(labels)
+            .scheduleDate(scheduleDate)
+            .inputs(inputs)
             .build();
     }
 }

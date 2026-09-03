@@ -10,17 +10,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.controller.config.ControllerAdvertiseConfiguration;
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.server.Service;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServerInstance;
+import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
@@ -218,7 +219,10 @@ class ControllerStorageRegistrarTest {
                 Duration.ofSeconds(10),
                 Duration.ofSeconds(5),
                 Duration.ofSeconds(5)
-            )
+            ),
+            null,
+            null,
+            null
         );
         return new ServiceInstance(
             UUID.randomUUID().toString(),

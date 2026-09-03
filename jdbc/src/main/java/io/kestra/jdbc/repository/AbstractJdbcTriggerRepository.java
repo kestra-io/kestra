@@ -1,5 +1,7 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -9,6 +11,8 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.exceptions.TypeConversionException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -22,6 +26,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
@@ -40,6 +45,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     private static final Field<Object> WORKER_ID_FIELD = field("worker_id");
     private static final Field<Object> VALUE_FIELD = field("value");
     private static final String NEXT_EVALUATION_DATE_COLUMN = "next_evaluation_date";
+    private static final String LAST_TRIGGERED_DATE_COLUMN = "last_triggered_date";
     private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
     private final JdbcFilterService filterService;
 
@@ -137,7 +143,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public ArrayListTotal<TriggerState> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, NEXT_EVALUATION_DATE_COLUMN, Resource.TRIGGER);
+        var condition = filter(filters, null, Resource.TRIGGER);
         return findPage(pageable, tenantId, condition);
     }
 
@@ -162,7 +168,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Flux<TriggerState> find(String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, NEXT_EVALUATION_DATE_COLUMN, Resource.TRIGGER);
+        var condition = filter(filters, null, Resource.TRIGGER);
         return findAsync(tenantId, condition);
     }
 
@@ -187,12 +193,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Function<String, String> sortMapping() throws IllegalArgumentException {
-        Map<String, String> mapper = Map.of(
-            "flowId", "flow_id",
-            "triggerId", "trigger_id",
-            "executionId", "execution_id",
-            "nextExecutionDate", NEXT_EVALUATION_DATE_COLUMN
-        );
+        // nextExecutionDate needs remapping, since its real column is next_evaluation_date.
+        Map<String, String> mapper = Map.of("nextExecutionDate", NEXT_EVALUATION_DATE_COLUMN);
 
         return s -> mapper.getOrDefault(s, s);
     }
@@ -327,6 +329,50 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                     .fetch()
             )
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
+    }
+
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.SOURCE) {
+            return DSL.quotedName("type");
+        }
+        return super.getColumnName(field);
+    }
+
+    @Override
+    protected Condition lockedCondition(Object value, QueryFilter.Op operation) {
+        boolean lockedValue = TypeConverter.toBoolean(value);
+        return switch (operation) {
+            case EQUALS -> DSL.field(DSL.quotedName("locked")).eq(lockedValue);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for LOCKED: " + operation);
+        };
+    }
+
+    @Override
+    protected Condition lastTriggeredDateCondition(Object value, QueryFilter.Op operation) {
+        return triggerDateFieldCondition(value, operation, LAST_TRIGGERED_DATE_COLUMN, QueryFilter.Field.LAST_TRIGGERED_DATE);
+    }
+
+    @Override
+    protected Condition nextExecutionDateCondition(Object value, QueryFilter.Op operation) {
+        return triggerDateFieldCondition(value, operation, NEXT_EVALUATION_DATE_COLUMN, QueryFilter.Field.NEXT_EXECUTION_DATE);
+    }
+
+    private Condition triggerDateFieldCondition(Object value, QueryFilter.Op operation, String column, QueryFilter.Field field) {
+        // Accept ISO-8601 durations (e.g. PT24H) as "last N hours" — same semantics as TIME_RANGE
+        try {
+            Duration duration = TypeConverter.toDuration(value);
+            ZonedDateTime threshold = ZonedDateTime.now().minus(duration);
+            return applyDateCondition(threshold.toOffsetDateTime(), QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO, column);
+        } catch (TypeConversionException ignored) {
+            // Not a duration — fall through to absolute date parsing
+        }
+        try {
+            OffsetDateTime dateTime = TypeConverter.toZonedDateTime(value).toOffsetDateTime();
+            return applyDateCondition(dateTime, operation, column);
+        } catch (TypeConversionException e) {
+            throw new InvalidQueryFiltersException("Invalid date or duration value for " + field + ": " + value);
+        }
     }
 
     @Override

@@ -2,28 +2,28 @@
     <div class="webhook-curl">
         <div v-if="webhookTriggers.length > 0">
             <KsFormItem :label="$t('webhook.payload')" class="payload">
-                <Editor
-                    :fullHeight="false"
-                    :input="true"
+                <KsEditor
+                    v-bind="editorBindings"
+                    :options="{fullHeight: false, showScroll: true}"
+                    :inline="true"
                     :navbar="false"
                     lang="json"
-                    :showScroll="true"
                     v-model="webhookPayload"
                 />
             </KsFormItem>
             <div v-for="trigger in webhookTriggers" :key="trigger.id" class="trigger">
                 <div class="code">
                     <pre><code>{{ generateWebhookCurlCommand(trigger) }}</code></pre>
-                    <CopyToClipboard :text="generateWebhookCurlCommand(trigger)" class="copy" />
+                    <CopyToClipboard :text="generateWebhookCurlCommand(trigger)" />
                 </div>
             </div>
 
-            <KsAlert type="info" showIcon :closable="false">
+            <KsAlert type="info" :closable="false">
                 {{ $t('webhook.curl_note') }}
             </KsAlert>
         </div>
         <div v-else>
-            <KsAlert type="warning" showIcon :closable="false">
+            <KsAlert type="warning" :closable="false">
                 {{ $t('webhook.no_triggers') }}
             </KsAlert>
         </div>
@@ -31,87 +31,74 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue";
-    import CopyToClipboard from "../layout/CopyToClipboard.vue";
-    import Editor from "../inputs/Editor.vue";
-    import {baseUrl, basePath, apiUrl} from "override/utils/route";
-    import {useFlowStore} from "../../stores/flow";
-
-    interface Flow {
-        namespace: string;
-        id: string;
-        triggers?: Trigger[];
-    }
-
-    interface Trigger {
-        id: string;
-        type: string;
-        key?: string;
-        disabled?: boolean;
-    }
+    import {computed, onMounted, ref} from "vue"
+    import CopyToClipboard from "../layout/CopyToClipboard.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
+    import {useFlowStore, type Flow, type Trigger} from "../../stores/flow"
 
     const props = defineProps<{
         flow: Flow;
-    }>();
+    }>()
 
-    const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}");
+    const editorBindings = useEditorBindings()
 
-    const flowStore = useFlowStore();
+    const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}")
+
+    const flowStore = useFlowStore()
     const webhookTriggers = computed(() => {
-        const sourceFlow = flowStore.flow || props.flow;
+        const sourceFlow = flowStore.flow || props.flow
 
         if (!sourceFlow?.triggers) {
-            return [];
+            return []
         }
 
         return sourceFlow.triggers.filter((trigger: Trigger) =>
-            trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
-            (trigger.disabled === undefined || trigger.disabled === false)
-        );
-    });
-
-    const generateWebhookUrl = (trigger: Trigger): string => {
-        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`;
-        return `${origin}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
-    };
+            trigger.type === WEBHOOK_TRIGGER_TYPE &&
+            (trigger.disabled === undefined || trigger.disabled === false),
+        )
+    })
 
     const generateWebhookCurlCommand = (trigger: Trigger): string => {
         if (!trigger.key) {
-            return "Webhook key not available";
+            return "Webhook key not available"
         }
 
-        const command = [`curl -X POST ${generateWebhookUrl(trigger)}`];
-        command.push("-H \"Content-Type: application/json\"");
+        const url = webhookUrl({namespace: props.flow.namespace, id: props.flow.id, key: trigger.key})
+        const command = [`curl -X POST ${url}`]
+        command.push("-H \"Content-Type: application/json\"")
 
         if (webhookPayload.value.trim()) {
-            command.push(`-d '${webhookPayload.value}'`);
+            command.push(`-d '${webhookPayload.value}'`)
         }
 
-        return toShell(command);
-    };
+        return toShell(command)
+    }
 
     const toShell = (command: string[]): string => {
-        return command.join(" \\\n  ");
-    };
+        return command.join(" \\\n  ")
+    }
 
     onMounted(async () => {
         if (props.flow?.namespace && props.flow?.id) {
             try {
                 await flowStore.loadFlow({
                     namespace: props.flow.namespace,
-                    id: props.flow.id
-                });
+                    id: props.flow.id,
+                })
             } catch (error) {
-                throw new Error(`Failed to load flow: ${error}`);
+                // oxlint-disable-next-line preserve-caught-error
+                throw new Error(`Failed to load flow: ${error}`)
             }
         }
-    });
+    })
 </script>
 
 <style scoped lang="scss">
 .webhook-curl {
     position: relative;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     padding: 1rem;
     border-radius: 0.5rem;
 
@@ -120,7 +107,7 @@
 
         :deep(.kel-form-item__label) {
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         :deep(.editor-container) {
@@ -131,16 +118,12 @@
 
     .code {
         position: relative;
-        pre {
-            overflow-x: auto;
-        }
-    }
 
-    .copy {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        z-index: 10;
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            padding-right: var(--ks-spacing-8);
+        }
     }
 }
 </style>

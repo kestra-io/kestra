@@ -1,6 +1,10 @@
 import {describe, test, expect, vi, beforeEach, afterEach} from "vitest"
 import {ElNotification} from "element-plus"
 import {KsNotification} from "../../../src/components/Feedback/KsNotification"
+import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
+import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
+import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
 
 vi.mock("element-plus", () => ({
     ElNotification: Object.assign(
@@ -18,10 +22,6 @@ vi.mock("element-plus", () => ({
 describe("KsNotification", () => {
     beforeEach(() => {
         vi.mocked(ElNotification).mockReturnValue({close: vi.fn()} as any)
-        vi.mocked(ElNotification.success).mockReturnValue({close: vi.fn()} as any)
-        vi.mocked(ElNotification.warning).mockReturnValue({close: vi.fn()} as any)
-        vi.mocked(ElNotification.info).mockReturnValue({close: vi.fn()} as any)
-        vi.mocked(ElNotification.error).mockReturnValue({close: vi.fn()} as any)
     })
 
     afterEach(() => {
@@ -33,36 +33,51 @@ describe("KsNotification", () => {
         expect(ElNotification).toHaveBeenCalledWith({
             title: "Done",
             message: "All tasks finished",
-            type: "success",
             position: "bottom-right",
+            icon: CheckCircleOutline,
+            customClass: "kel-notification--success",
         })
     })
 
-    test("KsNotification.success delegates to ElNotification.success", () => {
+    test("KsNotification.success injects success icon via base ElNotification", () => {
         KsNotification.success({title: "Saved", message: "Flow saved", position: "bottom-right"})
-        expect(ElNotification.success).toHaveBeenCalledWith({
+        expect(ElNotification).toHaveBeenCalledWith({
             title: "Saved",
             message: "Flow saved",
             position: "bottom-right",
+            icon: CheckCircleOutline,
+            customClass: "kel-notification--success",
         })
     })
 
-    test("KsNotification.warning delegates to ElNotification.warning", () => {
+    test("KsNotification.warning injects warning icon via base ElNotification", () => {
         KsNotification.warning({title: "Warning", message: "Quota at 85%"})
-        expect(ElNotification.warning).toHaveBeenCalledWith({title: "Warning", message: "Quota at 85%"})
+        expect(ElNotification).toHaveBeenCalledWith({
+            title: "Warning",
+            message: "Quota at 85%",
+            icon: AlertCircleOutline,
+            customClass: "kel-notification--warning",
+        })
     })
 
-    test("KsNotification.info delegates to ElNotification.info", () => {
+    test("KsNotification.info injects info icon via base ElNotification", () => {
         KsNotification.info({title: "Info", message: "Scheduled"})
-        expect(ElNotification.info).toHaveBeenCalledWith({title: "Info", message: "Scheduled"})
+        expect(ElNotification).toHaveBeenCalledWith({
+            title: "Info",
+            message: "Scheduled",
+            icon: InformationOutline,
+            customClass: "kel-notification--info",
+        })
     })
 
-    test("KsNotification.error delegates to ElNotification.error with duration 0", () => {
+    test("KsNotification.error injects error icon via base ElNotification with duration 0", () => {
         KsNotification.error({title: "Error", message: "Task failed", duration: 0})
-        expect(ElNotification.error).toHaveBeenCalledWith({
+        expect(ElNotification).toHaveBeenCalledWith({
             title: "Error",
             message: "Task failed",
             duration: 0,
+            icon: AlertOutline,
+            customClass: "kel-notification--error",
         })
     })
 

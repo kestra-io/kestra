@@ -1,37 +1,54 @@
 <template>
-    <div
-        class="d-flex w-100 mb-2"
-        v-for="(label, index) in locals"
-        :key="index"
-    >
-        <div class="flex-grow-1 d-flex align-items-center">
-            <KsInput
-                class="form-control me-2"
-                :placeholder="$t('key')"
-                :modelValue="(label.key as string | undefined)"
-                :disabled="localExisting.includes(label.key || '')"
-                @update:model-value="update(index, $event, 'key')"
-            />
-            <KsInput
-                class="form-control me-2"
-                :placeholder="$t('value')"
-                :modelValue="(label.value as string | undefined)"
-                @update:model-value="update(index, $event, 'value')"
-            />
+    <div class="label-input">
+        <div class="label-input-header">
+            <div class="label-input-header-content">
+                <slot name="header" />
+            </div>
+            <div class="label-input-header-actions">
+                <KsButton class="label-input-add" :icon="Plus" @click="addItem">
+                    {{ $t("add label") }}
+                </KsButton>
+                <slot name="header-end" />
+            </div>
         </div>
-        <div class="flex-shrink-1">
-            <KsButtonGroup class="d-flex">
-                <KsButton :icon="Plus" @click="addItem" />
-                <KsButton :icon="Minus" @click="removeItem(index)" />
-            </KsButtonGroup>
+
+        <div
+            class="label-input-item"
+            v-for="(label, index) in locals"
+            :key="index"
+        >
+            <div class="label-input-row">
+                <KsInput
+                    class="label-input-field"
+                    :placeholder="$t('key')"
+                    :modelValue="(label.key as string | undefined)"
+                    :disabled="existingRows.has(label)"
+                    @update:model-value="update(index, $event, 'key')"
+                />
+                <KsInput
+                    class="label-input-field"
+                    :placeholder="$t('value')"
+                    :modelValue="(label.value as string | undefined)"
+                    @update:model-value="update(index, $event, 'value')"
+                />
+                <KsButton
+                    :icon="Minus"
+                    :tooltip="$t('remove label')"
+                    @click="removeItem(index)"
+                />
+            </div>
+            <KsText v-if="label.key && !isValidLabelKey(label.key)" type="danger" size="small" data-test="label-key-error">
+                {{ $t("invalid label key") }}
+            </KsText>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted} from "vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Minus from "vue-material-design-icons/Minus.vue";
+    import {ref, onMounted, watch} from "vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Minus from "vue-material-design-icons/Minus.vue"
+    import {isValidLabelKey} from "../../utils/executionLabels"
 
     interface Label {
         key: string | null;
@@ -41,43 +58,112 @@
     const props = defineProps<{
         labels: Label[];
         existingLabels?: Label[];
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "update:labels", value: Label[]): void;
-    }>();
+    }>()
 
-    const locals = ref<Label[]>([]);
-    const localExisting = ref<string[]>([]);
+    defineSlots<{
+        header?(): unknown
+        "header-end"?(): unknown
+    }>()
+
+    const locals = ref<Label[]>([])
+    const existingRows = ref<Set<Label>>(new Set())
 
     const addItem = () => {
-        locals.value.push({key: null, value: null});
-        emit("update:labels", locals.value);
-    };
+        locals.value.push({key: null, value: null})
+        emit("update:labels", locals.value)
+    }
 
     const removeItem = (index: number) => {
-        locals.value.splice(index, 1);
-        if (locals.value.length === 0) {
-            addItem();
-        }
-        emit("update:labels", locals.value);
-    };
+        locals.value.splice(index, 1)
+        emit("update:labels", locals.value)
+    }
 
     const update = (index: number, value: string | number | undefined, prop: keyof Label) => {
-        locals.value[index][prop] = value !== "" && value !== undefined ? String(value) : null;
-        emit("update:labels", locals.value);
-    };
+        locals.value[index][prop] = value !== "" && value !== undefined ? String(value) : null
+        emit("update:labels", locals.value)
+    }
+
+    const syncFromProps = (labels: Label[]) => {
+        if (labels.length === 0) {
+            locals.value = [{key: null, value: null}]
+        } else {
+            locals.value = labels
+        }
+    }
 
     onMounted(() => {
         if (props.labels.length === 0) {
-            addItem();
+            addItem()
         } else {
-            locals.value = props.labels;
+            syncFromProps(props.labels)
             if (locals.value.length === 0) {
-                addItem();
+                addItem()
             }
         }
 
-        localExisting.value = props.existingLabels?.map((label) => label.key ?? "") || [];
-    });
+        const existingKeys = new Set((props.existingLabels ?? []).map((label) => label.key ?? ""))
+        existingRows.value = new Set(
+            locals.value
+                .filter((label) => label.key != null && existingKeys
+                    .has(label.key)),
+        )
+    })
+
+    watch(
+        () => props.labels,
+        (labels) => {
+            if (labels === locals.value) {
+                return
+            }
+            syncFromProps(labels)
+        },
+    )
 </script>
+
+<style scoped lang="scss">
+    .label-input {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+    }
+
+    .label-input-header {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .label-input-header-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .label-input-header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        flex-shrink: 0;
+    }
+
+    .label-input-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+    }
+
+    .label-input-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
+
+    .label-input-field {
+        flex: 1;
+        min-width: 0;
+    }
+</style>

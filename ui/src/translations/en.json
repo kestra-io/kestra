@@ -2572,6 +2572,7 @@
         "message": "Fix the errors before saving.",
         "title": "Cannot save the flow"
       },
+      "schema_default_tooltip": "Default value used when the field is not set",
       "search_task_placeholder": "Search or describe a task…",
       "shortcuts": {
         "add_after": "Insert a block after selection",

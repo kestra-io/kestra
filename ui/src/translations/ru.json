@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: плагин не установлен для этого типа trigger, уведомления не будут отправлены."
       },
       "trigger": {
-        "case_sub": "Функция только для EE",
-        "case_title": "Статус кейса",
         "execution_sub": "Реагирует на изменения состояния flow",
         "execution_title": "Состояние выполнения",
         "other_sub": "Любой доступный плагин trigger",

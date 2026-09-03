@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: このトリガータイプにはプラグインがインストールされていません。通知は送信されません。"
       },
       "trigger": {
-        "case_sub": "EEのみの機能",
-        "case_title": "ケースステータス",
         "execution_sub": "flowの状態変化に反応します",
         "execution_title": "実行状態",
         "other_sub": "利用可能なトリガープラグイン",

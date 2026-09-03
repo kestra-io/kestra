@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: 이 trigger 유형에 대한 플러그인이 설치되지 않아 알림이 전송되지 않습니다."
       },
       "trigger": {
-        "case_sub": "EE 전용 기능",
-        "case_title": "케이스 상태",
         "execution_sub": "flow 상태 변경에 반응합니다.",
         "execution_title": "실행 상태",
         "other_sub": "사용 가능한 모든 trigger 플러그인",

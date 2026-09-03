@@ -2,6 +2,7 @@ package io.kestra.plugin.scripts.exec.scripts.runners;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
@@ -16,6 +17,7 @@ import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.plugin.core.runner.Process;
@@ -32,6 +34,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @AllArgsConstructor
 @Getter
 public class CommandsWrapper implements TaskCommands {
+    static final String EXECUTION_CONTEXT_FILE_NAME = ".kestra-execution-context.json";
+
+    private static final Set<String> EXECUTION_CONTEXT_EXCLUDED_VARIABLES = Set.of("envs", "globals");
+
     private RunContext runContext;
 
     private Path workingDirectory;
@@ -98,6 +104,9 @@ public class CommandsWrapper implements TaskCommands {
     @With
     private KotlpOptions kotlp;
 
+    @With
+    private boolean executionContext;
+
     public CommandsWrapper(RunContext runContext) {
         this.runContext = runContext;
         this.workingDirectory = runContext.workingDir().path();
@@ -130,7 +139,8 @@ public class CommandsWrapper implements TaskCommands {
             enableOutputDirectory,
             timeout,
             targetOS,
-            kotlp
+            kotlp,
+            executionContext
         );
     }
 
@@ -150,6 +160,23 @@ public class CommandsWrapper implements TaskCommands {
         this.env.putAll(envs);
 
         return this;
+    }
+
+    /**
+     * Writes the execution context as JSON into the working directory, so a script can read its
+     * metadata as data instead of interpolating Pebble expressions into its own source.
+     *
+     * `envs` and `globals` are left out: both are already exposed to the script as environment
+     * variables, so writing them again would only widen what ends up on disk.
+     */
+    private void writeExecutionContextFile() throws IOException {
+        Map<String, Object> variables = new TreeMap<>(runContext.getVariables());
+        EXECUTION_CONTEXT_EXCLUDED_VARIABLES.forEach(variables::remove);
+
+        Files.write(
+            this.workingDirectory.resolve(EXECUTION_CONTEXT_FILE_NAME),
+            JacksonMapper.ofJson().writeValueAsBytes(variables)
+        );
     }
 
     public <T extends TaskRunnerDetailResult> ScriptOutput run() throws Exception {
@@ -176,6 +203,10 @@ public class CommandsWrapper implements TaskCommands {
 
         if (this.inputFiles != null) {
             FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
+        }
+
+        if (this.executionContext) {
+            this.writeExecutionContextFile();
         }
 
         if (this.isKotlpEnabled()) {

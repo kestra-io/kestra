@@ -198,7 +198,7 @@ jobs:
           fi
           git commit -m "chore(core): localize to languages other than english"
           # Generation is idempotent, so the run this push triggers finds nothing to do and stops.
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin "HEAD:$GITHUB_HEAD_REF"
 
   # Kept off the frontend test path: a translation typo shouldn't block those, and this check needs
   # neither a build nor `npm ci` — just the checked-out files and Node itself. It is what stops an

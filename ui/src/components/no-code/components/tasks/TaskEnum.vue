@@ -4,6 +4,8 @@
         @update:model-value="onInput"
         filterable
         clearable
+        :allowCreate="allowCreate"
+        :defaultFirstOption="allowCreate"
         :placeholder="$t('no_code.choose_placeholder', {field: root?.split('.').pop() || 'value'})"
     >
         <KsOption
@@ -23,6 +25,7 @@
         modelValue?: object | string | number | boolean | unknown[]
         schema?: Record<string, unknown>
         required?: boolean
+        allowCreate?: boolean
         task?: Record<string, unknown>
         root?: string
         definitions?: Record<string, unknown>
@@ -30,6 +33,7 @@
         modelValue: undefined,
         schema: undefined,
         required: false,
+        allowCreate: false,
         task: undefined,
         root: undefined,
         definitions: undefined,

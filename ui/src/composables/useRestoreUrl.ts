@@ -36,6 +36,9 @@ export function getRestoredQuery(route: RouteLocation) {
     let change = false;
 
     for (const key in local) {
+        if (key === "page" || key === "size") {
+            continue;
+        }
         if (!query[key] && local[key]) {
             // empty array break the application
             if (local[key] instanceof Array && local[key].length === 0) {

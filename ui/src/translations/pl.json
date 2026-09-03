@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin nie jest zainstalowany dla tego typu Triggera, więc powiadomienie nie zostanie wysłane."
       },
       "trigger": {
-        "case_sub": "Funkcja tylko w Enterprise Edition",
-        "case_title": "Status sprawy",
         "execution_sub": "Reaguje na zmiany statusu Flow",
         "execution_title": "Status egzekucji",
         "other_sub": "Dowolny dostępny plugin Triggera",
@@ -792,6 +790,7 @@
     "execution labels": "Etykiety egzekucji",
     "show more labels": "Pokaż {count} więcej etykiet",
     "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
+    "invalid label key": "Nieprawidłowy key etykiety. Prawidłowy key musi zaczynać się małą literą i zawierać tylko małe litery, cyfry, myślniki (-), podkreślenia (_) lub kropki (.)",
     "feeds": {
       "heading": "Wszystko o Kestra.",
       "subheading": "Najnowsze aktualizacje, przewodniki i historie"

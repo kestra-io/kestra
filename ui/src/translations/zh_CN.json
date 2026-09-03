@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
       },
       "trigger": {
-        "case_sub": "仅限企业版功能",
-        "case_title": "案例状态",
         "execution_sub": "对 flow 状态变化作出反应",
         "execution_title": "执行状态",
         "other_sub": "任何可用的 trigger 插件",
@@ -792,6 +790,7 @@
     "execution labels": "执行标签",
     "show more labels": "显示另外 {count} 个 label",
     "wrong labels": "标签中不允许空键或值",
+    "invalid label key": "标签 key 无效。有效的 key 必须以小写字母开头,且只能包含小写字母、数字、连字符 (-)、下划线 (_) 或句点 (.)",
     "feeds": {
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"

@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin no instalado para este tipo de trigger, no se enviará ninguna notificación."
       },
       "trigger": {
-        "case_sub": "Característica solo para EE",
-        "case_title": "Estado del caso",
         "execution_sub": "Reacciona a los cambios de estado del flow",
         "execution_title": "Estado de la ejecución",
         "other_sub": "Cualquier plugin de trigger disponible",
@@ -792,6 +790,7 @@
     "execution labels": "Etiquetas de ejecución",
     "show more labels": "Mostrar {count} etiquetas más",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",
+    "invalid label key": "Key de etiqueta no válida. Una key válida debe empezar con una letra minúscula y contener solo letras minúsculas, números, guiones (-), guiones bajos (_) o puntos (.)",
     "feeds": {
       "heading": "Todo sobre Kestra.",
       "subheading": "Las últimas actualizaciones, guías e historias"

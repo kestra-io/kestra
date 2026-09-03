@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: このトリガータイプにはプラグインがインストールされていません。通知は送信されません。"
       },
       "trigger": {
-        "case_sub": "EEのみの機能",
-        "case_title": "ケースステータス",
         "execution_sub": "flowの状態変化に反応します",
         "execution_title": "実行状態",
         "other_sub": "利用可能なトリガープラグイン",
@@ -414,7 +412,8 @@
       "zoom-reset": "ズームリセット",
       "zoom-fit": "フィット",
       "invalid": "グラフエラー",
-      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。"
+      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
+      "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。"
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",
@@ -791,6 +790,7 @@
     "execution labels": "実行ラベル",
     "show more labels": "他 {count} 件のラベルを表示",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
+    "invalid label key": "無効なラベルkeyです。有効なkeyは小文字で始まり、小文字、数字、ハイフン (-)、アンダースコア (_)、ピリオド (.) のみを含む必要があります。",
     "feeds": {
       "heading": "すべてのKestraに関すること。",
       "subheading": "最新の更新情報、ガイド、ストーリー"
@@ -883,6 +883,7 @@
     "metric": "メトリック",
     "aggregation": "集計",
     "metric choice": "このflowには利用可能なメトリクスがありません",
+    "metric filter no match": "\"{term}\" に一致するメトリックはありません",
     "of": "の",
     "title": "タイトル",
     "api": "API",

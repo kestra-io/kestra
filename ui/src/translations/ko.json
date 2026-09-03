@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: 이 trigger 유형에 대한 플러그인이 설치되지 않아 알림이 전송되지 않습니다."
       },
       "trigger": {
-        "case_sub": "EE 전용 기능",
-        "case_title": "케이스 상태",
         "execution_sub": "flow 상태 변경에 반응합니다.",
         "execution_title": "실행 상태",
         "other_sub": "사용 가능한 모든 trigger 플러그인",
@@ -414,7 +412,8 @@
       "zoom-reset": "확대/축소 재설정",
       "zoom-fit": "맞춤",
       "invalid": "그래프 오류",
-      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요."
+      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
+      "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요."
     },
     "show task logs": "Task Logs 보기",
     "show task condition": "작업 상태 표시",
@@ -791,6 +790,7 @@
     "execution labels": "실행 라벨",
     "show more labels": "라벨 {count}개 더 보기",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
+    "invalid label key": "잘못된 라벨 key입니다. 올바른 key는 소문자로 시작해야 하며 소문자, 숫자, 하이픈(-), 밑줄(_) 또는 마침표(.)만 포함할 수 있습니다.",
     "feeds": {
       "heading": "Kestra의 모든 것.",
       "subheading": "최신 업데이트, 가이드 및 스토리"
@@ -883,6 +883,7 @@
     "metric": "메트릭",
     "aggregation": "집계",
     "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
+    "metric filter no match": "\"{term}\"과 일치하는 메트릭이 없습니다.",
     "of": "의",
     "title": "제목",
     "api": "API",

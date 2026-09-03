@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: Plugin für diesen Trigger-Typ nicht installiert, es wird keine Benachrichtigung gesendet."
       },
       "trigger": {
-        "case_sub": "Nur in der Enterprise Edition",
-        "case_title": "Case-Status",
         "execution_sub": "Reagiert auf Statusänderungen von Flows",
         "execution_title": "Execution-Status",
         "other_sub": "Jedes verfügbare Trigger-Plugin",
@@ -414,7 +412,8 @@
       "zoom-reset": "Zoom zurücksetzen",
       "zoom-fit": "Anpassen",
       "invalid": "Graph-Fehler",
-      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler."
+      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
+      "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut."
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -791,6 +790,7 @@
     "execution labels": "Execution-Labels",
     "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
+    "invalid label key": "Ungültiger Label-Key. Ein gültiger Key muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben, Zahlen, Bindestriche (-), Unterstriche (_) oder Punkte (.) enthalten.",
     "feeds": {
       "heading": "Alles rund um Kestra.",
       "subheading": "Die neuesten Updates, Anleitungen und Beiträge"
@@ -883,6 +883,7 @@
     "metric": "Metrik",
     "aggregation": "Aggregation",
     "metric choice": "Keine Metriken für diesen Flow verfügbar",
+    "metric filter no match": "Keine Metrik stimmt mit „{term}“ überein",
     "of": "von",
     "title": "Titel",
     "api": "API",

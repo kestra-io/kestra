@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin não instalado para este tipo de trigger, nenhuma notificação será enviada."
       },
       "trigger": {
-        "case_sub": "Funcionalidade apenas para EE",
-        "case_title": "Status do caso",
         "execution_sub": "Reage a alterações de estado do flow",
         "execution_title": "Estado da execução",
         "other_sub": "Qualquer plugin de trigger disponível",
@@ -414,7 +412,8 @@
       "zoom-reset": "Redefinir zoom",
       "zoom-fit": "Ajustar",
       "invalid": "Erro no gráfico",
-      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros."
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
+      "load_error": "Não foi possível carregar o gráfico de topologia. Tente novamente."
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Exibir condição da task",
@@ -791,6 +790,7 @@
     "execution labels": "Labels de execução",
     "show more labels": "Mostrar mais {count} labels",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
+    "invalid label key": "Key de label inválida. Uma key válida deve começar com uma letra minúscula e conter apenas letras minúsculas, números, hífens (-), sublinhados (_) ou pontos (.)",
     "feeds": {
       "heading": "Tudo sobre Kestra.",
       "subheading": "As últimas atualizações, guias e histórias"
@@ -883,6 +883,7 @@
     "metric": "Métrica",
     "aggregation": "Agregação",
     "metric choice": "Nenhuma métrica disponível para este flow",
+    "metric filter no match": "Nenhuma métrica corresponde a \"{term}\"",
     "of": "de",
     "title": "Título",
     "api": "API",

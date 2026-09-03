@@ -299,6 +299,30 @@ jobs:
       java-version: 25
       skip-build: ${{ needs.build-artifacts.result == 'success' }}
 
+  # Single gate for "require status checks to pass". The test jobs above are
+  # path-gated with `if:`, and several are reusable workflows (`uses:`) whose
+  # nested checks are never reported when the caller job is skipped — so a
+  # branch-protection rule on them individually would wait forever for a status
+  # that never arrives. This job always runs, and fails only when a required job
+  # actually failed or was cancelled; skipped and successful jobs both pass.
+  # Require only this check in branch protection instead of the individual jobs.
+  required-checks:
+    name: Required checks
+    if: always()
+    needs: [file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed or was cancelled
+        if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled')
+        run: |
+          echo "A required job failed or was cancelled:"
+          echo '${{ toJSON(needs) }}'
+          exit 1
+      - name: Success
+        run: echo "All required jobs passed or were legitimately skipped."
+
   otel-export-trace:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest

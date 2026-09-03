@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
       },
       "trigger": {
-        "case_sub": "仅限企业版功能",
-        "case_title": "案例状态",
         "execution_sub": "对 flow 状态变化作出反应",
         "execution_title": "执行状态",
         "other_sub": "任何可用的 trigger 插件",
@@ -414,7 +412,8 @@
       "zoom-reset": "重置缩放",
       "zoom-fit": "适应屏幕",
       "invalid": "图形错误",
-      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。"
+      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
+      "load_error": "无法加载拓扑图。请重试。"
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -791,6 +790,7 @@
     "execution labels": "执行标签",
     "show more labels": "显示另外 {count} 个 label",
     "wrong labels": "标签中不允许空键或值",
+    "invalid label key": "标签 key 无效。有效的 key 必须以小写字母开头,且只能包含小写字母、数字、连字符 (-)、下划线 (_) 或句点 (.)",
     "feeds": {
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"
@@ -883,6 +883,7 @@
     "metric": "指标",
     "aggregation": "聚合",
     "metric choice": "此flow没有可用的指标",
+    "metric filter no match": "没有指标匹配\"{term}\"",
     "of": "的",
     "title": "标题",
     "api": "API",

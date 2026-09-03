@@ -38,7 +38,6 @@
     import {ref, computed, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
-    import {storageKeys} from "../../utils/constants";
 
     const props = defineProps<{
         total?: number;
@@ -52,7 +51,6 @@
     }>();
 
     const route = useRoute();
-    const PAGINATION_SIZE = `${storageKeys.PAGINATION_SIZE}__${String(route.name)}`;
 
     const {t} = useI18n();
 
@@ -65,8 +63,7 @@
 
     const internalSize = ref<number>(
         parseInt(
-            localStorage.getItem(PAGINATION_SIZE) as string ||
-                (route.query.size as string) ||
+            (route.query.size as string) ||
                 props.size?.toString() ||
                 "25"
         )
@@ -84,7 +81,6 @@
     function pageSizeChange(value: number) {
         internalPage.value = 1;
         internalSize.value = value;
-        localStorage.setItem(PAGINATION_SIZE, value.toString());
         emit("page-changed", {
             page: 1,
             size: internalSize.value,
@@ -110,8 +106,7 @@
         () => route.query,
         () => {
             internalSize.value = parseInt(
-                localStorage.getItem(PAGINATION_SIZE) as string ||
-                    (route.query.size as string) ||
+                (route.query.size as string) ||
                     props.size?.toString() ||
                     "25"
             );

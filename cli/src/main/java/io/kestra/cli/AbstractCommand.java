@@ -47,8 +47,10 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     @Inject
     private io.kestra.core.utils.VersionProvider versionProvider;
 
+    // Resolved lazily: an Optional here builds the whole webserver bean graph for every command,
+    // and a configuration declaring kestra.server-type makes that graph reach the database.
     @Inject
-    protected Optional<EmbeddedServer> embeddedServer;
+    protected BeanProvider<EmbeddedServer> embeddedServer;
 
     @Inject
     private BeanProvider<FlowAutoLoader> flowAutoLoaderService;

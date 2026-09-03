@@ -2267,7 +2267,7 @@ export type TriggerControllerApiCreateBackfillRequest = {
     namespace?: string;
     flowId?: string;
     triggerId?: string;
-    backfill?: TriggerControllerApiCreateBackfillRequestBackfill;
+    backfill: TriggerControllerApiCreateBackfillRequestBackfill;
 };
 
 export type TriggerControllerApiCreateBackfillRequestBackfill = {

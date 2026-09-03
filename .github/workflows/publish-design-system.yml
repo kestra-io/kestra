@@ -38,6 +38,9 @@ jobs:
     defaults:
       run:
         working-directory: ui
+    env:
+      PACKAGE: ${{ inputs.package }}
+      INCREMENT: ${{ inputs.increment }}
 
     steps:
       - name: Checkout
@@ -60,37 +63,39 @@ jobs:
 
       - name: Run tests
         if: inputs.skip-test != 'true'
-        run: npm run test --workspace @kestra-io/${{ inputs.package }}
+        run: npm run test --workspace "@kestra-io/$PACKAGE"
 
       - name: Build
-        run: npm run build --workspace @kestra-io/${{ inputs.package }}
+        run: npm run build --workspace "@kestra-io/$PACKAGE"
 
       - name: Remove export changes
         run: git reset --hard HEAD
 
       - name: Extract latest published version from npmjs.com
         run: |
-          publishedVersion=$(npm view @kestra-io/${{ inputs.package }} version --registry https://registry.npmjs.org)
+          publishedVersion=$(npm view "@kestra-io/$PACKAGE" version --registry https://registry.npmjs.org)
           echo "Latest published version: $publishedVersion"
           # Set the version in package.json to the latest published version to ensure correct version bumping
-          npm pkg set --workspace @kestra-io/${{ inputs.package }} version=$publishedVersion
+          npm pkg set --workspace "@kestra-io/$PACKAGE" version="$publishedVersion"
           # Bump the version based on the input increment (patch, minor, major)
-          newVersion=$(npm version ${{ inputs.increment }} --workspace @kestra-io/${{ inputs.package }} --no-git-tag-version)
+          newVersion=$(npm version "$INCREMENT" --workspace "@kestra-io/$PACKAGE" --no-git-tag-version)
           echo "New version: $newVersion"
 
       - name: Read new version
         id: version
         # Read the new version from the package.json and set it as an output for later steps
-        run: echo "value=$(npm pkg get version --workspace @kestra-io/${{ inputs.package }} | jq -r '."@kestra-io/${{ inputs.package }}"')" >> $GITHUB_OUTPUT 
+        run: echo "value=$(npm pkg get version --workspace "@kestra-io/$PACKAGE" | jq -r --arg pkg "@kestra-io/$PACKAGE" '.[$pkg]')" >> "$GITHUB_OUTPUT"
 
       - name: Commit and tag
         working-directory: .
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
         run: |
           # setup the bot for commit and tag
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # tag the version and push
-          git tag "${{ inputs.package }}/v${{ steps.version.outputs.value }}"
+          git tag "$PACKAGE/v$VERSION"
           git push --tags
 
       # Trusted publishing need npm 11.+
@@ -100,7 +105,7 @@ jobs:
           npm version
 
       - name: Publish to npm
-        run: npm publish --workspace @kestra-io/${{ inputs.package }} --access public
-      
+        run: npm publish --workspace "@kestra-io/$PACKAGE" --access public
+
       - name: Create release tarball
-        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/${{ inputs.package }}
+        run: npm pack --workspace "@kestra-io/$PACKAGE" --pack-destination "packages/$PACKAGE"

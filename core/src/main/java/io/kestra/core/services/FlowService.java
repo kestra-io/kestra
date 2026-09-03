@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -50,6 +51,8 @@ import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.pebble.PebbleExpressionService;
+import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;
@@ -78,6 +81,8 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowService {
+    private static final Pattern PEBBLE_FUNCTION_PATTERN = Pattern.compile("\\b([a-zA-Z0-9_]+)\\s*\\(");
+
     @Inject
     protected FlowRepositoryInterface flowRepository; // Used in EE
 
@@ -104,6 +109,9 @@ public class FlowService {
 
     @Inject
     private PluginRegistry pluginRegistry;
+
+    @Inject
+    private PebbleExpressionService pebbleExpressionService;
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
@@ -639,6 +647,31 @@ public class FlowService {
             trigger -> SecretUtils.validateSecretFields(trigger)
                 .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg))
         );
+
+        if (pebbleExpressionService != null && flow.getSource() != null) {
+            Map<String, PebbleFunction> deprecatedFunctions = pebbleExpressionService.functions().stream()
+                .filter(PebbleFunction::deprecated)
+                .collect(Collectors.toMap(PebbleFunction::name, f -> f));
+            if (!deprecatedFunctions.isEmpty()) {
+                PebbleUtil.replaceInBlock(flow.getSource(), block ->
+                {
+                    Matcher matcher = PEBBLE_FUNCTION_PATTERN.matcher(block);
+                    while (matcher.find()) {
+                        String fnName = matcher.group(1);
+                        PebbleFunction pf = deprecatedFunctions.get(fnName);
+                        if (pf != null) {
+                            String msg = pf.replacement() != null && !pf.replacement().isBlank()
+                                ? "Pebble function '%s' is deprecated. Use '%s' instead.".formatted(fnName, pf.replacement())
+                                : "Pebble function '%s' is deprecated.".formatted(fnName);
+                            if (!warnings.contains(msg)) {
+                                warnings.add(msg);
+                            }
+                        }
+                    }
+                    return block;
+                });
+            }
+        }
 
         return warnings;
     }

@@ -1725,7 +1725,8 @@
           "workerSelector": "워커 선택기",
           "checks": "점검",
           "updated": "업데이트됨",
-          "quotas": "할당량"
+          "quotas": "할당량",
+          "policyRefs": "정책 참조"
         }
       },
       "select": {

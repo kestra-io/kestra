@@ -207,6 +207,7 @@
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
     "queued duration": "대기 중 지속 시간",
+    "paused duration": "일시 중지 시간",
     "executionProgress": {
       "title": "실행 진행률",
       "estimatedRemaining": "예상 남은 시간: {duration}",
@@ -299,6 +300,21 @@
     "to": "종료",
     "steps": "단계",
     "state": "상태",
+    "state_history": {
+      "title": "상태 기록",
+      "open": "상태 기록",
+      "aria_open": "상태 기록 표시",
+      "aria_open_for": "{subject}의 상태 기록 표시",
+      "started_at": "{time}에 시작됨",
+      "failed_at": "{time}에 실패함",
+      "skipped_at": "{time}에 건너뜀",
+      "created_at": "{time}에 생성됨",
+      "did_not_run": "이 태스크는 실행되지 않았습니다",
+      "waiting_to_start": "시작 대기 중",
+      "attempt_n": "시도 {index}",
+      "attempt_count": "{count}회 시도",
+      "copy": "상태 기록 복사"
+    },
     "search": "검색",
     "source search": "소스 검색",
     "selected": "선택됨",
@@ -448,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "동시성 제한",
-      "warning": "실행 중인 카운터를 변경하면 동시성이 손상되어 실행이 허용된 한도를 초과할 수 있습니다."
+      "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다."
     },
     "flowConcurrency": {
       "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
@@ -456,6 +472,11 @@
         "message": "이 flow는 더 이상 동시성 블록을 선언하지 않지만, 제한 레코드가 여전히 실행 중인 실행 {count}개를 세고 있습니다. 새 실행에는 영향을 주지 않으며 관리 → 동시성 제한에서 초기화할 수 있습니다.",
         "title": "남아 있는 동시성 제한"
       }
+    },
+    "docsPage": {
+      "notFound": "이 문서 페이지가 존재하지 않습니다. 이동되었거나 이름이 변경되었을 수 있습니다.",
+      "loadError": "이 문서 페이지를 불러올 수 없습니다. 다시 시도해 주세요.",
+      "backToDocs": "Docs로 돌아가기"
     },
     "documentation": {
       "documentation": "문서"
@@ -495,6 +516,15 @@
     },
     "use": "사용",
     "plugins": {
+      "autoInstall": {
+        "failed": "플러그인 설치에 실패했습니다",
+        "failedHint": "flow가 저장되지 않았습니다. 문제를 해결하거나 flow에서 plugin을 제거한 후 다시 저장하세요.",
+        "preparing": "플러그인 설치를 준비하는 중...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "플러그인이 성공적으로 설치되었습니다 | 플러그인이 성공적으로 설치되었습니다",
+        "timeout": "플러그인 설치가 예상보다 오래 걸리고 있습니다. flow가 저장되지 않았으므로 설치가 완료되면 다시 저장하세요.",
+        "title": "플러그인 {count}개 설치 중 | 플러그인 {count}개 설치 중"
+      },
       "names": "플러그인들",
       "release": "릴리스 노트",
       "beta": "베타",
@@ -534,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow 문서",
+      "nav_definitions": "정의",
       "nav_examples": "예시",
+      "nav_metrics": "메트릭",
       "nav_outputs": "Outputs",
       "nav_overview": "개요",
       "nav_properties": "속성",
@@ -616,6 +648,10 @@
     "open full page": "전체 페이지 열기",
     "drill down preview": "미리보기",
     "errors": {
+      "400": {
+        "title": "잘못된 요청",
+        "content": "서버가 요청을 이해할 수 없습니다."
+      },
       "401": {
         "title": "인증되지 않았습니다.",
         "content": "이 페이지에 접근하려면 인증이 필요합니다."
@@ -628,6 +664,114 @@
         "title": "페이지를 찾을 수 없음",
         "content": "요청한 URL을 이 서버에서 찾을 수 없습니다.<br />알고 있는 전부입니다.",
         "flow or execution": "찾고 있는 flow 또는 실행이 존재하지 않습니다."
+      },
+      "409": {
+        "title": "충돌",
+        "content": "요청이 리소스의 현재 상태와 충돌합니다."
+      },
+      "422": {
+        "title": "유효하지 않은 엔터티",
+        "content": "제출된 콘텐츠를 처리할 수 없습니다."
+      },
+      "500": {
+        "title": "내부 서버 오류",
+        "content": "저희 쪽에 문제가 발생했습니다. 나중에 다시 시도해 주세요."
+      },
+      "503": {
+        "title": "서비스를 사용할 수 없습니다.",
+        "content": "서버를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요."
+      },
+      "generic": {
+        "title": "문제가 발생했습니다.",
+        "content": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요."
+      },
+      "trace id": "추적 ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI 요청 실패"
+        },
+        "bad-request": {
+          "title": "잘못된 요청"
+        },
+        "bulk-validation-failed": {
+          "title": "일부 항목을 처리할 수 없습니다."
+        },
+        "conflict": {
+          "title": "충돌"
+        },
+        "entity-already-exists": {
+          "title": "엔터티가 이미 존재합니다."
+        },
+        "forbidden": {
+          "title": "액세스 거부됨"
+        },
+        "internal-error": {
+          "title": "내부 서버 오류"
+        },
+        "invalid-argument": {
+          "title": "잘못된 인수"
+        },
+        "invalid-entity": {
+          "title": "유효하지 않은 엔티티"
+        },
+        "invalid-format": {
+          "title": "잘못된 값 형식"
+        },
+        "invalid-json": {
+          "title": "유효하지 않은 JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "유효하지 않은 plugin 유형"
+        },
+        "invalid-query-filters": {
+          "title": "잘못된 쿼리 필터"
+        },
+        "invalid-query-parameter": {
+          "title": "잘못된 쿼리 파라미터"
+        },
+        "invalid-request-body": {
+          "title": "잘못된 요청 본문"
+        },
+        "locked": {
+          "title": "리소스가 잠겨 있습니다"
+        },
+        "method-not-allowed": {
+          "title": "허용되지 않는 메서드"
+        },
+        "migration-required": {
+          "title": "마이그레이션 필요"
+        },
+        "not-acceptable": {
+          "title": "허용되지 않음"
+        },
+        "not-found": {
+          "title": "리소스를 찾을 수 없습니다."
+        },
+        "payload-too-large": {
+          "title": "Payload가 너무 큽니다"
+        },
+        "resource-expired": {
+          "title": "리소스가 만료되었습니다."
+        },
+        "service-unavailable": {
+          "title": "서비스를 사용할 수 없습니다.",
+          "detail": "서버를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요."
+        },
+        "timeout": {
+          "title": "작업 시간 초과"
+        },
+        "too-many-requests": {
+          "title": "요청이 너무 많습니다."
+        },
+        "unauthenticated": {
+          "title": "인증 필요"
+        },
+        "unsupported-media-type": {
+          "title": "지원되지 않는 미디어 유형"
+        },
+        "validation-failed": {
+          "title": "유효성 검사 실패"
+        }
       }
     },
     "back_to_dashboard": "대시보드로 돌아가기",
@@ -645,6 +789,7 @@
     "label": "Label",
     "labels": "라벨",
     "execution labels": "실행 라벨",
+    "show more labels": "라벨 {count}개 더 보기",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
     "feeds": {
       "heading": "Kestra의 모든 것.",
@@ -662,20 +807,20 @@
     "bulk restart": "<code>{executionCount}</code> 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
     "cancel": "취소",
-    "errorLogs": "오류 logs",
+    "errorLogs": "오류 log",
     "welcome_page": {
       "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?"
     },
     "product_tour": "제품 둘러보기",
-    "executions replayed": "<code>{executionCount}</code> 개의 실행이 재실행되었습니다",
+    "executions replayed": "<code>{executionCount}</code>개의 실행이 재생되었습니다.",
     "executions state changed": "<code>{executionCount}</code> 실행 상태가 변경되었습니다",
-    "executions resumed": "<code>{executionCount}</code> 개의 실행이 재개되었습니다",
-    "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
+    "executions resumed": "<code>{executionCount}</code>개의 실행이 재개되었습니다.",
+    "executions paused": "<code>{executionCount}</code> 실행 일시 중지됨",
     "executions unqueue": "<code>{executionCount}</code> 실행 대기열에서 제거됨",
-    "executions force run": "<code>{executionCount}</code> 실행 강제 실행",
-    "executions restarted": "<code>{executionCount}</code> 개의 실행이 재시작되었습니다",
-    "executions killed": "<code>{executionCount}</code> 개의 실행이 강제 종료되었습니다",
-    "executions deleted": "<code>{executionCount}</code> 개의 실행이 삭제되었습니다",
+    "executions force run": "<code>{executionCount}</code> 강제 실행된 execution",
+    "executions restarted": "<code>{executionCount}</code>개의 실행이 다시 시작되었습니다.",
+    "executions killed": "<code>{executionCount}</code>개 실행이 중지되었습니다.",
+    "executions deleted": "<code>{executionCount}</code>개의 실행이 삭제되었습니다.",
     "invalid bulk replay": "실행을 재실행할 수 없습니다",
     "invalid bulk resume": "실행을 재개할 수 없습니다",
     "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
@@ -754,6 +899,11 @@
     "expand_by_default": "기본적으로 구조화된 log 확장",
     "similar lines": "유사한 라인",
     "download_logs_description": "내보낼 log를 선택하세요. 필터는 현재 보기에 기본 설정됩니다.",
+    "logs_download_truncated": "가장 최근 {downloaded} 줄의 log를 내보냈습니다. {skipped} 줄이 더 필터와 일치했지만 제외되었습니다.",
+    "logs_download_capped": "한 번의 내보내기 최대치인 가장 최근 {downloaded} 줄의 log를 내보냈습니다. 필터와 일치하는 줄이 더 있었을 수 있습니다.",
+    "logs_download_partial": "이 필터는 더 이상 페이지를 넘길 수 없어 내보내기가 {downloaded} 줄의 log에서 중단되었습니다. 일치하는 일부 줄이 누락되었습니다.",
+    "logs_download_failed": "log 내보내기에 실패했습니다. 파일이 다운로드되지 않았습니다.",
+    "logs_download_empty": "필터와 일치하는 log 줄이 없어 파일이 다운로드되지 않았습니다.",
     "display_settings": "표시 설정",
     "density": "밀도",
     "density_compact": "압축",
@@ -766,7 +916,7 @@
     "join_slack": "Slack 참여",
     "kestra": "Kestra",
     "error detected": "오류가 감지되었습니다.",
-    "warning detected": "경고 감지됨",
+    "warning detected": "경고가 감지되었습니다.",
     "informative notice": "노트(s)",
     "open": "열기",
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
@@ -863,6 +1013,7 @@
       },
       "export": "namespace 파일 내보내기",
       "export_single": "파일 내보내기",
+      "export_error": "\"{name}\"을(를) 내보낼 수 없습니다. 경로를 확인할 수 없습니다.",
       "dialog": {
         "name": {
           "file": "확장자를 포함한 이름:",
@@ -1411,7 +1562,8 @@
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
       },
-      "inherited": "상속된 KV 쌍"
+      "inherited": "상속된 KV 쌍",
+      "expiration_hint": "현재 {date}에 만료됩니다. 이 만료를 유지하려면 필드를 그대로 두십시오. 기간을 선택하면 지금부터 다시 계산되고, 지우면 제거됩니다."
     },
     "expiration": "만료",
     "page": {
@@ -1751,7 +1903,8 @@
       "close_all_tabs": "모든 탭 닫기",
       "close_all_panels": "모든 패널 닫기",
       "exit_fullscreen": "전체 화면 종료",
-      "fullscreen": "전체 화면"
+      "fullscreen": "전체 화면",
+      "split_panel": "패널 분할"
     },
     "search_docs": "검색",
     "no_results_found": "결과를 찾을 수 없습니다",
@@ -1764,7 +1917,9 @@
       "triggers": "트리거를 찾을 수 없음",
       "flows": "flow를 찾을 수 없음",
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
-      "secrets": "비밀 없음"
+      "secrets": "비밀 없음",
+      "all_columns_hidden": "모든 열이 숨겨짐",
+      "all_columns_hidden_description": "데이터를 다시 보려면 테이블 열 사용자 지정에서 최소 하나 이상의 열을 다시 켜세요."
     },
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {
@@ -1782,6 +1937,7 @@
       "others": "기타",
       "viewAll": "전체 보기",
       "export": "내보내기",
+      "exportEmpty": "이 차트에는 내보낼 데이터가 없습니다.",
       "exportTo": {
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"
@@ -1932,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot을(를) 사용할 수 없습니다",
-          "detail": "AI 공급자가 구성되어 있지 않습니다. 관리자에게 설정해 달라고 요청한 다음 다시 시도하세요.",
-          "retry": "다시 시도"
+          "detail": "AI 공급자가 구성되지 않았습니다. 관리자에게 설정을 요청하세요.",
+          "docs": "문서 보기"
         },
         "thinkingWords": [
           "오케스트레이션",
@@ -2017,6 +2173,31 @@
         "clear_selection": "선택 해제",
         "fit_view": "화면에 맞추기"
       },
+      "dag": {
+        "force": "트리",
+        "layered": "DAG",
+        "system": "시스템",
+        "last_update": "마지막 업데이트",
+        "status": {
+          "fresh": "신규",
+          "stale": "오래됨",
+          "failed": "실패함",
+          "unknown": "추적되지 않음"
+        },
+        "summary": {
+          "fresh": "모든 {n} Asset이 최신입니다.",
+          "issues": "{n} 고정",
+          "failed": "{n} 실패함",
+          "last_run": "마지막 실행 {ago}",
+          "unknown": "{n} 추적되지 않음"
+        },
+        "recent_runs": "최근 실행",
+        "group_by": "그룹화 기준",
+        "groups": "그룹 ({n})",
+        "group_none": "그룹화 없음",
+        "group_dataset": "데이터셋",
+        "ungrouped": "그룹 해제됨"
+      },
       "search": {
         "placeholders": {
           "default": "flow 또는 namespace로 검색...",
@@ -2078,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "내 서버",
-      "servers_count": "{count} MCP 서버",
+      "servers_count": "{count} MCP 서버 | {count} MCP 서버",
       "managed_by_kestra": "Kestra에서 관리",
       "servers": "MCP 서버",
       "client_setup": "클라이언트 설정",
@@ -2391,6 +2572,7 @@
         "message": "저장하기 전에 오류를 수정하세요.",
         "title": "flow를 저장할 수 없습니다"
       },
+      "schema_default_tooltip": "필드가 설정되지 않은 경우 사용되는 기본값",
       "search_task_placeholder": "Task 검색 또는 설명…",
       "shortcuts": {
         "add_after": "선택 영역 뒤에 블록 삽입",

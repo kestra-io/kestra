@@ -1,7 +1,6 @@
 <template>
     <SchemaSection
         :class="['section-collapsible', {nested, compact}]"
-        :style="labelColor ? {'--property-label-color': labelColor} : undefined"
         :clickableText="sectionName"
         :href="href"
         :arrow="!compact"
@@ -202,7 +201,6 @@
         description?: string;
         examples?: SchemaExample[];
         nested?: boolean;
-        labelColor?: string;
         showFilter?: boolean;
         compact?: boolean;
     }>(), {
@@ -216,7 +214,6 @@
         description: undefined,
         examples: undefined,
         nested: false,
-        labelColor: undefined,
         showFilter: false,
         compact: false,
     })
@@ -238,9 +235,12 @@
     })
 
     // The title says what a property is, the description carries the caveat, so the
-    // compact view renders both - matching PropertyDetail. Joined as two paragraphs
-    // in a single slot call: KsMarkdown wraps each render in its own container, so
-    // two slots would break the `p + p` spacing rule.
+    // compact view renders both - matching PropertyDetail. Joined into a single slot
+    // call rather than one per field: every consumer wraps the `markdown` slot in its
+    // own element (SchemaToHtml adds `div.markdown` around each render), so two calls
+    // put the paragraphs in separate containers where neither `p + p` nor an
+    // `.ks-markdown + .ks-markdown` sibling rule can reach them, and the two lines
+    // collapse together. One render keeps them siblings, so `p + p` spaces them.
     function propertyDoc(property: JSONProperty): string {
         return [property.title, property.description]
             .filter((text): text is string => Boolean(text))
@@ -398,7 +398,7 @@
         }
 
         :deep(> .collapse-button > .collapse-button__label) {
-            color: var(--property-label-color, inherit);
+            color: var(--ks-text-primary);
         }
 
         :deep(> .collapse-button) {
@@ -517,14 +517,14 @@
 
     .compact-prop-desc {
         margin-top: var(--ks-spacing-2);
-        font-size: var(--ks-font-size-base);
-        line-height: 1.65;
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.5;
         color: var(--ks-text-secondary);
 
         :deep(p) {
             margin: 0;
-            font-size: var(--ks-font-size-base);
-            line-height: 1.65;
+            font-size: var(--ks-font-size-sm);
+            line-height: 1.5;
             color: var(--ks-text-secondary);
         }
 

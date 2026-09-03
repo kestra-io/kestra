@@ -48,6 +48,7 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -402,6 +403,10 @@ public class ExecutorService {
                     }
                     return taskRuns;
                 }
+            } catch (ConstraintViolationException e) {
+                // An invalid flowable config (e.g. a negative concurrency) is surfaced to the caller,
+                // which fails the flowable task run so the execution terminates cleanly.
+                throw e;
             } catch (Exception e) {
                 log.warn("Unable to resolve the next tasks to run", e);
             }
@@ -559,14 +564,21 @@ public class ExecutorService {
             // For running flowable tasks: compute both next task runs and the worker task result in a single pass.
             if (taskRun.getState().isRunning() && task instanceof FlowableTask<?> && this.canChildrenProgress(executor.getExecution(), taskRun)) {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
-                Optional<WorkerTaskResult> flowableResult = this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext);
-                if (flowableResult.isPresent()) {
-                    list.add(flowableResult.get());
-                    // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
-                    if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                        this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                try {
+                    nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
+                    Optional<WorkerTaskResult> flowableResult = this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext);
+                    if (flowableResult.isPresent()) {
+                        list.add(flowableResult.get());
+                        // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
+                        if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
+                            this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                        }
                     }
+                } catch (ConstraintViolationException e) {
+                    // An invalid flowable configuration fails the flowable task run, which terminates the
+                    // execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                    runContext.logger().error("Failed to process flowable task {}: {}", taskRun.getId(), e.getMessage(), e);
+                    executor.withExecution(executor.getExecution().withTaskRun(taskRun.withState(State.Type.FAILED)), "flowableValidation");
                 }
             }
 
@@ -752,7 +764,12 @@ public class ExecutorService {
                                     // re-initializing from scratch.
                                     Optional<Execution> failingSubExecution = executionService.findLastFailingLoopSubExecution(executor.getExecution(), taskRun);
                                     if (failingSubExecution.isPresent()) {
-                                        Execution restarted = executionService.restart(failingSubExecution.get(), executor.getFlow(), null);
+                                        Execution subExecution = failingSubExecution.get();
+                                        // The failing iteration's terminal state was recorded in terminatedIterations
+                                        // when the loop terminated; undo it now so the retry's real outcome
+                                        // (recorded once it reaches a new terminal state) isn't double-counted.
+                                        revertLoopIterationTermination(taskRun, subExecution.getState().getCurrent());
+                                        Execution restarted = executionService.restart(subExecution, executor.getFlow(), null);
                                         executor.withLoopExecution(restarted, "restartLoopExecution");
                                         executor.withExecution(
                                             executor.getExecution()
@@ -855,6 +872,29 @@ public class ExecutorService {
         this.addWorkerTaskResults(executor, list);
 
         return executor;
+    }
+
+    /**
+     * Undoes the terminal-state bookkeeping {@link io.kestra.executor.handler.LoopExecutionEventMessageHandler}
+     * recorded for a loop iteration that terminated the loop in error, before that iteration is restarted.
+     * Without this, the retry's own terminal event would be merged on top of the stale one, double-counting
+     * the iteration in {@link Loop#TERMINATED_ITERATIONS_OUTPUT} and corrupting the running-iteration count
+     * used to compute the next iteration index.
+     */
+    private void revertLoopIterationTermination(TaskRun loopTaskRun, State.Type terminatedState) throws InternalException {
+        Map<String, Object> outputs = taskOutputService.getOutputs(loopTaskRun);
+        if (!outputs.containsKey(Loop.RUNNING_ITERATIONS_OUTPUT) || !outputs.containsKey(Loop.TERMINATED_ITERATIONS_OUTPUT)) {
+            return;
+        }
+
+        int runningIterations = (Integer) outputs.get(Loop.RUNNING_ITERATIONS_OUTPUT);
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> terminatedByState = new HashMap<>((Map<String, Integer>) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT));
+        terminatedByState.computeIfPresent(terminatedState.name(), (state, count) -> count > 1 ? count - 1 : null);
+
+        outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, runningIterations + 1);
+        outputs.put(Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedByState);
+        taskOutputService.saveOutputs(loopTaskRun, outputs);
     }
 
     /**
@@ -997,6 +1037,9 @@ public class ExecutorService {
                     if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                         Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
+                        if (duration != null && (duration.isZero() || duration.isNegative())) {
+                            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
+                        }
                         Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
                         Pause.Behavior behavior = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
                         if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
@@ -1496,12 +1539,23 @@ public class ExecutorService {
                             .build()
                     );
                 } catch (Exception e) {
+                    Task task = workerTask.getTask();
+                    // Log against the task run so the failure carries its taskId/taskRunId, not only the execution.
+                    executorTask.runContext().logger().error("Failed to process task: {}", e.getMessage(), e);
+
+                    // State.Type.fail resolves the failure against allowFailure/allowWarning: FAILED, WARNING or SUCCESS.
+                    State.Type failState = State.Type.fail(task);
+                    // Fail the execution only when the task itself ends FAILED; WARNING/SUCCESS let it continue.
+                    if (failState == State.Type.FAILED) {
+                        executor.withException(e, "handleExecutionUpdatingTasks");
+                    }
+
+                    TaskRunAttempt failedAttempt = TaskRunAttempt.builder().state(new State(failState)).build();
                     workerTaskResults.add(
                         WorkerTaskResult.builder()
-                            .taskRun(workerTask.getTaskRun().fail())
+                            .taskRun(workerTask.getTaskRun().withAttempts(List.of(failedAttempt)).withState(failState))
                             .build()
                     );
-                    executor.withException(e, "handleExecutionUpdatingTasks");
                 }
                 return true;
             });

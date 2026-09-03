@@ -12,10 +12,12 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
+import io.kestra.core.server.Service.ServiceState;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.noop.NoopTimer;
+import io.micronaut.context.BeanProvider;
 import reactor.core.publisher.Flux;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -34,8 +36,10 @@ class TriggerSchedulerMonitorTest {
     private ExecutionRepositoryInterface executionRepository;
     private InMemoryTriggerStateStore triggerStateStore;
     private DefaultScheduler defaultScheduler;
+    private BeanProvider<DefaultScheduler> schedulerProvider;
     private TriggerSchedulerMonitor monitor;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
         metricRegistry = mock(MetricRegistry.class);
@@ -49,8 +53,12 @@ class TriggerSchedulerMonitorTest {
 
         defaultScheduler = mock(DefaultScheduler.class);
         when(defaultScheduler.currentVNodesAssignment()).thenReturn(Set.of(TEST_VNODE));
+        when(defaultScheduler.getState()).thenReturn(ServiceState.RUNNING);
 
-        monitor = new TriggerSchedulerMonitor(metricRegistry, executionRepository, triggerStateStore, defaultScheduler);
+        schedulerProvider = mock(BeanProvider.class);
+        when(schedulerProvider.get()).thenReturn(defaultScheduler);
+
+        monitor = new TriggerSchedulerMonitor(metricRegistry, executionRepository, triggerStateStore, schedulerProvider);
     }
 
     @Test
@@ -78,6 +86,32 @@ class TriggerSchedulerMonitorTest {
 
         // Then findAllByTrigger is invoked once per non-realtime trigger.
         verify(executionRepository, times(2)).findAllByTrigger(any());
+    }
+
+    @Test
+    void shouldNotPropagateWhenSchedulerFailsToConstruct() {
+        // Given a scheduler that fails to construct (e.g. a dependency's @PostConstruct throwing).
+        when(schedulerProvider.get()).thenThrow(new RuntimeException("boom"));
+        triggerStateStore.save(lockedTriggerOf("schedule-trigger", TriggerType.SCHEDULE));
+
+        // When the monitor runs, the failure is caught locally instead of propagating to the caller.
+        monitor.run();
+
+        // Then no trigger is inspected.
+        verify(executionRepository, never()).findAllByTrigger(any());
+    }
+
+    @Test
+    void shouldSkipMonitoringWhenSchedulerIsNotRunning() {
+        // Given a constructed scheduler that is not currently running.
+        when(defaultScheduler.getState()).thenReturn(ServiceState.TERMINATING);
+        triggerStateStore.save(lockedTriggerOf("schedule-trigger", TriggerType.SCHEDULE));
+
+        // When the monitor runs
+        monitor.run();
+
+        // Then no trigger is inspected.
+        verify(executionRepository, never()).findAllByTrigger(any());
     }
 
     private static TriggerState lockedTriggerOf(String triggerId, TriggerType type) {

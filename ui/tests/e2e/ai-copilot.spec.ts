@@ -234,7 +234,8 @@ test.describe("AI Copilot", () => {
         expect(new URL(page.url()).searchParams.get("blueprintSourceYaml")).toContain("id: demo")
     })
 
-    test("accepts a dashboard draft into the dashboard editor", async ({page}) => {
+    /** OSS cannot store dashboards (isCustomDashboardsEnabled: false), so the draft card hides its actions; the actionable path is covered by the EE suite. */
+    test("shows a dashboard draft without actions when the backend cannot store dashboards", async ({page}) => {
         await page.route("**/ai/threads/*/chat", async (route) => {
             await route.fulfill({
                 status: 200,
@@ -248,13 +249,12 @@ test.describe("AI Copilot", () => {
 
         await page.locator(D.input).fill("draft me a dashboard")
         await page.locator(D.send).click()
-        await expect(page.locator(D.draft)).toBeVisible()
+        const draft = page.locator(D.draft)
+        await expect(draft).toBeVisible()
+        await expect(draft).toContainText("id: my-dash")
 
-        await page.locator(D.draftOpen).click()
-        // The dashboard create editor seeds itself from the `sourceYaml` query.
-        await page.waitForURL(/\/dashboards\/new\?.*sourceYaml=/)
-        // Read the query param via URLSearchParams (form-decodes `+`→space); decodeURIComponent doesn't.
-        expect(new URL(page.url()).searchParams.get("sourceYaml")).toContain("id: my-dash")
+        await expect(page.locator(D.draftOpen)).toHaveCount(0)
+        await expect(page.locator(D.draftApply)).toHaveCount(0)
     })
 
     test("applies a flow draft directly and navigates to the created flow", async ({page}) => {

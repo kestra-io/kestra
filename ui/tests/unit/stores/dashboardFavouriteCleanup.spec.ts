@@ -29,8 +29,17 @@ vi.mock("vue-i18n", () => ({
 
 const deleteDashboardFn = vi.fn()
 
-vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
-    deleteDashboard: (...args: any[]) => deleteDashboardFn(...args),
+vi.mock("@kestra-io/kestra-sdk", () => ({
+    useClient: () => ({get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: (...args: any[]) => deleteDashboardFn(...args)}),
+}))
+
+vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({}))
+
+vi.mock("override/utils/route", () => ({
+    apiUrl: () => "/api/v1/main",
+    apiUrlWithoutTenants: () => "/api/v1",
+    basePath: () => "/ui/main",
+    baseUrl: "/",
 }))
 
 const TEST_TIMEOUT_MS = 20_000
@@ -48,7 +57,7 @@ describe("dashboard store favourite cleanup", () => {
     beforeEach(() => {
         vi.resetModules()
         deleteDashboardFn.mockReset()
-        deleteDashboardFn.mockResolvedValue({})
+        deleteDashboardFn.mockResolvedValue({data: {}})
         localStorage.clear()
         setActivePinia(createPinia())
     })

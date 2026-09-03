@@ -163,10 +163,6 @@ export type AiControllerAiProviderResponse = {
     isDefault?: boolean;
 };
 
-export type AiControllerDashboardGenerationPrompt = DashboardGenerationPrompt & {
-    providerId?: string;
-};
-
 export type AiControllerFlowGenerationPrompt = FlowGenerationPrompt & {
     providerId?: string;
 };
@@ -668,18 +664,6 @@ export type DashboardControllerDashboardResponse = {
 export type DashboardControllerPreviewRequest = {
     chart: string;
     globalFilter?: ChartFiltersOverrides | null;
-};
-
-export type DashboardGenerationPrompt = {
-    conversationId: string;
-    userPrompt: string;
-    yaml?: string;
-};
-
-export type DashboardSettings = {
-    defaultHomeDashboard?: string;
-    defaultFlowOverviewDashboard?: string;
-    defaultNamespaceOverviewDashboard?: string;
 };
 
 export type DependsOn = {
@@ -2222,12 +2206,6 @@ export type TaskWithVersion = {
     version?: string;
 };
 
-export type TenantControllerSetTenantDefaultDashboardsRequest = {
-    defaultHomeDashboard?: string;
-    defaultFlowOverviewDashboard?: string;
-    defaultNamespaceOverviewDashboard?: string;
-};
-
 export type TenantInterface = {
     tenantId?: string;
 };
@@ -2637,25 +2615,6 @@ export type LogoutResponses = {
 };
 
 export type LogoutResponse = LogoutResponses[keyof LogoutResponses];
-
-export type GenerateDashboardData = {
-    /**
-     * Prompt and context required for dashboard generation
-     */
-    body: AiControllerDashboardGenerationPrompt;
-    path?: never;
-    query?: never;
-    url: '/api/v1/main/ai/generate/dashboard';
-};
-
-export type GenerateDashboardResponses = {
-    /**
-     * generateDashboard 200 response
-     */
-    200: string;
-};
-
-export type GenerateDashboardResponse = GenerateDashboardResponses[keyof GenerateDashboardResponses];
 
 export type GenerateFlowData = {
     /**
@@ -3160,22 +3119,6 @@ export type GetPluginUiResponses = {
 
 export type GetPluginUiResponse = GetPluginUiResponses[keyof GetPluginUiResponses];
 
-export type SetTenantDefaultDashboardData = {
-    body: TenantControllerSetTenantDefaultDashboardsRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/tenants/main/settings/default-dashboards';
-};
-
-export type SetTenantDefaultDashboardResponses = {
-    /**
-     * setTenantDefaultDashboard 200 response
-     */
-    200: DashboardSettings;
-};
-
-export type SetTenantDefaultDashboardResponse = SetTenantDefaultDashboardResponses[keyof SetTenantDefaultDashboardResponses];
-
 export type CreateData = {
     body: ApiCreateThreadRequest;
     path: {
@@ -3551,34 +3494,6 @@ export type SearchDashboardsResponses = {
 
 export type SearchDashboardsResponse = SearchDashboardsResponses[keyof SearchDashboardsResponses];
 
-export type CreateDashboardData = {
-    /**
-     * The dashboard definition as YAML
-     */
-    body: string;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards';
-};
-
-export type CreateDashboardErrors = {
-    /**
-     * If the dashboard id is reserved ('_default')
-     */
-    422: unknown;
-};
-
-export type CreateDashboardResponses = {
-    /**
-     * createDashboard 200 response
-     */
-    200: DashboardControllerDashboardResponse;
-};
-
-export type CreateDashboardResponse = CreateDashboardResponses[keyof CreateDashboardResponses];
-
 export type ExportChartData = {
     body: DashboardControllerPreviewRequest;
     path: {
@@ -3640,86 +3555,6 @@ export type GetDefaultDashboardDefinitionsResponses = {
 
 export type GetDefaultDashboardDefinitionsResponse = GetDefaultDashboardDefinitionsResponses[keyof GetDefaultDashboardDefinitionsResponses];
 
-export type GetDefaultDashboardsData = {
-    body?: never;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/settings/default-dashboards';
-};
-
-export type GetDefaultDashboardsResponses = {
-    /**
-     * getDefaultDashboards 200 response
-     */
-    200: DashboardSettings;
-};
-
-export type GetDefaultDashboardsResponse = GetDefaultDashboardsResponses[keyof GetDefaultDashboardsResponses];
-
-export type ValidateDashboardData = {
-    /**
-     * The dashboard definition as YAML
-     */
-    body: string;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/validate';
-};
-
-export type ValidateDashboardResponses = {
-    /**
-     * validateDashboard 200 response
-     */
-    200: ValidateConstraintViolation;
-};
-
-export type ValidateDashboardResponse = ValidateDashboardResponses[keyof ValidateDashboardResponses];
-
-export type ValidateChartData = {
-    /**
-     * The chart definition as YAML
-     */
-    body: string;
-    path: {
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/validate/chart';
-};
-
-export type ValidateChartResponses = {
-    /**
-     * validateChart 200 response
-     */
-    200: ValidateConstraintViolation;
-};
-
-export type ValidateChartResponse = ValidateChartResponses[keyof ValidateChartResponses];
-
-export type DeleteDashboardData = {
-    body?: never;
-    path: {
-        /**
-         * The dashboard id
-         */
-        id: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}';
-};
-
-export type DeleteDashboardResponses = {
-    /**
-     * deleteDashboard 200 response
-     */
-    200: unknown;
-};
-
 export type GetDashboardData = {
     body?: never;
     path: {
@@ -3741,67 +3576,6 @@ export type GetDashboardResponses = {
 };
 
 export type GetDashboardResponse = GetDashboardResponses[keyof GetDashboardResponses];
-
-export type UpdateDashboardData = {
-    /**
-     * The dashboard definition as YAML
-     */
-    body: string;
-    path: {
-        /**
-         * The dashboard id
-         */
-        id: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}';
-};
-
-export type UpdateDashboardErrors = {
-    /**
-     * If the dashboard id is reserved ('_default')
-     */
-    422: unknown;
-};
-
-export type UpdateDashboardResponses = {
-    /**
-     * updateDashboard 200 response
-     */
-    200: DashboardControllerDashboardResponse;
-};
-
-export type UpdateDashboardResponse = UpdateDashboardResponses[keyof UpdateDashboardResponses];
-
-export type GetDashboardChartDataData = {
-    /**
-     * The filters to apply, some can override chart definition like labels & namespace
-     */
-    body: ChartFiltersOverrides;
-    path: {
-        /**
-         * The dashboard id
-         */
-        id: string;
-        /**
-         * The chart id
-         */
-        chartId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}';
-};
-
-export type GetDashboardChartDataResponses = {
-    /**
-     * getDashboardChartData 200 response
-     */
-    200: PagedResultsMapStringObject;
-};
-
-export type GetDashboardChartDataResponse = GetDashboardChartDataResponses[keyof GetDashboardChartDataResponses];
 
 export type ExportDashboardChartData = {
     /**

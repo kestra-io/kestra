@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin not installed for this trigger type, no notification will be sent."
       },
       "trigger": {
-        "case_sub": "EE only feature",
-        "case_title": "Case status",
         "execution_sub": "Reacts to flow state changes",
         "execution_title": "Execution state",
         "other_sub": "Any available trigger plugin",

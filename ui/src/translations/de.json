@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: Plugin für diesen Trigger-Typ nicht installiert, es wird keine Benachrichtigung gesendet."
       },
       "trigger": {
-        "case_sub": "Nur in der Enterprise Edition",
-        "case_title": "Case-Status",
         "execution_sub": "Reagiert auf Statusänderungen von Flows",
         "execution_title": "Execution-Status",
         "other_sub": "Jedes verfügbare Trigger-Plugin",

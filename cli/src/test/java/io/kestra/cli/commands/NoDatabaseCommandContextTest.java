@@ -23,10 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NoDatabaseCommandContextTest {
     /**
-     * Declares a repository type as well as a datasource, since that is what keeps the repositories
-     * registered, and keys the datasource {@code h2} to override the one the test environment
-     * declares rather than add a second — two would fail for that reason instead of the unreachable
-     * host.
+     * Shaped like a configuration shared across server types: a repository type, which is what
+     * keeps the repositories registered, and a server type, which is what registers the server
+     * facets gated on it. The datasource is keyed {@code h2} to override the one the test
+     * environment declares rather than add a second — two would fail for that reason instead of the
+     * unreachable host.
      */
     private static Path unreachableDatabaseConfig(Path tempDir) throws Exception {
         return Files.writeString(tempDir.resolve("kestra.yml"), """
@@ -37,6 +38,7 @@ class NoDatabaseCommandContextTest {
                 username: kestra
                 password: k3str4
             kestra:
+              server-type: STANDALONE
               repository:
                 type: postgres
               queue:
@@ -77,6 +79,16 @@ class NoDatabaseCommandContextTest {
         // it through MICRONAUT_CONFIG_FILES.
         try (ApplicationContext ctx = context()) {
             assertThat(ctx.containsBean(DataSource.class)).isFalse();
+        }
+    }
+
+    @Test
+    void shouldKeepTheDatasourceWhenTheArgumentsDoNotParse() {
+        // A parse failure reports the root as the leaf, and the root owns no repository — but
+        // picocli goes on to instantiate the command the arguments named, which may. Enterprise
+        // Edition's `flow delete` resolves a tenant through one.
+        try (ApplicationContext ctx = context("flow", "delete")) {
+            assertThat(ctx.containsBean(DataSource.class)).isTrue();
         }
     }
 

@@ -883,6 +883,7 @@
     "metric": "मेट्रिक",
     "aggregation": "एकत्रीकरण",
     "metric choice": "इस flow के लिए कोई मेट्रिक्स उपलब्ध नहीं है",
+    "metric filter no match": "कोई भी metric \"{term}\" से मेल नहीं खाता है",
     "of": "का",
     "title": "शीर्षक",
     "api": "API",

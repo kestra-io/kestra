@@ -1670,6 +1670,8 @@ export type PaginationType = 'OFFSET' | 'CURSOR';
 export type PebbleFunction = {
     name?: string;
     arguments?: Array<PebbleFunctionArgument>;
+    deprecated?: boolean;
+    replacement?: string | null;
 };
 
 export type PebbleFunctionArgument = {

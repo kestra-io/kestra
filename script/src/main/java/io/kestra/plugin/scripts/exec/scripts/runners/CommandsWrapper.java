@@ -18,6 +18,7 @@ import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunVariables;
+import io.kestra.core.runners.WorkingDir;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
@@ -35,8 +36,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @AllArgsConstructor
 @Getter
 public class CommandsWrapper implements TaskCommands {
-    static final String EXECUTION_CONTEXT_FILE_NAME = ".kestra-execution-context.json";
-
     private static final Set<String> EXECUTION_CONTEXT_EXCLUDED_VARIABLES = Set.of(
         // already handed to the script as environment variables
         "envs",
@@ -182,7 +181,7 @@ public class CommandsWrapper implements TaskCommands {
         EXECUTION_CONTEXT_EXCLUDED_VARIABLES.forEach(variables::remove);
 
         Files.write(
-            this.workingDirectory.resolve(EXECUTION_CONTEXT_FILE_NAME),
+            this.workingDirectory.resolve(WorkingDir.EXECUTION_CONTEXT_FILE_NAME),
             JacksonMapper.ofJson().writeValueAsBytes(variables)
         );
     }
@@ -296,6 +295,25 @@ public class CommandsWrapper implements TaskCommands {
                 .outputFiles(getOutputFiles(taskRunnerRunContext))
                 .build();
             throw new RunnableTaskException(e, output);
+        } finally {
+            if (this.executionContext) {
+                this.deleteExecutionContextFile();
+            }
+        }
+    }
+
+    /**
+     * Removes the execution context file once the commands are done.
+     * <p>
+     * Inside a {@code WorkingDirectory} the working directory is shared between child tasks, so a
+     * leftover file would be picked up by a later task that never set `executionContext` — handing it
+     * the previous task's metadata instead of its own.
+     */
+    private void deleteExecutionContextFile() {
+        try {
+            Files.deleteIfExists(this.workingDirectory.resolve(WorkingDir.EXECUTION_CONTEXT_FILE_NAME));
+        } catch (IOException e) {
+            runContext.logger().debug("Unable to delete the execution context file", e);
         }
     }
 

@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.configs.sys;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.context.ApplicationContext;
@@ -14,7 +15,7 @@ import picocli.CommandLine;
     description = { "Display current configuration properties." }
 )
 @Slf4j
-public class ConfigPropertiesCommand extends AbstractCommand {
+public class ConfigPropertiesCommand extends AbstractCommand implements NoDatabaseCommandInterface {
     @Inject
     private ApplicationContext applicationContext;
 

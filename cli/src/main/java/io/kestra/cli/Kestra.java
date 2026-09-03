@@ -217,7 +217,12 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
             ? commandProperties(cls, commandLine)
             : Map.of();
 
-        return contextBuilder(cls, properties)
+        // A parse failure leaves the leaf unresolved, so picocli reports the root while going on to
+        // instantiate the command the arguments named. Choosing a flavour from the root would then
+        // build the wrong one — see contextBuilder.
+        boolean parsedCleanly = commandLine.getParseResult().errors().isEmpty();
+
+        return contextBuilder(cls, properties, parsedCleanly)
             .mainClass(mainClass)
             .environments(environments)
             .properties(properties)
@@ -258,7 +263,8 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
     /**
      * Select the {@link ApplicationContext} flavour a command runs in.
      */
-    private static ApplicationContextBuilder contextBuilder(Class<?> cls, Map<String, Object> properties) {
+    private static ApplicationContextBuilder contextBuilder(Class<?> cls, Map<String, Object> properties,
+        boolean parsedCleanly) {
         // Pure migration commands run in a minimal context that never registers the other
         // Kestra @Context beans (repositories, server services, the migration startup trigger),
         // so nothing touches the database before the migration is applied explicitly.
@@ -272,8 +278,10 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
         }
 
         // Commands that own no repository run without a datasource, so they work — and stay out of
-        // the schema — whatever the instance is configured with.
-        if (NoDatabaseCommandInterface.class.isAssignableFrom(cls)) {
+        // the schema — whatever the instance is configured with. Only when the arguments parsed:
+        // otherwise this class is the root standing in for a command that did not resolve, and that
+        // command may well own a repository.
+        if (parsedCleanly && NoDatabaseCommandInterface.class.isAssignableFrom(cls)) {
             return new NoDatabaseApplicationContextBuilder();
         }
 

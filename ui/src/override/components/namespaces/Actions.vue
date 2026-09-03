@@ -29,7 +29,6 @@
     import {computed, Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import {useDashboardStore} from "../../../stores/dashboard"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
@@ -42,14 +41,10 @@
     const route = useRoute()
     const router = useRouter()
     const namespacesStore = useNamespacesStore()
-    const dashboardStore = useDashboardStore()
 
     const onSelectDashboard = (value: any) => {
-        const key = dashboardStore.getUserDashboardStorageKey(route)
-        localStorage.setItem(key, value)
         router.replace({
             params: {...route.params, dashboard: value},
-            query: route.query,
         })
     }
 

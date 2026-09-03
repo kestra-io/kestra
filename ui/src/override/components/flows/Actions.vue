@@ -158,7 +158,6 @@
         localStorage.setItem(key, value)
         router.replace({
             params: {...route.params, dashboard: value},
-            query: route.query,
         })
     }
 

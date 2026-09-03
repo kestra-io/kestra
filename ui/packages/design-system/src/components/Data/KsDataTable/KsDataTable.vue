@@ -103,6 +103,7 @@
         noDataDescription?: string
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
+        sortKeyMapper?: (key: string) => string
         selectionMapper?: (element: any) => any
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
@@ -124,6 +125,7 @@
         noDataDescription: undefined,
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
+        sortKeyMapper: undefined,
         selectionMapper: undefined,
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
@@ -410,7 +412,8 @@
 
     const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
-            internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
+            const key = props.sortKeyMapper?.(sort.prop) ?? sort.prop
+            internalSort.value = `${key}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
             internalSort.value = undefined
         }

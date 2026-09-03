@@ -2,7 +2,7 @@
   "name": "@kestra-io/kestra-sdk",
   "version": "2.0.0",
   "private": true,
-  "description": "JS/TS client generated from the OSS OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. The generated code under src/openapi is committed to git. Keeps the name of the module-federation-shared client so plugins and the app use one client (auth + routing). See README.md.",
+  "description": "JS/TS client generated from the OSS OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. The generated code under src/openapi is committed to git. Keeps the client's name so plugins import the same specifier the app does (auth + routing). See README.md.",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {

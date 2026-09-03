@@ -319,6 +319,8 @@
             --vscode-editor-background: var(--ks-bg-input);
             --vscode-breadcrumb-background: var(--ks-bg-input);
             --vscode-editorGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScrollGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScroll-background: var(--ks-bg-input);
         }
 
         .monaco-editor .margin {

@@ -6,7 +6,6 @@ import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;
 import io.kestra.core.models.Setting;
-import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionOutput;
 import io.kestra.core.models.executions.LogEntry;
@@ -121,12 +120,6 @@ public class JdbcTableConfigsFactory {
     @Named("slamonitor")
     public InstantiableJdbcTableConfig slaMonitor() {
         return new InstantiableJdbcTableConfig("slamonitor", SLAMonitor.class, "sla_monitor");
-    }
-
-    @Bean
-    @Named("dashboards")
-    public InstantiableJdbcTableConfig dashboards() {
-        return new InstantiableJdbcTableConfig("dashboards", Dashboard.class, "dashboards");
     }
 
     @Bean

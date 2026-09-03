@@ -184,7 +184,8 @@ export const createAxios = (
                     refreshing = true
 
                     try {
-                        await instance.post("/oauth/access_token?grant_type=refresh_token", null, {
+                        const refreshBasePath = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH
+                        await instance.post(`${refreshBasePath}/oauth/access_token?grant_type=refresh_token`, null, {
                             headers: {"Content-Type": "application/json"},
                             timeout: 5000
                         })

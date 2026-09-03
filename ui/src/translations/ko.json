@@ -414,7 +414,8 @@
       "zoom-reset": "확대/축소 재설정",
       "zoom-fit": "맞춤",
       "invalid": "그래프 오류",
-      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요."
+      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
+      "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요."
     },
     "show task logs": "Task Logs 보기",
     "show task condition": "작업 상태 표시",

@@ -38,6 +38,7 @@ import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.validations.TenantId;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
 import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
 import io.kestra.webserver.models.ChartFiltersOverrides;
@@ -544,7 +545,7 @@ public class DashboardController {
 
     @Getter
     public static class DashboardResponse {
-        @jakarta.validation.constraints.Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+        @TenantId
         private final String tenantId;
         @NotNull
         @NotBlank

@@ -414,7 +414,8 @@
       "zoom-reset": "Zresetuj powiększenie",
       "zoom-fit": "Dopasuj",
       "invalid": "Błąd grafu",
-      "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów."
+      "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
+      "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie."
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",

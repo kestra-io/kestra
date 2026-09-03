@@ -6,6 +6,7 @@
         :minItemSize="50"
         keyField="id"
         class="log-wrapper"
+        data-test="task-run-scroller"
         :class="{'full-height': fullHeight}"
     >
         <template
@@ -58,6 +59,7 @@
                         :minItemSize="32"
                         keyField="index"
                         class="log-lines"
+                        data-test="task-run-log-scroller"
                         :class="{'single-line': currentTaskRuns.length === 1, 'full-height': fullHeight}"
                         :ref="
                             (el) =>

@@ -382,14 +382,34 @@
         return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
     })
 
+    // The row's date is already the boundary the backend truncated to: re-snapping it with `startOf`
+    // would re-anchor the window to the browser's calendar and to moment's Sunday-based week.
+    function bucketDateRange(dataIndex: number): {startDate: string; endDate: string} | undefined {
+        const label = (parsedData.value.labels as string[])[dataIndex]
+        const column = chartOptions?.column ?? ""
+
+        const raw = (generated.value?.results as Record<string, any>[] | undefined)
+            ?.find((row) => parseValue(row[column]) === label)?.[column]
+        const bucket = moment(raw as moment.MomentInput, moment.ISO_8601, true)
+        if (!bucket.isValid()) return undefined
+
+        return {
+            startDate: bucket.toISOString(),
+            endDate: bucket.clone().add(1, grouping.value.unit).subtract(1, "millisecond").toISOString(),
+        }
+    }
+
     function onChartClick(params: any) {
         if (params.seriesType !== "bar" || props.execution) return
 
-        drillDown([
-            {column: dimensionColumn.value, value: params.seriesName},
-            ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
-            ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
-        ])
+        drillDown(
+            [
+                {column: dimensionColumn.value, value: params.seriesName},
+                ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
+                ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
+            ],
+            {dateRange: bucketDateRange(params.dataIndex)},
+        )
     }
 
     function refresh(customFilters?: QueryFilter[]) {

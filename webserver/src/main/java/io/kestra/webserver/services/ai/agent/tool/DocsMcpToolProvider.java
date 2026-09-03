@@ -46,6 +46,7 @@ public class DocsMcpToolProvider {
                 .build();
             this.client = new DefaultMcpClient.Builder()
                 .transport(transport)
+                .autoHealthCheck(false)
                 .build();
             this.tools = client.listTools().stream()
                 .collect(Collectors.toMap(spec -> spec, spec -> new McpToolExecutor(client)));

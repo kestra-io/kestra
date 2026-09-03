@@ -2733,6 +2733,7 @@ public class ExecutionController {
     @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
+    @ApiResponse(responseCode = "200", content = { @Content(mediaType = MediaType.TEXT_CSV, schema = @Schema(type = "string")) })
     public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",

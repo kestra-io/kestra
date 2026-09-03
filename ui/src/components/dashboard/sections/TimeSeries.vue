@@ -198,7 +198,7 @@
     }
 
     const parsedData = computed(() => {
-        const rawData = generated.value.results as Record<string, any>[] | undefined
+        const rawData = generated.value?.results as Record<string, any>[] | undefined
         // fill the buckets between the earliest and latest returned dates so gaps stay visible on the axis
         const xAxis = fillTimeBucketLabels(
             rawData?.map((v: Record<string, any>) => v[chartOptions?.column ?? ""]) ?? [],

@@ -11,7 +11,7 @@ import {expect} from "storybook/test";
 const LEVEL_ORDER = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const;
 type Level = typeof LEVEL_ORDER[number];
 
-function filteredByMinLevel(logs: typeof FAKE_LOGS, minLevel: string) {
+function filteredByMinLevel(logs: Array<(typeof FAKE_LOGS)[number]>, minLevel: string) {
     const minIdx = LEVEL_ORDER.indexOf(minLevel as Level);
     if (minIdx === -1) return logs;
     return logs.filter(log => LEVEL_ORDER.indexOf(log.level as Level) <= minIdx);
@@ -51,8 +51,36 @@ const FAKE_EXECUTION = {
     flowId: "test-flow",
     namespace: "company.team",
     state: {current: "SUCCESS", startDate: "2025-01-01T00:00:00Z", duration: "PT1S"},
-    taskRunList: [],
+    taskRunList: [{
+        id: "task-run-1",
+        taskId: "my-task",
+        executionId: "test-exec-id",
+        state: {
+            current: "SUCCESS",
+            startDate: "2025-01-01T00:00:00Z",
+            endDate: "2025-01-01T00:00:09Z",
+            duration: "PT9S",
+            histories: [],
+        },
+        attempts: [{
+            state: {
+                current: "SUCCESS",
+                startDate: "2025-01-01T00:00:00Z",
+                endDate: "2025-01-01T00:00:09Z",
+                duration: "PT9S",
+                histories: [],
+            },
+        }],
+    }],
 };
+
+const LONG_FAKE_LOGS = Array.from({length: 5000}, (_, index) => ({
+    ...BASE,
+    index,
+    level: "INFO",
+    timestamp: new Date(Date.UTC(2025, 0, 1, 0, 0, 0, index)).toISOString(),
+    message: `Log line ${index}`,
+}));
 
 const ROUTER_ROUTES = [
     {path: "/", name: "home", component: {template: "<div/>"}},
@@ -61,25 +89,26 @@ const ROUTER_ROUTES = [
     {path: "/flows", name: "flows/list", component: {template: "<div/>"}},
 ];
 
-function makeDecorators() {
+function makeDecorators(rawView = true, sourceLogs = FAKE_LOGS) {
     return [
         () => ({
             setup() {
-                localStorage.setItem(storageKeys.LOGS_VIEW_TYPE, "true");
+                localStorage.setItem(storageKeys.LOGS_VIEW_TYPE, String(rawView));
 
                 const executionsStore = useExecutionsStore();
-                executionsStore.logs = filteredByMinLevel(FAKE_LOGS, "INFO") as any;
+                executionsStore.logs = filteredByMinLevel(sourceLogs, "INFO") as any;
                 executionsStore.execution = FAKE_EXECUTION as any;
+                executionsStore.flow = {tasks: [{id: "my-task", type: "io.kestra.plugin.core.log.Log"}]} as any;
 
                 (executionsStore as any).loadLogs = async ({params}: {executionId: string; params?: Record<string, any>}) => {
                     const gte = params?.["filters[level][GREATER_THAN_OR_EQUAL_TO]"];
                     const lte = params?.["filters[level][LESS_THAN_OR_EQUAL_TO]"];
-                    let filtered: typeof FAKE_LOGS;
+                    let filtered: typeof sourceLogs;
                     if (lte) {
                         const maxIdx = LEVEL_ORDER.indexOf(lte as Level);
-                        filtered = FAKE_LOGS.filter(log => LEVEL_ORDER.indexOf(log.level as Level) >= maxIdx);
+                        filtered = sourceLogs.filter(log => LEVEL_ORDER.indexOf(log.level as Level) >= maxIdx);
                     } else {
-                        filtered = filteredByMinLevel(FAKE_LOGS, (gte as string) ?? "TRACE");
+                        filtered = filteredByMinLevel(sourceLogs, (gte as string) ?? "TRACE");
                     }
                     executionsStore.logs = filtered as any;
                     return filtered;
@@ -105,11 +134,24 @@ export const Default: Story = {
 };
 
 export const Fullscreen: Story = {
-    decorators: makeDecorators(),
+    decorators: makeDecorators(true, LONG_FAKE_LOGS),
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
         const iframeBody = canvasElement.ownerDocument.body;
         const fullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']");
         if (!fullscreenButton) throw new Error("fullscreen logs button not found");
+
+        const scroller = await waitFor(() => {
+            const element = canvasElement.querySelector<HTMLElement>("[data-test='logs-scroller']");
+            if (!element || element.scrollHeight <= element.clientHeight) {
+                throw new Error("scrollable logs not ready");
+            }
+            return element;
+        });
+        scroller.scrollTop = Math.floor(scroller.scrollHeight / 2);
+        scroller.dispatchEvent(new Event("scroll"));
+        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        const inlineScrollTop = scroller.scrollTop;
+        expect(inlineScrollTop).toBeGreaterThan(0);
 
         await userEvent.click(fullscreenButton);
 
@@ -123,16 +165,38 @@ export const Fullscreen: Story = {
         expect(exitFullscreenButton).toHaveAttribute("aria-pressed", "true");
         expect(dialog.querySelector("[data-test='logs-toolbar']")).toBeInTheDocument();
         expect(dialog.querySelector("[data-test='logs-scroller']")).toBeInTheDocument();
+        await waitFor(() => expect(Math.abs(scroller.scrollTop - inlineScrollTop)).toBeLessThan(50));
 
+        const fullscreenScrollTop = scroller.scrollTop;
         await userEvent.click(exitFullscreenButton);
 
         await waitFor(() => expect(dialog).not.toBeVisible());
+        await waitFor(() => expect(Math.abs(scroller.scrollTop - fullscreenScrollTop)).toBeLessThan(50));
         const reopenFullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']");
         if (!reopenFullscreenButton) throw new Error("fullscreen logs button not found after closing the dialog");
         expect(reopenFullscreenButton).toHaveAttribute("aria-pressed", "false");
 
         await userEvent.click(reopenFullscreenButton);
         await waitFor(() => expect(dialog).toBeVisible());
+    },
+};
+
+export const CompactFullscreen: Story = {
+    decorators: makeDecorators(false),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const iframeBody = canvasElement.ownerDocument.body;
+        const fullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']");
+        if (!fullscreenButton) throw new Error("fullscreen logs button not found");
+
+        await userEvent.click(fullscreenButton);
+
+        const compactScroller = await waitFor(() => {
+            const element = iframeBody.querySelector<HTMLElement>("[data-test='logs-fullscreen-dialog'] [data-test='task-run-log-scroller']");
+            if (!element) throw new Error("compact task-run log scroller not found");
+            return element;
+        });
+
+        expect(getComputedStyle(compactScroller).maxHeight).not.toBe("300px");
     },
 };
 

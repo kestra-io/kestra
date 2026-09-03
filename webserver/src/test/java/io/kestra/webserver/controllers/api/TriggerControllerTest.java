@@ -44,6 +44,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -250,9 +252,9 @@ class TriggerControllerTest {
         );
 
         // THEN
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).isEqualTo(
-            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
+        Problems.assertProblem(e, ProblemTypes.CONFLICT);
+        assertThat(Problems.detail(e)).isEqualTo(
+            "trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
                 .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
         );
     }
@@ -277,9 +279,9 @@ class TriggerControllerTest {
         );
 
         // THEN
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).isEqualTo(
-            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is a realtime trigger, reset it to kill and restart it"
+        Problems.assertProblem(e, ProblemTypes.CONFLICT);
+        assertThat(Problems.detail(e)).isEqualTo(
+            "trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is a realtime trigger, reset it to kill and restart it"
                 .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
         );
     }
@@ -299,8 +301,7 @@ class TriggerControllerTest {
             )
         );
         // THEN
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(e.getMessage()).isEqualTo("Not Found");
+        Problems.assertProblem(e, ProblemTypes.NOT_FOUND);
     }
 
     @Test

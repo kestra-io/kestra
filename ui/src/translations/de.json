@@ -207,6 +207,7 @@
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeit",
     "queued duration": "Wartedauer",
+    "paused duration": "Pausierte Dauer",
     "executionProgress": {
       "title": "Execution-Fortschritt",
       "estimatedRemaining": "Geschätzte Restzeit: {duration}",
@@ -221,7 +222,7 @@
     "next_execution": "Nächste Execution",
     "datepicker": {
       "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
-      "leave empty for infinite": "Leer lassen für unbegrenzte Dauer oder eine ISO-8601-Dauer eingeben (z. B. 'P1DT1H1M1S')",
+      "leave empty for infinite": "Leer lassen für unendliche Dauer oder eine ISO 8601-Dauer eingeben (z. B. 'P1DT1H1M1S')",
       "duration example": "Beispiel: 'P1DT1H1M1S'",
       "error": "Ungültiges Dauerformat, es muss eine ISO-8601-Dauer sein (z. B. P1DT1H1M1S)",
       "custom": "Benutzerdefiniert",
@@ -299,6 +300,21 @@
     "to": "Bis",
     "steps": "Schritte",
     "state": "Status",
+    "state_history": {
+      "title": "Statusverlauf",
+      "open": "Statusverlauf",
+      "aria_open": "Statusverlauf anzeigen",
+      "aria_open_for": "Statusverlauf für {subject} anzeigen",
+      "started_at": "Gestartet {time}",
+      "failed_at": "Fehlgeschlagen um {time}",
+      "skipped_at": "Übersprungen um {time}",
+      "created_at": "Erstellt {time}",
+      "did_not_run": "Dieser Task wurde nicht ausgeführt",
+      "waiting_to_start": "Wartet auf Start",
+      "attempt_n": "Versuch {index}",
+      "attempt_count": "{count} Versuche",
+      "copy": "Statusverlauf kopieren"
+    },
     "search": "Suche",
     "source search": "Quellensuche",
     "selected": "Ausgewählt",
@@ -448,7 +464,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency-Limits",
-      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beeinträchtigen, sodass Executions das erlaubte Limit überschreiten können"
+      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können."
     },
     "flowConcurrency": {
       "loadError": "Das Concurrency-Limit dieses Flows konnte nicht geladen werden.",
@@ -456,6 +472,11 @@
         "message": "Dieser Flow deklariert keinen Concurrency-Block mehr, aber ein Limit-Eintrag zählt weiterhin {count} laufende Execution(s). Er wirkt sich nicht mehr auf neue Executions aus und kann unter Administration → Concurrency-Limits zurückgesetzt werden.",
         "title": "Übrig gebliebenes Concurrency-Limit"
       }
+    },
+    "docsPage": {
+      "notFound": "Diese Dokumentationsseite existiert nicht. Sie wurde möglicherweise verschoben oder umbenannt.",
+      "loadError": "Diese Dokumentationsseite konnte nicht geladen werden. Bitte versuche es erneut.",
+      "backToDocs": "Zurück zu Docs"
     },
     "documentation": {
       "documentation": "Dokumentation"
@@ -495,6 +516,15 @@
     },
     "use": "Verwenden",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin-Installation fehlgeschlagen",
+        "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
+        "preparing": "Plugin-Installation wird vorbereitet...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin erfolgreich installiert | Plugins erfolgreich installiert",
+        "timeout": "Die Plugin-Installation dauert länger als erwartet. Der Flow wurde nicht gespeichert, speichere erneut, sobald die Installation abgeschlossen ist.",
+        "title": "{count} Plugin wird installiert | {count} Plugins werden installiert"
+      },
       "names": "Plugins",
       "release": "Versionshinweise",
       "beta": "Beta",
@@ -534,7 +564,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow-Dokumentation",
+      "nav_definitions": "Definitionen",
       "nav_examples": "Beispiele",
+      "nav_metrics": "Metriken",
       "nav_outputs": "Outputs",
       "nav_overview": "Übersicht",
       "nav_properties": "Eigenschaften",
@@ -616,6 +648,10 @@
     "open full page": "Ganze Seite öffnen",
     "drill down preview": "Vorschau",
     "errors": {
+      "400": {
+        "title": "Fehlerhafte Anfrage",
+        "content": "Die Anfrage konnte vom Server nicht verstanden werden."
+      },
       "401": {
         "title": "Nicht autorisiert",
         "content": "Du musst angemeldet sein, um auf diese Seite zuzugreifen."
@@ -628,6 +664,114 @@
         "title": "Seite nicht gefunden",
         "content": "Die angeforderte URL wurde auf diesem Server nicht gefunden.<br />Mehr wissen wir leider auch nicht.",
         "flow or execution": "Der Flow oder die Execution, die du suchst, existiert nicht."
+      },
+      "409": {
+        "title": "Konflikt",
+        "content": "Die Anfrage steht im Konflikt mit dem aktuellen Status der Ressource."
+      },
+      "422": {
+        "title": "Ungültige Entität",
+        "content": "Der übermittelte Inhalt konnte nicht verarbeitet werden."
+      },
+      "500": {
+        "title": "Interner Serverfehler",
+        "content": "Auf unserer Seite ist etwas schiefgelaufen. Bitte versuche es später noch einmal."
+      },
+      "503": {
+        "title": "Dienst nicht verfügbar",
+        "content": "Der Server ist vorübergehend nicht verfügbar. Bitte versuche es später noch einmal."
+      },
+      "generic": {
+        "title": "Etwas ist schiefgelaufen",
+        "content": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut."
+      },
+      "trace id": "Trace-ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "KI-Anfrage fehlgeschlagen"
+        },
+        "bad-request": {
+          "title": "Fehlerhafte Anfrage"
+        },
+        "bulk-validation-failed": {
+          "title": "Einige Elemente konnten nicht verarbeitet werden"
+        },
+        "conflict": {
+          "title": "Konflikt"
+        },
+        "entity-already-exists": {
+          "title": "Entität existiert bereits"
+        },
+        "forbidden": {
+          "title": "Zugriff verweigert"
+        },
+        "internal-error": {
+          "title": "Interner Serverfehler"
+        },
+        "invalid-argument": {
+          "title": "Ungültiges Argument"
+        },
+        "invalid-entity": {
+          "title": "Ungültige Entität"
+        },
+        "invalid-format": {
+          "title": "Ungültiges Werteformat"
+        },
+        "invalid-json": {
+          "title": "Ungültiges JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Ungültiger Plugin-Typ"
+        },
+        "invalid-query-filters": {
+          "title": "Ungültige Abfragefilter"
+        },
+        "invalid-query-parameter": {
+          "title": "Ungültiger Abfrageparameter"
+        },
+        "invalid-request-body": {
+          "title": "Ungültiger Request-Body"
+        },
+        "locked": {
+          "title": "Ressource ist gesperrt"
+        },
+        "method-not-allowed": {
+          "title": "Methode nicht erlaubt"
+        },
+        "migration-required": {
+          "title": "Migration erforderlich"
+        },
+        "not-acceptable": {
+          "title": "Nicht akzeptabel"
+        },
+        "not-found": {
+          "title": "Ressource nicht gefunden"
+        },
+        "payload-too-large": {
+          "title": "Payload zu groß"
+        },
+        "resource-expired": {
+          "title": "Ressource ist abgelaufen"
+        },
+        "service-unavailable": {
+          "title": "Dienst nicht verfügbar",
+          "detail": "Der Server ist vorübergehend nicht verfügbar. Bitte versuche es später noch einmal."
+        },
+        "timeout": {
+          "title": "Operation Zeitüberschreitung"
+        },
+        "too-many-requests": {
+          "title": "Zu viele Anfragen"
+        },
+        "unauthenticated": {
+          "title": "Authentifizierung erforderlich"
+        },
+        "unsupported-media-type": {
+          "title": "Nicht unterstützter Medientyp"
+        },
+        "validation-failed": {
+          "title": "Validierung fehlgeschlagen"
+        }
       }
     },
     "back_to_dashboard": "Zurück zum Dashboard",
@@ -645,6 +789,7 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Execution-Labels",
+    "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
     "feeds": {
       "heading": "Alles rund um Kestra.",
@@ -671,8 +816,8 @@
     "executions state changed": "Der Status von <code>{executionCount}</code> Execution(s) wurde geändert",
     "executions resumed": "<code>{executionCount}</code> Execution(s) fortgesetzt",
     "executions paused": "<code>{executionCount}</code> Execution(s) pausiert",
-    "executions unqueue": "<code>{executionCount}</code> Execution(s) aus der Warteschlange entfernt",
-    "executions force run": "<code>{executionCount}</code> Execution(s) erzwungen",
+    "executions unqueue": "<code>{executionCount}</code> Execution(s) nicht in der Warteschlange",
+    "executions force run": "<code>{executionCount}</code> erzwungene Execution(s)",
     "executions restarted": "<code>{executionCount}</code> Execution(s) neu gestartet",
     "executions killed": "<code>{executionCount}</code> Execution(s) gekillt",
     "executions deleted": "<code>{executionCount}</code> Execution(s) gelöscht",
@@ -754,6 +899,11 @@
     "expand_by_default": "Strukturierte Logs standardmäßig ausklappen",
     "similar lines": "ähnliche Zeilen",
     "download_logs_description": "Wähle aus, welche Logs exportiert werden sollen. Die Filter entsprechen standardmäßig deiner aktuellen Ansicht.",
+    "logs_download_truncated": "Die neuesten {downloaded} Log-Zeilen wurden exportiert. {skipped} weitere entsprachen deinen Filtern und wurden ausgelassen.",
+    "logs_download_capped": "Die neuesten {downloaded} Log-Zeilen wurden exportiert, das Maximum für einen Export. Möglicherweise entsprachen weitere deinen Filtern.",
+    "logs_download_partial": "Der Export endete bei {downloaded} Log-Zeilen, weil dieser Filter nicht weiter durchblättert werden kann. Einige passende Zeilen fehlen.",
+    "logs_download_failed": "Der Log-Export ist fehlgeschlagen. Es wurde keine Datei heruntergeladen.",
+    "logs_download_empty": "Keine Log-Zeilen entsprachen deinen Filtern, daher wurde keine Datei heruntergeladen.",
     "display_settings": "Anzeigeeinstellungen",
     "density": "Dichte",
     "density_compact": "Kompakt",
@@ -766,7 +916,7 @@
     "join_slack": "Slack beitreten",
     "kestra": "Kestra",
     "error detected": "Fehler erkannt.",
-    "warning detected": "Warnungen erkannt",
+    "warning detected": "Warnung(en) erkannt.",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
     "dependency task": "Task {taskId} ist eine Abhängigkeit eines anderen Tasks",
@@ -863,6 +1013,7 @@
       },
       "export": "Namespace-Dateien exportieren",
       "export_single": "Datei exportieren",
+      "export_error": "\"{name}\" konnte nicht exportiert werden. Der Pfad konnte nicht aufgelöst werden.",
       "dialog": {
         "name": {
           "file": "Name mit Erweiterung:",
@@ -1411,7 +1562,8 @@
         "confirm": "Möchtest du wirklich <code>{name}</code> KV-Paar(e) löschen?",
         "warning": "Du hast keine Berechtigungen für diese Namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
-      "inherited": "Geerbte KV-Paare"
+      "inherited": "Geerbte KV-Paare",
+      "expiration_hint": "Läuft derzeit am {date} ab. Lasse das Feld unberührt, um dieses Ablaufdatum beizubehalten; die Auswahl einer Dauer berechnet es ab jetzt neu, und das Löschen entfernt es."
     },
     "expiration": "Ablauf",
     "page": {
@@ -1751,7 +1903,8 @@
       "close_all_tabs": "Alle Tabs schließen",
       "close_all_panels": "Alle Panels schließen",
       "exit_fullscreen": "Vollbild verlassen",
-      "fullscreen": "Vollbild"
+      "fullscreen": "Vollbild",
+      "split_panel": "Bereich teilen"
     },
     "search_docs": "Suche",
     "no_results_found": "Keine Ergebnisse gefunden",
@@ -1764,7 +1917,9 @@
       "triggers": "Keine Trigger gefunden",
       "flows": "Keine Flows gefunden",
       "kv_pairs": "Keine KV-Paare gefunden",
-      "secrets": "Keine Secrets gefunden"
+      "secrets": "Keine Secrets gefunden",
+      "all_columns_hidden": "Alle Spalten sind ausgeblendet",
+      "all_columns_hidden_description": "Aktiviere mindestens eine Spalte in „Tabellenspalten anpassen“ wieder, um die Daten erneut anzuzeigen."
     },
     "duplicate-pair": "{label} „{key}“ ist doppelt vorhanden, der erste Key wird ignoriert.",
     "dashboards": {
@@ -1782,6 +1937,7 @@
       "others": "Andere",
       "viewAll": "Alle anzeigen",
       "export": "Exportieren",
+      "exportEmpty": "Dieses Diagramm hat keine Daten zum Exportieren.",
       "exportTo": {
         "csv": "Als CSV exportieren",
         "ion": "Als ION exportieren"
@@ -1932,8 +2088,8 @@
         },
         "unavailable": {
           "title": "Der AI Copilot ist nicht verfügbar",
-          "detail": "Es ist kein AI-Anbieter konfiguriert. Bitte einen Administrator, einen einzurichten, und versuche es dann erneut.",
-          "retry": "Erneut versuchen"
+          "detail": "Kein AI-Provider ist konfiguriert. Bitte einen Administrator, einen einzurichten.",
+          "docs": "Dokumentation ansehen"
         },
         "thinkingWords": [
           "Orchestrierung",
@@ -2017,6 +2173,31 @@
         "clear_selection": "Auswahl aufheben",
         "fit_view": "An Bildschirm anpassen"
       },
+      "dag": {
+        "force": "Baum",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Letzte Aktualisierung",
+        "status": {
+          "fresh": "Neu",
+          "stale": "Veraltet",
+          "failed": "Fehlgeschlagen",
+          "unknown": "Nicht getrackt"
+        },
+        "summary": {
+          "fresh": "Alle {n} Assets sind aktuell",
+          "issues": "{n} veraltet",
+          "failed": "{n} fehlgeschlagen",
+          "last_run": "letzter Run {ago}",
+          "unknown": "{n} nicht getrackt"
+        },
+        "recent_runs": "Letzte Runs",
+        "group_by": "Gruppieren nach",
+        "groups": "Gruppen ({n})",
+        "group_none": "Keine Gruppierung",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungruppiert"
+      },
       "search": {
         "placeholders": {
           "default": "Nach Flow oder Namespace suchen…",
@@ -2078,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "Deine Server",
-      "servers_count": "{count} MCP-Server",
+      "servers_count": "{count} MCP Server | {count} MCP Server",
       "managed_by_kestra": "Verwaltet von Kestra",
       "servers": "MCP-Server",
       "client_setup": "Client-Einrichtung",
@@ -2391,6 +2572,7 @@
         "message": "Behebe die Fehler vor dem Speichern.",
         "title": "Der Flow kann nicht gespeichert werden"
       },
+      "schema_default_tooltip": "Standardwert, der verwendet wird, wenn das Feld nicht gesetzt ist",
       "search_task_placeholder": "Task suchen oder beschreiben…",
       "shortcuts": {
         "add_after": "Block nach Auswahl einfügen",

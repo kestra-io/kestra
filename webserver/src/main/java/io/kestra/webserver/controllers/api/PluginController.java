@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.kestra.core.docs.*;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
@@ -18,8 +19,14 @@ import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.PluginArtifact;
+import io.kestra.core.plugins.PluginAutoInstallDetectResult;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginCatalogService;
+import io.kestra.core.plugins.PluginInstallJob;
+import io.kestra.core.plugins.PluginInstallJobRegistry;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.EditionProvider;
@@ -37,6 +44,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
@@ -52,8 +60,10 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 
 import static io.kestra.core.models.Plugin.isDeprecated;
@@ -92,6 +102,15 @@ public class PluginController {
     @Named("withIcons")
     protected PluginCatalogService pluginCatalogService;
 
+    @Inject
+    protected PluginAutoInstallService pluginAutoInstallService;
+
+    @Inject
+    protected PluginInstallJobRegistry pluginInstallJobRegistry;
+
+    @Inject
+    protected PluginSchemaBundleService pluginSchemaBundleService;
+
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -102,7 +121,25 @@ public class PluginController {
     public HttpResponse<Map<String, Object>> getSchemasFromType(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
         @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf,
+        @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable
+        @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
+        if (Boolean.TRUE.equals(includeCatalog)) {
+            // Same ETag revalidation as the plain schema (#12102): the browser re-downloads the big
+            // merged JSON only when the installed plugin set or the bundle actually changed, and
+            // gets a cheap 304 otherwise — a newly-installed plugin shows up on the next request.
+            final String catalogEtag = schemaETag("schema-catalog-" + pluginSchemaBundleService.fingerprint(), type, arrayOf);
+            if (catalogEtag.equals(ifNoneMatch)) {
+                return notModified(catalogEtag);
+            }
+            Map<String, Object> merged = pluginSchemaBundleService.mergeWithBundle(type, jsonSchemaCache.getSchemaForType(type, arrayOf));
+            return HttpResponse.ok(merged)
+                .header(HttpHeaders.ETAG, catalogEtag)
+                .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+        }
+
+        // Non-merged schema: revalidate on every use via ETag so the editor never validates against a
+        // stale schema after a plugin is added/removed (#12102).
         final String etag = schemaETag("schema", type, arrayOf);
         if (etag.equals(ifNoneMatch)) {
             return notModified(etag);
@@ -110,6 +147,88 @@ public class PluginController {
         return HttpResponse.ok(jsonSchemaCache.getSchemaForType(type, arrayOf))
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+    }
+
+    @Post(uri = "install")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Start async plugin installation",
+        description = "Enqueues installation of the specified plugin artifacts and returns a job id " +
+            "immediately (HTTP 202). Poll GET /plugins/install/{jobId} for status and per-artifact " +
+            "byte-level progress. Only artifacts provided by the plugin catalog (as returned by " +
+            "POST /plugins/auto-install/detect) are accepted. In distributed (EE) deployments the " +
+            "installation is propagated cluster-wide after the job succeeds. Returns 403 when the " +
+            "auto-install feature is disabled on this instance."
+    )
+    @ApiResponse(responseCode = "202", description = "Installation job accepted")
+    @ApiResponse(responseCode = "400", description = "An artifact is not part of the plugin catalog")
+    @ApiResponse(responseCode = "403", description = "Auto-install feature is disabled on this instance")
+    @ApiResponse(responseCode = "429", description = "Too many install jobs are already pending or running")
+    public HttpResponse<?> installPlugins(
+        @Valid @Body List<PluginArtifact> artifacts) {
+        // Same gate as detectMissingPlugins: the feature flag must always win.
+        if (!pluginAutoInstallService.isEnabled()) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                .body(new ApiMessage("Plugin auto-install is disabled on this instance."));
+        }
+
+        // Catalog allowlist: never resolve, download and class-load an arbitrary Maven coordinate.
+        List<PluginArtifact> unknownArtifacts = artifacts.stream()
+            .filter(artifact -> !pluginAutoInstallService.isFromCatalog(artifact))
+            .toList();
+        if (!unknownArtifacts.isEmpty()) {
+            return HttpResponse.badRequest(
+                new ApiMessage("Cannot install artifacts %s: they are not part of the plugin catalog.".formatted(unknownArtifacts))
+            );
+        }
+
+        UUID jobId;
+        try {
+            jobId = pluginInstallJobRegistry.submit(artifacts);
+        } catch (KestraRuntimeException e) {
+            return HttpResponse.status(HttpStatus.TOO_MANY_REQUESTS).body(new ApiMessage(e.getMessage()));
+        }
+
+        PluginInstallJob job = pluginInstallJobRegistry.get(jobId)
+            .orElseThrow(() -> new KestraRuntimeException("Plugin install job %s vanished immediately after submit.".formatted(jobId)));
+        return HttpResponse.status(HttpStatus.ACCEPTED).body(job);
+    }
+
+    @Get(uri = "install/{jobId}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get plugin installation job status",
+        description = "Returns the current state of an async plugin installation job, including " +
+            "per-artifact byte-level transfer progress. Returns 404 when the job is unknown or " +
+            "has been evicted (jobs are kept for one hour after completion)."
+    )
+    @ApiResponse(responseCode = "200", description = "Job snapshot")
+    @ApiResponse(responseCode = "404", description = "Job not found")
+    public HttpResponse<PluginInstallJob> getInstallJob(@PathVariable UUID jobId) {
+        return pluginInstallJobRegistry.get(jobId)
+            .map(HttpResponse::ok)
+            .orElse(HttpResponse.notFound());
+    }
+
+    @Post(uri = "auto-install/detect", consumes = MediaType.TEXT_PLAIN)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Detect missing plugins in a flow",
+        description = "Parses the provided flow YAML, identifies task and trigger types that are not " +
+            "yet registered, and maps them to their Maven artifacts via the plugin catalog. " +
+            "Returns 403 when the auto-install feature is disabled on this instance."
+    )
+    @ApiResponse(responseCode = "200", description = "Detection result")
+    @ApiResponse(responseCode = "403", description = "Auto-install feature is disabled on this instance")
+    public HttpResponse<?> detectMissingPlugins(@Body String flowYaml) {
+        if (!pluginAutoInstallService.isEnabled()) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                .body(new ApiMessage("Plugin auto-install is disabled on this instance."));
+        }
+        return HttpResponse.ok(pluginAutoInstallService.detect(flowYaml));
     }
 
     @Get(uri = "properties/{type}")
@@ -218,7 +337,15 @@ public class PluginController {
             "RealtimeTriggerInterface) or app (implements PollingTriggerInterface)."
     )
     public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
-        List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
+        List<ApiTriggerPlugin> all = toTriggerPluginCatalog(pluginRegistry.plugins());
+
+        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
+    }
+
+    // A plugin installed in several versions registers one RegisteredPlugin per version, each
+    // exposing the same trigger classes - keep a single catalog entry per trigger type.
+    protected List<ApiTriggerPlugin> toTriggerPluginCatalog(List<RegisteredPlugin> plugins) {
+        return plugins.stream()
             .flatMap(
                 registeredPlugin -> registeredPlugin.getTriggers().stream()
                     .filter(c -> !isInternal(c))
@@ -226,13 +353,13 @@ public class PluginController {
                     .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
+            .collect(Collectors.toMap(ApiTriggerPlugin::type, dto -> dto, (first, duplicate) -> first, LinkedHashMap::new))
+            .values().stream()
             .sorted(
                 Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
                     .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER)
             )
             .toList();
-
-        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
     }
 
     protected ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
@@ -245,6 +372,7 @@ public class PluginController {
             triggerClass.getName(),
             title,
             io.kestra.core.docs.Plugin.titleFor(registeredPlugin, triggerClass),
+            registeredPlugin.title(),
             description,
             TriggerPluginCategory.classify(registeredPlugin, triggerClass),
             isEnterpriseEdition(registeredPlugin, triggerClass),
@@ -387,6 +515,7 @@ public class PluginController {
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),
                     plugin.getAppBlocks().stream(),
+                    plugin.getRules().stream(),
                     plugin.getAdditionalPlugins().stream()
                 )
                     .flatMap(i -> i)
@@ -674,6 +803,10 @@ public class PluginController {
     public record PluginIconResponse(@Nullable PluginIcon icon) {
     }
 
+    /** JSON-object error body, so no API response is ever an empty or non-object payload. */
+    public record ApiMessage(String message) {
+    }
+
     /**
      * Lightweight descriptor of a trigger plugin class for the "Add Trigger" catalog UI.
      *
@@ -684,6 +817,10 @@ public class PluginController {
      *        its own declared metadata rather than guessed from the class package — used
      *        by the UI to disambiguate triggers from different plugins that otherwise share
      *        the same last Java package segment (see {@link io.kestra.core.docs.Plugin#titleFor})
+     * @param pluginGroupTitle the owning plugin artifact's manifest title (for example {@code "NATS"}
+     *        for every subgroup of the NATS plugin) - coarser than {@code pluginTitle}, which falls
+     *        back to a bare package segment (such as {@code "core"}) when a subgroup declares no
+     *        title; the UI escalates to this when {@code pluginTitle} alone still collides
      * @param description one-line description from the plugin @Schema
      * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
      * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)
@@ -694,6 +831,7 @@ public class PluginController {
         String type,
         String name,
         String pluginTitle,
+        String pluginGroupTitle,
         String description,
         TriggerPluginCategory group,
         boolean ee,

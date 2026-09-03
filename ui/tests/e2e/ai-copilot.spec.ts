@@ -400,7 +400,7 @@ test.describe("AI Copilot", () => {
         await expect(alert).toContainText("The model provider is unavailable.")
     })
 
-    test("shows the unavailable state on a failed thread create and clears it on retry", async ({page}) => {
+    test("shows the unavailable state on a failed thread create, pointing at the docs", async ({page}) => {
         // A 503 on thread creation (no provider configured) → the dedicated unavailable state,
         // never the global not-found redirect.
         await page.route("**/api/v1/*/ai/threads", async (route) => {
@@ -413,13 +413,12 @@ test.describe("AI Copilot", () => {
         await page.locator(D.input).fill("hi")
         await page.locator(D.send).click()
 
-        const unavailable = page.locator("[data-test=\"copilot-unavailable\"]")
-        await expect(unavailable).toBeVisible()
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible()
 
-        // Retry clears the unavailable state and returns to the composer.
-        await page.locator("[data-test=\"copilot-unavailable-retry\"]").click()
-        await expect(unavailable).toBeHidden()
-        await expect(page.locator(D.input)).toBeVisible()
+        // Configuring a provider is an instance-config change, so the only action is the docs link.
+        const docs = page.locator("[data-test=\"copilot-unavailable-docs\"]")
+        await expect(docs).toHaveAttribute("href", /kestra\.io\/docs\/ai-tools\/ai-copilot/)
+        await expect(docs).toHaveAttribute("target", "_blank")
     })
 })
 

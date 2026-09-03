@@ -5,11 +5,14 @@ import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
 
 const response: AxiosLikeConfig = {responseType: "blob" as const}
 const validateStatus = (status: number) => status === 200 || status === 404
-const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string) => {
+/** Returns false when the export carried no rows: the backend answers 200 with an empty body,
+ *  and writing that out hands the user a 0 byte file with no clue anything went wrong. */
+const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string): boolean => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
-    const url = window.URL.createObjectURL(blob)
+    if (blob.size === 0) return false
 
-    Utils.downloadUrl(url, `${filename}.${extension}`)
+    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${extension}`)
+    return true
 }
 
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
@@ -21,7 +24,7 @@ import type {Dashboard, Chart} from "../components/dashboard/types.ts"
 import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import _throttle from "lodash/throttle"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
@@ -277,7 +280,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV") {
+    /** Resolves to false when the chart had nothing to export, so the caller can tell the user
+     *  instead of silently downloading an empty file. */
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV"): Promise<boolean> {
         const isDefault = dashboard.id === "default"
 
         const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`

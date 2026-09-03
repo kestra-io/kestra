@@ -36,9 +36,21 @@ vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
     updateDashboard: (...a: unknown[]) => updateDashboard(...a),
 }))
 
-// A create rejection shaped like the backend's "already exists" 422.
-const alreadyExists = {response: {status: 422, data: {message: "Flow id already exists: my-flow"}}}
-const dashboardExists = {response: {status: 422, data: {message: "Dashboard id already exists: my-dash"}}}
+// A create rejection carrying the entity-already-exists problem document. The fallback branches on the
+// problem type, so neither the status nor the wording of `detail` affects it.
+const problem = (detail: string) => ({
+    response: {
+        status: 409,
+        data: {
+            type: "https://kestra.io/docs/api-reference/problems/entity-already-exists",
+            title: "Entity already exists",
+            status: 409,
+            detail,
+        },
+    },
+})
+const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
+const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
 import {useApplyDraft} from "../../../../../src/components/ai/copilot/useApplyDraft"
 
@@ -102,7 +114,7 @@ describe("useApplyDraft", () => {
 
     it("apply UPDATES the flow when create reports it already exists", async () => {
         confirm.mockResolvedValueOnce(undefined)
-        createFlow.mockRejectedValueOnce(alreadyExists) // create → 422 already exists → fall back to update
+        createFlow.mockRejectedValueOnce(alreadyExists) // create → entity-already-exists → fall back to update
         await useApplyDraft().apply(draft())
         expect(updateFlow).toHaveBeenCalledWith(
             expect.objectContaining({namespace: "company.team", id: "my-flow", body: "id: my-flow\nnamespace: company.team"}),
@@ -111,23 +123,38 @@ describe("useApplyDraft", () => {
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "flows/update"}))
     })
 
-    it("falls back to update when the 'already exists' error is nested in the validation body", async () => {
-        // The real backend 422 puts the "already exists" text in the validation errors, not data.message.
+    it("does NOT fall back to update for a different problem that merely mentions existing", async () => {
+        // The old implementation regexed /already exists/i over the whole serialized body, so a validation
+        // failure whose text happened to contain the phrase would silently overwrite the user's flow.
         confirm.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce({
-            status: 422,
-            response: {status: 422, data: {message: "Validation failed", _embedded: {errors: [{message: "flow.id: Flow id already exists: my-flow"}]}}},
+            response: {
+                status: 422,
+                data: {
+                    type: "https://kestra.io/docs/api-reference/problems/validation-failed",
+                    title: "Validation failed",
+                    status: 422,
+                    detail: "A task referencing a flow that already exists is not allowed here.",
+                },
+            },
         })
         await useApplyDraft().apply(draft())
-        expect(updateFlow).toHaveBeenCalledWith(
-            expect.objectContaining({namespace: "company.team", id: "my-flow"}),
-            expect.objectContaining({showMessageOnError: false}),
-        )
+        expect(updateFlow).not.toHaveBeenCalled()
     })
 
     it("apply surfaces an error (no update) when create fails for another reason", async () => {
         confirm.mockResolvedValueOnce(undefined)
-        createFlow.mockRejectedValueOnce({response: {status: 422, data: {message: "invalid flow: bad task"}}})
+        createFlow.mockRejectedValueOnce({
+            response: {
+                status: 422,
+                data: {
+                    type: "https://kestra.io/docs/api-reference/problems/validation-failed",
+                    title: "Validation failed",
+                    status: 422,
+                    detail: "bad task",
+                },
+            },
+        })
         await useApplyDraft().apply(draft())
         expect(updateFlow).not.toHaveBeenCalled()
         expect(alert).toHaveBeenCalled()

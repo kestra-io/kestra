@@ -160,4 +160,64 @@ describe("TaskNode actions", () => {
         expect(emitted).toHaveLength(1)
         expect(emitted![0][0]).toMatchObject({id: "my-task", taskRuns: runs})
     })
+
+    it("should replace NodeMenu when the taskActions slot is provided, and support filtering actions", () => {
+        const wrapper = mount(TaskNode, {
+            props: {
+                id: "root.my-task",
+                data: {
+                    node: {
+                        uid: "root.my-task",
+                        type: "io.kestra.core.models.hierarchies.GraphTask",
+                        task: TASK,
+                        taskRun: taskRun({result: "value"}),
+                    },
+                    executionId: EXECUTION_ID,
+                    isReadOnly: true,
+                },
+                playgroundEnabled: false,
+                playgroundReadyToStart: false,
+                replayEnabled: true,
+            },
+            global: {
+                plugins: [i18n],
+                stubs: {
+                    Handle: true,
+                    NodeMenu: true,
+                    BasicNode: {
+                        template: "<div><slot name='title-actions'/></div>",
+                    },
+                },
+                provide: {
+                    [EXECUTION_INJECTION_KEY as symbol]: computed(() => ({
+                        id: EXECUTION_ID,
+                        taskRunList: [taskRun({result: "value"})],
+                        state: {current: "SUCCESS"},
+                    })),
+                    [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
+                    [SHOW_EXTRA_DETAILS_INJECTION_KEY as symbol]: ref(false),
+                },
+            },
+            slots: {
+                taskActions: `
+                    <template #default="{actions}">
+                        <div id="custom-menu">
+                            <span v-for="action in actions.filter(a => !['outputs', 'replay', 'edit'].includes(a.key))" :key="action.key" class="filtered-action">
+                                {{ action.key }}
+                            </span>
+                        </div>
+                    </template>
+                `,
+            },
+        })
+
+        expect(wrapper.findComponent(NodeMenu).exists()).toBe(false)
+        expect(wrapper.find("#custom-menu").exists()).toBe(true)
+
+        const actionKeys = wrapper.findAll(".filtered-action").map((w) => w.text())
+        expect(actionKeys).toContain("logs") // Not filtered out
+        expect(actionKeys).not.toContain("outputs") // Filtered out
+        expect(actionKeys).not.toContain("replay") // Filtered out
+        expect(actionKeys).not.toContain("edit") // Filtered out
+    })
 })

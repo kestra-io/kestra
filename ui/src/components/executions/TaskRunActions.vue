@@ -5,11 +5,6 @@
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
-                <NodeMenuItem
-                    v-for="action in nodeActions"
-                    :key="action.key"
-                    :action="action"
-                />
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
@@ -87,6 +82,11 @@
                     v-if="hasWorkerId !== null"
                     :taskRun="taskRun"
                     @follow="emit('follow', $event)"
+                />
+                <NodeMenuItem
+                    v-for="action in nodeActions"
+                    :key="action.key"
+                    :action="action"
                 />
             </KsDropdownMenu>
         </template>
@@ -252,7 +252,4 @@
         }
     }
 
-    .node-action--danger {
-        color: var(--ks-text-error);
-    }
 </style>

@@ -1,4 +1,5 @@
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
+import {splitValidationErrors} from "./validationErrors"
 
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 
@@ -376,6 +377,27 @@ function nextAvailableId(baseId: string, existingIds: Set<string>): string {
     return `${baseId}_${counter}`
 }
 
+/**
+ * Resolves where a new error handler of a task goes: the task's `errors` lane
+ * and the index of the entry to append after (-1 when the lane is empty or absent).
+ * Returns undefined when the task id cannot be found in the source.
+ */
+export function errorsLaneTarget(source: string, taskId: string): {parentPath: string; refIndex: number} | undefined {
+    const taskPath = flowYamlUtils.getPathFromSectionAndId({source, section: "tasks", id: taskId})
+    // an unknown id yields the bare section path, not undefined
+    if (!taskPath || !/\[\d+\]/.test(taskPath)) return undefined
+
+    const parentPath = `${taskPath}.errors`
+    try {
+        const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+        const lane = parsed ? getAtPath(parsed, parentPath) : undefined
+        const refIndex = Array.isArray(lane) && lane.length > 0 ? lane.length - 1 : -1
+        return {parentPath, refIndex}
+    } catch {
+        return {parentPath, refIndex: -1}
+    }
+}
+
 export function isWrapperLane(source: string, parentPath: string): boolean {
     try {
         const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
@@ -407,7 +429,7 @@ export function groupValidationIssuesByTask(
         existing.push(entry)
         grouped.set(id, existing)
     }
-    const lines = (errors ?? []).flatMap(raw => raw.split(/[\r\n]+/))
+    const lines = (errors ?? []).flatMap(raw => splitValidationErrors(raw))
     for (const line of lines) {
         const cleaned = line.replace(/^\s*validation error\s*:\s*/i, "").trim()
         if (!cleaned) continue

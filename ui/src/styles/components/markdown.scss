@@ -83,7 +83,7 @@
     .video-container {
         position: relative;
         margin-top: 2rem;
-        margin-bottom: -1rem;
+        margin-bottom: var(--ks-spacing-6);
         padding-top: 56.75%;
         overflow: hidden;
         background-color: var(--ks-bg-base);

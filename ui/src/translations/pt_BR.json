@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin não instalado para este tipo de trigger, nenhuma notificação será enviada."
       },
       "trigger": {
-        "case_sub": "Recurso exclusivo da EE",
-        "case_title": "Status do caso",
         "execution_sub": "Reage a mudanças de estado do flow",
         "execution_title": "Estado da Execution",
         "other_sub": "Qualquer plugin de trigger disponível",
@@ -182,6 +180,7 @@
     "add_new_item": "Adicionar novo item",
     "copy": "Copiar",
     "copy_to_clipboard": "Copiar para a área de transferência",
+    "copy_pebble_expression": "Copiar expressão pebble",
     "new": "Novo",
     "edit": "Editar",
     "back": "Voltar",
@@ -206,6 +205,7 @@
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
     "queued duration": "Duração na fila",
+    "paused duration": "Duração em pausa",
     "executionProgress": {
       "title": "Progresso da execução",
       "estimatedRemaining": "Tempo restante estimado: {duration}",
@@ -220,7 +220,7 @@
     "next_execution": "Próxima execução",
     "datepicker": {
       "invalid duration": "Formato de duração inválido. Use o formato ISO 8601 (ex: PT30M, P1D).",
-      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (ex: 'P1DT1H1M1S')",
+      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (por exemplo, 'P1DT1H1M1S')",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (ex: P1DT1H1M1S)",
       "custom": "Personalizado",
@@ -298,6 +298,21 @@
     "to": "Para",
     "steps": "Passos",
     "state": "Estado",
+    "state_history": {
+      "title": "Histórico de estado",
+      "open": "Histórico de estado",
+      "aria_open": "Mostrar o histórico de estado",
+      "aria_open_for": "Mostrar o histórico de estado de {subject}",
+      "started_at": "Iniciado às {time}",
+      "failed_at": "Falhou às {time}",
+      "skipped_at": "Ignorado às {time}",
+      "created_at": "Criado às {time}",
+      "did_not_run": "Esta tarefa não foi executada",
+      "waiting_to_start": "Aguardando início",
+      "attempt_n": "Tentativa {index}",
+      "attempt_count": "{count} tentativas",
+      "copy": "Copiar histórico de estado"
+    },
     "search": "Buscar",
     "source search": "Busca de fonte",
     "selected": "Selecionado",
@@ -367,7 +382,7 @@
     "unqueue done": "A execução está fora da fila",
     "force run": "Forçar execução",
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
-    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "force run confirm": "Tem certeza de que deseja forçar a execução `{id}`?\n\nAVISO: forçar a execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "force run done": "A execução foi forçada",
     "metrics": "Métricas",
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
@@ -397,7 +412,8 @@
       "zoom-reset": "Redefinir zoom",
       "zoom-fit": "Ajustar",
       "invalid": "Erro no gráfico",
-      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros."
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
+      "load_error": "Não foi possível carregar o gráfico de topologia. Tente novamente."
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Exibir condição da task",
@@ -447,7 +463,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
-      "warning": "Alterar o contador em execução pode corromper a concorrência, fazendo com que as execuções excedam o limite permitido."
+      "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -455,6 +471,11 @@
         "message": "Este flow não declara mais um bloco de concorrência, mas um registro de limite ainda contabiliza {count} execução(ões) em andamento. Ele não afeta mais as novas execuções e pode ser redefinido em Administração → Limites de Concorrência.",
         "title": "Limite de concorrência remanescente"
       }
+    },
+    "docsPage": {
+      "notFound": "Esta página da documentação não existe. Ela pode ter sido movida ou renomeada.",
+      "loadError": "Não foi possível carregar esta página da documentação. Tente novamente.",
+      "backToDocs": "Voltar aos Docs"
     },
     "documentation": {
       "documentation": "Documentação"
@@ -494,6 +515,15 @@
     },
     "use": "Usar",
     "plugins": {
+      "autoInstall": {
+        "failed": "Falha na instalação do plugin",
+        "failedHint": "O flow não foi salvo. Corrija o problema ou remova o plugin do flow e salve novamente.",
+        "preparing": "Preparando a instalação do plugin...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin instalado com sucesso | Plugins instalados com sucesso",
+        "timeout": "A instalação do plugin está demorando mais do que o esperado. O flow não foi salvo, salve novamente quando a instalação terminar.",
+        "title": "Instalando {count} plugin | Instalando {count} plugins"
+      },
       "names": "Plugins",
       "release": "Notas de lançamento",
       "beta": "Beta",
@@ -533,7 +563,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentação do flow",
+      "nav_definitions": "Definições",
       "nav_examples": "Exemplos",
+      "nav_metrics": "Métricas",
       "nav_outputs": "Outputs",
       "nav_overview": "Visão geral",
       "nav_properties": "Propriedades",
@@ -615,6 +647,10 @@
     "open full page": "Abrir Página Completa",
     "drill down preview": "Pré-visualização",
     "errors": {
+      "400": {
+        "title": "Requisição inválida",
+        "content": "A requisição não pôde ser compreendida pelo servidor."
+      },
       "401": {
         "title": "Não autorizado",
         "content": "Você precisa estar autenticado para acessar esta página."
@@ -627,6 +663,114 @@
         "title": "Página não encontrada",
         "content": "A URL solicitada não foi encontrada neste servidor.<br />Isso é tudo que sabemos.",
         "flow or execution": "O flow ou execução que você está procurando não existe."
+      },
+      "409": {
+        "title": "Conflito",
+        "content": "A requisição conflita com o estado atual do recurso."
+      },
+      "422": {
+        "title": "Entidade inválida",
+        "content": "O conteúdo enviado não pôde ser processado."
+      },
+      "500": {
+        "title": "Erro interno do servidor",
+        "content": "Algo deu errado do nosso lado. Por favor, tente novamente mais tarde."
+      },
+      "503": {
+        "title": "Serviço indisponível",
+        "content": "O servidor está temporariamente indisponível. Por favor, tente novamente mais tarde."
+      },
+      "generic": {
+        "title": "Algo deu errado",
+        "content": "Ocorreu um erro inesperado. Por favor, tente novamente."
+      },
+      "trace id": "ID de rastreamento",
+      "problems": {
+        "ai-request-failed": {
+          "title": "A solicitação de AI falhou"
+        },
+        "bad-request": {
+          "title": "Requisição inválida"
+        },
+        "bulk-validation-failed": {
+          "title": "Alguns itens não puderam ser processados"
+        },
+        "conflict": {
+          "title": "Conflito"
+        },
+        "entity-already-exists": {
+          "title": "A entidade já existe"
+        },
+        "forbidden": {
+          "title": "Acesso negado"
+        },
+        "internal-error": {
+          "title": "Erro interno do servidor"
+        },
+        "invalid-argument": {
+          "title": "Argumento inválido"
+        },
+        "invalid-entity": {
+          "title": "Entidade inválida"
+        },
+        "invalid-format": {
+          "title": "Formato de valor inválido"
+        },
+        "invalid-json": {
+          "title": "JSON inválido"
+        },
+        "invalid-plugin-type": {
+          "title": "Tipo de plugin inválido"
+        },
+        "invalid-query-filters": {
+          "title": "Filtros de consulta inválidos"
+        },
+        "invalid-query-parameter": {
+          "title": "Parâmetro de consulta inválido"
+        },
+        "invalid-request-body": {
+          "title": "Corpo da requisição inválido"
+        },
+        "locked": {
+          "title": "Recurso bloqueado"
+        },
+        "method-not-allowed": {
+          "title": "Método não permitido"
+        },
+        "migration-required": {
+          "title": "Migração necessária"
+        },
+        "not-acceptable": {
+          "title": "Não aceitável"
+        },
+        "not-found": {
+          "title": "Recurso não encontrado"
+        },
+        "payload-too-large": {
+          "title": "Payload muito grande"
+        },
+        "resource-expired": {
+          "title": "O recurso expirou"
+        },
+        "service-unavailable": {
+          "title": "Serviço indisponível",
+          "detail": "O servidor está temporariamente indisponível. Por favor, tente novamente mais tarde."
+        },
+        "timeout": {
+          "title": "A operação excedeu o tempo limite"
+        },
+        "too-many-requests": {
+          "title": "Muitas requisições"
+        },
+        "unauthenticated": {
+          "title": "Autenticação necessária"
+        },
+        "unsupported-media-type": {
+          "title": "Tipo de mídia não suportado"
+        },
+        "validation-failed": {
+          "title": "A validação falhou"
+        }
       }
     },
     "back_to_dashboard": "Voltar ao dashboard",
@@ -644,7 +788,9 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Labels de execução",
+    "show more labels": "Mostrar mais {count} labels",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
+    "invalid label key": "Key de label inválida. Uma key válida deve começar com uma letra minúscula e conter apenas letras minúsculas, números, hifens (-), underscores (_) ou pontos (.)",
     "feeds": {
       "heading": "Tudo sobre Kestra.",
       "subheading": "As últimas atualizações, guias e histórias"
@@ -657,11 +803,11 @@
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",
     "bulk pause": "Tem certeza de que deseja pausar a(s) execução(ões) <code>{executionCount}</code>?",
-    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "bulk force run": "Tem certeza de que deseja forçar a execução de `{executionCount}` execução(ões)?\n\nAVISO: forçar a execução não é garantido e pode criar execuções de Task duplicadas.\n\nAs seguintes transições serão feitas:\n\n- Tasks CREATED serão movidas para o estado RUNNING.\n- Tasks RUNNING serão reenviadas.\n- Tasks QUEUED serão removidas da fila.\n- Tasks PAUSED serão retomadas.",
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
-    "errorLogs": "Logs de erros",
+    "errorLogs": "Logs de erro",
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?"
     },
@@ -669,12 +815,12 @@
     "executions replayed": "<code>{executionCount}</code> execução(ões) reproduzida(s)",
     "executions state changed": "O estado de <code>{executionCount}</code> execução(ões) foi alterado",
     "executions resumed": "<code>{executionCount}</code> execução(ões) retomada(s)",
-    "executions paused": "<code>{executionCount}</code> execução(ões) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> execução(ões) na fila",
-    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",
+    "executions paused": "<code>{executionCount}</code> execução(ões) pausada(s)",
+    "executions unqueue": "<code>{executionCount}</code> execução(ões) não enfileirada(s)",
+    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s)",
     "executions restarted": "<code>{executionCount}</code> execução(ões) reiniciada(s)",
-    "executions killed": "<code>{executionCount}</code> execução(ões) morta(s)",
-    "executions deleted": "<code>{executionCount}</code> execução(ões) deletada(s)",
+    "executions killed": "<code>{executionCount}</code> execução(ões) encerrada(s)",
+    "executions deleted": "<code>{executionCount}</code> execução(ões) excluída(s)",
     "invalid bulk replay": "Não foi possível reproduzir execuções",
     "invalid bulk resume": "Não foi possível retomar execuções",
     "invalid bulk pause": "Não foi possível pausar as execuções",
@@ -753,6 +899,11 @@
     "expand_by_default": "Expandir logs estruturados por padrão",
     "similar lines": "linhas semelhantes",
     "download_logs_description": "Escolha quais logs exportar. Os filtros são padronizados para sua visualização atual.",
+    "logs_download_truncated": "Foram exportadas as {downloaded} linhas de log mais recentes. Outras {skipped} correspondiam aos seus filtros e foram omitidas.",
+    "logs_download_capped": "Foram exportadas as {downloaded} linhas de log mais recentes, o máximo para uma exportação. Podem ter existido mais linhas correspondentes aos seus filtros.",
+    "logs_download_partial": "A exportação parou em {downloaded} linhas de log porque este filtro não pode ser paginado além disso. Faltam algumas linhas correspondentes.",
+    "logs_download_failed": "A exportação de log falhou. Nenhum arquivo foi baixado.",
+    "logs_download_empty": "Nenhuma linha de log corresponde aos seus filtros, então nenhum arquivo foi baixado.",
     "display_settings": "Configurações de exibição",
     "density": "Densidade",
     "density_compact": "Compacto",
@@ -765,7 +916,7 @@
     "join_slack": "Participar do Slack",
     "kestra": "Kestra",
     "error detected": "Erro(s) detectado(s).",
-    "warning detected": "Aviso(s) detectado(s)",
+    "warning detected": "Aviso(s) detectado(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
     "dependency task": "Task {taskId} é uma dependência de outra task",
@@ -836,6 +987,7 @@
         "folder_error": "Ocorreu um erro ao criar a pasta"
       },
       "rename": {
+        "error": "Não foi possível renomear para \"{name}\". Já pode existir um arquivo ou uma pasta com esse nome.",
         "label": "Renomear",
         "file": "Renomear arquivo",
         "folder": "Renomear pasta",
@@ -861,6 +1013,7 @@
       },
       "export": "Exportar arquivos do namespace",
       "export_single": "Exportar arquivo",
+      "export_error": "Não foi possível exportar \"{name}\". Não foi possível resolver o seu caminho.",
       "dialog": {
         "name": {
           "file": "Nome com extensão:",
@@ -1409,7 +1562,8 @@
         "confirm": "Tem certeza de que deseja excluir: <code>{name}</code> KV(s)?",
         "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>"
       },
-      "inherited": "Pares KV herdados"
+      "inherited": "Pares KV herdados",
+      "expiration_hint": "Atualmente expira em {date}. Deixe o campo intocado para manter esta expiração; escolher uma duração a recalcula a partir de agora, e limpá-la a remove."
     },
     "expiration": "Expiração",
     "page": {
@@ -1663,7 +1817,7 @@
         "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente."
       },
       "apps": {
-        "title": "Você ainda não tem apps!",
+        "title": "Você ainda não tem Apps!",
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo."
       },
       "testSuites": {
@@ -1749,7 +1903,8 @@
       "close_all_tabs": "Fechar todas as abas",
       "close_all_panels": "Fechar todos os painéis",
       "exit_fullscreen": "Sair da tela cheia",
-      "fullscreen": "Tela Cheia"
+      "fullscreen": "Tela Cheia",
+      "split_panel": "Dividir painel"
     },
     "search_docs": "Pesquisar",
     "no_results_found": "Nenhum resultado encontrado",
@@ -1762,7 +1917,9 @@
       "triggers": "Nenhum Trigger Encontrado",
       "flows": "Nenhum Flow Encontrado",
       "kv_pairs": "Nenhum par de Key-Value encontrado",
-      "secrets": "Nenhum Secret Encontrado"
+      "secrets": "Nenhum Secret Encontrado",
+      "all_columns_hidden": "Todas as colunas estão ocultas",
+      "all_columns_hidden_description": "Ative pelo menos uma coluna novamente em Personalizar colunas da tabela para ver os dados novamente."
     },
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "dashboards": {
@@ -1780,6 +1937,7 @@
       "others": "Outros",
       "viewAll": "Ver tudo",
       "export": "Exportar",
+      "exportEmpty": "Este gráfico não tem dados para exportar.",
       "exportTo": {
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"
@@ -1930,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot não está disponível",
-          "detail": "Nenhum provedor de IA está configurado. Peça a um administrador para configurá-lo e tente novamente.",
-          "retry": "Tentar novamente"
+          "detail": "Nenhum provedor de AI está configurado. Peça a um administrador para configurar um.",
+          "docs": "Ver documentação"
         },
         "thinkingWords": [
           "Orquestração",
@@ -1960,6 +2118,12 @@
           "Convergindo"
         ],
         "newChat": "Novo chat",
+        "fixThread": {
+          "flow": "Corrigir Flow {id}",
+          "task": "Corrigir Task {id}",
+          "execution": "Corrigir execução de {id}",
+          "generic": "Corrigir erros do Flow"
+        },
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",
@@ -2008,6 +2172,31 @@
         "zoom_out": "Reduzir zoom",
         "clear_selection": "Limpar seleção",
         "fit_view": "Ajustar à tela"
+      },
+      "dag": {
+        "force": "Árvore",
+        "layered": "DAG",
+        "system": "Sistema",
+        "last_update": "Última atualização",
+        "status": {
+          "fresh": "Novo",
+          "stale": "Obsoleto",
+          "failed": "Falha",
+          "unknown": "Não rastreado"
+        },
+        "summary": {
+          "fresh": "Todos os {n} Assets atualizados",
+          "issues": "{n} obsoleto",
+          "failed": "{n} falhou",
+          "last_run": "última execução {ago}",
+          "unknown": "{n} não rastreado"
+        },
+        "recent_runs": "Execuções recentes",
+        "group_by": "Agrupar por",
+        "groups": "Grupos ({n})",
+        "group_none": "Sem agrupamento",
+        "group_dataset": "Dataset",
+        "ungrouped": "Não agrupado"
       },
       "search": {
         "placeholders": {
@@ -2070,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "Seus Servidores",
-      "servers_count": "{count} Servidores MCP",
+      "servers_count": "{count} Servidor MCP | {count} Servidores MCP",
       "managed_by_kestra": "Gerenciado por Kestra",
       "servers": "Servidores MCP",
       "client_setup": "Configuração do cliente",
@@ -2204,7 +2393,7 @@
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, alternar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
       "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
-      "no_results_in_types": "Sem correspondências para “{query}” em {types}",
+      "no_results_in_types": "Sem correspondências para {query} em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",
@@ -2383,6 +2572,7 @@
         "message": "Corrija os erros antes de salvar.",
         "title": "Não é possível salvar o flow"
       },
+      "schema_default_tooltip": "Valor padrão usado quando o campo não está definido",
       "search_task_placeholder": "Pesquisar ou descrever uma task…",
       "shortcuts": {
         "add_after": "Inserir um bloco após a seleção",

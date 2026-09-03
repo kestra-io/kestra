@@ -260,6 +260,12 @@ public class InternalNamespace implements Namespace {
         // Throw if file not found OR if it's deleted
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
 
+        if (namespaceFileMetadata.isDirectory()) {
+            throw new FileNotFoundException(
+                "'%s' is a directory in namespace '%s', it has no content to read.".formatted(normalizedPath, namespace)
+            );
+        }
+
         return storage.get(tenant, namespace, resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision()));
     }
 
@@ -337,6 +343,8 @@ public class InternalNamespace implements Namespace {
     @Override
     public List<NamespaceFile> putFile(final Path path, final InputStream content, final Conflicts onAlreadyExist) throws IOException, URISyntaxException {
         final Path normalizedPath = NamespaceFile.normalize(path);
+
+        ensureNoFileInHierarchy(normalizedPath);
 
         Optional<NamespaceFileMetadata> inRepository = discardConflictingEntry(findByPath(normalizedPath, true), false, normalizedPath);
         int currentRevision = inRepository.map(NamespaceFileMetadata::getRevision).orElse(0);
@@ -450,6 +458,40 @@ public class InternalNamespace implements Namespace {
     }
 
     /**
+     * Rejects a write whose path runs through an existing file.
+     * <p>
+     * A file can never hold children, and the ancestor directories are created implicitly by the write, so
+     * such a path is only caught by the storage layer, which fails with a raw filesystem error surfacing as
+     * a 500 that exposes the absolute storage path.
+     *
+     * @throws ConflictException if any ancestor of the given path is an existing file.
+     */
+    private void ensureNoFileInHierarchy(Path path) throws IOException {
+        List<String> ancestors = new ArrayList<>();
+        String parentPath = NamespaceFileMetadata.parentPath(path.toString());
+        while (parentPath != null && !parentPath.equals("/")) {
+            // Directories are stored with a trailing slash, so looking the ancestors up without one only
+            // matches files.
+            ancestors.add(NamespaceFileMetadata.path(parentPath, false));
+            parentPath = NamespaceFileMetadata.parentPath(parentPath);
+        }
+
+        if (ancestors.isEmpty()) {
+            return;
+        }
+
+        stateStore.findByPaths(tenant, namespace, ancestors, false).stream()
+            .filter(Predicate.not(NamespaceFileMetadata::isDirectory))
+            .findFirst()
+            .ifPresent(file ->
+            {
+                throw new ConflictException(
+                    "Cannot create '%s' in namespace '%s': '%s' is a file, not a directory.".formatted(path, namespace, file.getPath())
+                );
+            });
+    }
+
+    /**
      * Make all parent directories for a given path.
      */
     private List<NamespaceFile> mkDirs(String path) throws IOException {
@@ -459,7 +501,7 @@ public class InternalNamespace implements Namespace {
             (maybeParentPath = Optional.ofNullable(NamespaceFileMetadata.parentPath(maybeParentPath.map(Path::toString).orElse(path))).map(Path::of)).isPresent()
                 && !this.exists(maybeParentPath.get())
         ) {
-            this.createDirectory(maybeParentPath.get());
+            this.createSingleDirectory(maybeParentPath.get());
             createdDirs.add(NamespaceFile.of(namespace, maybeParentPath.get().toString().endsWith("/") ? maybeParentPath.get().toString() : maybeParentPath.get() + "/", 1));
         }
 
@@ -473,6 +515,13 @@ public class InternalNamespace implements Namespace {
     public NamespaceFile createDirectory(Path path) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
+        ensureNoFileInHierarchy(normalizedPath);
+        mkDirs(normalizedPath.toString());
+
+        return createSingleDirectory(normalizedPath);
+    }
+
+    private NamespaceFile createSingleDirectory(Path normalizedPath) throws IOException {
         discardConflictingEntry(findByPath(normalizedPath, true), true, normalizedPath);
 
         NamespaceFileMetadata nsFileMetadata = stateStore.save(

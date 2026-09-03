@@ -211,6 +211,13 @@ $fill-color-base: #fafcff;
     #{--kel-box-shadow-dark}: 0px 16px 48px 16px var(--ks-shadow-elevated), 0px 12px 32px var(--ks-shadow-surface), 0px 8px 16px -8px var(--ks-shadow-surface);
 }
 
+:root .kel-input__inner::placeholder,
+:root .kel-textarea__inner::placeholder {
+    color: var(--ks-placeholder-color);
+    font-size: var(--ks-placeholder-font-size);
+    font-weight: var(--ks-placeholder-font-weight);
+}
+
 // popper
 .kel-popper {
     box-shadow: var(--kel-box-shadow);
@@ -326,6 +333,22 @@ $fill-color-base: #fafcff;
     .kel-message-box__header {
         margin-bottom: var(--kel-messagebox-padding-primary);
         font-weight: bold;
+    }
+
+    .kel-message-box__container {
+        align-items: flex-start;
+    }
+
+    .kel-message-box__message .ks-markdown > * {
+        margin: var(--ks-spacing-3) 0;
+
+        &:first-child {
+            margin-top: 0;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 
     .kel-message-box__btns {

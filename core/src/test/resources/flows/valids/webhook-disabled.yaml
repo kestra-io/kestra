@@ -1,0 +1,13 @@
+id: webhook-disabled
+namespace: io.kestra.tests
+
+tasks:
+  - id: out
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{trigger | json }}"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhook-disabled-key
+    disabled: true

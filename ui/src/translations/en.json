@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin not installed for this trigger type, no notification will be sent."
       },
       "trigger": {
-        "case_sub": "EE only feature",
-        "case_title": "Case status",
         "execution_sub": "Reacts to flow state changes",
         "execution_title": "Execution state",
         "other_sub": "Any available trigger plugin",
@@ -182,6 +180,7 @@
     "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
+    "copy_pebble_expression": "Copy pebble expression",
     "new": "New",
     "edit": "Edit",
     "back": "Back",
@@ -206,6 +205,7 @@
     "total_duration": "Total duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",
+    "paused duration": "Paused duration",
     "executionProgress": {
       "title": "Execution progress",
       "estimatedRemaining": "Est. remaining: {duration}",
@@ -220,7 +220,7 @@
     "next_execution": "Next execution",
     "datepicker": {
       "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
-      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
+      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S')",
       "duration example": "Example: 'P1DT1H1M1S'",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
       "custom": "Custom",
@@ -298,6 +298,21 @@
     "to": "To",
     "steps": "Steps",
     "state": "State",
+    "state_history": {
+        "title": "State history",
+        "open": "State history",
+        "aria_open": "Show the state history",
+        "aria_open_for": "Show the state history for {subject}",
+        "started_at": "Started {time}",
+        "failed_at": "Failed at {time}",
+        "skipped_at": "Skipped at {time}",
+        "created_at": "Created {time}",
+        "did_not_run": "This task did not run",
+        "waiting_to_start": "Waiting to start",
+        "attempt_n": "Attempt {index}",
+        "attempt_count": "{count} attempts",
+        "copy": "Copy state history"
+    },
     "search": "Search",
     "source search": "Source search",
     "selected": "Selected",
@@ -367,7 +382,7 @@
     "unqueue done": "Execution is unqueued",
     "force run": "Force run",
     "force run title": "Force run execution <code>{id}</code>.",
-    "force run confirm": "Are you sure you want to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task runs.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "force run confirm": "Are you sure you want to force run execution `{id}`?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task runs.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "force run done": "Execution is forced ran",
     "metrics": "Metrics",
     "no metrics available": "No metrics recorded for this task run.",
@@ -397,7 +412,8 @@
       "zoom-reset": "Reset zoom",
       "zoom-fit": "Fit",
       "invalid": "Graph error",
-      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors."
+      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
+      "load_error": "Could not load the topology graph. Please try again."
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -447,7 +463,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
+      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",
@@ -455,6 +471,11 @@
         "message": "This flow no longer declares a concurrency block, but a limit record still counts {count} running execution(s). It no longer affects new executions and can be reset from Administration → Concurrency Limits.",
         "title": "Leftover concurrency limit"
       }
+    },
+    "docsPage": {
+      "notFound": "This documentation page does not exist. It may have been moved or renamed.",
+      "loadError": "Could not load this documentation page. Please try again.",
+      "backToDocs": "Back to docs"
     },
     "documentation": {
       "documentation": "Documentation"
@@ -494,6 +515,15 @@
     },
     "use": "Use",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin installation failed",
+        "failedHint": "The flow was not saved. Fix the issue or remove the plugin from the flow, then save again.",
+        "preparing": "Preparing plugin installation...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installed successfully | Plugins installed successfully",
+        "timeout": "Plugin installation is taking longer than expected. The flow was not saved, save again once the installation completes.",
+        "title": "Installing {count} plugin | Installing {count} plugins"
+      },
       "names": "Plugins",
       "release": "Release notes",
       "beta": "Beta",
@@ -533,7 +563,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow documentation",
+      "nav_definitions": "Definitions",
       "nav_examples": "Examples",
+      "nav_metrics": "Metrics",
       "nav_outputs": "Outputs",
       "nav_overview": "Overview",
       "nav_properties": "Properties",
@@ -627,6 +659,118 @@
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
+      },
+      "400": {
+        "title": "Bad request",
+        "content": "The request could not be understood by the server."
+      },
+      "409": {
+        "title": "Conflict",
+        "content": "The request conflicts with the current state of the resource."
+      },
+      "422": {
+        "title": "Invalid entity",
+        "content": "The submitted content could not be processed."
+      },
+      "500": {
+        "title": "Internal server error",
+        "content": "Something went wrong on our side. Please try again later."
+      },
+      "503": {
+        "title": "Service unavailable",
+        "content": "The server is temporarily unavailable. Please try again later."
+      },
+      "generic": {
+        "title": "Something went wrong",
+        "content": "An unexpected error occurred. Please try again."
+      },
+      "trace id": "Trace ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI request failed"
+        },
+        "bad-request": {
+          "title": "Bad request"
+        },
+        "bulk-validation-failed": {
+          "title": "Some items could not be processed"
+        },
+        "conflict": {
+          "title": "Conflict"
+        },
+        "entity-already-exists": {
+          "title": "Entity already exists"
+        },
+        "forbidden": {
+          "title": "Access denied"
+        },
+        "internal-error": {
+          "title": "Internal server error"
+        },
+        "invalid-argument": {
+          "title": "Invalid argument"
+        },
+        "invalid-entity": {
+          "title": "Invalid entity"
+        },
+        "invalid-format": {
+          "title": "Invalid value format"
+        },
+        "invalid-json": {
+          "title": "Invalid JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Invalid plugin type"
+        },
+        "invalid-query-filters": {
+          "title": "Invalid query filters"
+        },
+        "invalid-query-parameter": {
+          "title": "Invalid query parameter"
+        },
+        "invalid-request-body": {
+          "title": "Invalid request body"
+        },
+        "locked": {
+          "title": "Resource is locked"
+        },
+        "method-not-allowed": {
+          "title": "Method not allowed"
+        },
+        "migration-required": {
+          "title": "Migration required"
+        },
+        "not-acceptable": {
+          "title": "Not acceptable"
+        },
+        "not-found": {
+          "title": "Resource not found"
+        },
+        "payload-too-large": {
+          "title": "Payload too large"
+        },
+        "resource-expired": {
+          "title": "Resource has expired"
+        },
+        "service-unavailable": {
+          "title": "Service unavailable",
+          "detail": "The server is temporarily unavailable. Please try again later."
+        },
+        "timeout": {
+          "title": "Operation timed out"
+        },
+        "too-many-requests": {
+          "title": "Too many requests"
+        },
+        "unauthenticated": {
+          "title": "Authentication required"
+        },
+        "unsupported-media-type": {
+          "title": "Unsupported media type"
+        },
+        "validation-failed": {
+          "title": "Validation failed"
+        }
       }
     },
     "back_to_dashboard": "Back to dashboard",
@@ -644,7 +788,9 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Execution labels",
+    "show more labels": "Show {count} more labels",
     "wrong labels": "Empty key or value is not allowed in labels",
+    "invalid label key": "Invalid label key. A valid key must start with a lowercase letter and contain only lowercase letters, numbers, hyphens (-), underscores (_) or periods (.)",
     "feeds": {
       "heading": "All things Kestra.",
       "subheading": "The latest updates, guides and stories"
@@ -657,24 +803,24 @@
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
-    "bulk force run": "Are you sure you want to force run <code>{executionCount}</code> execution(s)?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "bulk force run": "Are you sure you want to force run `{executionCount}` execution(s)?\n\nWARNING: force running an execution is not guaranteed and may create duplicate task executions.\n\nThe following transitions will be done:\n\n- CREATED tasks will be moved to the running state.\n- RUNNING tasks will be re-submitted.\n- QUEUED tasks will be un-queued.\n- PAUSED tasks will be resumed.",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "cancel": "Cancel",
-    "errorLogs": "Errors logs",
+    "errorLogs": "Error logs",
     "welcome_page": {
       "guide": "Need guidance to execute your first flow?"
     },
     "product_tour": "Product Tour",
-    "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
+    "executions replayed": "<code>{executionCount}</code> execution(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
-    "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
-    "executions paused": "<code>{executionCount}</code> executions(s) paused",
-    "executions unqueue": "<code>{executionCount}</code> executions(s) unqueue",
-    "executions force run": "<code>{executionCount}</code> executions(s) forced run",
-    "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
-    "executions killed": "<code>{executionCount}</code> executions(s) killed",
-    "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
+    "executions resumed": "<code>{executionCount}</code> execution(s) resumed",
+    "executions paused": "<code>{executionCount}</code> execution(s) paused",
+    "executions unqueue": "<code>{executionCount}</code> execution(s) unqueued",
+    "executions force run": "<code>{executionCount}</code> execution(s) forced run",
+    "executions restarted": "<code>{executionCount}</code> execution(s) restarted",
+    "executions killed": "<code>{executionCount}</code> execution(s) killed",
+    "executions deleted": "<code>{executionCount}</code> execution(s) deleted",
     "invalid bulk replay": "Could not replay executions",
     "invalid bulk resume": "Could not resume executions",
     "invalid bulk pause": "Could not pause executions",
@@ -753,6 +899,11 @@
     "expand_by_default": "Expand structured logs by default",
     "similar lines": "similar lines",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",
+    "logs_download_truncated": "Exported the most recent {downloaded} log lines. {skipped} more matched your filters and were left out.",
+    "logs_download_capped": "Exported the most recent {downloaded} log lines, the maximum for one export. More may have matched your filters.",
+    "logs_download_partial": "The export stopped at {downloaded} log lines because this filter cannot be paged any further. Some matching lines are missing.",
+    "logs_download_failed": "The log export failed. No file was downloaded.",
+    "logs_download_empty": "No log lines matched your filters, so no file was downloaded.",
     "display_settings": "Display settings",
     "density": "Density",
     "density_compact": "Compact",
@@ -765,7 +916,7 @@
     "join_slack": "Join Slack",
     "kestra": "Kestra",
     "error detected": "Error(s) detected.",
-    "warning detected": "Warning(s) detected",
+    "warning detected": "Warning(s) detected.",
     "informative notice": "Note(s)",
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
@@ -836,6 +987,7 @@
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
+        "error": "Could not rename to \"{name}\". A file or folder with that name may already exist.",
         "label": "Rename",
         "file": "Rename file",
         "folder": "Rename folder",
@@ -861,6 +1013,7 @@
       },
       "export": "Export namespace files",
       "export_single": "Export file",
+      "export_error": "Could not export \"{name}\". Its path could not be resolved.",
       "dialog": {
         "name": {
           "file": "Name with extension:",
@@ -1409,7 +1562,8 @@
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
       },
-      "inherited": "Inherited KV pairs"
+      "inherited": "Inherited KV pairs",
+      "expiration_hint": "Currently expires on {date}. Leave the field untouched to keep this expiration; picking a duration recalculates it from now, and clearing it removes it."
     },
     "expiration": "Expiration",
     "page": {
@@ -1663,7 +1817,7 @@
         "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
       },
       "apps": {
-        "title": "You have no apps yet!",
+        "title": "You have no Apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
       },
       "testSuites": {
@@ -1749,7 +1903,8 @@
       "close_all_tabs": "Close all tabs",
       "close_all_panels": "Close all panels",
       "exit_fullscreen": "Exit fullscreen",
-      "fullscreen": "Fullscreen"
+      "fullscreen": "Fullscreen",
+      "split_panel": "Split panel"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",
@@ -1762,7 +1917,9 @@
       "triggers": "No Triggers Found",
       "flows": "No Flows Found",
       "kv_pairs": "No Key-Value pairs Found",
-      "secrets": "No Secrets Found"
+      "secrets": "No Secrets Found",
+      "all_columns_hidden": "All columns are hidden",
+      "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again."
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
@@ -1780,6 +1937,7 @@
       "others": "Others",
       "viewAll": "View all",
       "export": "Export",
+      "exportEmpty": "This chart has no data to export.",
       "exportTo": {
         "csv": "Export to CSV",
         "ion": "Export to ION"
@@ -1930,8 +2088,8 @@
         },
         "unavailable": {
           "title": "AI Copilot isn't available",
-          "detail": "No AI provider is configured. Ask an administrator to set one up, then try again.",
-          "retry": "Try again"
+          "detail": "No AI provider is configured. Ask an administrator to set one up.",
+          "docs": "View documentation"
         },
         "thinkingWords": [
           "Orchestrating",
@@ -1960,6 +2118,12 @@
           "Converging"
         ],
         "newChat": "New chat",
+        "fixThread": {
+          "flow": "Fix flow {id}",
+          "task": "Fix task {id}",
+          "execution": "Fix execution of {id}",
+          "generic": "Fix flow errors"
+        },
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",
@@ -2008,6 +2172,31 @@
         "zoom_out": "Zoom out",
         "clear_selection": "Clear selection",
         "fit_view": "Fit to screen"
+      },
+      "dag": {
+        "force": "Tree",
+        "layered": "DAG",
+        "system": "System",
+        "last_update": "Last update",
+        "status": {
+          "fresh": "Fresh",
+          "stale": "Stale",
+          "failed": "Failed",
+          "unknown": "Not tracked"
+        },
+        "summary": {
+          "fresh": "All {n} assets fresh",
+          "issues": "{n} stale",
+          "failed": "{n} failed",
+          "last_run": "last run {ago}",
+          "unknown": "{n} not tracked"
+        },
+        "recent_runs": "Recent runs",
+        "group_by": "Group by",
+        "groups": "Groups ({n})",
+        "group_none": "No grouping",
+        "group_dataset": "Dataset",
+        "ungrouped": "Ungrouped"
       },
       "search": {
         "placeholders": {
@@ -2070,7 +2259,7 @@
     },
     "mcp": {
       "your_servers": "Your Servers",
-      "servers_count": "{count} MCP Servers",
+      "servers_count": "{count} MCP Server | {count} MCP Servers",
       "managed_by_kestra": "Managed by Kestra",
       "servers": "MCP Servers",
       "client_setup": "Client setup",
@@ -2204,7 +2393,7 @@
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
       "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
-      "no_results_in_types": "No matches for “{query}” in {types}",
+      "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",
@@ -2383,6 +2572,7 @@
         "message": "Fix the errors before saving.",
         "title": "Cannot save the flow"
       },
+      "schema_default_tooltip": "Default value used when the field is not set",
       "search_task_placeholder": "Search or describe a task…",
       "shortcuts": {
         "add_after": "Insert a block after selection",

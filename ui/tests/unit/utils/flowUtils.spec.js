@@ -1,5 +1,5 @@
 import {describe, it, expect} from "vitest"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import * as FlowUtils from "../../../src/utils/flowUtils"
 
 export const flat = `

@@ -21,68 +21,71 @@
                     :executionId="taskRun.outputs.executionId"
                 />
 
-                <Metrics :taskRun="taskRun" :execution="execution" />
+                <template v-if="!(taskRuns && taskRuns.length > 1)">
+                    <Metrics :taskRun="taskRun" :execution="execution" />
 
-                <Outputs
-                    :taskRun="taskRun"
-                    :executionId="execution.id"
-                    :execution="execution"
-                />
+                    <Outputs
+                        :taskRun="taskRun"
+                        :executionId="execution.id"
+                        :execution="execution"
+                    />
 
-                <Restart
-                    component="KsDropdownItem"
-                    :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
-                    isReplay
-                    tooltipPosition="left"
-                    :execution="execution"
-                    :taskRun="taskRun"
-                    :attemptIndex="attemptIndex"
-                    @follow="emit('follow', $event)"
-                />
+                    <Restart
+                        component="KsDropdownItem"
+                        :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
+                        isReplay
+                        tooltipPosition="left"
+                        :execution="execution"
+                        :taskRun="taskRun"
+                        :attemptIndex="attemptIndex"
+                        @follow="emit('follow', $event)"
+                    />
 
-                <ChangeStatus
-                    component="KsDropdownItem"
-                    :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
-                    :execution="execution"
-                    :taskRun="taskRun"
-                    :attemptIndex="attemptIndex"
-                    @follow="emit('follow', $event)"
-                />
-                <TaskEdit
-                    v-if="canReadFlow"
-                    :readOnly="true"
-                    component="KsDropdownItem"
-                    :taskId="taskRun.taskId"
-                    section="tasks"
-                    :flowId="execution.flowId"
-                    :namespace="execution.namespace"
-                    :revision="execution.flowRevision"
-                    :flowSource="flow?.source"
-                />
-                <KsDropdownItem
-                    :icon="Download"
-                    @click="downloadContent(taskRun.id)"
-                >
-                    {{ $t("download logs") }}
-                </KsDropdownItem>
-                <KsDropdownItem
-                    :icon="Copy"
-                    @click="copyContent(taskRun.id)"
-                >
-                    {{ $t("copy logs") }}
-                </KsDropdownItem>
-                <KsDropdownItem
-                    :icon="Delete"
-                    @click="deleteLogs(taskRun.id)"
-                >
-                    {{ $t("delete logs") }}
-                </KsDropdownItem>
-                <WorkerInfo
-                    component="KsDropdownItem"
-                    v-if="hasWorkerId !== null"
-                    :taskRun="taskRun"
-                    @follow="emit('follow', $event)"
-                />
+                    <ChangeStatus
+                        component="KsDropdownItem"
+                        :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
+                        :execution="execution"
+                        :taskRun="taskRun"
+                        :attemptIndex="attemptIndex"
+                        @follow="emit('follow', $event)"
+                    />
+
+                    <TaskEdit
+                        v-if="canReadFlow"
+                        :readOnly="true"
+                        component="KsDropdownItem"
+                        :taskId="taskRun.taskId"
+                        section="tasks"
+                        :flowId="execution.flowId"
+                        :namespace="execution.namespace"
+                        :revision="execution.flowRevision"
+                        :flowSource="flow?.source"
+                    />
+                    <KsDropdownItem
+                        :icon="Download"
+                        @click="downloadContent(taskRun.id)"
+                    >
+                        {{ $t("download logs") }}
+                    </KsDropdownItem>
+                    <KsDropdownItem
+                        :icon="Copy"
+                        @click="copyContent(taskRun.id)"
+                    >
+                        {{ $t("copy logs") }}
+                    </KsDropdownItem>
+                    <KsDropdownItem
+                        :icon="Delete"
+                        @click="deleteLogs(taskRun.id)"
+                    >
+                        {{ $t("delete logs") }}
+                    </KsDropdownItem>
+                    <WorkerInfo
+                        component="KsDropdownItem"
+                        v-if="hasWorkerId !== null"
+                        :taskRun="taskRun"
+                        @follow="emit('follow', $event)"
+                    />
+                </template>
                 <NodeMenuItem
                     v-for="action in nodeActions"
                     :key="action.key"
@@ -123,9 +126,9 @@
     import AiIcon from "../ai/AiIcon.vue"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
 
-
     const props = withDefaults(defineProps<{
         taskRun: any
+        taskRuns?: any[]
         execution: any
         flow?: any
         attemptIndex?: number

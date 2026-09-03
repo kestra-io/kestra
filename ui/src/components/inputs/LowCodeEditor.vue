@@ -61,9 +61,13 @@
                     v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
                     class="node-action-button"
                     :taskRun="taskProps.taskRun"
+                    :taskRuns="taskProps.taskRuns"
                     :execution="taskProps.execution"
                     :flow="flowStore.flow"
-                    :nodeActions="taskProps.actions.filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))"
+                    :nodeActions="taskProps.actions
+                        .filter(a => taskProps.taskRuns?.length > 1 ? !['edit'].includes(a.key) : !EXCLUDED_NODE_ACTIONS.includes(a.key))
+                        .map((a, i) => i === 0 ? {...a, divided: true} : a)
+                    "
                     @follow="$emit('follow', $event)"
                 />
                 <NodeMenu v-else :actions="taskProps.actions" />
@@ -252,9 +256,6 @@
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
-
-    const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
-
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import {useTaskPicker} from "../no-code/blocks/useTaskPicker"
@@ -271,6 +272,8 @@
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
+
+    const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
 
     const router = useRouter()
     const route = useRoute()

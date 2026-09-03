@@ -146,6 +146,7 @@ public class Extension extends AbstractExtension {
         Map<String, Function> functions = new HashMap<>();
 
         functions.put(NowFunction.NAME, new NowFunction());
+        functions.put(BoundedRangeFunction.NAME, new BoundedRangeFunction());
         functions.put(FromJsonFunction.NAME, new FromJsonFunction());
         functions.put(EnvFunction.NAME, new EnvFunction());
         functions.put(SecretFunction.NAME, secretFunction);

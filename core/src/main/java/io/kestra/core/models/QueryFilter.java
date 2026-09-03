@@ -110,7 +110,12 @@ public record QueryFilter(
         IS_NULL,
         IS_NOT_NULL,
         REGEX,
-        PREFIX
+        PREFIX;
+
+        @JsonCreator
+        public static Op fromString(String value) {
+            return Enums.getForNameIgnoreCase(value, Op.class);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -921,14 +926,16 @@ public record QueryFilter(
                 )
             );
         }
-        if (
-            filter.operation() == Op.REGEX
-                && filter.value() instanceof String pattern
-                && !RegexUtils.isSafeUserRegex(pattern)
-        ) {
-            errors.add(
-                "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
-            );
+        if (filter.operation() == Op.REGEX && filter.value() instanceof String pattern) {
+            if (!RegexUtils.isSafeUserRegex(pattern)) {
+                errors.add(
+                    "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
+                );
+            } else {
+                RegexUtils.syntaxError(pattern).ifPresent(error -> errors.add(
+                    "REGEX pattern '%s' for field %s is not a valid regular expression: %s".formatted(pattern, filter.field().name(), error)
+                ));
+            }
         }
     }
 

@@ -8,7 +8,7 @@
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" />
+                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" />
             </div>
             <div class="node-content">
                 <slot name="badge" />
@@ -63,6 +63,9 @@
         state?: string;
         data: any;
         icons: any;
+        // Resolves an icon the `icons` index doesn't carry; without it a node whose plugin isn't
+        // in the index has no way to ever get an icon (kestra-io/kestra#18129).
+        loadIcon?: (cls: string) => Promise<any>;
         class?: string | string[] | Record<string, boolean>;
     }>()
 
@@ -104,7 +107,10 @@
         return [
             {
                 "unused-path": props.data.unused,
-                disabled: node.value?.disabled || props.data.parent?.taskNode?.task?.disabled,
+                disabled: node.value?.disabled
+                    || props.data.node?.disabled
+                    || props.data.parent?.taskNode?.task?.disabled
+                    || props.data.parent?.taskNode?.disabled,
             },
             props.class,
         ]

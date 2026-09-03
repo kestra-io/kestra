@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Manifest;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -14,12 +15,16 @@ import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -374,6 +379,19 @@ class PluginControllerTest {
     }
 
     @Test
+    void catalogMergedSchemaRevalidatesViaEtagLikeTheLocalOnlySchema() {
+        HttpResponse<Map> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
+        HttpResponse<Map> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
+
+        // Both variants revalidate on every use via ETag (no-cache, see #12102); the merged tag also
+        // covers the bundle fingerprint so it changes when a different bundle is loaded.
+        assertThat(local.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("Cache-Control")).isEqualTo("no-cache");
+        assertThat(merged.header("ETag")).isNotNull();
+        assertThat(merged.header("ETag")).isNotEqualTo(local.header("ETag"));
+    }
+
+    @Test
     void inputs() {
         List<InputType> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/inputs"),
@@ -489,5 +507,54 @@ class PluginControllerTest {
         assertThat(result.getResults())
             .map(ApiTriggerPlugin::name)
             .contains("Webhook");
+    }
+
+    @Test
+    void triggerPluginTitleDisambiguatesPluginsThatShareAPackageSegment() {
+        // Regression test for the "Add Trigger" picker showing colliding, wrongly-cased labels for
+        // unrelated plugins whose package happens to share a segment (e.g. io.kestra.plugin.mongodb
+        // vs io.kestra.plugin.debezium.mongodb, both conventionally named `Trigger`). The picker label
+        // must come from each plugin's own declared title, not from the trigger class' package name -
+        // this only exercises the resolution, using two real trigger classes as arbitrary stand-ins.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin mongodb = pluginWithTitle("MongoDB");
+        RegisteredPlugin debeziumMongodb = pluginWithTitle("Debezium MongoDB");
+
+        ApiTriggerPlugin mongodbTrigger = controller.toApiTriggerPlugin(mongodb, Schedule.class);
+        ApiTriggerPlugin debeziumMongodbTrigger = controller.toApiTriggerPlugin(debeziumMongodb, Webhook.class);
+
+        assertThat(mongodbTrigger.pluginTitle()).isEqualTo("MongoDB");
+        assertThat(debeziumMongodbTrigger.pluginTitle()).isEqualTo("Debezium MongoDB");
+        assertThat(mongodbTrigger.pluginTitle()).isNotEqualTo(debeziumMongodbTrigger.pluginTitle());
+        assertThat(mongodbTrigger.pluginGroupTitle()).isEqualTo("MongoDB");
+    }
+
+    @Test
+    void shouldReturnASingleCatalogEntryPerTriggerTypeWhenAPluginIsRegisteredInSeveralVersions() {
+        // Regression test for https://github.com/kestra-io/kestra/issues/18419: a plugin installed
+        // in several versions registers one RegisteredPlugin per version, and the duplicated trigger
+        // types corrupted the "Add Trigger" grid, which keys its cards by type.
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin plugin = pluginWithTriggers(Schedule.class, Webhook.class);
+        RegisteredPlugin samePluginOtherVersion = pluginWithTriggers(Schedule.class, Webhook.class);
+
+        List<ApiTriggerPlugin> catalog = controller.toTriggerPluginCatalog(List.of(plugin, samePluginOtherVersion));
+
+        assertThat(catalog).map(ApiTriggerPlugin::type).containsExactlyInAnyOrder(Schedule.class.getName(), Webhook.class.getName());
+    }
+
+    private static RegisteredPlugin pluginWithTitle(String title) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", title);
+        return RegisteredPlugin.builder().manifest(manifest).build();
+    }
+
+    @SafeVarargs
+    private static RegisteredPlugin pluginWithTriggers(Class<? extends AbstractTrigger>... triggers) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", "Core");
+        return RegisteredPlugin.builder().manifest(manifest).triggers(List.of(triggers)).build();
     }
 }

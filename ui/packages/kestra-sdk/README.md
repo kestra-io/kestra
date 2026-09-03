@@ -10,8 +10,20 @@ living **in the same repo, on the same commit** as the backend it describes.
   decouples the fast (npm) build from the Gradle/backend build — `npm run dev`, `build`, and
   `check:types` never need a Java toolchain.
 
-The package keeps the name `@kestra-io/kestra-sdk` because it is the module-federation-shared client:
-the app and plugins must resolve one client instance (shared auth + routing).
+The package keeps the name `@kestra-io/kestra-sdk` because that is the specifier plugins import to
+reach the app's client (auth + routing).
+
+## Entry points
+
+| Import | Contents |
+| --- | --- |
+| `@kestra-io/kestra-sdk` | `useClient` / `configureClient` / `setMockClient`, and every generated **type** |
+| `@kestra-io/kestra-sdk/<tag>` | the operations of one tag, e.g. `/flows`, `/executions` |
+| `@kestra-io/kestra-sdk/all` | every operation at once — named exports, plus the namespace as `default` |
+
+The root entry exports **no operations**: re-exporting the generated operations there put all of them
+in the app's initial graph. Reach an operation through its tag, or through `/all` if one import is
+preferable to several.
 
 ## Regenerating the SDK
 

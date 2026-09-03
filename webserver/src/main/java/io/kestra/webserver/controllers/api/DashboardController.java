@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import io.kestra.core.exceptions.AlreadyExistsException;
 import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -37,6 +38,7 @@ import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.validations.TenantId;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
 import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
 import io.kestra.webserver.models.ChartFiltersOverrides;
@@ -158,17 +160,7 @@ public class DashboardController {
 
         Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), dashboardParsed.getId());
         if (existingDashboard.isPresent()) {
-            throw new ConstraintViolationException(
-                Collections.singleton(
-                    ManualConstraintViolation.of(
-                        "Dashboard id already exists",
-                        dashboardParsed,
-                        Dashboard.class,
-                        "dashboard.id",
-                        dashboardParsed.getId()
-                    )
-                )
-            );
+            throw AlreadyExistsException.of("Dashboard", dashboardParsed.getId());
         }
 
         return HttpResponse.ok(new DashboardResponse(this.save(null, dashboardParsed, dashboard)));
@@ -337,7 +329,7 @@ public class DashboardController {
             return null;
         }
 
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters != null ? filters : List.of());
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
         ZonedDateTime endDate = timeLineSearch.getEndDate();
@@ -553,7 +545,7 @@ public class DashboardController {
 
     @Getter
     public static class DashboardResponse {
-        @jakarta.validation.constraints.Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+        @TenantId
         private final String tenantId;
         @NotNull
         @NotBlank

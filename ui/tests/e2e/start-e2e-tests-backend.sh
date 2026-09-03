@@ -2,7 +2,7 @@
 set -e
 
 # Default values
-KESTRA_DOCKER_IMAGE_TO_TEST="kestra/kestra:develop-no-plugins"
+KESTRA_DOCKER_IMAGE_TO_TEST="kestra/kestra:develop-slim"
 E2E_TEST_CONFIG_DIR="$(dirname "${BASH_SOURCE[0]}")"
 KESTRA_BASE_URL="http://127.0.0.1:9011/ui/"
 

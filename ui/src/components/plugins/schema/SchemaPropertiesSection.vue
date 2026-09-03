@@ -1,7 +1,6 @@
 <template>
     <SchemaSection
         :class="['section-collapsible', {nested, compact}]"
-        :style="labelColor ? {'--property-label-color': labelColor} : undefined"
         :clickableText="sectionName"
         :href="href"
         :arrow="!compact"
@@ -86,7 +85,7 @@
                             >
                                 <slot
                                     name="markdown"
-                                    :content="property.title || property.description || ''"
+                                    :content="propertyDoc(property)"
                                 />
                             </div>
                         </div>
@@ -184,6 +183,7 @@
         extractTypeInfo,
         isDeprecated,
         isDynamic,
+        sanitizeForMarkdown,
         type JSONProperty,
         type JSONSchema,
         type SchemaExample,
@@ -201,7 +201,6 @@
         description?: string;
         examples?: SchemaExample[];
         nested?: boolean;
-        labelColor?: string;
         showFilter?: boolean;
         compact?: boolean;
     }>(), {
@@ -215,7 +214,6 @@
         description: undefined,
         examples: undefined,
         nested: false,
-        labelColor: undefined,
         showFilter: false,
         compact: false,
     })
@@ -235,6 +233,20 @@
     watch(autoExpanded, (expanded) => {
         if (expanded) emit("expand")
     })
+
+    // The title says what a property is, the description carries the caveat, so the
+    // compact view renders both - matching PropertyDetail. Joined into a single slot
+    // call rather than one per field: every consumer wraps the `markdown` slot in its
+    // own element (SchemaToHtml adds `div.markdown` around each render), so two calls
+    // put the paragraphs in separate containers where neither `p + p` nor an
+    // `.ks-markdown + .ks-markdown` sibling rule can reach them, and the two lines
+    // collapse together. One render keeps them siblings, so `p + p` spaces them.
+    function propertyDoc(property: JSONProperty): string {
+        return [property.title, property.description]
+            .filter((text): text is string => Boolean(text))
+            .map(sanitizeForMarkdown)
+            .join("\n\n")
+    }
 
     function isPropertyVisible(key: string, property: JSONProperty): boolean {
         if (!props.showFilter) return true
@@ -386,7 +398,7 @@
         }
 
         :deep(> .collapse-button > .collapse-button__label) {
-            color: var(--property-label-color, inherit);
+            color: var(--ks-text-primary);
         }
 
         :deep(> .collapse-button) {
@@ -505,14 +517,14 @@
 
     .compact-prop-desc {
         margin-top: var(--ks-spacing-2);
-        font-size: var(--ks-font-size-base);
-        line-height: 1.65;
+        font-size: var(--ks-font-size-sm);
+        line-height: 1.5;
         color: var(--ks-text-secondary);
 
         :deep(p) {
             margin: 0;
-            font-size: var(--ks-font-size-base);
-            line-height: 1.65;
+            font-size: var(--ks-font-size-sm);
+            line-height: 1.5;
             color: var(--ks-text-secondary);
         }
 

@@ -128,7 +128,7 @@
     import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
-    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
+    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {executeTask} from "../../utils/submitTask"
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
@@ -150,7 +150,7 @@
         return style.toLowerCase() as AlertType
     }
 
-    interface ReplaySubmitOptions {
+    export interface ReplaySubmitOptions {
         formRef: FormInstance
         id: string
         namespace: string
@@ -257,6 +257,10 @@
         hasForbiddenUserSystemLabels(executionLabels.value),
     )
 
+    const haveInvalidLabelKeys = computed(() =>
+        hasInvalidLabelKeys(executionLabels.value),
+    )
+
     const validationMessages = computed(() => {
         const messages: string[] = []
         if (haveBadLabels.value) {
@@ -265,11 +269,14 @@
         if (haveForbiddenSystemLabels.value) {
             messages.push(t("forbidden system labels"))
         }
+        if (haveInvalidLabelKeys.value) {
+            messages.push(t("invalid label key"))
+        }
         return messages
     })
 
     const flowCanBeExecuted = computed(() =>
-        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value),
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value),
     )
 
     const isDirty = computed(() =>

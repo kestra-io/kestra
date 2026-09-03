@@ -34,6 +34,13 @@ class UnsetVariablesTest {
         assertThat(((Map<String, Object>) taskOutputService.getOutputs(execution.getTaskRunList().get(2)).get("values"))).containsEntry("message", "default");
     }
 
+    @ExecuteFlow("flows/valids/unset-variables-missing.yaml")
+    @Test
+    void shouldFailWhenMissingVariable(Execution execution) throws io.kestra.core.exceptions.InternalException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+    }
+
     @Test
     void shouldRenderVariablesForEachExecution() throws Exception {
         // the executor calls update() on the task instance of its cached flow, so the same task

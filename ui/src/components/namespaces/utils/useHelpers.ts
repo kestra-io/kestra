@@ -20,7 +20,6 @@ export interface Tab {
     component: Component;
     props?: Record<string, any>;
     count?: number;
-    blueprintDetail?: boolean;
     fullContainer?: boolean;
 }
 

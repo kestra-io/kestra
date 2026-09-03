@@ -1,6 +1,17 @@
 <template>
     <div class="json-tree">
         <div
+            v-if="rootLiteral !== undefined"
+            class="json-tree__row"
+            :style="{'--depth': 0}"
+            @click="$emit('select', basePath ?? '', value)"
+        >
+            <span class="json-tree__gutter">1</span>
+            <span class="json-tree__content">
+                <span class="json-tree__value" :class="`json-tree__value--${valueType(value)}`">{{ rootLiteral }}</span>
+            </span>
+        </div>
+        <div
             v-for="(row, index) in rows"
             :key="row.path"
             class="json-tree__row"
@@ -68,7 +79,7 @@
     }
 
     function isValidVariable(key: string): boolean {
-        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)
+        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
     }
 
     function formatStep(key: string): string {
@@ -91,6 +102,9 @@
     function leafDisplay(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return `"${value}"`
+        // `String({})` is `[object Object]` and `String([])` is empty.
+        if (Array.isArray(value)) return "[]"
+        if (typeof value === "object") return "{}"
         return String(value)
     }
 
@@ -168,6 +182,13 @@
         buildRows(value, props.basePath ?? "", 0, result)
         return result
     })
+
+    /** An empty root yields no rows, so the literal is rendered instead of nothing. */
+    const rootLiteral = computed<string | undefined>(() =>
+        !rows.value.length && props.value !== null && typeof props.value === "object"
+            ? leafDisplay(props.value)
+            : undefined,
+    )
 </script>
 
 <style scoped lang="scss">

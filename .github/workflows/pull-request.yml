@@ -240,19 +240,65 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # EXPERIMENT (do not merge): inlined from
+  # kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main.
+  # Phase 2: the usual parallel setup, still with `--rerun-tasks` so the workload is
+  # identical to the serial phase-1 run (all tests execute, nothing from cache).
+  # - `needs`/`if` on file-changes are intentionally dropped: the backend filter
+  #   excludes `.github/**`, so this workflow-only PR would otherwise skip the job.
   backend:
     name: Backend - Tests
-    needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: write
+      checks: write
+      actions: read
+      pull-requests: write
+    env:
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
-    with:
-      java-version: 25
+    steps:
+      - uses: actions/checkout@v5
+        name: Checkout - Current ref
+        with:
+          fetch-depth: 0
+
+      - uses: kestra-io/actions/composite/setup-build@main
+        name: Setup - Build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+          java-version: 25
+
+      - name: Setup - Start docker compose
+        shell: bash
+        run: docker compose -f docker-compose-ci.yml up -d
+
+      - name: Gradle - check (parallel, rerun all tasks)
+        shell: bash
+        run: |
+          ./gradlew check --rerun-tasks --parallel
+
+      - name: comment PR with test report
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --ci $(pwd)
+
+      - name: generate test report in logs and fail if any failed tests
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --fail-on-error $(pwd)
+
+      - name: Report - Java
+        uses: kestra-io/actions/composite/report-java@main
+        if: ${{ !cancelled() }}
+        with:
+          secrets: ${{ toJSON(secrets) }}
 
   # Built once here, consumed by both the E2E tests and the PR docker image
   # publish (previously each of them rebuilt the whole product themselves).

@@ -299,7 +299,7 @@ public class DashboardController {
         assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        return export(fetchedData.getResults(), "%s_%s_export".formatted(id, chartId), format);
+        return export(fetchChartDataQuery.chart(), fetchedData.getResults(), "%s_%s_export".formatted(id, chartId), format);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -312,7 +312,7 @@ public class DashboardController {
         assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        return export(fetchedData.getResults(), "%s_%s_export".formatted("default-dashboard", fetchChartDataQuery.chart().getId()), format);
+        return export(fetchChartDataQuery.chart(), fetchedData.getResults(), "%s_%s_export".formatted("default-dashboard", fetchChartDataQuery.chart().getId()), format);
     }
 
     private void assertExportable(Chart<?> chart) {
@@ -321,14 +321,18 @@ public class DashboardController {
         }
     }
 
-    private HttpResponse<StreamedFile> export(List<Map<String, Object>> rows, String filename, ExportFormat format) throws IOException {
+    private HttpResponse<StreamedFile> export(Chart<?> chart, List<Map<String, Object>> rows, String filename, ExportFormat format) throws IOException {
         var byteArrayOutputStream = new ByteArrayOutputStream();
 
         if (format == ExportFormat.ION) {
             FileSerde.writeAll(byteArrayOutputStream, Flux.fromIterable(rows)).block();
         } else {
             var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
-            CSVUtils.toCSV(outputStreamWriter, rows);
+            if (rows.isEmpty() && chart instanceof DataChart<?, ?> dataChart) {
+                CSVUtils.toCSV(outputStreamWriter, rows, List.copyOf(dataChart.getData().getColumns().keySet()));
+            } else {
+                CSVUtils.toCSV(outputStreamWriter, rows);
+            }
         }
 
         byte[] content = byteArrayOutputStream.toByteArray();

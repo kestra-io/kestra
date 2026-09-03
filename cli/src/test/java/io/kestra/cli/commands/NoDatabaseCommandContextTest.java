@@ -83,6 +83,16 @@ class NoDatabaseCommandContextTest {
     }
 
     @Test
+    void shouldKeepTheDatasourceWhenTheArgumentsDoNotParse() {
+        // A parse failure reports the root as the leaf, and the root owns no repository — but
+        // picocli goes on to instantiate the command the arguments named, which may. Enterprise
+        // Edition's `flow delete` resolves a tenant through one.
+        try (ApplicationContext ctx = context("flow", "delete")) {
+            assertThat(ctx.containsBean(DataSource.class)).isTrue();
+        }
+    }
+
+    @Test
     void shouldStillBuildADatasourceForACommandThatOwnsARepository(@TempDir Path tempDir) throws Exception {
         // Empty, so the database comes from the test configuration rather than from a developer's
         // own ~/.kestra/config.yml, which this one has to be able to reach.

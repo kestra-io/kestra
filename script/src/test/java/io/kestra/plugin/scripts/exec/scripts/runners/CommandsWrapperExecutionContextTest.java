@@ -67,8 +67,9 @@ class CommandsWrapperExecutionContextTest {
         );
 
         assertThat(context).containsKeys("flow", "execution", "task", "taskrun");
-        // both are already handed to the script as environment variables
-        assertThat(context).doesNotContainKeys("envs", "globals");
+        // envs and globals are already handed to the script as environment variables,
+        // addSecretConsumer is internal plumbing that has no business in a metadata file
+        assertThat(context).doesNotContainKeys("envs", "globals", "addSecretConsumer");
     }
 
     @Test

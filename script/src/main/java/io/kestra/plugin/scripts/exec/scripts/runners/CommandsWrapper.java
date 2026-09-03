@@ -17,6 +17,7 @@ import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunVariables;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
@@ -36,7 +37,14 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class CommandsWrapper implements TaskCommands {
     static final String EXECUTION_CONTEXT_FILE_NAME = ".kestra-execution-context.json";
 
-    private static final Set<String> EXECUTION_CONTEXT_EXCLUDED_VARIABLES = Set.of("envs", "globals");
+    private static final Set<String> EXECUTION_CONTEXT_EXCLUDED_VARIABLES = Set.of(
+        // already handed to the script as environment variables
+        "envs",
+        "globals",
+        // internal plumbing, not execution metadata
+        RunVariables.SECRET_CONSUMER_VARIABLE_NAME,
+        RunVariables.FIXTURE_FILES_KEY
+    );
 
     private RunContext runContext;
 

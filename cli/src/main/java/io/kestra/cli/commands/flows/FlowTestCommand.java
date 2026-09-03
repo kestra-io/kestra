@@ -81,10 +81,11 @@ public class FlowTestCommand extends AbstractApiCommand {
             .put("kestra.server-type", ServerType.STANDALONE)
             // The flow is read from a file rather than from the instance, so the run gets a database
             // and a storage directory of its own. EphemeralDatabase.URL_PROPERTY repoints every
-            // datasource, including the log store's own.
+            // datasource; the log store follows the repository type, and its own pool is skipped on
+            // the same marker. Setting kestra.logs.type here would instead trip the licence gate on
+            // an external log store.
             .put("kestra.repository.type", "h2")
             .put("kestra.queue.type", "h2")
-            .put("kestra.logs.type", "h2")
             .put(EphemeralDatabase.URL_PROPERTY, EPHEMERAL_DATABASE_URL)
             .put("kestra.storage.type", "local")
             .put("kestra.storage.local.base-path", TEMP_STORAGE.toAbsolutePath().toString())

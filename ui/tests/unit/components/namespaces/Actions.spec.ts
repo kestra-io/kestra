@@ -10,10 +10,18 @@ const route = {
     query: {} as Record<string, string>,
 }
 
+const {replace} = vi.hoisted(() => ({replace: vi.fn()}))
+
 vi.mock("vue-router", () => ({
-    useRouter: () => ({replace: vi.fn()}),
+    useRouter: () => ({replace}),
     useRoute: () => route,
     RouterLink: RouterLinkStub,
+}))
+
+vi.mock("../../../../src/stores/dashboard", () => ({
+    useDashboardStore: () => ({
+        getUserDashboardStorageKey: (current: typeof route) => `userDashboard/${current.params.tenant}/namespaces/update`,
+    }),
 }))
 
 vi.mock("override/stores/namespaces", () => ({
@@ -25,7 +33,7 @@ vi.mock("override/stores/misc", () => ({
 }))
 
 vi.mock("override/components/dashboard/Selector.vue", () => ({
-    default: {name: "Dashboards", template: "<div />"},
+    default: {name: "Dashboards", emits: ["dashboard"], template: "<div />"},
 }))
 
 import Actions from "../../../../src/override/components/namespaces/Actions.vue"
@@ -46,7 +54,12 @@ const createFlowTarget = (wrapper: ReturnType<typeof mountActions>) =>
     wrapper.findComponent({name: "Action"}).props("to") as {name: string; params?: Record<string, string>; query?: Record<string, string>}
 
 beforeEach(() => {
+    route.name = "namespaces/update/flows"
+    route.meta = {tab: "flows"}
     route.params = {tenant: "acme", id: "company.team"}
+    route.query = {}
+    replace.mockClear()
+    localStorage.clear()
 })
 
 afterAll(() => {
@@ -74,5 +87,20 @@ describe("namespace Actions", () => {
         // Then
         expect(target.name).toBe("namespaces/update/blueprints")
         expect(target.params).toEqual({tenant: "acme", id: "kestra.system"})
+    })
+
+    test("remembers the dashboard picked on the overview and keeps the page's filters", async () => {
+        route.name = "namespaces/update/overview"
+        route.meta = {tab: "overview"}
+        route.query = {"filters[timeRange][EQUALS]": "PT24H"}
+
+        const wrapper = mountActions()
+        await wrapper.findComponent({name: "Dashboards"}).vm.$emit("dashboard", "team_overview")
+
+        expect(localStorage.getItem("userDashboard/acme/namespaces/update")).toBe("team_overview")
+        expect(replace).toHaveBeenCalledWith({
+            params: {tenant: "acme", id: "company.team", dashboard: "team_overview"},
+            query: {"filters[timeRange][EQUALS]": "PT24H"},
+        })
     })
 })

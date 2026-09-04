@@ -249,9 +249,16 @@
         <div v-else-if="showEmptyResultsState" class="source-search__states">
             <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
                 <template #description>
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <h3 class="source-search__no-results-title" v-html="noResultsMessage" />
-                    <p v-if="hiddenTypeHint" class="source-search__no-results-hint">{{ hiddenTypeHint }}</p>
+                    <h3>{{ t('source_search.no_results_title', {query}) }}</h3>
+                    <p>{{ t('source_search.no_results_description') }}</p>
+
+                    <p v-if="suggestedQuery">
+                        {{ t('source_search.did_you_mean', {suggestion: suggestedQuery}) }}
+                        <button type="button" @click="query = suggestedQuery">
+                            {{ suggestedQuery }}
+                        </button>
+                        ?
+                    </p>
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
@@ -347,7 +354,7 @@
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
-    import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
+    import {computeSelectionSummary, distinctSkipReasons, getSeparatorVariant, type ReplaceContext, type SourceSearchResult} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
 
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
@@ -486,6 +493,9 @@
         })
     }
 
+    const results = ref<SourceSearchResult[]>([])
+    const suggestedQuery = ref<string | null>(null)
+
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
@@ -523,15 +533,6 @@
         .map((type) => ({type, count: crossResourceSearchStore.countFor(type)}))
         .filter((entry) => entry.count > 0))
 
-    const hiddenTypeHint = computed(() => hiddenTypeCounts.value
-        .map((entry) => t("source_search.no_results_hidden_type", {count: entry.count, type: typeLabel(entry.type)}))
-        .join(" "))
-
-    const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
-    const noResultsMessage = computed(() => t("source_search.no_results_in_types", {
-        query: `<code>${query.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`,
-        types: selectedTypesLabel.value,
-    }))
 
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
@@ -566,7 +567,6 @@
     function onSelect(value: CrossSearchSelection) {
         selection.value = value
     }
-
     function goToMatch(delta: number) {
         const list = visibleFlatSelections.value
         if (list.length === 0) return
@@ -718,7 +718,7 @@
         }
 
         previewResponse.value = null
-        searchPending.value = true
+        suggestedQuery.value = null
 
         try {
             await crossResourceSearchStore.search({
@@ -727,6 +727,24 @@
                 namespace: namespaceFilter.value,
                 ...searchFilters.value,
             })
+            results.value = crossResourceSearchStore.flows.results
+            if (results.value.length === 0) {
+                const alternativeQuery = getSeparatorVariant(query.value)
+
+                if(alternativeQuery){
+                    const alternativeResponse = await FlowsAPI.searchFlowsBySourceCode({...searchFilters.value,
+                        page: 1,
+                        size: 200,
+                        q: alternativeQuery,
+                        namespace: namespaceFilter.value,
+                    })
+                    if(alternativeResponse.results.length > 0){
+                        suggestedQuery.value = alternativeQuery
+                    }
+                }
+            }
+        } catch (e: any) {
+            results.value = []
         } finally {
             searchPending.value = false
         }

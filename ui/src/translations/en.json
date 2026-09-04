@@ -2424,6 +2424,7 @@
       "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
       "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
+      "did_you_mean": "Did you mean {suggestion}?",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",
       "open_in_kv": "Open in KV store",

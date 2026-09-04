@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: このトリガータイプにはプラグインがインストールされていません。通知は送信されません。"
       },
       "trigger": {
-        "case_sub": "EEのみの機能",
-        "case_title": "ケースステータス",
         "execution_sub": "flowの状態変化に反応します",
         "execution_title": "実行状態",
         "other_sub": "利用可能なトリガープラグイン",
@@ -138,6 +136,7 @@
     "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
     "update": "更新",
     "confirmation": "確認",
+    "toast confirm": "よろしいですか？",
     "common": {
       "back": "戻る",
       "openInNewTab": "新しいタブで開く"
@@ -222,7 +221,7 @@
     "next_execution": "次回の実行",
     "datepicker": {
       "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
-      "leave empty for infinite": "無期限にする場合は空欄にするか、ISO 8601期間（例：'P1DT1H1M1S'）を入力してください",
+      "leave empty for infinite": "無期限にする場合は空欄のままにするか、ISO 8601期間（例：'P1DT1H1M1S'）を入力してください",
       "duration example": "例：'P1DT1H1M1S'",
       "error": "期間の形式が無効です。ISO 8601期間形式（例：P1DT1H1M1S）である必要があります。",
       "custom": "カスタム",
@@ -344,9 +343,31 @@
     "select a state": "状態を選択",
     "are you sure change state": "状態を変更してもよろしいですか？",
     "yes": "はい",
+    "no": "いいえ",
     "change state done": "タスクの状態が更新されました",
     "change state confirm": "実行 <code>{id}</code> の <code>{task}</code> タスクのタスク実行状態を変更してもよろしいですか？<br/>これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
     "change state current state": "現在のステータスは:",
+    "change state hint": {
+      "WARNING": [
+        "このflowはWARNINGとしてマークされます。",
+        "次のtasksが実行されます。",
+        "エラーtasksが実行されます。"
+      ],
+      "FAILED": [
+        "FlowはFAILEDとしてマークされます。",
+        "他のTaskは実行されません。",
+        "エラーTaskが実行されます。"
+      ],
+      "SUCCESS": [
+        "このflowはこのtaskが成功したため再起動します。",
+        "すべてのブロックされたtaskが実行されます。",
+        "すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。"
+      ],
+      "RUNNING": [
+        "flowは再起動し、すべての次のtaskが実行されます。",
+        "すべてのブロックされたtaskが実行されます。"
+      ]
+    },
     "replay execution title": "実行の再実行",
     "restart execution title": "実行の再起動",
     "replay execution description": "これにより、選択された実行に基づいて新しい実行が作成されます。",
@@ -414,7 +435,8 @@
       "zoom-reset": "ズームリセット",
       "zoom-fit": "フィット",
       "invalid": "グラフエラー",
-      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。"
+      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
+      "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。"
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
-      "warning": "実行中のカウンターを変更すると、並行性が損なわれ、実行が許可された制限を超える可能性があります。"
+      "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
     },
     "flowConcurrency": {
       "loadError": "この flow の同時実行制限を読み込めませんでした。",
@@ -515,6 +537,10 @@
       }
     },
     "use": "使用",
+    "plugin_card": {
+      "tasks": "タスク | タスク",
+      "blueprints": "Blueprint | Blueprint"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "プラグインのインストールに失敗しました",
@@ -791,6 +817,7 @@
     "execution labels": "実行ラベル",
     "show more labels": "他 {count} 件のラベルを表示",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
+    "invalid label key": "無効なラベルkeyです。有効なkeyは小文字で始まり、小文字、数字、ハイフン (-)、アンダースコア (_)、ピリオド (.) のみを含む必要があります。",
     "feeds": {
       "heading": "すべてのKestraに関すること。",
       "subheading": "最新の更新情報、ガイド、ストーリー"
@@ -812,15 +839,15 @@
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？"
     },
     "product_tour": "プロダクトツアー",
-    "executions replayed": "<code>{executionCount}</code>件の実行が再実行されました",
+    "executions replayed": "<code>{executionCount}</code> の実行がリプレイされました",
     "executions state changed": "<code>{executionCount}</code> 回の実行の状態が変更されました",
-    "executions resumed": "<code>{executionCount}</code>件の実行が再開されました",
-    "executions paused": "<code>{executionCount}</code> 回の実行がPAUSEDされました",
-    "executions unqueue": "<code>{executionCount}</code> 回の実行がキューから外されました",
-    "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",
-    "executions restarted": "<code>{executionCount}</code>件の実行が再起動されました",
-    "executions killed": "<code>{executionCount}</code>件の実行がkillされました",
-    "executions deleted": "<code>{executionCount}</code>件の実行が削除されました",
+    "executions resumed": "<code>{executionCount}</code> 件の実行が再開されました",
+    "executions paused": "<code>{executionCount}</code> 件の実行が一時停止されました",
+    "executions unqueue": "<code>{executionCount}</code> の実行がキューから削除されました",
+    "executions force run": "<code>{executionCount}</code> 件の強制実行されたExecution",
+    "executions restarted": "<code>{executionCount}</code> 件の実行が再起動されました",
+    "executions killed": "<code>{executionCount}</code> 件の実行が強制終了されました",
+    "executions deleted": "<code>{executionCount}</code> 件の実行が削除されました",
     "invalid bulk replay": "実行を再実行できませんでした",
     "invalid bulk resume": "実行を再開できませんでした",
     "invalid bulk pause": "実行を一時停止できませんでした",
@@ -883,6 +910,7 @@
     "metric": "メトリック",
     "aggregation": "集計",
     "metric choice": "このflowには利用可能なメトリクスがありません",
+    "metric filter no match": "\"{term}\" に一致するメトリックはありません",
     "of": "の",
     "title": "タイトル",
     "api": "API",
@@ -916,7 +944,7 @@
     "join_slack": "Slackに参加",
     "kestra": "Kestra",
     "error detected": "エラーが検出されました。",
-    "warning detected": "警告が検出されました",
+    "warning detected": "警告が検出されました。",
     "informative notice": "注記",
     "open": "開く",
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
@@ -1651,6 +1679,7 @@
     "last error was": "最後のエラーは",
     "active": "アクティブ",
     "flows imported": "フローがインポートされました",
+    "flows not imported": "インポートされていないFlows",
     "custom value": "カスタム value",
     "chart": "チャート",
     "chart preview": "チャートプレビュー",
@@ -1696,7 +1725,8 @@
           "workerSelector": "ワーカーセレクター",
           "checks": "チェック",
           "updated": "更新済み",
-          "quotas": "クォータ"
+          "quotas": "クォータ",
+          "policyRefs": "ポリシー参照"
         }
       },
       "select": {
@@ -2088,8 +2118,8 @@
         },
         "unavailable": {
           "title": "AI Copilot は利用できません",
-          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼し、その後再試行してください。",
-          "retry": "再試行"
+          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼してください。",
+          "docs": "ドキュメントを見る"
         },
         "thinkingWords": [
           "オーケストレーション",
@@ -2572,6 +2602,7 @@
         "message": "保存する前にエラーを修正してください。",
         "title": "flowを保存できません"
       },
+      "schema_default_tooltip": "フィールドが設定されていない場合に使用されるデフォルト値",
       "search_task_placeholder": "タスクを検索または記述…",
       "shortcuts": {
         "add_after": "選択後にブロックを挿入",

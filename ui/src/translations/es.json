@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin no instalado para este tipo de trigger, no se enviará ninguna notificación."
       },
       "trigger": {
-        "case_sub": "Característica solo para EE",
-        "case_title": "Estado del caso",
         "execution_sub": "Reacciona a los cambios de estado del flow",
         "execution_title": "Estado de la ejecución",
         "other_sub": "Cualquier plugin de trigger disponible",
@@ -138,6 +136,7 @@
     "invalid duration": "Formato de duración no válido. Utilice ISO 8601 (p. ej., PT30M, P1D).",
     "update": "Actualizar",
     "confirmation": "Confirmación",
+    "toast confirm": "¿Estás seguro?",
     "common": {
       "back": "Atrás",
       "openInNewTab": "Abrir en nueva pestaña"
@@ -222,7 +221,7 @@
     "next_execution": "Próxima ejecución",
     "datepicker": {
       "invalid duration": "Formato de duración no válido. Utilice ISO 8601 (p. ej., PT30M, P1D).",
-      "leave empty for infinite": "Dejar vacío para una duración infinita o escribir una duración ISO 8601 (ej., 'P1DT1H1M1S')",
+      "leave empty for infinite": "Dejar vacío para una duración infinita o escribir una duración ISO 8601 (p. ej., 'P1DT1H1M1S')",
       "duration example": "Ejemplo: 'P1DT1H1M1S'",
       "error": "Formato de duración inválido, debe ser una duración ISO 8601 (ej., P1DT1H1M1S)",
       "custom": "Personalizado",
@@ -344,9 +343,31 @@
     "select a state": "Seleccionar un estado",
     "are you sure change state": "¿Está seguro de que desea cambiar el estado?",
     "yes": "Sí",
+    "no": "No",
     "change state done": "El estado del task ha sido actualizado",
     "change state confirm": "¿Estás seguro de que quieres cambiar el estado de ejecución de la task <code>{task}</code> en la ejecución <code>{id}</code>?<br/>Luego, reiniciará la ejecución desde la siguiente task y reiniciará la ejecución padre si existe.",
     "change state current state": "Estado actual es:",
+    "change state hint": {
+      "WARNING": [
+        "El flow se marcará como WARNING.",
+        "Las próximas tasks se ejecutarán.",
+        "Las tasks con error se ejecutarán."
+      ],
+      "FAILED": [
+        "El flow se marcará como FAILED.",
+        "No se ejecutará ninguna otra task.",
+        "Se ejecutarán las tasks de error."
+      ],
+      "SUCCESS": [
+        "El flow se reiniciará ya que esta task fue exitosa.",
+        "Todas las tasks bloqueadas serán ejecutadas.",
+        "El flow estará en un estado de SUCCESS si todas las ejecuciones de tasks son exitosas."
+      ],
+      "RUNNING": [
+        "El flow se reiniciará y ejecutará todas las siguientes tasks.",
+        "Todas las tasks bloqueadas serán ejecutadas."
+      ]
+    },
     "replay execution title": "Repetir ejecución",
     "restart execution title": "Reiniciar ejecución",
     "replay execution description": "Esto creará una nueva ejecución basada en la ejecución seleccionada.",
@@ -414,7 +435,8 @@
       "zoom-reset": "Restablecer zoom",
       "zoom-fit": "Ajustar",
       "invalid": "Error de gráfico",
-      "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores."
+      "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores.",
+      "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo."
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Mostrar condición de task",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Límites de Concurrencia",
-      "warning": "Cambiar el contador en ejecución puede corromper la concurrencia, por lo que las ejecuciones pueden exceder el límite permitido."
+      "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido."
     },
     "flowConcurrency": {
       "loadError": "No se pudo cargar el límite de concurrencia de este flow.",
@@ -515,6 +537,10 @@
       }
     },
     "use": "Usar",
+    "plugin_card": {
+      "tasks": "tarea | tareas",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Fallo en la instalación del plugin",
@@ -791,6 +817,7 @@
     "execution labels": "Etiquetas de ejecución",
     "show more labels": "Mostrar {count} etiquetas más",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",
+    "invalid label key": "Key de etiqueta no válida. Una key válida debe empezar con una letra minúscula y contener solo letras minúsculas, números, guiones (-), guiones bajos (_) o puntos (.)",
     "feeds": {
       "heading": "Todo sobre Kestra.",
       "subheading": "Las últimas actualizaciones, guías e historias"
@@ -807,20 +834,20 @@
     "bulk restart": "¿Estás seguro de que quieres reiniciar <code>{executionCount}</code> ejecución(es)?",
     "bulk kill": "¿Estás seguro de que quieres matar <code>{executionCount}</code> ejecución(es)?",
     "cancel": "Cancelar",
-    "errorLogs": "Registros de errores",
+    "errorLogs": "Logs de error",
     "welcome_page": {
       "guide": "¿Necesitas orientación para ejecutar tu primer flow?"
     },
     "product_tour": "Recorrido del Producto",
-    "executions replayed": "<code>{executionCount}</code> ejecución(es) reproducidas",
+    "executions replayed": "<code>{executionCount}</code> ejecución(es) reproducida(s)",
     "executions state changed": "El estado de <code>{executionCount}</code> ejecución(es) ha sido cambiado",
-    "executions resumed": "<code>{executionCount}</code> ejecución(es) reanudadas",
-    "executions paused": "<code>{executionCount}</code> ejecución(es) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> ejecución(es) en cola",
-    "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",
-    "executions restarted": "<code>{executionCount}</code> ejecución(es) reiniciadas",
-    "executions killed": "<code>{executionCount}</code> ejecución(es) matadas",
-    "executions deleted": "<code>{executionCount}</code> ejecución(es) eliminadas",
+    "executions resumed": "<code>{executionCount}</code> ejecución(es) reanudada(s)",
+    "executions paused": "<code>{executionCount}</code> ejecución(es) pausada(s)",
+    "executions unqueue": "<code>{executionCount}</code> ejecución(es) sin cola",
+    "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s)",
+    "executions restarted": "<code>{executionCount}</code> ejecución(es) reiniciada(s)",
+    "executions killed": "<code>{executionCount}</code> ejecución(es) eliminada(s)",
+    "executions deleted": "`{executionCount}` ejecución(es) eliminada(s)",
     "invalid bulk replay": "No se pudieron reproducir las ejecuciones",
     "invalid bulk resume": "No se pudieron reanudar las ejecuciones",
     "invalid bulk pause": "No se pudo pausar las ejecuciones",
@@ -883,6 +910,7 @@
     "metric": "Métrica",
     "aggregation": "Agregación",
     "metric choice": "No hay métricas disponibles para este flow",
+    "metric filter no match": "Ninguna métrica coincide con \"{term}\"",
     "of": "de",
     "title": "Título",
     "api": "API",
@@ -916,7 +944,7 @@
     "join_slack": "Unirse a Slack",
     "kestra": "Kestra",
     "error detected": "Se detectaron errores.",
-    "warning detected": "Advertencia(s) detectada(s)",
+    "warning detected": "Advertencia(s) detectada(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
     "dependency task": "Task {taskId} es una dependencia de otra task",
@@ -1651,6 +1679,7 @@
     "last error was": "Último error fue",
     "active": "Activo",
     "flows imported": "Flujos importados",
+    "flows not imported": "Flows no importados",
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "chart preview": "Vista previa del gráfico",
@@ -1696,7 +1725,8 @@
           "workerSelector": "Selector de Worker",
           "checks": "Comprobaciones",
           "updated": "Actualizado",
-          "quotas": "Cuotas"
+          "quotas": "Cuotas",
+          "policyRefs": "Referencias de Policy"
         }
       },
       "select": {
@@ -2088,8 +2118,8 @@
         },
         "unavailable": {
           "title": "AI Copilot no está disponible",
-          "detail": "Ningún proveedor de IA está configurado. Pida a un administrador que configure uno y vuelva a intentarlo.",
-          "retry": "Reintentar"
+          "detail": "No hay ningún proveedor de AI configurado. Pide a un administrador que configure uno.",
+          "docs": "Ver documentación"
         },
         "thinkingWords": [
           "Orquestación",
@@ -2572,6 +2602,7 @@
         "message": "Corrige los errores antes de guardar.",
         "title": "No se puede guardar el flow"
       },
+      "schema_default_tooltip": "Valor predeterminado que se usa cuando el campo no está definido",
       "search_task_placeholder": "Buscar o describir una task…",
       "shortcuts": {
         "add_after": "Insertar un bloque después de la selección",

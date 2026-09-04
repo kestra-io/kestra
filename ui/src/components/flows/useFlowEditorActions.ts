@@ -152,6 +152,7 @@ export function useFlowEditorActions() {
                 position: "bottom-right",
                 type: "info",
                 duration: 0,
+                customClass: "kel-notification__large",
             })
 
             setTimeout(() => {

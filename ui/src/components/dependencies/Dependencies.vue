@@ -53,34 +53,42 @@
                     </div>
 
                     <div class="controls">
-                        <KsButton
-                            size="small"
-                            :title="$t('dependency.controls.zoom_in')"
-                            @click="controls.zoomIn"
-                        >
-                            <Plus />
-                        </KsButton>
-                        <KsButton
-                            size="small"
-                            :title="$t('dependency.controls.zoom_out')"
-                            @click="controls.zoomOut"
-                        >
-                            <Minus />
-                        </KsButton>
-                        <KsButton
-                            size="small"
-                            :title="$t('dependency.controls.clear_selection')"
-                            @click="controls.clearSelection"
-                        >
-                            <SelectionRemove />
-                        </KsButton>
-                        <KsButton
-                            size="small"
-                            :title="$t('dependency.controls.fit_view')"
-                            @click="controls.fit"
-                        >
-                            <FitToScreenOutline />
-                        </KsButton>
+                        <KsTooltip :content="$t('dependency.controls.zoom_in')" placement="right">
+                            <KsButton
+                                size="small"
+                                :aria-label="$t('dependency.controls.zoom_in')"
+                                @click="controls.zoomIn"
+                            >
+                                <Plus />
+                            </KsButton>
+                        </KsTooltip>
+                        <KsTooltip :content="$t('dependency.controls.zoom_out')" placement="right">
+                            <KsButton
+                                size="small"
+                                :aria-label="$t('dependency.controls.zoom_out')"
+                                @click="controls.zoomOut"
+                            >
+                                <Minus />
+                            </KsButton>
+                        </KsTooltip>
+                        <KsTooltip :content="$t('dependency.controls.clear_selection')" placement="right">
+                            <KsButton
+                                size="small"
+                                :aria-label="$t('dependency.controls.clear_selection')"
+                                @click="controls.clearSelection"
+                            >
+                                <SelectionRemove />
+                            </KsButton>
+                        </KsTooltip>
+                        <KsTooltip :content="$t('dependency.controls.fit_view')" placement="right">
+                            <KsButton
+                                size="small"
+                                :aria-label="$t('dependency.controls.fit_view')"
+                                @click="controls.fit"
+                            >
+                                <FitToScreenOutline />
+                            </KsButton>
+                        </KsTooltip>
                         <KsDropdown>
                             <KsButton size="small" :title="$t('export')">
                                 <Download />
@@ -107,7 +115,7 @@
                     @close="controls.clearSelection"
                 />
                 <Table
-                    v-show="!selectedNode"
+                    v-else
                     :elements="getElements()"
                     :highlightShown="handlers.highlightShown"
                     :selected="selectedNodeID"

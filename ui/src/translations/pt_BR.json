@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin não instalado para este tipo de trigger, nenhuma notificação será enviada."
       },
       "trigger": {
-        "case_sub": "Recurso exclusivo da EE",
-        "case_title": "Status do caso",
         "execution_sub": "Reage a mudanças de estado do flow",
         "execution_title": "Estado da Execution",
         "other_sub": "Qualquer plugin de trigger disponível",
@@ -138,6 +136,7 @@
     "invalid duration": "Formato de duração inválido. Por favor, use ISO 8601 (ex: PT30M, P1D).",
     "update": "Atualizar",
     "confirmation": "Confirmação",
+    "toast confirm": "Tem certeza?",
     "common": {
       "back": "Voltar",
       "openInNewTab": "Abrir em nova aba"
@@ -222,7 +221,7 @@
     "next_execution": "Próxima execução",
     "datepicker": {
       "invalid duration": "Formato de duração inválido. Use o formato ISO 8601 (ex: PT30M, P1D).",
-      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (ex: 'P1DT1H1M1S')",
+      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (por exemplo, 'P1DT1H1M1S')",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (ex: P1DT1H1M1S)",
       "custom": "Personalizado",
@@ -344,9 +343,31 @@
     "select a state": "Selecione um estado",
     "are you sure change state": "Tem certeza de que deseja alterar o estado?",
     "yes": "Sim",
+    "no": "Não",
     "change state done": "O estado da task foi atualizado",
     "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task <code>{task}</code> na execução <code>{id}</code>?<br/>Isso reiniciará a execução a partir da próxima task e reiniciará a execução pai, se houver.",
     "change state current state": "Status atual é:",
+    "change state hint": {
+      "WARNING": [
+        "O flow será marcado como WARNING.",
+        "As próximas tasks serão executadas.",
+        "As tasks de erro serão executadas."
+      ],
+      "FAILED": [
+        "O flow será marcado como FAILED.",
+        "Nenhuma outra task será executada.",
+        "As tasks de erro serão executadas."
+      ],
+      "SUCCESS": [
+        "O flow será reiniciado pois esta task foi bem-sucedida.",
+        "Todas as tasks bloqueadas serão executadas.",
+        "O flow estará em estado de SUCCESS se todas as execuções das tasks forem bem-sucedidas."
+      ],
+      "RUNNING": [
+        "O flow será reiniciado e executará todas as próximas tasks.",
+        "Todas as tasks bloqueadas serão executadas."
+      ]
+    },
     "replay execution title": "Reexecutar execução",
     "restart execution title": "Reiniciar execução",
     "replay execution description": "Isso criará uma nova execução com base na execução selecionada.",
@@ -414,7 +435,8 @@
       "zoom-reset": "Redefinir zoom",
       "zoom-fit": "Ajustar",
       "invalid": "Erro no gráfico",
-      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros."
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
+      "load_error": "Não foi possível carregar o gráfico de topologia. Tente novamente."
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Exibir condição da task",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
-      "warning": "Alterar o contador em execução pode corromper a concorrência, fazendo com que as execuções excedam o limite permitido."
+      "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -515,6 +537,10 @@
       }
     },
     "use": "Usar",
+    "plugin_card": {
+      "tasks": "Task | Tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Falha na instalação do plugin",
@@ -791,6 +817,7 @@
     "execution labels": "Labels de execução",
     "show more labels": "Mostrar mais {count} labels",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
+    "invalid label key": "Key de label inválida. Uma key válida deve começar com uma letra minúscula e conter apenas letras minúsculas, números, hifens (-), underscores (_) ou pontos (.)",
     "feeds": {
       "heading": "Tudo sobre Kestra.",
       "subheading": "As últimas atualizações, guias e histórias"
@@ -807,7 +834,7 @@
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
-    "errorLogs": "Logs de erros",
+    "errorLogs": "Logs de erro",
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?"
     },
@@ -815,12 +842,12 @@
     "executions replayed": "<code>{executionCount}</code> execução(ões) reproduzida(s)",
     "executions state changed": "O estado de <code>{executionCount}</code> execução(ões) foi alterado",
     "executions resumed": "<code>{executionCount}</code> execução(ões) retomada(s)",
-    "executions paused": "<code>{executionCount}</code> execução(ões) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> execução(ões) na fila",
-    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",
+    "executions paused": "<code>{executionCount}</code> execução(ões) pausada(s)",
+    "executions unqueue": "<code>{executionCount}</code> execução(ões) não enfileirada(s)",
+    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s)",
     "executions restarted": "<code>{executionCount}</code> execução(ões) reiniciada(s)",
-    "executions killed": "<code>{executionCount}</code> execução(ões) morta(s)",
-    "executions deleted": "<code>{executionCount}</code> execução(ões) deletada(s)",
+    "executions killed": "<code>{executionCount}</code> execução(ões) encerrada(s)",
+    "executions deleted": "<code>{executionCount}</code> execução(ões) excluída(s)",
     "invalid bulk replay": "Não foi possível reproduzir execuções",
     "invalid bulk resume": "Não foi possível retomar execuções",
     "invalid bulk pause": "Não foi possível pausar as execuções",
@@ -883,6 +910,7 @@
     "metric": "Métrica",
     "aggregation": "Agregação",
     "metric choice": "Nenhuma métrica disponível para este flow",
+    "metric filter no match": "Nenhuma métrica corresponde a \"{term}\"",
     "of": "de",
     "title": "Título",
     "api": "API",
@@ -916,7 +944,7 @@
     "join_slack": "Participar do Slack",
     "kestra": "Kestra",
     "error detected": "Erro(s) detectado(s).",
-    "warning detected": "Aviso(s) detectado(s)",
+    "warning detected": "Aviso(s) detectado(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
     "dependency task": "Task {taskId} é uma dependência de outra task",
@@ -1651,6 +1679,7 @@
     "last error was": "O último erro foi",
     "active": "Ativo",
     "flows imported": "Fluxos importados",
+    "flows not imported": "Flows não importados",
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "chart preview": "Prévia do gráfico",
@@ -1696,7 +1725,8 @@
           "workerSelector": "Seletor de Worker",
           "checks": "Verificações",
           "updated": "Atualizado",
-          "quotas": "Cotas"
+          "quotas": "Cotas",
+          "policyRefs": "Referências de Policy"
         }
       },
       "select": {
@@ -2088,8 +2118,8 @@
         },
         "unavailable": {
           "title": "AI Copilot não está disponível",
-          "detail": "Nenhum provedor de IA está configurado. Peça a um administrador para configurá-lo e tente novamente.",
-          "retry": "Tentar novamente"
+          "detail": "Nenhum provedor de AI está configurado. Peça a um administrador para configurar um.",
+          "docs": "Ver documentação"
         },
         "thinkingWords": [
           "Orquestração",
@@ -2572,6 +2602,7 @@
         "message": "Corrija os erros antes de salvar.",
         "title": "Não é possível salvar o flow"
       },
+      "schema_default_tooltip": "Valor padrão usado quando o campo não está definido",
       "search_task_placeholder": "Pesquisar ou descrever uma task…",
       "shortcuts": {
         "add_after": "Inserir um bloco após a seleção",

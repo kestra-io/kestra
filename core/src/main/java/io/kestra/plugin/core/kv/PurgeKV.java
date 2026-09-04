@@ -30,9 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Schema(
     title = "Purge keys from the KV store.",
     description = """
-        Deletes keys across Namespaces using a purge `behavior` (default: expired-only). Filter by explicit `namespaces` or `namespacePattern`, optional `keyPattern`, and include/exclude child namespaces.
-
-        Deprecated `expiredOnly` overrides `behavior` if set."""
+        Deletes keys across Namespaces using a purge `behavior` (default: expired-only). Filter by explicit `namespaces` or `namespacePattern`, optional `keyPattern`, and include/exclude child namespaces."""
 )
 @Plugin(
     examples = {
@@ -46,7 +44,9 @@ import lombok.extern.slf4j.Slf4j;
                 tasks:
                   - id: purge_kv
                     type: io.kestra.plugin.core.kv.PurgeKV
-                    expiredOnly: true
+                    behavior:
+                      type: key
+                      expiredOnly: true
                     namespaces:
                       - company
                     includeChildNamespaces: true

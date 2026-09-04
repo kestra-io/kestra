@@ -2,7 +2,9 @@ package io.kestra.core.serializers;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -117,6 +119,61 @@ class JacksonMapperTest {
         assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":null}]");
         // Revert
         assertThat(value.getRight().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":{\"value\":\"value\"}}]");
+    }
+
+    @Test
+    void toMapKeepingNullValuesShouldKeepNullMapEntriesButDropNullProperties() {
+        Map<String, Object> nested = new LinkedHashMap<>();
+        nested.put("a", 1);
+        nested.put("b", null);
+
+        Map<String, Object> result = JacksonMapper.toMapKeepingNullValues(
+            new NullContentPojo(List.of(nested), null)
+        );
+
+        assertThat(result).doesNotContainKey("nullable");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> record = (Map<String, Object>) ((List<Object>) result.get("records")).getFirst();
+        assertThat(record).containsEntry("a", 1);
+        assertThat(record).containsKey("b");
+        assertThat(record.get("b")).isNull();
+    }
+
+    @Test
+    void toMapKeepingNullValuesShouldKeepNullMapEntriesInTheGivenZone() {
+        Map<String, Object> nested = new LinkedHashMap<>();
+        nested.put("b", null);
+
+        // the copy() in the zoned overload must not lose the content inclusion
+        Map<String, Object> result = JacksonMapper.toMapKeepingNullValues(
+            new NullContentPojo(List.of(nested), null), ZoneId.of("Asia/Tokyo")
+        );
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> record = (Map<String, Object>) ((List<Object>) result.get("records")).getFirst();
+        assertThat(record).containsKey("b");
+        assertThat(record.get("b")).isNull();
+    }
+
+    @Test
+    void toMapShouldDropNullMapEntries() {
+        Map<String, Object> nested = new LinkedHashMap<>();
+        nested.put("a", 1);
+        nested.put("b", null);
+
+        Map<String, Object> result = JacksonMapper.toMap(new NullContentPojo(List.of(nested), null));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> record = (Map<String, Object>) ((List<Object>) result.get("records")).getFirst();
+        assertThat(record).doesNotContainKey("b");
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class NullContentPojo {
+        private List<Object> records;
+        private String nullable;
     }
 
     private record DummyObject(String value) {

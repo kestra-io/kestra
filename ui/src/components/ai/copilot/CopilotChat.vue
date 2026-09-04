@@ -10,11 +10,12 @@
             <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
         </div>
 
-        <!-- AI unavailable: the backend has no configured provider — known up front from `/configs`,
-             or discovered mid-session (503). Configuring a provider is an instance-config change (a
-             restart), never something a retry in this panel could pick up, so the only action here
-             points at the docs that explain how to set one up. -->
-        <div v-if="isUnavailable" class="copilot-unavailable" data-test="copilot-unavailable">
+        <!-- AI unavailable: the copilot has no provider to run on — either `/configs` said so and the
+             user tried to send anyway, or the turn came back 503. It only ever replaces the chat once
+             a prompt has been attempted; opening the copilot never lands here (kestra-io/kestra-ee#10739).
+             Configuring a provider is an instance-config change (a restart), never something a retry in
+             this panel could pick up, so the only action here points at the docs. -->
+        <div v-if="unavailable" class="copilot-unavailable" data-test="copilot-unavailable">
             <KsIcon class="copilot-unavailable-icon">
                 <RobotOffOutline />
             </KsIcon>
@@ -272,12 +273,11 @@
 
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
 
-    // `/configs` reports whether any AI provider is configured, so the unavailable state renders on
-    // load rather than after the user composes a prompt that was always going to fail
-    // (kestra-io/kestra#18322). `unavailable` still covers the mid-session case (provider removed or
-    // unreachable → 503). An older backend that doesn't send the flag leaves the copilot usable.
+    // `/configs` reports whether any AI provider is configured. It's known up front, but the copilot
+    // waits for the user to actually try sending something before acting on it: an instance with no
+    // provider opens on the regular chat, not on the unavailable state (kestra-io/kestra-ee#10739).
+    // An older backend that doesn't send the flag leaves it undefined and the copilot usable.
     const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
-    const isUnavailable = computed(() => unavailable.value || noProviderConfigured.value)
 
     /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
     const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=kestra_app&utm_medium=referral&utm_campaign=ai_copilot_unavailable&utm_content=learn_more#configuration"
@@ -355,6 +355,12 @@
     )
 
     function onSubmit(prompt: string): void {
+        // Known-unconfigured instance: the turn could only come back 503, so raise the unavailable
+        // state here rather than round-tripping for it.
+        if (noProviderConfigured.value) {
+            unavailable.value = true
+            return
+        }
         sendChat({
             prompt,
             mode: mode.value,

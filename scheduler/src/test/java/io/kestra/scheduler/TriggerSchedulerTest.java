@@ -5,6 +5,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
+import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
@@ -662,7 +664,7 @@ class TriggerSchedulerTest {
             triggerState
                 .locked(SchedulerClock.getClock(), false)
                 .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
-                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).build())
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).currentDate(backfillStart).build())
         );
 
         // Simulate multiple 'onSchedule'
@@ -734,7 +736,7 @@ class TriggerSchedulerTest {
         triggerStateStore.save(
             triggerState
                 .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
-                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).paused(true).build())
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).currentDate(backfillStart).paused(true).build())
         );
         // endregion [GIVEN]
 
@@ -749,6 +751,37 @@ class TriggerSchedulerTest {
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
         TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
         assertThat(state.getBackfill().getCurrentDate()).isEqualTo(backfillStart);
+    }
+
+    @Test
+    void shouldCreateExecutionAtBackfillStartWhenStartIsACronTick() {
+        // GIVEN: same create order as TriggerEventHandler.onCreateBackfill (seed, then nextEvaluationDate)
+        Clock clock = Clock.fixed(Instant.parse("2024-06-15T13:00:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        FlowWithSource flow = Fixtures.defaultFlow(b -> b.cron("* * * * *").timezone("UTC").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(clock, clock.instant(), NODES_ASSIGNMENTS);
+
+        ZonedDateTime start = ZonedDateTime.parse("2024-06-15T12:00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2024-06-15T12:05:00Z");
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow()
+            .locked(clock, false)
+            .backfill(clock, Backfill.builder().start(start).end(end).build());
+        ConditionContext conditionContext = conditionService.conditionContext(
+            runContextFactory.of(flow, flow.getTriggers().getFirst()), flow, null);
+        ZonedDateTime next = NextEvaluationDate.get(
+            clock, flow.getTriggers().getFirst(), state.context(), conditionContext);
+        triggerStateStore.save(state.updateForNextEvaluationDate(clock, next));
+
+        // WHEN
+        scheduler.onSchedule(clock, clock.instant(), NODES_ASSIGNMENTS);
+
+        // THEN: the first backfilled execution is the start tick, not start+1 minute
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+        assertThat(execution.evaluation().trigger()).isNotNull();
+        assertThat(ZonedDateTime.parse((String) execution.evaluation().trigger().getVariables().get("date")).toInstant())
+            .isEqualTo(start.toInstant());
     }
 
     @Test

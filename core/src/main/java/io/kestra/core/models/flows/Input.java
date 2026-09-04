@@ -38,6 +38,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = FloatInput.class, name = "FLOAT"),
         @JsonSubTypes.Type(value = IntInput.class, name = "INT"),
         @JsonSubTypes.Type(value = JsonInput.class, name = "JSON"),
+        @JsonSubTypes.Type(value = IonInput.class, name = "ION"),
         @JsonSubTypes.Type(value = SecretInput.class, name = "SECRET"),
         @JsonSubTypes.Type(value = StringInput.class, name = "STRING"),
         @JsonSubTypes.Type(value = SelectInput.class, name = "SELECT"),
@@ -77,6 +78,9 @@ public abstract class Input<T> implements Data {
     )
     DependsOn dependsOn;
 
+    @Schema(
+        title = "Whether the input is required."
+    )
     @Builder.Default
     Boolean required = true;
 

@@ -2,12 +2,13 @@
   "name": "@kestra-io/kestra-sdk",
   "version": "2.0.0",
   "private": true,
-  "description": "JS/TS client generated from the OSS OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. The generated code under src/openapi is committed to git. Keeps the name of the module-federation-shared client so plugins and the app use one client (auth + routing). See README.md.",
+  "description": "JS/TS client generated from the OSS OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. The generated code under src/openapi is committed to git. Keeps the client's name so plugins import the same specifier the app does (auth + routing). See README.md.",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
     "./ai": "./dist/ai.js",
+    "./all": "./dist/all.js",
     "./blueprint-tags": "./dist/blueprint-tags.js",
     "./blueprints": "./dist/blueprints.js",
     "./client": "./dist/client.js",
@@ -28,7 +29,6 @@
     "./secrets": "./dist/secrets.js",
     "./services": "./dist/services.js",
     "./shared": "./dist/shared.js",
-    "./tenants": "./dist/tenants.js",
     "./triggers": "./dist/triggers.js",
     "./package.json": "./package.json"
   },
@@ -38,7 +38,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.99.0",
+    "@hey-api/openapi-ts": "^0.97.0",
     "@kestra-io/hey-api-plugin": "*",
     "@types/node": "^26.1.1",
     "tsdown": "^0.22.0",

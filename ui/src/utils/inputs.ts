@@ -1,5 +1,5 @@
 import moment from "moment/moment"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {storageKeys} from "./constants"
 
 export type InputType = "STRING"
@@ -12,6 +12,7 @@ export type InputType = "STRING"
     | "ARRAY"
     | "MULTISELECT"
     | "JSON"
+    | "ION"
     | "YAML"
     | "SECRET"
     | "FILE"
@@ -165,15 +166,20 @@ export function normalize(type: InputType | undefined, value: any) {
 
     if (type === "BOOLEAN" && value === undefined) {
         res = "undefined"
-    } else if (type === "BOOL" && value === undefined) {
-        res = false
+    } else if (type === "BOOL") {
+        // `defaults` is a Property, which serialises as its expression string, so `defaults: true`
+        // reaches the form as the string "true". KsSwitch (el-switch) only accepts a real boolean:
+        // given anything else it emits `update:modelValue` = false during setup, which both turns the
+        // toggle off and marks the input as user-edited — so the validate response can no longer
+        // restore the default. Coerce here.
+        res = value === true || value === "true"
     } else if (value === null || value === undefined) {
         res = undefined
     } else if (type === "DATE" || type === "DATETIME") {
         res = moment(res).toISOString()
     } else if (type === "TIME") {
         res = moment().startOf("day").add(res, "seconds").toString()
-    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON") {
+    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }
@@ -181,27 +187,6 @@ export function normalize(type: InputType | undefined, value: any) {
         if (typeof res !== "string") {
             res = YAML_UTILS.stringify(res).toString()
         }
-    } else if (type === "STRING" && Array.isArray(res)) {
-        res = res.toString()
-    }
-    return res
-}
-
-export function normalizeForComponents(type: InputType | undefined, value: any) {
-    let res = value
-
-    if (value === null) {
-        res = undefined
-    } else if (type === "DATE" || type === "DATETIME") {
-        res = moment(res).toISOString()
-    } else if (type === "TIME") {
-        res = moment().startOf("day").add(res, "seconds").toString()
-    } else if (type === "ARRAY") {
-        res = JSON.stringify(res).toString()
-    } else if (type === "BOOLEAN" && value === undefined) {
-        res = "undefined"
-    } else if (type === "BOOL" && value === undefined) {
-        res = false
     } else if (type === "STRING" && Array.isArray(res)) {
         res = res.toString()
     }

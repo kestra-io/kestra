@@ -63,7 +63,11 @@ const isTourExecution = (route: TourRoute) =>
     && route.params.namespace === TOUR_NAMESPACE
     && route.params.flowId === TOUR_FLOW_ID
 
-const isFlowEditor = (route: TourRoute) => String(route.name ?? "").startsWith(FLOW_PARENT_ROUTE)
+const isTourFlow = (route: TourRoute) =>
+    route.params.namespace === TOUR_NAMESPACE && route.params.id === TOUR_FLOW_ID
+
+const isFlowEditor = (route: TourRoute) =>
+    String(route.name ?? "").startsWith(FLOW_PARENT_ROUTE) && isTourFlow(route)
 
 const adoptExecution = (
     {store, route}: TourSceneContext & {route: TourRoute},
@@ -96,7 +100,7 @@ export const TOUR_SCENES: TourScene[] = [
             await actions.openCopilot()
         },
         action: ({actions}) => actions.generateFlow(),
-        completedByUser: ({route}) => route.name !== "ai",
+        completedByUser: ({route}) => route.name === "flows/create" || isFlowEditor(route),
     },
     {
         id: "flow_generated",
@@ -215,7 +219,8 @@ export const TOUR_SCENES: TourScene[] = [
             await actions.showTaskDocs(TOUR_WEBHOOK_TRIGGER_TYPE)
         },
         action: ({actions}) => actions.openTriggersTab(),
-        completedByUser: ({route}) => route.name === `${FLOW_PARENT_ROUTE}/triggers`,
+        completedByUser: ({route}) =>
+            route.name === `${FLOW_PARENT_ROUTE}/triggers` && isTourFlow(route),
     },
     {
         id: "test_event",
@@ -276,7 +281,7 @@ export const TOUR_SCENES: TourScene[] = [
                 await actions.openExecution(
                     executionId,
                     undefined,
-                    {expression: "trigger.body", select: "trigger.variables"},
+                    {expression: "trigger.body", select: "trigger.body"},
                     "outputs",
                 )
             }

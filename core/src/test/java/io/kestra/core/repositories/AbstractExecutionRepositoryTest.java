@@ -58,6 +58,7 @@ import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
@@ -820,6 +821,54 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void dashboard_fetchData_durationAggregationInSeconds() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionCreateDate = Instant.now().minus(Duration.ofMinutes(5));
+
+        // sub-minute durations only: the Postgres state_duration column loses the minutes part of longer durations
+        executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(500)));
+        executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(1500)));
+
+        var now = ZonedDateTime.now();
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
+            tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(
+                    Map.of(
+                        "state", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.STATE).build(),
+                        "total", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                        "duration", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.DURATION).agg(AggregationType.SUM).build()
+                    )
+                ).build(),
+            now.minusHours(1),
+            now,
+            null
+        );
+
+        assertThat(data.getTotal()).isEqualTo(1L);
+        assertThat(data).first().extracting("total").hasToString("2");
+        // the DURATION column is exposed in seconds, keeping the sub-second part: 0.5s + 1.5s
+        assertThat(((Number) data.getFirst().get("duration")).doubleValue()).isCloseTo(2.0d, within(0.001d));
+    }
+
+    private Execution executionWithDuration(String tenantId, Instant createDate, Duration duration) {
+        return Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .state(
+                new State(
+                    Type.SUCCESS,
+                    List.of(new State.History(State.Type.CREATED, createDate), new State.History(Type.SUCCESS, createDate.plus(duration)))
+                )
+            )
+            .taskRunList(List.of())
+            .build();
+    }
+
+    @Test
     protected void dashboard_fetchValue() throws IOException {
         var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var executionDuration = Duration.ofMinutes(220);
@@ -1386,6 +1435,60 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void findShouldSortByTotalDurationAcrossMinuteBoundary() {
+        // given - two terminated executions whose durations straddle the one-minute boundary.
+        // This guards against backends that only compare the sub-minute part of the duration
+        // (e.g. the former Postgres EXTRACT(MILLISECONDS FROM interval) generated column), which
+        // would sort the multi-minute execution below the sub-minute one.
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final Instant clock = Instant.now();
+
+        var longExecution = Execution.builder()
+            .id("longExecution__" + FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(
+                    new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.SUCCESS, clock.plus(Duration.ofMinutes(5)))
+                )
+            )).build();
+        executionRepository.save(longExecution);
+
+        var shortExecution = Execution.builder()
+            .id("shortExecution__" + FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(State.of(
+                State.Type.SUCCESS,
+                List.of(
+                    new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.SUCCESS, clock.plus(Duration.ofSeconds(20)))
+                )
+            )).build();
+        executionRepository.save(shortExecution);
+
+        // when / then
+        List<QueryFilter> emptyFilters = null;
+        var ascSort = createSortLikeInControllers(List.of("state.duration:asc"), executionRepository.sortMapping());
+        assertThat(executionRepository.find(Pageable.from(ascSort), tenant, emptyFilters).stream())
+            .as("shortest total duration first when sorting ascending")
+            .map(Execution::getId)
+            .containsExactly(shortExecution.getId(), longExecution.getId());
+
+        var descSort = createSortLikeInControllers(List.of("state.duration:desc"), executionRepository.sortMapping());
+        assertThat(executionRepository.find(Pageable.from(descSort), tenant, emptyFilters).stream())
+            .as("longest total duration first when sorting descending")
+            .map(Execution::getId)
+            .containsExactly(longExecution.getId(), shortExecution.getId());
+    }
+
+    @Test
     protected void findShouldOrderByStartDateAsc() {
         // given
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -1571,6 +1674,47 @@ public abstract class AbstractExecutionRepositoryTest {
         } finally {
             executionRepository.delete(savedA);
             executionRepository.delete(savedB);
+        }
+    }
+
+    @Test
+    void shouldOnlyFindAsyncNormalKindWhenThereIsNoKindFilter() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution normal = executionRepository.save(builder(tenant, State.Type.SUCCESS, "flowA").build());
+        Execution playground = executionRepository.save(
+            builder(tenant, State.Type.SUCCESS, "flowA").kind(ExecutionKind.PLAYGROUND).build()
+        );
+
+        try {
+            List<QueryFilter> flowFilter = List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.FLOW_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("flowA")
+                    .build()
+            );
+            List<QueryFilter> kindFilter = List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(ExecutionKind.PLAYGROUND)
+                    .build()
+            );
+
+            // When
+            List<Execution> filtered = executionRepository.findAsync(tenant, flowFilter).collectList().block();
+            List<Execution> unfiltered = executionRepository.findAsync(tenant, List.of()).collectList().block();
+            List<Execution> byKind = executionRepository.findAsync(tenant, kindFilter).collectList().block();
+
+            // Then
+            assertThat(filtered).map(Execution::getId).containsExactly(normal.getId());
+            assertThat(unfiltered).map(Execution::getId).containsExactly(normal.getId());
+            assertThat(byKind).map(Execution::getId).containsExactly(playground.getId());
+            assertThat(executionRepository.find(Pageable.UNPAGED, tenant, flowFilter)).hasSameSizeAs(filtered);
+        } finally {
+            executionRepository.delete(normal);
+            executionRepository.delete(playground);
         }
     }
 

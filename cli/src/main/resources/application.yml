@@ -9,10 +9,6 @@ micronaut:
       swagger:
         paths: classpath:META-INF/swagger
         mapping: /swagger/**
-      ui:
-        paths: classpath:ui
-        mapping: /ui/**
-        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**
@@ -66,6 +62,16 @@ micronaut:
   caches:
     default:
       maximum-weight: 10485760
+    # One cache per icon index: the methods behind them take no argument, so they all resolve to the same cache
+    # key and sharing a cache would make them serve each other's entries. Each therefore holds a single entry.
+    plugin-icons:
+      maximum-size: 1
+    plugin-icons-metadata:
+      maximum-size: 1
+    plugin-group-icons:
+      maximum-size: 1
+    plugin-group-icons-metadata:
+      maximum-size: 1
   http:
     client:
       read-idle-timeout: 60s
@@ -167,7 +173,6 @@ kestra:
         - "/api/v1/executions/webhook/"
         - "/api/v1/main/executions/webhook/"
         - "/api/v1/*/executions/webhook/"
-        - "/api/v1/basicAuthValidationErrors"
 
     preview:
       initial-rows: 100
@@ -213,6 +218,10 @@ kestra:
       poll-switch-interval: 60s
 
   plugins:
+    # No default: the schema bundle ships inside the Kestra JAR as the /plugins-schema.json
+    # classpath resource, so no instance needs to fetch it. Set this only to point at a bundle
+    # hosted somewhere yourself ({version} is replaced by the running stable version).
+    schema-bundle-url-template: ""
     repositories:
       central:
         url: https://repo.maven.apache.org/maven2/

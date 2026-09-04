@@ -11,6 +11,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,6 +54,10 @@ public abstract class AbstractFlow implements FlowInterface {
 
     @NotNull
     @Builder.Default
+    @Schema(
+        title = "Whether the flow is disabled.",
+        description = "A disabled flow does not run: its triggers are paused and new executions are rejected."
+    )
     boolean disabled = false;
 
     @Getter
@@ -68,7 +73,7 @@ public abstract class AbstractFlow implements FlowInterface {
     boolean draft = false;
 
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)

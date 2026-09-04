@@ -11,19 +11,19 @@
             :loadIcon="pluginsStore.loadIcon"
             @back="goBack"
         >
-            <template #actions="{hasMissingPlugins, missingPlugins}">
+            <template #actions="{hasMissingPlugins, missingTasks}">
                 <template v-if="userCanCreate">
                     <KsTooltip
                         v-if="hasMissingPlugins"
-                        :content="$t('blueprints.missingPlugins.card', {plugins: missingPlugins.join(', ')})"
+                        :content="$t('blueprints.missingPlugins.card', {tasks: missingTasks.join(', ')})"
                     >
                         <KsButton type="primary" disabled>
-                            {{ $t("blueprints.detail.openInEditor") }}
+                            {{ $t(openInEditorKey) }}
                         </KsButton>
                     </KsTooltip>
                     <router-link v-else :to="editorRoute">
                         <KsButton type="primary" @click="trackBlueprintUse('detail')">
-                            {{ $t("blueprints.detail.openInEditor") }}
+                            {{ $t(openInEditorKey) }}
                         </KsButton>
                     </router-link>
                 </template>
@@ -90,6 +90,11 @@
     const tags = ref()
 
     const userCanCreate = computed(() => canCreate(props.kind))
+
+    const openInEditorKey = computed(() => ({
+        app: "blueprints.detail.openInAppsEditor",
+        dashboard: "blueprints.detail.openInDashboardEditor",
+    })[props.kind] ?? "blueprints.detail.openInEditor")
 
     const breadcrumb = computed(() => [
         {

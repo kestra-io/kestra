@@ -1,8 +1,17 @@
 <template>
-    <div v-if="playgroundStore.enabled && isTask && taskModel?.id" class="flow-playground">
+    <div v-if="!hideRunButton && playgroundStore.enabled && isTask && taskModel?.id && !navStack.length" class="flow-playground">
         <PlaygroundRunTaskButton :taskId="taskModel?.id" />
     </div>
-    <KsForm v-if="isTaskDefinitionBasedOnType" labelPosition="top">
+
+    <FieldNavBreadcrumb
+        v-if="navStack.length"
+        :frames="navStack"
+        :rootLabel="rootLabel"
+        @navigate="onCrumb"
+        @back="fieldNav.pop"
+    />
+
+    <KsForm v-if="isTaskDefinitionBasedOnType && !navStack.length" labelPosition="top">
         <KsFormItem>
             <template #label>
                 <div class="type-div">
@@ -20,7 +29,7 @@
     <div @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
             v-ks-loading="isLoading || isPluginSchemaLoading"
-            v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
+            v-if="!navStack.length && (selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
             :modelValue="taskModel"
             @update:model-value="onTaskInput"
@@ -28,15 +37,31 @@
             :properties
             filterType
         />
+        <TaskObjectField
+            v-else-if="navCurrent"
+            :key="navCurrent.path"
+            :schema="navCurrent.schema"
+            :rootOverride="navCurrent.path"
+            :fieldKey="navCurrent.label"
+            :task="taskModel"
+            :frameRoot="true"
+            v-model="frameValue"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import TaskObject from "./tasks/TaskObject.vue"
+    import TaskObjectField from "./tasks/TaskObjectField.vue"
     import PluginSelect from "../../plugins/PluginSelect.vue"
+    import FieldNavBreadcrumb from "./FieldNavBreadcrumb.vue"
+    import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {NoCodeElement, Schemas} from "../utils/types"
+    import get from "lodash/get"
+    import set from "lodash/set"
+    import cloneDeep from "lodash/cloneDeep"
     import {
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
@@ -44,6 +69,9 @@
         SCHEMA_DEFINITIONS_INJECTION_KEY,
         DATA_TYPES_MAP_INJECTION_KEY,
         ON_TASK_EDITOR_CLICK_INJECTION_KEY,
+        FIELD_NAV_INJECTION_KEY,
+        FULL_SOURCE_INJECTION_KEY,
+        PLUGIN_DEFAULTS_INJECTION_KEY,
     } from "../injectionKeys"
     import {removeNullAndUndefined} from "../utils/cleanUp"
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins"
@@ -60,6 +88,10 @@
 
     const modelValue = defineModel<string>()
 
+    defineProps<{
+        hideRunButton?: boolean
+    }>()
+
     const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()
 
@@ -69,9 +101,57 @@
     const selectedTaskType = ref<string>()
     const isLoading = ref(false)
 
+    const fieldNav = useFieldNavigation()
+    provide(FIELD_NAV_INJECTION_KEY, fieldNav)
+    const {stack: navStack, current: navCurrent} = fieldNav
+
+    const fullSource = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
+    const pluginDefaultsForType = computed<Record<string, unknown>>(() => {
+        const type = selectedTaskType.value || taskModel.value?.type
+        if (!type) return {}
+        let parsed: any
+        try {
+            parsed = YAML_UTILS.parse(fullSource.value)
+        } catch {
+            return {}
+        }
+        const defaults = parsed?.pluginDefaults
+        if (!Array.isArray(defaults)) return {}
+        const merged: Record<string, unknown> = {}
+        for (const entry of defaults) {
+            if (entry?.type && (type === entry.type || type.startsWith(`${entry.type}.`)) && entry.values) {
+                Object.assign(merged, entry.values)
+            }
+        }
+        return merged
+    })
+    provide(PLUGIN_DEFAULTS_INJECTION_KEY, pluginDefaultsForType)
+
+    const rootLabel = computed(() =>
+        taskModel.value?.id
+        || selectedTaskType.value?.split(".").pop()
+        || "task",
+    )
+
+    const frameValue = computed({
+        get: () => (navCurrent.value ? get(taskModel.value, navCurrent.value.path) : undefined),
+        set: (value) => {
+            if (!navCurrent.value) return
+            const next = cloneDeep(toRaw(taskModel.value) ?? {})
+            set(next as Record<string, any>, navCurrent.value.path, value)
+            onTaskInput(next)
+        },
+    })
+
+    function onCrumb(index: number) {
+        if (index < 0) fieldNav.reset()
+        else fieldNav.popTo(index)
+    }
+
+    watch(selectedTaskType, () => fieldNav.reset())
+
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined)
-
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
@@ -144,7 +224,6 @@
         selectedTaskType.value = taskModel.value?.type
     }
 
-    // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
             pluginsStore.updateDocumentation({cls: selectedTaskType.value, ...taskModel.value})
@@ -153,8 +232,6 @@
 
     const fieldDefinition = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
 
-    // useful to map inputs to their real schema
-    // NOTE: there can be more than one schema per type (ex: KPI chart could be for flow or for executions.)
     const typeMap = computed<Record<string, string[]>>(() => {
         if (fieldDefinition.value?.anyOf) {
             const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: any) => {
@@ -211,11 +288,29 @@
         return typeMap.value[selectedTaskType.value ?? ""] || []
     })
 
+    const resolvedSchemas = computed(() => {
+        return resolvedTypes.value.map((type) => definitions.value?.[type])
+    })
+
+    const dataTypes = computed(() => {
+        const types = new Set<string>()
+        for(const s of resolvedSchemas.value){
+            const dataResolved = s?.properties?.data?.$ref
+                ? getValueAtJsonPath(fullSchema.value, s.properties.data.$ref)
+                : s?.properties?.data
+            const typeConst = dataResolved?.properties?.type?.const
+            if(typeConst){
+                types.add(typeConst)
+            }
+        }
+        return Array.from(types)
+    })
+
     const versionedSchema = ref<Schemas|undefined>()
     const isPluginSchemaLoading = ref(false)
 
     watch([selectedTaskType, resolvedTypes], async ([val, types]) => {
-        if(types.length > 1 && val){
+        if(types.length > 1 && val && dataTypes.value.length <= 1){
             isPluginSchemaLoading.value = true
             try{
                 const {schema} = await pluginsStore.load({
@@ -223,15 +318,18 @@
                     version: taskModel.value?.version,
                 })
                 versionedSchema.value = schema?.properties
+            } catch {
+                versionedSchema.value = undefined
             } finally {
                 isPluginSchemaLoading.value = false
             }
+        } else {
+            versionedSchema.value = undefined
         }
     }, {immediate: true})
 
     const resolvedType = computed<string>(() => {
         if(resolvedTypes.value.length > 1 && selectedTaskType.value){
-            // find the resolvedType that match the current dataType
             const dataType = taskModel.value?.data?.type
             if(dataType){
                 for(const typeLocal of resolvedTypes.value){
@@ -252,10 +350,6 @@
                 ? resolvedTypes.value[0]
                 : selectedTaskType.value ?? "")
             : ""
-    })
-
-    const resolvedSchemas = computed(() => {
-        return resolvedTypes.value.map((type) => definitions.value?.[type])
     })
 
     const REQUIRED_FIELDS = ["id", "data"]
@@ -280,26 +374,19 @@
     })
 
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
-        // try to resolve the type from local schema
-        // IE: when only one schema is available take it and run with it
         if (resolvedLocalSchema.value?.properties) {
             return resolvedLocalSchema.value.properties
         }
 
-        // if there is more than one schema valid, try to find common properties
-        // to all the schemas to help user narrow down the schema they want
         if(resolvedTypes.value.length > 1){
             const schemas = resolvedSchemas.value
 
-            // find properties with the same key and list their keys
             const commonProps = Object.keys(schemas[0].properties).filter((key) => {
                 return schemas.every((s) => s.properties[key] !== undefined)
             }).reduce((acc, key) => {
-                // check if the properties are the same when they are serialized
                 if (schemas.every((s) => {
                     return isEqual(schemas[0].properties[key], s.properties[key])
                 })) {
-                    // if they are we can safely display them
                     acc[key] = schemas[0].properties[key]
                 }
                 return acc
@@ -308,9 +395,6 @@
             if(dataTypes.value.length > 1){
                 commonProps["data"] = {
                     type: "object",
-                    // this is to force the data field to be visible
-                    // and TaskComplex and therefore make the data type
-                    // appear without a border
                     $ref: "#/definitions/",
                 }
             }
@@ -319,20 +403,6 @@
         }
 
         return undefined
-    })
-
-    const dataTypes = computed(() => {
-        const types = new Set<string>()
-        for(const s of resolvedSchemas.value){
-            const dataResolved = s.properties?.data?.$ref
-                ? getValueAtJsonPath(fullSchema.value, s.properties?.data?.$ref)
-                : s.properties?.data
-            const typeConst = dataResolved?.properties?.type?.const
-            if(typeConst){
-                types.add(typeConst)
-            }
-        }
-        return Array.from(types)
     })
 
     const dataTypesMap = computed(() => dataTypes.value.length > 1 ? {

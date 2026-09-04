@@ -1,15 +1,14 @@
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-import {languages} from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
+import {languages} from "monaco-editor/editor/editor.api"
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 import {useI18n} from "vue-i18n"
 import {ComputedRef} from "vue"
 
-import IPosition = monaco.IPosition;
-import IDisposable = monaco.IDisposable;
+import type {IPosition, IDisposable} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import CompletionItem = languages.CompletionItem;
 
@@ -17,7 +16,7 @@ function propertySuggestion (value: string, position: {
             lineNumber: number,
             startColumn: number,
             endColumn: number
-}, kind?: monaco.languages.CompletionItemKind): CompletionItem {
+}, kind?: monaco.languages.CompletionItemKind, options?: {deprecated?: boolean; detail?: string}): CompletionItem {
     let label = value.split("(")[0]
     if (label.startsWith(QUOTE) && label.endsWith(QUOTE)) {
         label = label.substring(1, label.length - 1)
@@ -28,7 +27,9 @@ function propertySuggestion (value: string, position: {
         label: label,
         insertText: value,
         insertTextRules: value.includes("${1:") ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
-        sortText: value.includes("(") ? "b" + value : "a" + value,
+        sortText: (options?.deprecated ? "z" : "") + (value.includes("(") ? "b" + value : "a" + value),
+        tags: options?.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
+        detail: options?.detail,
         range: {
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
@@ -67,14 +68,28 @@ export function registerPebbleAutocompletion(
             }
 
             const startOfWordColumn = position.column - rootPebbleVariableMatcher.matches[1].length
+            const fnDefs = await autoCompletion.functionsWithDefaults()
+            const fnDefMap = new Map(fnDefs.map(fn => [fn.name, fn]))
+            const suggestions = await autoCompletion.rootFieldAutoCompletion({source: model.getValue(), offset: model.getOffsetAt(position)})
             return {
                 incomplete: true,
-                suggestions: (await (autoCompletion.rootFieldAutoCompletion({source: model.getValue(), offset: model.getOffsetAt(position)})))
-                    .map(s => propertySuggestion(s, {
-                        lineNumber: position.lineNumber,
-                        startColumn: startOfWordColumn,
-                        endColumn: endOfWordColumn(position, model),
-                    })),
+                suggestions: suggestions.map(s => {
+                    const fnName = s.split("(")[0]
+                    const fnDef = fnDefMap.get(fnName)
+                    return propertySuggestion(
+                        s,
+                        {
+                            lineNumber: position.lineNumber,
+                            startColumn: startOfWordColumn,
+                            endColumn: endOfWordColumn(position, model),
+                        },
+                        undefined,
+                        fnDef?.deprecated ? {
+                            deprecated: true,
+                            detail: fnDef.replacement ? `Deprecated. Use '${fnDef.replacement}' instead.` : "Deprecated",
+                        } : undefined,
+                    )
+                }),
             }
         },
     }))

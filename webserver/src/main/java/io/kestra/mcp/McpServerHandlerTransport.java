@@ -1,5 +1,6 @@
 package io.kestra.mcp;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import io.micronaut.context.annotation.Requires;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,8 @@ import reactor.core.publisher.Mono;
 @Requires(beans = DispatchQueueInterface.class)
 @Slf4j
 public class McpServerHandlerTransport {
+    private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(10);
+
     private final Map<HandlerKey, KestraFluxStreamableServerTransportProvider> handlers = new ConcurrentHashMap<>();
     private final Map<HandlerKey, McpAsyncServer> servers = new ConcurrentHashMap<>();
     private final McpErrorResponseMapper mcpErrorResponseMapper;
@@ -57,6 +61,22 @@ public class McpServerHandlerTransport {
             servers.put(handlerKey, buildServer(handlerKey, transportProvider));
             return transportProvider;
         });
+    }
+
+    /**
+     * Shuts down every server built by this registry when the application context closes.
+     * <p>
+     * Each {@link KestraFluxStreamableServerTransportProvider} starts a keep-alive scheduler in its
+     * constructor; without this hook those schedulers outlive the context and keep pinging dead
+     * sessions for the lifetime of the JVM, which is particularly visible in tests where many
+     * contexts are created in a single JVM.
+     */
+    @PreDestroy
+    public void close() {
+        Flux.fromIterable(Set.copyOf(handlers.keySet()))
+            .concatMap(key -> evictAndNotify(key.tenantId(), key.serverId()).onErrorComplete())
+            .then()
+            .block(SHUTDOWN_TIMEOUT);
     }
 
     public Mono<Void> refreshTools(String tenantId, String serverId) {

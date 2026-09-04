@@ -173,11 +173,10 @@
                 padding: 0;
                 cursor: pointer;
 
-                .material-design-icon__svg {
-                    bottom: 0;
-                    width: 16px;
-                    height: 16px;
-                    transform: translateY(1px) translateX(-0.5px);
+                .material-design-icon,
+                .material-design-icon > .material-design-icon__svg {
+                    width: var(--ks-icon-size-sm);
+                    height: var(--ks-icon-size-sm);
                 }
             }
 
@@ -219,7 +218,8 @@
                 margin-right: .3rem;
             }
 
-            a {
+            // Plain links only: an <a> rendered by KsButton (tag="a") must keep its button styling.
+            a:not(.kel-button) {
                 color: var(--ks-text-primary);
                 &:hover{
                     text-decoration: underline;

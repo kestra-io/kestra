@@ -68,7 +68,8 @@ const HANDLERS = {
     // --- executions ---------------------------------------------------------------------------
     "GET /executions/search": {results: [], total: 0},
     "GET /executions/namespaces/:namespace/flows/:flowId/average-duration": {avgDurationMs: null, count: 0},
-    "GET /outputs/:executionId": [],
+    "GET /outputs/tasks/:executionId": [],
+    "GET /outputs/executions/:executionId": {},
 
     // --- dashboards & misc --------------------------------------------------------------------
     "POST /dashboards/charts/preview": {results: [], total: 0},

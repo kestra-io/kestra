@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
-import {ref} from "vue"
+import {reactive, ref} from "vue"
 import {mountGlobal} from "./_helpers"
 
 // Drive the composable from the test so we can assert how CopilotChat renders each
@@ -15,11 +15,11 @@ const state = {
     pendingConfirmation: ref<any>(null),
     unavailable: ref(false),
     canSend: ref(true),
+    nextThreadTitle: ref<string | null>(null),
     sendChat: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
     reset: vi.fn(),
-    retry: vi.fn(),
     retryLastTurn: vi.fn(),
     loadThread: vi.fn(),
     restoreThread: vi.fn(),
@@ -31,10 +31,22 @@ let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, 
 vi.mock("vue-router", () => ({useRoute: () => routeStub}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
-// CopilotChat reads a seeded prompt from the misc store on mount. Shared mutable stub so a
-// test can seed a prompt before mounting (no Pinia in the unit env).
-const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), promptCopilot: vi.fn()}
+// CopilotChat reads a seeded prompt and the AI-availability flag from the misc store. Shared
+// mutable stub (reactive, so a mid-test `configs` swap re-renders) since there's no Pinia in the
+// unit env.
+const miscStore = reactive({
+    copilotPrompt: null as string | null,
+    copilotThreadTitle: null as string | null,
+    copilotNewThread: false,
+    configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
+    openCopilot: vi.fn(),
+    promptCopilot: vi.fn(),
+})
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
+// CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
+// create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419).
+const flowStore = reactive({flowYaml: ""})
+vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
@@ -55,13 +67,17 @@ describe("CopilotChat", () => {
         state.sendChat.mockReset()
         state.confirm.mockReset()
         state.reset.mockReset()
-        state.retry.mockReset()
         state.retryLastTurn.mockReset()
         state.loadThread.mockReset()
         state.restoreThread.mockReset()
         state.noteContext.mockReset()
         state.thread.value = null
+        state.nextThreadTitle.value = null
         miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
+        miscStore.configs = {isAiApiKeyConfigured: true}
+        flowStore.flowYaml = ""
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -96,6 +112,32 @@ describe("CopilotChat", () => {
         expect(miscStore.copilotPrompt).toBeNull()
     })
 
+    // kestra-io/kestra-ee#10424: a seeded fix must not stack onto the active conversation.
+    it("drops the active conversation and titles the next thread when the seeded prompt asks for a new thread", async () => {
+        state.thread.value = {uid: "t-1"} as any
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
+        // Consumed once, so a later open doesn't reset again.
+        expect(miscStore.copilotNewThread).toBe(false)
+        expect(miscStore.copilotThreadTitle).toBeNull()
+    })
+
+    it("seeds a new-thread fix without resetting when the chat is already fresh", async () => {
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).not.toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
+    })
+
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {
         const w = mountChat({initialMode: "PLAN"})
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "do it")
@@ -111,6 +153,43 @@ describe("CopilotChat", () => {
         expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
             prompt: "why did this fail?",
             additionalContext: {currentView: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}},
+        }))
+    })
+
+    // kestra-io/kestra-ee#10419: a flow pasted on the create page was never saved, so the agent
+    // has nothing to read — the turn must carry the editor buffer itself.
+    it("sends the editor buffer as flowSource on the flow create page", async () => {
+        routeStub = {name: "flows/create", params: {}}
+        flowStore.flowYaml = "id: repro\nnamespace: company.team"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "fix this error")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", flowSource: "id: repro\nnamespace: company.team"}},
+        }))
+    })
+
+    it("sends the editor buffer alongside the flow ids on a flow detail route", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "what does this flow do?")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team", flowId: "my-flow", flowSource: "id: my-flow"}},
+        }))
+    })
+
+    it("drops the editor buffer when the flow context pill is dismissed", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotContextChip"}).vm.$emit("remove", "flowId")
+        await flushPromises()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no flow please")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team"}},
         }))
     })
 
@@ -219,18 +298,18 @@ describe("CopilotChat", () => {
     })
 
     it("starts a new chat via the top bar", async () => {
-        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}] // something to reset → enabled
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}] // something to reset → shown
         const w = mountChat()
         await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
         expect(state.reset).toHaveBeenCalled()
     })
 
-    it("disables New chat on a fresh, empty chat and enables it once there is something to reset", () => {
+    it("hides New chat on a fresh, empty chat and shows it once there is something to reset", () => {
         // beforeEach leaves the chat fresh (no messages, no thread) → nothing to reset.
-        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeDefined()
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").exists()).toBe(false)
 
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
-        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeUndefined()
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").exists()).toBe(true)
     })
 
     it("mounts the thread controls (EE-only Recents; a no-op in OSS)", () => {
@@ -244,11 +323,46 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
     })
 
-    it("retries from the unavailable state", async () => {
+    // Configuring a provider is an instance-config change, so the unavailable state points at the
+    // docs rather than offering a retry that could never succeed within the session.
+    it("offers the configuration docs — not a retry — from the unavailable state", () => {
         state.unavailable.value = true
         const w = mountChat()
-        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
-        expect(state.retry).toHaveBeenCalled()
+        const docs = w.find("[data-test=\"copilot-unavailable-docs\"]")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
+        expect(docs.attributes("target")).toBe("_blank")
+        expect(w.find("[data-test=\"copilot-unavailable-retry\"]").exists()).toBe(false)
+    })
+
+    // kestra-io/kestra-ee#10739: `/configs` says up front that no provider is configured, but the
+    // copilot still opens on the regular chat — the unavailable state waits for a send attempt.
+    it("opens on the regular chat when no AI provider is configured", () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        expect(w.text()).toContain("Turn your idea into a workflow")
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
+        expect(w.find(".copilot-suggestions").exists()).toBe(true)
+    })
+
+    it("shows the unavailable state once a prompt is attempted with no AI provider configured", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        const w = mountChat()
+
+        // A quick-start suggestion is a send attempt like any other.
+        await w.find(".copilot-suggestion").trigger("click")
+
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
+        // The turn is short-circuited: it could only ever come back 503.
+        expect(state.sendChat).not.toHaveBeenCalled()
+    })
+
+    it("keeps the copilot usable when the availability flag is absent (older backend)", () => {
+        miscStore.configs = {}
+        expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+
+        miscStore.configs = undefined
+        expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
     })
 
     it("auto-scrolls the transcript to the bottom as new content arrives", async () => {

@@ -4,6 +4,7 @@
         destroyOnClose
         appendToBody
         large
+        scrollable
     >
         <template #header>
             <div class="header">
@@ -17,99 +18,97 @@
             </div>
         </template>
 
-        <KsScrollbar class="modal-body" maxHeight="70vh">
-            <KsTabs v-model="activeTab" type="segmented">
-                <KsTabPane name="form" :label="$t('triggers_add_modal_tab_form')">
-                    <div class="form">
-                        <KsForm labelPosition="left" labelWidth="122px" :model="formModel">
-                            <KsFormItem :label="$t('namespace')" required>
-                                <NamespaceSelect
-                                    v-model="formModel.namespace"
-                                    :placeholder="$t('triggers_add_modal_namespace_placeholder')"
-                                    :clearable="false"
-                                    :autoDefault="false"
-                                    @update:model-value="onNamespaceChange"
-                                />
-                            </KsFormItem>
-
-                            <KsFormItem :label="$t('flow')" required>
-                                <KsSelect
-                                    v-model="formModel.flowId"
-                                    filterable
-                                    :placeholder="$t('triggers_add_modal_flow_placeholder')"
-                                    :disabled="!formModel.namespace"
-                                    :loading="flowsLoading"
-                                >
-                                    <KsOption v-for="f in flowOptions" :key="f.id" :label="f.id" :value="f.id" />
-                                </KsSelect>
-                            </KsFormItem>
-
-                            <KsFormItem :label="$t('triggers_add_modal_trigger_id')" required>
-                                <KsInput
-                                    v-model="formModel.triggerId"
-                                    class="id-input"
-                                    :placeholder="$t('triggers_add_modal_trigger_id_placeholder')"
-                                />
-                            </KsFormItem>
-
-                            <TaskObject
-                                v-if="hasTriggerProperties"
-                                :modelValue="triggerPropertiesModel"
-                                @update:model-value="onPropertiesUpdate"
-                                :properties="triggerProperties"
-                                :schema="triggerSchema"
-                                :root="trigger.type"
-                                merge
+        <KsTabs v-model="activeTab" type="segmented" class="modal-tabs">
+            <KsTabPane name="form" :label="$t('triggers_add_modal_tab_form')">
+                <div class="form">
+                    <KsForm labelPosition="left" labelWidth="122px" :model="formModel">
+                        <KsFormItem :label="$t('namespace')" required>
+                            <NamespaceSelect
+                                v-model="formModel.namespace"
+                                :placeholder="$t('triggers_add_modal_namespace_placeholder')"
+                                :clearable="false"
+                                :autoDefault="false"
+                                @update:model-value="onNamespaceChange"
                             />
+                        </KsFormItem>
 
-                            <p v-else class="hint">
-                                {{ $t("triggers_add_modal_properties_hint") }}
-                            </p>
-                        </KsForm>
-                    </div>
-                </KsTabPane>
+                        <KsFormItem :label="$t('flow')" required>
+                            <KsSelect
+                                v-model="formModel.flowId"
+                                filterable
+                                :placeholder="$t('triggers_add_modal_flow_placeholder')"
+                                :disabled="!formModel.namespace"
+                                :loading="flowsLoading"
+                            >
+                                <KsOption v-for="f in flowOptions" :key="f.id" :label="f.id" :value="f.id" />
+                            </KsSelect>
+                        </KsFormItem>
 
-                <KsTabPane name="source" :label="$t('triggers_add_modal_tab_source')">
-                    <div class="source">
-                        <KsIconButton
-                            class="copy"
-                            :aria-label="copied ? $t('copied') : $t('copy')"
-                            @click="copySource"
-                        >
-                            <CheckIcon v-if="copied" class="text-success" />
-                            <ContentCopy v-else />
-                        </KsIconButton>
-                        <KsEditor
-                            v-bind="editorBindings"
-                            :modelValue="sourceYaml"
-                            lang="yaml"
-                            :inline="true"
-                            :navbar="false"
-                            readOnly
-                            :options="{
-                                fullHeight: false,
-                                customHeight: 24,
-                                editor: {
-                                    padding: {top: 6, bottom: 6},
-                                    guides: {indentation: false},
-                                },
-                            }"
+                        <KsFormItem :label="$t('triggers_add_modal_trigger_id')" required>
+                            <KsInput
+                                v-model="formModel.triggerId"
+                                class="id-input"
+                                :placeholder="$t('triggers_add_modal_trigger_id_placeholder')"
+                            />
+                        </KsFormItem>
+
+                        <TaskObject
+                            v-if="hasTriggerProperties"
+                            :modelValue="triggerPropertiesModel"
+                            @update:model-value="onPropertiesUpdate"
+                            :properties="triggerProperties"
+                            :schema="triggerSchema"
+                            :root="trigger.type"
+                            merge
                         />
-                    </div>
-                </KsTabPane>
 
-                <KsTabPane name="documentation" :label="$t('triggers_add_modal_tab_documentation')">
-                    <div class="docs">
-                        <PluginDocumentation
-                            v-if="documentationPlugin"
-                            :plugin="documentationPlugin"
-                            fetchPluginDocumentation
-                        />
-                        <KsSkeleton v-else :rows="6" animated />
-                    </div>
-                </KsTabPane>
-            </KsTabs>
-        </KsScrollbar>
+                        <p v-else class="hint">
+                            {{ $t("triggers_add_modal_properties_hint") }}
+                        </p>
+                    </KsForm>
+                </div>
+            </KsTabPane>
+
+            <KsTabPane name="source" :label="$t('triggers_add_modal_tab_source')">
+                <div class="source">
+                    <KsIconButton
+                        class="copy"
+                        :aria-label="copied ? $t('copied') : $t('copy')"
+                        @click="copySource"
+                    >
+                        <CheckIcon v-if="copied" class="text-success" />
+                        <ContentCopy v-else />
+                    </KsIconButton>
+                    <KsEditor
+                        v-bind="editorBindings"
+                        :modelValue="sourceYaml"
+                        lang="yaml"
+                        :inline="true"
+                        :navbar="false"
+                        readOnly
+                        :options="{
+                            fullHeight: false,
+                            customHeight: 24,
+                            editor: {
+                                padding: {top: 6, bottom: 6},
+                                guides: {indentation: false},
+                            },
+                        }"
+                    />
+                </div>
+            </KsTabPane>
+
+            <KsTabPane name="documentation" :label="$t('triggers_add_modal_tab_documentation')">
+                <div class="docs">
+                    <PluginDocumentation
+                        v-if="documentationPlugin"
+                        :plugin="documentationPlugin"
+                        fetchPluginDocumentation
+                    />
+                    <KsSkeleton v-else :rows="6" animated />
+                </div>
+            </KsTabPane>
+        </KsTabs>
 
         <template #footer>
             <div class="footer">
@@ -128,8 +127,8 @@
     import {computed, provide, ref, watch} from "vue"
     import {useRouter} from "vue-router"
 
-    import {KsEditor} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -137,7 +136,6 @@
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins"
     import {useTriggerDraftStore} from "../../../stores/triggerDraft"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
-    import {triggerDisplayName} from "./triggerCatalog"
 
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
@@ -149,7 +147,7 @@
     } from "../../no-code/injectionKeys"
 
     const visible = defineModel<boolean>("visible", {required: true})
-    const props = defineProps<{trigger: TriggerPluginDto}>()
+    const props = defineProps<{trigger: TriggerPluginDto; displayName: string}>()
     defineEmits<{cancel: []}>()
 
     const COPY_FEEDBACK_MS = 1600
@@ -190,8 +188,6 @@
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
 
-    const displayName = computed(() => triggerDisplayName(props.trigger))
-
     // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
     // $schema, properties, required, title…). The actual class fields live at
     // schema.properties.properties, with the required array at schema.properties.required.
@@ -205,7 +201,8 @@
 
     const triggerSchema = computed<{required?: string[]}>(() => {
         const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        return wrapper?.required ? {required: wrapper.required} : {}
+        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
+        return required?.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
@@ -267,7 +264,7 @@
     }
 
     const copySource = async () => {
-        await navigator.clipboard.writeText(`triggers:\n${sourceYaml.value}\n`)
+        await copyToClipboard(`triggers:\n${sourceYaml.value}\n`)
         copied.value = true
         setTimeout(() => copied.value = false, COPY_FEEDBACK_MS)
     }
@@ -342,14 +339,9 @@
         }
     }
 
-    .modal-body {
-        margin-right: calc(var(--kel-dialog-padding-primary) * -1);
-        padding-right: var(--kel-dialog-padding-primary);
-
-        :deep(.kel-tabs--segmented) {
-            .kel-tabs__header {
-                margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
-            }
+    .modal-tabs {
+        :deep(.kel-tabs__header) {
+            margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
         }
     }
 

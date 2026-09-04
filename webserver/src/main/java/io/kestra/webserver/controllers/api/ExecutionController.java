@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -34,6 +33,7 @@ import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -47,6 +47,10 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemType;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
@@ -54,8 +58,7 @@ import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -80,20 +83,21 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.*;
-import io.kestra.plugin.core.preview.TextFileRenderer;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
+import io.kestra.webserver.annotation.AnonymousAccess;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
 import io.kestra.webserver.models.api.ApiLightExecution;
-import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
+import io.kestra.webserver.services.WebhookBodyService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -119,6 +123,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -140,6 +145,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -244,13 +250,22 @@ public class ExecutionController {
     private WebhookService webhookService;
 
     @Inject
+    private FlowMetaStoreInterface flowMetaStore;
+
+    @Inject
+    private WebhookBodyService webhookBodyService;
+
+    @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
     @Inject
-    private PluginRegistry pluginRegistry;
+    private ModelValidator modelValidator;
+
+    @Inject
+    private FileRendererService fileRendererService;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -485,7 +500,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete a list of executions")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<?> deleteExecutionsByIds(
         @RequestBody(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
@@ -493,7 +508,7 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
@@ -501,25 +516,12 @@ public class ExecutionController {
                 executions.add(execution.get());
             } else {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             }
         }
         if (!invalids.isEmpty()) {
-            return HttpResponse.badRequest()
-                .body(
-                    BulkErrorResponse
-                        .builder()
-                        .message("invalid bulk delete")
-                        .invalids(invalids)
-                        .build()
-                );
+            throw new BulkValidationException("One or more executions could not be deleted.", invalids);
         }
 
         executions
@@ -532,7 +534,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete executions filter by query parameters")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -563,20 +565,74 @@ public class ExecutionController {
         return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts` with the URI of its content in Kestra's internal storage, each other " +
+                        "part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @AnonymousAccess
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPostWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
+    }
+
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @AnonymousAccess
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPutWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
+    }
+
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by GET webhook trigger")
@@ -587,95 +643,174 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts` with the URI of its content in Kestra's internal storage, each other " +
+                        "part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    /**
+     * Collect the parts of a {@code multipart/form-data} webhook request, then evaluate the webhook with them.
+     * The content of a file part is streamed into the internal storage, so that a file of any size reaches the
+     * flow intact. The webhook is resolved first: a request that matches none must not store anything.
+     */
+    private Mono<HttpResponse<?>> webhookMultipart(
+        String namespace,
+        String id,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
+        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+        return webhookMultipart(maybeFlow, key, path, parts, request);
+    }
+
+    protected Mono<HttpResponse<?>> webhookMultipart(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
+        Flow flow = executableFlow(maybeFlow);
+        findWebhook(flow, key);
+
+        // Minted before the parts are read, so that they are stored under the execution that will carry them.
+        String executionId = IdUtils.create();
+
+        return webhookBodyService
+            .collect(parts, flow, executionId, request.getContentType().map(MediaType::getName).orElse(MediaType.MULTIPART_FORM_DATA))
+            .flatMap(body ->
+            {
+                try {
+                    return this.webhook(maybeFlow, key, path, MicronautHttpService.from(request, body), executionId, null);
+                } catch (RuntimeException | IllegalVariableEvaluationException e) {
+                    // The call was refused after its parts were stored under an execution that will not exist.
+                    webhookBodyService.deleteStored(flow, executionId);
+                    return Mono.error(e);
+                }
+            });
+    }
+
+    /**
+     * Read the body of a webhook request as the trigger it reaches asks for it, then evaluate the webhook with it.
+     * The webhook is resolved first: a request that matches none must have neither its body stored nor its bytes
+     * carried into the server.
+     */
     private Mono<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
-        return webhook(find, key, path, request);
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+        return webhook(maybeFlow, key, path, request);
     }
 
     protected Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        if (maybeFlow.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
-        }
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        Flow flow = executableFlow(maybeFlow);
+        // Processed here too: how the body is read is the trigger's fetchType, which governance can change
+        AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
 
-        var flow = maybeFlow.get();
-        if (flow.isDisabled()) {
-            throw new ConflictException("Cannot execute flow: flow is disabled.");
-        }
-        if (flow instanceof FlowWithException fwe) {
-            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
-        }
+        // Minted before the body is read, so that a stored body lives under the execution that will carry it.
+        String executionId = IdUtils.create();
+        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook.getFetchType());
 
-        Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
-            : flow
-                .getTriggers())
-            .stream()
-            .filter(o -> o instanceof AbstractWebhookTrigger)
-            .map(o -> (AbstractWebhookTrigger) o)
-            .filter(w ->
-            {
-                RunContext runContext = runContextFactory.of(flow, w);
-                try {
-                    String webhookKey = runContext.render(w.getKey()).trim();
-                    // compare via MessageDigest.isEqual to prevent timing attacks
-                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
-                } catch (IllegalVariableEvaluationException e) {
-                    // be conservative, don't crash but filter the webhook
-                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
-                    return false;
-                }
-            })
-            .findFirst();
-
-        if (maybeWebhook.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
+        try {
+            return this.webhook(
+                maybeFlow,
+                key,
+                path,
+                MicronautHttpService.from(request, body.requestBody()),
+                executionId,
+                body.storedUri()
+            );
+        } catch (RuntimeException | IllegalVariableEvaluationException e) {
+            // The call was refused after its body was stored under an execution that will not exist.
+            webhookBodyService.deleteStored(flow, executionId);
+            throw e;
         }
+    }
 
-        final AbstractWebhookTrigger webhook = maybeWebhook.get();
+    /**
+     * Evaluate the webhook the given key matches, for an execution that will be given the provided identifier.
+     *
+     * @param executionId the identifier of the execution the call creates, minted by the caller when the request
+     *        had to be read before the execution could be created, e.g. to store its file parts
+     * @param storedBodyUri the URI the body of the request was stored under, {@code null} unless the trigger
+     *        fetches its body as {@link AbstractWebhookTrigger.FetchType#STORE}
+     */
+    private Mono<HttpResponse<?>> webhook(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        io.kestra.core.http.HttpRequest request,
+        String executionId,
+        URI storedBodyUri) throws IllegalVariableEvaluationException {
+        Flow flow = executableFlow(maybeFlow);
+        // Matched on the raw flow so an unknown key stays a 404, then evaluated as the executor would
+        // run it: the trigger is part of the flow, so its configuration is the processed one.
+        final AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
         this.onWebhookMatched(flow, webhook);
+
+        if (webhook.isDisabled()) {
+            throw new ConflictException("Cannot execute webhook: the trigger '%s' is disabled.".formatted(webhook.getId()));
+        }
 
         // Webhook context
         var webhookContext = new WebhookContext(
-            MicronautHttpService.from(request),
+            request,
             path,
             flow,
             webhook,
-            webhookService
+            webhookService,
+            executionId,
+            storedBodyUri
         );
 
         // Call evaluate and create a failed execution if exception occurs
         try {
             return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
         } catch (Exception e) {
-            var executionId = IdUtils.create();
+            // The failed execution takes the identifier the call was given, so that anything already stored for it
+            // is attached to it, and purged with it.
+            // No labels: the executor builds the execution from the flow processed for runtime, which
+            // contributes them itself.
             var createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
-                .withLabels(LabelService.labelsExcludingSystem(flow.getLabels()))
                 .withStateType(State.Type.FAILED)
                 .withTrigger(ExecutionTrigger.of(webhook, Map.of()));
 
@@ -700,6 +835,70 @@ public class ExecutionController {
         // no-op
     }
 
+    /**
+     * @return the flow a webhook call targets
+     * @throws HttpStatusException if the flow does not exist
+     * @throws ConflictException if the flow cannot be executed
+     */
+    private static Flow executableFlow(Optional<Flow> maybeFlow) {
+        if (maybeFlow.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
+        }
+
+        var flow = maybeFlow.get();
+        if (flow.isDisabled()) {
+            throw new ConflictException("Cannot execute flow: flow is disabled.");
+        }
+        if (flow instanceof FlowWithException fwe) {
+            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
+        }
+
+        return flow;
+    }
+
+    /**
+     * @return the same trigger as the flow processed for runtime carries it, so that what governs the flow
+     *         governs its triggers too; the one given when the processed flow can no longer supply it, which
+     *         is the case for a flow governance blocks — rejected a step later by the edition's gate.
+     */
+    private AbstractWebhookTrigger processedForRuntime(Flow flow, AbstractWebhookTrigger webhook) {
+        return ListUtils.emptyOnNull(FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).flow().getTriggers())
+            .stream()
+            .filter(processed -> webhook.getId().equals(processed.getId()))
+            .filter(AbstractWebhookTrigger.class::isInstance)
+            .map(AbstractWebhookTrigger.class::cast)
+            .findFirst()
+            .orElse(webhook);
+    }
+
+    /**
+     * @return the webhook trigger of the flow the given key matches
+     * @throws HttpStatusException if no webhook trigger matches the key
+     */
+    private AbstractWebhookTrigger findWebhook(Flow flow, String key) {
+        return (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
+            : flow
+                .getTriggers())
+            .stream()
+            .filter(o -> o instanceof AbstractWebhookTrigger)
+            .map(o -> (AbstractWebhookTrigger) o)
+            .filter(w ->
+            {
+                RunContext runContext = runContextFactory.of(flow, w);
+                try {
+                    String webhookKey = runContext.render(w.getKey()).trim();
+                    // compare via AuthUtils.constantTimeEquals to prevent timing attacks
+                    return AuthUtils.constantTimeEquals(webhookKey, key);
+                } catch (IllegalVariableEvaluationException e) {
+                    // be conservative, don't crash but filter the webhook
+                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
+                    return false;
+                }
+            })
+            .findFirst()
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found"));
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{namespace}/{id}/validate", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = { "Executions" }, summary = "Validate the creation of a new execution for a flow")
@@ -713,15 +912,19 @@ public class ExecutionController {
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
         List<Label> parsedLabels = parseLabels(labels);
-        Execution execution = Execution.newExecution(flow, parsedLabels);
+        // inputs render against the flow, and the labels, the executor will build the execution from,
+        // so a `defaults` referencing a label the flow only carries at runtime resolves here too
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolvedFlow = processedFlow.flow() instanceof FlowWithException ? flow : processedFlow.flow();
+        Execution execution = Execution.newExecution(resolvedFlow, LabelService.withoutPinned(parsedLabels, processedFlow.pinnedLabelKeys()));
         return flowInputOutput
-            .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
+            .validateExecutionInputs(resolvedFlow.getInputs(), resolvedFlow, execution, inputs)
             .map(values ->
             {
                 // values are keyed by expanded leaf id (FORM children are dotted, e.g. environment.region);
                 // nest them so checks referencing {{ inputs.environment.region }} resolve like the create path does.
                 Map<String, Object> inputsAsMap = MapUtils.flattenToNestedMap(values.stream().collect(HashMap::new, (m, v) -> m.put(v.input().getId(), v.value()), HashMap::putAll));
-                List<Check> checks = flowService.getFailedChecks(flow, inputsAsMap);
+                List<Check> checks = flowService.getFailedChecks(resolvedFlow, inputsAsMap);
                 return ApiValidateExecutionInputsResponse.of(id, namespace, checks, values);
             });
     }
@@ -752,7 +955,6 @@ public class ExecutionController {
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
         @Parameter(description = "Specific execution kind") @QueryValue Optional<ExecutionKind> kind) {
         final String tenantId = tenantService.resolveTenant();
-        List<Label> parsedLabels = parseLabels(labels);
         final Flow flow;
         try {
             flow = flowService.getFlowIfExecutableOrThrow(tenantId, namespace, id, revision);
@@ -772,6 +974,8 @@ public class ExecutionController {
             throw e;
         }
 
+        List<Label> parsedLabels = parseLabels(labels);
+
         if (flow.isDraft()) {
             controlDraftExecutableAs(flow, kind.orElse(null));
 
@@ -787,6 +991,11 @@ public class ExecutionController {
         }
 
         var executionId = IdUtils.create();
+        // inputs render against the flow, and the labels, the executor will build the execution from,
+        // so a `defaults` referencing a label the flow only carries at runtime resolves here too
+        ProcessedFlow processedFlow = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolvedFlow = processedFlow.flow() instanceof FlowWithException ? flow : processedFlow.flow();
+        List<Label> contributed = LabelService.withoutPinned(parsedLabels, processedFlow.pinnedLabelKeys());
         // Capture the OTel context on the current thread before entering the reactive chain.
         // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
         // would return an empty root context since OTel Context is thread-local.
@@ -794,10 +1003,10 @@ public class ExecutionController {
         // Same reason for the Micronaut propagated context: it carries the server request and its
         // authentication, which the CREATE event listeners need to attribute the execution to its author.
         final PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
+        return flowInputOutput.readExecutionInputs(resolvedFlow, executionId, contributed, inputs)
             .flatMap(executionInputs ->
             {
-                List<Check> failed = flowService.getFailedChecks(flow, executionInputs);
+                List<Check> failed = flowService.getFailedChecks(resolvedFlow, executionInputs);
                 Check.Behavior behavior = Check.resolveBehavior(failed);
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
                     return Mono.error(
@@ -895,11 +1104,11 @@ public class ExecutionController {
         private final URI url;
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
-        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs,
+        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs,
             List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
             Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
-                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
+                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, null, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
                 traceParent, fixtures, kind, breakpoints, loopRun
             );
 
@@ -915,7 +1124,6 @@ public class ExecutionController {
                 execution.getFlowRevision(),
                 execution.getTaskRunList(),
                 execution.getInputs(),
-                execution.getOutputs(),
                 execution.getLabels(),
                 execution.getVariables(),
                 execution.getState(),
@@ -935,23 +1143,36 @@ public class ExecutionController {
         }
     }
 
+    /**
+     * Parses the labels a caller supplied for an execution, rejecting the system namespace, which only Kestra
+     * writes. Which of the rest survive onto the execution is the executor's call, so that every creation
+     * route is governed identically rather than once per door.
+     */
     protected List<Label> parseLabels(List<String> labels) {
         List<Label> parsedLabels = labels == null ? new ArrayList<>()
             : RequestUtils.toMap(labels).entrySet().stream()
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
-        // check for system labels: none can be passed at execution creation time except system.correlationId and system.from
-        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && !label.key().equals(Label.FROM) && label.key().startsWith(SYSTEM_PREFIX))
+        parsedLabels.forEach(modelValidator::validate);
+
+        // system labels can only be set by Kestra itself; the only exceptions accepted from a
+        // client are system.correlationId and system.from=ui (sent by the UI). Any other
+        // system.from value (scheduler/trigger/worker/…) would let a caller spoof the origin.
+        Optional<Label> first = parsedLabels.stream()
+            .filter(
+                label -> label.key().startsWith(SYSTEM_PREFIX)
+                    && !label.key().equals(CORRELATION_ID)
+                    && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value()))
+            )
             .findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
 
-        // from can be passed by the UI so we only add it if it didn't exist anymore
-        // if we want to be more restrictive, we may want to restrict it to only have the `ui` value
+        // default the origin to "api" when the client didn't set it (the UI sends system.from=ui)
         if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
-            parsedLabels.add(new Label(Label.FROM, "api"));
+            parsedLabels.add(new Label(Label.FROM, Label.FromLabel.API.value));
         }
 
         return parsedLabels;
@@ -1129,7 +1350,7 @@ public class ExecutionController {
 
         if (!(execution.getState().canBeRestarted())) {
             throw new ConflictException(
-                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated or paused."
+                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated."
             );
         }
 
@@ -1145,56 +1366,39 @@ public class ExecutionController {
     @Post(uri = "/restart/by-ids")
     @Operation(tags = { "Executions" }, summary = "Restart a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
-                            "current state is '" + execution.get().getState().getCurrent() + "' !",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated to be restarted, " +
+                            "current state is '" + execution.get().getState().getCurrent() + "' !", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk restart")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be restarted.", invalids);
         }
 
         this.restartCounter.increment(executions.size());
 
         return submitBatchAction(
             executions,
-            (execution, opId) -> {
+            (execution, opId) ->
+            {
                 Integer revision = null;
                 if (Boolean.TRUE.equals(latestRevision)) {
                     Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
@@ -1209,7 +1413,7 @@ public class ExecutionController {
     @Post(uri = "/restart/by-query")
     @Operation(tags = { "Executions" }, summary = "Restart executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1444,7 +1648,7 @@ public class ExecutionController {
     @Post(uri = "/change-status/by-ids")
     @Operation(tags = { "Executions" }, summary = "Change executions state by id asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
@@ -1453,29 +1657,17 @@ public class ExecutionController {
         }
 
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in a terminated state or is killed",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in a terminated state or is killed", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -1483,13 +1675,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk change executions state")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not have their state changed.", invalids);
         }
 
         this.changeStatusCounter.increment(executions.size());
@@ -1504,7 +1690,7 @@ public class ExecutionController {
     @Post(uri = "/change-status/by-query")
     @Operation(tags = { "Executions" }, summary = "Change executions state by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1567,43 +1753,25 @@ public class ExecutionController {
     @Delete(uri = "/kill/by-ids")
     @Operation(tags = { "Executions" }, summary = "Kill a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws QueueException {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && execution.get().getState().isTerminated()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution already finished",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution already finished", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else if (!validateExecutionACL(execution.get())) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "user don't have the authorisation to kill this execution",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "user don't have the authorisation to kill this execution", ProblemTypes.FORBIDDEN)
                 );
             } else {
                 executions.add(execution.get());
@@ -1611,13 +1779,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk kill")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be killed.", invalids);
         }
 
         this.killCounter.increment(executions.size());
@@ -1725,43 +1887,25 @@ public class ExecutionController {
     @Post(uri = "/resume/by-ids")
     @Operation(tags = { "Executions" }, summary = "Resume a list of paused executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().isPaused()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in state PAUSED",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in state PAUSED", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else if (!validateExecutionACL(execution.get())) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "user don't have the authorisation to resume this execution",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
                 );
             } else {
                 executions.add(execution.get());
@@ -1769,13 +1913,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk resume")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be resumed.", invalids);
         }
 
         this.resumeCounter.increment(executions.size());
@@ -1790,7 +1928,7 @@ public class ExecutionController {
     @Post(uri = "/resume/by-query")
     @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1825,33 +1963,21 @@ public class ExecutionController {
     @Post(uri = "/pause/by-ids")
     @Operation(tags = { "Executions" }, summary = "Pause a list of running executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().isRunning()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in state RUNNING",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in state RUNNING", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -1859,13 +1985,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk pause")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be paused.", invalids);
         }
 
         this.pauseCounter.increment(executions.size());
@@ -1880,7 +2000,7 @@ public class ExecutionController {
     @Post(uri = "/pause/by-query")
     @Operation(tags = { "Executions" }, summary = "Pause executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1895,7 +2015,7 @@ public class ExecutionController {
     @Delete(uri = "/kill/by-query")
     @Operation(tags = { "Executions" }, summary = "Kill executions filter by query parameters")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1910,7 +2030,7 @@ public class ExecutionController {
     @Post(uri = "/replay/by-query")
     @Operation(tags = { "Executions" }, summary = "Create new executions from old ones filter by query parameters asynchronously. Keep the flow revision")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1927,24 +2047,18 @@ public class ExecutionController {
     @Post(uri = "/replay/by-ids")
     @Operation(tags = { "Executions" }, summary = "Create new executions from old ones asynchronously. Keep the flow revision")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -1952,13 +2066,7 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk replay")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be replayed.", invalids);
         }
 
         this.replayCounter.increment(executions.size());
@@ -2098,12 +2206,7 @@ public class ExecutionController {
         }
 
         String extension = FilenameUtils.getExtension(path.toString());
-        FileRenderer renderer = pluginRegistry.plugins().stream()
-            .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
-            .map(this::instantiate)
-            .filter(fileRenderer -> fileRenderer.supports(extension))
-            .findFirst()
-            .orElseGet(TextFileRenderer::new);
+        FileRenderer renderer = fileRendererService.resolve(extension);
 
         InputStream fileStream = switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME ->
@@ -2128,14 +2231,6 @@ public class ExecutionController {
         }
     }
 
-    private FileRenderer instantiate(Class<? extends FileRenderer> fileRenderer) {
-        try {
-            return fileRenderer.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/labels")
     @Operation(tags = { "Executions" }, summary = "Add or update labels of a terminated execution")
@@ -2146,14 +2241,14 @@ public class ExecutionController {
     public Mono<HttpResponse<?>> setLabelsOnTerminatedExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels) throws QueueException {
-        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (maybeExecution.isEmpty()) {
-            return Mono.just(HttpResponse.notFound());
-        }
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
+            .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution '%s' was not found.".formatted(executionId)));
 
-        Execution execution = maybeExecution.get();
         if (!execution.getState().getCurrent().isTerminated()) {
-            return Mono.just(HttpResponse.badRequest("The execution is not terminated"));
+            throw new ConflictException(
+                "Labels can only be set on a terminated execution. Execution '%s' is in state '%s'."
+                    .formatted(executionId, execution.getState().getCurrent())
+            );
         }
 
         List<Label> mergedLabels = mergeSystemLabels(execution, labels);
@@ -2194,33 +2289,21 @@ public class ExecutionController {
     @Post(uri = "/labels/by-ids")
     @Operation(tags = { "Executions" }, summary = "Set labels on a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByIds(
-        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
+        @RequestBody(description = "The request containing a list of labels and a list of executions") @Body @Valid SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : setLabelsByIds.executionsId()) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
             if (execution.isPresent() && !execution.get().getState().isTerminated()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution is not terminated",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution is not terminated", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
@@ -2228,33 +2311,32 @@ public class ExecutionController {
         }
 
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk set labels")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not have their labels set.", invalids);
+        }
+
+        // merge and validate every execution's labels before emitting anything, so a rejected
+        // batch (e.g. a system label in the payload) never applies to some executions but not others
+        Map<String, List<Label>> mergedLabelsByExecutionId = new HashMap<>(executions.size());
+        for (Execution execution : executions) {
+            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
+            mergedLabelsByExecutionId.put(execution.getId(), mergeSystemLabels(execution, deduplicated));
         }
 
         this.updateLabelsCounter.increment(executions.size());
 
         return submitBatchAction(executions, (execution, opId) ->
-        {
-            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
-            List<Label> merged = mergeSystemLabels(execution, deduplicated);
-            executionCommandQueue.emit(UpdateLabels.from(execution, merged).withOperationId(opId));
-        });
+            executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId))
+        );
     }
 
-    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull @Valid List<Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/labels/by-query")
     @Operation(tags = { "Executions" }, summary = "Set label on executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2293,48 +2375,30 @@ public class ExecutionController {
     @Post(uri = "/unqueue/by-ids")
     @Operation(tags = { "Executions" }, summary = "Unqueue a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type state) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
             if (execution.isPresent() && execution.get().getState().getCurrent() != State.Type.QUEUED) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not in state QUEUED",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not in state QUEUED", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else {
                 executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk unqueue")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be unqueued.", invalids);
         }
 
         this.unqueueCounter.increment(executions.size());
@@ -2349,7 +2413,7 @@ public class ExecutionController {
     @Post(uri = "/unqueue/by-query")
     @Operation(tags = { "Executions" }, summary = "Unqueue executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2387,57 +2451,33 @@ public class ExecutionController {
     @Post(uri = "/force-run/by-ids")
     @Operation(tags = { "Executions" }, summary = "Force run a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> forceRunByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+        List<ProblemError> invalids = new ArrayList<>();
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
             if (execution.isPresent() && execution.get().getState().isTerminated()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution in a terminated state",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution in a terminated state", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "execution not found",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
                 );
             } else if (!validateExecutionACL(execution.get())) {
                 invalids.add(
-                    ManualConstraintViolation.of(
-                        "user don't have the authorisation to force run this execution",
-                        executionId,
-                        String.class,
-                        "execution",
-                        executionId
-                    )
+                    executionProblem(executionId, "user don't have the authorisation to force run this execution", ProblemTypes.FORBIDDEN)
                 );
             } else {
                 executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
-            return bulkValidationError(
-                BulkErrorResponse
-                    .builder()
-                    .message("invalid bulk force run")
-                    .invalids(invalids)
-                    .build()
-            );
+            throw new BulkValidationException("One or more executions could not be force-run.", invalids);
         }
 
         this.forceRunCounter.increment(executions.size());
@@ -2452,7 +2492,7 @@ public class ExecutionController {
     @Post(uri = "/force-run/by-query")
     @Operation(tags = { "Executions" }, summary = "Force run executions filter by query parameters asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -2626,7 +2666,9 @@ public class ExecutionController {
                             dependencies.stream()
                                 .anyMatch(node -> node.getTenantId().equals(exec.getTenantId()) && node.getNamespace().equals(exec.getNamespace()) && node.getId().equals(exec.getFlowId()))
                         ) {
-                            if (streamingService.isStopFollow(flows.get(FlowId.uidWithoutRevision(current)), current)) {
+                            // evaluate the dependency execution itself, not the followed one: a terminated
+                            // dependency must be ended and removed even while the followed execution runs
+                            if (streamingService.isStopFollow(flows.get(FlowId.uidWithoutRevision(exec)), exec)) {
                                 emitter.next(Event.of(ExecutionStatusEvent.of(exec)).id("end"));
                                 return exec;
                             } else {
@@ -2811,7 +2853,9 @@ public class ExecutionController {
                 try {
                     emit.accept(operationId);
                 } catch (QueueException e) {
-                    throw new RuntimeException(e);
+                    // Exceptions.propagate rethrows a runtime as-is and wraps a checked one, so a MessageTooBigException
+                    // stays its real type and the ErrorController handler can map it to 413.
+                    throw Exceptions.propagate(e);
                 }
             },
             asyncOperationsConfiguration.waitTimeout()
@@ -2830,7 +2874,11 @@ public class ExecutionController {
                         "Failed to execute action '%s' on execution %s (operation_id=%s). Cause: %s".formatted(actionName, executionId, processed.operationId(), processed.error())
                     );
                 }
-                return executionRepository.findById(tenantId, executionId)
+                // This runs on the thread that completes the async-operation sink, which is the event-queue polling
+                // thread and carries no authenticated principal. The ACL-enforcing findById fails closed there, so it
+                // reports the execution as missing even though the command succeeded. Authorization already happened
+                // on the request thread, in the endpoint that submitted this operation.
+                return executionRepository.findByIdWithoutAcl(tenantId, executionId)
                     .orElseThrow(
                         () -> new NoSuchElementException(
                             "Execution disappeared after " + actionName.toLowerCase() + ": " + executionId
@@ -2841,12 +2889,11 @@ public class ExecutionController {
     }
 
     /**
-     * Returns an HTTP 400 response typed as {@code MutableHttpResponse<T>} so callers with a
-     * specific return type do not need to declare a wildcard. The cast is safe at runtime.
+     * One rejected item of a bulk operation. The execution id goes in the path rather than the message so a
+     * client can localise the text, and the type lets it tell a missing execution from a forbidden one.
      */
-    @SuppressWarnings("unchecked")
-    private static <T> MutableHttpResponse<T> bulkValidationError(BulkErrorResponse errorResponse) {
-        return (MutableHttpResponse<T>) HttpResponse.badRequest(errorResponse);
+    private static ProblemError executionProblem(String executionId, String detail, ProblemType type) {
+        return ProblemError.ofItem(detail, "executions[" + executionId + "]", type);
     }
 
     /**

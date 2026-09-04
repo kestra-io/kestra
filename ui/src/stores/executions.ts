@@ -10,13 +10,13 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {TaskRun, useClient, type Execution as SDKExecution, type StateType} from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
-import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import * as ExecutionUtils from "../utils/executionUtils"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
 import {Optional} from "../utils/utils"
 import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 export interface Check {
     message: string
@@ -102,7 +102,6 @@ export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> &
     tenantId?: string;
     taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, any>;
-    outputs?: Record<string, any>;
     variables?: Record<string, any>;
 }
 
@@ -115,7 +114,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         total: 0,
         results: [],
     })
-    const metrics = ref<any[]>([])
     const subflowsExecutions = ref<Record<string, any>>({})
     // live lifecycle-step progress reported by plugins mid-run (see RunContext#emitProgress),
     // read off the follow-logs SSE stream; taskRunId is globally unique so this is safe to
@@ -274,8 +272,19 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
-    const loadExecution = (options: { id: string }) => {
-        return ExecutionsAPI.execution({executionId: options.id}).then(data => {
+    let latestExecutionLoad = 0
+
+    const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
+        const load = ++latestExecutionLoad
+        return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
+            // A load the user has navigated away from must neither become the execution on screen
+            // nor drop the pending update for the one that is, the same way a superseded search is
+            // dropped in `stores/logs.ts`.
+            if (load !== latestExecutionLoad) return data
+
+            // A trailing event from the previous execution's stream, still open until the page
+            // mounts and follows this one, would otherwise land on top of this load.
+            throttledExecutionUpdate.cancel()
             execution.value = data
             return execution.value
         })
@@ -503,7 +512,11 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const followExecution = (options: { id: string }, translate: (itn: string) => string) => {
-        execution.value = undefined
+        // Keep an execution the route guard already loaded: clearing it would send the page back to
+        // its loading state, and cost a second fetch of what the store is already holding.
+        if (execution.value?.id !== options.id) {
+            execution.value = undefined
+        }
         closeSSE()
 
         executionSubscription.value = subscribeToExecution(options.id, {
@@ -515,16 +528,12 @@ export const useExecutionsStore = defineStore("executions", () => {
                     ? {
                         variant: "error",
                         title: translate("error"),
-                        content: {
-                            message: translate("errors.404.flow or execution"),
-                        },
+                        content: translate("errors.404.flow or execution"),
                     }
                     : {
                         variant: "error",
                         title: translate("something_went_wrong.connection_lost.title"),
-                        content: {
-                            message: translate("something_went_wrong.connection_lost.message"),
-                        },
+                        content: translate("something_went_wrong.connection_lost.message"),
                     }
             },
             onEnd: () => {
@@ -561,23 +570,6 @@ export const useExecutionsStore = defineStore("executions", () => {
                 return data
             }
             logs.value = data as any
-            return data
-        })
-    }
-
-    const loadMetrics = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
-        const {page, size, sort, taskRunId, taskId} = options.params ?? {}
-        return MetricsAPI.searchByExecution({
-            executionId: options.executionId,
-            page, size,
-            sort: sort ? [sort] : undefined,
-            taskRunId, taskId,
-        }).then(data => {
-            if (options.store === false) {
-                return data
-            }
-            metrics.value = data.results
-            total.value = data.total ?? 0
             return data
         })
     }
@@ -812,9 +804,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         // from an earlier attempt, not be dropped. Idempotent for genuine SSE reconnect replay
         // since that resends the identical timestamp.
         //
-        // Reassign the array (like `metrics` does on every loadMetrics()) rather than push/splice
-        // in place: consumers watching this ref shallowly (e.g. to know when to re-render a
-        // topology node) only see a change on reference reassignment, not on in-place mutation.
+        // Reassign the array rather than push/splice in place: consumers watching this ref
+        // shallowly (e.g. to know when to re-render a topology node) only see a change on
+        // reference reassignment, not on in-place mutation.
         const existingIndex = progressEvents.value.findIndex(e => e.taskRunId === event.taskRunId && e.step === event.step)
         if (existingIndex === -1) {
             progressEvents.value = [...progressEvents.value, event]
@@ -866,7 +858,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         execution,
         total,
         logs,
-        metrics,
         subflowsExecutions,
         progressEvents,
         flow,
@@ -911,7 +902,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         followExecutionDependencies,
         followLogs,
         loadLogs,
-        loadMetrics,
         downloadLogs,
         downloadLogsFile,
         deleteLogs,

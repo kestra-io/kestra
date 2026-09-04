@@ -71,6 +71,10 @@ main {
         transition: padding 0.3s ease;
         padding: 0 2rem;
 
+        &:has(section.empty) {
+            transition: none;
+        }
+
         &.full-height {
             flex: 1;
             display: flex;
@@ -98,15 +102,16 @@ main {
             flex: 1;
             min-height: 0;
 
-            :has(.ks-data-table-wrapper) {
+            // Every ancestor of the table is matched here, so keep the stretch out of
+            // collapsible sections, which have to hug their summary when closed.
+            :has(.ks-data-table-wrapper):not(details, details *) {
                 height: 100%;
             }
         }
     }
 
-    // fitHeight pages pin the pagination footer, so override main-container's own top/bottom padding to match plain full-container pages
     section.main-container.full-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
-        padding-top: 1rem;
+        padding-top: 2rem;
         padding-bottom: 0;
     }
 
@@ -211,31 +216,7 @@ body{
     background-color: var(--ks-bg-base);
 }
 
-.no-code-skeleton{
-    color: var(--ks-text-secondary);
-    background-color: var(--ks-bg-surface);
-    width: 100%;
-    border-radius: 4px;
-    padding: 0 .5rem;
-    // slowly appearing grey background animation
-    animation: skeleton-loading 6s 1;
-    position: relative;
-    &:before{
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        background-image: linear-gradient(110deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .1) 35%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0) 100%);
-        background-size: 200% 200%;
-        background-repeat: no-repeat;
-        background-position: 0 0;
-        opacity: 0.7;
-        border-radius: 4px;
-        animation: skeleton-animation 3s infinite;
-        height: 32px;
-    }
-}
+
 
 @keyframes skeleton-animation {
     0% {
@@ -243,18 +224,6 @@ body{
     }
     100% {
         background-position: 185% 100%;
-    }
-}
-
-@keyframes skeleton-loading {
-    0% {
-        opacity:0;
-    }
-    40% {
-        opacity:0;
-    }
-    100% {
-        opacity:.7;
     }
 }
 
@@ -266,6 +235,7 @@ body{
 
 #app {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     overflow: hidden;
 }

@@ -1,11 +1,11 @@
 <template>
-    <KsDialog v-model="open" destroyOnClose :appendToBody="true" width="560px">
+    <KsDialog v-model="open" destroyOnClose :appendToBody="true" width="560px" scrollable>
         <template #header>
-            <span>{{ t("test_event.title") }}</span>
+            <span>{{ $t("test_event.title") }}</span>
         </template>
 
         <p class="test-event-description">
-            {{ t("test_event.description", {trigger: target?.triggerId}) }}
+            {{ $t("test_event.description", {trigger: target?.triggerId}) }}
         </p>
 
         <p class="test-event-url">
@@ -13,7 +13,7 @@
         </p>
 
         <KsForm labelPosition="top">
-            <KsFormItem :label="t('test_event.payload')">
+            <KsFormItem :label="$t('test_event.payload')">
                 <KsEditor
                     v-bind="editorBindings"
                     v-model="payload"
@@ -24,7 +24,7 @@
                 />
             </KsFormItem>
 
-            <KsFormItem :label="t('test_event.headers')">
+            <KsFormItem :label="$t('test_event.headers')">
                 <KsInput
                     v-model="headers"
                     type="textarea"
@@ -36,25 +36,25 @@
 
         <KsAlert v-if="result && result.ok" type="success" :closable="false">
             <template #title>
-                <span>{{ t("test_event.response", {status: result.status}) }}</span>
+                <span>{{ $t("test_event.response", {status: result.status}) }}</span>
                 <RouterLink v-if="result.executionId" :to="executionRoute(result.executionId)" class="test-event-link">
-                    {{ t("test_event.execution_created") }}
+                    {{ $t("test_event.execution_created") }}
                 </RouterLink>
             </template>
         </KsAlert>
 
         <KsAlert v-else-if="result" type="error" :closable="false">
             <template #title>
-                <span>{{ t("test_event.failed", {status: result.status}) }}</span>
+                <span>{{ $t("test_event.failed", {status: result.status}) }}</span>
             </template>
         </KsAlert>
 
         <template #footer>
             <KsButton @click="open = false">
-                {{ t("close") }}
+                {{ $t("close") }}
             </KsButton>
             <KsButton type="primary" :disabled="sending" @click="send">
-                {{ sending ? t("test_event.sending") : t("test_event.send") }}
+                {{ sending ? $t("test_event.sending") : $t("test_event.send") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -62,7 +62,6 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
     import {EXECUTION_PARENT_ROUTE} from "../executions/executionTabs"
@@ -89,7 +88,6 @@
         sent: [result: TestEventResult];
     }>()
 
-    const {t} = useI18n()
     const route = useRoute()
     const editorBindings = useEditorBindings()
 
@@ -111,8 +109,9 @@
             : "",
     )
 
+    // The parent route resolves the user's default execution tab; naming a tab here ignored it.
     const executionRoute = (id: string) => ({
-        name: `${EXECUTION_PARENT_ROUTE}/gantt`,
+        name: EXECUTION_PARENT_ROUTE,
         params: {
             namespace: target.value?.namespace,
             flowId: target.value?.flowId,

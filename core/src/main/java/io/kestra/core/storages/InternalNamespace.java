@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 
@@ -259,6 +260,12 @@ public class InternalNamespace implements Namespace {
         // Throw if file not found OR if it's deleted
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
 
+        if (namespaceFileMetadata.isDirectory()) {
+            throw new FileNotFoundException(
+                "'%s' is a directory in namespace '%s', it has no content to read.".formatted(normalizedPath, namespace)
+            );
+        }
+
         return storage.get(tenant, namespace, resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision()));
     }
 
@@ -337,7 +344,9 @@ public class InternalNamespace implements Namespace {
     public List<NamespaceFile> putFile(final Path path, final InputStream content, final Conflicts onAlreadyExist) throws IOException, URISyntaxException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
-        Optional<NamespaceFileMetadata> inRepository = findByPath(normalizedPath, true);
+        ensureNoFileInHierarchy(normalizedPath);
+
+        Optional<NamespaceFileMetadata> inRepository = discardConflictingEntry(findByPath(normalizedPath, true), false, normalizedPath);
         int currentRevision = inRepository.map(NamespaceFileMetadata::getRevision).orElse(0);
         NamespaceFile namespaceFile = NamespaceFile.of(namespace, normalizedPath, currentRevision + 1);
         Path storagePath = namespaceFile.storagePath();
@@ -403,6 +412,86 @@ public class InternalNamespace implements Namespace {
     }
 
     /**
+     * Discards an entry returned by a path lookup when it is not of the expected kind.
+     * <p>
+     * A path is either a file or a directory, never both, but path lookups match {@code <path>} and
+     * {@code <path>/} alike, so a directory entry can be returned while writing a file and the other
+     * way around. Taking it at face value corrupts the path: writing a file over a directory entry
+     * derives the new revision from that entry and then stores it as a directory pinned to revision 1,
+     * so the content lands one revision ahead of the indexed one and can never be read back.
+     * <p>
+     * A live entry of the other kind is a genuine conflict and is rejected. A deleted one no longer
+     * owns the path, so it is purged and the write starts from a clean slate.
+     *
+     * @return the entry when it is of the expected kind, otherwise {@link Optional#empty()}.
+     * @throws ConflictException if a live entry of the other kind holds the path.
+     */
+    private Optional<NamespaceFileMetadata> discardConflictingEntry(Optional<NamespaceFileMetadata> found, boolean expectDirectory, Path path) throws IOException {
+        Optional<NamespaceFileMetadata> conflicting = found.filter(metadata -> metadata.isDirectory() != expectDirectory);
+        if (conflicting.isEmpty()) {
+            return found;
+        }
+
+        NamespaceFileMetadata metadata = conflicting.get();
+        if (!metadata.isDeleted()) {
+            throw new ConflictException(
+                String.format(
+                    "Cannot create %s '%s' in namespace '%s': a %s already exists at this path.",
+                    expectDirectory ? "directory" : "file",
+                    path,
+                    namespace,
+                    metadata.isDirectory() ? "directory" : "file"
+                )
+            );
+        }
+
+        logger.debug(
+            "Purging deleted {} '{}' of namespace '{}', its path is being reused by a {}.",
+            metadata.isDirectory() ? "directory" : "file",
+            metadata.getPath(),
+            namespace,
+            expectDirectory ? "directory" : "file"
+        );
+        this.purge(NamespaceFile.fromMetadata(metadata));
+
+        return Optional.empty();
+    }
+
+    /**
+     * Rejects a write whose path runs through an existing file.
+     * <p>
+     * A file can never hold children, and the ancestor directories are created implicitly by the write, so
+     * such a path is only caught by the storage layer, which fails with a raw filesystem error surfacing as
+     * a 500 that exposes the absolute storage path.
+     *
+     * @throws ConflictException if any ancestor of the given path is an existing file.
+     */
+    private void ensureNoFileInHierarchy(Path path) throws IOException {
+        List<String> ancestors = new ArrayList<>();
+        String parentPath = NamespaceFileMetadata.parentPath(path.toString());
+        while (parentPath != null && !parentPath.equals("/")) {
+            // Directories are stored with a trailing slash, so looking the ancestors up without one only
+            // matches files.
+            ancestors.add(NamespaceFileMetadata.path(parentPath, false));
+            parentPath = NamespaceFileMetadata.parentPath(parentPath);
+        }
+
+        if (ancestors.isEmpty()) {
+            return;
+        }
+
+        stateStore.findByPaths(tenant, namespace, ancestors, false).stream()
+            .filter(Predicate.not(NamespaceFileMetadata::isDirectory))
+            .findFirst()
+            .ifPresent(file ->
+            {
+                throw new ConflictException(
+                    "Cannot create '%s' in namespace '%s': '%s' is a file, not a directory.".formatted(path, namespace, file.getPath())
+                );
+            });
+    }
+
+    /**
      * Make all parent directories for a given path.
      */
     private List<NamespaceFile> mkDirs(String path) throws IOException {
@@ -412,7 +501,7 @@ public class InternalNamespace implements Namespace {
             (maybeParentPath = Optional.ofNullable(NamespaceFileMetadata.parentPath(maybeParentPath.map(Path::toString).orElse(path))).map(Path::of)).isPresent()
                 && !this.exists(maybeParentPath.get())
         ) {
-            this.createDirectory(maybeParentPath.get());
+            this.createSingleDirectory(maybeParentPath.get());
             createdDirs.add(NamespaceFile.of(namespace, maybeParentPath.get().toString().endsWith("/") ? maybeParentPath.get().toString() : maybeParentPath.get() + "/", 1));
         }
 
@@ -425,6 +514,15 @@ public class InternalNamespace implements Namespace {
     @Override
     public NamespaceFile createDirectory(Path path) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
+
+        ensureNoFileInHierarchy(normalizedPath);
+        mkDirs(normalizedPath.toString());
+
+        return createSingleDirectory(normalizedPath);
+    }
+
+    private NamespaceFile createSingleDirectory(Path normalizedPath) throws IOException {
+        discardConflictingEntry(findByPath(normalizedPath, true), true, normalizedPath);
 
         NamespaceFileMetadata nsFileMetadata = stateStore.save(
             NamespaceFileMetadata.builder()

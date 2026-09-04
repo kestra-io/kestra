@@ -7,6 +7,7 @@
             :cls="cls"
             :icons="icons"
             :loadIcon="loadIcon"
+            variable="--ks-black"
             onlyIcon
         />
         <span v-if="overflow > 0" class="blueprint-icon-stack__more">+{{ overflow }}</span>
@@ -89,7 +90,9 @@
             width: var(--ks-spacing-5);
             height: var(--ks-spacing-5);
             padding: 2px;
-            background-color: var(--ks-bg-tag);
+            background-color: var(--ks-bg-plugin-icon);
+            border: 1px solid var(--ks-border-default);
+            color: var(--ks-black);
             border-radius: var(--ks-radius-base);
         }
 

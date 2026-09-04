@@ -312,11 +312,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
     @Override
     public Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters) {
-        if (filters == null || filters.isEmpty()) {
-            return findAllAsync(tenantId);
-        }
-        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION);
-        return findAsync(defaultFilter(tenantId), condition);
+        // same condition as find(Pageable, String, List) so that streaming consumers see exactly what the search returns
+        return findAsync(defaultFilter(tenantId), this.computeFindCondition(filters, null));
     }
 
     private <T extends Record> SelectConditionStep<T> filteringQuery(
@@ -627,7 +624,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         } else if (field.getName().equals(START_DATE_FIELD.getName())) {
             return START_DATE_FIELD;
         } else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
-            return DSL.field("{0} / 1000", Long.class, field);
+            // divide by a decimal so Postgres does not integer-divide, which truncated sub-second durations to 0
+            return DSL.field("{0} / 1000.0", Double.class, field);
         }
         return field;
     }

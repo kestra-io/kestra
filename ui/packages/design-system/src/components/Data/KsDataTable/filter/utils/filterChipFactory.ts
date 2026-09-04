@@ -98,7 +98,7 @@ export const processFieldValue = (
     const isSingleValueOp = isTextOp || RANGE_COMPARATORS.includes(comparator)
 
     if (config?.valueType === "key-value" && KV_COMPARATORS.includes(comparator)) {
-        const combinedValue = params.map(p => p?.value as string)
+        const combinedValue = params.flatMap(p => Array.isArray(p?.value) ? p.value : [p?.value as string])
         return {
             value: combinedValue,
             valueLabel: combinedValue.length > 1

@@ -8,6 +8,7 @@
         :tooltipType="tooltipType"
         :disableFeatures="disableFeatures"
         :renderer="renderer"
+        :maxPixelRatio="maxPixelRatio"
         :data="data"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
@@ -23,7 +24,7 @@
 
     import KsEchart from "./KsEchart.vue"
     import type {KsChartSeriesItem} from "./KsEchart.vue"
-    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     use([BarChart])
 
@@ -53,6 +54,8 @@
             tooltipType?: TooltipType
             /** ECharts renderer backend. */
             renderer?: ChartRenderer
+            /** Upper bound for the canvas pixel ratio; see KsEchart. */
+            maxPixelRatio?: number
         }>(),
         {
             data: null,
@@ -63,6 +66,7 @@
             disableFeatures: () => [],
             tooltipType: TooltipType.NATIVE,
             renderer: ChartRenderer.CANVAS,
+            maxPixelRatio: undefined,
         },
     )
 
@@ -75,7 +79,7 @@
 
     const mergedOption = computed(() => {
         const base: Record<string, unknown> = {
-            grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
+            grid: {left: "3%", right: "4%", bottom: "3%", outerBoundsMode: "same"},
             xAxis: {type: "category", data: props.categories},
             yAxis: {type: "value"},
             tooltip: {trigger: "axis", confine: true, axisPointer: {type: "shadow"}},

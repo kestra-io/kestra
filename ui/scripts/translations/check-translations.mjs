@@ -29,7 +29,9 @@
 // `$t()` or `<i18n-t keypath>` has to exist in some `en.json` the app loads
 // (OSS + design system for OSS code, plus EE's own for EE code). The locale
 // files agreeing with each other says nothing about a key that is missing from
-// all of them, and such a key renders as its raw id - see usageRules.mjs.
+// all of them, and such a key renders as its raw id - see usageRules.mjs. A
+// key completed at runtime (`t("crud.type." + type)`) is checked down to its
+// namespace, which has to exist for the same reason.
 //
 // --report <path> writes a JSON summary ({missing: {lang: [keys]},
 // duplicates: [keys], placeholders: {lang: [problems]},
@@ -49,7 +51,7 @@ import path from "node:path"
 import {fileURLToPath} from "node:url"
 import {allKeys, flattenStrings, leafKeys, placeholderProblems, shadowedOssKeys, untranslatedKeys} from "./translationRules.mjs"
 import {evalLocaleModule, staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
-import {isScannedSourceFile, translationKeyUsages, undefinedKeyUsages} from "./usageRules.mjs"
+import {isScannedSourceFile, translationKeyUsages, translationNamespaceUsages, undefinedKeyUsages, undefinedNamespaceUsages} from "./usageRules.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 // ui/scripts/translations -> the OSS repo root
@@ -151,21 +153,30 @@ function ossDefinedKeys() {
  */
 function checkUsedKeys(result, label, repoRoot, sourceRoots, definedKeys) {
     const usagesByFile = {}
+    const namespacesByFile = {}
     for (const sourceRoot of sourceRoots) {
         if (!fs.existsSync(sourceRoot)) continue
         for (const file of fs.globSync(path.join(sourceRoot, "**/*"))) {
             if (!isScannedSourceFile(file) || !fs.statSync(file).isFile()) continue
-            const usages = translationKeyUsages(fs.readFileSync(file, "utf-8"))
-            if (usages.length > 0) usagesByFile[path.relative(repoRoot, file)] = usages
+            const source = fs.readFileSync(file, "utf-8")
+            const relativeFile = path.relative(repoRoot, file)
+            const usages = translationKeyUsages(source)
+            if (usages.length > 0) usagesByFile[relativeFile] = usages
+            const namespaces = translationNamespaceUsages(source)
+            if (namespaces.length > 0) namespacesByFile[relativeFile] = namespaces
         }
     }
 
     const findings = undefinedKeyUsages(usagesByFile, definedKeys)
-    if (findings.length === 0) return
-
     result.undefinedKeys.push(...findings)
     for (const {file, line, key} of findings) {
         annotate("error", `[${label}] Translation key "${key}" is used in ${file}:${line} but defined in no en.json, so it renders as its raw id - add it to en.json (or reuse an existing key) and run \`npm run translations:generate\``, {file, line})
+    }
+
+    const namespaceFindings = undefinedNamespaceUsages(namespacesByFile, definedKeys)
+    result.undefinedKeys.push(...namespaceFindings.map(({file, line, namespace}) => ({file, line, key: `${namespace}.*`})))
+    for (const {file, line, namespace} of namespaceFindings) {
+        annotate("error", `[${label}] Translation keys under "${namespace}." are built at runtime in ${file}:${line}, but no en.json defines that namespace, so every one of them renders as its raw id - restore the namespace in en.json and run \`npm run translations:generate\``, {file, line})
     }
 }
 

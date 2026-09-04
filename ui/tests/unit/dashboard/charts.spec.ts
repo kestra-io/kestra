@@ -1,5 +1,10 @@
-import {describe, expect, it} from "vitest"
-import {chartSegmentDrillDown, registerDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
+import {describe, expect, it, vi} from "vitest"
+
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
+}))
+
+import {buildFullQuery, chartDrillDownTarget, chartSegmentDrillDown, registerDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
 import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars} from "../../../src/components/dashboard/composables/charts"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
@@ -126,6 +131,72 @@ describe("chartSegmentDrillDown", () => {
                 "filters[metadata][EQUALS][os]": "linux",
             },
         })
+    })
+})
+
+describe("chartDrillDownTarget", () => {
+    const STATE_SEGMENT = [{column: {field: "STATE"}, value: "SUCCESS"}]
+
+    it("carries the list page filters alongside the clicked segment", () => {
+        const target = chartDrillDownTarget({data: {type: EXEC}}, STATE_SEGMENT, {
+            routeQuery: {"filters[namespace][IN]": "system", "filters[flowId][IN]": "test"},
+        })
+        expect(target?.query).toEqual({
+            "filters[namespace][IN]": "system",
+            "filters[flowId][IN]": "test",
+            "filters[state][IN]": "SUCCESS",
+        })
+    })
+
+    it("lets every clicked dimension narrow a page filter on the same field", () => {
+        const target = chartDrillDownTarget(
+            {data: {type: EXEC}},
+            [...STATE_SEGMENT, {column: {field: "FLOW_ID"}, value: "my-flow"}],
+            {routeQuery: {"filters[state][IN]": "RUNNING", "filters[flowId][IN]": "other"}},
+        )
+        expect(target?.query).toEqual({
+            "filters[state][IN]": "SUCCESS",
+            "filters[flowId][IN]": "my-flow",
+        })
+    })
+
+    it("carries the page's own time range when no bucket was clicked", () => {
+        const target = chartDrillDownTarget({data: {type: EXEC}}, STATE_SEGMENT, {
+            routeQuery: {"filters[timeRange][EQUALS]": "PT7D"},
+        })
+        expect(target?.timeWindow).toEqual({"filters[timeRange][EQUALS]": "PT7D"})
+    })
+
+    it("prefers the clicked bucket over the page's own time range", () => {
+        const target = chartDrillDownTarget({data: {type: EXEC}}, STATE_SEGMENT, {
+            routeQuery: {"filters[timeRange][EQUALS]": "PT7D"},
+            dateRange: {startDate: "2026-08-28T00:00:00.000Z", endDate: "2026-08-28T23:59:59.999Z"},
+        })
+        expect(target?.timeWindow).toEqual({
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-08-28T00:00:00.000Z",
+            "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2026-08-28T23:59:59.999Z",
+        })
+    })
+})
+
+describe("buildFullQuery", () => {
+    it("emits the resolved time window instead of the chart default duration", () => {
+        const query = buildFullQuery({
+            name: "executions/list",
+            query: {"filters[state][IN]": "SUCCESS"},
+            timeFiltered: true,
+            timeWindow: {"filters[timeRange][EQUALS]": "PT7D"},
+        })
+        expect(query).toEqual({
+            "filters[state][IN]": "SUCCESS",
+            "filters[timeRange][EQUALS]": "PT7D",
+            scope: "USER",
+        })
+    })
+
+    it("falls back to the chart default duration when no window was resolved", () => {
+        const query = buildFullQuery({name: "executions/list", query: {}, timeFiltered: true})
+        expect(query).toEqual({"filters[timeRange][EQUALS]": "PT24H", scope: "USER"})
     })
 })
 

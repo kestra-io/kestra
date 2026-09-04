@@ -1,7 +1,8 @@
-import {useRoute, useRouter} from "vue-router"
+import {useRoute, useRouter, type LocationQuery} from "vue-router"
 import {STATES} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 import {useDrillDownStore, type DrillDownTarget} from "../../../stores/drillDown"
+import {keepTopLevelFilters} from "../../../utils/queryFilters"
 import {getDrillDownPreview} from "./drillDownPreview"
 
 interface WhereCondition {
@@ -20,6 +21,10 @@ export interface DrillDownDescriptor {
 }
 
 type ClickDimension = {column: {field?: string; key?: string} | undefined; value: string};
+
+const START_DATE_PARAM = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
+const END_DATE_PARAM = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
+const TIME_RANGE_PARAM = "filters[timeRange][EQUALS]"
 
 const WHERE_TYPE_TO_COMPARATOR: Record<string, string> = {
     EQUAL_TO: "EQUALS",
@@ -160,33 +165,64 @@ export function chartSegmentDrillDown(
     chart: {data?: Record<string, any>} | undefined,
     column: {field?: string; key?: string} | undefined,
     value: string,
-): {name: string; query: Record<string, string>; timeFiltered: boolean} | null {
+): {name: string; query: LocationQuery; timeFiltered: boolean} | null {
+    const target = chartDrillDownTarget(chart, [{column, value}])
+    return target && {name: target.name, timeFiltered: target.timeFiltered, query: target.query}
+}
+
+export function chartDrillDownTarget(
+    chart: {data?: Record<string, any>} | undefined,
+    dimensions: ClickDimension[],
+    context?: {routeQuery?: LocationQuery; dateRange?: {startDate: string; endDate: string}},
+): DrillDownTarget | null {
     const descriptor = DRILL_DOWNS[chart?.data?.type?.split(".").pop() ?? ""]
     if (!descriptor) return null
+
+    const routeQuery = context?.routeQuery ?? {}
+    const query: LocationQuery = {
+        ...keepTopLevelFilters(routeQuery, Object.values(descriptor.fieldKey)),
+        ...whereToFilters(descriptor, chart?.data?.where),
+    }
+    for (const {column, value} of dimensions) {
+        Object.assign(query, dimensionFilter(descriptor, column, value))
+    }
 
     return {
         name: descriptor.route,
         timeFiltered: descriptor.timeFiltered,
-        query: {
-            ...whereToFilters(descriptor, chart?.data?.where),
-            ...dimensionFilter(descriptor, column, value),
-        },
+        query,
+        timeWindow: context?.dateRange
+            ? {[START_DATE_PARAM]: context.dateRange.startDate, [END_DATE_PARAM]: context.dateRange.endDate}
+            : routeTimeWindow(routeQuery),
     }
 }
 
+// Only one of the two forms is returned, since the backend treats `startDate`/`endDate` and
+// `timeRange` as mutually exclusive.
+function routeTimeWindow(query: LocationQuery): Record<string, string> | undefined {
+    const startDate = query[START_DATE_PARAM]
+    const endDate = query[END_DATE_PARAM]
+    if (startDate && endDate) {
+        return {[START_DATE_PARAM]: String(startDate), [END_DATE_PARAM]: String(endDate)}
+    }
+
+    const timeRange = query[TIME_RANGE_PARAM]
+    return timeRange ? {[TIME_RANGE_PARAM]: String(timeRange)} : undefined
+}
+
 /**
- * Reproduces the query augmentation the full listing pages expect (scope, pagination, and the
- * default time-range filter), so the drawer's fetch, the drawer's "Open full page" push, and the
- * legacy full-page redirect all build the exact same query from a drill-down target.
+ * Reproduces the query augmentation the full listing pages expect (scope, pagination, and the time
+ * window), so the drawer's fetch, the drawer's "Open full page" push, and the legacy full-page
+ * redirect all build the exact same query from a drill-down target.
  */
 export function buildFullQuery(target: DrillDownTarget, pagination?: {size: number; page: number}): Record<string, any> {
     return {
         ...target.query,
         scope: "USER",
         ...(pagination ? {size: pagination.size, page: pagination.page} : {}),
-        ...(target.timeFiltered
-            ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
-            : {}),
+        ...(target.timeWindow ?? (target.timeFiltered
+            ? {[TIME_RANGE_PARAM]: useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+            : {})),
     }
 }
 
@@ -194,18 +230,12 @@ export function useChartDrillDown(chart: {data?: Record<string, any>} | undefine
     const route = useRoute()
     const router = useRouter()
 
-    function drillDown(dimensions: ClickDimension[]) {
-        const query: Record<string, string> = {}
-        let target: ReturnType<typeof chartSegmentDrillDown> = null
-
-        for (const {column, value} of dimensions) {
-            const resolved = chartSegmentDrillDown(chart, column, value)
-            if (!resolved) return
-            target = resolved
-            Object.assign(query, resolved.query)
-        }
+    function drillDown(dimensions: ClickDimension[], options?: {dateRange?: {startDate: string; endDate: string}}) {
+        const target = chartDrillDownTarget(chart, dimensions, {
+            routeQuery: route.query,
+            dateRange: options?.dateRange,
+        })
         if (!target) return
-        target = {...target, query}
 
         const preview = getDrillDownPreview(target.name)
         if (preview && preview.mode !== "none") {

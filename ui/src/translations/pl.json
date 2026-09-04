@@ -1725,7 +1725,8 @@
           "workerSelector": "Worker Selector",
           "checks": "Kontrole",
           "updated": "Zaktualizowano",
-          "quotas": "Limity"
+          "quotas": "Limity",
+          "policyRefs": "Odwołania do polityk"
         }
       },
       "select": {

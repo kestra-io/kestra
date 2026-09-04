@@ -56,6 +56,22 @@
                     />
                 </slot>
             </template>
+            <template #taskActions="taskProps">
+                <TaskRunActions
+                    v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
+                    class="node-action-button"
+                    :taskRun="taskProps.taskRun"
+                    :taskRuns="taskProps.taskRuns"
+                    :execution="taskProps.execution"
+                    :flow="flowStore.flow"
+                    :nodeActions="taskProps.actions
+                        .filter(a => taskProps.taskRuns?.length > 1 ? !['edit'].includes(a.key) : !EXCLUDED_NODE_ACTIONS.includes(a.key))
+                        .map((a, i) => i === 0 ? {...a, divided: true} : a)
+                    "
+                    @follow="$emit('follow', $event)"
+                />
+                <NodeMenu v-else :actions="taskProps.actions" />
+            </template>
         </Topology>
 
         <BlockTaskPicker :picker="taskPicker" modal />
@@ -232,14 +248,14 @@
     import Restart from "../executions/overview/components/actions/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
-    import {Topology} from "@kestra-io/topology"
+    import {Topology, NodeMenu} from "@kestra-io/topology"
     import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+    import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
-
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import {useTaskPicker} from "../no-code/blocks/useTaskPicker"
@@ -256,6 +272,8 @@
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
+
+    const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
 
     const router = useRouter()
     const route = useRoute()

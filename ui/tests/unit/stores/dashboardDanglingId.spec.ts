@@ -32,7 +32,17 @@ const dashboardChartDataFn = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
     dashboard: (...args: any[]) => dashboardFn(...args),
-    dashboardChartData: (...args: any[]) => dashboardChartDataFn(...args),
+}))
+
+vi.mock("@kestra-io/kestra-sdk", () => ({
+    useClient: () => ({get: vi.fn(), post: (...args: any[]) => dashboardChartDataFn(...args), put: vi.fn(), delete: vi.fn()}),
+}))
+
+vi.mock("override/utils/route", () => ({
+    apiUrl: () => "/api/v1/main",
+    apiUrlWithoutTenants: () => "/api/v1",
+    basePath: () => "/ui/main",
+    baseUrl: "/",
 }))
 
 const TEST_TIMEOUT_MS = 20_000
@@ -68,7 +78,8 @@ describe("dashboard store dangling id handling", () => {
 
         await expect(dashboardStore.generate("deleted-dashboard-id", "chart", {})).resolves.toBeUndefined()
         expect(dashboardChartDataFn).toHaveBeenCalledWith(
-            expect.objectContaining({id: "deleted-dashboard-id", chartId: "chart"}),
+            "/api/v1/main/dashboards/deleted-dashboard-id/charts/chart",
+            {},
             expect.objectContaining({showMessageOnError: false}),
         )
     })

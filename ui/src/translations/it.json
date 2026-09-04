@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin non installato per questo tipo di trigger, nessuna notifica verrà inviata."
       },
       "trigger": {
-        "case_sub": "Funzionalità solo EE",
-        "case_title": "Stato del caso",
         "execution_sub": "Reagisce ai cambiamenti di stato del flow",
         "execution_title": "Stato di esecuzione",
         "other_sub": "Qualsiasi plugin trigger disponibile",
@@ -138,6 +136,7 @@
     "invalid duration": "Formato durata non valido. Utilizzare ISO 8601 (ad es., PT30M, P1D).",
     "update": "Aggiorna",
     "confirmation": "Conferma",
+    "toast confirm": "Sei sicuro?",
     "common": {
       "back": "Indietro",
       "openInNewTab": "Apri in una nuova scheda"
@@ -344,9 +343,31 @@
     "select a state": "Seleziona uno stato",
     "are you sure change state": "Sei sicuro di voler cambiare lo stato?",
     "yes": "Sì",
+    "no": "No",
     "change state done": "Lo stato del task è stato aggiornato",
     "change state confirm": "Sei sicuro di voler cambiare lo stato di esecuzione del task per il task <code>{task}</code> nell'esecuzione <code>{id}</code>?<br/>Riavvvierà quindi l'esecuzione dal task successivo e riavvierà l'esecuzione padre, se presente.",
     "change state current state": "Lo stato attuale è:",
+    "change state hint": {
+      "WARNING": [
+        "Il flow sarà contrassegnato come WARNING.",
+        "I prossimi task saranno eseguiti.",
+        "I task di errore saranno eseguiti."
+      ],
+      "FAILED": [
+        "Il flow sarà contrassegnato come FAILED.",
+        "Nessun altro task verrà eseguito.",
+        "I task di errore verranno eseguiti."
+      ],
+      "SUCCESS": [
+        "Il flow verrà riavviato poiché questo task è stato completato con successo.",
+        "Tutti i task bloccati verranno eseguiti.",
+        "Il flow sarà in stato SUCCESS se tutte le esecuzioni dei task avranno successo."
+      ],
+      "RUNNING": [
+        "Il flow verrà riavviato ed eseguirà tutti i task successivi.",
+        "Tutti i task bloccati verranno eseguiti."
+      ]
+    },
     "replay execution title": "Riesegui esecuzione",
     "restart execution title": "Riavvia esecuzione",
     "replay execution description": "Questo creerà una nuova esecuzione basata sull'esecuzione selezionata.",
@@ -414,7 +435,8 @@
       "zoom-reset": "Reimposta zoom",
       "zoom-fit": "Adatta",
       "invalid": "Errore del grafico",
-      "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori."
+      "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
+      "load_error": "Impossibile caricare il grafico della topologia. Riprova."
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limiti di Concorrenza",
-      "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
+      "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito."
     },
     "flowConcurrency": {
       "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",
@@ -515,6 +537,10 @@
       }
     },
     "use": "Usa",
+    "plugin_card": {
+      "tasks": "task | task",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Installazione del plugin non riuscita",
@@ -791,6 +817,7 @@
     "execution labels": "Etichette di esecuzione",
     "show more labels": "Mostra altre {count} label",
     "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
+    "invalid label key": "Key dell'etichetta non valida. Una key valida deve iniziare con una lettera minuscola e contenere solo lettere minuscole, numeri, trattini (-), underscore (_) o punti (.)",
     "feeds": {
       "heading": "Tutto su Kestra.",
       "subheading": "Gli ultimi aggiornamenti, guide e storie"
@@ -807,20 +834,20 @@
     "bulk restart": "Sei sicuro di voler riavviare <code>{executionCount}</code> esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
     "cancel": "Annulla",
-    "errorLogs": "Log degli errori",
+    "errorLogs": "Log di errore",
     "welcome_page": {
       "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?"
     },
     "product_tour": "Tour del prodotto",
-    "executions replayed": "<code>{executionCount}</code> esecuzione/i ripetute",
+    "executions replayed": "<code>{executionCount}</code> esecuzione(i) riprodotta(e)",
     "executions state changed": "Lo stato di <code>{executionCount}</code> esecuzione/i è stato cambiato",
-    "executions resumed": "<code>{executionCount}</code> esecuzione/i riprese",
-    "executions paused": "<code>{executionCount}</code> esecuzione(i) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> esecuzione(i) in coda",
-    "executions force run": "<code>{executionCount}</code> esecuzione/i forzata/e",
-    "executions restarted": "<code>{executionCount}</code> esecuzione/i riavviate",
-    "executions killed": "<code>{executionCount}</code> esecuzione/i kill",
-    "executions deleted": "<code>{executionCount}</code> esecuzione/i eliminate",
+    "executions resumed": "<code>{executionCount}</code> esecuzione(i) ripresa(e)",
+    "executions paused": "<code>{executionCount}</code> esecuzione(i) in pausa",
+    "executions unqueue": "<code>{executionCount}</code> esecuzione(i) non in coda",
+    "executions force run": "<code>{executionCount}</code> esecuzione(i) forzata/e",
+    "executions restarted": "<code>{executionCount}</code> esecuzione(i) riavviata(e)",
+    "executions killed": "<code>{executionCount}</code> esecuzione(i) killata(e)",
+    "executions deleted": "<code>{executionCount}</code> esecuzione(i) eliminata(e)",
     "invalid bulk replay": "Impossibile ripetere le esecuzioni",
     "invalid bulk resume": "Impossibile riprendere le esecuzioni",
     "invalid bulk pause": "Impossibile mettere in pausa le esecuzioni",
@@ -883,6 +910,7 @@
     "metric": "Metrica",
     "aggregation": "Aggregazione",
     "metric choice": "Nessuna metrica disponibile per questo flow",
+    "metric filter no match": "Nessuna metrica corrisponde a \"{term}\"",
     "of": "di",
     "title": "Titolo",
     "api": "API",
@@ -916,7 +944,7 @@
     "join_slack": "Unisciti a Slack",
     "kestra": "Kestra",
     "error detected": "Errore(i) rilevato(i).",
-    "warning detected": "Avvisi rilevati",
+    "warning detected": "Avviso/i rilevato/i.",
     "informative notice": "Note(s)",
     "open": "Apri",
     "dependency task": "Il task {taskId} è una dipendenza di un altro task",
@@ -1652,6 +1680,7 @@
     "last error was": "L'ultimo errore è stato",
     "active": "Attivo",
     "flows imported": "Flussi importati",
+    "flows not imported": "Flow non importati",
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
     "chart preview": "Anteprima grafico",
@@ -1697,7 +1726,8 @@
           "workerSelector": "Selettore Worker",
           "checks": "Controlli",
           "updated": "Aggiornato",
-          "quotas": "Quote"
+          "quotas": "Quote",
+          "policyRefs": "Riferimenti Policy"
         }
       },
       "select": {
@@ -2089,8 +2119,8 @@
         },
         "unavailable": {
           "title": "AI Copilot non è disponibile",
-          "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno, quindi riprova.",
-          "retry": "Riprova"
+          "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno.",
+          "docs": "Visualizza la documentazione"
         },
         "thinkingWords": [
           "Orchestrazione",
@@ -2573,6 +2603,7 @@
         "message": "Correggi gli errori prima di salvare.",
         "title": "Impossibile salvare il flow"
       },
+      "schema_default_tooltip": "Valore predefinito usato quando il campo non è impostato",
       "search_task_placeholder": "Cerca o descrivi un task...",
       "shortcuts": {
         "add_after": "Inserisci un blocco dopo la selezione",

@@ -13,6 +13,7 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
@@ -27,7 +28,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     protected String tenantId;
 
     @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
@@ -102,6 +103,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.type = allowTypeChange
             ? ObjectUtils.firstNonNull(this.type, previousType)
             : ObjectUtils.firstNonNull(previousType, this.type);
+        // The namespace of an existing asset is immutable, as AssetsController.updateAsset already enforces
+        this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(new HashMap<>());
@@ -157,6 +160,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withTenantId(String tenantId) {
         this.tenantId = tenantId;
+        return this;
+    }
+
+    public Asset withNamespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 }

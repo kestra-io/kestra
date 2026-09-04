@@ -1,17 +1,17 @@
 <template>
     <div class="flow-properties-edit" data-test="flow-properties-edit">
         <header v-if="!hideHeader" class="flow-properties-head">
-            <KsIconButton :tooltip="t('back')" data-test="flow-properties-back" @click="emit('close')">
+            <KsIconButton :tooltip="$t('back')" data-test="flow-properties-back" @click="emit('close')">
                 <ChevronLeft />
             </KsIconButton>
-            <span class="flow-properties-title">{{ t("no_code.sections.flow") }}</span>
+            <span class="flow-properties-title">{{ $t("no_code.sections.flow") }}</span>
         </header>
 
         <div v-if="createTarget" class="flow-properties-body" data-test="flow-properties-create">
             <FieldNavBreadcrumb
                 class="flow-properties-crumb"
                 :frames="[{path: createTarget.parentPath, label: createTarget.label}]"
-                :rootLabel="t('no_code.sections.flow')"
+                :rootLabel="$t('no_code.sections.flow')"
                 @navigate="closeCreate"
                 @back="closeCreate"
             />
@@ -61,8 +61,7 @@
 
 <script setup lang="ts">
     import {computed, inject, provide, ref} from "vue"
-    import {useI18n} from "vue-i18n"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsForm, KsIconButton} from "@kestra-io/design-system"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
@@ -74,34 +73,22 @@
     import {useFlowStore} from "../../../stores/flow"
     import {useFlowFields} from "../utils/useFlowFields"
     import {removeNullAndUndefined} from "../utils/cleanUp"
+    import {getFlowFields} from "./flowFields"
+    import {useMiscStore} from "override/stores/misc"
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../injectionKeys"
 
-    const {t} = useI18n()
     const flowStore = useFlowStore()
+    const miscStore = useMiscStore()
 
     const props = defineProps<{hideHeader?: boolean; hostedInModal?: boolean}>()
 
     const emit = defineEmits<{(e: "close"): void}>()
 
-    const FLOW_FIELDS = [
-        "id",
-        "namespace",
-        "description",
-        "labels",
-        "inputs",
-        "variables",
-        "outputs",
-        "concurrency",
-        "retry",
-        "sla",
-        "checks",
-        "workerSelector",
-        "disabled",
-    ]
+    const FLOW_FIELDS = computed(() => getFlowFields(miscStore.configs?.edition))
 
     const bubbleCreate = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {})
     const flowYaml = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
@@ -179,7 +166,7 @@
 
     const fields = computed(() => {
         const all = [...fieldsFromSchemaTop.value, ...fieldsFromSchemaRest.value]
-        return FLOW_FIELDS
+        return FLOW_FIELDS.value
             .map((key) => all.find((field) => field.fieldKey === key))
             .filter((field): field is NonNullable<typeof field> => Boolean(field))
     })

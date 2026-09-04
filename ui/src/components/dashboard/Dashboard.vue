@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
-    <section id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
+    <section v-if="isRouteSettled" id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards"
     import {processFlowYaml} from "./composables/useDashboards"
@@ -91,6 +91,10 @@
     const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? DEFAULT_DASHBOARD)
     const isDashboardBundledWithUI = ref<boolean>(false)
     const charts = ref<Chart[]>([])
+    // The filter writes its defaults (time range) into the URL when it mounts, so it may
+    // only mount once load() is done moving us to the canonical dashboard URL: a mount on
+    // the intermediate URL loses those defaults to the cancelled navigation.
+    const isRouteSettled = ref<boolean>(false)
 
     const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = []
@@ -130,6 +134,7 @@
         if (miscStore.configs?.isCustomDashboardsEnabled === false) {
             await useDefaultDashboardBundledInUI()
             await loadCharts(dashboard.value.charts)
+            isRouteSettled.value = true
             return
         }
 
@@ -152,6 +157,10 @@
             }
         }
 
+        // Unmount the charts before anything about the dashboard changes: a chart reads its dashboard id once, on
+        // setup, so one left mounted across the swap keeps requesting the previous dashboard's charts, now routed as
+        // the new dashboard's, and either 404s or shows data that belongs to the other dashboard.
+        charts.value = []
         isDashboardBundledWithUI.value = false
         if (id === "default") {
             // if requested dashboard is the default one, we first try to find if there is any configured in the DB by an admin
@@ -179,12 +188,14 @@
                 coreStore.message = {
                     variant: "error",
                     title: err,
+                    content: err,
                 }
                 await useDefaultDashboardBundledInUI()
             }
         }
 
         await loadCharts(dashboard.value.charts)
+        isRouteSettled.value = true
     }
 
     watch([() => route.params.dashboard, () => route.params.tenant], async () => {

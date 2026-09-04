@@ -4,10 +4,10 @@ import java.util.Objects;
 
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
@@ -20,7 +20,7 @@ public class FlowNode implements TenantInterface {
     String uid;
 
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     String namespace;

@@ -1,6 +1,7 @@
 import {computed, onBeforeUnmount, onUnmounted, ref, watch} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
+import {watchDebounced} from "@vueuse/core"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useRouteTabsStore} from "../../../stores/routeTabs"
@@ -20,30 +21,40 @@ export function useFlowRoot() {
     const routeTabsStore = useRouteTabsStore()
 
     const previousFlow = ref<string | undefined>(undefined)
-    const dependenciesCount = ref<number | undefined>(undefined)
     const deleted = ref(false)
     const tabsOwnerId = Symbol("flow-root-tabs")
 
     const user = computed(() => authStore.user)
     const activeTabName = useActiveTab()
 
+    // The store owns this count; deriving it again here subtracted the flow's own node twice.
+    const dependenciesCount = computed(() => flowStore.dependenciesCount)
+
     function flowKey(): string {
         return route.params.namespace + "/" + route.params.id
     }
 
-    function load() {
-        if (flowStore.flow === undefined || previousFlow.value !== flowKey()) {
-            const query = {...route.query, allowDeleted: true}
-            return flowStore.loadFlow({
+    function isFlowLoaded(): boolean {
+        return flowStore.flow?.namespace === route.params.namespace && flowStore.flow?.id === route.params.id
+    }
+
+    async function load() {
+        if (previousFlow.value === flowKey() && isFlowLoaded()) return
+
+        // The route guard loads the flow into the store before this page mounts (FLOW_ENTITY_META),
+        // so fetching it again here would double every flow page open.
+        if (!isFlowLoaded()) {
+            await flowStore.loadFlow({
                 ...route.params,
-                ...query,
-            } as any).then(() => {
-                if (flowStore.flow) {
-                    deleted.value = Boolean(flowStore.flow.deleted)
-                    previousFlow.value = flowKey()
-                    flowStore.loadGraph({flow: flowStore.flow})
-                }
-            })
+                ...route.query,
+                allowDeleted: true,
+            } as any)
+        }
+
+        if (flowStore.flow) {
+            deleted.value = Boolean(flowStore.flow.deleted)
+            previousFlow.value = flowKey()
+            flowStore.loadGraph({flow: flowStore.flow})
         }
     }
 
@@ -119,16 +130,15 @@ export function useFlowRoot() {
         }
     }, {immediate: true})
 
-    watch(() => flowStore.flow, (flow) => {
-        if (flow && flow.id) {
-            // https://github.com/kestra-io/kestra/issues/10484
-            setTimeout(() => {
-                flowStore
-                    .loadDependencies({subtype: "FLOW", namespace: flow.namespace, id: flow.id}, true)
-                    .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
-            }, 1000)
-        }
-    }, {deep: true})
+    // Debounced so a save's burst collapses into one refetch, once the backend has indexed (#10484).
+    watchDebounced(
+        () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision] as const,
+        ([namespace, id]) => {
+            if (!namespace || !id) return
+            flowStore.loadDependencies({subtype: "FLOW", namespace, id}, true)
+        },
+        {debounce: 1000},
+    )
 
     function setupLifecycle() {
         // since this component is only used in edition

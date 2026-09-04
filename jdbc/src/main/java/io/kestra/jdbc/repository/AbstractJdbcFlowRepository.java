@@ -18,6 +18,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.AlreadyExistsException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
@@ -29,7 +30,6 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.flows.*;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -708,8 +708,16 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
-    @SuppressWarnings("unchecked")
     private <R extends Record, E> SelectConditionStep<R> fullTextSelect(String tenantId, DSLContext context, List<Field<Object>> field) {
+        return fullTextSelect(tenantId, context, field, false);
+    }
+
+    /**
+     * @param excludeDraft when true, resolves each flow to its most recent non-draft revision
+     *                     instead of its latest revision.
+     */
+    @SuppressWarnings("unchecked")
+    private <R extends Record, E> SelectConditionStep<R> fullTextSelect(String tenantId, DSLContext context, List<Field<Object>> field, boolean excludeDraft) {
         ArrayList<Field<?>> fields = new ArrayList<>();
         // add mandatory fields
         fields.add(VALUE_FIELD);
@@ -722,7 +730,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         return (SelectConditionStep<R>) context
             .select(fields)
-            .from(fromLastRevision(false))
+            .from(excludeDraft ? fromLastNonDraftRevision(false) : fromLastRevision(false))
             .join(jdbcRepository.getTable().as("ft"))
             .on(
                 DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.field(DSL.quotedName("rev", "key"))))
@@ -839,14 +847,23 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<FlowWithSource> findWithSource(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+        return this.findWithSource(pageable, tenantId, filters, false);
+    }
+
+    @Override
+    public ArrayListTotal<FlowWithSource> findWithSourceExcludingDrafts(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+        return this.findWithSource(pageable, tenantId, filters, true);
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private ArrayListTotal<FlowWithSource> findWithSource(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters, boolean excludeDraft) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
                 DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record> select = getFindFlowSelect(tenantId, filters, context, List.of(field("source_code")));
+                SelectConditionStep<Record> select = getFindFlowSelect(tenantId, filters, context, List.of(field("source_code")), excludeDraft);
 
                 return (ArrayListTotal) this.jdbcRepository.fetchPage(
                     context,
@@ -862,7 +879,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @SuppressWarnings("unchecked")
     private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
-        var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of());
+        return getFindFlowSelect(tenantId, filters, context, additionalFieldsToSelect, false);
+    }
+
+    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect, boolean excludeDraft) {
+        var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of(), excludeDraft);
         select = select.and(this.filter(filters, null, Resource.FLOW));
         return (SelectConditionStep<R>) select;
     }
@@ -923,17 +944,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     public FlowWithSource create(GenericFlow flow) throws ConstraintViolationException {
         if (this.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()) {
-            throw new ConstraintViolationException(
-                Collections.singleton(
-                    ManualConstraintViolation.of(
-                        "Flow id already exists",
-                        flow,
-                        GenericFlow.class,
-                        "flow.id",
-                        flow.getId()
-                    )
-                )
-            );
+            throw AlreadyExistsException.of("Flow", flow.getId(), flow.getNamespace());
         }
         return this.save(flow, CrudEventType.CREATE);
     }
@@ -944,7 +955,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         try {
             // For drafts the YAML may be unparsable; if parsing fails we skip all
             // validation since draft revisions are intentionally allowed to carry invalid content.
-            FlowWithSource flowWithDefault = flowParsingService.parse(flow, false);
+            FlowWithSource flowWithDefault = flowParsingService.parseForValidation(flow);
             // Drafts are allowed to be saved invalid - they will fail at execution time instead.
             // Read the draft flag from the original GenericFlow (set from the API draft flag) rather
             // than from flowWithDefault, since `parse` re-parses the YAML source which

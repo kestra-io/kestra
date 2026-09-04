@@ -2,47 +2,6 @@
   "ru": {
     "loading": "Загрузка...",
     "more actions": "Дополнительные действия",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "Используйте только буквы, цифры, точки, тире и нижние подчеркивания, начиная с буквы или цифры.",
-        "id_label": "ID flow",
-        "id_placeholder": "my-flow",
-        "namespace_invalid": "Используйте только строчные буквы, цифры, точки, тире и подчеркивания, начиная со строчной буквы или цифры.",
-        "namespace_placeholder": "Выберите namespace",
-        "namespaces_error": "Не удалось загрузить namespaces. Введите namespace вручную.",
-        "open_editor": "Открыть редактор",
-        "subtitle": "Начните с шаблона hello-world и создайте с нуля.",
-        "title": "Пустой flow"
-      },
-      "blueprints": {
-        "subtitle": "Выберите готовый flow из каталога сообщества.",
-        "title": "Просмотр blueprints"
-      },
-      "import": {
-        "back": "Назад",
-        "error": {
-          "empty": "Содержимое YAML пусто.",
-          "invalid_mapping": "Недопустимый YAML flow: ожидалось сопоставление ключ-значение, а не список или скаляр.",
-          "parse_error": "Не удалось разобрать YAML.",
-          "too_large": "Этот файл слишком большой. Вместо этого вставьте определение flow или загрузите файл размером менее 1 МБ."
-        },
-        "paste_label": "Вставить YAML",
-        "read_error": "Не удалось прочитать файл.",
-        "submit": "Импортировать flow",
-        "subtitle": "Вставьте или загрузите существующее определение flow.",
-        "title": "Импортировать YAML",
-        "upload_button": "Загрузить .yml / .yaml",
-        "upload_label": "Или загрузите файл",
-        "upload_tip": "Принимает файлы .yml и .yaml."
-      },
-      "subtitle": "Начните с чистого листа, изучите blueprints или импортируйте существующий YAML.",
-      "system": {
-        "badge": "СИСТЕМА",
-        "subtitle": "Создайте flow оповещений или автоматизации для вашей платформы.",
-        "title": "Создать системный flow"
-      },
-      "title": "Создать новый flow"
-    },
     "recipe": {
       "create_flow": "Создать flow",
       "email": "Email",
@@ -115,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: плагин не установлен для этого типа trigger, уведомления не будут отправлены."
       },
       "trigger": {
-        "case_sub": "Функция только для EE",
-        "case_title": "Статус кейса",
         "execution_sub": "Реагирует на изменения состояния flow",
         "execution_title": "Состояние выполнения",
         "other_sub": "Любой доступный плагин trigger",
@@ -179,6 +136,7 @@
     "invalid duration": "Неверный формат длительности. Используйте ISO 8601 (например, PT30M, P1D).",
     "update": "Обновить",
     "confirmation": "Подтверждение",
+    "toast confirm": "Вы уверены?",
     "common": {
       "back": "Назад",
       "openInNewTab": "Открыть в новой вкладке"
@@ -223,10 +181,12 @@
     "add_new_item": "Добавить новый элемент",
     "copy": "Копировать",
     "copy_to_clipboard": "Копировать в буфер обмена",
+    "copy_pebble_expression": "Копировать выражение pebble",
     "new": "Новый",
     "edit": "Редактировать",
     "back": "Назад",
     "next": "Далее",
+    "previous": "Назад",
     "done": "Готово",
     "review your inputs": "Проверьте введённые данные",
     "edit flow": "Редактировать flow",
@@ -246,6 +206,7 @@
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",
     "queued duration": "Время в очереди",
+    "paused duration": "Длительность паузы",
     "executionProgress": {
       "title": "Прогресс выполнения",
       "estimatedRemaining": "Осталось примерно: {duration}",
@@ -311,8 +272,6 @@
         "1d": "1д",
         "7d": "7д"
       },
-      "last14days": "Последние 14 дней",
-      "last28days": "Последние 28 дней",
       "14days": "14 дней",
       "28days": "28 дней"
     },
@@ -340,6 +299,21 @@
     "to": "До",
     "steps": "Шаги",
     "state": "Состояние",
+    "state_history": {
+      "title": "История состояний",
+      "open": "История состояний",
+      "aria_open": "Показать историю состояний",
+      "aria_open_for": "Показать историю состояний для {subject}",
+      "started_at": "Запущено в {time}",
+      "failed_at": "Ошибка в {time}",
+      "skipped_at": "Пропущено в {time}",
+      "created_at": "Создано в {time}",
+      "did_not_run": "Эта задача не выполнялась",
+      "waiting_to_start": "Ожидание запуска",
+      "attempt_n": "Попытка {index}",
+      "attempt_count": "Попыток: {count}",
+      "copy": "Копировать историю состояний"
+    },
     "search": "Поиск",
     "source search": "Поиск по источнику",
     "selected": "Выбрано",
@@ -369,9 +343,31 @@
     "select a state": "Выберите состояние",
     "are you sure change state": "Вы уверены, что хотите изменить состояние?",
     "yes": "Да",
+    "no": "Нет",
     "change state done": "Состояние task было обновлено",
     "change state confirm": "Вы уверены, что хотите изменить состояние выполнения task для task <code>{task}</code> в исполнении <code>{id}</code>?<br/>После этого выполнение будет перезапущено со следующего task, а родительское выполнение, если таковое имеется, также будет перезапущено.",
     "change state current state": "Текущий статус:",
+    "change state hint": {
+      "WARNING": [
+        "Flow будет помечен как WARNING.",
+        "Следующие tasks будут выполнены.",
+        "Ошибка tasks будет выполнена."
+      ],
+      "FAILED": [
+        "Flow будет помечен как FAILED.",
+        "Никакие другие task не будут выполнены.",
+        "Ошибочные tasks будут выполнены."
+      ],
+      "SUCCESS": [
+        "Flow будет перезапущен, так как этот task был успешным.",
+        "Все заблокированные tasks будут выполнены.",
+        "Flow будет в состоянии SUCCESS, если все запуски tasks будут успешными."
+      ],
+      "RUNNING": [
+        "Flow будет перезапущен и выполнит все следующие tasks.",
+        "Все заблокированные tasks будут выполнены."
+      ]
+    },
     "replay execution title": "Повторное выполнение",
     "restart execution title": "Перезапустить выполнение",
     "replay execution description": "Это создаст новое выполнение на основе выбранного выполнения.",
@@ -409,7 +405,7 @@
     "unqueue done": "Выполнение находится вне очереди",
     "force run": "Принудительный запуск",
     "force run title": "Принудительный запуск выполнения <code>{id}</code>.",
-    "force run confirm": "Вы уверены, что хотите принудительно запустить выполнение <code>{id}</code>?<br/><br/>ВНИМАНИЕ: принудительный запуск выполнения не гарантируется и может привести к дублированию запусков task.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED task будут переведены в состояние RUNNING.</li><li>RUNNING task будут повторно отправлены.</li><li>QUEUED task будут удалены из очереди.</li><li>PAUSED task будут возобновлены.</li></ul>",
+    "force run confirm": "Вы уверены, что хотите принудительно запустить выполнение `{id}`?\n\nВНИМАНИЕ: принудительный запуск выполнения не гарантируется и может привести к дублированию запусков task.\n\nБудут выполнены следующие переходы:\n\n- CREATED task будут переведены в состояние RUNNING.\n- RUNNING task будут повторно отправлены.\n- QUEUED task будут удалены из очереди.\n- PAUSED task будут возобновлены.",
     "force run done": "Выполнение принудительно запущено",
     "metrics": "Метрики",
     "no metrics available": "Для этого выполнения task метрики не записаны.",
@@ -439,7 +435,8 @@
       "zoom-reset": "Сбросить масштаб",
       "zoom-fit": "Подогнать",
       "invalid": "Ошибка графа",
-      "invalid_description": "Произошла ошибка при загрузке графа. Пожалуйста, проверьте исходный код на наличие ошибок."
+      "invalid_description": "Произошла ошибка при загрузке графа. Пожалуйста, проверьте исходный код на наличие ошибок.",
+      "load_error": "Не удалось загрузить граф топологии. Повторите попытку."
     },
     "show task logs": "Показать логи задачи",
     "show task condition": "Показать условие task",
@@ -478,6 +475,7 @@
     },
     "file_preview": {
       "big_file_warning": "Этот файл имеет размер {size}. Загрузка может занять некоторое время и заблокировать ваш браузер. Вы все равно хотите его загрузить?",
+      "big_file_download_only": "Этот файл имеет размер {size}. Он слишком большой, чтобы открыть его в редакторе, скачайте его вместо этого.",
       "load_anyway": "Загрузить в любом случае",
       "load_error": "Не удалось загрузить предварительный просмотр файла. Возможно, это временная проблема или проблема с правами доступа.",
       "retry": "Повторить",
@@ -488,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Ограничения на параллельность",
-      "warning": "Изменение счетчика выполнения может нарушить параллелизм, поэтому выполнения могут превысить допустимый лимит."
+      "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit."
     },
     "flowConcurrency": {
       "loadError": "Не удалось загрузить ограничение параллелизма для этого flow.",
@@ -496,6 +494,11 @@
         "message": "Этот flow больше не объявляет блок параллелизма, но запись ограничения по-прежнему учитывает {count} выполняющихся выполнений. Она больше не влияет на новые выполнения и может быть сброшена в разделе Администрирование → Ограничения параллелизма.",
         "title": "Оставшееся ограничение параллелизма"
       }
+    },
+    "docsPage": {
+      "notFound": "Эта страница документации не существует. Возможно, она была перемещена или переименована.",
+      "loadError": "Не удалось загрузить эту страницу документации. Попробуйте снова.",
+      "backToDocs": "Назад к Docs"
     },
     "documentation": {
       "documentation": "Документация"
@@ -521,17 +524,33 @@
       "detail": {
         "category": "Тип категории",
         "links": "Ссылка и ресурсы",
-        "openInEditor": "Открыть в Edit Flow"
+        "openInEditor": "Открыть в Edit Flow",
+        "openInAppsEditor": "Открыть в редакторе Apps",
+        "openInDashboardEditor": "Открыть в редакторе Dashboard"
       },
       "missingPlugins": {
-        "title": "Отсутствующие plugins",
-        "description": "Этот blueprint использует tasks из plugin(s), которые не установлены в этом экземпляре: {plugins}. Установите их, чтобы использовать этот blueprint.",
-        "card": "Требуются plugin(s), не установленные в этом экземпляре: {plugins}",
+        "title": "Недоступные tasks",
+        "description": "Этот blueprint использует типы task, которые недоступны в этом экземпляре:",
+        "installHint": "Установите отсутствующие plugin(s), чтобы использовать этот blueprint: {plugins}.",
+        "card": "Использует типы task, которые недоступны в этом экземпляре: {tasks}",
         "install": "Установить plugins"
       }
     },
     "use": "Использовать",
+    "plugin_card": {
+      "tasks": "задача | задачи",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
+      "autoInstall": {
+        "failed": "Не удалось установить плагин",
+        "failedHint": "Flow не был сохранён. Исправьте проблему или удалите плагин из flow, затем сохраните снова.",
+        "preparing": "Подготовка установки плагина...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Плагин успешно установлен | Плагины успешно установлены",
+        "timeout": "Установка плагина занимает больше времени, чем ожидалось. Flow не был сохранён, сохраните снова после завершения установки.",
+        "title": "Установка {count} плагина | Установка {count} плагинов"
+      },
       "names": "Плагины",
       "release": "Заметки о выпуске",
       "beta": "Бета",
@@ -571,7 +590,9 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Документация flow",
+      "nav_definitions": "Определения",
       "nav_examples": "Примеры",
+      "nav_metrics": "Метрики",
       "nav_outputs": "Outputs",
       "nav_overview": "Обзор",
       "nav_properties": "Свойства",
@@ -608,6 +629,7 @@
     "triggers_add_filter_app": "Приложение",
     "triggers_add_empty_title": "Триггеры не найдены",
     "triggers_add_ee_tooltip": "Этот trigger требует Enterprise Edition.",
+    "ee_feature_tooltip": "Эта функция требует Enterprise Edition.",
     "triggers_add_card_add": "Добавить",
     "triggers_add_modal_tab_form": "Форма",
     "triggers_add_modal_tab_source": "Источник",
@@ -652,6 +674,10 @@
     "open full page": "Открыть страницу полностью",
     "drill down preview": "Предпросмотр",
     "errors": {
+      "400": {
+        "title": "Неверный запрос",
+        "content": "Запрос не может быть понят сервером."
+      },
       "401": {
         "title": "Неавторизован",
         "content": "Вам нужно пройти аутентификацию для доступа к этой странице."
@@ -664,6 +690,114 @@
         "title": "Страница не найдена",
         "content": "Запрашиваемый URL не найден на этом сервере.<br />Это все, что мы знаем.",
         "flow or execution": "Flow или выполнение, которое вы ищете, не существует."
+      },
+      "409": {
+        "title": "Конфликт",
+        "content": "Запрос конфликтует с текущим состоянием ресурса."
+      },
+      "422": {
+        "title": "Недопустимая сущность",
+        "content": "Отправленное содержимое не может быть обработано."
+      },
+      "500": {
+        "title": "Внутренняя ошибка сервера",
+        "content": "Что-то пошло не так с нашей стороны. Пожалуйста, попробуйте позже."
+      },
+      "503": {
+        "title": "Сервис недоступен",
+        "content": "Сервер временно недоступен. Пожалуйста, попробуйте позже."
+      },
+      "generic": {
+        "title": "Что-то пошло не так",
+        "content": "Произошла непредвиденная ошибка. Пожалуйста, попробуйте еще раз."
+      },
+      "trace id": "ID трассировки",
+      "problems": {
+        "ai-request-failed": {
+          "title": "Сбой запроса AI"
+        },
+        "bad-request": {
+          "title": "Неверный запрос"
+        },
+        "bulk-validation-failed": {
+          "title": "Некоторые элементы не удалось обработать"
+        },
+        "conflict": {
+          "title": "Конфликт"
+        },
+        "entity-already-exists": {
+          "title": "Сущность уже существует"
+        },
+        "forbidden": {
+          "title": "Доступ запрещен"
+        },
+        "internal-error": {
+          "title": "Внутренняя ошибка сервера"
+        },
+        "invalid-argument": {
+          "title": "Недопустимый аргумент"
+        },
+        "invalid-entity": {
+          "title": "Недопустимая сущность"
+        },
+        "invalid-format": {
+          "title": "Неверный формат значения"
+        },
+        "invalid-json": {
+          "title": "Неверный JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "Недопустимый тип plugin"
+        },
+        "invalid-query-filters": {
+          "title": "Неверные фильтры запроса"
+        },
+        "invalid-query-parameter": {
+          "title": "Недопустимый параметр запроса"
+        },
+        "invalid-request-body": {
+          "title": "Недопустимое тело запроса"
+        },
+        "locked": {
+          "title": "Ресурс заблокирован"
+        },
+        "method-not-allowed": {
+          "title": "Метод не разрешен"
+        },
+        "migration-required": {
+          "title": "Требуется миграция"
+        },
+        "not-acceptable": {
+          "title": "Неприемлемо"
+        },
+        "not-found": {
+          "title": "Ресурс не найден"
+        },
+        "payload-too-large": {
+          "title": "Payload слишком большой"
+        },
+        "resource-expired": {
+          "title": "Ресурс истек"
+        },
+        "service-unavailable": {
+          "title": "Сервис недоступен",
+          "detail": "Сервер временно недоступен. Пожалуйста, попробуйте позже."
+        },
+        "timeout": {
+          "title": "Операция завершилась по таймауту"
+        },
+        "too-many-requests": {
+          "title": "Слишком много запросов"
+        },
+        "unauthenticated": {
+          "title": "Требуется аутентификация"
+        },
+        "unsupported-media-type": {
+          "title": "Неподдерживаемый тип медиа"
+        },
+        "validation-failed": {
+          "title": "Ошибка валидации"
+        }
       }
     },
     "back_to_dashboard": "Вернуться на панель управления",
@@ -681,7 +815,9 @@
     "label": "Метка",
     "labels": "Метки",
     "execution labels": "Метки выполнения",
+    "show more labels": "Показать еще {count} меток",
     "wrong labels": "Пустой key или value не допускается в метках",
+    "invalid label key": "Недопустимый key метки. Допустимый key должен начинаться со строчной буквы и содержать только строчные буквы, цифры, дефисы (-), подчёркивания (_) или точки (.)",
     "feeds": {
       "heading": "Все о Kestra.",
       "subheading": "Последние обновления, руководства и истории"
@@ -694,7 +830,7 @@
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk resume": "Вы уверены, что хотите возобновить <code>{executionCount}</code> выполнение(я)?",
     "bulk pause": "Вы уверены, что хотите приостановить выполнение <code>{executionCount}</code>?",
-    "bulk force run": "Вы уверены, что хотите принудительно запустить {executionCount} выполнение(й)?<br/><br/>ВНИМАНИЕ: принудительный запуск выполнения не гарантирован и может привести к дублированию выполнений task.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED tasks будут переведены в состояние RUNNING.</li><li>RUNNING tasks будут повторно отправлены.</li><li>QUEUED tasks будут удалены из очереди.</li><li>PAUSED tasks будут возобновлены.</li></ul>",
+    "bulk force run": "Вы уверены, что хотите принудительно запустить `{executionCount}` выполнение(й)?\n\nВНИМАНИЕ: принудительный запуск выполнения не гарантирован и может привести к дублированию выполнений task.\n\nБудут выполнены следующие переходы:\n\n- CREATED tasks будут переведены в состояние RUNNING.\n- RUNNING tasks будут повторно отправлены.\n- QUEUED tasks будут удалены из очереди.\n- PAUSED tasks будут возобновлены.",
     "bulk restart": "Вы уверены, что хотите перезапустить <code>{executionCount}</code> выполнение(я)?",
     "bulk kill": "Вы уверены, что хотите убить <code>{executionCount}</code> выполнение(я)?",
     "cancel": "Отмена",
@@ -703,15 +839,15 @@
       "guide": "Нужна помощь в выполнении вашего первого flow?"
     },
     "product_tour": "Тур по продукту",
-    "executions replayed": "<code>{executionCount}</code> выполнение(я) воспроизведено",
+    "executions replayed": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji odtworzono",
     "executions state changed": "Состояние выполнения <code>{executionCount}</code> было изменено",
-    "executions resumed": "<code>{executionCount}</code> выполнение(я) возобновлено",
-    "executions paused": "<code>{executionCount}</code> выполнение(я) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> выполнение(я) в очереди",
-    "executions force run": "<code>{executionCount}</code> выполнение(я) принудительный запуск",
-    "executions restarted": "<code>{executionCount}</code> выполнение(я) перезапущено",
-    "executions killed": "<code>{executionCount}</code> выполнение(я) убито",
-    "executions deleted": "<code>{executionCount}</code> выполнение(я) удалено",
+    "executions resumed": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji wznowiono",
+    "executions paused": "<code>{executionCount}</code> egzekucja(-e) wstrzymana(-e)",
+    "executions unqueue": "<code>{executionCount}</code> egzekucja(e) usunięte z kolejki",
+    "executions force run": "<code>{executionCount}</code> принудительно запущенных egzekucji",
+    "executions restarted": "<code>{executionCount}</code> перезапущенных egzekucji",
+    "executions killed": "<code>{executionCount}</code> egzekucja(-e) zabita(-e)",
+    "executions deleted": "<code>{executionCount}</code> удаленных egzekucji",
     "invalid bulk replay": "Не удалось воспроизвести выполнения",
     "invalid bulk resume": "Не удалось возобновить выполнения",
     "invalid bulk pause": "Не удалось приостановить выполнения",
@@ -774,6 +910,7 @@
     "metric": "Метрика",
     "aggregation": "Агрегация",
     "metric choice": "Для этого flow метрики недоступны",
+    "metric filter no match": "Нет метрик, соответствующих \"{term}\"",
     "of": "из",
     "title": "Заголовок",
     "api": "API",
@@ -790,6 +927,11 @@
     "expand_by_default": "Разворачивать структурированные log по умолчанию",
     "similar lines": "похожие строки",
     "download_logs_description": "Выберите, какие log'и экспортировать. Фильтры по умолчанию соответствуют вашему текущему представлению.",
+    "logs_download_truncated": "Экспортированы {downloaded} самых свежих строк log. Ещё {skipped} соответствовали вашим фильтрам и были пропущены.",
+    "logs_download_capped": "Экспортированы {downloaded} самых свежих строк log — максимум для одного экспорта. Возможно, вашим фильтрам соответствовало больше строк.",
+    "logs_download_partial": "Экспорт остановился на {downloaded} строках log, так как этот фильтр нельзя пролистать дальше. Часть подходящих строк отсутствует.",
+    "logs_download_failed": "Экспорт log не удался. Файл не был загружен.",
+    "logs_download_empty": "Ни одна строка log не соответствует вашим фильтрам, поэтому файл не был загружен.",
     "display_settings": "Настройки отображения",
     "density": "Плотность",
     "density_compact": "Компактный",
@@ -802,7 +944,7 @@
     "join_slack": "Присоединиться к Slack",
     "kestra": "Kestra",
     "error detected": "Обнаружена ошибка(и).",
-    "warning detected": "Обнаружены предупреждения",
+    "warning detected": "Обнаружены предупреждения.",
     "informative notice": "Примечание(я)",
     "open": "Открыть",
     "dependency task": "Задача {taskId} является зависимостью другого задачи",
@@ -873,6 +1015,7 @@
         "folder_error": "Произошла ошибка при создании папки"
       },
       "rename": {
+        "error": "Не удалось переименовать в \"{name}\". Возможно, файл или папка с таким именем уже существует.",
         "label": "Переименовать",
         "file": "Переименовать файл",
         "folder": "Переименовать папку",
@@ -886,6 +1029,10 @@
         "files": "Удалить {count} выбранных файлов",
         "folders": "Удалить {count} выбранных папок"
       },
+      "move": {
+        "bulk_success": "Выбранные файлы успешно перемещены.",
+        "bulk_error": "Не удалось переместить {count} из выбранных элементов."
+      },
       "import": {
         "files": "Импортировать файлы",
         "folder": "Импортировать папку",
@@ -894,6 +1041,7 @@
       },
       "export": "Экспортировать файлы namespace",
       "export_single": "Экспортировать файл",
+      "export_error": "Не удалось экспортировать \"{name}\". Не удалось определить путь.",
       "dialog": {
         "name": {
           "file": "Имя с расширением:",
@@ -1013,7 +1161,8 @@
             "triggers_default_tab": "Вкладка по умолчанию Triggers",
             "playground": "Песочница",
             "auto_refresh_interval": "Интервал автоматического обновления",
-            "task_edit_default_mode": "Режим редактирования Task по умолчанию"
+            "task_edit_default_mode": "Режим редактирования Task по умолчанию",
+            "flow_template": "Шаблон flow по умолчанию"
           },
           "descriptions": {
             "default_namespace": "Используется при создании новых flow без namespace.",
@@ -1026,11 +1175,17 @@
             "triggers_default_tab": "Вкладка выбрана при переходе на страницу триггеров.",
             "auto_refresh_interval": "Секунды между автоматическими обновлениями данных на страницах списков.",
             "playground": "Запускайте задачи по отдельности в редакторе playground.",
-            "task_edit_default_mode": "Как task открывается по умолчанию из no-code редактора."
+            "task_edit_default_mode": "Как task открывается по умолчанию из no-code редактора.",
+            "flow_template": "YAML открывается в редакторе при создании нового flow. id и namespace можно не указывать, так как они генерируются автоматически. Если это поле пусто, используется шаблон, настроенный для экземпляра."
           },
           "task_edit_default_mode_options": {
             "modal": "Модальное окно",
             "tab": "Вкладка"
+          },
+          "flow_template_reset": "Сбросить до значений по умолчанию",
+          "flow_template_error": {
+            "invalid_mapping": "Недопустимый шаблон flow: ожидалось сопоставление ключ-значение, а не список или скаляр.",
+            "parse_error": "Не удалось разобрать YAML. Шаблон был сохранен, поэтому редактор может показать ту же ошибку при создании flow."
           }
         },
         "theme": {
@@ -1107,7 +1262,7 @@
       "contact_sales": "Связаться с отделом продаж",
       "secrets": {
         "title": "Обновите управление Secrets",
-        "message": "Enterprise Edition (EE) позволяет добавлять, редактировать или удалять секреты непосредственно в UI — без перезапуска экземпляра. Организуйте секреты по namespace с детальными разрешениями RBAC и наследуйте их от родительских namespace к дочерним. EE интегрируется с менеджерами секретов, такими как HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager и Elasticsearch. Настройте выделенные бэкенды для каждого namespace, tenant или экземпляра, чтобы изолировать секреты между командами, или включите секреты только для чтения, хранящиеся во внешних хранилищах. Секреты остаются зашифрованными в состоянии покоя и при передаче. Дополнительное кэширование сокращает вызовы API, а журналы аудита регистрируют весь доступ.",
+        "message": "Enterprise Edition позволяет добавлять, редактировать и удалять секреты непосредственно в UI, организовывать их по namespace с помощью RBAC и хранить их в HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager или Elasticsearch.",
         "add_env": {
           "intro": "Создать новый Secret",
           "first": "Закодируйте <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">секретное значение в Base64</a>",
@@ -1117,7 +1272,11 @@
       },
       "apps": {
         "title": "Создавайте пользовательские приложения с Kestra",
-        "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения."
+        "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения.",
+        "blueprints": {
+          "title": "Начните с blueprint приложения.",
+          "message": "Готовые blueprints приложений для распространенных сценариев использования, таких как формы, утверждения и отправка данных. С Kestra Enterprise Edition вы можете использовать любой blueprint в качестве отправной точки и адаптировать его для создания пользовательских UI поверх ваших workflows."
+        }
       },
       "tests": {
         "label": "Тесты",
@@ -1183,7 +1342,7 @@
       "namespace": {
         "edit": {
           "title": "Обновите управление вашим Namespace",
-          "message": "В Kestra Enterprise Edition namespaces обеспечивают расширенную изоляцию и управление секретами, переменными и значениями плагинов по умолчанию в масштабе. Администраторы могут настраивать пользовательские менеджеры секретов, изолированные хранилища, выделенные группы worker'ов и детальные разрешения для каждого namespace. Это гарантирует, что секреты, переменные и конфигурации плагинов остаются безопасными и простыми в обслуживании для разных команд и проектов."
+          "message": "В Kestra Enterprise Edition namespaces обеспечивают расширенную изоляцию и контроль секретов, переменных и политик управления в масштабе. Администраторы могут настраивать пользовательские менеджеры секретов, изолированные хранилища, выделенные группы worker'ов и детальные разрешения для каждого namespace. Это гарантирует, что секреты, переменные и правила управления остаются безопасными и простыми в обслуживании для разных команд и проектов."
         },
         "secrets": {
           "title": "Управление секретами безопасным способом",
@@ -1414,6 +1573,7 @@
       "key": "Имя",
       "keyPlaceholder": "Имя, используемое для ссылки на этот секрет, например, MY_API_TOKEN",
       "name": "Секретное значение",
+      "valuePlaceholder": "Введите секретное значение",
       "description": "Описание",
       "descriptionPlaceholder": "Опишите этот секрет",
       "tags": "Теги",
@@ -1430,7 +1590,8 @@
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
       },
-      "inherited": "Наследуемые KV пары"
+      "inherited": "Наследуемые KV пары",
+      "expiration_hint": "Срок действия истекает {date}. Оставьте поле без изменений, чтобы сохранить этот срок действия; выбор продолжительности пересчитывает его с текущего момента, а очистка удаляет его."
     },
     "expiration": "Срок действия",
     "page": {
@@ -1518,6 +1679,7 @@
     "last error was": "Последняя ошибка была",
     "active": "Активно",
     "flows imported": "Потоки импортированы",
+    "flows not imported": "Flows не импортированы",
     "custom value": "Пользовательское значение",
     "chart": "График",
     "chart preview": "Предварительный просмотр диаграммы",
@@ -1563,7 +1725,8 @@
           "workerSelector": "Селектор Worker",
           "checks": "Проверки",
           "updated": "Обновлено",
-          "quotas": "Квоты"
+          "quotas": "Квоты",
+          "policyRefs": "Ссылки на Policy"
         }
       },
       "select": {
@@ -1745,10 +1908,6 @@
           "content": "Этот ресурс не имеет зависимостей вверх или вниз по потоку с flow или другими ресурсами."
         }
       },
-      "plugins": {
-        "title": "Для этого namespace не установлены значения по умолчанию для плагинов.",
-        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации."
-      },
       "triggers": {
         "title": "Ваш flow не имеет никаких Triggers.",
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> в нашей документации."
@@ -1758,7 +1917,7 @@
         "content": "Представьте flow как инструмент MCP, добавив в него <code>McpToolTrigger</code>. Подробнее о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers/mcp-tool-trigger?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-trigger-inlinedoc\" target=\"_blank\">MCP Tool Trigger</a></strong> читайте в нашей документации."
       },
       "versionPlugin": {
-        "title": "У вас еще нет версионированного плагина!",
+        "title": "У вас еще нет версионированных плагинов!",
         "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра."
       },
       "panels": {
@@ -1774,7 +1933,8 @@
       "close_all_tabs": "Закрыть все вкладки",
       "close_all_panels": "Закрыть все панели",
       "exit_fullscreen": "Выйти из полноэкранного режима",
-      "fullscreen": "На весь экран"
+      "fullscreen": "На весь экран",
+      "split_panel": "Разделить панель"
     },
     "search_docs": "Поиск",
     "no_results_found": "Результаты не найдены",
@@ -1787,7 +1947,9 @@
       "triggers": "Триггеры не найдены",
       "flows": "Потоки не найдены",
       "kv_pairs": "Пары kv store не найдены",
-      "secrets": "Секреты не найдены"
+      "secrets": "Секреты не найдены",
+      "all_columns_hidden": "Все столбцы скрыты",
+      "all_columns_hidden_description": "Включите хотя бы один столбец в разделе «Настроить столбцы таблицы», чтобы снова увидеть данные."
     },
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "dashboards": {
@@ -1805,6 +1967,7 @@
       "others": "Другие",
       "viewAll": "Показать все",
       "export": "Экспорт",
+      "exportEmpty": "В этой диаграмме нет данных для экспорта.",
       "exportTo": {
         "csv": "Экспорт в CSV",
         "ion": "Экспорт в ION"
@@ -1914,6 +2077,7 @@
           "test": "тест"
         },
         "contextRemoved": "Удалено {type} {id} из контекста.",
+        "modelChanged": "Переключено на {model}.",
         "toolResult": {
           "detail": "Подробности",
           "error": "{tool} FAILED",
@@ -1954,8 +2118,8 @@
         },
         "unavailable": {
           "title": "AI Copilot недоступен",
-          "detail": "Провайдер ИИ не настроен. Попросите администратора настроить его и повторите попытку.",
-          "retry": "Повторить попытку"
+          "detail": "Не настроен ни один AI provider. Попросите администратора настроить его.",
+          "docs": "Просмотреть документацию"
         },
         "thinkingWords": [
           "Оркестрация",
@@ -1984,6 +2148,12 @@
           "Конвергирует"
         ],
         "newChat": "Новый чат",
+        "fixThread": {
+          "flow": "Исправить Flow {id}",
+          "task": "Исправить Task {id}",
+          "execution": "Исправить выполнение {id}",
+          "generic": "Исправить ошибки Flow"
+        },
         "draft": {
           "openInEditor": "Открыть в редакторе",
           "apply": "Применить",
@@ -2032,6 +2202,31 @@
         "zoom_out": "Уменьшить масштаб",
         "clear_selection": "Очистить выбор",
         "fit_view": "По размеру экрана"
+      },
+      "dag": {
+        "force": "Дерево",
+        "layered": "DAG",
+        "system": "Система",
+        "last_update": "Последнее обновление",
+        "status": {
+          "fresh": "Новый",
+          "stale": "Устаревший",
+          "failed": "Неудача",
+          "unknown": "Не отслеживается"
+        },
+        "summary": {
+          "fresh": "Все {n} Asset'ов обновлены",
+          "issues": "{n} устаревших",
+          "failed": "{n} не удалось",
+          "last_run": "последний запуск {ago}",
+          "unknown": "{n} не отслеживается"
+        },
+        "recent_runs": "Последние запуски",
+        "group_by": "Группировать по",
+        "groups": "Группы ({n})",
+        "group_none": "Без группировки",
+        "group_dataset": "Набор данных",
+        "ungrouped": "Без группы"
       },
       "search": {
         "placeholders": {
@@ -2094,7 +2289,7 @@
     },
     "mcp": {
       "your_servers": "Ваши серверы",
-      "servers_count": "{count} MCP Серверов",
+      "servers_count": "{count} сервер MCP | {count} сервера MCP | {count} серверов MCP",
       "managed_by_kestra": "Управляется Kestra",
       "servers": "Серверы MCP",
       "client_setup": "Настройка клиента",
@@ -2228,7 +2423,7 @@
       "next_match": "Следующее совпадение",
       "no_results_description": "Попробуйте расширить namespace, переключить область видимости обратно на All source или отключить Match case и Match whole word.",
       "no_results_hidden_type": "Найдено {count} совпадение в {type}, который вы не выбрали. | Найдено {count} совпадения в {type}, который вы не выбрали. | Найдено {count} совпадений в {type}, который вы не выбрали.",
-      "no_results_in_types": "Нет совпадений для «{query}» в {types}",
+      "no_results_in_types": "Нет совпадений для {query} в {types}",
       "no_results_title": "Нет совпадений для «{query}»",
       "open_flow": "Открыть flow",
       "open_in_editor": "Открыть в редакторе",
@@ -2407,6 +2602,7 @@
         "message": "Исправьте ошибки перед сохранением.",
         "title": "Невозможно сохранить flow"
       },
+      "schema_default_tooltip": "Значение по умолчанию, используемое, когда поле не задано",
       "search_task_placeholder": "Поиск или описание task…",
       "shortcuts": {
         "add_after": "Вставить блок после выделения",

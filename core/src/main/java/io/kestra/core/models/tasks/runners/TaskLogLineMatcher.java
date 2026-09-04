@@ -59,6 +59,12 @@ public class TaskLogLineMatcher {
 
     @jakarta.inject.Inject
     private OtlpSpanForwarder otlpSpanForwarder;
+    // The key is EE-only, but the marker protocol is shared, so OSS has to redact it wherever a raw command or log line is emitted.
+    private static final String ENCRYPTED_OUTPUTS_KEY = "encryptedOutputs";
+
+    private static final Pattern ENCRYPTED_LOG_DATA = Pattern.compile("::\\{.*?" + ENCRYPTED_OUTPUTS_KEY + ".*?}::");
+
+    private static final String REDACTED = "******";
 
     /**
      * Attempts to match and extract structured data from a given log line.
@@ -98,6 +104,21 @@ public class TaskLogLineMatcher {
     }
 
     protected TaskLogMatch handle(Logger logger, RunContext runContext, Instant instant, TaskLogMatch match, String data, boolean forwardTraces) {
+    /**
+     * Replaces every {@code ::{...}::} block carrying encrypted outputs with {@code ******}, so a command or log
+     * line embedding one can be emitted without exposing the value it is meant to encrypt. Frames are matched
+     * textually and within a single line, as the payload may not be valid JSON.
+     */
+    public static String redactEncryptedOutputs(String text) {
+        if (text == null || !text.contains(ENCRYPTED_OUTPUTS_KEY)) {
+            return text;
+        }
+
+        return ENCRYPTED_LOG_DATA.matcher(text).replaceAll(REDACTED);
+    }
+
+    protected TaskLogMatch handle(Logger logger, RunContext runContext, Instant instant, TaskLogMatch match, String data) {
+        String logData = redactEncryptedOutputs(data);
 
         if (match.metrics() != null) {
             match.metrics().forEach(runContext::metric);
@@ -113,7 +134,7 @@ public class TaskLogLineMatcher {
                         .addKeyValue(ORIGINAL_TIMESTAMP_KEY, instant);
                     builder.log(it.message());
                 } catch (Exception e) {
-                    logger.warn("Invalid log '{}'", data, e);
+                    logger.warn("Invalid log '{}'", logData, e);
                 }
             });
         }
@@ -123,14 +144,15 @@ public class TaskLogLineMatcher {
                 AssetEmitter assetEmitter = runContext.assets();
                 assetEmitter.emit(match.assets());
             } catch (IllegalVariableEvaluationException e) {
-                logger.warn("Unable to get asset emitter for log '{}'", data, e);
+                logger.warn("Unable to get asset emitter for log '{}'", logData, e);
             } catch (QueueException e) {
-                logger.warn("Unable to emit asset for log '{}'", data, e);
+                logger.warn("Unable to emit asset for log '{}'", logData, e);
             }
         }
 
         if (match.otlp() != null && !match.otlp().isEmpty()) {
             processOtlp(match.otlp(), logger, runContext, instant, forwardTraces);
+            handleOtlp(logger, runContext, instant, match.otlp(), logData);
         }
 
         return match;
@@ -226,6 +248,8 @@ public class TaskLogLineMatcher {
                     }
 
                     builder.log(logRecord.body() != null ? logRecord.body().asText() : null);
+                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, toInstant(logRecord.timeUnixNano(), instant))
+                        .log(logRecord.body() != null ? redactEncryptedOutputs(logRecord.body().asText()) : null);
                 } catch (Exception e) {
                     logger.warn("Invalid OTLP log", e);
                 }

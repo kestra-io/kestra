@@ -15,7 +15,6 @@ const i18n = createI18n({
                 trigger: {
                     execution_title: "Execution status", execution_sub: "Reacts to flow state changes",
                     schedule_title: "Schedule", schedule_sub: "Runs on a time schedule",
-                    case_title: "Case status", case_sub: "EE only feature",
                     webhook_title: "Webhook", webhook_sub: "Triggered by an HTTP request",
                     other_title: "Other trigger", other_sub: "Any available trigger plugin",
                 },

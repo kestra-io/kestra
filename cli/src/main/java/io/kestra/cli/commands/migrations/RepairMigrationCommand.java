@@ -11,7 +11,7 @@ import picocli.CommandLine;
  * CLI command that repairs the stored checksum for an already-applied migration script.
  *
  * <p>
- * Usage: {@code kestra migrate repair 2.0.01-upgrade}
+ * Usage: {@code kestra migrate repair 2.0.01-schema}
  */
 @Slf4j
 @CommandLine.Command(
@@ -24,7 +24,7 @@ public class RepairMigrationCommand extends AbstractMigrationCommand {
     @CommandLine.Parameters(
         index = "0",
         paramLabel = "<script-id>",
-        description = "Migration script ID to repair, for example 2.0.01-upgrade"
+        description = "Migration script ID to repair, for example 2.0.01-schema"
     )
     private String scriptId;
 

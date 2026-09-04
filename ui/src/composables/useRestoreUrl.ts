@@ -1,13 +1,14 @@
 /**
- * Persists a page's URL query (filters, sort, pagination, etc.) to sessionStorage
- * so it can be restored when the user navigates back to that page with no query.
+ * Persists a page's URL query (filters, sort, etc.) to sessionStorage so it can be
+ * restored when the user navigates back to that page with no query. Pagination
+ * (page/size) is excluded (PY-1529) from restoration so returning lands on the default page.
  *
  * Auto-saves on every same-path query change and auto-restores on mount when the
  * URL has no query but a saved state exists. Exposes `loadInit` so consumers can
  * gate their initial data fetch and avoid racing the in-flight restore navigation.
  */
 import {computed, onMounted, ref, watch} from "vue"
-import {RouteLocation, useRoute, useRouter} from "vue-router"
+import {isNavigationFailure, NavigationFailureType, RouteLocation, Router, useRoute, useRouter} from "vue-router"
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
@@ -34,7 +35,7 @@ export function getRestoredQuery(route: RouteLocation) {
 
     for (const key in localStorageValue) {
         const value = localStorageValue[key]
-        if (query[key] || !value) continue
+        if (key === "page" || key === "size" || query[key] || !value) continue
         // empty array breaks the application
         if (Array.isArray(value) && value.length === 0) continue
         query[key] = value
@@ -42,6 +43,24 @@ export function getRestoredQuery(route: RouteLocation) {
     }
 
     return {query, change, localStorageValue}
+}
+
+/**
+ * Resolves once the navigation that cancelled ours has finished, so the retry starts
+ * from the settled URL instead of cancelling that navigation right back. The timeout
+ * covers a navigation that already settled before we subscribed.
+ */
+function navigationSettled(router: Router): Promise<void> {
+    return new Promise((resolve) => {
+        const stop = router.afterEach(() => {
+            stop()
+            resolve()
+        })
+        setTimeout(() => {
+            stop()
+            resolve()
+        }, 100)
+    })
 }
 
 export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
@@ -68,15 +87,22 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         }
     }
 
-    const goToRestoreUrl = () => {
-        const {query, change} = getRestoredQuery(route)
-
+    const goToRestoreUrl = async () => {
         // Unblock loadData synchronously — the consumer's route.query watcher
         // fires before router.replace's .then, and that reload must see loadInit=true.
         loadInit.value = true
 
-        if (change) {
-            router.replace({query})
+        // A page that rewrites its own URL on mount (e.g. the dashboard appending its
+        // id param) cancels our replace and the restored filters are lost, so re-assert
+        // them once that navigation has settled.
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const {query, change} = getRestoredQuery(route)
+            if (!change) return
+
+            const failure = await router.replace({query})
+            if (!isNavigationFailure(failure, NavigationFailureType.cancelled)) return
+
+            await navigationSettled(router)
         }
     }
 

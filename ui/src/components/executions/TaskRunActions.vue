@@ -11,7 +11,7 @@
                 >
                     <span class="d-inline-flex align-items-center">
                         <AiIcon class="me-1" />
-                        <span>{{ t('fix_with_ai') }}</span>
+                        <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
                 <SubFlowLink
@@ -63,19 +63,19 @@
                     :icon="Download"
                     @click="downloadContent(taskRun.id)"
                 >
-                    {{ t("download logs") }}
+                    {{ $t("download logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Copy"
                     @click="copyContent(taskRun.id)"
                 >
-                    {{ t("copy logs") }}
+                    {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Delete"
                     @click="deleteLogs(taskRun.id)"
                 >
-                    {{ t("delete logs") }}
+                    {{ $t("delete logs") }}
                 </KsDropdownItem>
                 <WorkerInfo
                     component="KsDropdownItem"
@@ -188,7 +188,7 @@
                 coreStore.message = {
                     variant: "success",
                     title: t("success"),
-                    message: t("copied_logs_to_clipboard"),
+                    content: t("copied_logs_to_clipboard"),
                 }
             })
         })
@@ -228,7 +228,7 @@
             return last?.message ?? ""
         })()
         const prompt = `Fix the task ${props.taskRun.taskId} as it generated the following error:\n${errorLines}`
-        miscStore.promptCopilot(prompt)
+        miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: props.taskRun.taskId}), newThread: true})
     }
 </script>
 

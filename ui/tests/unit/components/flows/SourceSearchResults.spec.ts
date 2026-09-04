@@ -1,4 +1,4 @@
-import {describe, test, expect, vi} from "vitest"
+import {describe, test, expect, vi, beforeEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -8,9 +8,13 @@ import type {NamespaceFileState, KvMatchEntry, SecretMatchEntry, ResourceGroup} 
 import type {SourceSearchResult} from "../../../../src/utils/sourceSearchDiff"
 import en from "../../../../src/translations/en.json"
 
+const {mockRoute} = vi.hoisted(() => ({
+    mockRoute: {query: {} as Record<string, unknown>, params: {} as Record<string, unknown>},
+}))
+
 vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn()}),
-    useRoute: () => ({query: {}, params: {}}),
+    useRoute: () => mockRoute,
     RouterLink: {
         template: "<a><slot /></a>",
         props: ["to"],
@@ -19,8 +23,14 @@ vi.mock("vue-router", () => ({
 
 const i18n = createI18n({legacy: false, locale: "en", messages: en})
 
+const RouterLinkProbe = {
+    props: ["to"],
+    template: "<a :data-to=\"JSON.stringify(to)\"><slot /></a>",
+}
+
 const globalConfig = {
     plugins: [i18n, KestraDesignSystem],
+    stubs: {RouterLink: RouterLinkProbe},
 }
 
 const makeFlowResult = (namespace: string, id: string, snippets: string[], editable = true) => ({
@@ -58,6 +68,10 @@ function mountResults(overrides: Record<string, unknown> = {}) {
 }
 
 describe("SourceSearchResults", () => {
+    beforeEach(() => {
+        mockRoute.params = {}
+    })
+
     test("renders a flow group for each result", async () => {
         const flowsResults = [
             makeFlowResult("company.data", "flow-one", ["line [mark]match[/mark] here"]),
@@ -239,5 +253,30 @@ describe("SourceSearchResults", () => {
         const vm = wrapper.vm as unknown as {collapseAll: () => void; expandAll: () => void}
         expect(() => vm.collapseAll()).not.toThrow()
         expect(() => vm.expandAll()).not.toThrow()
+    })
+
+    test("points the group's open link at the flow's edit tab route with the current tenant", () => {
+        mockRoute.params = {tenant: "acme"}
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag"])]
+
+        const wrapper = mountResults({flowsResults})
+
+        const link = wrapper.find("[data-test='source-search-open-link']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: "acme", namespace: "ns", id: "flow-id"},
+        })
+    })
+
+    test("resolves the group's open link without a tenant in OSS single-tenant mode", () => {
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag"])]
+
+        const wrapper = mountResults({flowsResults})
+
+        const link = wrapper.find("[data-test='source-search-open-link']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: undefined, namespace: "ns", id: "flow-id"},
+        })
     })
 })

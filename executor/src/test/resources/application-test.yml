@@ -83,3 +83,14 @@ datasources:
     username: sa
     password: ""
     driverClassName: org.h2.Driver
+
+# Disable Micronaut embedded gRPC server
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false
+
+logger:
+  levels:
+    "io.kestra.core.migration": WARN

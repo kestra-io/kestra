@@ -11,6 +11,7 @@
             <div
                 ref="dragHandle"
                 class="menu-drag-handle"
+                :class="{'is-swiping': isSwiping}"
                 aria-hidden="true"
             />
         </template>
@@ -30,7 +31,7 @@
                 @update:collapsed="(value: boolean) => onSectionCollapseChange(section, value)"
             >
                 <template v-if="getSectionCollapsed(section) && sectionHasNewChild(section)" #suffix>
-                    <KsNewBadge>{{ t("new") }}</KsNewBadge>
+                    <KsNewBadge>{{ $t("new") }}</KsNewBadge>
                 </template>
                 <MenuLink
                     v-for="item in getDisplayedItems(section)"
@@ -165,7 +166,7 @@
 
     const DRAG_CLOSE_THRESHOLD = 60
     const dragHandle = ref<HTMLElement>()
-    const {direction} = usePointerSwipe(dragHandle, {
+    const {direction, isSwiping} = usePointerSwipe(dragHandle, {
         threshold: DRAG_CLOSE_THRESHOLD,
         disableTextSelect: true,
         onSwipeEnd: () => {
@@ -294,8 +295,16 @@
     bottom: 0;
     width: var(--ks-spacing-2);
     z-index: 1;
-    cursor: w-resize;
+    /* Drag-to-collapse, not drag-to-resize: the handle is wired to a swipe gesture and the
+       menu width is fixed, so a resize cursor promised something that never happened. */
+    cursor: grab;
     touch-action: pan-y;
+
+    /* Driven by the composable rather than :active, which depends on the UA keeping the state
+       on an 8px div through a pointer capture. */
+    &.is-swiping {
+        cursor: grabbing;
+    }
 }
 
 .menu-drag-handle::after {

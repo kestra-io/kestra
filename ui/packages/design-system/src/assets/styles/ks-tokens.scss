@@ -44,6 +44,10 @@
     --ks-spacing-12: 5rem;
     --ks-spacing-16: 6rem;
 
+    --ks-placeholder-color: var(--ks-text-inactive);
+    --ks-placeholder-font-size: var(--ks-font-size-xs);
+    --ks-placeholder-font-weight: var(--ks-font-weight-regular);
+
     --ks-font-weight-regular: 400;
     --ks-font-weight-medium: 500;
     --ks-font-weight-semibold: 600;
@@ -75,6 +79,7 @@
     --ks-icon-size-xl: 2rem;
 
     --ks-status-created: var(--ks-status-info);
+    --ks-status-submitted: var(--ks-status-info);
     --ks-status-restarted: var(--ks-status-info);
     --ks-status-retried: var(--ks-status-info);
     --ks-status-failed: var(--ks-status-error);
@@ -91,6 +96,7 @@
     --ks-status-queued: var(--ks-status-neutral);
 
     --ks-status-border-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-base) 80%);
+    --ks-status-border-submitted: color-mix(in srgb, var(--ks-status-submitted), var(--ks-bg-base) 80%);
     --ks-status-border-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-base) 80%);
     --ks-status-border-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-base) 80%);
     --ks-status-border-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-base) 80%);
@@ -107,6 +113,7 @@
     --ks-status-border-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-base) 80%);
 
     --ks-status-background-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-badge) 90%);
+    --ks-status-background-submitted: color-mix(in srgb, var(--ks-status-submitted), var(--ks-bg-badge) 90%);
     --ks-status-background-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-badge) 90%);
     --ks-status-background-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-badge) 90%);
     --ks-status-background-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-badge) 90%);

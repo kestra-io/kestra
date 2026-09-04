@@ -9,7 +9,7 @@ import {ILanguageFeaturesService} from "monaco-editor/editor/common/services/lan
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {
     endOfWordColumn,
     NO_SUGGESTIONS,
@@ -33,6 +33,11 @@ import {
     filterExistingSubflowLinks,
     SUBFLOW_LINK_SCHEME,
 } from "./subflowLinkProvider"
+import {
+    filterMissingRequiredTaskProperties,
+    scopePropertySuggestionsToTaskType,
+    taskIdentityAtCursor,
+} from "./taskCompletionScoping"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
@@ -40,77 +45,7 @@ import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
 import CompletionContext = languages.CompletionContext;
 
-type TaskLike = Record<string, unknown>;
-
-function isTaskLike(value: unknown): value is TaskLike {
-    return (
-        typeof value === "object" &&
-        value !== null &&
-        typeof (value as TaskLike).id === "string" &&
-        typeof (value as TaskLike).type === "string"
-    )
-}
-
-function filterMissingRequiredTaskProperties({
-                                                 source,
-                                                 cursorIndex,
-                                                 requiredProperties,
-                                             }: {
-    source: string;
-    cursorIndex: number;
-    requiredProperties: string[];
-}): string[] {
-    if (!requiredProperties.length || !source.length) {
-        return []
-    }
-
-    try {
-        const safeCursorIndex = Math.max(
-            0,
-            Math.min(cursorIndex - 1, source.length - 1),
-        )
-        const probeIndexes = [safeCursorIndex]
-        let previousNonWhitespace = safeCursorIndex
-        while (
-            previousNonWhitespace > 0 &&
-            /\s/.test(source.charAt(previousNonWhitespace))
-            ) {
-            previousNonWhitespace--
-        }
-        if (previousNonWhitespace !== safeCursorIndex) {
-            probeIndexes.push(previousNonWhitespace)
-        }
-
-        for (const probeIndex of probeIndexes) {
-            const localized = YAML_UTILS.localizeElementAtIndex(
-                source,
-                probeIndex,
-            )
-            const candidates = [...(localized?.parents ?? []), localized?.value]
-
-            for (let i = candidates.length - 1; i >= 0; i--) {
-                const candidate = candidates[i]
-                if (
-                    isTaskLike(candidate) &&
-                    typeof candidate.id === "string" &&
-                    typeof candidate.type === "string"
-                ) {
-                    return requiredProperties.filter(
-                        (property) =>
-                            !Object.prototype.hasOwnProperty.call(
-                                candidate,
-                                property,
-                            ),
-                    )
-                }
-            }
-        }
-
-        return requiredProperties
-    } catch {
-        return requiredProperties
-    }
-}
+const unscopableTaskTypes = new Set<string>()
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     protected readonly yamlAutoCompletionObject: YamlAutoCompletion
@@ -126,19 +61,22 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         const validateYAML = computed(() => useBlueprintsStore().validateYAML)
-        // Keep Monaco YAML validation in sync with the blueprint store setting.
-        watch(validateYAML, (shouldValidate) =>
-            configureMonacoYaml(monaco, {validate: shouldValidate}),
-        )
 
         // Base YAML language setup shared across all YAML editors.
-        configureMonacoYaml(monaco, {
+        const monacoYaml = configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
             validate: validateYAML.value ?? true,
             schemas: yamlSchemas(),
         })
+
+        // Keep Monaco YAML validation in sync with the blueprint store setting. The single instance must be
+        // updated in place: calling configureMonacoYaml again would stack a second undisposed instance whose
+        // validate flag can never be turned off again.
+        watch(validateYAML, (shouldValidate) =>
+            monacoYaml.update({validate: shouldValidate ?? true}),
+        )
 
         const yamlCompletion = (
             StandaloneServices.get(ILanguageFeaturesService).completionProvider
@@ -388,10 +326,47 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion
                 })
 
+            // Monaco YAML derives property suggestions from the union of every task type, so a task
+            // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
+            let scopedSuggestions = suggestions
+            if (!isTypeValueContext) {
+                const task = taskIdentityAtCursor({
+                    source: model.getValue(),
+                    cursorIndex: model.getOffsetAt(position),
+                })
+                // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
+                // task shape but carry types like `STRING`, which would 404 on every keystroke.
+                const scopeKey = task && task.type.includes(".")
+                    ? `${task.type}@${task.version ?? ""}`
+                    : undefined
+                if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
+                    try {
+                        // `all` is required: without it the endpoint omits every inherited `Task`
+                        // property (`retry`, `timeout`, `description`…), which would filter them out.
+                        const pluginDoc = await pluginsStore.load({
+                            cls: task.type,
+                            version: task.version,
+                            commit: false,
+                            all: true,
+                        })
+                        const properties = pluginDoc?.schema?.properties?.properties
+                        scopedSuggestions = scopePropertySuggestionsToTaskType({
+                            suggestions,
+                            validPropertyKeys: properties ? Object.keys(properties) : undefined,
+                            propertyKind: monaco.languages.CompletionItemKind.Property,
+                        })
+                    } catch {
+                        // Fail open, and remember the failure: the provider is re-invoked on every
+                        // keystroke, so retrying a type that cannot resolve would request it each time.
+                        unscopableTaskTypes.add(scopeKey)
+                    }
+                }
+            }
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions,
+                suggestions: scopedSuggestions,
             }
         }
     }

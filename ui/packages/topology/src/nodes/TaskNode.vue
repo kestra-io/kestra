@@ -6,6 +6,7 @@
         :state="state"
         :class="classes"
         :icons="icons"
+        :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
@@ -36,7 +37,7 @@
                 <component :is="statusStyle.icon" class="status-tag__icon" />
                 <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
                 <span v-else class="status-tag__text">
-                    <Duration :histories="histories" :interval="100" />
+                    <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
         </template>
@@ -85,6 +86,7 @@
         default: null;
         description?: string;
         runIf?: unknown;
+        errors?: unknown[];
         taskRunner?: {
             type?: string;
         };
@@ -142,6 +144,7 @@
         targetPosition?: Position;
         id: string;
         icons?: Record<string, unknown>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -153,6 +156,7 @@
         targetPosition: Position.Left,
         enableSubflowInteraction: true,
         icons: undefined,
+        loadIcon: undefined,
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
@@ -376,7 +380,7 @@
                 onClick: () => emit(EVENTS.EXPAND, expandData.value),
             })
         }
-        if (!taskExecution.value && !readOnly && props.data.isFlowable) {
+        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors?.length) {
             list.push({
                 key: "add-error",
                 label: t("add error handler"),
@@ -481,6 +485,8 @@ button.playground-button {
 
 .runner-badge {
     align-self: flex-start;
+    max-width: 100%;
+    margin-bottom: var(--ks-spacing-1);
     padding: 0 var(--ks-spacing-2);
     border-radius: var(--ks-radius-base);
     background-color: var(--ks-bg-tag);

@@ -10,25 +10,25 @@
         <NavBarAction
             v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating"
             :icon="ContentCopy"
-            :label="t('copy')"
+            :label="$t('copy')"
             @click="editorCopyFlow"
         />
         <NavBarAction
             v-if="isEditTab && editorIsAllowedEdit && !deleted"
             :icon="Download"
-            :label="t('flow_export')"
+            :label="$t('flow_export')"
             @click="editorExportYaml"
         />
         <NavBarAction
             v-if="isEditTab && canDelete && !deleted && !flowStore.isCreating"
             :icon="Delete"
-            :label="t('delete')"
+            :label="$t('delete')"
             @click="editorDeleteFlow"
         />
         <NavBarAction
             v-if="tab === 'logs' && hasLogs"
             :icon="TrashCan"
-            :label="t('delete logs')"
+            :label="$t('delete logs')"
             @click="deleteLogs"
         />
 
@@ -40,14 +40,14 @@
                 :buttonProps="{disabled: editorHasErrors}"
                 @click="editorSaveOrPublish"
             >
-                {{ isPublishAction ? t('publish') : t('save') }}
+                {{ isPublishAction ? $t('publish') : $t('save') }}
                 <template #dropdown>
                     <KsDropdownMenu>
                         <KsDropdownItem v-if="isPublishAction" :icon="ContentSave" @click="editorSave">
-                            {{ t('save') }}
+                            {{ $t('save') }}
                         </KsDropdownItem>
                         <KsDropdownItem :icon="FileDocumentEditOutline" @click="editorSaveAsDraft">
-                            {{ t('save_as_draft') }}
+                            {{ $t('save_as_draft') }}
                         </KsDropdownItem>
                         <KsDropdownItem
                             v-if="editorHaveChange && !flowStore.isCreating"
@@ -55,15 +55,15 @@
                             :disabled="editorHasErrors || editorIsReadOnly"
                             @click="editorSaveAndExecute"
                         >
-                            {{ t('save_and_execute') }}
+                            {{ $t('save_and_execute') }}
                         </KsDropdownItem>
                     </KsDropdownMenu>
                 </template>
             </KsDropdown>
             <NavBarAction
-                v-else-if="canEdit && !deleted"
+                v-else-if="flow && canEdit && !deleted && !flowStore.isCreating"
                 :icon="Pencil"
-                :label="t('edit flow')"
+                :label="$t('edit flow')"
                 @click="editFlow"
             />
         </template>
@@ -73,7 +73,7 @@
                 v-if="deleted"
                 type="primary"
                 :icon="BackupRestore"
-                :label="t('restore')"
+                :label="$t('restore')"
                 @click="restoreFlow"
             />
             <TriggerFlow
@@ -92,7 +92,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {useFlowStore} from "../../../stores/flow"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
     import TrashCan from "vue-material-design-icons/TrashCan.vue"

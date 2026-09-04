@@ -495,6 +495,24 @@ class TaskLogLineMatcherTest {
     }
 
     @Test
+    void shouldRedactEncryptedOutputsFrameWhenEmbeddedInACommand() {
+        String command = "set -e\necho '::{\"encryptedOutputs\":{\"encrypted\":my secret value}}::'";
+
+        String redacted = TaskLogLineMatcher.redactEncryptedOutputs(command);
+
+        assertThat(redacted).isEqualTo("set -e\necho '******'");
+    }
+
+    @Test
+    void shouldNotRedactPlainOutputsFrame() {
+        String command = "::{\"outputs\":{\"a\":\"b\"}}::";
+
+        String redacted = TaskLogLineMatcher.redactEncryptedOutputs(command);
+
+        assertThat(redacted).isEqualTo(command);
+    }
+
+    @Test
     void shouldProcessOutputsAndOtlpWhenFramedLineContainsBoth() throws IOException {
         var runContext = runContext();
         var listAppender = appender(runContext);

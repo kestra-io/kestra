@@ -47,6 +47,15 @@ describe("NavBarAction", () => {
         expect(wrapper.find("a").exists()).toBe(false)
     })
 
+    test("renders a download anchor when given an `href`", () => {
+        const wrapper = mountAction({label: "API", href: "/api/v1/main/executions/abc", download: "execution-abc.json"})
+
+        const link = wrapper.get("a")
+        expect(link.attributes("href")).toBe("/api/v1/main/executions/abc")
+        expect(link.attributes("download")).toBe("execution-abc.json")
+        expect(wrapper.find("button").exists()).toBe(false)
+    })
+
     test("forwards data-test onto the rendered element so e2e can select it", async () => {
         await router.push("/")
         await router.isReady()

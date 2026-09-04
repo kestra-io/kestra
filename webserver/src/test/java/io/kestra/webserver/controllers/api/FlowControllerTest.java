@@ -9,21 +9,18 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.Helpers;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.*;
@@ -54,11 +51,11 @@ import io.kestra.webserver.models.flows.SourceSearchReplacePreviewResponse;
 import io.kestra.webserver.models.flows.SourceSearchResult;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
@@ -166,7 +163,38 @@ class FlowControllerTest {
         );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).isEqualTo("Not Found: Unable to find flow main_io.kestra.tests_unknown-flow");
+        assertThat(Problems.detail(exception)).isEqualTo("Unable to find flow main_io.kestra.tests_unknown-flow");
+    }
+
+    @Test
+    void graphFromSource() {
+        String flowSource = generateFlowAsString(IdUtils.create(), TEST_NAMESPACE, "test");
+
+        FlowGraph result = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows/graph", flowSource).contentType(MediaType.APPLICATION_YAML),
+            FlowGraph.class
+        );
+
+        assertThat(result.getNodes()).isNotEmpty();
+        assertThat(result.getEdges()).isNotEmpty();
+    }
+
+    @Test
+    void graphFromSource_invalid() {
+        String flowSource = """
+            id: %s
+            namespace: %s
+            """.formatted(IdUtils.create(), TEST_NAMESPACE);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/flows/graph", flowSource).contentType(MediaType.APPLICATION_YAML),
+                FlowGraph.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(exception.getResponse().getBody(String.class).get()).contains("tasks");
     }
 
     @Test
@@ -210,6 +238,39 @@ class FlowControllerTest {
         PagedResults<Flow> flows = client.toBlocking()
             .retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[q][EQUALS]=io.kestra.tests2&filters[q][NOT_EQUALS]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(0L);
+    }
+
+    @Test
+    void searchFlowsWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET("/api/v1/main/flows/search?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsSortsRegardlessOfFieldCase() {
+        // the real column is "id"; wrong case previously 500'd because H2 is case-sensitive on quoted identifiers
+        PagedResults<Flow> flows = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/flows/search?sort=ID:desc"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsSortsOnMultipleFields() {
+        PagedResults<Flow> flows = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/flows/search?sort=namespace:asc&sort=updated:desc"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
@@ -263,9 +324,11 @@ class FlowControllerTest {
 
     @Test
     void shouldReturnBadRequestForInvalidRegexQuery() {
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.GET(FLOW_PATH + "/source?q=" + URLEncoder.encode("concurrency:(\\s*limit:", StandardCharsets.UTF_8) + "&regex=true")
-        ))
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(FLOW_PATH + "/source?q=" + URLEncoder.encode("concurrency:(\\s*limit:", StandardCharsets.UTF_8) + "&regex=true")
+            )
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -312,9 +375,11 @@ class FlowControllerTest {
         String namespace = "io.kestra.sourcesearch.badbackref.preview";
         createSourceSearchFlow(namespace, "badbackref-flow", "aaa");
 
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.POST(FLOW_PATH + "/source/replace/preview", new SourceSearchReplacePreviewRequest("(a)", false, false, true, namespace, null, "$9"))
-        ))
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(FLOW_PATH + "/source/replace/preview", new SourceSearchReplacePreviewRequest("(a)", false, false, true, namespace, null, "$9"))
+            )
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -325,12 +390,14 @@ class FlowControllerTest {
         String id = "badbackref-flow";
         createSourceSearchFlow(namespace, id, "aaa");
 
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.POST(
-                FLOW_PATH + "/source/replace/apply",
-                new SourceSearchReplaceApplyRequest("(a)", false, false, true, null, "$9", List.of(new IdWithNamespace(namespace, id)))
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    FLOW_PATH + "/source/replace/apply",
+                    new SourceSearchReplaceApplyRequest("(a)", false, false, true, null, "$9", List.of(new IdWithNamespace(namespace, id)))
+                )
             )
-        ))
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -341,12 +408,14 @@ class FlowControllerTest {
         String id = "badbackref-flow";
         createSourceSearchFlow(namespace, id, "aaa");
 
-        assertThatThrownBy(() -> client.toBlocking().retrieve(
-            HttpRequest.POST(
-                FLOW_PATH + "/source/replace/line",
-                new SourceSearchReplaceLineRequest("(a)", false, false, true, "$9", namespace, id, 3, 13)
+        assertThatThrownBy(
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    FLOW_PATH + "/source/replace/line",
+                    new SourceSearchReplaceLineRequest("(a)", false, false, true, "$9", namespace, id, 3, 13)
+                )
             )
-        ))
+        )
             .isInstanceOf(HttpClientResponseException.class)
             .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
     }
@@ -572,6 +641,29 @@ class FlowControllerTest {
         );
 
         assertTrue(exception.getMessage().contains("flow namespace is invalid"));
+    }
+
+    @Test
+    void updateFlowsInNamespaceWithMissingNamespaceReturns422() {
+        String flowWithoutNamespace = """
+            id: crashflow
+            tasks:
+              - id: t
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """;
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/flows/io.kestra.updatenamespace", flowWithoutNamespace)
+                    .contentType(MediaType.APPLICATION_YAML_TYPE)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode())
+            .as("a missing namespace is a validation error, not an unhandled 500")
+            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertTrue(exception.getMessage().contains("flow namespace is required"));
     }
 
     @Test
@@ -1061,10 +1153,79 @@ class FlowControllerTest {
                     "by default /by-query endpoints should use specific PREFIX in legacy filter mapping, " +
                         "in this test, we should get all Flow when querying with namespace=io.kestra.tests, io.kestra.tests.subnamespace are accepted, but not io.kestra.tests2"
                 )
-                .isEqualTo(Helpers.FLOWS_COUNT - 1); // -1 because io.kestra.tests2 namespace
+                // -1 for the io.kestra.tests2 namespace, -2 for the invalid-draft-flow and
+                // webhook-draft fixtures, which the export endpoint excludes as drafts
+                .isEqualTo(Helpers.FLOWS_COUNT - 3);
         }
 
         file.delete();
+    }
+
+    @Test
+    void exportFlowsByQueryExcludesDrafts() throws IOException {
+        String savedId = "draftexportsaved";
+        String draftOnlyId = "draftexportdraftonly";
+
+        String savedSource = """
+            id: %s
+            namespace: %s
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: saved revision
+            """.formatted(savedId, TEST_NAMESPACE);
+        String draftOnTopSource = savedSource.replace("saved revision", "draft revision");
+        String draftOnlySource = """
+            id: %s
+            namespace: %s
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: never saved
+            """.formatted(draftOnlyId, TEST_NAMESPACE);
+
+        // saved normally, then a newer draft revision on top: the saved revision must still export
+        client.toBlocking().exchange(POST("/api/v1/main/flows", savedSource).contentType(MediaType.APPLICATION_YAML));
+        client.toBlocking().exchange(
+            PUT("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + savedId + "?draft=true", draftOnTopSource).contentType(MediaType.APPLICATION_YAML)
+        );
+        // only ever a draft: must not export at all
+        client.toBlocking().exchange(POST("/api/v1/main/flows?draft=true", draftOnlySource).contentType(MediaType.APPLICATION_YAML));
+
+        File file = File.createTempFile("flows", ".zip");
+        try {
+            byte[] zip = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/flows/export/by-query?filters[namespace][EQUALS]=" + TEST_NAMESPACE),
+                Argument.of(byte[].class)
+            );
+            Files.write(file.toPath(), zip);
+
+            try (ZipFile zipFile = new ZipFile(file)) {
+                List<String> names = zipFile.stream().map(ZipEntry::getName).toList();
+
+                assertThat(names)
+                    .as("a flow whose only revision is a draft is not exported")
+                    .doesNotContain(TEST_NAMESPACE + "-" + draftOnlyId + ".yml");
+                assertThat(names)
+                    .as("a draft-headed flow still exports, through its last saved revision")
+                    .contains(TEST_NAMESPACE + "-" + savedId + ".yml");
+
+                String exported = new String(
+                    zipFile.getInputStream(zipFile.getEntry(TEST_NAMESPACE + "-" + savedId + ".yml")).readAllBytes(),
+                    StandardCharsets.UTF_8
+                );
+                assertThat(exported)
+                    .as("the exported source is the saved revision, not the draft on top")
+                    .contains("saved revision")
+                    .doesNotContain("draft revision");
+            }
+        } finally {
+            file.delete();
+            client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + savedId));
+            client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + draftOnlyId));
+        }
     }
 
     @Test
@@ -1335,6 +1496,8 @@ class FlowControllerTest {
         body = response.body();
         assertThat(body.size()).isEqualTo(2);
         assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        // The unknown type is absent from the schema bundle (none in the test env), so even with
+        // auto-install enabled it stays a hard constraint.
         assertThat(body.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
 
@@ -1490,11 +1653,11 @@ class FlowControllerTest {
         assertNull(violations.getFirst().getWarnings());
         assertNull(violations.getFirst().getInfos());
 
-        // Second flow is also invalid, so most properties should be null or have default values
+        // Second flow references an unknown task type: it is absent from the schema bundle
+        // (none in the test env), so even with auto-install enabled it stays a hard constraint.
         assertEquals("invalidFlow2.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
         assertNull(violations.get(1).getDeprecationPaths());
-        assertNull(violations.get(1).getWarnings());
         assertNull(violations.get(1).getInfos());
 
         assertThat(violations.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
@@ -1563,6 +1726,16 @@ class FlowControllerTest {
         var flows = client.toBlocking()
             .retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(1L);
+    }
+
+    @Test
+    void labelsEqualsWithoutKeyReturnsBadRequestNotServerError() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS]=x"), Argument.of(PagedResults.class, Flow.class))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test

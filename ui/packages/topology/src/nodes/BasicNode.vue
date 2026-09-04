@@ -8,7 +8,7 @@
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" />
+                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" />
             </div>
             <div class="node-content">
                 <slot name="badge" />
@@ -18,11 +18,11 @@
                             {{ displayTitle }}
                         </KsTooltip>
                     </div>
-                    <slot name="title-status" />
-                    <slot name="title-actions" />
                 </div>
                 <slot name="content" />
             </div>
+            <slot name="title-status" />
+            <slot name="title-actions" />
         </div>
         <slot name="details" />
     </div>
@@ -63,6 +63,9 @@
         state?: string;
         data: any;
         icons: any;
+        // Resolves an icon the `icons` index doesn't carry; without it a node whose plugin isn't
+        // in the index has no way to ever get an icon (kestra-io/kestra#18129).
+        loadIcon?: (cls: string) => Promise<any>;
         class?: string | string[] | Record<string, boolean>;
     }>()
 
@@ -104,7 +107,10 @@
         return [
             {
                 "unused-path": props.data.unused,
-                disabled: node.value?.disabled || props.data.parent?.taskNode?.task?.disabled,
+                disabled: node.value?.disabled
+                    || props.data.node?.disabled
+                    || props.data.parent?.taskNode?.task?.disabled
+                    || props.data.parent?.taskNode?.disabled,
             },
             props.class,
         ]
@@ -144,6 +150,7 @@
             padding: var(--ks-spacing-2);
             padding-right: var(--ks-spacing-4);
             align-items: center;
+            gap: var(--ks-spacing-1);
             width: 218px;
             height: 56px;
         }
@@ -184,7 +191,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        margin-left: 0.7rem;
+        margin-left: var(--ks-spacing-2);
         flex: 1;
         min-width: 0;
 

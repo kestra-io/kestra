@@ -373,6 +373,30 @@ class ScheduleTest {
     }
 
     @Test
+    void neverMatchingWhenOnFrequentCronDoesNotHangTheEvaluation() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("* * * * * *")
+            .withSeconds(true)
+            .when("{{ false }}")
+            .build();
+
+        long start = System.nanoTime();
+        Optional<ZonedDateTime> next = trigger.findNextDateMatchingConditions(
+            trigger.executionTime(),
+            conditionContext(trigger),
+            ZonedDateTime.now()
+        );
+        long elapsed = Duration.ofNanos(System.nanoTime() - start).toSeconds();
+
+        assertThat(next).isEmpty();
+        assertThat(elapsed)
+            .as("the tick walk must be bounded by an iteration cap, not just a 10-year lookahead")
+            .isLessThan(10);
+    }
+
+    @Test
     void lateMaximumDelay() {
         Schedule trigger = Schedule.builder()
             .id("schedule").type(Schedule.class.getName())
@@ -553,6 +577,32 @@ class ScheduleTest {
         assertThat(inputs.get("multiselectInput")).isEqualTo(List.of("option3"));
     }
 
+    @Test
+    void shouldRenderInputDefaultsReferencingFlowLabels() throws Exception {
+        // Given
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 1 * *").build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minusMonths(1);
+
+        // When
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContextWithLabelInput(trigger),
+            triggerContext(date, trigger)
+        );
+
+        // Then
+        assertThat(evaluate).isPresent();
+        assertThat(evaluate.get().inputs()).containsEntry("labelEcho", "platform/critical");
+        // the flow's labels are exposed for rendering only, never carried by the execution the executor creates
+        assertThat(evaluate.get().labels()).doesNotContain(new Label("team", "platform"), new Label("app.tier", "critical"));
+    }
+
     private ConditionContext conditionContext(AbstractTrigger trigger) {
         Flow flow = Flow.builder()
             .id(IdUtils.create())
@@ -654,6 +704,46 @@ class ScheduleTest {
                             )
                         )
                         .autoSelectFirst(true)
+                        .build()
+                )
+            )
+            .build();
+
+        TriggerContext triggerContext = TriggerContext.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId(trigger.getId())
+            .build();
+
+        return ConditionContext.builder()
+            .runContext(
+                runContextInitializer.forScheduler(
+                    (DefaultRunContext) runContextFactory.of(),
+                    triggerContext, trigger
+                )
+            )
+            .flow(flow)
+            .build();
+    }
+
+    private ConditionContext conditionContextWithLabelInput(AbstractTrigger trigger) {
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.tests")
+            .labels(
+                List.of(
+                    new Label("team", "platform"),
+                    new Label("app.tier", "critical")
+                )
+            )
+            .inputs(
+                List.of(
+                    StringInput.builder()
+                        .id("labelEcho")
+                        .type(Type.STRING)
+                        .required(false)
+                        // dotted keys are nested by Label.toNestedMap, so dot notation is the only working form
+                        .defaults(Property.ofExpression("{{ labels.team }}/{{ labels.app.tier }}"))
                         .build()
                 )
             )

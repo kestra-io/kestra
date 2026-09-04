@@ -14,7 +14,7 @@
                 size="small"
                 class="branch-lane-depth-pill"
             >
-                {{ t("block_editor.depth_pill", {depth}) }}
+                {{ $t("block_editor.depth_pill", {depth}) }}
             </KsTag>
         </div>
 
@@ -77,7 +77,7 @@
             <KsAlert
                 v-else-if="laneName === 'then'"
                 type="warning"
-                :title="t('block_editor.then_required_warning')"
+                :title="$t('block_editor.then_required_warning')"
                 class="branch-lane-warning"
             />
 
@@ -88,11 +88,11 @@
                 :data-block-id="tasks.length === 0 ? `__lane:${parentPath}` : undefined"
                 :class="{'block-kbd-focused': tasks.length === 0 && focusedId === `__lane:${parentPath}`}"
                 :tabindex="tasks.length === 0 && focusedId === `__lane:${parentPath}` ? 0 : -1"
-                :aria-label="t('block_editor.add_to_lane', {lane: laneLabel})"
+                :aria-label="$t('block_editor.add_to_lane', {lane: laneLabel})"
                 @click="emit('add-at-path', parentPath, tasks.length - 1, $event)"
             >
                 <PlusCircleOutline class="branch-lane-add-icon" />
-                {{ t("block_editor.add_to_lane", {lane: laneLabel}) }}
+                {{ $t("block_editor.add_to_lane", {lane: laneLabel}) }}
             </button>
         </div>
     </div>
@@ -110,13 +110,13 @@
     import TagOutline from "vue-material-design-icons/TagOutline.vue"
 
     import {KsTag, KsAlert} from "@kestra-io/design-system"
+    import FlowableClusterCard from "./FlowableClusterCard.vue"
+    import LeafBlockCard from "./LeafBlockCard.vue"
 
     import type {PluginIconData} from "../../../stores/plugins"
     import {displayTaskOf, isFlowableType, isWrappedLaneItem, resolveBlockDomId} from "../../../utils/flowableBlockOps"
     import {useDragAndDrop} from "../../../composables/useDragAndDrop"
 
-    const FlowableClusterCard = defineAsyncComponent(() => import("./FlowableClusterCard.vue"))
-    const LeafBlockCard = defineAsyncComponent(() => import("./LeafBlockCard.vue"))
     const DagDependsOnEditor = defineAsyncComponent(() => import("./DagDependsOnEditor.vue"))
 
     const {t} = useI18n()

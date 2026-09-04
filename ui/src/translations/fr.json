@@ -2046,6 +2046,13 @@
         "title": "Copilot IA",
         "placeholder": "Dites-moi quoi construire…",
         "send": "Envoyer",
+        "usage": {
+          "remaining": "{percent}% restant",
+          "help": "Part de la limite d'utilisation de l'IA de ce fournisseur restante dans la fenêtre actuelle.",
+          "warning": "Vous êtes proche de la limite d'utilisation de l'IA de ce fournisseur. Les requêtes sont refusées une fois la limite atteinte.",
+          "exceeded": "La limite d'utilisation de l'IA de ce fournisseur a été atteinte. Elle sera réinitialisée à la fin de la période actuelle.",
+          "exceededUntil": "La limite d'utilisation de l'IA de ce fournisseur a été atteinte. Elle sera réinitialisée le {when}."
+        },
         "mode": {
           "ask": "Demander",
           "edit": "Modifier",

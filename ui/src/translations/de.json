@@ -2046,6 +2046,13 @@
         "title": "AI Copilot",
         "placeholder": "Sag mir, was ich bauen soll…",
         "send": "Senden",
+        "usage": {
+          "remaining": "{percent}% verbleibend",
+          "help": "Verbleibender Anteil des AI-Nutzungslimits dieses Anbieters im aktuellen Fenster.",
+          "warning": "Sie nähern sich dem KI-Nutzungslimit dieses Anbieters. Sobald es erreicht ist, werden weitere Anfragen abgelehnt.",
+          "exceeded": "Das KI-Nutzungslimit dieses Anbieters wurde erreicht. Es wird am Ende des aktuellen Zeitraums zurückgesetzt.",
+          "exceededUntil": "Das KI-Nutzungslimit dieses Anbieters wurde erreicht. Es wird zurückgesetzt am {when}."
+        },
         "mode": {
           "ask": "Fragen",
           "edit": "Bearbeiten",

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Map;
 
 import io.kestra.webserver.services.ai.AiConfiguration;
+import io.kestra.webserver.services.ai.AiUsageLimitConfiguration;
 import io.kestra.webserver.services.ai.ThinkingEffort;
 
 import io.micronaut.core.annotation.Nullable;
@@ -11,7 +12,9 @@ import io.micronaut.core.bind.annotation.Bindable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
+@Builder
 public record GeminiConfiguration(
     @Nullable String baseUrl,
     String apiKey,
@@ -30,7 +33,8 @@ public record GeminiConfiguration(
     @Nullable ThinkingEffort thinkingEffort,
     @Nullable
     @MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) Map<String, String> customHeaders,
-    Duration timeout) implements AiConfiguration {
+    Duration timeout,
+    @Nullable AiUsageLimitConfiguration usageLimit) implements AiConfiguration {
     public GeminiConfiguration {
         if (modelName == null)
             modelName = "gemini-2.5-flash";

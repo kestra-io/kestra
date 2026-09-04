@@ -209,6 +209,11 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         return displayName;
     }
 
+    @Override
+    public Optional<AiUsageLimitConfiguration> usageLimit() {
+        return Optional.ofNullable(aiConfiguration.usageLimit()).filter(AiUsageLimitConfiguration::enabled);
+    }
+
     public ExpressionContextService expressionContextService() {
         return expressionContextService;
     }

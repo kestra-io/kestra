@@ -2046,6 +2046,13 @@
         "title": "AI 副驾驶",
         "placeholder": "告诉我构建什么…",
         "send": "发送",
+        "usage": {
+          "remaining": "剩余 {percent}%",
+          "help": "此提供商在当前窗口中剩余的 AI 使用限额。",
+          "warning": "您已接近此提供商的 AI 使用限制。达到限制后，将拒绝轮次。",
+          "exceeded": "此提供商的 AI 使用限制已达上限。它将在当前周期结束时重置。",
+          "exceededUntil": "此提供商的 AI 使用限制已达到。它将在 {when} 重置。"
+        },
         "mode": {
           "ask": "询问",
           "edit": "编辑",

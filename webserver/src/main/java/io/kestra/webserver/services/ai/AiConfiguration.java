@@ -27,4 +27,16 @@ public interface AiConfiguration {
     default Map<String, String> customHeaders() {
         return Map.of();
     }
+
+    /**
+     * This provider's spend ceiling as configured, or null when it declares none.
+     *
+     * <p>Nullable because this is the binding surface — a provider configuration is a record whose
+     * {@code usageLimit} component implements this, and binding writes null when nothing was configured.
+     * Callers read {@link AiServiceInterface#usageLimit()}, which expresses absence as an empty Optional.
+     */
+    @Nullable
+    default AiUsageLimitConfiguration usageLimit() {
+        return null;
+    }
 }

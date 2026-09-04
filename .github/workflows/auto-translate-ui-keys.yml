@@ -42,9 +42,10 @@ jobs:
           working-directory: ui
 
         - name: Generate translations
-          run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ github.event.inputs.retranslate_modified_keys }}
+          run: node --experimental-strip-types ui/scripts/translations/generate.ts "$RETRANSLATE_MODIFIED_KEYS"
           env:
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+            RETRANSLATE_MODIFIED_KEYS: ${{ github.event.inputs.retranslate_modified_keys }}
 
         - name: Set up Git
           run: |
@@ -79,7 +80,7 @@ jobs:
             # The last commit that touched the fingerprints is the previous generation, so every
             # commit after it that touched an English source is what this run translates.
             SINCE=$(git log -1 --format=%H -- $FINGERPRINTS)
-            git log --format='- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))' "${SINCE:-HEAD}..HEAD" -- ui/src/translations/en.json ':(glob)ui/packages/design-system/**/*.locale.ts' > "$RUNNER_TEMP/sources"
+            git log --format="- %s ([%h](https://github.com/$GITHUB_REPOSITORY/commit/%H))" "${SINCE:-HEAD}..HEAD" -- ui/src/translations/en.json ':(glob)ui/packages/design-system/**/*.locale.ts' > "$RUNNER_TEMP/sources"
             {
               echo "This PR was created automatically by a GitHub Action."
               echo
@@ -101,9 +102,9 @@ jobs:
             } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
             git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
-            PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base ${{ github.ref_name }} --head $BRANCH_NAME)
-            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              gh pr edit "$PR_URL" --add-reviewer "${{ github.actor }}" || echo "Could not request a review from ${{ github.actor }} on $PR_URL"
+            PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base "$GITHUB_REF_NAME" --head $BRANCH_NAME)
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+              gh pr edit "$PR_URL" --add-reviewer "$GITHUB_ACTOR" || echo "Could not request a review from $GITHUB_ACTOR on $PR_URL"
             fi
 
         - name: Check keys matching

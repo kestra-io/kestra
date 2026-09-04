@@ -359,7 +359,7 @@ If your `<style>` block needs to exist:
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
-| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
+| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
 | `KsAvatar` | Avatar with fallback |
 | `KsProgress` | Progress bar |
 | `KsPagination` | Pagination controls |
@@ -369,7 +369,7 @@ If your `<style>` block needs to exist:
 | `KsDateAgo` | Relative time display ("2 hours ago") |
 | `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
-| `KsFileTag` | Storage URI rendered as a file reference: symbol picked from the extension, plus a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
+| `KsFileTag` | Storage URI rendered as a file reference: a `KsTag` whose symbol comes from the extension, with a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |

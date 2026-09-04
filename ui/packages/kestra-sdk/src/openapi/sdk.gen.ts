@@ -2,7 +2,7 @@
 
 import { buildClientParams, type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AggregateMetricsFromFlowResponses, AggregateMetricsFromTaskResponses, AiControllerFlowGenerationPrompt, ApiAutocomplete, ApiChatTurnRequest, ApiConfirmActionRequest, ApiCreateThreadRequest, ApiMcpServerWritable, ApplyReplaceBySourceCodeResponses, AutocompleteNamespacesResponses, BasicAuthCredentials, BlueprintControllerKind, BulkUpdateFlowsResponses, ChartFiltersOverrides, ChatResponse, ChatResponses, ConcurrencyLimit, ConfirmResponse, ConfirmResponses, CreateBackfillErrors, CreateBackfillResponses, CreateBasicAuthResponses, CreateExecutionErrors, CreateExecutionResponses, CreateFlowResponses, CreateMcpResponses, CreateNamespaceDirectoryResponses, CreateNamespaceFileResponses, CreateResponses, DashboardControllerPreviewRequest, DeleteBackfillByIdsResponses, DeleteBackfillByQueryResponses, DeleteBackfillErrors, DeleteBackfillResponses, DeleteExecutionResponses, DeleteExecutionsByIdsErrors, DeleteExecutionsByIdsResponses, DeleteExecutionsByQueryErrors, DeleteExecutionsByQueryResponses, DeleteFileDirectoryResponses, DeleteFlowResponses, DeleteFlowsByIdsResponses, DeleteFlowsByQueryResponses, DeleteKeyValueResponses, DeleteKeyValuesResponses, DeleteLogsFromExecutionResponses, DeleteLogsFromFlowResponses, DeleteMcpResponses, DeleteRevisionsResponses, DeleteTriggerErrors, DeleteTriggerResponses, DeleteTriggersByIdsResponses, DeleteTriggersByQueryResponses, DetectMissingPluginsErrors, DetectMissingPluginsResponses, DisabledTriggersByIdsResponses, DisabledTriggersByQueryResponses, DisableFlowsByIdsResponses, DisableFlowsByQueryResponses, DisableTriggerByIdErrors, DisableTriggerByIdResponses, DownloadFileFromExecutionResponses, DownloadLogsFromExecutionResponses, EnableFlowsByIdsResponses, EnableFlowsByQueryResponses, EvalExpressionResponses, EvalTaskRunExpressionResponses, ExecutionControllerSetLabelsByIdsRequest, ExecutionControllerStateRequest, ExecutionKind, ExecutionRepositoryInterfaceDateFilter, ExecutionRepositoryInterfaceFlowFilter, ExportChartResponses, ExportDashboardChartResponses, ExportExecutionsResponses, ExportFlowsByIdsResponses, ExportFlowsByQueryResponses, ExportFlowsResponses, ExportFormat, ExportNamespaceFilesResponses, ExportTriggersResponses, ExpressionControllerRenderExpressionRequest, ExpressionsResponses, FileFormat, FindDistinctFieldValuesResponses, FollowDependenciesExecutionsResponse, FollowDependenciesExecutionsResponses, FollowExecutionResponse, FollowExecutionResponses, FollowLogsFromExecutionResponse, FollowLogsFromExecutionResponses, ForceRunByIdsErrors, ForceRunByIdsResponses, ForceRunExecutionErrors, ForceRunExecutionResponses, ForceRunExecutionsByQueryErrors, ForceRunExecutionsByQueryResponses, GenerateFlowGraphFromSourceResponses, GenerateFlowGraphResponses, GenerateFlowResponses, GetAllInputTypesResponses, GetBasicAuthConfigErrorsResponses, GetBlueprintGraphResponses, GetBlueprintResponses, GetBlueprintSourceResponses, GetConcurrencyLimitResponses, GetConfigurationResponses, GetDashboardResponses, GetDefaultDashboardDefinitionsResponses, GetExecutionAverageDurationResponses, GetExecutionFlowGraphResponses, GetExecutionOutputsResponses, GetExecutionResponses, GetExpressionFiltersResponses, GetExpressionFunctionsResponses, GetFileContentResponses, GetFileMetadatasFromExecutionResponses, GetFileMetadatasResponses, GetFileRevisionsResponses, GetFlowDependenciesFromNamespaceResponses, GetFlowDependenciesResponses, GetFlowFromExecutionByIdResponses, GetFlowFromExecutionResponses, GetFlowResponses, GetInheritedSecretsResponses, GetInstallJobErrors, GetInstallJobResponses, GetKeyValueResponses, GetLatestExecutionsResponses, GetLoginConfigurationResponses, GetMcpResponses, GetNamespaceResponses, GetPluginBySubgroupsResponses, GetPluginDocumentationFromVersionResponses, GetPluginDocumentationResponses, GetPluginGroupIconsResponses, GetPluginIconResponses, GetPluginIconsResponses, GetPluginIconSvgResponses, GetPluginUiManifestResponses, GetPluginUiResponses, GetPluginVersionsResponses, GetPropertiesFromTypeResponses, GetProvidersResponses, GetResponses, GetSchemaFromInputTypeResponses, GetSchemasFromTypeResponses, GetServiceResponses, GetTaskFromFlowResponses, GetTaskOutputsInformationResponses, GetTaskRunOutputsResponses, GetUsagesResponses, HandleDeleteRequestResponses, HandleGetRequestResponse, HandleGetRequestResponses, HandleRequestResponses, IdWithNamespace, ImportFlowsResponses, InstallPluginsErrors, InstallPluginsResponses, KillExecutionErrors, KillExecutionResponses, KillExecutionsByIdsErrors, KillExecutionsByIdsResponses, KillExecutionsByQueryErrors, KillExecutionsByQueryResponses, KvControllerApiDeleteBulkRequest, Label, Level, ListAllKeysResponses, ListBlueprintTagsResponses, ListDeprecatedResponses, ListDistinctNamespacesResponses, ListExecutableDistinctNamespacesResponses, ListFlowExecutionsByNamespaceResponses, ListFlowMetricsResponses, ListFlowRevisionsResponses, ListFlowsByNamespaceResponses, ListKeysWithInheritenceResponses, ListLogsFromExecutionResponses, ListMcpsResponses, ListNamespaceDirectoryFilesResponses, ListPluginsResponses, ListSecretsResponses, ListTaskMetricsResponses, ListTasksWithMetricsResponses, ListToolsResponses, ListTriggerPluginsResponses, LoginResponses, LogoutResponses, MetricsResponses, MiscControllerLoginRequest, MoveFileDirectoryResponses, PauseBackfillByIdsResponses, PauseBackfillByQueryResponses, PauseBackfillErrors, PauseBackfillResponses, PauseExecutionErrors, PauseExecutionResponses, PauseExecutionsByIdsErrors, PauseExecutionsByIdsResponses, PauseExecutionsByQueryErrors, PauseExecutionsByQueryResponses, PluginArtifact, PreviewChartResponses, PreviewFileFromExecutionResponses, PreviewReplaceBySourceCodeResponses, QueryFilter, QueryFilterField, RenderExpressionsResponses, ReplaceLineBySourceCodeResponses, ReplayExecutionErrors, ReplayExecutionResponses, ReplayExecutionsByIdsErrors, ReplayExecutionsByIdsResponses, ReplayExecutionsByQueryErrors, ReplayExecutionsByQueryResponses, ReplayExecutionWithinputsErrors, ReplayExecutionWithinputsResponses, RestartExecutionErrors, RestartExecutionResponses, RestartExecutionsByIdsErrors, RestartExecutionsByIdsResponses, RestartExecutionsByQueryErrors, RestartExecutionsByQueryResponses, RestartTriggerErrors, RestartTriggerResponses, ResumeExecutionErrors, ResumeExecutionFromBreakpointErrors, ResumeExecutionFromBreakpointResponses, ResumeExecutionResponses, ResumeExecutionsByIdsErrors, ResumeExecutionsByIdsResponses, ResumeExecutionsByQueryErrors, ResumeExecutionsByQueryResponses, SchemaType, SearchBlueprintsResponses, SearchByExecutionResponses, SearchConcurrencyLimitsResponses, SearchDashboardsResponses, SearchExecutionsByFlowIdResponses, SearchExecutionsResponses, SearchFlowsBySourceCodeResponses, SearchFlowsResponses, SearchLogsResponses, SearchNamespaceFilesResponses, SearchNamespacesResponses, SearchTriggersForFlowResponses, SearchTriggersResponses, ServiceType, SetKeyValueResponses, SetLabelsOnTerminatedExecutionErrors, SetLabelsOnTerminatedExecutionResponses, SetLabelsOnTerminatedExecutionsByIdsErrors, SetLabelsOnTerminatedExecutionsByIdsResponses, SetLabelsOnTerminatedExecutionsByQueryErrors, SetLabelsOnTerminatedExecutionsByQueryResponses, SourceSearchReplaceApplyRequest, SourceSearchReplaceLineRequest, SourceSearchReplacePreviewRequest, SourceSearchScope, StateType, TaskWithVersion, ToggleMcpResponses, TriggerControllerApiCreateBackfillRequest, TriggerControllerApiDisableTriggerRequest, TriggerControllerApiTriggerId, TriggerControllerSetDisabledRequest, TriggerExecutionByGetWebhookResponses, TriggerExecutionByGetWebhookWithPathResponses, TriggerExecutionByPostWebhookResponses, TriggerExecutionByPostWebhookWithPathResponses, TriggerExecutionByPutWebhookResponses, TriggerExecutionByPutWebhookWithPathResponses, Type, UnlockTriggerErrors, UnlockTriggerResponses, UnlockTriggersByIdsResponses, UnlockTriggersByQueryResponses, UnpauseBackfillByIdsResponses, UnpauseBackfillByQueryResponses, UnpauseBackfillErrors, UnpauseBackfillResponses, UnqueueExecutionErrors, UnqueueExecutionResponses, UnqueueExecutionsByIdsErrors, UnqueueExecutionsByIdsResponses, UnqueueExecutionsByQueryErrors, UnqueueExecutionsByQueryResponses, UpdateConcurrencyLimitResponses, UpdateExecutionsStatusByIdsErrors, UpdateExecutionsStatusByIdsResponses, UpdateExecutionsStatusByQueryErrors, UpdateExecutionsStatusByQueryResponses, UpdateExecutionStatusErrors, UpdateExecutionStatusResponses, UpdateFlowResponses, UpdateFlowsInNamespaceResponses, UpdateMcpResponses, UpdateTaskRunStateErrors, UpdateTaskRunStateResponses, ValidateFlowsResponses, ValidateNewExecutionInputsErrors, ValidateNewExecutionInputsResponses, ValidateResumeExecutionInputsErrors, ValidateResumeExecutionInputsResponses, ValidateTaskResponses, ValidateTriggerResponses } from './types.gen';
+import type { AggregateMetricsFromFlowErrors, AggregateMetricsFromFlowResponses, AggregateMetricsFromTaskErrors, AggregateMetricsFromTaskResponses, AiControllerFlowGenerationPrompt, ApiAutocomplete, ApiChatTurnRequest, ApiConfirmActionRequest, ApiCreateThreadRequest, ApiMcpServerWritable, ApplyReplaceBySourceCodeErrors, ApplyReplaceBySourceCodeResponses, AutocompleteNamespacesErrors, AutocompleteNamespacesResponses, BasicAuthCredentials, BlueprintControllerKind, BulkUpdateFlowsErrors, BulkUpdateFlowsResponses, ChartFiltersOverrides, ChatErrors, ChatResponse, ChatResponses, ConcurrencyLimit, ConfirmErrors, ConfirmResponse, ConfirmResponses, CreateBackfillErrors, CreateBackfillResponses, CreateBasicAuthErrors, CreateBasicAuthResponses, CreateErrors, CreateExecutionErrors, CreateExecutionResponses, CreateFlowErrors, CreateFlowResponses, CreateMcpErrors, CreateMcpResponses, CreateNamespaceDirectoryErrors, CreateNamespaceDirectoryResponses, CreateNamespaceFileErrors, CreateNamespaceFileResponses, CreateResponses, DashboardControllerPreviewRequest, DeleteBackfillByIdsErrors, DeleteBackfillByIdsResponses, DeleteBackfillByQueryErrors, DeleteBackfillByQueryResponses, DeleteBackfillErrors, DeleteBackfillResponses, DeleteExecutionErrors, DeleteExecutionResponses, DeleteExecutionsByIdsErrors, DeleteExecutionsByIdsResponses, DeleteExecutionsByQueryErrors, DeleteExecutionsByQueryResponses, DeleteFileDirectoryErrors, DeleteFileDirectoryResponses, DeleteFlowErrors, DeleteFlowResponses, DeleteFlowsByIdsErrors, DeleteFlowsByIdsResponses, DeleteFlowsByQueryErrors, DeleteFlowsByQueryResponses, DeleteKeyValueErrors, DeleteKeyValueResponses, DeleteKeyValuesErrors, DeleteKeyValuesResponses, DeleteLogsFromExecutionErrors, DeleteLogsFromExecutionResponses, DeleteLogsFromFlowErrors, DeleteLogsFromFlowResponses, DeleteMcpErrors, DeleteMcpResponses, DeleteRevisionsErrors, DeleteRevisionsResponses, DeleteTriggerErrors, DeleteTriggerResponses, DeleteTriggersByIdsErrors, DeleteTriggersByIdsResponses, DeleteTriggersByQueryErrors, DeleteTriggersByQueryResponses, DetectMissingPluginsErrors, DetectMissingPluginsResponses, DisabledTriggersByIdsErrors, DisabledTriggersByIdsResponses, DisabledTriggersByQueryErrors, DisabledTriggersByQueryResponses, DisableFlowsByIdsErrors, DisableFlowsByIdsResponses, DisableFlowsByQueryErrors, DisableFlowsByQueryResponses, DisableTriggerByIdErrors, DisableTriggerByIdResponses, DownloadFileFromExecutionErrors, DownloadFileFromExecutionResponses, DownloadLogsFromExecutionErrors, DownloadLogsFromExecutionResponses, EnableFlowsByIdsErrors, EnableFlowsByIdsResponses, EnableFlowsByQueryErrors, EnableFlowsByQueryResponses, EvalExpressionErrors, EvalExpressionResponses, EvalTaskRunExpressionErrors, EvalTaskRunExpressionResponses, ExecutionControllerSetLabelsByIdsRequest, ExecutionControllerStateRequest, ExecutionKind, ExecutionRepositoryInterfaceDateFilter, ExecutionRepositoryInterfaceFlowFilter, ExportChartErrors, ExportChartResponses, ExportDashboardChartErrors, ExportDashboardChartResponses, ExportExecutionsErrors, ExportExecutionsResponses, ExportFlowsByIdsErrors, ExportFlowsByIdsResponses, ExportFlowsByQueryErrors, ExportFlowsByQueryResponses, ExportFlowsErrors, ExportFlowsResponses, ExportFormat, ExportNamespaceFilesErrors, ExportNamespaceFilesResponses, ExportTriggersErrors, ExportTriggersResponses, ExpressionControllerRenderExpressionRequest, ExpressionsErrors, ExpressionsResponses, FileFormat, FindDistinctFieldValuesErrors, FindDistinctFieldValuesResponses, FollowDependenciesExecutionsErrors, FollowDependenciesExecutionsResponse, FollowDependenciesExecutionsResponses, FollowExecutionErrors, FollowExecutionResponse, FollowExecutionResponses, FollowLogsFromExecutionErrors, FollowLogsFromExecutionResponse, FollowLogsFromExecutionResponses, ForceRunByIdsErrors, ForceRunByIdsResponses, ForceRunExecutionErrors, ForceRunExecutionResponses, ForceRunExecutionsByQueryErrors, ForceRunExecutionsByQueryResponses, GenerateFlowErrors, GenerateFlowGraphErrors, GenerateFlowGraphFromSourceErrors, GenerateFlowGraphFromSourceResponses, GenerateFlowGraphResponses, GenerateFlowResponses, GetAllInputTypesErrors, GetAllInputTypesResponses, GetBasicAuthConfigErrorsErrors, GetBasicAuthConfigErrorsResponses, GetBlueprintErrors, GetBlueprintGraphErrors, GetBlueprintGraphResponses, GetBlueprintResponses, GetBlueprintSourceErrors, GetBlueprintSourceResponses, GetConcurrencyLimitErrors, GetConcurrencyLimitResponses, GetConfigurationErrors, GetConfigurationResponses, GetDashboardErrors, GetDashboardResponses, GetDefaultDashboardDefinitionsErrors, GetDefaultDashboardDefinitionsResponses, GetErrors, GetExecutionAverageDurationErrors, GetExecutionAverageDurationResponses, GetExecutionErrors, GetExecutionFlowGraphErrors, GetExecutionFlowGraphResponses, GetExecutionOutputsErrors, GetExecutionOutputsResponses, GetExecutionResponses, GetExpressionFiltersErrors, GetExpressionFiltersResponses, GetExpressionFunctionsErrors, GetExpressionFunctionsResponses, GetFileContentErrors, GetFileContentResponses, GetFileMetadatasErrors, GetFileMetadatasFromExecutionErrors, GetFileMetadatasFromExecutionResponses, GetFileMetadatasResponses, GetFileRevisionsErrors, GetFileRevisionsResponses, GetFlowDependenciesErrors, GetFlowDependenciesFromNamespaceErrors, GetFlowDependenciesFromNamespaceResponses, GetFlowDependenciesResponses, GetFlowErrors, GetFlowFromExecutionByIdErrors, GetFlowFromExecutionByIdResponses, GetFlowFromExecutionErrors, GetFlowFromExecutionResponses, GetFlowResponses, GetInheritedSecretsErrors, GetInheritedSecretsResponses, GetInstallJobErrors, GetInstallJobResponses, GetKeyValueErrors, GetKeyValueResponses, GetLatestExecutionsErrors, GetLatestExecutionsResponses, GetLoginConfigurationErrors, GetLoginConfigurationResponses, GetMcpErrors, GetMcpResponses, GetNamespaceErrors, GetNamespaceResponses, GetPluginBySubgroupsErrors, GetPluginBySubgroupsResponses, GetPluginDocumentationErrors, GetPluginDocumentationFromVersionErrors, GetPluginDocumentationFromVersionResponses, GetPluginDocumentationResponses, GetPluginGroupIconsErrors, GetPluginGroupIconsResponses, GetPluginIconErrors, GetPluginIconResponses, GetPluginIconsErrors, GetPluginIconsResponses, GetPluginIconSvgErrors, GetPluginIconSvgResponses, GetPluginUiErrors, GetPluginUiManifestErrors, GetPluginUiManifestResponses, GetPluginUiResponses, GetPluginVersionsErrors, GetPluginVersionsResponses, GetPropertiesFromTypeErrors, GetPropertiesFromTypeResponses, GetProvidersErrors, GetProvidersResponses, GetResponses, GetSchemaFromInputTypeErrors, GetSchemaFromInputTypeResponses, GetSchemasFromTypeErrors, GetSchemasFromTypeResponses, GetServiceErrors, GetServiceResponses, GetTaskFromFlowErrors, GetTaskFromFlowResponses, GetTaskOutputsInformationErrors, GetTaskOutputsInformationResponses, GetTaskRunOutputsErrors, GetTaskRunOutputsResponses, GetUsagesErrors, GetUsagesResponses, HandleDeleteRequestResponses, HandleGetRequestResponse, HandleGetRequestResponses, HandleRequestResponses, IdWithNamespace, ImportFlowsErrors, ImportFlowsResponses, InstallPluginsErrors, InstallPluginsResponses, KillExecutionErrors, KillExecutionResponses, KillExecutionsByIdsErrors, KillExecutionsByIdsResponses, KillExecutionsByQueryErrors, KillExecutionsByQueryResponses, KvControllerApiDeleteBulkRequest, Label, Level, ListAllKeysErrors, ListAllKeysResponses, ListBlueprintTagsErrors, ListBlueprintTagsResponses, ListDeprecatedErrors, ListDeprecatedResponses, ListDistinctNamespacesErrors, ListDistinctNamespacesResponses, ListExecutableDistinctNamespacesErrors, ListExecutableDistinctNamespacesResponses, ListFlowExecutionsByNamespaceErrors, ListFlowExecutionsByNamespaceResponses, ListFlowMetricsErrors, ListFlowMetricsResponses, ListFlowRevisionsErrors, ListFlowRevisionsResponses, ListFlowsByNamespaceErrors, ListFlowsByNamespaceResponses, ListKeysWithInheritenceErrors, ListKeysWithInheritenceResponses, ListLogsFromExecutionErrors, ListLogsFromExecutionResponses, ListMcpsErrors, ListMcpsResponses, ListNamespaceDirectoryFilesErrors, ListNamespaceDirectoryFilesResponses, ListPluginsErrors, ListPluginsResponses, ListSecretsErrors, ListSecretsResponses, ListTaskMetricsErrors, ListTaskMetricsResponses, ListTasksWithMetricsErrors, ListTasksWithMetricsResponses, ListToolsErrors, ListToolsResponses, ListTriggerPluginsErrors, ListTriggerPluginsResponses, LoginErrors, LoginResponses, LogoutErrors, LogoutResponses, MetricsErrors, MetricsResponses, MiscControllerLoginRequest, MoveFileDirectoryErrors, MoveFileDirectoryResponses, PauseBackfillByIdsErrors, PauseBackfillByIdsResponses, PauseBackfillByQueryErrors, PauseBackfillByQueryResponses, PauseBackfillErrors, PauseBackfillResponses, PauseExecutionErrors, PauseExecutionResponses, PauseExecutionsByIdsErrors, PauseExecutionsByIdsResponses, PauseExecutionsByQueryErrors, PauseExecutionsByQueryResponses, PluginArtifact, PreviewChartErrors, PreviewChartResponses, PreviewFileFromExecutionErrors, PreviewFileFromExecutionResponses, PreviewReplaceBySourceCodeErrors, PreviewReplaceBySourceCodeResponses, QueryFilter, QueryFilterField, RenderExpressionsErrors, RenderExpressionsResponses, ReplaceLineBySourceCodeErrors, ReplaceLineBySourceCodeResponses, ReplayExecutionErrors, ReplayExecutionResponses, ReplayExecutionsByIdsErrors, ReplayExecutionsByIdsResponses, ReplayExecutionsByQueryErrors, ReplayExecutionsByQueryResponses, ReplayExecutionWithinputsErrors, ReplayExecutionWithinputsResponses, RestartExecutionErrors, RestartExecutionResponses, RestartExecutionsByIdsErrors, RestartExecutionsByIdsResponses, RestartExecutionsByQueryErrors, RestartExecutionsByQueryResponses, RestartTriggerErrors, RestartTriggerResponses, ResumeExecutionErrors, ResumeExecutionFromBreakpointErrors, ResumeExecutionFromBreakpointResponses, ResumeExecutionResponses, ResumeExecutionsByIdsErrors, ResumeExecutionsByIdsResponses, ResumeExecutionsByQueryErrors, ResumeExecutionsByQueryResponses, SchemaType, SearchBlueprintsErrors, SearchBlueprintsResponses, SearchByExecutionErrors, SearchByExecutionResponses, SearchConcurrencyLimitsErrors, SearchConcurrencyLimitsResponses, SearchDashboardsErrors, SearchDashboardsResponses, SearchExecutionsByFlowIdErrors, SearchExecutionsByFlowIdResponses, SearchExecutionsErrors, SearchExecutionsResponses, SearchFlowsBySourceCodeErrors, SearchFlowsBySourceCodeResponses, SearchFlowsErrors, SearchFlowsResponses, SearchLogsErrors, SearchLogsResponses, SearchNamespaceFilesErrors, SearchNamespaceFilesResponses, SearchNamespacesErrors, SearchNamespacesResponses, SearchTriggersErrors, SearchTriggersForFlowErrors, SearchTriggersForFlowResponses, SearchTriggersResponses, ServiceType, SetKeyValueErrors, SetKeyValueResponses, SetLabelsOnTerminatedExecutionErrors, SetLabelsOnTerminatedExecutionResponses, SetLabelsOnTerminatedExecutionsByIdsErrors, SetLabelsOnTerminatedExecutionsByIdsResponses, SetLabelsOnTerminatedExecutionsByQueryErrors, SetLabelsOnTerminatedExecutionsByQueryResponses, SourceSearchReplaceApplyRequest, SourceSearchReplaceLineRequest, SourceSearchReplacePreviewRequest, SourceSearchScope, StateType, TaskWithVersion, ToggleMcpErrors, ToggleMcpResponses, TriggerControllerApiCreateBackfillRequest, TriggerControllerApiDisableTriggerRequest, TriggerControllerApiTriggerId, TriggerControllerSetDisabledRequest, TriggerExecutionByGetWebhookErrors, TriggerExecutionByGetWebhookResponses, TriggerExecutionByGetWebhookWithPathErrors, TriggerExecutionByGetWebhookWithPathResponses, TriggerExecutionByPostWebhookErrors, TriggerExecutionByPostWebhookResponses, TriggerExecutionByPostWebhookWithPathErrors, TriggerExecutionByPostWebhookWithPathResponses, TriggerExecutionByPutWebhookErrors, TriggerExecutionByPutWebhookResponses, TriggerExecutionByPutWebhookWithPathErrors, TriggerExecutionByPutWebhookWithPathResponses, Type, UnlockTriggerErrors, UnlockTriggerResponses, UnlockTriggersByIdsErrors, UnlockTriggersByIdsResponses, UnlockTriggersByQueryErrors, UnlockTriggersByQueryResponses, UnpauseBackfillByIdsErrors, UnpauseBackfillByIdsResponses, UnpauseBackfillByQueryErrors, UnpauseBackfillByQueryResponses, UnpauseBackfillErrors, UnpauseBackfillResponses, UnqueueExecutionErrors, UnqueueExecutionResponses, UnqueueExecutionsByIdsErrors, UnqueueExecutionsByIdsResponses, UnqueueExecutionsByQueryErrors, UnqueueExecutionsByQueryResponses, UpdateConcurrencyLimitErrors, UpdateConcurrencyLimitResponses, UpdateExecutionsStatusByIdsErrors, UpdateExecutionsStatusByIdsResponses, UpdateExecutionsStatusByQueryErrors, UpdateExecutionsStatusByQueryResponses, UpdateExecutionStatusErrors, UpdateExecutionStatusResponses, UpdateFlowErrors, UpdateFlowResponses, UpdateFlowsInNamespaceErrors, UpdateFlowsInNamespaceResponses, UpdateMcpErrors, UpdateMcpResponses, UpdateTaskRunStateErrors, UpdateTaskRunStateResponses, ValidateFlowsErrors, ValidateFlowsResponses, ValidateNewExecutionInputsErrors, ValidateNewExecutionInputsResponses, ValidateResumeExecutionInputsErrors, ValidateResumeExecutionInputsResponses, ValidateTaskErrors, ValidateTaskResponses, ValidateTriggerErrors, ValidateTriggerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -23,21 +23,21 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  *
  * Global endpoint available to all users.
  */
-export const _6A59A9Ad = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetBasicAuthConfigErrorsResponses, unknown, ThrowOnError>({ url: '/api/v1/basicAuthValidationErrors', ...options });
+export const _6A59A9Ad = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetBasicAuthConfigErrorsResponses, GetBasicAuthConfigErrorsErrors, ThrowOnError>({ url: '/api/v1/basicAuthValidationErrors', ...options });
 
 /**
  * Retrieve the instance configuration.
  *
  * Requires authentication; see /configs/login for the public, unauthenticated subset used by the login page.
  */
-export const _30933140 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetConfigurationResponses, unknown, ThrowOnError>({ url: '/api/v1/configs', ...options });
+export const _30933140 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetConfigurationResponses, GetConfigurationErrors, ThrowOnError>({ url: '/api/v1/configs', ...options });
 
 /**
  * Retrieve the configuration required by the login page.
  *
  * Public endpoint available to unauthenticated users; exposes only what the login/setup UI needs.
  */
-export const _475D2A03 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetLoginConfigurationResponses, unknown, ThrowOnError>({ url: '/api/v1/configs/login', ...options });
+export const _475D2A03 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetLoginConfigurationResponses, GetLoginConfigurationErrors, ThrowOnError>({ url: '/api/v1/configs/login', ...options });
 
 /**
  * Authenticate with basic auth credentials.
@@ -48,7 +48,7 @@ export const _625Ef69 = <ThrowOnError extends boolean = true>(parameters: {
     miscControllerLoginRequest: MiscControllerLoginRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ key: 'miscControllerLoginRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<LoginResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<LoginResponses, LoginErrors, ThrowOnError>({
         url: '/api/v1/login',
         ...options,
         ...params,
@@ -63,7 +63,7 @@ export const _625Ef69 = <ThrowOnError extends boolean = true>(parameters: {
 /**
  * Clear the basic auth session cookie.
  */
-export const _04167Ea76 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).post<LogoutResponses, unknown, ThrowOnError>({ url: '/api/v1/logout', ...options });
+export const _04167Ea76 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).post<LogoutResponses, LogoutErrors, ThrowOnError>({ url: '/api/v1/logout', ...options });
 
 /**
  * Generate or regenerate a flow based on a prompt
@@ -72,7 +72,7 @@ export const _6667C843 = <ThrowOnError extends boolean = true>(parameters: {
     aiControllerFlowGenerationPrompt: AiControllerFlowGenerationPrompt;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ key: 'aiControllerFlowGenerationPrompt', map: 'body' }] }]);
-    return (options?.client ?? client).post<GenerateFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<GenerateFlowResponses, GenerateFlowErrors, ThrowOnError>({
         url: '/api/v1/main/ai/generate/flow',
         ...options,
         ...params,
@@ -87,17 +87,17 @@ export const _6667C843 = <ThrowOnError extends boolean = true>(parameters: {
 /**
  * List available AI providers
  */
-export const _02135D614 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetProvidersResponses, unknown, ThrowOnError>({ url: '/api/v1/main/ai/providers', ...options });
+export const _02135D614 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetProvidersResponses, GetProvidersErrors, ThrowOnError>({ url: '/api/v1/main/ai/providers', ...options });
 
 /**
  * Retrieve the list of available Pebble expression filters.
  */
-export const _078936A73 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetExpressionFiltersResponses, unknown, ThrowOnError>({ url: '/api/v1/pebble/filters', ...options });
+export const _078936A73 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetExpressionFiltersResponses, GetExpressionFiltersErrors, ThrowOnError>({ url: '/api/v1/pebble/filters', ...options });
 
 /**
  * Retrieve the available Pebble expression functions with their arguments and defaults.
  */
-export const _0753B2353 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetExpressionFunctionsResponses, unknown, ThrowOnError>({ url: '/api/v1/pebble/functions', ...options });
+export const _0753B2353 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetExpressionFunctionsResponses, GetExpressionFunctionsErrors, ThrowOnError>({ url: '/api/v1/pebble/functions', ...options });
 
 /**
  * Get list of plugins
@@ -114,7 +114,7 @@ export const _09Bfeede = <ThrowOnError extends boolean = true>(parameters?: {
                 { in: 'query', key: 'sort' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<ListPluginsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListPluginsResponses, ListPluginsErrors, ThrowOnError>({
         url: '/api/v1/plugins',
         ...options,
         ...params
@@ -146,21 +146,21 @@ export const _0739F9723 = <ThrowOnError extends boolean = true>(parameters: {
 /**
  * Get plugins group by subgroups
  */
-export const _36Cc3F94 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginBySubgroupsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/groups/subgroups', ...options });
+export const _36Cc3F94 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginBySubgroupsResponses, GetPluginBySubgroupsErrors, ThrowOnError>({ url: '/api/v1/plugins/groups/subgroups', ...options });
 
 /**
  * Get plugins icons
  *
  * Answers the icon metadata of every registered class. The `icon` field is always null here: icon bytes are served per class, and cached by the browser, by `GET /plugins/icons/{cls}/icon.svg`. `hash` is non-null exactly when the class has an icon, so callers can still tell which classes to render an icon for.
  */
-export const e16C271 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginIconsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/icons', ...options });
+export const e16C271 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginIconsResponses, GetPluginIconsErrors, ThrowOnError>({ url: '/api/v1/plugins/icons', ...options });
 
 /**
  * Get plugin group and subgroup icons
  *
  * Answers the icon metadata of every plugin group and subgroup. As on `GET /plugins/icons` the `icon` field is always null; the bytes come from `GET /plugins/icons/{cls}/icon.svg`.
  */
-export const _557632E4 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginGroupIconsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/icons/groups', ...options });
+export const _557632E4 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetPluginGroupIconsResponses, GetPluginGroupIconsErrors, ThrowOnError>({ url: '/api/v1/plugins/icons/groups', ...options });
 
 /**
  * Get a single plugin icon
@@ -171,7 +171,7 @@ export const _028D5F9Be = <ThrowOnError extends boolean = true>(parameters: {
     cls: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'cls' }] }]);
-    return (options?.client ?? client).get<GetPluginIconResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetPluginIconResponses, GetPluginIconErrors, ThrowOnError>({
         url: '/api/v1/plugins/icons/{cls}',
         ...options,
         ...params
@@ -187,7 +187,7 @@ export const _01C907F3e = <ThrowOnError extends boolean = true>(parameters: {
     cls: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'cls' }] }]);
-    return (options?.client ?? client).get<GetPluginIconSvgResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetPluginIconSvgResponses, GetPluginIconSvgErrors, ThrowOnError>({
         url: '/api/v1/plugins/icons/{cls}/icon.svg',
         ...options,
         ...params
@@ -197,7 +197,7 @@ export const _01C907F3e = <ThrowOnError extends boolean = true>(parameters: {
 /**
  * Get all types for an inputs
  */
-export const _0Aad6466 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetAllInputTypesResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/inputs', ...options });
+export const _0Aad6466 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetAllInputTypesResponses, GetAllInputTypesErrors, ThrowOnError>({ url: '/api/v1/plugins/inputs', ...options });
 
 /**
  * Get the JSON schema for an input type
@@ -208,7 +208,7 @@ export const _6Fb73243 = <ThrowOnError extends boolean = true>(parameters: {
     type: Type;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'type' }] }]);
-    return (options?.client ?? client).get<GetSchemaFromInputTypeResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetSchemaFromInputTypeResponses, GetSchemaFromInputTypeErrors, ThrowOnError>({
         url: '/api/v1/plugins/inputs/{type}',
         ...options,
         ...params
@@ -259,7 +259,7 @@ export const _07477A414 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<TaskWithVersion>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<GetPluginUiManifestResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<GetPluginUiManifestResponses, GetPluginUiManifestErrors, ThrowOnError>({
         url: '/api/v1/plugins/pluginUiManifest',
         ...options,
         ...params,
@@ -280,7 +280,7 @@ export const _04C6659B3 = <ThrowOnError extends boolean = true>(parameters: {
     type: SchemaType;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'type' }] }]);
-    return (options?.client ?? client).get<GetPropertiesFromTypeResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetPropertiesFromTypeResponses, GetPropertiesFromTypeErrors, ThrowOnError>({
         url: '/api/v1/plugins/properties/{type}',
         ...options,
         ...params
@@ -302,7 +302,7 @@ export const _02D5B2720 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'arrayOf' },
                 { in: 'query', key: 'includeCatalog' }
             ] }]);
-    return (options?.client ?? client).get<GetSchemasFromTypeResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetSchemasFromTypeResponses, GetSchemasFromTypeErrors, ThrowOnError>({
         url: '/api/v1/plugins/schemas/{type}',
         ...options,
         ...params
@@ -314,7 +314,7 @@ export const _02D5B2720 = <ThrowOnError extends boolean = true>(parameters: {
  *
  * Feeds the 'Add Trigger' catalog UI. Returns one entry per non-internal, non-deprecated trigger class, classified as core (bundled with Kestra Core), realtime (implements RealtimeTriggerInterface) or app (implements PollingTriggerInterface).
  */
-export const _03C2494Fa = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<ListTriggerPluginsResponses, unknown, ThrowOnError>({ url: '/api/v1/plugins/triggers', ...options });
+export const _03C2494Fa = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<ListTriggerPluginsResponses, ListTriggerPluginsErrors, ThrowOnError>({ url: '/api/v1/plugins/triggers', ...options });
 
 /**
  * Get plugin documentation
@@ -324,7 +324,7 @@ export const _56210B11 = <ThrowOnError extends boolean = true>(parameters: {
     all?: boolean;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'cls' }, { in: 'query', key: 'all' }] }]);
-    return (options?.client ?? client).get<GetPluginDocumentationResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetPluginDocumentationResponses, GetPluginDocumentationErrors, ThrowOnError>({
         url: '/api/v1/plugins/{cls}',
         ...options,
         ...params
@@ -338,7 +338,7 @@ export const _402B3Be4 = <ThrowOnError extends boolean = true>(parameters: {
     cls: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'cls' }] }]);
-    return (options?.client ?? client).get<GetPluginVersionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetPluginVersionsResponses, GetPluginVersionsErrors, ThrowOnError>({
         url: '/api/v1/plugins/{cls}/versions',
         ...options,
         ...params
@@ -358,7 +358,7 @@ export const _023E2Be03 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'version' },
                 { in: 'query', key: 'all' }
             ] }]);
-    return (options?.client ?? client).get<GetPluginDocumentationFromVersionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetPluginDocumentationFromVersionResponses, GetPluginDocumentationFromVersionErrors, ThrowOnError>({
         url: '/api/v1/plugins/{cls}/versions/{version}',
         ...options,
         ...params
@@ -373,7 +373,7 @@ export const d02B69d = <ThrowOnError extends boolean = true>(parameters: {
     path: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'group' }, { in: 'path', key: 'path' }] }]);
-    return (options?.client ?? client).get<GetPluginUiResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetPluginUiResponses, GetPluginUiErrors, ThrowOnError>({
         url: '/api/v1/plugins/{group}/pluginUi/{path}',
         ...options,
         ...params
@@ -388,7 +388,7 @@ export const _0509A5F04 = <ThrowOnError extends boolean = true>(parameters: {
     apiCreateThreadRequest: ApiCreateThreadRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'apiCreateThreadRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<CreateResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<CreateResponses, CreateErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/ai/threads',
         ...options,
         ...params,
@@ -408,7 +408,7 @@ export const _18F56 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'threadId' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetResponses, GetErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/ai/threads/{threadId}',
         ...options,
         ...params
@@ -428,7 +428,7 @@ export const _2E9358 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'apiChatTurnRequest', map: 'body' }
             ] }]);
-    return (options?.client ?? client).sse.post<ChatResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).sse.post<ChatResponses, ChatErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/ai/threads/{threadId}/chat',
         ...options,
         ...params,
@@ -453,7 +453,7 @@ export const _38B0E6C0 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'apiConfirmActionRequest', map: 'body' }
             ] }]);
-    return (options?.client ?? client).sse.post<ConfirmResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).sse.post<ConfirmResponses, ConfirmErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/ai/threads/{threadId}/confirm',
         ...options,
         ...params,
@@ -475,7 +475,7 @@ export const _435C395a = <ThrowOnError extends boolean = true>(parameters: {
     basicAuthCredentials: BasicAuthCredentials;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'basicAuthCredentials', map: 'body' }] }]);
-    return (options?.client ?? client).post<CreateBasicAuthResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<CreateBasicAuthResponses, CreateBasicAuthErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/basicAuth',
         ...options,
         ...params,
@@ -508,7 +508,7 @@ export const _04Fc707F8 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'size' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<SearchBlueprintsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchBlueprintsResponses, SearchBlueprintsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/blueprints/community/{kind}',
         ...options,
         ...params
@@ -530,7 +530,7 @@ export const _1Aac14e = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<ListBlueprintTagsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListBlueprintTagsResponses, ListBlueprintTagsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/blueprints/community/{kind}/tags',
         ...options,
         ...params
@@ -550,7 +550,7 @@ export const _74911Bdd = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'kind' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<GetBlueprintResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetBlueprintResponses, GetBlueprintErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/blueprints/community/{kind}/{id}',
         ...options,
         ...params
@@ -570,7 +570,7 @@ export const _4E249771 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'kind' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<GetBlueprintGraphResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetBlueprintGraphResponses, GetBlueprintGraphErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/blueprints/community/{kind}/{id}/graph',
         ...options,
         ...params
@@ -590,7 +590,7 @@ export const _07538A9A8 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'kind' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<GetBlueprintSourceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetBlueprintSourceResponses, GetBlueprintSourceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/blueprints/community/{kind}/{id}/source',
         ...options,
         ...params
@@ -605,7 +605,7 @@ export const _38F8C0C3 = <ThrowOnError extends boolean = true>(parameters: {
     serviceType: ServiceType;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'serviceType' }] }]);
-    return (options?.client ?? client).get<MetricsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<MetricsResponses, MetricsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/cluster/metrics/{serviceType}',
         ...options,
         ...params
@@ -620,7 +620,7 @@ export const _04Beefd81 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetServiceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetServiceResponses, GetServiceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/cluster/services/{id}',
         ...options,
         ...params
@@ -634,7 +634,7 @@ export const _1Ec18Cc3 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<SearchConcurrencyLimitsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchConcurrencyLimitsResponses, SearchConcurrencyLimitsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/concurrency-limit/search',
         ...options,
         ...params
@@ -654,7 +654,7 @@ export const _27Bdb75e = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'flowId' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<GetConcurrencyLimitResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetConcurrencyLimitResponses, GetConcurrencyLimitErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}',
         ...options,
         ...params
@@ -676,7 +676,7 @@ export const _06666E52f = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'concurrencyLimit', map: 'body' }
             ] }]);
-    return (options?.client ?? client).put<UpdateConcurrencyLimitResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).put<UpdateConcurrencyLimitResponses, UpdateConcurrencyLimitErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}',
         ...options,
         ...params,
@@ -705,7 +705,7 @@ export const _0F4647D9 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'q' },
                 { in: 'query', key: 'sort' }
             ] }]);
-    return (options?.client ?? client).get<SearchDashboardsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchDashboardsResponses, SearchDashboardsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/dashboards',
         ...options,
         ...params
@@ -725,7 +725,7 @@ export const _07E6Bfb76 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'format' },
                 { key: 'dashboardControllerPreviewRequest', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<ExportChartResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ExportChartResponses, ExportChartErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/dashboards/charts/export',
         ...options,
         ...params,
@@ -745,7 +745,7 @@ export const _052C8Df0a = <ThrowOnError extends boolean = true>(parameters: {
     dashboardControllerPreviewRequest: DashboardControllerPreviewRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'dashboardControllerPreviewRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<PreviewChartResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<PreviewChartResponses, PreviewChartErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/dashboards/charts/preview',
         ...options,
         ...params,
@@ -764,7 +764,7 @@ export const _01Fea9F09 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetDefaultDashboardDefinitionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetDefaultDashboardDefinitionsResponses, GetDefaultDashboardDefinitionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/dashboards/defaults/definitions',
         ...options,
         ...params
@@ -779,7 +779,7 @@ export const _03F07A422 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetDashboardResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetDashboardResponses, GetDashboardErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/dashboards/{id}',
         ...options,
         ...params
@@ -803,7 +803,7 @@ export const _05A013182 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'format' },
                 { key: 'chartFiltersOverrides', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<ExportDashboardChartResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ExportDashboardChartResponses, ExportDashboardChartErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export',
         ...options,
         ...params,
@@ -832,7 +832,7 @@ export const _06944349d = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'page' },
                 { in: 'query', key: 'size' }
             ] }]);
-    return (options?.client ?? client).get<SearchExecutionsByFlowIdResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchExecutionsByFlowIdResponses, SearchExecutionsByFlowIdErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions',
         ...options,
         ...params
@@ -956,7 +956,7 @@ export const _736327A7 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'filters' },
                 { in: 'query', key: 'size' }
             ] }]);
-    return (options?.client ?? client).get<FindDistinctFieldValuesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<FindDistinctFieldValuesResponses, FindDistinctFieldValuesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/distinct-field-values',
         ...options,
         ...params
@@ -971,7 +971,7 @@ export const _02B0Ac8D1 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).get<ExportExecutionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ExportExecutionsResponses, ExportExecutionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/export/by-query/csv',
         ...options,
         ...params
@@ -993,7 +993,7 @@ export const _271A34a = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'revision' }
             ] }]);
-    return (options?.client ?? client).get<GetFlowFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFlowFromExecutionResponses, GetFlowFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/flows/{namespace}/{flowId}',
         ...options,
         ...params
@@ -1123,7 +1123,7 @@ export const _02Ce15148 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<ExecutionRepositoryInterfaceFlowFilter>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<GetLatestExecutionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<GetLatestExecutionsResponses, GetLatestExecutionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/latest',
         ...options,
         ...params,
@@ -1142,7 +1142,7 @@ export const _0752Adbc4 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<ListExecutableDistinctNamespacesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListExecutableDistinctNamespacesResponses, ListExecutableDistinctNamespacesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/namespaces',
         ...options,
         ...params
@@ -1157,7 +1157,7 @@ export const _7F56E7Dd = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'namespace' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<ListFlowExecutionsByNamespaceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListFlowExecutionsByNamespaceResponses, ListFlowExecutionsByNamespaceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/namespaces/{namespace}/flows',
         ...options,
         ...params
@@ -1177,7 +1177,7 @@ export const _1E39Ce0f = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'flowId' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<GetExecutionAverageDurationResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetExecutionAverageDurationResponses, GetExecutionAverageDurationErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/namespaces/{namespace}/flows/{flowId}/average-duration',
         ...options,
         ...params
@@ -1363,7 +1363,7 @@ export const _05Ef057Dd = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'filters' },
                 { in: 'query', key: 'dateFilter' }
             ] }]);
-    return (options?.client ?? client).get<SearchExecutionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchExecutionsResponses, SearchExecutionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/search',
         ...options,
         ...params
@@ -1430,7 +1430,7 @@ export const _027A6Da8 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'key' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<TriggerExecutionByGetWebhookResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<TriggerExecutionByGetWebhookResponses, TriggerExecutionByGetWebhookErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}',
         ...options,
         ...params
@@ -1454,7 +1454,7 @@ export const _0357D5B80 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<TriggerExecutionByPostWebhookResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<TriggerExecutionByPostWebhookResponses, TriggerExecutionByPostWebhookErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}',
         ...options,
         ...params,
@@ -1483,7 +1483,7 @@ export const _0279E8381 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).put<TriggerExecutionByPutWebhookResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).put<TriggerExecutionByPutWebhookResponses, TriggerExecutionByPutWebhookErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}',
         ...options,
         ...params,
@@ -1512,7 +1512,7 @@ export const _731Fd483 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'path' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<TriggerExecutionByGetWebhookWithPathResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<TriggerExecutionByGetWebhookWithPathResponses, TriggerExecutionByGetWebhookWithPathErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}/{path}',
         ...options,
         ...params
@@ -1538,7 +1538,7 @@ export const _01263C155 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<TriggerExecutionByPostWebhookWithPathResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<TriggerExecutionByPostWebhookWithPathResponses, TriggerExecutionByPostWebhookWithPathErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}/{path}',
         ...options,
         ...params,
@@ -1569,7 +1569,7 @@ export const _66Dea7Aa = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).put<TriggerExecutionByPutWebhookWithPathResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).put<TriggerExecutionByPutWebhookWithPathResponses, TriggerExecutionByPutWebhookWithPathErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/webhook/{namespace}/{id}/{key}/{path}',
         ...options,
         ...params,
@@ -1598,7 +1598,7 @@ export const _012672A53 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'deleteMetrics' },
                 { in: 'query', key: 'deleteStorage' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteExecutionResponses, DeleteExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}',
         ...options,
         ...params
@@ -1613,7 +1613,7 @@ export const _04199839e = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetExecutionResponses, GetExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}',
         ...options,
         ...params
@@ -1653,7 +1653,7 @@ export const _02C81F3Ac = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<EvalExpressionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<EvalExpressionResponses, EvalExpressionErrors, ThrowOnError>({
         bodySerializer: null,
         url: '/api/v1/{tenant}/executions/{executionId}/actions/eval',
         ...options,
@@ -1681,7 +1681,7 @@ export const _3D8Cecc2 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<EvalTaskRunExpressionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<EvalTaskRunExpressionResponses, EvalTaskRunExpressionErrors, ThrowOnError>({
         bodySerializer: null,
         url: '/api/v1/{tenant}/executions/{executionId}/actions/eval/{taskRunId}',
         ...options,
@@ -1977,7 +1977,7 @@ export const _051905136 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'path' },
                 { in: 'query', key: 'format' }
             ] }]);
-    return (options?.client ?? client).get<DownloadFileFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<DownloadFileFromExecutionResponses, DownloadFileFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}/file',
         ...options,
         ...params
@@ -1997,7 +1997,7 @@ export const _044Bb45A4 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'path' }
             ] }]);
-    return (options?.client ?? client).get<GetFileMetadatasFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFileMetadatasFromExecutionResponses, GetFileMetadatasFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}/file/metas',
         ...options,
         ...params
@@ -2021,7 +2021,7 @@ export const _0486C8476 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'maxRows' },
                 { in: 'query', key: 'encoding' }
             ] }]);
-    return (options?.client ?? client).get<PreviewFileFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<PreviewFileFromExecutionResponses, PreviewFileFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}/file/preview',
         ...options,
         ...params
@@ -2036,7 +2036,7 @@ export const _5F1Abe3c = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetFlowFromExecutionByIdResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFlowFromExecutionByIdResponses, GetFlowFromExecutionByIdErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}/flow',
         ...options,
         ...params
@@ -2051,7 +2051,7 @@ export const _011787999 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError, FollowExecutionResponse>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).sse.get<FollowExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).sse.get<FollowExecutionResponses, FollowExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}/follow',
         ...options,
         ...params
@@ -2073,7 +2073,7 @@ export const _072B3D08b = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'destinationOnly' },
                 { in: 'query', key: 'expandAll' }
             ] }]);
-    return (options?.client ?? client).sse.get<FollowDependenciesExecutionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).sse.get<FollowDependenciesExecutionsResponses, FollowDependenciesExecutionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}/follow-dependencies',
         ...options,
         ...params
@@ -2093,7 +2093,7 @@ export const _47F9Ce7e = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'subflows' }
             ] }]);
-    return (options?.client ?? client).get<GetExecutionFlowGraphResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetExecutionFlowGraphResponses, GetExecutionFlowGraphErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/{executionId}/graph',
         ...options,
         ...params
@@ -2182,7 +2182,7 @@ export const _04A36929b = <ThrowOnError extends boolean = true>(parameters: {
     expressionControllerRenderExpressionRequest: ExpressionControllerRenderExpressionRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'expressionControllerRenderExpressionRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<RenderExpressionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<RenderExpressionsResponses, RenderExpressionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/expressions/render',
         ...options,
         ...params,
@@ -2207,7 +2207,7 @@ export const _5196384a = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'draft' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<CreateFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<CreateFlowResponses, CreateFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows',
         ...options,
         ...params,
@@ -2239,7 +2239,7 @@ export const _0494596B6 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'allowNamespaceChild' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<BulkUpdateFlowsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<BulkUpdateFlowsResponses, BulkUpdateFlowsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/bulk',
         ...options,
         ...params,
@@ -2259,7 +2259,7 @@ export const _0Ec51319 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<IdWithNamespace>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).delete<DeleteFlowsByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteFlowsByIdsResponses, DeleteFlowsByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/delete/by-ids',
         ...options,
         ...params,
@@ -2279,7 +2279,7 @@ export const _0715460C9 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).delete<DeleteFlowsByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteFlowsByQueryResponses, DeleteFlowsByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/delete/by-query',
         ...options,
         ...params
@@ -2294,7 +2294,7 @@ export const _1F4344F1 = <ThrowOnError extends boolean = true>(parameters: {
     namespace?: string | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'namespace' }] }]);
-    return (options?.client ?? client).get<ListDeprecatedResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListDeprecatedResponses, ListDeprecatedErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/deprecated',
         ...options,
         ...params
@@ -2309,7 +2309,7 @@ export const _7D0E1E4 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<IdWithNamespace>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<DisableFlowsByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<DisableFlowsByIdsResponses, DisableFlowsByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/disable/by-ids',
         ...options,
         ...params,
@@ -2329,7 +2329,7 @@ export const _579848F4 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).post<DisableFlowsByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<DisableFlowsByQueryResponses, DisableFlowsByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/disable/by-query',
         ...options,
         ...params
@@ -2344,7 +2344,7 @@ export const _06B60682e = <ThrowOnError extends boolean = true>(parameters: {
     q?: string | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'q' }] }]);
-    return (options?.client ?? client).get<ListDistinctNamespacesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListDistinctNamespacesResponses, ListDistinctNamespacesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/distinct-namespaces',
         ...options,
         ...params
@@ -2359,7 +2359,7 @@ export const _3De59Ebf = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<IdWithNamespace>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<EnableFlowsByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<EnableFlowsByIdsResponses, EnableFlowsByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/enable/by-ids',
         ...options,
         ...params,
@@ -2379,7 +2379,7 @@ export const _5B713B0f = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).post<EnableFlowsByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<EnableFlowsByQueryResponses, EnableFlowsByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/enable/by-query',
         ...options,
         ...params
@@ -2394,7 +2394,7 @@ export const ae43B0 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<IdWithNamespace>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<ExportFlowsByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ExportFlowsByIdsResponses, ExportFlowsByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/export/by-ids',
         ...options,
         ...params,
@@ -2414,7 +2414,7 @@ export const _0715B9840 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).get<ExportFlowsByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ExportFlowsByQueryResponses, ExportFlowsByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/export/by-query',
         ...options,
         ...params
@@ -2429,7 +2429,7 @@ export const _07E3Fae4f = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).get<ExportFlowsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ExportFlowsResponses, ExportFlowsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/export/by-query/csv',
         ...options,
         ...params
@@ -2451,7 +2451,7 @@ export const a76C0Db = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'taskId' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<ExpressionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ExpressionsResponses, ExpressionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/expressions',
         ...options,
         ...params,
@@ -2476,7 +2476,7 @@ export const _030B1A670 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'subflows' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<GenerateFlowGraphFromSourceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<GenerateFlowGraphFromSourceResponses, GenerateFlowGraphFromSourceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/graph',
         ...options,
         ...params,
@@ -2504,7 +2504,7 @@ export const _562B4060 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'failOnError' },
                 { in: 'body', key: 'fileUpload' }
             ] }]);
-    return (options?.client ?? client).post<ImportFlowsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ImportFlowsResponses, ImportFlowsErrors, ThrowOnError>({
         ...formDataBodySerializer,
         url: '/api/v1/{tenant}/flows/import',
         ...options,
@@ -2534,7 +2534,7 @@ export const _02187E7C3 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'sort' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<SearchFlowsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchFlowsResponses, SearchFlowsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/search',
         ...options,
         ...params
@@ -2568,7 +2568,7 @@ export const _067435Ac4 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'regex' },
                 { in: 'query', key: 'scope' }
             ] }]);
-    return (options?.client ?? client).get<SearchFlowsBySourceCodeResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchFlowsBySourceCodeResponses, SearchFlowsBySourceCodeErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/source',
         ...options,
         ...params
@@ -2585,7 +2585,7 @@ export const _07628391b = <ThrowOnError extends boolean = true>(parameters: {
     sourceSearchReplaceApplyRequest: SourceSearchReplaceApplyRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'sourceSearchReplaceApplyRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<ApplyReplaceBySourceCodeResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ApplyReplaceBySourceCodeResponses, ApplyReplaceBySourceCodeErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/source/replace/apply',
         ...options,
         ...params,
@@ -2607,7 +2607,7 @@ export const _0593C8Eb9 = <ThrowOnError extends boolean = true>(parameters: {
     sourceSearchReplaceLineRequest: SourceSearchReplaceLineRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'sourceSearchReplaceLineRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<ReplaceLineBySourceCodeResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ReplaceLineBySourceCodeResponses, ReplaceLineBySourceCodeErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/source/replace/line',
         ...options,
         ...params,
@@ -2629,7 +2629,7 @@ export const e83C44b = <ThrowOnError extends boolean = true>(parameters: {
     sourceSearchReplacePreviewRequest: SourceSearchReplacePreviewRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'sourceSearchReplacePreviewRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<PreviewReplaceBySourceCodeResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<PreviewReplaceBySourceCodeResponses, PreviewReplaceBySourceCodeErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/source/replace/preview',
         ...options,
         ...params,
@@ -2649,7 +2649,7 @@ export const _032E9A671 = <ThrowOnError extends boolean = true>(parameters: {
     body: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<ValidateFlowsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ValidateFlowsResponses, ValidateFlowsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/validate',
         ...options,
         ...params,
@@ -2676,7 +2676,7 @@ export const _407247Bb = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'section' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<ValidateTaskResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ValidateTaskResponses, ValidateTaskErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/validate/task',
         ...options,
         ...params,
@@ -2698,7 +2698,7 @@ export const _030A1703e = <ThrowOnError extends boolean = true>(parameters: {
     };
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<ValidateTriggerResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<ValidateTriggerResponses, ValidateTriggerErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/validate/trigger',
         ...options,
         ...params,
@@ -2718,7 +2718,7 @@ export const _62Bef13d = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'namespace' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<ListFlowsByNamespaceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListFlowsByNamespaceResponses, ListFlowsByNamespaceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}',
         ...options,
         ...params
@@ -2745,7 +2745,7 @@ export const _541Dca5a = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'override' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).post<UpdateFlowsInNamespaceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<UpdateFlowsInNamespaceResponses, UpdateFlowsInNamespaceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}',
         ...options,
         ...params,
@@ -2770,7 +2770,7 @@ export const _69272D79 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'id' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteFlowResponses, DeleteFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}/{id}',
         ...options,
         ...params
@@ -2796,7 +2796,7 @@ export const _0480965c = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'revision' },
                 { in: 'query', key: 'allowDeleted' }
             ] }]);
-    return (options?.client ?? client).get<GetFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFlowResponses, GetFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}/{id}',
         ...options,
         ...params
@@ -2820,7 +2820,7 @@ export const _011A9De69 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'draft' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).put<UpdateFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).put<UpdateFlowResponses, UpdateFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}/{id}',
         ...options,
         ...params,
@@ -2849,7 +2849,7 @@ export const _666C64Ed = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'destinationOnly' },
                 { in: 'query', key: 'expandAll' }
             ] }]);
-    return (options?.client ?? client).get<GetFlowDependenciesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFlowDependenciesResponses, GetFlowDependenciesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}/{id}/dependencies',
         ...options,
         ...params
@@ -2873,7 +2873,7 @@ export const _41A7Bacb = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'revision' },
                 { in: 'query', key: 'subflows' }
             ] }]);
-    return (options?.client ?? client).get<GenerateFlowGraphResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GenerateFlowGraphResponses, GenerateFlowGraphErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}/{id}/graph',
         ...options,
         ...params
@@ -2895,7 +2895,7 @@ export const _4Cc20E8d = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'revisions' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteRevisionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteRevisionsResponses, DeleteRevisionsErrors, ThrowOnError>({
         querySerializer: { parameters: { revisions: { array: { explode: false } } } },
         url: '/api/v1/{tenant}/flows/{namespace}/{id}/revisions',
         ...options,
@@ -2918,7 +2918,7 @@ export const _6C34C66c = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'allowDelete' }
             ] }]);
-    return (options?.client ?? client).get<ListFlowRevisionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListFlowRevisionsResponses, ListFlowRevisionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}/{id}/revisions',
         ...options,
         ...params
@@ -2942,7 +2942,7 @@ export const _048Aa80Ed = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'revision' }
             ] }]);
-    return (options?.client ?? client).get<GetTaskFromFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetTaskFromFlowResponses, GetTaskFromFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/flows/{namespace}/{id}/tasks/{taskId}',
         ...options,
         ...params
@@ -2966,7 +2966,7 @@ export const _023C90349 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'sort' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<ListAllKeysResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListAllKeysResponses, ListAllKeysErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/kv',
         ...options,
         ...params
@@ -2992,7 +2992,7 @@ export const _02A5C7489 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'cursor' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<SearchLogsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchLogsResponses, SearchLogsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/logs/search',
         ...options,
         ...params
@@ -3018,7 +3018,7 @@ export const _4Ca5D6B4 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'taskId' },
                 { in: 'query', key: 'attempt' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteLogsFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteLogsFromExecutionResponses, DeleteLogsFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/logs/{executionId}',
         ...options,
         ...params
@@ -3038,7 +3038,7 @@ export const _06C136Fdf = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<ListLogsFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListLogsFromExecutionResponses, ListLogsFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/logs/{executionId}',
         ...options,
         ...params
@@ -3058,7 +3058,7 @@ export const _74Ae0977 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<DownloadLogsFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<DownloadLogsFromExecutionResponses, DownloadLogsFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/logs/{executionId}/download',
         ...options,
         ...params
@@ -3078,7 +3078,7 @@ export const _459D2D6e = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).sse.get<FollowLogsFromExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).sse.get<FollowLogsFromExecutionResponses, FollowLogsFromExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/logs/{executionId}/follow',
         ...options,
         ...params
@@ -3100,7 +3100,7 @@ export const _21216412 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'triggerId' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteLogsFromFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteLogsFromFlowResponses, DeleteLogsFromFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/logs/{namespace}/{flowId}',
         ...options,
         ...params
@@ -3122,7 +3122,7 @@ export const _5031B3D7 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'size' },
                 { in: 'query', key: 'sort' }
             ] }]);
-    return (options?.client ?? client).get<ListMcpsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListMcpsResponses, ListMcpsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/mcp-servers',
         ...options,
         ...params
@@ -3137,7 +3137,7 @@ export const _23Aa1Afe = <ThrowOnError extends boolean = true>(parameters: {
     apiMcpServerWritable: ApiMcpServerWritable;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'apiMcpServerWritable', map: 'body' }] }]);
-    return (options?.client ?? client).post<CreateMcpResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<CreateMcpResponses, CreateMcpErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/mcp-servers',
         ...options,
         ...params,
@@ -3157,7 +3157,7 @@ export const _01561Bc11 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).delete<DeleteMcpResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteMcpResponses, DeleteMcpErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/mcp-servers/{id}',
         ...options,
         ...params
@@ -3172,7 +3172,7 @@ export const _04A77A99c = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetMcpResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetMcpResponses, GetMcpErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/mcp-servers/{id}',
         ...options,
         ...params
@@ -3192,7 +3192,7 @@ export const _0742Eabef = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'apiMcpServerWritable', map: 'body' }
             ] }]);
-    return (options?.client ?? client).put<UpdateMcpResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).put<UpdateMcpResponses, UpdateMcpErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/mcp-servers/{id}',
         ...options,
         ...params,
@@ -3212,7 +3212,7 @@ export const _382Ac1A6 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).patch<ToggleMcpResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).patch<ToggleMcpResponses, ToggleMcpErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/mcp-servers/{id}/toggle',
         ...options,
         ...params
@@ -3227,7 +3227,7 @@ export const _049932423 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<ListToolsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListToolsResponses, ListToolsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/mcp-servers/{id}/tools',
         ...options,
         ...params
@@ -3291,7 +3291,7 @@ export const _041C601E4 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'endDate' },
                 { in: 'query', key: 'aggregation' }
             ] }]);
-    return (options?.client ?? client).get<AggregateMetricsFromFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<AggregateMetricsFromFlowResponses, AggregateMetricsFromFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/metrics/aggregates/{namespace}/{flowId}/{metric}',
         ...options,
         ...params
@@ -3321,7 +3321,7 @@ export const _041Bfcd8d = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'endDate' },
                 { in: 'query', key: 'aggregation' }
             ] }]);
-    return (options?.client ?? client).get<AggregateMetricsFromTaskResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<AggregateMetricsFromTaskResponses, AggregateMetricsFromTaskErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/metrics/aggregates/{namespace}/{flowId}/{taskId}/{metric}',
         ...options,
         ...params
@@ -3341,7 +3341,7 @@ export const _22F15037 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'flowId' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<ListFlowMetricsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListFlowMetricsResponses, ListFlowMetricsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/metrics/names/{namespace}/{flowId}',
         ...options,
         ...params
@@ -3363,7 +3363,7 @@ export const _3Acedc00 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'taskId' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<ListTaskMetricsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListTaskMetricsResponses, ListTaskMetricsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/metrics/names/{namespace}/{flowId}/{taskId}',
         ...options,
         ...params
@@ -3383,7 +3383,7 @@ export const _64625D6d = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'flowId' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<ListTasksWithMetricsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListTasksWithMetricsResponses, ListTasksWithMetricsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/metrics/tasks/{namespace}/{flowId}',
         ...options,
         ...params
@@ -3411,7 +3411,7 @@ export const _48B0B9B9 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'taskRunId' },
                 { in: 'query', key: 'taskId' }
             ] }]);
-    return (options?.client ?? client).get<SearchByExecutionResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchByExecutionResponses, SearchByExecutionErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/metrics/{executionId}',
         ...options,
         ...params
@@ -3428,7 +3428,7 @@ export const _548A6080 = <ThrowOnError extends boolean = true>(parameters: {
     apiAutocomplete: ApiAutocomplete;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'apiAutocomplete', map: 'body' }] }]);
-    return (options?.client ?? client).post<AutocompleteNamespacesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<AutocompleteNamespacesResponses, AutocompleteNamespacesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/autocomplete',
         ...options,
         ...params,
@@ -3459,7 +3459,7 @@ export const _0755159C0 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'existing' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<SearchNamespacesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchNamespacesResponses, SearchNamespacesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/search',
         ...options,
         ...params
@@ -3474,7 +3474,7 @@ export const _4A10C6A5 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetNamespaceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetNamespaceResponses, GetNamespaceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{id}',
         ...options,
         ...params
@@ -3494,7 +3494,7 @@ export const _1F9D50E4 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'destinationOnly' }
             ] }]);
-    return (options?.client ?? client).get<GetFlowDependenciesFromNamespaceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFlowDependenciesFromNamespaceResponses, GetFlowDependenciesFromNamespaceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/dependencies',
         ...options,
         ...params
@@ -3514,7 +3514,7 @@ export const _07288D39a = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'path' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteFileDirectoryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteFileDirectoryResponses, DeleteFileDirectoryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files',
         ...options,
         ...params
@@ -3536,7 +3536,7 @@ export const _07C45C5D9 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'path' },
                 { in: 'query', key: 'revision' }
             ] }]);
-    return (options?.client ?? client).get<GetFileContentResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFileContentResponses, GetFileContentErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files',
         ...options,
         ...params
@@ -3558,7 +3558,7 @@ export const _54C4A1Db = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'path' },
                 { in: 'body', key: 'fileContent' }
             ] }]);
-    return (options?.client ?? client).post<CreateNamespaceFileResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<CreateNamespaceFileResponses, CreateNamespaceFileErrors, ThrowOnError>({
         ...formDataBodySerializer,
         url: '/api/v1/{tenant}/namespaces/{namespace}/files',
         ...options,
@@ -3586,7 +3586,7 @@ export const _7D6E2400 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'from' },
                 { in: 'query', key: 'to' }
             ] }]);
-    return (options?.client ?? client).put<MoveFileDirectoryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).put<MoveFileDirectoryResponses, MoveFileDirectoryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files',
         ...options,
         ...params
@@ -3606,7 +3606,7 @@ export const _075B6Dc39 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'path' }
             ] }]);
-    return (options?.client ?? client).get<ListNamespaceDirectoryFilesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListNamespaceDirectoryFilesResponses, ListNamespaceDirectoryFilesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files/directory',
         ...options,
         ...params
@@ -3626,7 +3626,7 @@ export const _5233556e = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'path' }
             ] }]);
-    return (options?.client ?? client).post<CreateNamespaceDirectoryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<CreateNamespaceDirectoryResponses, CreateNamespaceDirectoryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files/directory',
         ...options,
         ...params
@@ -3641,7 +3641,7 @@ export const _4157Eab0 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'namespace' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<ExportNamespaceFilesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ExportNamespaceFilesResponses, ExportNamespaceFilesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files/export',
         ...options,
         ...params
@@ -3661,7 +3661,7 @@ export const _04B8569Da = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'path' }
             ] }]);
-    return (options?.client ?? client).get<GetFileRevisionsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFileRevisionsResponses, GetFileRevisionsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files/revisions',
         ...options,
         ...params
@@ -3681,7 +3681,7 @@ export const _057D73E5c = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'q' }
             ] }]);
-    return (options?.client ?? client).get<SearchNamespaceFilesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchNamespaceFilesResponses, SearchNamespaceFilesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files/search',
         ...options,
         ...params
@@ -3701,7 +3701,7 @@ export const _56Da3D52 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'path' }
             ] }]);
-    return (options?.client ?? client).get<GetFileMetadatasResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFileMetadatasResponses, GetFileMetadatasErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/files/stats',
         ...options,
         ...params
@@ -3716,7 +3716,7 @@ export const _03F73Cd01 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'namespace' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetInheritedSecretsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetInheritedSecretsResponses, GetInheritedSecretsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/inherited-secrets',
         ...options,
         ...params
@@ -3736,7 +3736,7 @@ export const _043D2910a = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'kvControllerApiDeleteBulkRequest', map: 'body' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteKeyValuesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteKeyValuesResponses, DeleteKeyValuesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/kv',
         ...options,
         ...params,
@@ -3756,7 +3756,7 @@ export const _057232872 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'namespace' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<ListKeysWithInheritenceResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListKeysWithInheritenceResponses, ListKeysWithInheritenceErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/kv/inheritance',
         ...options,
         ...params
@@ -3776,7 +3776,7 @@ export const _05D06Cae3 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'key' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).delete<DeleteKeyValueResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteKeyValueResponses, DeleteKeyValueErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/kv/{key}',
         ...options,
         ...params
@@ -3796,7 +3796,7 @@ export const _066Ce9C38 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'key' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<GetKeyValueResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetKeyValueResponses, GetKeyValueErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/namespaces/{namespace}/kv/{key}',
         ...options,
         ...params
@@ -3818,7 +3818,7 @@ export const _06C163B2c = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { key: 'body', map: 'body' }
             ] }]);
-    return (options?.client ?? client).put<SetKeyValueResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).put<SetKeyValueResponses, SetKeyValueErrors, ThrowOnError>({
         bodySerializer: null,
         url: '/api/v1/{tenant}/namespaces/{namespace}/kv/{key}',
         ...options,
@@ -3839,7 +3839,7 @@ export const _5A13D0D0 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetExecutionOutputsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetExecutionOutputsResponses, GetExecutionOutputsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/outputs/executions/{executionId}',
         ...options,
         ...params
@@ -3854,7 +3854,7 @@ export const _02Fb2086b = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetTaskOutputsInformationResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetTaskOutputsInformationResponses, GetTaskOutputsInformationErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/outputs/tasks/{executionId}',
         ...options,
         ...params
@@ -3874,7 +3874,7 @@ export const _1Df97Ee2 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'taskRunId' },
                 { in: 'path', key: 'tenant' }
             ] }]);
-    return (options?.client ?? client).get<GetTaskRunOutputsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetTaskRunOutputsResponses, GetTaskRunOutputsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}',
         ...options,
         ...params
@@ -3898,7 +3898,7 @@ export const _077F7Debb = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'sort' },
                 { in: 'query', key: 'filters' }
             ] }]);
-    return (options?.client ?? client).get<ListSecretsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ListSecretsResponses, ListSecretsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/secrets',
         ...options,
         ...params
@@ -3953,7 +3953,7 @@ export const _0454D50C4 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).post<DeleteBackfillByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<DeleteBackfillByQueryResponses, DeleteBackfillByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/backfill/delete/by-query',
         ...options,
         ...params
@@ -3968,7 +3968,7 @@ export const _06E9Fc5D4 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<TriggerControllerApiTriggerId>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<DeleteBackfillByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<DeleteBackfillByIdsResponses, DeleteBackfillByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/backfill/delete/by-triggers',
         ...options,
         ...params,
@@ -4008,7 +4008,7 @@ export const _01Af6F06f = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).post<PauseBackfillByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<PauseBackfillByQueryResponses, PauseBackfillByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/backfill/pause/by-query',
         ...options,
         ...params
@@ -4023,7 +4023,7 @@ export const _0Af3543f = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<TriggerControllerApiTriggerId>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<PauseBackfillByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<PauseBackfillByIdsResponses, PauseBackfillByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/backfill/pause/by-triggers',
         ...options,
         ...params,
@@ -4063,7 +4063,7 @@ export const _0361F2856 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).post<UnpauseBackfillByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<UnpauseBackfillByQueryResponses, UnpauseBackfillByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/backfill/unpause/by-query',
         ...options,
         ...params
@@ -4078,7 +4078,7 @@ export const _3139A61a = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<TriggerControllerApiTriggerId>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<UnpauseBackfillByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<UnpauseBackfillByIdsResponses, UnpauseBackfillByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/backfill/unpause/by-triggers',
         ...options,
         ...params,
@@ -4098,7 +4098,7 @@ export const _0675820B5 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'body', key: 'filters' }] }]);
-    return (options?.client ?? client).delete<DeleteTriggersByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteTriggersByQueryResponses, DeleteTriggersByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/delete/by-query',
         ...options,
         ...params,
@@ -4118,7 +4118,7 @@ export const _03C4Fde05 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<TriggerControllerApiTriggerId>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).delete<DeleteTriggersByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).delete<DeleteTriggersByIdsResponses, DeleteTriggersByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/delete/by-triggers',
         ...options,
         ...params,
@@ -4138,7 +4138,7 @@ export const _2Bf5E58f = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).get<ExportTriggersResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<ExportTriggersResponses, ExportTriggersErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/export/by-query/csv',
         ...options,
         ...params
@@ -4164,7 +4164,7 @@ export const _025Dffc7d = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'filters' },
                 { in: 'query', key: 'dateFilter' }
             ] }]);
-    return (options?.client ?? client).get<SearchTriggersResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchTriggersResponses, SearchTriggersErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/search',
         ...options,
         ...params
@@ -4206,7 +4206,7 @@ export const _064E031A6 = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'disabled' },
                 { in: 'query', key: 'recoverMissedSchedules' }
             ] }]);
-    return (options?.client ?? client).post<DisabledTriggersByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<DisabledTriggersByQueryResponses, DisabledTriggersByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/set-disabled/by-query',
         ...options,
         ...params
@@ -4221,7 +4221,7 @@ export const _075D97736 = <ThrowOnError extends boolean = true>(parameters: {
     triggerControllerSetDisabledRequest: TriggerControllerSetDisabledRequest;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'triggerControllerSetDisabledRequest', map: 'body' }] }]);
-    return (options?.client ?? client).post<DisabledTriggersByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<DisabledTriggersByIdsResponses, DisabledTriggersByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/set-disabled/by-triggers',
         ...options,
         ...params,
@@ -4241,7 +4241,7 @@ export const _2F570092 = <ThrowOnError extends boolean = true>(parameters: {
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
-    return (options?.client ?? client).post<UnlockTriggersByQueryResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<UnlockTriggersByQueryResponses, UnlockTriggersByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/unlock/by-query',
         ...options,
         ...params
@@ -4256,7 +4256,7 @@ export const _7874E902 = <ThrowOnError extends boolean = true>(parameters: {
     body: Array<TriggerControllerApiTriggerId>;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
-    return (options?.client ?? client).post<UnlockTriggersByIdsResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).post<UnlockTriggersByIdsResponses, UnlockTriggersByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/unlock/by-triggers',
         ...options,
         ...params,
@@ -4289,7 +4289,7 @@ export const _077995F6c = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'sort' },
                 { in: 'query', key: 'q' }
             ] }]);
-    return (options?.client ?? client).get<SearchTriggersForFlowResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<SearchTriggersForFlowResponses, SearchTriggersForFlowErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/{namespace}/{flowId}',
         ...options,
         ...params
@@ -4369,7 +4369,7 @@ export const _334059E8 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }] }]);
-    return (options?.client ?? client).get<GetUsagesResponses, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetUsagesResponses, GetUsagesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/usages/all',
         ...options,
         ...params

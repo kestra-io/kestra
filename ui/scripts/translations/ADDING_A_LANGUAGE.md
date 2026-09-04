@@ -104,11 +104,7 @@ Commit the locale files and the fingerprints files **together** - one without th
 
 If a handful of keys fail on every retry with `PROHIBITED_CONTENT`, that is a Gemini safety block, not a flake - reword the English source, never hand-write the translation.
 
-### 3.7 One out-of-pipeline file (known gap)
-
-`ui/src/components/plugins/PluginCard.locale.ts` holds all languages inline but sits in `ui/src`, outside the phase-2 glob (`packages/design-system/**/*.locale.ts`), so the generator will NOT add the new language to it. Its keys fall back to English if missed. Either extend the glob in `ui/scripts/translations/generate.ts` to cover it (preferred, one-line change) or accept the English fallback for its two short strings. Worth fixing in the same PR.
-
-### 3.8 Verify
+### 3.7 Verify
 
 ```bash
 cd ui
@@ -175,7 +171,6 @@ OSS:
 - [ ] `i18n.ts`: plural rule, only if the language needs one
 - [ ] `generateTranslations.ts`: per-language rule block (form of address, reserved-term inflection, entity glossary) written and reviewed before generating
 - [ ] `translations:generate` run; locale JSON + `fingerprints.json` + design-system `*.locale.ts` + `fingerprints-design-system.json` committed together
-- [ ] `PluginCard.locale.ts` gap handled
 - [ ] `translations:check` + `check:types` green
 - [ ] Manual smoke test (language switch, dates, pagination, empty states)
 

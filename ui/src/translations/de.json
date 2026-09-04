@@ -2223,11 +2223,13 @@
       "collapse": "Einklappen"
     },
     "delete triggers": "Trigger löschen",
+    "delete triggers orphans only": "Nur trigger-State, der nicht mehr im flow deklariert ist, wird gelöscht. Trigger, die noch im flow deklariert sind, bleiben erhalten.",
     "bulk delete triggers": "Möchtest du wirklich {count} Trigger löschen?",
     "bulk success delete triggers": "{count} Trigger wurden erfolgreich gelöscht",
     "delete trigger confirmation": "Möchtest du den Trigger {id} wirklich löschen? WARNUNG: Das Löschen eines Triggers kann zu doppelten Executions führen, wenn der Trigger noch in einem Flow aktiv ist",
     "delete trigger success": "Trigger {id} wurde erfolgreich gelöscht",
     "delete trigger error": "Fehler beim Löschen des Triggers {id}",
+    "delete trigger still declared": "Dieser trigger ist noch im flow deklariert. Entferne ihn aus dem flow oder verwende Restart.",
     "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "delete revision confirm": "Möchtest du die Revision {revision} wirklich löschen?",
     "delete revision error": "Fehler beim Löschen der Revision {revision}: {error}",

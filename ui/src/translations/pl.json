@@ -2223,11 +2223,13 @@
       "collapse": "Zwiń"
     },
     "delete triggers": "Usuń Triggery",
+    "delete triggers orphans only": "Usunięty zostanie tylko stan trigger, który nie jest już zadeklarowany w flow. Trigger nadal zadeklarowane w flow zostaną zachowane.",
     "bulk delete triggers": "Czy na pewno chcesz usunąć {count} Triggerów?",
     "bulk success delete triggers": "Pomyślnie usunięto {count} Triggerów",
     "delete trigger confirmation": "Czy na pewno chcesz usunąć Trigger {id}? OSTRZEŻENIE: usunięcie Triggera może prowadzić do zduplikowanych egzekucji, jeśli Trigger jest nadal aktywny w jakimś Flow",
     "delete trigger success": "Trigger {id} został pomyślnie usunięty",
     "delete trigger error": "Błąd podczas usuwania Triggera {id}",
+    "delete trigger still declared": "Ten trigger jest nadal zadeklarowany w flow. Usuń go z flow lub użyj Restart.",
     "revision deleted": "Wersja {revision} została pomyślnie usunięta",
     "delete revision confirm": "Czy na pewno chcesz usunąć wersję {revision}?",
     "delete revision error": "Błąd podczas usuwania wersji {revision}: {error}",

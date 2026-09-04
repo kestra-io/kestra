@@ -2223,11 +2223,13 @@
       "collapse": "접기"
     },
     "delete triggers": "트리거 삭제",
+    "delete triggers orphans only": "flow에 더 이상 선언되지 않은 trigger 상태만 삭제됩니다. flow에 선언된 trigger는 유지됩니다.",
     "bulk delete triggers": "{count}개의 trigger를 삭제하시겠습니까?",
     "bulk success delete triggers": "{count} triggers가 성공적으로 삭제되었습니다",
     "delete trigger confirmation": "트리거 {id}를 삭제하시겠습니까? WARNING: 트리거가 flow에서 여전히 활성 상태인 경우 삭제하면 중복 실행이 발생할 수 있습니다.",
     "delete trigger success": "{id} 트리거가 성공적으로 삭제되었습니다",
     "delete trigger error": "트리거 {id} 삭제 오류",
+    "delete trigger still declared": "이 trigger는 아직 flow에 선언되어 있습니다. flow에서 제거하거나 Restart를 사용하세요.",
     "revision deleted": "{revision} 리비전이 성공적으로 삭제되었습니다.",
     "delete revision confirm": "{revision} 개정을 삭제하시겠습니까?",
     "delete revision error": "{error} 오류로 인해 {revision} 수정본 삭제 오류 발생",

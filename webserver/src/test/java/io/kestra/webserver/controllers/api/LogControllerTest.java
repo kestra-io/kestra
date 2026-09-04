@@ -22,6 +22,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
@@ -291,6 +292,61 @@ class LogControllerTest {
             Argument.of(List.class, LogEntry.class)
         );
         assertThat(logs.size()).isZero();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deleteLogsByIds() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+        logRepository.save(logEntry(tenant, Level.WARN));
+        logRepository.save(logEntry(tenant, Level.ERROR));
+
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(logs.getTotal()).isEqualTo(3L);
+        List<String> idsToDelete = logs.getResults().stream()
+            .limit(2)
+            .map(LogEntry::getId)
+            .toList();
+        assertThat(idsToDelete).allSatisfy(id -> assertThat(id).isNotBlank());
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-ids", idsToDelete),
+            BulkResponse.class
+        );
+        assertThat(response.getCount()).isEqualTo(2);
+
+        CursorOrOffsetPagedResults<LogEntry> remaining = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(remaining.getTotal()).isEqualTo(1L);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deleteLogsByQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+        logRepository.save(logEntry(tenant, Level.WARN));
+        logRepository.save(logEntry(tenant, Level.ERROR));
+
+        HttpResponse<?> delete = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[level][EQUALS]=ERROR")
+        );
+        assertThat(delete.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        CursorOrOffsetPagedResults<LogEntry> remaining = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(remaining.getTotal()).isEqualTo(2L);
+        assertThat(remaining.getResults()).noneMatch(log -> log.getLevel() == Level.ERROR);
     }
 
     @Test

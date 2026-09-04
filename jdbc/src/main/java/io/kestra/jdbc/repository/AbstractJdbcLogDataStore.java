@@ -44,6 +44,9 @@ import lombok.Getter;
 import lombok.Setter;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
+
 public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
@@ -166,7 +169,27 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
-        return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
+        return toOffsetPage(findPageWithId(pageable, tenantId, condition), pageable);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private ArrayListTotal<LogEntry> findPageWithId(Pageable pageable, String tenantId, Condition condition) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            SelectConditionStep<Record> select = (SelectConditionStep) context
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(condition);
+
+            return this.jdbcRepository.fetchPage(context, select, pageable, this::mapWithId);
+        });
+    }
+
+    private LogEntry mapWithId(Record record) {
+        LogEntry entry = this.jdbcRepository.deserialize(record.get(VALUE_FIELD, String.class));
+        return entry.toBuilder().id(record.get(KEY_FIELD)).build();
     }
 
     /**
@@ -446,6 +469,21 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
             return delete.execute();
         });
+    }
+
+    @Override
+    public int deleteByIds(String tenantId, List<String> ids) {
+        if (ListUtils.isEmpty(ids)) {
+            return 0;
+        }
+
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration)
+                .delete(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(KEY_FIELD.in(ids))
+                .execute()
+        );
     }
 
     private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {

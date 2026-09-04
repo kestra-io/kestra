@@ -333,6 +333,48 @@ class MiscControllerTest {
         }
     }
 
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void updateNewsletterOptIn_shouldReturnNoContent_whenAuthenticated() {
+        String uid = "newsletterUid";
+        String username = "newsletter.success@kestra.io";
+        String password = "newsletterPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+
+        try {
+            var response = client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/basicAuth/newsletter", new MiscController.NewsletterOptIn(true))
+                    .basicAuth(username, password)
+            );
+
+            assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void updateNewsletterOptIn_shouldReject_whenNotAuthenticated() {
+        String uid = "newsletterUid2";
+        String username = "newsletter.fail@kestra.io";
+        String password = "newsletterPassword2";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+
+        try {
+            assertThatThrownBy(
+                () -> client.toBlocking().exchange(
+                    HttpRequest.POST("/api/v1/main/basicAuth/newsletter", new MiscController.NewsletterOptIn(true))
+                        .basicAuth("bad.user@kestra.io", "badPassword")
+                )
+            ).isInstanceOfSatisfying(
+                HttpClientResponseException.class, ex -> assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+            );
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
     @Test
     void login_isReachableWithoutPriorAuthentication() {
         // /api/v1/login must be reachable by an unauthenticated caller, otherwise nobody could ever log in

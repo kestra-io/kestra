@@ -43,6 +43,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -231,6 +232,24 @@ public class MiscController {
         return HttpResponse.noContent()
             .cookie(authCookie(request, basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()))
             .cookie(authFlagCookie(request));
+    }
+
+    @Post(uri = "/{tenant}/basicAuth/newsletter")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Misc" },
+        summary = "Record the admin's newsletter opt-in choice.",
+        description = "Called once the onboarding survey step completes or is skipped, after the admin account already exists; requires authentication."
+    )
+    public MutableHttpResponse<?> updateNewsletterOptIn(@RequestBody @Valid @Body NewsletterOptIn newsletterOptIn) {
+        basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .recordNewsletterOptIn(newsletterOptIn.newsletterOptedIn());
+
+        return HttpResponse.noContent();
+    }
+
+    public record NewsletterOptIn(@NotNull Boolean newsletterOptedIn) {
     }
 
     @Get("/basicAuthValidationErrors")

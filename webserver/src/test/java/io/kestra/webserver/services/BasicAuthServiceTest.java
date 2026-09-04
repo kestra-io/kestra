@@ -307,6 +307,31 @@ class BasicAuthServiceTest {
     }
 
     @Test
+    void recordNewsletterOptIn_shouldPublishEventWithChoice() throws TimeoutException {
+        stubFor(
+            post(urlEqualTo("/v1/reports/events"))
+                .willReturn(aResponse().withStatus(200))
+        );
+        var settingRepositoryInterface = new InMemorySettingRepository();
+        var basicAuthService = new BasicAuthService(settingRepositoryInterface, yamlBasicAuthConfiguration, instanceService, ossAuthEventPublisher);
+        basicAuthService.init();
+
+        basicAuthService.recordNewsletterOptIn(true);
+
+        awaitOssAuthEventApiCall("admin@kestra.io", true);
+    }
+
+    @Test
+    void recordNewsletterOptIn_shouldThrowWhenBasicAuthNotConfigured() {
+        var settingRepositoryInterface = new InMemorySettingRepository();
+        var basicAuthConfiguration = new BasicAuthConfiguration(null, null, null, null);
+        var basicAuthService = new BasicAuthService(settingRepositoryInterface, basicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
+        basicAuthService.init();
+
+        assertThrows(IllegalStateException.class, () -> basicAuthService.recordNewsletterOptIn(true));
+    }
+
+    @Test
     void should_throw_exception_when_saving_invalid_config() {
         var settingRepositoryInterface = new InMemorySettingRepository();
         var basicAuthService = new BasicAuthService(settingRepositoryInterface, yamlBasicAuthConfiguration, instanceService, ApplicationEventPublisher.noOp());
@@ -649,6 +674,10 @@ class BasicAuthServiceTest {
     }
 
     private void awaitOssAuthEventApiCall(String email) {
+        awaitOssAuthEventApiCall(email, null);
+    }
+
+    private void awaitOssAuthEventApiCall(String email, Boolean newsletterOptedIn) {
         AtomicReference<AssertionError> lastAssertionError = new AtomicReference<>();
         try {
             Awaitility.await().pollInterval(Duration.ofMillis(100)).atMost(Duration.ofSeconds(20))
@@ -662,7 +691,10 @@ class BasicAuthServiceTest {
                                     and(
                                         matchingJsonPath("$.iid", equalTo(instanceService.fetch())),
                                         matchingJsonPath("$.type", equalTo(Event.EventType.OSS_AUTH.name())),
-                                        matchingJsonPath("$.ossAuth.email", equalTo(email))
+                                        matchingJsonPath("$.ossAuth.email", equalTo(email)),
+                                        newsletterOptedIn == null
+                                            ? matchingJsonPath("$.ossAuth.email")
+                                            : matchingJsonPath("$.ossAuth.newsletterOptedIn", equalTo(newsletterOptedIn.toString()))
                                     )
                                 )
                         );

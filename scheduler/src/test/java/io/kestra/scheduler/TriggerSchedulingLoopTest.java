@@ -1,9 +1,14 @@
 package io.kestra.scheduler;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +16,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.utils.Await;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
@@ -107,6 +113,33 @@ class TriggerSchedulingLoopTest {
     }
 
     @Test
+    void shouldNotEvaluateOncePerMissedIntervalWhenAssignmentsArriveLate() throws Exception {
+        // GIVEN
+        AdjustableClock adjustableClock = new AdjustableClock(Instant.parse("2026-01-01T00:00:00Z"));
+        clock = adjustableClock;
+        AtomicInteger evaluations = new AtomicInteger();
+        TriggerSchedulingLoop loop = createLoop();
+        Mockito.when(triggerScheduler.onSchedule(any(), any(), any())).thenAnswer(invocation -> evaluations.incrementAndGet());
+
+        Thread thread = new Thread(loop);
+        thread.start();
+
+        try {
+            // WHEN
+            adjustableClock.advance(Duration.ofSeconds(5));
+            loop.setAssignments(Set.of(1));
+
+            // THEN
+            Await.until(() -> evaluations.get() > 0, Duration.ofMillis(10), Duration.ofSeconds(10));
+            Thread.sleep(200); // leave room for any catch-up iteration to fire
+            assertThat(evaluations.get()).isEqualTo(1);
+        } finally {
+            loop.stop();
+            thread.join();
+        }
+    }
+
+    @Test
     void shouldStopLoopGracefullyGivenRunningLoop() throws InterruptedException {
         // GIVEN
         TriggerSchedulingLoop loop = createLoop();
@@ -167,5 +200,33 @@ class TriggerSchedulingLoopTest {
 
         // THEN
         assertThat(processed).isEqualTo(0);
+    }
+
+    private static final class AdjustableClock extends Clock {
+
+        private final AtomicReference<Instant> instant;
+
+        private AdjustableClock(Instant instant) {
+            this.instant = new AtomicReference<>(instant);
+        }
+
+        private void advance(Duration duration) {
+            instant.updateAndGet(current -> current.plus(duration));
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneId.of("UTC");
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Instant instant() {
+            return instant.get();
+        }
     }
 }

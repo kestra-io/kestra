@@ -462,7 +462,7 @@
     import resource from "../../models/resource"
 
     import useRouteContext from "../../composables/useRouteContext"
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"

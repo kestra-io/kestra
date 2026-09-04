@@ -360,7 +360,7 @@
     import TestEventDialog, {type TestEventTarget} from "./TestEventDialog.vue"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
-    import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useTriggerFilter} from "../filter/configurations"
 

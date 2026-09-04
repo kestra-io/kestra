@@ -347,7 +347,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
     import {QueryFilter} from "@kestra-io/kestra-sdk"

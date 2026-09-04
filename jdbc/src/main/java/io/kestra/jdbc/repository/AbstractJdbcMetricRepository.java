@@ -186,6 +186,39 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
     }
 
     @Override
+    public int purge(
+        @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        ZonedDateTime endDate
+    ) {
+        Condition condition = this.defaultFilter(tenantId)
+            .and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
+
+        if (startDate != null) {
+            condition = condition.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+        }
+
+        if (namespace != null) {
+            if (flowId != null) {
+                condition = condition.and(field("namespace").eq(namespace));
+            } else {
+                condition = condition.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+            }
+        }
+
+        if (flowId != null) {
+            condition = condition.and(field("flow_id").eq(flowId));
+        }
+
+        Condition finalCondition = condition;
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration).delete(this.jdbcRepository.getTable()).where(finalCondition).execute()
+        );
+    }
+
+    @Override
     protected Condition defaultFilter(String tenantId) {
         return buildTenantCondition(tenantId);
     }

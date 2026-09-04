@@ -87,6 +87,27 @@ if (Object.keys(placeholdersOf(eeReport)).length > 0) {
     )
 }
 
+const staleOf = (report) => report?.stale ?? []
+
+if (staleOf(ossReport).length > 0) {
+    sections.push(
+        "### ❌ OSS translations - stale keys\n\n" +
+        staleOf(ossReport).map(key => `- \`${key}\``).join("\n") + "\n\n" +
+        "**What to do:** each key is new, or its English source changed after the other languages were generated, so those " +
+        "languages no longer say what English says. Run `npm run translations:generate` in [kestra-io/kestra](https://github.com/kestra-io/kestra)'s " +
+        "`ui/` and commit the result. Never paste the English text into the other locale files.",
+    )
+}
+
+if (staleOf(eeReport).length > 0) {
+    sections.push(
+        "### ❌ EE translations - stale keys\n\n" +
+        staleOf(eeReport).map(key => `- \`${key}\``).join("\n") + "\n\n" +
+        "**What to do:** each key is new, or its English source changed after the other languages were generated. " +
+        "Run `npm run translations:generate` in `ui-ee` (or trigger the `Auto-Translate UI keys` workflow) and commit the result.",
+    )
+}
+
 // Tolerates reports written before `undefinedKeys` existed, like `placeholdersOf` above.
 const undefinedKeysOf = (report) => report?.undefinedKeys ?? []
 

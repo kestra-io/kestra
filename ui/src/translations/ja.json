@@ -1725,7 +1725,8 @@
           "workerSelector": "ワーカーセレクター",
           "checks": "チェック",
           "updated": "更新済み",
-          "quotas": "クォータ"
+          "quotas": "クォータ",
+          "policyRefs": "ポリシー参照"
         }
       },
       "select": {

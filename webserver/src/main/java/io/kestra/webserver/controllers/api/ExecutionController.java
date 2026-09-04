@@ -1350,7 +1350,7 @@ public class ExecutionController {
 
         if (!(execution.getState().canBeRestarted())) {
             throw new ConflictException(
-                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated or paused."
+                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated."
             );
         }
 
@@ -1378,7 +1378,7 @@ public class ExecutionController {
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
-                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
+                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated to be restarted, " +
                             "current state is '" + execution.get().getState().getCurrent() + "' !", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {

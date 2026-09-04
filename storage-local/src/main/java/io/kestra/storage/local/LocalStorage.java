@@ -296,14 +296,9 @@ public class LocalStorage implements StorageInterface {
         Path destinationPath = getLocalPath(tenantId, to);
 
         try {
-            // The destination parent directory may not exist yet (e.g. moving kestra:///input.csv to
-            // kestra:///archive/2026/08/input.csv): without creating it first, Files.move throws
-            // NoSuchFileException which would be misreported as a missing source file (see issue #18435).
             Files.createDirectories(destinationPath.getParent());
             Files.move(sourcePath, destinationPath, StandardCopyOption.ATOMIC_MOVE);
 
-            // The companion .metadata file (written by putFile) must follow the object, otherwise the
-            // metadata is silently lost after the move and the source .metadata file is left orphaned.
             Path sourceMetadataPath = Path.of(sourcePath + ".metadata");
             if (Files.exists(sourceMetadataPath)) {
                 Files.move(sourceMetadataPath, Path.of(destinationPath + ".metadata"), StandardCopyOption.ATOMIC_MOVE);
@@ -334,8 +329,6 @@ public class LocalStorage implements StorageInterface {
 
         boolean deleted = Files.deleteIfExists(path);
         if (deleted) {
-            // Remove the companion .metadata file as well, otherwise orphaned .metadata files
-            // accumulate on disk over time (see issue #18435).
             Files.deleteIfExists(Path.of(path + ".metadata"));
         }
         return deleted;

@@ -100,9 +100,6 @@ class LocalStorageTest extends StorageTestSuite {
         assertTrue(exception.getMessage().contains("blocking"));
     }
 
-    // Issue #18435: moving to a destination whose parent directory does not exist yet used to throw
-    // NoSuchFileException, which was then misreported as a missing source file. The destination
-    // parent directory must be created before the move.
     @Test
     void shouldMoveToDestinationWithUncreatedParentDirectory() throws URISyntaxException, IOException {
         String tenantId = IdUtils.create();
@@ -114,8 +111,6 @@ class LocalStorageTest extends StorageTestSuite {
         assertFalse(storageInterface.exists(tenantId, null, new URI("/input.csv")));
     }
 
-    // Issue #18435: moving an object used to leave its companion .metadata file behind, silently
-    // losing the metadata. The .metadata file must follow the object.
     @Test
     void shouldMoveObjectWithCompanionMetadata() throws URISyntaxException, IOException {
         String tenantId = IdUtils.create();
@@ -134,7 +129,6 @@ class LocalStorageTest extends StorageTestSuite {
         assertFalse(storageInterface.exists(tenantId, null, new URI("/source.csv")));
     }
 
-    // Issue #18435: deleting an object used to leave an orphaned .metadata file on disk.
     @Test
     void shouldDeleteObjectWithCompanionMetadata() throws URISyntaxException, IOException {
         String tenantId = IdUtils.create();
@@ -148,7 +142,7 @@ class LocalStorageTest extends StorageTestSuite {
         assertTrue(storageInterface.delete(tenantId, null, new URI("/file.txt")));
         assertFalse(storageInterface.exists(tenantId, null, new URI("/file.txt")));
 
-        // list() filters .metadata files out, so check the file system directly for the orphan.
+        // list() excludes metadata files, so verify the file directly.
         LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
         Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
             .resolve(tenantId)

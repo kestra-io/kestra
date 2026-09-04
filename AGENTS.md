@@ -451,6 +451,7 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - Run `npm run lint` in `ui/` before pushing any frontend change. Otherwise one comment per violation is posted by reviewdog, and the human review is buried under trailing-comma suggestions.
 - Attach a screenshot or a short recording for every user-visible change, taken against a running instance.
 - Keep the branch rebased on `develop` rather than merged.
+- **Never merge, approve, or call a PR ready while a check is failing.** Run `gh pr checks <number>` first; on any `fail` or `pending` line, stop and either fix the cause or explain in the PR why the failure is unrelated. `develop` has no required status checks, so nothing but this rule stands between a red pipeline and a merge: half of the PRs merged over summer 2026 were red.
 - Fill in `.github/pull_request_template.md`, and delete the checklist section that does not apply instead of leaving it unticked.
 - Write the description as problem, fix and evidence, once each. No table restating the diff, and no checklist of tests that all passed.
 - Never commit generated output by hand: the twelve non-English translation files, `fingerprints.json`, and the generated SDK are produced by their scripts or by CI.

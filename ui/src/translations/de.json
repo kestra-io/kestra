@@ -901,6 +901,7 @@
     "flow creation denied in namespace": "Du hast keine Berechtigung, Flows im Namespace `{namespace}` zu erstellen.",
     "readonly property": "Schreibgeschützte Eigenschaft",
     "namespace and id readonly": "Die Eigenschaften `namespace` und `id` können nicht geändert werden – sie sind jetzt auf ihre ursprünglichen Werte gesetzt. Wenn du einen Flow umbenennen oder seinen Namespace ändern möchtest, erstelle einen neuen Flow und entferne den alten.",
+    "flow metadata locked": "`id` und `namespace` können nach dem Erstellen eines Flows nicht mehr geändert werden.",
     "avg": "Durchschnitt",
     "sum": "Summe",
     "min": "Min",

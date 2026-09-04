@@ -901,6 +901,7 @@
     "flow creation denied in namespace": "No tienes permiso para crear flows en el namespace `{namespace}`.",
     "readonly property": "Propiedad de solo lectura",
     "namespace and id readonly": "Las propiedades `namespace` e `id` no se pueden cambiar; ahora están configuradas con sus valores iniciales. Si desea renombrar un flow o cambiar su namespace, puede crear un nuevo flow y eliminar el anterior.",
+    "flow metadata locked": "`id` y `namespace` no se pueden cambiar después de crear un flow.",
     "avg": "Promedio",
     "sum": "Suma",
     "min": "Min",

@@ -198,10 +198,16 @@ export const useFlowStore = defineStore("flow", () => {
         return save(false)
     }
 
-    async function onEdit({source, topologyVisible}: {
+    async function onEdit({source, topologyVisible, metadataGuarded}: {
         source: string,
         editorViewType?: string,
-        topologyVisible?: boolean
+        topologyVisible?: boolean,
+        /**
+         * Set by an editor that already prevents id/namespace from being edited.
+         * There the warning would explain a change the user was never able to
+         * make; every other caller still needs it.
+         */
+        metadataGuarded?: boolean
     }): Promise<FlowValidations | undefined> {
         const flowBeforeEdit = flow.value
         const flowOnValidation = flowParsed.value
@@ -218,7 +224,7 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    if (!readonlyToastShown.value) {
+                    if (!metadataGuarded && !readonlyToastShown.value) {
                         readonlyToastShown.value = true
                         coreStore.message = {
                             variant: "warning",

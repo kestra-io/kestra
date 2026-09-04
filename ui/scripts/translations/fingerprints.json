@@ -816,6 +816,7 @@
   "flow disable": "daffb882d6b9",
   "flow enable": "a62bb5ddc635",
   "flow export": "28a2de62e560",
+  "flow metadata locked": "4ae20a4adcbb",
   "flow must not be empty": "7d10f7a78270",
   "flow revision latest": "50168a3912c5",
   "flow revision original": "60d27375f0c1",

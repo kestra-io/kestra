@@ -901,6 +901,7 @@
     "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "readonly property": "只读属性",
     "namespace and id readonly": "属性 `namespace` 和 `id` 无法更改 — 它们现在已设置为初始值。如果您想重命名 flow 或更改其 namespace，可以创建一个新的 flow 并删除旧的。",
+    "flow metadata locked": "`id` 和 `namespace` 在 flow 创建后无法更改。",
     "avg": "平均",
     "sum": "总计",
     "min": "最小",

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.FlowBlockedException;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
@@ -18,20 +19,24 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESPACE;
@@ -43,7 +48,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@MicronautTest
+@KestraTest
 class FlowTriggerServiceTest {
     private static final List<Label> EMPTY_LABELS = List.of();
 
@@ -57,13 +62,19 @@ class FlowTriggerServiceTest {
     private ExecutionOutputService executionOutputService;
     @Inject
     private ExecutionDepthConfiguration executionDepthConfiguration;
+    @Inject
+    private TriggerRepositoryInterface triggerRepository;
+    @Inject
+    private TriggerStateStore triggerStateStore;
     private FlowMetaStoreInterface flowMetaStore;
     private FlowTriggerService flowTriggerService;
 
     @BeforeEach
     void setUp() {
         flowMetaStore = mock(FlowMetaStoreInterface.class);
-        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService, executionDepthConfiguration);
+        flowTriggerService = new FlowTriggerService(
+            conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService, executionDepthConfiguration, triggerRepository
+        );
     }
 
     @Test
@@ -90,6 +101,33 @@ class FlowTriggerServiceTest {
 
         assertThat(resultingExecutionsToRun).size().isEqualTo(1);
         assertThat(resultingExecutionsToRun.getFirst().getFlowId()).isEqualTo(flowWithFlowTrigger.getId());
+    }
+
+    @Test
+    void shouldNotComputeExecutionsWhenFlowTriggerIsDisabledInTriggerState() {
+        // GIVEN a flow trigger enabled in the flow source but disabled in its trigger state. Its own flow id
+        // is unique so the persisted disabled state cannot leak into the other tests of this class.
+        var simpleFlow = aSimpleFlow();
+        var trigger = flowTriggerWithNoConditions();
+        var flowWithFlowTrigger = Flow.builder()
+            .id(IdUtils.create())
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(trigger))
+            .build();
+        triggerStateStore.save(
+            TriggerState.of(TriggerId.of(flowWithFlowTrigger, trigger), TriggerType.UNSCHEDULED, null, true, 0)
+        );
+
+        // WHEN
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS),
+            flowWithFlowTrigger
+        );
+
+        // THEN
+        assertThat(resultingExecutionsToRun).isEmpty();
     }
 
     @Test

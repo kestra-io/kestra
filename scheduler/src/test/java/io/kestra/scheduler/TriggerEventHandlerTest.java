@@ -43,6 +43,7 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
+import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
@@ -105,6 +106,24 @@ class TriggerEventHandlerTest {
             executionKilledQueue,
             new AsyncOperationService(asyncOperationProcessedEventQueue)
         );
+    }
+
+    @Test
+    void shouldRecordLastTriggeredDateAndExecutionIdGivenUnscheduledTriggerFiredEvent() {
+        // GIVEN a trigger the scheduler holds a state for but never evaluates
+        Clock fixed = Clock.fixed(Instant.parse("2026-01-02T03:04:05Z"), ZoneId.systemDefault());
+        SchedulerClock.setClock(fixed);
+        TriggerEventHandler handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        triggerStateStore.save(TriggerState.of(triggerId, TriggerType.UNSCHEDULED, null, false, 0));
+
+        // WHEN
+        handler.handle(fixed, 0, new UnscheduledTriggerFired(triggerId, "exec-123"));
+
+        // THEN
+        TriggerState state = triggerStateStore.findById(triggerId).orElseThrow();
+        assertThat(state.getLastTriggeredDate()).isEqualTo(fixed.instant());
+        assertThat(state.getExecutionId()).isEqualTo("exec-123");
+        assertThat(state.getNextEvaluationDate()).isNull();
     }
 
     @Test

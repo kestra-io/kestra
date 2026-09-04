@@ -23,6 +23,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
@@ -43,6 +44,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     private static final Field<Integer> VNODE_FIELD = field("vnode", Integer.class);
     private static final Field<Object> FLOW_ID_FIELD = field("flow_id");
     private static final Field<Object> WORKER_ID_FIELD = field("worker_id");
+    private static final Field<String> TYPE_FIELD = field("type", String.class);
+    private static final Field<Boolean> DISABLED_FIELD = field("disabled", Boolean.class);
     private static final Field<Object> VALUE_FIELD = field("value");
     private static final String NEXT_EVALUATION_DATE_COLUMN = "next_evaluation_date";
     private static final String LAST_TRIGGERED_DATE_COLUMN = "last_triggered_date";
@@ -79,6 +82,23 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     @Override
     public Optional<TriggerState> findById(TriggerId trigger) {
         return findOne(DSL.noCondition(), KEY_FIELD.eq(trigger.uid()));
+    }
+
+    /**
+     * Reads the generated {@code disabled} column instead of the whole row. Callers on the webhook, MCP and
+     * flow-trigger paths ask this per firing, where deserializing the full state would be the bulk of the cost.
+     */
+    @Override
+    public boolean isDisabled(TriggerId trigger) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .select(DISABLED_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(KEY_FIELD.eq(trigger.uid()))
+                .fetchOne(DISABLED_FIELD)
+            ) == Boolean.TRUE;
     }
 
     @Override
@@ -325,6 +345,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                     .where(NEXT_EVALUATION_EPOCH_FIELD.le(epochMilli).or(NEXT_EVALUATION_EPOCH_FIELD.isNull()))
                     .and(LOCKED_FIELD.isNull().or(LOCKED_FIELD.eq(locked)))
                     .and(VNODE_FIELD.in(vNodes))
+                    .and(TYPE_FIELD.isDistinctFrom(TriggerType.UNSCHEDULED.name()))
                     .orderBy(NEXT_EVALUATION_EPOCH_FIELD.asc())
                     .fetch()
             )

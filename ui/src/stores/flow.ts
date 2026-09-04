@@ -689,7 +689,10 @@ function deleteFlowAndDependencies() {
         if (!flowParsed.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
-        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
+        return FlowsAPI.generateFlowGraphFromSource(
+            {subflows, body: flowSource},
+            {showMessageOnError: false} as Parameters<typeof FlowsAPI.generateFlowGraphFromSource>[1],
+        )
             .then(data => {
                 flowGraph.value = data as unknown as FlowGraph
 

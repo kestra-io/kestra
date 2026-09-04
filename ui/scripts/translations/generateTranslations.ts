@@ -29,7 +29,7 @@ import {
     readFingerprints,
     writeFingerprints,
 } from "./fingerprints.ts"
-import {placeholderProblems} from "./translationRules.mjs"
+import {placeholderProblems, untranslatedKeys} from "./translationRules.mjs"
 import {LANGUAGES} from "../../src/translations/languages.ts"
 
 /**
@@ -175,22 +175,32 @@ async function requestTranslation(client: TranslationClient, text: string, targe
 
 /**
  * Translates one string and verifies the result interpolates exactly the placeholders its English
- * source does, rerolling while it does not.
+ * source does and, for a non-Latin-script locale, is not the English text handed back verbatim,
+ * rerolling while either holds.
  *
  * A translation that invents or drops a placeholder is not a cosmetic defect: vue-i18n renders the
  * invented one as an empty gap and silently loses the value behind the dropped one, and the PR gate
- * rejects it outright. Checking here keeps the generator from writing output that its own checker
- * refuses.
+ * rejects it outright. An English copy is worse in a different way: written and fingerprinted, it
+ * looks settled to every later run, so the only thing that ever caught it was the gate's English-copy
+ * rule, weeks later. Checking both here keeps the generator from writing output its own checker
+ * refuses; a copy that survives the rerolls is reported as a failure, which leaves the fingerprint
+ * alone and the key pending for the next run.
  */
-async function translateText(client: TranslationClient, key: string, text: string, targetLanguage: string): Promise<string | undefined> {
+async function translateText(client: TranslationClient, key: string, text: string, languageCode: string, targetLanguage: string): Promise<string | undefined> {
     for (let attempt = 0; attempt <= PLACEHOLDER_RETRIES; attempt++) {
         const translated = await requestTranslation(client, text, targetLanguage)
         if (translated === undefined) return undefined
 
         const problems = placeholderProblems(key, translated, text)
-        if (problems.length === 0) return translated
-
-        console.log(`'${key}': ${problems[0]} - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+        if (problems.length > 0) {
+            console.log(`'${key}': ${problems[0]} - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+            continue
+        }
+        if (untranslatedKeys(languageCode, {[key]: translated}, {[key]: text}).length > 0) {
+            console.log(`[${languageCode}] '${key}': the model returned the English text unchanged - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+            continue
+        }
+        return translated
     }
     return undefined
 }
@@ -331,7 +341,7 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
         // matter, and the output ordering is rebuilt from en.json just below.
         const translated: FlatDict = {}
         await Promise.all(pending.map(async (key) => {
-            const value = await translateText(client, key, enFlat[key], targetLanguage)
+            const value = await translateText(client, key, enFlat[key], languageCode, targetLanguage)
             if (value === undefined) {
                 failedKeys.add(key)
                 console.log(`[${languageCode}] '${key}': translation failed, leaving the existing value in place.`)
@@ -507,7 +517,7 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
 
             const translated: FlatDict = {}
             await Promise.all(pending.map(async (key) => {
-                const value = await translateText(client, key, enFlat[key], targetLanguage)
+                const value = await translateText(client, key, enFlat[key], code, targetLanguage)
                 if (value === undefined) {
                     failedKeys.add(key)
                     console.log(`[${filePath}] '${key}': translation failed, leaving the existing value in place.`)

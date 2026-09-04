@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Turns the JSON reports written by check-translations.mjs (--report) into a
-// single Markdown PR comment body. Prints nothing (exit 0) if both reports
-// are clean, so the workflow can skip posting/updating a comment.
+// single Markdown PR comment body. Prints nothing (exit 0) if both reports are
+// clean, which the workflow hands to comment-update as an empty template so the
+// section a failing run left on the PR is cleared rather than outliving the fix.
 //
 // Usage: node ui-ee/scripts/translations/build-comment.mjs <oss-report.json> <ee-report.json>
 

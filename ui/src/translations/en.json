@@ -1725,7 +1725,8 @@
           "workerSelector": "Worker Selector",
           "checks": "Checks",
           "updated": "Updated",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Policy References"
         }
       },
       "select": {

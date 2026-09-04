@@ -43,6 +43,12 @@ describe("fileIcon", () => {
         expect(fileIcon("kestra:///out/abc")).toBe(fileIcon("kestra:///out/data.unknownext"))
     })
 
+    test("does not resolve an extension that names an Object.prototype member", () => {
+        const generic = fileIcon("kestra:///out/abc")
+        expect(fileIcon("kestra:///out/report.constructor")).toBe(generic)
+        expect(fileIcon("kestra:///out/report.__proto__")).toBe(generic)
+    })
+
     test("resolves a bare file name too, not only a URI", () => {
         expect(fileIcon("report.csv")).toBe(fileIcon("kestra:///out/report.csv"))
     })

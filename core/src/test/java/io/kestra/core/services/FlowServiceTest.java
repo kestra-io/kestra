@@ -317,6 +317,44 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldAcceptFlowIdsThatWereReservedBeforeTheExecutionEndpointRename() {
+        // Until the execution action endpoints moved under /{executionId}/actions/,
+        // POST /executions/{namespace}/{flowId} was ambiguous with them, and
+        // FlowValidator rejected any flow id that collided: pause, resume,
+        // force-run, change-status, kill, executions, search, source, disable and
+        // enable. The rename removed the ambiguity, so the restriction was lifted
+        // with it -- nothing asserted the freedom afterwards, which is what this
+        // covers. If a future change reintroduces the clash, or restores the
+        // keyword list, this fails.
+        List<String> formerlyReserved = List.of(
+            "pause", "resume", "force-run", "change-status", "kill",
+            "executions", "search", "source", "disable", "enable"
+        );
+
+        for (String flowId : formerlyReserved) {
+            // Given
+            String source = """
+                id: %s
+                namespace: io.kestra.unittest
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: This is a message
+                """.formatted(flowId);
+
+            // When
+            List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+            // Then
+            assertThat(results).as("flow id '%s'", flowId).hasSize(1);
+            assertThat(results.getFirst().getConstraints())
+                .as("flow id '%s' must not be rejected", flowId)
+                .isNull();
+            assertThat(results.getFirst().getFlow()).isEqualTo(flowId);
+        }
+    }
+
+    @Test
     void shouldReturnEmptyListGivenFlowWithNoChecks() {
         // Given
         Flow flow = mock(Flow.class);

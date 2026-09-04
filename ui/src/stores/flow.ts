@@ -22,6 +22,7 @@ import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 import type {KestraRequestOptions} from "../utils/kestraHttp"
+import {splitValidationErrors} from "../utils/validationErrors"
 
 const textYamlHeader = {
     headers: {
@@ -911,8 +912,7 @@ function deleteFlowAndDependencies() {
                 ? [`${t(key + ".description")} ${t(key + ".details")}`]
                 : []
 
-        const constraintsError =
-            flowValidation.value?.constraints?.split(/, ?/) ?? []
+        const constraintsError = splitValidationErrors(flowValidation.value?.constraints)
 
         const errors = [...flowExistsError, ...constraintsError]
 
@@ -1007,6 +1007,7 @@ function deleteFlowAndDependencies() {
         deleteFlow,
         loadGraph,
         loadGraphFromSource,
+        fetchGraph,
         getGraphFromSourceResponse,
         loadRevisions,
         loadFlowStats,

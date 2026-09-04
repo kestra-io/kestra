@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: このトリガータイプにはプラグインがインストールされていません。通知は送信されません。"
       },
       "trigger": {
-        "case_sub": "EEのみの機能",
-        "case_title": "ケースステータス",
         "execution_sub": "flowの状態変化に反応します",
         "execution_title": "実行状態",
         "other_sub": "利用可能なトリガープラグイン",
@@ -138,6 +136,7 @@
     "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
     "update": "更新",
     "confirmation": "確認",
+    "toast confirm": "よろしいですか？",
     "common": {
       "back": "戻る",
       "openInNewTab": "新しいタブで開く"
@@ -344,9 +343,31 @@
     "select a state": "状態を選択",
     "are you sure change state": "状態を変更してもよろしいですか？",
     "yes": "はい",
+    "no": "いいえ",
     "change state done": "タスクの状態が更新されました",
     "change state confirm": "実行 <code>{id}</code> の <code>{task}</code> タスクのタスク実行状態を変更してもよろしいですか？<br/>これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
     "change state current state": "現在のステータスは:",
+    "change state hint": {
+      "WARNING": [
+        "このflowはWARNINGとしてマークされます。",
+        "次のtasksが実行されます。",
+        "エラーtasksが実行されます。"
+      ],
+      "FAILED": [
+        "FlowはFAILEDとしてマークされます。",
+        "他のTaskは実行されません。",
+        "エラーTaskが実行されます。"
+      ],
+      "SUCCESS": [
+        "このflowはこのtaskが成功したため再起動します。",
+        "すべてのブロックされたtaskが実行されます。",
+        "すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。"
+      ],
+      "RUNNING": [
+        "flowは再起動し、すべての次のtaskが実行されます。",
+        "すべてのブロックされたtaskが実行されます。"
+      ]
+    },
     "replay execution title": "実行の再実行",
     "restart execution title": "実行の再起動",
     "replay execution description": "これにより、選択された実行に基づいて新しい実行が作成されます。",
@@ -414,7 +435,8 @@
       "zoom-reset": "ズームリセット",
       "zoom-fit": "フィット",
       "invalid": "グラフエラー",
-      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。"
+      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
+      "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。"
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",
@@ -515,6 +537,10 @@
       }
     },
     "use": "使用",
+    "plugin_card": {
+      "tasks": "タスク | タスク",
+      "blueprints": "Blueprint | Blueprint"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "プラグインのインストールに失敗しました",
@@ -791,6 +817,7 @@
     "execution labels": "実行ラベル",
     "show more labels": "他 {count} 件のラベルを表示",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
+    "invalid label key": "無効なラベルkeyです。有効なkeyは小文字で始まり、小文字、数字、ハイフン (-)、アンダースコア (_)、ピリオド (.) のみを含む必要があります。",
     "feeds": {
       "heading": "すべてのKestraに関すること。",
       "subheading": "最新の更新情報、ガイド、ストーリー"
@@ -883,6 +910,7 @@
     "metric": "メトリック",
     "aggregation": "集計",
     "metric choice": "このflowには利用可能なメトリクスがありません",
+    "metric filter no match": "\"{term}\" に一致するメトリックはありません",
     "of": "の",
     "title": "タイトル",
     "api": "API",
@@ -1651,6 +1679,7 @@
     "last error was": "最後のエラーは",
     "active": "アクティブ",
     "flows imported": "フローがインポートされました",
+    "flows not imported": "インポートされていないFlows",
     "custom value": "カスタム value",
     "chart": "チャート",
     "chart preview": "チャートプレビュー",
@@ -2572,6 +2601,7 @@
         "message": "保存する前にエラーを修正してください。",
         "title": "flowを保存できません"
       },
+      "schema_default_tooltip": "フィールドが設定されていない場合に使用されるデフォルト値",
       "search_task_placeholder": "タスクを検索または記述…",
       "shortcuts": {
         "add_after": "選択後にブロックを挿入",

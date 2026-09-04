@@ -887,8 +887,8 @@ public class ExecutionController {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
                     String webhookKey = runContext.render(w.getKey()).trim();
-                    // compare via MessageDigest.isEqual to prevent timing attacks
-                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
+                    // compare via AuthUtils.constantTimeEquals to prevent timing attacks
+                    return AuthUtils.constantTimeEquals(webhookKey, key);
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook
                     log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);

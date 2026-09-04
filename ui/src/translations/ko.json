@@ -136,6 +136,7 @@
     "invalid duration": "유효하지 않은 기간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해주세요.",
     "update": "업데이트",
     "confirmation": "확인",
+    "toast confirm": "확실합니까?",
     "common": {
       "back": "뒤로",
       "openInNewTab": "새 탭에서 열기"
@@ -342,9 +343,31 @@
     "select a state": "상태 선택",
     "are you sure change state": "상태를 변경하시겠습니까?",
     "yes": "네",
+    "no": "아니요",
     "change state done": "작업 상태가 업데이트되었습니다",
     "change state confirm": "실행 <code>{id}</code>의 <code>{task}</code> task에 대한 task 실행 상태를 변경하시겠습니까?<br/>그러면 다음 task부터 실행이 다시 시작되고, 상위 실행이 있는 경우 상위 실행도 다시 시작됩니다.",
     "change state current state": "현재 상태는:",
+    "change state hint": {
+      "WARNING": [
+        "Flow가 WARNING으로 표시됩니다.",
+        "다음 tasks가 실행됩니다.",
+        "오류 tasks가 실행됩니다."
+      ],
+      "FAILED": [
+        "Flow가 FAILED로 표시됩니다.",
+        "다른 task는 실행되지 않습니다.",
+        "오류 task가 실행됩니다."
+      ],
+      "SUCCESS": [
+        "이 task가 성공했기 때문에 flow가 재시작됩니다.",
+        "모든 차단된 task가 실행됩니다.",
+        "모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다."
+      ],
+      "RUNNING": [
+        "flow가 재시작되고 모든 다음 task가 실행됩니다.",
+        "모든 차단된 task가 실행됩니다."
+      ]
+    },
     "replay execution title": "실행 다시 실행",
     "restart execution title": "실행 재시작",
     "replay execution description": "선택한 실행을 기반으로 새 실행을 생성합니다.",
@@ -513,6 +536,10 @@
       }
     },
     "use": "사용",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "블루프린트 | 블루프린트"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "플러그인 설치에 실패했습니다",
@@ -1651,6 +1678,7 @@
     "last error was": "마지막 오류는",
     "active": "활성화됨",
     "flows imported": "Flow가 가져왔습니다.",
+    "flows not imported": "가져오지 않은 Flow",
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "chart preview": "차트 미리보기",

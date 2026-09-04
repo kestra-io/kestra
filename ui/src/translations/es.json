@@ -136,6 +136,7 @@
     "invalid duration": "Formato de duración no válido. Utilice ISO 8601 (p. ej., PT30M, P1D).",
     "update": "Actualizar",
     "confirmation": "Confirmación",
+    "toast confirm": "¿Estás seguro?",
     "common": {
       "back": "Atrás",
       "openInNewTab": "Abrir en nueva pestaña"
@@ -342,9 +343,31 @@
     "select a state": "Seleccionar un estado",
     "are you sure change state": "¿Está seguro de que desea cambiar el estado?",
     "yes": "Sí",
+    "no": "No",
     "change state done": "El estado del task ha sido actualizado",
     "change state confirm": "¿Estás seguro de que quieres cambiar el estado de ejecución de la task <code>{task}</code> en la ejecución <code>{id}</code>?<br/>Luego, reiniciará la ejecución desde la siguiente task y reiniciará la ejecución padre si existe.",
     "change state current state": "Estado actual es:",
+    "change state hint": {
+      "WARNING": [
+        "El flow se marcará como WARNING.",
+        "Las próximas tasks se ejecutarán.",
+        "Las tasks con error se ejecutarán."
+      ],
+      "FAILED": [
+        "El flow se marcará como FAILED.",
+        "No se ejecutará ninguna otra task.",
+        "Se ejecutarán las tasks de error."
+      ],
+      "SUCCESS": [
+        "El flow se reiniciará ya que esta task fue exitosa.",
+        "Todas las tasks bloqueadas serán ejecutadas.",
+        "El flow estará en un estado de SUCCESS si todas las ejecuciones de tasks son exitosas."
+      ],
+      "RUNNING": [
+        "El flow se reiniciará y ejecutará todas las siguientes tasks.",
+        "Todas las tasks bloqueadas serán ejecutadas."
+      ]
+    },
     "replay execution title": "Repetir ejecución",
     "restart execution title": "Reiniciar ejecución",
     "replay execution description": "Esto creará una nueva ejecución basada en la ejecución seleccionada.",
@@ -513,6 +536,10 @@
       }
     },
     "use": "Usar",
+    "plugin_card": {
+      "tasks": "tarea | tareas",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Fallo en la instalación del plugin",
@@ -1651,6 +1678,7 @@
     "last error was": "Último error fue",
     "active": "Activo",
     "flows imported": "Flujos importados",
+    "flows not imported": "Flows no importados",
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "chart preview": "Vista previa del gráfico",

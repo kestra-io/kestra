@@ -37,6 +37,7 @@
                 <KsDatePicker
                     v-model="local.startDateValue"
                     type="datetime"
+                    :disabledDate="isAfterEndDate"
                     :placeholder="$t('filter.select_start_date')"
                 />
             </div>
@@ -46,6 +47,7 @@
                     v-model="local.endDateValue"
                     type="datetime"
                     :defaultTime="endDateDefaultTime"
+                    :disabledDate="isBeforeStartDate"
                     :placeholder="$t('filter.select_end_date')"
                 />
             </div>
@@ -95,6 +97,16 @@
     }>()
 
     const {modelValue, timeRangeMode, startDateValue, endDateValue, dateFilterMode} = toRefs(props)
+
+    // The day panels only offer days that keep start <= end; the same-day time case is caught by the
+    // caller before it reaches the API.
+    const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+    const isAfterEndDate = (date: Date) =>
+        local.endDateValue ? startOfDay(date) > startOfDay(local.endDateValue) : false
+
+    const isBeforeStartDate = (date: Date) =>
+        local.startDateValue ? startOfDay(date) < startOfDay(local.startDateValue) : false
 
     // Without a default time, picking a day in the end date panel pre-fills 00:00:00, which excludes the whole selected day; default the time part to now so picking today covers up to the current time.
     const endDateDefaultTime = new Date()

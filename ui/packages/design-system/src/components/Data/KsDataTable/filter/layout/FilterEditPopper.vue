@@ -46,6 +46,7 @@
         NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
+    import {resolveDefaultVisibleValue} from "../utils/filterChipFactory"
     import FilterText from "./FilterText.vue"
     import FilterRadio from "./FilterRadio.vue"
     import FilterFooter from "./FilterFooter.vue"
@@ -285,10 +286,14 @@
             return
         }
 
+        // Falling back to a blank value left the filter with nothing selected, rather than with
+        // the default the page configured (the executions view's 24h interval, for instance).
+        const defaultValue = resolveDefaultVisibleValue(props.filterKey)
+
         Object.assign(state, {
-            textValue: "",
-            selectValue: "",
-            keyValuePair: [],
+            textValue: typeof defaultValue === "string" ? defaultValue : "",
+            selectValue: typeof defaultValue === "string" ? defaultValue : "",
+            keyValuePair: Array.isArray(defaultValue) ? [...defaultValue] : [],
             radioValue: "ALL",
             dateValue: null,
             timeRangeMode: "predefined",
@@ -383,6 +388,14 @@
         // defaults to now (getFilterValue) so typing just a Start or End date applies immediately.
         if (isTimeRange.value && state.timeRangeMode === "custom"
             && !state.startDateValue && !state.endDateValue) {
+            return
+        }
+
+        // An inverted range is rejected by the API with a 422, so it is never applied: the date
+        // panels already rule out the day-level case, this covers two times on the same day.
+        if (isTimeRange.value && state.timeRangeMode === "custom"
+            && state.startDateValue && state.endDateValue
+            && state.startDateValue > state.endDateValue) {
             return
         }
 

@@ -221,6 +221,7 @@
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
     import {useRoute, useRouter} from "vue-router"
+    import {storageKeys, topologyOrientations} from "../../utils/constants"
     import {useVueFlow} from "@vue-flow/core"
 
     import SearchField from "../layout/SearchField.vue"
@@ -568,8 +569,23 @@
 
     const pluginsStore = usePluginsStore()
 
-    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault)
-    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"))
+    // `horizontalDefault` is a per-instance, responsive override (e.g. the execution Overview
+    // switching orientation based on viewport width). It must never be persisted as the user's
+    // remembered preference, so `writeDefaults` is disabled: the key is only ever written when
+    // the user explicitly toggles orientation (see `toggleOrientation` below).
+    const isHorizontalLS = useStorage<boolean | undefined>(
+        storageKeys.TOPOLOGY_ORIENTATION,
+        undefined,
+        localStorage,
+        {writeDefaults: false},
+    )
+    const defaultTopologyOrientation = localStorage.getItem(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION)
+    const isHorizontal = ref(
+        props.horizontalDefault ??
+        (isHorizontalLS.value !== undefined
+            ? isHorizontalLS.value?.toString() === "true"
+            : defaultTopologyOrientation === topologyOrientations.HORIZONTAL),
+    )
 
     watch(() => props.horizontalDefault, (value) => {
         if (value !== undefined && value !== isHorizontal.value) {

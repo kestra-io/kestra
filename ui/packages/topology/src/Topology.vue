@@ -197,7 +197,7 @@
         // slot content is only re-evaluated when a node's graph data is regenerated.
         taskDetailsVersion?: number;
     }>(), {
-        isHorizontal: true,
+        isHorizontal: false,
         isReadOnly: true,
         isAllowedEdit: false,
         toggleOrientationButton: false,

@@ -1128,6 +1128,7 @@
             "log_level": "기본 Log 레벨",
             "log_display": "기본 Log 표시",
             "editor_type": "기본 편집기 유형",
+            "topology_orientation": "기본 토폴로지 방향",
             "execute_flow": "Flow 실행",
             "execute_default_tab": "기본 실행 탭",
             "flow_default_tab": "기본 Flow 탭",
@@ -1142,6 +1143,7 @@
             "log_level": "실행 로그에 표시되는 최소 log level.",
             "log_display": "실행을 열 때 로그가 표시되는 방식.",
             "editor_type": "flow를 처음 열 때 표시되는 편집기.",
+            "topology_orientation": "플로우 에디터의 토폴로지 패널 기본 방향입니다.",
             "execute_flow": "실행 결과가 실행을 트리거한 후 열리는 위치.",
             "execute_default_tab": "실행으로 이동할 때 선택된 탭.",
             "flow_default_tab": "flow로 이동할 때 선택된 탭.",
@@ -1154,6 +1156,10 @@
           "task_edit_default_mode_options": {
             "modal": "모달",
             "tab": "탭"
+          },
+          "topology_orientation_options": {
+            "vertical": "세로",
+            "horizontal": "가로"
           },
           "flow_template_reset": "기본값으로 재설정",
           "flow_template_error": {

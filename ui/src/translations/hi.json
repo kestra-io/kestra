@@ -1128,6 +1128,7 @@
             "log_level": "Log स्तर",
             "log_display": "Log प्रदर्शन",
             "editor_type": "डिफ़ॉल्ट एडिटर प्रकार",
+            "topology_orientation": "डिफ़ॉल्ट Topology अभिविन्यास",
             "execute_flow": "Flow निष्पादित करें",
             "execute_default_tab": "डिफ़ॉल्ट Execution टैब",
             "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
@@ -1142,6 +1143,7 @@
             "log_level": "न्यूनतम log स्तर जो execution logs में दिखाया गया है।",
             "log_display": "जब एक execution खोला जाता है तो logs कैसे प्रस्तुत किए जाते हैं।",
             "editor_type": "जब पहली बार किसी flow को खोलते हैं तो दिखाया गया संपादक।",
+            "topology_orientation": "Flow एडिटर में Topology पैनल का डिफ़ॉल्ट अभिविन्यास।",
             "execute_flow": "ट्रिगर करने के बाद निष्पादन परिणाम कहाँ खुलते हैं।",
             "execute_default_tab": "नेविगेशन के दौरान एक execution पर जाने पर चयनित Tab।",
             "flow_default_tab": "फ्लो पर नेविगेट करते समय चयनित टैब।",
@@ -1154,6 +1156,10 @@
           "task_edit_default_mode_options": {
             "modal": "मॉडल",
             "tab": "टैब"
+          },
+          "topology_orientation_options": {
+            "vertical": "लंबवत",
+            "horizontal": "क्षैतिज"
           },
           "flow_template_reset": "डिफ़ॉल्ट पर रीसेट करें",
           "flow_template_error": {

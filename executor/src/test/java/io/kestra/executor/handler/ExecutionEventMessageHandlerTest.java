@@ -109,6 +109,7 @@ class ExecutionEventMessageHandlerTest {
         assertThat(maybeExecutor).isPresent();
         assertThat(maybeExecutor.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
         assertThat(maybeExecutor.get().getExecution().getTaskRunList()).hasSize(1);
+        assertThat(maybeExecutor.get().getWorkerJobEvents()).hasSize(1);
     }
 
     @Test

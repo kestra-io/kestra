@@ -976,8 +976,8 @@ class ExecutionControllerRunnerTest {
 
         // Then - maxRows survived the redirect
         assertThat(preview).isNotNull();
-        assertThat(preview).containsEntry("content", "first");
         assertThat(preview).containsEntry("truncated", true);
+        assertThat(preview.get("content").toString().lines()).containsExactly("first");
     }
 
     @Test

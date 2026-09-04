@@ -65,7 +65,7 @@
         "@typescript-eslint/parser": "^8.63.0",
         "@vitejs/plugin-vue": "^6.0.7",
         "@vitejs/plugin-vue-jsx": "^5.1.6",
-        "@vitest/browser": "^4.1.10",
+        "@vitest/browser": "^4.1.11",
         "@vitest/browser-playwright": "^4.1.10",
         "@vitest/coverage-v8": "^4.1.10",
         "@vue-flow/background": "^1.3.2",

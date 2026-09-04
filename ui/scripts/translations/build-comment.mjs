@@ -86,6 +86,33 @@ if (Object.keys(placeholdersOf(eeReport)).length > 0) {
     )
 }
 
+// Tolerates reports written before `undefinedKeys` existed, like `placeholdersOf` above.
+const undefinedKeysOf = (report) => report?.undefinedKeys ?? []
+
+function formatUndefinedKeys(findings) {
+    return findings.map(({file, line, key}) => `- \`${key}\` in \`${file}:${line}\``).join("\n")
+}
+
+if (undefinedKeysOf(ossReport).length > 0) {
+    sections.push(
+        "### ❌ OSS translations - keys used in code but defined nowhere\n\n" +
+        formatUndefinedKeys(undefinedKeysOf(ossReport)) + "\n\n" +
+        "**What to do:** fix these upstream, in [kestra-io/kestra](https://github.com/kestra-io/kestra). Each key is passed " +
+        "to `t()` but exists in no `en.json`, so the UI renders the raw key id. Add it to `ui/src/translations/en.json` " +
+        "(or to the owning design-system `*.locale.ts`), or point the call at an existing key, then run `npm run translations:generate`.",
+    )
+}
+
+if (undefinedKeysOf(eeReport).length > 0) {
+    sections.push(
+        "### ❌ EE translations - keys used in code but defined nowhere\n\n" +
+        formatUndefinedKeys(undefinedKeysOf(eeReport)) + "\n\n" +
+        "**What to do:** each key is passed to `t()` but exists in neither `ui-ee/src/translations/ee_translations/en.json` " +
+        "nor OSS's `en.json`, so the UI renders the raw key id. Add it to the EE `en.json` (or point the call at an existing key), " +
+        "then run `npm run translations:generate` in `ui-ee`.",
+    )
+}
+
 if (sections.length === 0) {
     process.exit(0)
 }

@@ -97,16 +97,18 @@ Two checkers apply the same shared rules at different depths:
 
 | | `translations:check` ([`compareTranslations.ts`](compareTranslations.ts)) | PR gate ([`check-translations.mjs`](check-translations.mjs)) |
 |---|---|---|
-| Runs | Locally + at the end of the auto-translate workflow | CI, on every PR touching translations |
+| Runs | Locally + at the end of the auto-translate workflow | CI, on every PR touching translations or UI source |
 | Needs | `node_modules` (vue-i18n's real message compiler) | Nothing - Node builtins only, runs before `npm ci` |
-| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys |
+| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys, keys used in code but defined in no `en.json` |
 
 A clean `translations:check` run reports **No missing keys / No extra keys / No stale keys** for every language - anything less blocks the merge.
 
 The PR gate runs as two ownership-scoped passes so a failure points at the right repository:
 
-- `--scope oss` - every OSS locale matches OSS's own `en.json`. A failure is an OSS problem, wherever it is observed.
-- `--scope ee` - every EE locale matches EE's `en.json`, and no EE key redefines a key OSS already owns.
+- `--scope oss` - every OSS locale matches OSS's own `en.json`, and every literal key the OSS, design-system and topology sources pass to `t()`, `$t()` or `<i18n-t keypath>` exists in OSS's `en.json` or a design-system `*.locale.ts`. A failure is an OSS problem, wherever it is observed.
+- `--scope ee` - every EE locale matches EE's `en.json`, no EE key redefines a key OSS already owns, and every literal key `ui-ee/src` uses exists in EE's, OSS's or the design system's English files.
+
+The used-key rule ([`usageRules.mjs`](usageRules.mjs)) only reads literal keys. A key built at runtime - `t(e.message)`, `` t(`errors.${code}`) ``, `t("crud.type." + type)`, `:keypath="expr"` - is skipped, and a key the code tests with `te()` first is allowed to be absent. So a failure is always a real raw-id render. The reverse is not checked: a key nothing references is not reported, because the same dynamic lookups make "unused" impossible to prove from the source.
 
 ## CI: the auto-translate bot
 

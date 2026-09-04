@@ -136,6 +136,7 @@
     "invalid duration": "Format de durée invalide. Veuillez utiliser le format ISO 8601 (par exemple, PT30M, P1D).",
     "update": "Mettre à jour",
     "confirmation": "Confirmation",
+    "toast confirm": "Êtes-vous sûr ?",
     "common": {
       "back": "Retour",
       "openInNewTab": "Ouvrir dans un nouvel onglet"
@@ -342,9 +343,31 @@
     "select a state": "Sélectionner un état",
     "are you sure change state": "Êtes-vous sûr de vouloir changer l'état ?",
     "yes": "Oui",
+    "no": "Non",
     "change state done": "L'état de la task a été mis à jour",
     "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?<br/>Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
     "change state current state": "Statut actuel :",
+    "change state hint": {
+      "WARNING": [
+        "Le flow sera marqué comme WARNING.",
+        "Les prochaines tasks seront exécutées.",
+        "Les tasks d'erreur seront exécutées."
+      ],
+      "FAILED": [
+        "Le flow sera marqué comme FAILED.",
+        "Aucune autre task ne sera exécutée.",
+        "Les tasks d'erreur seront exécutées."
+      ],
+      "SUCCESS": [
+        "Le flow redémarrera car cette task a réussi.",
+        "Toutes les tasks bloquées seront exécutées.",
+        "Le flow sera en état SUCCESS si toutes les exécutions de task réussissent."
+      ],
+      "RUNNING": [
+        "Le flow redémarrera et exécutera toutes les tâches suivantes.",
+        "Toutes les tâches bloquées seront exécutées."
+      ]
+    },
     "replay execution title": "Rejouer l'exécution",
     "restart execution title": "Redémarrer l'exécution",
     "replay execution description": "Cela créera une nouvelle exécution basée sur l'exécution sélectionnée.",
@@ -514,6 +537,10 @@
       }
     },
     "use": "Utiliser",
+    "plugin_card": {
+      "tasks": "tâche | tâches",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Échec de l'installation du plugin",
@@ -1652,6 +1679,7 @@
     "last error was": "La dernière erreur était",
     "active": "Actif",
     "flows imported": "Flux importés",
+    "flows not imported": "Flows non importés",
     "custom value": "Valeur personnalisée",
     "chart": "Graphique",
     "chart preview": "Aperçu du graphique",

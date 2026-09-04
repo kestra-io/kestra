@@ -136,6 +136,7 @@
     "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
     "update": "Update",
     "confirmation": "Confirmation",
+    "toast confirm": "Are you sure?",
     "common": {
       "back": "Back",
       "openInNewTab": "Open in new tab"
@@ -342,9 +343,31 @@
     "select a state": "Select a state",
     "are you sure change state": "Are you sure you want to change the state?",
     "yes": "Yes",
+    "no": "No",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
     "change state current state": "Current status is:",
+    "change state hint": {
+      "WARNING": [
+        "The flow will be marked as WARNING.",
+        "The next tasks will be executed.",
+        "The error tasks will be executed."
+      ],
+      "FAILED": [
+        "The flow will be marked as FAILED.",
+        "No other task will be executed.",
+        "The error tasks will be executed."
+      ],
+      "SUCCESS": [
+        "The flow will restart as this task was successful.",
+        "All the blocked tasks will be executed.",
+        "The flow will be in a SUCCESS state if all task runs are successful."
+      ],
+      "RUNNING": [
+        "The flow will restart and will execute all next tasks.",
+        "All blocked tasks will be executed."
+      ]
+    },
     "replay execution title": "Replay execution",
     "restart execution title": "Restart execution",
     "replay execution description": "This will create a new execution based on the selected execution.",
@@ -514,6 +537,10 @@
       }
     },
     "use": "Use",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Plugin installation failed",
@@ -1652,6 +1679,7 @@
     "last error was": "Last error was",
     "active": "Active",
     "flows imported": "Flows imported",
+    "flows not imported": "Flows not imported",
     "custom value": "Custom value",
     "chart": "Chart",
     "chart preview": "Chart preview",

@@ -108,7 +108,7 @@ class TriggerSchedulerTest {
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
@@ -126,7 +126,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isTrue();
@@ -165,7 +165,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("polling")).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("polling")).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isTrue();
@@ -192,7 +192,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("polling")).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("polling")).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isFalse();
@@ -217,7 +217,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("realtime")).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime")).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isTrue();
@@ -244,7 +244,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN — the trigger must stay unlocked so it is retried at its next evaluation date
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("realtime")).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime")).orElse(null);
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getLastTriggeredDate()).isNull();
@@ -355,7 +355,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN the condition failed (Friday ≠ Sunday) and the persisted nextEvaluationDate is on a Sunday
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
         ZonedDateTime nextZoned = state.getNextEvaluationDate().atZone(ZoneId.systemDefault());
         assertThat(nextZoned.getDayOfWeek())
             .as("nextEvaluationDate should fall on a SUNDAY, but was %s", nextZoned)
@@ -391,7 +391,7 @@ class TriggerSchedulerTest {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
-            TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+            TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
             assertThat(currentTriggerState).isNotNull();
 
             // [1-4 Calls] onSchedule
@@ -453,7 +453,7 @@ class TriggerSchedulerTest {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
-            TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+            TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
             assertThat(currentTriggerState).isNotNull();
 
             // [1st Call] onSchedule
@@ -518,7 +518,7 @@ class TriggerSchedulerTest {
         // [THEN]
         final ZonedDateTime expectedNextEvaluationNDate = ZonedDateTime.now(Clock.offset(initialSchedulerClock, Duration.ofHours(1)));
         // Assert TriggerState
-        TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(currentTriggerState).isNotNull();
 
         assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(initialState.getEvaluatedAt());
@@ -543,7 +543,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
@@ -595,7 +595,7 @@ class TriggerSchedulerTest {
         // endregion [GIVEN]
 
         // WHEN
-        TriggerState initialState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState initialState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         triggerStateStore.save(
             initialState
                 .locked(SchedulerClock.getClock(), false)
@@ -606,7 +606,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isFalse();
@@ -633,7 +633,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNull();
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
@@ -650,7 +650,7 @@ class TriggerSchedulerTest {
         // Trigger an initial execution
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
-        TriggerState triggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState triggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(triggerState).isNotNull();
         assertThat(triggerState.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(15).toInstant());
 
@@ -673,7 +673,7 @@ class TriggerSchedulerTest {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
-            TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+            TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
             assertThat(currentTriggerState).isNotNull();
             assertThat(currentTriggerState.isLocked()).isTrue();
             assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
@@ -732,7 +732,7 @@ class TriggerSchedulerTest {
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(2));
-        TriggerState triggerState = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        TriggerState triggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
         triggerStateStore.save(
             triggerState
                 .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
@@ -749,7 +749,7 @@ class TriggerSchedulerTest {
 
         // THEN
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
         assertThat(state.getBackfill().getCurrentDate()).isEqualTo(backfillStart);
     }
 
@@ -764,7 +764,7 @@ class TriggerSchedulerTest {
 
         ZonedDateTime start = ZonedDateTime.parse("2024-06-15T12:00:00Z");
         ZonedDateTime end = ZonedDateTime.parse("2024-06-15T12:05:00Z");
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow()
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow()
             .locked(clock, false)
             .backfill(clock, Backfill.builder().start(start).end(end).build());
         ConditionContext conditionContext = conditionService.conditionContext(
@@ -795,12 +795,12 @@ class TriggerSchedulerTest {
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNull();
     }
 
     private void completeExecution() {
-        triggerStateStore.findById(Fixtures.triggerId()).ifPresent(state ->
+        triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).ifPresent(state ->
         {
             TriggerState newState = state
                 .updateOnExecutionTerminated(SchedulerClock.getClock(), State.Type.SUCCESS)

@@ -23,7 +23,7 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
      * @param trigger the identifier.
      * @return an optional {@link TriggerState}.
      */
-    Optional<TriggerState> findById(TriggerId trigger);
+    Optional<TriggerState> findByIdWithoutAcl(TriggerId trigger);
 
     /**
      * Finds all trigger states for the given tenant id

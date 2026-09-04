@@ -119,7 +119,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> saved = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> saved = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(saved).isPresent();
         assertThat(TriggerId.of(saved.get())).isEqualTo(triggerId);
         assertThat(saved.get().getLastEventId()).isNotNull();
@@ -136,7 +136,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> saved = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> saved = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(saved).isEmpty();
     }
 
@@ -151,7 +151,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        assertThat(triggerStateStore.findById(triggerId)).isEmpty();
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isEmpty();
         Mockito.verify(executionKilledQueue, Mockito.never()).emit(Mockito.any(ExecutionKilled.class));
     }
 
@@ -166,7 +166,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        assertThat(triggerStateStore.findById(triggerId)).isEmpty();
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isEmpty();
         Mockito.verify(executionKilledQueue, Mockito.only()).emit(Mockito.any(ExecutionKilled.class));
     }
 
@@ -187,7 +187,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isTrue();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
@@ -207,7 +207,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getNextEvaluationDate()).isAfter(staleNextEvaluationDate.toInstant());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
@@ -226,7 +226,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> after = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> after = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(after).isPresent();
         assertThat(after.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
         assertThat(after.get().getUpdatedAt()).isEqualTo(initial.getUpdatedAt());
@@ -244,7 +244,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
@@ -266,7 +266,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getNextEvaluationDate()).isNotNull();
@@ -285,7 +285,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isTrue();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
@@ -305,7 +305,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
@@ -331,7 +331,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: the next evaluation date is in the future, no missed schedule is replayed
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getNextEvaluationDate()).isAfter(beforeHandler);
@@ -354,7 +354,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: evaluatedAt is advanced so the startup recovery cannot resurrect the skipped schedules
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getEvaluatedAt()).isAfter(evaluatedAt.toInstant());
         assertThat(updated.get().getEvaluatedAt()).isBeforeOrEqualTo(Instant.now());
@@ -372,7 +372,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: the frozen past next evaluation date is kept so every missed schedule replays
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
@@ -396,7 +396,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: the next evaluation date is the last missed cron tick, in the past but within the last period
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getNextEvaluationDate()).isBefore(Instant.now());
@@ -421,7 +421,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: the configured NONE applies, missed schedules are skipped
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getNextEvaluationDate()).isAfter(beforeHandler);
@@ -451,7 +451,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: the backfill resumes untouched
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getBackfill()).isNotNull();
@@ -474,7 +474,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: there is no missed schedule to recover, the next evaluation date is in the future
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getNextEvaluationDate()).isAfter(beforeHandler);
@@ -492,7 +492,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isTrue();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
@@ -514,7 +514,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated)
             .get()
             .extracting(t -> t.getBackfill().getPaused())
@@ -538,7 +538,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated)
             .get()
             .extracting(t -> t.getBackfill().getPaused())
@@ -566,7 +566,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN: currentDate is preserved (progress bar must not reset)
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).get()
             .extracting(t -> t.getBackfill().getCurrentDate())
             .isEqualTo(advanced);
@@ -583,7 +583,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
@@ -634,7 +634,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getExecutionId()).isEqualTo(executionId);
     }
@@ -662,7 +662,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getExecutionId()).isNull();
     }
@@ -678,7 +678,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getExecutionId()).isNull();
@@ -727,7 +727,7 @@ class TriggerEventHandlerTest {
 
         // THEN — the running instance is killed and the state disabled
         Mockito.verify(executionKilledQueue).emit(Mockito.any(ExecutionKilledTrigger.class));
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isTrue();
     }
@@ -745,7 +745,7 @@ class TriggerEventHandlerTest {
 
         // THEN
         Mockito.verifyNoInteractions(executionKilledQueue);
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
     }
@@ -765,7 +765,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN — the trigger is released so the scheduler can resubmit it
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
@@ -786,7 +786,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isTrue();
         assertThat(updated.get().getWorkerId()).isEqualTo("worker-2");
@@ -805,7 +805,7 @@ class TriggerEventHandlerTest {
 
         // THEN — the instance is killed
         Mockito.verify(executionKilledQueue).emit(Mockito.any(ExecutionKilledTrigger.class));
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getWorkerId()).isEqualTo("worker-1");
     }
@@ -837,7 +837,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN — the event is ignored and the trigger stays locked
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isTrue();
         assertThat(updated.get().getLastEventId()).isNull();
@@ -858,7 +858,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN — the FAILED creation execution unlocks the trigger so it can be resubmitted
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
@@ -882,7 +882,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN — the current instance keeps its lock
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isTrue();
         assertThat(updated.get().getWorkerId()).isEqualTo("worker-2");
@@ -906,7 +906,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN — the current instance keeps its lock
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isTrue();
         assertThat(updated.get().getWorkerId()).isEqualTo("worker-1");
@@ -966,7 +966,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN — the lock is released so the trigger is eligible for the next evaluation
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
@@ -997,7 +997,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN — the lock is held until the created execution terminates
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isTrue();
     }
@@ -1015,7 +1015,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getBackfill().getStart()).isEqualTo(backfillStart);
@@ -1040,7 +1040,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN: first evaluation is AT start, not the next minute
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(start.toInstant());
@@ -1062,7 +1062,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN: 12:00 is before start, so first evaluation is 12:01
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(Instant.parse("2024-06-15T12:01:00Z"));
@@ -1082,7 +1082,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN: the occurrence at start/end is scheduled, backfill is not cleared
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(startAndEnd.toInstant());
@@ -1102,7 +1102,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         // Backfill is cleared because the next evaluation date is after the backfill end
         assertThat(updated.get().getBackfill()).isNull();
@@ -1122,7 +1122,7 @@ class TriggerEventHandlerTest {
 
         // THEN
         // no exception expected, handled gracefully
-        assertThat(triggerStateStore.findById(triggerId)).isPresent();
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isPresent();
     }
 
     @Test
@@ -1138,7 +1138,7 @@ class TriggerEventHandlerTest {
         // THEN
         TriggerState updated;
 
-        updated = triggerStateStore.findById(triggerId).orElseThrow();
+        updated = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
         assertThat(updated.getLastEventId()).isEqualTo(event.eventId());
         Instant updatedAt = updated.getUpdatedAt();
         assertThat(updatedAt).isAfter(triggerState.getUpdatedAt());
@@ -1147,7 +1147,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        updated = triggerStateStore.findById(triggerId).orElseThrow();
+        updated = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
         assertThat(updated.getLastEventId()).isEqualTo(event.eventId());
         assertThat(updated.getUpdatedAt()).isEqualTo(updatedAt); // not updated
     }
@@ -1168,7 +1168,7 @@ class TriggerEventHandlerTest {
         // THEN
         TriggerState updated;
 
-        updated = triggerStateStore.findById(triggerId).orElseThrow();
+        updated = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
         assertThat(updated.getLastEventId()).isEqualTo(event2.eventId());
         assertThat(updated.getUpdatedAt()).isEqualTo(state.getUpdatedAt()); // not updated
     }
@@ -1190,7 +1190,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
         assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isEqualTo(previousNextEvaluationDate.toInstant());
         assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
@@ -1219,7 +1219,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
         assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isEqualTo(liveNextEvaluationDate.toInstant());
         assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
@@ -1250,7 +1250,7 @@ class TriggerEventHandlerTest {
         assertThatThrownBy(() -> handler.handle(CLOCK, TEST_VNODE, event))
             .isInstanceOf(ConflictException.class);
 
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).get().extracting(s -> s.getBackfill().getPreviousNextExecutionDate()).isEqualTo(liveNextEvaluationDate);
     }
 
@@ -1271,7 +1271,7 @@ class TriggerEventHandlerTest {
         handler.handle(CLOCK, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
         assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isNull();
         assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
@@ -1310,7 +1310,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN persisted nextEvaluationDate falls on SUNDAY, not the next raw cron tick
-        Optional<TriggerState> saved = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> saved = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(saved).isPresent();
         assertMatchesNextSunday(saved.get());
     }
@@ -1332,7 +1332,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertMatchesNextSunday(updated.get());
     }
@@ -1353,7 +1353,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertMatchesNextSunday(updated.get());
     }
@@ -1375,7 +1375,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertMatchesNextSunday(updated.get());
@@ -1419,9 +1419,9 @@ class TriggerEventHandlerTest {
 
     @Test
     void shouldEmitFailedProcessedEventWhenHandlerThrows() throws QueueException {
-        // GIVEN: a TriggerStateStore that throws on findById to force a RuntimeException inside doHandle
+        // GIVEN: a TriggerStateStore that throws on findByIdWithoutAcl to force a RuntimeException inside doHandle
         TriggerStateStore failingStore = Mockito.mock(TriggerStateStore.class);
-        Mockito.when(failingStore.findById(Mockito.any())).thenThrow(new RuntimeException("boom"));
+        Mockito.when(failingStore.findByIdWithoutAcl(Mockito.any())).thenThrow(new RuntimeException("boom"));
         handler = new TriggerEventHandler(
             failingStore,
             new InMemoryFlowMetaStore(TEST_VNODE_COUNT, List.of()),

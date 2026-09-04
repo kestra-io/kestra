@@ -1,9 +1,7 @@
 package io.kestra.webserver.services.ai.agent;
 
 import java.time.Instant;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,12 +26,10 @@ import io.kestra.core.ai.agent.repositories.AiThreadRepositoryInterface;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.services.ai.AiServiceInterface;
-import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
+import io.kestra.webserver.services.ai.agent.data.AgentToolErrorCode;
 import io.kestra.webserver.services.ai.agent.tool.AgentToolPermissionEvaluator;
 import io.kestra.webserver.services.ai.agent.tool.DefaultAgentToolPermissionEvaluator;
-import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
@@ -41,25 +37,17 @@ import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @KestraTest
 @Property(name = "kestra.ai.agent.model-call-timeout", value = "PT1S")
-class AgentOrchestratorTest {
+@Property(name = "kestra.ai.agent.max-tool-result-chars", value = "500")
+class AgentOrchestratorTest extends AbstractAiAgentTest {
     private static final String TENANT = TenantService.MAIN_TENANT;
-
-    private final ScriptedStreamingChatModel scriptedModel = new ScriptedStreamingChatModel();
 
     @Inject
     AgentOrchestrator orchestrator;
@@ -73,22 +61,6 @@ class AgentOrchestratorTest {
     @Inject
     AiThreadManager threadManager;
 
-    @MockBean(AiServiceManager.class)
-    AiServiceManager aiServiceManager() {
-        AiServiceInterface service = mock(AiServiceInterface.class);
-        when(service.streamingChatModel(any())).thenReturn(scriptedModel);
-        AiServiceManager manager = mock(AiServiceManager.class);
-        when(manager.getAiService(any())).thenReturn(service);
-        return manager;
-    }
-
-    @MockBean(DocsMcpToolProvider.class)
-    DocsMcpToolProvider docsMcpToolProvider() {
-        DocsMcpToolProvider provider = mock(DocsMcpToolProvider.class);
-        when(provider.tools()).thenReturn(Map.of());
-        return provider;
-    }
-
     private final Set<String> deniedTools = ConcurrentHashMap.newKeySet();
 
     @MockBean(DefaultAgentToolPermissionEvaluator.class)
@@ -97,8 +69,7 @@ class AgentOrchestratorTest {
     }
 
     @BeforeEach
-    void resetScript() {
-        scriptedModel.clear();
+    void resetDeniedTools() {
         deniedTools.clear();
     }
 
@@ -646,6 +617,74 @@ class AgentOrchestratorTest {
         assertThat(log.getLast().content()).contains("maximum number of tool steps");
     }
 
+    @Test
+    void shouldFailToolCallAndReportCodeWhenResultExceedsSizeBudget() {
+        // Given — the model asks for a plugin schema whose result is larger than the configured cap
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(pluginSchemaCall("c1"))));
+        scriptedModel.enqueue(AiMessage.from("That schema is too big; let me narrow it down."));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "how do I configure the Log task?", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        // Then — the call is marked failed, not truncated, and the turn continues to an answer
+        assertThat(sink.error).isNull();
+        assertThat(sink.names()).containsExactly(
+            AgentEvents.TOOL_CALL, AgentEvents.TOOL_RESULT, AgentEvents.TOKEN, AgentEvents.DONE
+        );
+        assertThat(toolResultOutcome(sink)).isEqualTo("error");
+        // the code is what lets the client show its own message rather than echoing the model-facing text
+        assertThat(toolResult(sink).code()).isEqualTo(AgentToolErrorCode.RESULT_TOO_LARGE);
+        assertThat(toolResult(sink).error()).contains("too large to send to the model");
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+    }
+
+    @Test
+    void shouldNotSendOversizedResultToModelWhenResultExceedsSizeBudget() {
+        // Given
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(pluginSchemaCall("c1"))));
+        scriptedModel.enqueue(AiMessage.from("done"));
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "schema?", AgentMode.ASK, TENANT, null, null, null), new CollectingSink());
+
+        // Then — the model sees only the short error, never the oversized payload nor a truncated prefix
+        List<String> toolResultTexts = scriptedModel.lastRequestMessages().stream()
+            .filter(ToolExecutionResultMessage.class::isInstance)
+            .map(m -> ((ToolExecutionResultMessage) m).text())
+            .toList();
+        assertThat(toolResultTexts).hasSize(1);
+        assertThat(toolResultTexts.getFirst()).startsWith("Error:").doesNotContain("\"properties\"");
+        assertThat(toolResultTexts.getFirst().length()).isLessThan(500);
+        // and it is flagged as an error so the provider treats it as a failed call
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(ToolExecutionResultMessage.class::isInstance)
+            .extracting(m -> ((ToolExecutionResultMessage) m).isError())
+            .containsOnly(Boolean.TRUE);
+    }
+
+    @Test
+    void shouldPersistErrorCodeWhenResultExceedsSizeBudget() {
+        // Given
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(pluginSchemaCall("c1"))));
+        scriptedModel.enqueue(AiMessage.from("done"));
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "schema?", AgentMode.ASK, TENANT, null, null, null), new CollectingSink());
+
+        // Then — a thread reload exposes the same code the live stream carried
+        assertThat(messageStore.load(TENANT, thread.uid()))
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
+            .singleElement()
+            .satisfies(m -> {
+                assertThat(m.toolResult().get("outcome")).isEqualTo("error");
+                assertThat(m.toolResult().get("code")).isEqualTo(AgentToolErrorCode.RESULT_TOO_LARGE.name());
+            });
+    }
+
     private AgentThread newThread(final AgentMode mode) {
         return threadStore.create(
             AgentThread.builder()
@@ -667,6 +706,14 @@ class AgentOrchestratorTest {
     /** Claim an awaiting thread for resumption, as the confirm endpoint does before calling resume. */
     private AgentThread claim(final AgentThread awaiting) {
         return threadManager.tryMarkRunning(awaiting, awaiting.mode(), AgentThreadStatus.AWAITING_CONFIRMATION).orElseThrow();
+    }
+
+    private static ToolExecutionRequest pluginSchemaCall(final String id) {
+        return ToolExecutionRequest.builder()
+            .id(id)
+            .name("get-plugin-schema")
+            .arguments("{\"pluginType\":\"io.kestra.plugin.core.log.Log\"}")
+            .build();
     }
 
     private static ToolExecutionRequest toolCall(final String id, final String name, final String executionId) {
@@ -693,6 +740,7 @@ class AgentOrchestratorTest {
         return ((AgentEvents.ProposedActionEvent) sink.first(AgentEvents.PROPOSED_ACTION)).confirmationId();
     }
 
+    /** A {@link TurnEventSink} that records everything a turn emitted. */
     private static final class CollectingSink implements TurnEventSink {
         private final List<Map.Entry<String, Object>> events = new ArrayList<>();
         private boolean completed;
@@ -700,11 +748,13 @@ class AgentOrchestratorTest {
         private volatile boolean cancelled;
         private boolean cancelOnFirstEmit;
 
-        void cancel() {
+        /** Simulate a client that disconnected before the turn started. */
+        private void cancel() {
             this.cancelled = true;
         }
 
-        void cancelOnFirstEmit() {
+        /** Simulate a client that disconnects as soon as the first event reaches it. */
+        private void cancelOnFirstEmit() {
             this.cancelOnFirstEmit = true;
         }
 
@@ -741,54 +791,6 @@ class AgentOrchestratorTest {
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No '" + name + "' event in " + names()));
-        }
-    }
-
-    private static final class ScriptedStreamingChatModel implements StreamingChatModel {
-        private final Deque<AiMessage> responses = new ArrayDeque<>();
-        private final List<List<ChatMessage>> requestMessages = new java.util.concurrent.CopyOnWriteArrayList<>();
-        private volatile boolean hang;
-
-        private void enqueue(final AiMessage message) {
-            responses.addLast(message);
-        }
-
-        private void hang() {
-            this.hang = true;
-        }
-
-        private void clear() {
-            responses.clear();
-            requestMessages.clear();
-            this.hang = false;
-        }
-
-        /**
-         * A snapshot of the messages the orchestrator sent on its most recent chat call. Snapshotted
-         * because the orchestrator keeps mutating the same list as the loop appends responses.
-         */
-        private List<ChatMessage> lastRequestMessages() {
-            if (requestMessages.isEmpty()) {
-                throw new AssertionError("No chat request was sent to the model");
-            }
-            return requestMessages.get(requestMessages.size() - 1);
-        }
-
-        @Override
-        public void chat(final ChatRequest request, final StreamingChatResponseHandler handler) {
-            requestMessages.add(new ArrayList<>(request.messages()));
-            if (hang) {
-                return; // never complete the response -> the orchestrator's bounded wait must time out
-            }
-            AiMessage ai = responses.pollFirst();
-            if (ai == null) {
-                handler.onError(new IllegalStateException("No scripted LLM response available"));
-                return;
-            }
-            if (ai.text() != null && !ai.text().isEmpty()) {
-                handler.onPartialResponse(ai.text());
-            }
-            handler.onCompleteResponse(ChatResponse.builder().aiMessage(ai).build());
         }
     }
 }

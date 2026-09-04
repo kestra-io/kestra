@@ -10,27 +10,18 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.tenant.TenantService;
-import io.kestra.webserver.services.ai.AiServiceInterface;
-import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.AgentOrchestrator;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
 import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
-import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiThreadSummary;
-import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.client.sse.SseClient;
 import io.micronaut.test.annotation.MockBean;
-import jakarta.inject.Inject;
 import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,36 +39,10 @@ import static org.mockito.Mockito.when;
  */
 @KestraTest
 @Property(name = "kestra.ai.agent.max-concurrent-turns", value = "1")
-class AiAgentControllerConcurrencyTest {
-    private static final String BASE = "/api/v1/" + TenantService.MAIN_TENANT + "/ai/threads";
-
+class AiAgentControllerConcurrencyTest extends AbstractAiAgentControllerTest {
     /** Signals that the in-flight turn has started (permit acquired); released once the test lets it finish. */
     private final CountDownLatch turnStarted = new CountDownLatch(1);
     private final CountDownLatch releaseTurn = new CountDownLatch(1);
-
-    @Inject
-    @Client("/")
-    HttpClient client;
-
-    @Inject
-    @Client("/")
-    SseClient sseClient;
-
-    @MockBean(AiServiceManager.class)
-    AiServiceManager aiServiceManager() {
-        AiServiceInterface service = mock(AiServiceInterface.class);
-        AiServiceManager manager = mock(AiServiceManager.class);
-        when(manager.getAiService(any())).thenReturn(service);
-        when(manager.hasConfiguredProvider()).thenReturn(true);
-        return manager;
-    }
-
-    @MockBean(DocsMcpToolProvider.class)
-    DocsMcpToolProvider docsMcpToolProvider() {
-        DocsMcpToolProvider provider = mock(DocsMcpToolProvider.class);
-        when(provider.tools()).thenReturn(Map.of());
-        return provider;
-    }
 
     /**
      * A latch-blocked orchestrator: every turn blocks on {@link #releaseTurn} while holding its permit, so
@@ -146,9 +111,4 @@ class AiAgentControllerConcurrencyTest {
         });
     }
 
-    private ApiThreadSummary createThread() {
-        return client.toBlocking().retrieve(
-            HttpRequest.POST(BASE, new ApiCreateThreadRequest(AgentMode.ASK, "q")), ApiThreadSummary.class
-        );
-    }
 }

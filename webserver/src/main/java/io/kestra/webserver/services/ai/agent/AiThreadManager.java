@@ -116,7 +116,15 @@ public class AiThreadManager {
      * {@code maxTurnsPerThread} guardrail.
      */
     public long turnCount(final String tenant, final String threadId) {
-        return messageStore.load(tenant, threadId).stream()
+        return turnCount(messageStore.load(tenant, threadId));
+    }
+
+    /**
+     * {@link #turnCount(String, String)} over an already-loaded log, for a caller that needs the messages
+     * for something else too and should not pay for a second read.
+     */
+    public static long turnCount(final List<AgentMessage> log) {
+        return log.stream()
             .map(AgentMessage::traceId)
             .distinct()
             .count();

@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -55,6 +56,7 @@ import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @MicronautTest
@@ -1224,6 +1226,35 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldRejectCreateBackfillWhenBackfillAlreadyRunning() {
+        // GIVEN
+        ZonedDateTime liveNextEvaluationDate = SchedulerClock.now().plusHours(1);
+        Backfill running = Backfill.builder()
+            .start(SchedulerClock.now().minusDays(7))
+            .end(SchedulerClock.now().minusDays(6))
+            .paused(false)
+            .build();
+        // the running backfill has progressed, so the next evaluation date now points inside its window
+        triggerStateStore.save(triggerState
+            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+            .backfill(CLOCK, running)
+            .updateForNextEvaluationDate(CLOCK, running.getStart().plusHours(8))
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        CreateBackfillTrigger event = new CreateBackfillTrigger(
+            triggerId,
+            new CreateBackfillTrigger.Backfill(SchedulerClock.now().minusDays(3), SchedulerClock.now().minusDays(2), null, null)
+        );
+
+        // WHEN / THEN
+        assertThatThrownBy(() -> handler.handle(CLOCK, TEST_VNODE, event))
+            .isInstanceOf(ConflictException.class);
+
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).get().extracting(s -> s.getBackfill().getPreviousNextExecutionDate()).isEqualTo(liveNextEvaluationDate);
+    }
+
+    @Test
     void shouldClearNextEvaluationDateWhenDeleteBackfillEventHandledGivenTriggerNeverEvaluated() {
         // GIVEN
         Backfill backfill = Backfill.builder()
@@ -1404,7 +1435,7 @@ class TriggerEventHandlerTest {
         SetDisableTrigger event = new SetDisableTrigger(triggerId, true).withOperationId(operationId);
 
         // WHEN / THEN
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> handler.handle(CLOCK, TEST_VNODE, event))
+        assertThatThrownBy(() -> handler.handle(CLOCK, TEST_VNODE, event))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("boom");
 

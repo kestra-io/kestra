@@ -439,6 +439,9 @@
     "documentationMenu": "Dokumentationsmenü",
     "down trend": "Sinkend",
     "download": "Herunterladen",
+    "file_preview": {
+        "big_file_download_only": "Diese Datei ist {size} groß. Sie ist zu groß, um sie im Editor zu öffnen, laden Sie sie stattdessen herunter."
+    },
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
     "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
@@ -1377,7 +1380,8 @@
       "kv_pairs": "Keine Key-Value-Paare gefunden",
       "secrets": "Keine Secrets gefunden",
       "templates": "Keine Vorlagen gefunden",
-      "triggers": "Keine Trigger gefunden"
+      "triggers": "Keine Trigger gefunden",
+      "all_columns_hidden": "Alle Spalten sind ausgeblendet"
     },
     "no_results_found": "Keine Ergebnisse gefunden",
     "no_tasks_running": "Noch keine Tasks laufen.",

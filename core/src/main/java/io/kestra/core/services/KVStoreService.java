@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import java.io.IOException;
 
+import io.kestra.core.exceptions.ResourceAccessDeniedException;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
@@ -33,11 +34,13 @@ public class KVStoreService {
      * @return The {@link KVStore}.
      */
     public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-        boolean isNotSameNamespace = fromNamespace != null && !namespace.equals(fromNamespace);
-        if (isNotSameNamespace && isNotParentNamespace(namespace, fromNamespace)) {
+        // A namespace inherits the K/V store of its ancestors, so the allow-list only governs access to any other namespace.
+        boolean inheritsTargetNamespace = fromNamespace != null && isDescendantOrSelf(namespace, fromNamespace);
+
+        if (fromNamespace != null && !inheritsTargetNamespace) {
             try {
                 namespaceService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
-            } catch (IllegalArgumentException e) {
+            } catch (ResourceAccessDeniedException e) {
                 throw new KVStoreException(
                     String.format(
                         "Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.", namespace, fromNamespace
@@ -47,8 +50,7 @@ public class KVStoreService {
         }
 
         // Only check namespace existence if not a descendant
-        boolean checkIfNamespaceExists = fromNamespace == null || isNotParentNamespace(namespace, fromNamespace);
-        if (checkIfNamespaceExists && !namespaceService.isNamespaceExists(tenant, namespace)) {
+        if (!inheritsTargetNamespace && !namespaceService.isNamespaceExists(tenant, namespace)) {
             // if it didn't exist, we still check if there are KV as you can add KV without creating a namespace in DB or having flows in it
             KVStore kvStore = new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository);
             try {
@@ -69,7 +71,10 @@ public class KVStoreService {
         return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository);
     }
 
-    private static boolean isNotParentNamespace(final String parentNamespace, final String childNamespace) {
-        return !childNamespace.startsWith(parentNamespace);
+    /**
+     * The trailing dot is required: without it 'prod2' would be treated as a descendant of 'prod' and skip the allow-list.
+     */
+    private static boolean isDescendantOrSelf(final String parentNamespace, final String childNamespace) {
+        return childNamespace.equals(parentNamespace) || childNamespace.startsWith(parentNamespace + ".");
     }
 }

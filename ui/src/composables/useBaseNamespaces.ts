@@ -228,6 +228,18 @@ export const useBaseNamespacesStore = () => {
         return (request.data as {revision: number}[]);
     }
 
+    async function fileMetadata(this: any, payload: {namespace: string; path: string}): Promise<{size?: number}> {
+        const URL = `${base(payload.namespace)}/files/stats?path=${slashPrefix(safePath(payload.path))}`;
+        const request = await axios.get(URL);
+        return request.data;
+    }
+
+    async function downloadFile(this: any, payload: {namespace: string; path: string}): Promise<Blob> {
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
+        const request = await axios.get(URL, {responseType: "blob", timeout: 0});
+        return request.data;
+    }
+
     async function readFile(this: any, payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
         if (!payload.path) return {error: "Path is required"};
 
@@ -318,6 +330,8 @@ export const useBaseNamespacesStore = () => {
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,
+        fileMetadata,
+        downloadFile,
         readFile,
         fileRevisions,
         searchFiles,

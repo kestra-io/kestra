@@ -142,10 +142,10 @@ public interface Namespace {
     }
 
     /**
-     * Creates a new directory for the current namespace.
+     * Creates a new directory for the current namespace, along with any missing parent directory.
      *
      * @param path The {@link Path} of the directory.
-     * @return The created namespace file.
+     * @return The created namespace file of the deepest directory.
      * @throws IOException if an error happens while accessing the file.
      */
     NamespaceFile createDirectory(Path path) throws IOException;

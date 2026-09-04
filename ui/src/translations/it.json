@@ -439,6 +439,9 @@
     "documentationMenu": "Menu documentazione",
     "down trend": "In diminuzione",
     "download": "Scarica",
+    "file_preview": {
+        "big_file_download_only": "Questo file è {size}. È troppo grande per essere aperto nell'editor, scaricalo invece."
+    },
     "download logs": "Scarica logs",
     "download_logos": "Scarica il Pacchetto Logo",
     "draft_available": "Una bozza di modifica è disponibile nell'editor",
@@ -1377,7 +1380,8 @@
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "templates": "Nessun Template Trovato",
-      "triggers": "Nessun Trigger Trovato"
+      "triggers": "Nessun Trigger Trovato",
+      "all_columns_hidden": "Tutte le colonne sono nascoste"
     },
     "no_results_found": "Nessun risultato trovato",
     "no_tasks_running": "Nessun task è ancora in esecuzione.",

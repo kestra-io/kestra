@@ -439,6 +439,9 @@
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
     "down trend": "घट रहा है",
     "download": "डाउनलोड करें",
+    "file_preview": {
+        "big_file_download_only": "यह फ़ाइल {size} है। यह एडिटर में खोलने के लिए बहुत बड़ी है, इसके बजाय इसे डाउनलोड करें।"
+    },
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
     "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
@@ -1377,7 +1380,8 @@
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
       "secrets": "कोई Secrets नहीं मिले",
       "templates": "कोई टेम्पलेट नहीं मिला",
-      "triggers": "कोई Triggers नहीं मिले"
+      "triggers": "कोई Triggers नहीं मिले",
+      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं"
     },
     "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",

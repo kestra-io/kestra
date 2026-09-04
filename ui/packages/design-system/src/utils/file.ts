@@ -34,8 +34,10 @@ const ICONS_BY_GROUP: [Component, string[]][] = [
     [FileDocumentOutline, ["txt", "log", "out", "err"]],
 ]
 
-const ICONS_BY_EXTENSION: Record<string, Component> = Object.fromEntries(
-    ICONS_BY_GROUP.flatMap(([icon, extensions]) => extensions.map((extension) => [extension, icon])),
+// A Map rather than an object: a plain object resolves `constructor` and `__proto__`
+// through the prototype chain, which would slip past the fallback below.
+const ICONS_BY_EXTENSION = new Map<string, Component>(
+    ICONS_BY_GROUP.flatMap(([icon, extensions]) => extensions.map((extension) => [extension, icon] as const)),
 )
 
 /** Matches the internal-storage URI schemes a task output, an input or a log attachment can carry. */
@@ -62,5 +64,5 @@ export function fileExtension(uri: string): string {
 
 /** Icon for a URI or file name, falling back to a generic file for unknown extensions. */
 export function fileIcon(uri: string): Component {
-    return ICONS_BY_EXTENSION[fileExtension(uri)] ?? FileOutline
+    return ICONS_BY_EXTENSION.get(fileExtension(uri)) ?? FileOutline
 }

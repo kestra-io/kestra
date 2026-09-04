@@ -56,6 +56,28 @@ describe("entity load ordering", () => {
         expect(store.flowYaml).toBe("id: fast")
     })
 
+    it("does not drop a successful flow load when a later, same-flow load fails", async () => {
+        const store = useFlowStore()
+        let resolveFirst: (flow: unknown) => void = () => {}
+        let callCount = 0
+        flowApi.mockImplementation(() => {
+            callCount++
+            return callCount === 1
+                ? new Promise((resolve) => {
+                    resolveFirst = resolve
+                })
+                : Promise.reject(new Error("network error"))
+        })
+
+        const first = store.loadFlow({namespace: "ns", id: "target"})
+        await store.loadFlow({namespace: "ns", id: "target"}).catch(() => {})
+        resolveFirst({id: "target", namespace: "ns", revision: 1, source: "id: target"})
+        await first
+
+        expect(store.flow?.id).toBe("target")
+        expect(store.flowYaml).toBe("id: target")
+    })
+
     it("drops an execution load the user has navigated away from", async () => {
         const store = useExecutionsStore()
         let resolveSlow: (execution: unknown) => void = () => {}

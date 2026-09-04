@@ -1725,7 +1725,8 @@
           "workerSelector": "Sélecteur de Worker",
           "checks": "Vérifications",
           "updated": "Mis à jour",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Références de Policy"
         }
       },
       "select": {

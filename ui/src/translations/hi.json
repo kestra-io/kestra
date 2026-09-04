@@ -1725,7 +1725,8 @@
           "workerSelector": "वर्कर सेलेक्टर",
           "checks": "जांचें",
           "updated": "अपडेट किया गया",
-          "quotas": "कोटा"
+          "quotas": "कोटा",
+          "policyRefs": "पॉलिसी संदर्भ"
         }
       },
       "select": {

@@ -65,7 +65,7 @@ public class RestartExecutionTool implements AiPlatformTool {
 
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException(
-                "Execution '%s' cannot be restarted: current state is '%s', expected terminated or paused."
+                "Execution '%s' cannot be restarted: current state is '%s', expected terminated."
                     .formatted(executionId, execution.getState().getCurrent())
             );
         }

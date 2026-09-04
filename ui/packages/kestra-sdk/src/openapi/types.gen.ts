@@ -1654,6 +1654,8 @@ export type PaginationType = 'OFFSET' | 'CURSOR';
 export type PebbleFunction = {
     name?: string;
     arguments?: Array<PebbleFunctionArgument>;
+    deprecated?: boolean;
+    replacement?: string | null;
 };
 
 export type PebbleFunctionArgument = {
@@ -2265,7 +2267,7 @@ export type TriggerControllerApiCreateBackfillRequest = {
     namespace?: string;
     flowId?: string;
     triggerId?: string;
-    backfill?: TriggerControllerApiCreateBackfillRequestBackfill;
+    backfill: TriggerControllerApiCreateBackfillRequestBackfill;
 };
 
 export type TriggerControllerApiCreateBackfillRequestBackfill = {

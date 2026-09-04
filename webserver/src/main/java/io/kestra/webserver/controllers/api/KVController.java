@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -80,7 +82,7 @@ public class KVController {
     );
 
     private String sortMapper(String key) {
-        return key == null ? null : SORT_FIELDS.get(key);
+	return key == null ? null :SORT_FIELDS.get(key);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -145,7 +147,6 @@ public class KVController {
             value = new String(bytesValue);
         }
 
-        // Should never throw as the above verifies the KV entry existence
         KVEntry kvEntry = nsKvStore.get(key).orElseThrow();
 
         return new KvDetail(KVType.from(value), value, kvEntry.revision(), kvEntry.updateDate());
@@ -163,9 +164,13 @@ public class KVController {
         String ttl = httpHeaders.get("ttl");
         KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
         try {
-            // use ION mapper to properly handle timestamp
-            JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);
-            kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
+            try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {
+                JsonNode jsonNode = JacksonMapper.ofIon().readTree(parser);
+                if (parser.nextToken() != null) {
+                    throw new JsonParseException(parser, "Trailing content after the first Ion value");
+                }
+                kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
+            }
         } catch (JsonProcessingException e) {
             kvStore(namespace).put(key, new KVValueAndMetadata(metadata, value));
         }

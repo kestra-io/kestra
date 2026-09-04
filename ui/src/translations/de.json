@@ -136,6 +136,7 @@
     "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
     "update": "Aktualisieren",
     "confirmation": "Bestätigung",
+    "toast confirm": "Bist du sicher?",
     "common": {
       "back": "Zurück",
       "openInNewTab": "In neuem Tab öffnen"
@@ -342,9 +343,31 @@
     "select a state": "Status auswählen",
     "are you sure change state": "Möchtest du den Status wirklich ändern?",
     "yes": "Ja",
+    "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
     "change state current state": "Aktueller Status:",
+    "change state hint": {
+      "WARNING": [
+        "Der Flow wird als WARNING markiert.",
+        "Die nächsten Tasks werden ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "FAILED": [
+        "Der Flow wird als FAILED markiert.",
+        "Keine andere Task wird ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "SUCCESS": [
+        "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
+        "Alle blockierten Tasks werden ausgeführt.",
+        "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
+      ],
+      "RUNNING": [
+        "Der flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "Alle blockierten Tasks werden ausgeführt."
+      ]
+    },
     "replay execution title": "Replay der Execution",
     "restart execution title": "Execution neu starten",
     "replay execution description": "Dadurch wird eine neue Execution auf Basis der ausgewählten Execution erstellt.",
@@ -513,6 +536,10 @@
       }
     },
     "use": "Verwenden",
+    "plugin_card": {
+      "tasks": "Task | Tasks",
+      "blueprints": "Blueprint | Blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
@@ -1651,6 +1678,7 @@
     "last error was": "Letzter Fehler war",
     "active": "Aktiv",
     "flows imported": "Flows importiert",
+    "flows not imported": "Flows nicht importiert",
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "chart preview": "Diagrammvorschau",

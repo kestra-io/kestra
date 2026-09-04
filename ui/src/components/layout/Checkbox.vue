@@ -58,7 +58,7 @@
                 background: transparent;
                 border-radius: 2px;
                 border: 1px solid var(--border-color);
-                transition: all 0.4s ease;
+                transition: background-color 160ms ease, border-color 160ms ease;
             }
 
             .neon-checkbox__check-container {
@@ -80,7 +80,7 @@
                 stroke-dasharray: 40;
                 stroke-dashoffset: 40;
                 transform-origin: center;
-                transition: stroke-dashoffset 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease;
+                transition: stroke-dashoffset 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 160ms ease;
             }
         }
 

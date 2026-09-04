@@ -33,6 +33,10 @@
         left: 0px;
         right: 0px;
         animation: move-border 3s linear infinite;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
     }
 
     .enterprise-tag::after{

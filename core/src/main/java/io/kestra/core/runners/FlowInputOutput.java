@@ -593,7 +593,18 @@ public class FlowInputOutput {
             case STRING, EMAIL, SELECT -> current.toString();
             case INT -> TypeConverter.toInteger(current);
             case FLOAT -> TypeConverter.toFloat(current);
-            case BOOL -> TypeConverter.toBoolean(current);
+            case BOOL -> {
+                if (current instanceof Boolean b) {
+                    yield b;
+                }
+
+                if (!(current instanceof String s &&
+                    (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")))) {
+                    throw new IllegalArgumentException("Unable to parse `" + current + "` as a boolean");
+                }
+
+                yield TypeConverter.toBoolean(current);
+            }
             case DATETIME -> TypeConverter.toInstant(current);
             case DATE -> TypeConverter.toLocalDate(current);
             case TIME -> TypeConverter.toLocalTime(current);

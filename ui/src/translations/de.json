@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: Plugin für diesen Trigger-Typ nicht installiert, es wird keine Benachrichtigung gesendet."
       },
       "trigger": {
-        "case_sub": "Nur in der Enterprise Edition",
-        "case_title": "Case-Status",
         "execution_sub": "Reagiert auf Statusänderungen von Flows",
         "execution_title": "Execution-Status",
         "other_sub": "Jedes verfügbare Trigger-Plugin",
@@ -138,6 +136,7 @@
     "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
     "update": "Aktualisieren",
     "confirmation": "Bestätigung",
+    "toast confirm": "Bist du sicher?",
     "common": {
       "back": "Zurück",
       "openInNewTab": "In neuem Tab öffnen"
@@ -222,7 +221,7 @@
     "next_execution": "Nächste Execution",
     "datepicker": {
       "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
-      "leave empty for infinite": "Leer lassen für unbegrenzte Dauer oder eine ISO-8601-Dauer eingeben (z. B. 'P1DT1H1M1S')",
+      "leave empty for infinite": "Leer lassen für unendliche Dauer oder eine ISO 8601-Dauer eingeben (z. B. 'P1DT1H1M1S')",
       "duration example": "Beispiel: 'P1DT1H1M1S'",
       "error": "Ungültiges Dauerformat, es muss eine ISO-8601-Dauer sein (z. B. P1DT1H1M1S)",
       "custom": "Benutzerdefiniert",
@@ -344,9 +343,31 @@
     "select a state": "Status auswählen",
     "are you sure change state": "Möchtest du den Status wirklich ändern?",
     "yes": "Ja",
+    "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
     "change state current state": "Aktueller Status:",
+    "change state hint": {
+      "WARNING": [
+        "Der Flow wird als WARNING markiert.",
+        "Die nächsten Tasks werden ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "FAILED": [
+        "Der Flow wird als FAILED markiert.",
+        "Keine andere Task wird ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "SUCCESS": [
+        "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
+        "Alle blockierten Tasks werden ausgeführt.",
+        "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
+      ],
+      "RUNNING": [
+        "Der flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "Alle blockierten Tasks werden ausgeführt."
+      ]
+    },
     "replay execution title": "Replay der Execution",
     "restart execution title": "Execution neu starten",
     "replay execution description": "Dadurch wird eine neue Execution auf Basis der ausgewählten Execution erstellt.",
@@ -414,7 +435,8 @@
       "zoom-reset": "Zoom zurücksetzen",
       "zoom-fit": "Anpassen",
       "invalid": "Graph-Fehler",
-      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler."
+      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
+      "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut."
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency-Limits",
-      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beeinträchtigen, sodass Executions das erlaubte Limit überschreiten können"
+      "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können."
     },
     "flowConcurrency": {
       "loadError": "Das Concurrency-Limit dieses Flows konnte nicht geladen werden.",
@@ -515,6 +537,10 @@
       }
     },
     "use": "Verwenden",
+    "plugin_card": {
+      "tasks": "Task | Tasks",
+      "blueprints": "Blueprint | Blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
@@ -791,6 +817,7 @@
     "execution labels": "Execution-Labels",
     "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
+    "invalid label key": "Ungültiger Label-Key. Ein gültiger Key muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben, Zahlen, Bindestriche (-), Unterstriche (_) oder Punkte (.) enthalten.",
     "feeds": {
       "heading": "Alles rund um Kestra.",
       "subheading": "Die neuesten Updates, Anleitungen und Beiträge"
@@ -816,8 +843,8 @@
     "executions state changed": "Der Status von <code>{executionCount}</code> Execution(s) wurde geändert",
     "executions resumed": "<code>{executionCount}</code> Execution(s) fortgesetzt",
     "executions paused": "<code>{executionCount}</code> Execution(s) pausiert",
-    "executions unqueue": "<code>{executionCount}</code> Execution(s) aus der Warteschlange entfernt",
-    "executions force run": "<code>{executionCount}</code> Execution(s) erzwungen",
+    "executions unqueue": "<code>{executionCount}</code> Execution(s) nicht in der Warteschlange",
+    "executions force run": "<code>{executionCount}</code> erzwungene Execution(s)",
     "executions restarted": "<code>{executionCount}</code> Execution(s) neu gestartet",
     "executions killed": "<code>{executionCount}</code> Execution(s) gekillt",
     "executions deleted": "<code>{executionCount}</code> Execution(s) gelöscht",
@@ -883,6 +910,7 @@
     "metric": "Metrik",
     "aggregation": "Aggregation",
     "metric choice": "Keine Metriken für diesen Flow verfügbar",
+    "metric filter no match": "Keine Metrik stimmt mit „{term}“ überein",
     "of": "von",
     "title": "Titel",
     "api": "API",
@@ -916,7 +944,7 @@
     "join_slack": "Slack beitreten",
     "kestra": "Kestra",
     "error detected": "Fehler erkannt.",
-    "warning detected": "Warnungen erkannt",
+    "warning detected": "Warnung(en) erkannt.",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
     "dependency task": "Task {taskId} ist eine Abhängigkeit eines anderen Tasks",
@@ -1651,6 +1679,7 @@
     "last error was": "Letzter Fehler war",
     "active": "Aktiv",
     "flows imported": "Flows importiert",
+    "flows not imported": "Flows nicht importiert",
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "chart preview": "Diagrammvorschau",
@@ -1696,7 +1725,8 @@
           "workerSelector": "Worker-Selektor",
           "checks": "Checks",
           "updated": "Aktualisiert",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Policy-Referenzen"
         }
       },
       "select": {
@@ -1903,7 +1933,8 @@
       "close_all_tabs": "Alle Tabs schließen",
       "close_all_panels": "Alle Panels schließen",
       "exit_fullscreen": "Vollbild verlassen",
-      "fullscreen": "Vollbild"
+      "fullscreen": "Vollbild",
+      "split_panel": "Bereich teilen"
     },
     "search_docs": "Suche",
     "no_results_found": "Keine Ergebnisse gefunden",
@@ -1916,7 +1947,9 @@
       "triggers": "Keine Trigger gefunden",
       "flows": "Keine Flows gefunden",
       "kv_pairs": "Keine KV-Paare gefunden",
-      "secrets": "Keine Secrets gefunden"
+      "secrets": "Keine Secrets gefunden",
+      "all_columns_hidden": "Alle Spalten sind ausgeblendet",
+      "all_columns_hidden_description": "Aktiviere mindestens eine Spalte in „Tabellenspalten anpassen“ wieder, um die Daten erneut anzuzeigen."
     },
     "duplicate-pair": "{label} „{key}“ ist doppelt vorhanden, der erste Key wird ignoriert.",
     "dashboards": {
@@ -2085,8 +2118,8 @@
         },
         "unavailable": {
           "title": "Der AI Copilot ist nicht verfügbar",
-          "detail": "Es ist kein AI-Anbieter konfiguriert. Bitte einen Administrator, einen einzurichten, und versuche es dann erneut.",
-          "retry": "Erneut versuchen"
+          "detail": "Kein AI-Provider ist konfiguriert. Bitte einen Administrator, einen einzurichten.",
+          "docs": "Dokumentation ansehen"
         },
         "thinkingWords": [
           "Orchestrierung",
@@ -2569,6 +2602,7 @@
         "message": "Behebe die Fehler vor dem Speichern.",
         "title": "Der Flow kann nicht gespeichert werden"
       },
+      "schema_default_tooltip": "Standardwert, der verwendet wird, wenn das Feld nicht gesetzt ist",
       "search_task_placeholder": "Task suchen oder beschreiben…",
       "shortcuts": {
         "add_after": "Block nach Auswahl einfügen",

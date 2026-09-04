@@ -120,6 +120,7 @@ Every async surface must render all four states. "Happy path only" is a bug.
 - Listen to `@page-changed` (or rely on `@update:currentPage`/`@update:pageSize` via v-model) and propagate the change to the bound state — typically a `router.push({...route.query, page: String(page), size: String(size)})`.
 - The component watches `[currentPage, pageSize]` and re-fires `loadData` automatically when either prop changes. Do **not** call `dataTable.reload()` from the parent in response to a page click — the prop change handles it.
 - `resetAndReload()` emits `update:currentPage(1)` and `page-changed`; if the page was already 1 it just reloads. Useful from a filter-change watcher to bounce back to page 1 + re-fetch.
+- When a column's `prop` is not the backend sort key (e.g. `auditLog.detail.resourceType` vs `detail.resourceType`), pass `:sortKeyMapper` (`(key: string) => string`); a sort click reloads immediately with the raw column prop otherwise, and the backend rejects it with a 422.
 
 **URL-driven pattern** — the default for top-level list pages (Logs, Flows, Executions, KV, Secrets, Triggers, FlowsSearch, Blueprints):
 

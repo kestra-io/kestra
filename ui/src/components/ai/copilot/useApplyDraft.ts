@@ -3,9 +3,10 @@ import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
+import {asProblem, isProblemType, ProblemTypes, useClient} from "@kestra-io/kestra-sdk"
+import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
-import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
+import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
@@ -86,8 +87,8 @@ export function useApplyDraft() {
 
         applying.value = true
         try {
-            // Try to create; if the flow already exists, update it instead. We deliberately don't
-            // probe with a GET first — a 404 on a not-yet-existing flow trips the global error page.
+            // Try to create; if the flow already exists, update it instead — one round trip rather
+            // than probing with a GET first.
             try {
                 await FlowsAPI.createFlow(
                     {body: draft.yaml, draft: false} as Parameters<typeof FlowsAPI.createFlow>[0],
@@ -137,17 +138,13 @@ export function useApplyDraft() {
         applying.value = true
         try {
             // Create, falling back to update if the id already exists — same no-probe rationale as flows.
+            /** Raw client because dashboard writes are Enterprise-only routes, absent from the OSS SDK; see the dashboard store. */
+            const yaml = {...silent, headers: {"Content-Type": "application/x-yaml"}} as AxiosLikeConfig
             try {
-                await DashboardsAPI.createDashboard(
-                    {body: draft.yaml} as Parameters<typeof DashboardsAPI.createDashboard>[0],
-                    silent,
-                )
+                await useClient().post(`${apiUrl()}/dashboards`, draft.yaml, yaml)
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
-                await DashboardsAPI.updateDashboard(
-                    {id, body: draft.yaml} as Parameters<typeof DashboardsAPI.updateDashboard>[0],
-                    silent,
-                )
+                await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
         } catch (e) {

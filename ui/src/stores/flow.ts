@@ -21,6 +21,8 @@ import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
+import {splitValidationErrors} from "../utils/validationErrors"
 
 const textYamlHeader = {
     headers: {
@@ -433,7 +435,19 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean }) {
+    // Tracks the flow the user is currently navigating to, so a load for a flow they have since
+    // moved away from can be dropped without an unrelated caller's own load for the *same* flow
+    // (e.g. Topology.vue re-syncing in the background) being able to drop it too (#10722).
+    let latestFlowLoadKey: string | undefined
+
+    async function loadFlow(
+        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
+        requestOptions?: KestraRequestOptions,
+    ) {
+        const key = `${options.namespace}/${options.id}`
+        if (options.store !== false) {
+            latestFlowLoadKey = key
+        }
         let data: Flow & {exception?: string}
         try {
             data = await FlowsAPI.flow({
@@ -442,7 +456,7 @@ export const useFlowStore = defineStore("flow", () => {
                 revision: options.revision ? Number(options.revision) : undefined,
                 allowDeleted: options.allowDeleted,
                 source: true,
-            }) as Flow & {exception?: string}
+            }, requestOptions) as Flow & {exception?: string}
         } catch (e: any) {
             if (options.deleted && e.status === 404) {
                 return e.body ?? {}
@@ -450,7 +464,9 @@ export const useFlowStore = defineStore("flow", () => {
             throw e
         }
 
-        if (options.store === false) {
+        // A load for a flow the user has navigated away from must not become the flow on screen,
+        // the same way a superseded search is dropped in `stores/logs.ts`.
+        if (options.store === false || key !== latestFlowLoadKey) {
             return data
         }
 
@@ -679,7 +695,10 @@ function deleteFlowAndDependencies() {
         if (!flowParsed.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
-        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
+        return FlowsAPI.generateFlowGraphFromSource(
+            {subflows, body: flowSource},
+            {showMessageOnError: false} as Parameters<typeof FlowsAPI.generateFlowGraphFromSource>[1],
+        )
             .then(data => {
                 flowGraph.value = data as unknown as FlowGraph
 
@@ -902,8 +921,7 @@ function deleteFlowAndDependencies() {
                 ? [`${t(key + ".description")} ${t(key + ".details")}`]
                 : []
 
-        const constraintsError =
-            flowValidation.value?.constraints?.split(/, ?/) ?? []
+        const constraintsError = splitValidationErrors(flowValidation.value?.constraints)
 
         const errors = [...flowExistsError, ...constraintsError]
 
@@ -998,6 +1016,7 @@ function deleteFlowAndDependencies() {
         deleteFlow,
         loadGraph,
         loadGraphFromSource,
+        fetchGraph,
         getGraphFromSourceResponse,
         loadRevisions,
         loadFlowStats,

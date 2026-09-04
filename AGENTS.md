@@ -451,10 +451,32 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - Run `npm run lint` in `ui/` before pushing any frontend change. Otherwise one comment per violation is posted by reviewdog, and the human review is buried under trailing-comma suggestions.
 - Attach a screenshot or a short recording for every user-visible change, taken against a running instance.
 - Keep the branch rebased on `develop` rather than merged.
-- **Never merge, approve, or call a PR ready while a check is failing.** Run `gh pr checks <number>` first; on any `fail` or `pending` line, stop and either fix the cause or explain in the PR why the failure is unrelated. `develop` has no required status checks, so nothing but this rule stands between a red pipeline and a merge: half of the PRs merged over summer 2026 were red.
+- **Never merge, approve, or call a PR ready while a check is failing or still running.** `develop` has no required status checks, so nothing but this rule stands between a red pipeline and a merge: half of the PRs merged over summer 2026 were red. How to watch and read a run is in [CI: watch it, then read it](#ci-watch-it-then-read-it).
 - Fill in `.github/pull_request_template.md`, and delete the checklist section that does not apply instead of leaving it unticked.
 - Write the description as problem, fix and evidence, once each. No table restating the diff, and no checklist of tests that all passed.
 - Never commit generated output by hand: the twelve non-English translation files, `fingerprints.json`, and the generated SDK are produced by their scripts or by CI.
+
+### CI: watch it, then read it
+
+After every push, block on the run instead of polling or guessing:
+
+```bash
+gh pr checks <number> --watch --fail-fast   # exits non-zero on the first failure; `pending` is not ready
+gh run view --job <job-id> --log-failed     # job id is the last path segment of the failing check's URL
+gh run list -b develop -L 5 --json conclusion,workflowName   # is develop itself red right now?
+```
+
+A PR is ready when the first command exits 0. When it does not, name the red check and its cause in the PR before doing anything else; "CI is flaky" is not a cause. Two entries are never the cause themselves: `Java Tests Report` and any `… / check` job are gates that turn red *because* another job did, so open that job. Make a check green by fixing what it found, never by deleting, `@Disabled`-ing or `@Tag("flaky")`-ing the test in the same PR.
+
+| Red check | What it means | What to do |
+|---|---|---|
+| `trigger-ee`, `kestra-ee/backend-tests` (on an OSS PR) | kestra-ee was compiled and tested against this branch (same-name EE branch, else `develop`) and failed | The change breaks EE, or the companion EE PR is missing or not merged. Open or link it; merge the OSS side only once both are green. |
+| `Backend - Tests`, `Frontend - Tests`, `E2E - Tests` | a test failed | Read the failing test. One failure in thousands, outside the touched area (awaitility timeouts in runner tests, `TaskCacheTest`) is a flaky test: re-run once, then open an issue with the run link if it fails again. Still red on `develop` too: link the culprit run in the PR and get that fixed first. |
+| `Build Artifacts / Build Jar`, `Comment OpenAPI spec changes` (EE) | the product does not build against the resolved OSS branch, `ui-ee` Vite bundle included (`kestra:consolidate-chunks` chunk cycle) | Real, and usually identical on every open PR: fix it or link the fix in flight. `'client-id' input must be set` is the exception: secrets were absent in that run's context, re-run it. |
+| `Publish Docker`, `Generate PR docker image` | GitHub Actions cache or registry backend (`failed to reserve cache`, `DeadlineExceeded … CacheService`) | Re-run the job once. |
+| `Can't find 'action.yml' … kestra-io/actions/…@main`, `exit code 128` | the shared actions repo is broken at `@main`, or the branch was force-pushed while CI ran | Re-run once the actions repo is fixed, or after the push settles. |
+| `CANCELLED` | superseded by a newer push (`cancel-in-progress`) | Not a failure; wait for the latest run. |
+| `Pull Request - Delete Docker`, `submit-gradle`, `OpenTelemetry - Export Trace` | cleanup, post-merge or telemetry jobs | Not about the change and not a blocker, but say it is red in the PR rather than reporting "all green". |
 
 ## Issue guidelines
 - **Classify an issue with its GitHub issue type, not a `kind/*` label.** The `kind/bug` label is retired — do not add it. Set the type instead: `gh issue create --title … ` followed by `gh issue edit <number> --type Bug`, or `gh issue edit <number> --type Task|Feature|Epic`. Available types are `Task`, `Bug`, `Feature` and `Epic` (list them with `gh api /orgs/kestra-io/issue-types`).

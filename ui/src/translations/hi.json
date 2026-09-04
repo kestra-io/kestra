@@ -136,6 +136,7 @@
     "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
     "update": "अपडेट करें",
     "confirmation": "पुष्टि",
+    "toast confirm": "क्या आप निश्चित हैं?",
     "common": {
       "back": "वापस",
       "openInNewTab": "नए टैब में खोलें"
@@ -342,9 +343,31 @@
     "select a state": "एक स्थिति चुनें",
     "are you sure change state": "क्या आप वाकई स्थिति बदलना चाहते हैं?",
     "yes": "हाँ",
+    "no": "नहीं",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
     "change state confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run state बदलना चाहते हैं?<br/>यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
     "change state current state": "वर्तमान स्थिति है:",
+    "change state hint": {
+      "WARNING": [
+        "Flow को WARNING के रूप में चिह्नित किया जाएगा।",
+        "अगले tasks निष्पादित किए जाएंगे।",
+        "त्रुटि tasks निष्पादित किए जाएंगे।"
+      ],
+      "FAILED": [
+        "Flow को FAILED के रूप में चिह्नित किया जाएगा।",
+        "कोई अन्य task निष्पादित नहीं किया जाएगा।",
+        "Error tasks निष्पादित किए जाएंगे।"
+      ],
+      "SUCCESS": [
+        "Flow पुनः शुरू होगा क्योंकि यह task सफल रहा।",
+        "सभी अवरुद्ध tasks निष्पादित किए जाएंगे।",
+        "यदि सभी task रन सफल होते हैं, तो Flow SUCCESS स्थिति में होगा।"
+      ],
+      "RUNNING": [
+        "flow पुनः आरंभ होगा और सभी अगले tasks निष्पादित होंगे।",
+        "सभी अवरुद्ध tasks निष्पादित किए जाएंगे।"
+      ]
+    },
     "replay execution title": "प्रदर्शन पुनः चलाएं",
     "restart execution title": "निष्पादन पुनः प्रारंभ करें",
     "replay execution description": "यह चयनित execution के आधार पर एक नया execution बनाएगा।",
@@ -514,6 +537,10 @@
       }
     },
     "use": "उपयोग करें",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "ब्लूप्रिंट | ब्लूप्रिंट"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "plugin इंस्टॉलेशन विफल रहा",
@@ -1652,6 +1679,7 @@
     "last error was": "अंतिम त्रुटि थी",
     "active": "सक्रिय",
     "flows imported": "फ़्लोज़ आयात किए गए",
+    "flows not imported": "Flows आयात नहीं किए गए",
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "chart preview": "चार्ट पूर्वावलोकन",

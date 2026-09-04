@@ -105,7 +105,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailur
         description = """
             `CONTINUE` (default): other tasks keep running to completion, as today.
 
-            `CANCELLED` / `FAILED`: as soon as a task fails with no retry left, every other still-running task in this DAG is interrupted and lands in the given state. The DAG itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
+            `CANCEL` / `FAIL`: as soon as a task fails with no retry left, every other still-running task in this DAG is interrupted and lands in the given state. The DAG itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
     )
     private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.CONTINUE);
 

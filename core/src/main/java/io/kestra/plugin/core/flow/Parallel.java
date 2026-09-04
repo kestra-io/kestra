@@ -113,7 +113,7 @@ import lombok.experimental.SuperBuilder;
                 tasks:
                   - id: parallel
                     type: io.kestra.plugin.core.flow.Parallel
-                    onChildFailure: CANCELLED
+                    onChildFailure: CANCEL
                     tasks:
                       - id: fails_fast
                         type: io.kestra.plugin.core.execution.Fail
@@ -141,7 +141,7 @@ public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailu
         description = """
             `CONTINUE` (default): other tasks keep running to completion, as today.
 
-            `CANCELLED` / `FAILED`: as soon as a task fails with no retry left, every other still-running task in this Parallel is interrupted and lands in the given state. The Parallel itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
+            `CANCEL` / `FAIL`: as soon as a task fails with no retry left, every other still-running task in this Parallel is interrupted and lands in the given state. The Parallel itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
     )
     private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.FAIL);
 

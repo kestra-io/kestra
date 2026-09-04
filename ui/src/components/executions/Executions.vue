@@ -144,7 +144,7 @@
                         <KsButton @click="isOpenLabelsModal = false">
                             {{ $t("cancel") }}
                         </KsButton>
-                        <KsButton type="primary" @click="setLabels()">
+                        <KsButton type="primary" :disabled="hasInvalidLabels" @click="setLabels()">
                             {{ $t("ok") }}
                         </KsButton>
                     </template>
@@ -217,7 +217,7 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
+                        <Labels :labels="filteredLabels(scope.row?.labels)" :max="3" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus
@@ -410,8 +410,9 @@
 
 <script setup lang="ts">
     import _merge from "lodash/merge"
-    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
+    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
@@ -451,6 +452,7 @@
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
     import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
+    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import * as Utils from "../../utils/utils"
@@ -473,7 +475,7 @@
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -524,6 +526,7 @@
     const executionsStore = useExecutionsStore()
 
     const executionLabels = ref<Label[]>([])
+    const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
     const recomputeInterval = ref(false)
     const isOpenLabelsModal = ref(false)
     const isOpenReplayModal = ref(false)
@@ -537,6 +540,12 @@
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false")
 
     const optionalColumns = ref([
+        {
+            label: t("state"),
+            prop: "state.current",
+            default: true,
+            description: t("filter.table_column.executions.state"),
+        },
         {
             label: t("start date"),
             prop: "state.startDate",
@@ -572,12 +581,6 @@
             prop: "labels",
             default: true,
             description: t("filter.table_column.executions.labels"),
-        },
-        {
-            label: t("state"),
-            prop: "state.current",
-            default: true,
-            description: t("filter.table_column.executions.state"),
         },
         {
             label: t("revision"),
@@ -622,13 +625,13 @@
         ...getExtraColumns().map(col => ({...col, label: t(col.label)})),
     ])
 
-    const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
+    const {visibleColumns: displayColumns, orderedVisibleColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: allColumns.value,
         storageKey: storageKey.value,
     })
 
     const visibleColumns = computed(() =>
-        displayColumns.value
+        orderedVisibleColumns.value
             .map(prop => allColumns.value.find(c => c.prop === prop))
             .filter(c => {
                 const condition = (c as {condition?: () => boolean})?.condition
@@ -854,6 +857,8 @@
         )
     }
 
+    const affectedCount = (response: any) => response?.count ?? response?.totalItems ?? 0
+
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: any) => {
         const actionMap: Record<string, () => any> = {
             "queryResumeExecution": () => executionsStore.queryResumeExecution,
@@ -889,7 +894,7 @@
             const ac = actionMap[queryAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 })
@@ -903,13 +908,15 @@
             const ac = actionMap[byIdAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
-                }).catch((e: any) => {
-                    toast.error(e?.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message))
+                }).catch((e: unknown) => {
+                    const problem = asProblem(e)
+                    toast.error(
+                        problemBulkBody(problem, t, te),
+                        problemTitle(problem, t, te),
+                    )
                 })
         }
     }
@@ -1066,11 +1073,24 @@
         )
     }
 
+    const onSetLabelsError = (e: unknown) => {
+        const problem = asProblem(e)
+        toast.error(
+            problemBulkBody(problem, t, te),
+            problemTitle(problem, t, te),
+        )
+    }
+
     const setLabels = () => {
         const filtered = filterValidLabels(executionLabels.value)
 
         if (filtered.error) {
             toast.error(t("wrong labels"), t("error"))
+            return
+        }
+
+        if (hasInvalidLabelKeys(filtered.labels)) {
+            toast.error(t("invalid label key"), t("error"))
             return
         }
 
@@ -1089,10 +1109,10 @@
                         data: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    })
+                    }).catch(onSetLabelsError)
             } else {
                 return executionsStore
                     .bulkSetLabels({
@@ -1100,12 +1120,10 @@
                         executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message)))
+                    }).catch(onSetLabelsError)
             }
         },
         )

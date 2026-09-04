@@ -11,32 +11,23 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Op;
-import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.settings.DashboardSettings;
-import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.webserver.controllers.api.TenantController.SetTenantDefaultDashboardsRequest;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -46,12 +37,16 @@ import jakarta.inject.Inject;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatObject;
 
+/**
+ * Covers the dashboards bundled with this edition. Storing dashboards of one's own is an Enterprise
+ * feature, so its lifecycle is exercised by the Enterprise controller test instead.
+ */
 @KestraTest
 class DashboardControllerTest {
 
     public static final String DASHBOARD_PATH = "/api/v1/main/dashboards";
+
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -61,622 +56,6 @@ class DashboardControllerTest {
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
-
-    @Inject
-    DashboardRepositoryInterface dashboardRepository;
-
-    @Test
-    void shouldSupportFullDashboardLifecycle() throws JsonProcessingException {
-        String dashboardYaml = """
-            id: full
-            title: Some Dashboard
-            description: Default overview dashboard
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Error Logs
-                  description: Count of ERROR logs per date
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Error Logs
-                      agg: COUNT
-                      graphStyle: BARS
-                  where:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - ERROR""";
-
-        // Create a dashboard
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(dashboard).isNotNull();
-        assertThat(dashboard.getId()).isEqualTo("full");
-        assertThat(dashboard.getTitle()).isEqualTo("Some Dashboard");
-        assertThat(dashboard.getDescription()).isEqualTo("Default overview dashboard");
-
-        // Get a dashboard
-        DashboardController.DashboardResponse get = client.toBlocking().retrieve(
-            GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(get).isNotNull();
-        assertThat(get.getId()).isEqualTo(dashboard.getId());
-        assertThat(get.getSourceCode()).startsWith("""
-            id: full
-            title: Some Dashboard""");
-
-        // List dashboards
-        List<DashboardController.DashboardResponse> dashboards = client.toBlocking().retrieve(
-            GET(DASHBOARD_PATH),
-            Argument.listOf(DashboardController.DashboardResponse.class)
-        );
-        assertThat(dashboards).hasSize(1);
-
-        // Compute a dashboard
-        List<Map> chartData = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/logs_timeseries", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-            Argument.listOf(Map.class)
-        );
-        assertThat(chartData).isNotNull();
-        assertThat(chartData).hasSize(1);
-
-        // Delete a dashboard
-        HttpResponse<Void> deleted = client.toBlocking().exchange(
-            DELETE(DASHBOARD_PATH + "/" + dashboard.getId())
-        );
-        assertThat(deleted).isNotNull();
-        assertThat(deleted.code()).isEqualTo(204);
-    }
-
-    @Test
-    void searchDashboardsWithUnknownSortFieldReturns422() {
-        HttpClientResponseException e = Assertions.assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(GET(DASHBOARD_PATH + "?sort=nonexistent:asc"))
-        );
-
-        assertThat(e.getStatus().getCode()).isEqualTo(422);
-        String body = e.getResponse().getBody(String.class).orElse("");
-        assertThat(body).contains("nonexistent");
-        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
-        assertThat(body).doesNotContainIgnoringCase("select ");
-        assertThat(body).doesNotContainIgnoringCase(" from ");
-        assertThat(body).doesNotContainIgnoringCase("order by");
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    void searchDashboardsSortsByTitle() {
-        String idA = IdUtils.create();
-        String idB = IdUtils.create();
-        client.toBlocking().exchange(POST(DASHBOARD_PATH, "id: %s\ntitle: AAA sort test %s".formatted(idA, idA)).contentType(MediaType.APPLICATION_YAML));
-        client.toBlocking().exchange(POST(DASHBOARD_PATH, "id: %s\ntitle: ZZZ sort test %s".formatted(idB, idB)).contentType(MediaType.APPLICATION_YAML));
-
-        PagedResults<DashboardController.DashboardResponse> dashboards = client.toBlocking().retrieve(
-            GET(DASHBOARD_PATH + "?sort=title:asc&size=1000"),
-            Argument.of(PagedResults.class, DashboardController.DashboardResponse.class)
-        );
-
-        List<String> ids = dashboards.getResults().stream().map(DashboardController.DashboardResponse::getId).toList();
-        assertThat(ids.indexOf(idA)).isLessThan(ids.indexOf(idB));
-    }
-
-    @Test
-    void shouldManageDefaultDashboards() {
-        HttpResponse<DashboardSettings> emptyDefaults = client.toBlocking().exchange(
-            GET("/api/v1/main/dashboards/settings/default-dashboards"),
-            DashboardSettings.class
-        );
-        assertThatObject(emptyDefaults.getStatus()).isEqualTo(HttpStatus.OK);
-        assertThat(emptyDefaults.body().getDefaultHomeDashboard()).isNull();
-        assertThat(emptyDefaults.body().getDefaultFlowOverviewDashboard()).isNull();
-        assertThat(emptyDefaults.body().getDefaultNamespaceOverviewDashboard()).isNull();
-
-        String dashboardYaml = """
-            id: defaults
-            title: Some Dashboard
-            description: Default overview dashboard
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Error Logs
-                  description: Count of ERROR logs per date
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Error Logs
-                      agg: COUNT
-                      graphStyle: BARS
-                  where:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - ERROR""";
-
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-
-        client.toBlocking().exchange(
-            POST(
-                "/api/v1/tenants/main/settings/default-dashboards",
-                new SetTenantDefaultDashboardsRequest(dashboard.getId(), null, null)
-            )
-        );
-
-        DashboardSettings defaults = client.toBlocking().retrieve(
-            GET("/api/v1/main/dashboards/settings/default-dashboards"),
-            DashboardSettings.class
-        );
-        assertThat(defaults.getDefaultHomeDashboard()).isEqualTo(dashboard.getId());
-        assertThat(defaults.getDefaultFlowOverviewDashboard()).isNull();
-        assertThat(defaults.getDefaultNamespaceOverviewDashboard()).isNull();
-
-        client.toBlocking().exchange(
-            POST(
-                "/api/v1/tenants/main/settings/default-dashboards",
-                new SetTenantDefaultDashboardsRequest(dashboard.getId(), dashboard.getId(), dashboard.getId())
-            )
-        );
-
-        DashboardSettings updatedDefaults = client.toBlocking().retrieve(
-            GET("/api/v1/main/dashboards/settings/default-dashboards"),
-            DashboardSettings.class
-        );
-        assertThat(updatedDefaults.getDefaultHomeDashboard()).isEqualTo(dashboard.getId());
-        assertThat(updatedDefaults.getDefaultFlowOverviewDashboard()).isEqualTo(dashboard.getId());
-        assertThat(updatedDefaults.getDefaultNamespaceOverviewDashboard()).isEqualTo(dashboard.getId());
-
-        HttpClientResponseException conflict = Assertions.assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().exchange(
-                POST(
-                    "/api/v1/tenants/main/settings/default-dashboards",
-                    new SetTenantDefaultDashboardsRequest("missing-dashboard", null, null)
-                )
-            )
-        );
-        assertThatObject(conflict.getStatus()).isEqualTo(HttpStatus.CONFLICT);
-
-        client.toBlocking().exchange(
-            POST(
-                "/api/v1/tenants/main/settings/default-dashboards",
-                new SetTenantDefaultDashboardsRequest(null, null, null)
-            )
-        );
-
-        DashboardSettings clearedDefaults = client.toBlocking().retrieve(
-            GET("/api/v1/main/dashboards/settings/default-dashboards"),
-            DashboardSettings.class
-        );
-        assertThat(clearedDefaults.getDefaultHomeDashboard()).isNull();
-        assertThat(clearedDefaults.getDefaultFlowOverviewDashboard()).isNull();
-        assertThat(clearedDefaults.getDefaultNamespaceOverviewDashboard()).isNull();
-    }
-
-    @Test
-    void shouldRemoveDeletedDashboardFromDefaults() {
-        String dashboardYaml = """
-            id: defaults-to-delete
-            title: Some Dashboard
-            description: Default overview dashboard
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Error Logs
-                  description: Count of ERROR logs per date
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Error Logs
-                      agg: COUNT
-                      graphStyle: BARS
-                  where:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - ERROR""";
-
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-
-        client.toBlocking().exchange(
-            POST(
-                "/api/v1/tenants/main/settings/default-dashboards",
-                new SetTenantDefaultDashboardsRequest(dashboard.getId(), dashboard.getId(), dashboard.getId())
-            )
-        );
-
-        client.toBlocking().exchange(
-            DELETE(DASHBOARD_PATH + "/" + dashboard.getId())
-        );
-
-        HttpResponse<DashboardSettings> defaultsAfterDelete = client.toBlocking().exchange(
-            GET("/api/v1/main/dashboards/settings/default-dashboards"),
-            DashboardSettings.class
-        );
-        assertThatObject(defaultsAfterDelete.getStatus()).isEqualTo(HttpStatus.OK);
-        assertThat(defaultsAfterDelete.body().getDefaultHomeDashboard()).isNull();
-        assertThat(defaultsAfterDelete.body().getDefaultFlowOverviewDashboard()).isNull();
-        assertThat(defaultsAfterDelete.body().getDefaultNamespaceOverviewDashboard()).isNull();
-    }
-
-    // The goal is to cover the legacy implementation that was autogenerating id so it was present on the backend but the source code didn't contain it.
-    // We now mandate the id within the dashboard source code and if it's not yet there, the "get" API should add it to the existing source if it's not there so that it's added on the next save.
-    @Test
-    void shouldAddIdToSourceCodeWhenNotPresent() throws JsonProcessingException {
-        String dashboardYaml = """
-            title: Some Dashboard
-            description: Default overview dashboard
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Error Logs
-                  description: Count of ERROR logs per date
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Error Logs
-                      agg: COUNT
-                      graphStyle: BARS
-                  where:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - ERROR""";
-
-        String dashboardId = "sourceShouldHaveIdAddedIfNotPresent";
-        dashboardRepository.save(JacksonMapper.ofYaml().readValue(dashboardYaml, Dashboard.class).toBuilder().tenantId(TenantService.MAIN_TENANT).id(dashboardId).build(), dashboardYaml);
-
-        Dashboard repositoryDashboard = dashboardRepository.get(TenantService.MAIN_TENANT, dashboardId).get();
-        assertThat(repositoryDashboard.getId()).isEqualTo(dashboardId);
-        assertThat(repositoryDashboard.getSourceCode()).doesNotContain("id: " + dashboardId);
-
-        // Get a dashboard
-        DashboardController.DashboardResponse get = client.toBlocking().retrieve(
-            GET(DASHBOARD_PATH + "/" + dashboardId),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(get).isNotNull();
-        assertThat(get.getId()).isEqualTo(dashboardId);
-        assertThat(get.getSourceCode()).contains("id: " + dashboardId);
-    }
-
-    @Test
-    void shouldRejectDashboardCreationWhenIdAlreadyExists() {
-        String dashboardYaml = """
-            id: cantHaveMultipleDashboardsWithSameId
-            title: Some Dashboard
-            description: Default overview dashboard
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Error Logs
-                  description: Count of ERROR logs per date
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Error Logs
-                      agg: COUNT
-                      graphStyle: BARS
-                  where:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - ERROR""";
-
-        client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-
-        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-                DashboardController.DashboardResponse.class
-            )
-        );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Dashboard id already exists");
-    }
-
-    @Test
-    void shouldUpdateDashboardAndRejectIdChange() {
-        String dashboardYaml = """
-            id: update
-            title: Some Dashboard
-            description: Default overview dashboard
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Error Logs
-                  description: Count of ERROR logs per date
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Error Logs
-                      agg: COUNT
-                      graphStyle: BARS
-                  where:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - ERROR""";
-
-        // Create a dashboard
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(dashboard).isNotNull();
-        assertThat(dashboard.getId()).isNotNull();
-        assertThat(dashboard.getTitle()).isEqualTo("Some Dashboard");
-        assertThat(dashboard.getDescription()).isEqualTo("Default overview dashboard");
-
-        DashboardController.DashboardResponse get = client.toBlocking().retrieve(
-            GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(get).isNotNull();
-        assertThat(dashboard.getDescription()).isEqualTo("Default overview dashboard");
-
-        // Update a dashboard
-        dashboard = client.toBlocking().retrieve(
-            PUT(DASHBOARD_PATH + "/" + dashboard.getId(), dashboardYaml.replace("Default overview dashboard", "Another description")).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(dashboard).isNotNull();
-
-        get = client.toBlocking().retrieve(
-            GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(get).isNotNull();
-        assertThat(dashboard.getDescription()).isEqualTo("Another description");
-
-        DashboardController.DashboardResponse finalDashboard = dashboard;
-        HttpClientResponseException httpStatusException = Assertions.assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                PUT(DASHBOARD_PATH + "/" + finalDashboard.getId(), dashboardYaml.replace(finalDashboard.getId(), finalDashboard.getId() + "-updated")).contentType(MediaType.APPLICATION_YAML),
-                DashboardController.DashboardResponse.class
-            )
-        );
-        assertThat(httpStatusException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpStatusException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Illegal dashboard id update");
-
-        get = client.toBlocking().retrieve(
-            GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(get).isNotNull();
-        assertThat(dashboard.getSourceCode()).contains("id: " + dashboard.getId());
-        assertThat(dashboard.getDescription()).isEqualTo("Another description");
-    }
-
-    @Test
-    void shouldRejectDashboardCreationWhenIdIsMissing() {
-        String dashboardYaml = """
-            title: Some Dashboard
-            description: Default overview dashboard
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Error Logs
-                  description: Count of ERROR logs per date
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Error Logs
-                      agg: COUNT
-                      graphStyle: BARS
-                  where:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - ERROR""";
-
-        // Create a dashboard
-        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-                DashboardController.DashboardResponse.class
-            )
-        );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Illegal argument: Dashboard id is mandatory");
-    }
-
-    @Test
-    void shouldExportASavedDashboardTableChartToCsvAndIon() {
-        var uuid = IdUtils.create();
-        var fakeNamespace = "a-namespace_" + uuid;
-        var logTimestamp = Instant.now();
-        var fakeExecutionId = "an-execution-id" + uuid;
-        logRepository.save(
-            LogEntry.builder()
-                .namespace(fakeNamespace)
-                .level(Level.INFO)
-                .attemptNumber(1)
-                .executionId(fakeExecutionId)
-                .tenantId(MAIN_TENANT)
-                .executionKind(ExecutionKind.NORMAL)
-                .flowId("a-flow-id")
-                .timestamp(logTimestamp)
-                .message("a message")
-                .build()
-        );
-
-        String dashboardYaml = """
-            id: exportACustomDashboardChartToCsv
-            title: A dashboard with a simple table
-            timeWindow:
-              default: P30D # P30DT30H
-              max: P365D
-            charts:
-              - id: table_logs_chart_id
-                type: io.kestra.plugin.core.dashboard.chart.Table
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    chart_namespace:
-                      field: NAMESPACE
-                    chart_execution_id:
-                      field: EXECUTION_ID
-                  where:
-                    - field: NAMESPACE
-                      type: EQUAL_TO
-                      value: "%s"
-                    - field: EXECUTION_ID
-                      type: EQUAL_TO
-                      value: "%s"
-            """.formatted(fakeNamespace, fakeExecutionId);
-
-        // Create a dashboard
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-        assertThat(dashboard).isNotNull();
-        assertThat(dashboard.getId()).isNotNull();
-        assertThat(dashboard.getTitle()).isEqualTo("A dashboard with a simple table");
-
-        // Compute a dashboard, making sure the query is correct
-        PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/table_logs_chart_id", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-            PagedResults.class
-        );
-        assertThat(chartData).isNotNull();
-        assertThat(chartData.getTotal()).isEqualTo(1);
-        assertThat(chartData.getResults().get(0).get("chart_namespace")).isEqualTo(fakeNamespace);
-        assertThat(chartData.getResults().get(0).get("chart_execution_id")).isEqualTo(fakeExecutionId);
-
-        // export CSV
-        byte[] csvBytes = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/table_logs_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-            Argument.of(byte[].class)
-        );
-        var csv = new String(csvBytes, StandardCharsets.UTF_8);
-        assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
-
-        // export ION
-        byte[] ionBytes = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/table_logs_chart_id/export?format=ION", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-            Argument.of(byte[].class)
-        );
-        var ion = new String(ionBytes, StandardCharsets.UTF_8);
-        assertThat(ion).contains(fakeNamespace).contains(fakeExecutionId);
-    }
 
     @Test
     void shouldExportAnAdHocPreviewChartToCsv() {
@@ -735,162 +114,6 @@ class DashboardControllerTest {
     }
 
     @Test
-    void shouldExportANonTableDataChartToCsv() {
-        var uuid = IdUtils.create();
-        var fakeNamespace = "a-namespace_" + uuid;
-        var fakeExecutionId = "an-execution-id" + uuid;
-        logRepository.save(
-            LogEntry.builder()
-                .namespace(fakeNamespace)
-                .level(Level.INFO)
-                .attemptNumber(1)
-                .executionId(fakeExecutionId)
-                .tenantId(MAIN_TENANT)
-                .executionKind(ExecutionKind.NORMAL)
-                .flowId("a-flow-id")
-                .timestamp(Instant.now())
-                .message("a message")
-                .build()
-        );
-
-        String dashboardYaml = """
-            id: exportNonTableDataChartToCsv
-            title: A dashboard with a pie chart
-            timeWindow:
-              default: P30D
-              max: P365D
-            charts:
-              - id: pie_logs_chart_id
-                type: io.kestra.plugin.core.dashboard.chart.Pie
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    chart_namespace:
-                      field: NAMESPACE
-                    chart_execution_id:
-                      field: EXECUTION_ID
-                      agg: COUNT
-                  where:
-                    - field: NAMESPACE
-                      type: EQUAL_TO
-                      value: "%s"
-                    - field: EXECUTION_ID
-                      type: EQUAL_TO
-                      value: "%s"
-            """.formatted(fakeNamespace, fakeExecutionId);
-
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-
-        // a Pie chart is not a Table but is still a DataChart: the export guard was broadened to allow it
-        byte[] csvBytes = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/pie_logs_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-            Argument.of(byte[].class)
-        );
-        var csv = new String(csvBytes, StandardCharsets.UTF_8);
-        assertThat(csv).contains("chart_namespace").contains("chart_execution_id").contains(fakeNamespace).contains("1");
-    }
-
-    @Test
-    void shouldExportAKpiChartToCsvAndIon() {
-        var uuid = IdUtils.create();
-        var fakeNamespace = "a-namespace_" + uuid;
-        var fakeExecutionId = "an-execution-id" + uuid;
-        logRepository.save(
-            LogEntry.builder()
-                .namespace(fakeNamespace)
-                .level(Level.INFO)
-                .attemptNumber(1)
-                .executionId(fakeExecutionId)
-                .tenantId(MAIN_TENANT)
-                .executionKind(ExecutionKind.NORMAL)
-                .flowId("a-flow-id")
-                .timestamp(Instant.now())
-                .message("a message")
-                .build()
-        );
-
-        String dashboardYaml = """
-            id: exportKpiChartToCsvAndIon
-            title: A dashboard with a KPI chart
-            timeWindow:
-              default: P30D
-              max: P365D
-            charts:
-              - id: kpi_logs_chart_id
-                type: io.kestra.plugin.core.dashboard.chart.KPI
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.LogsKPI
-                  columns:
-                    field: EXECUTION_ID
-                    agg: COUNT
-                  numerator:
-                    - field: LEVEL
-                      type: IN
-                      values:
-                        - INFO
-                  where:
-                    - field: NAMESPACE
-                      type: EQUAL_TO
-                      value: "%s"
-                    - field: EXECUTION_ID
-                      type: EQUAL_TO
-                      value: "%s"
-            """.formatted(fakeNamespace, fakeExecutionId);
-
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-
-        // KPI charts are DataChartKPI, not DataChart: the export guard was broadened to allow them too
-        byte[] csvBytes = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/kpi_logs_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-            Argument.of(byte[].class)
-        );
-        assertThat(new String(csvBytes, StandardCharsets.UTF_8)).contains("value").contains("1.0");
-
-        byte[] ionBytes = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/kpi_logs_chart_id/export?format=ION", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-            Argument.of(byte[].class)
-        );
-        // ION encodes doubles in binary, so only the "value" field name (a text symbol) is asserted here
-        assertThat(new String(ionBytes, StandardCharsets.UTF_8)).contains("value");
-    }
-
-    @Test
-    void shouldRejectExportOfMarkdownChart() {
-        String dashboardYaml = """
-            id: exportMarkdownChartIsRejected
-            title: A dashboard with a markdown chart
-            timeWindow:
-              default: P30D
-              max: P365D
-            charts:
-              - id: markdown_chart_id
-                type: io.kestra.plugin.core.dashboard.chart.Markdown
-                source:
-                  type: Text
-                  content: Some markdown content
-            """;
-
-        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            DashboardController.DashboardResponse.class
-        );
-
-        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/markdown_chart_id/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()),
-                Argument.of(byte[].class)
-            )
-        );
-        assertThat(httpClientResponseException.getMessage()).contains("Only data charts can be exported.");
-    }
-
-    @Test
     void shouldExportChartFromDefaultDashboardSentinel() {
         // the "_default" id is a reserved sentinel resolving to the built-in default dashboard, not a stored one
         DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
@@ -910,6 +133,19 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldTreatNullFiltersAsNoFiltersOnChartData() {
+        // Raw JSON body with an explicit "filters":null, matching the reported repro exactly -
+        // going through ChartFiltersOverrides' builder would drop the null key (NON_NULL inclusion)
+        // and never exercise the bug. Export is the only route reaching the dashboard query builder
+        // in this edition, charts being rendered from their definition instead.
+        HttpResponse<byte[]> exported = client.toBlocking().exchange(
+            POST(DASHBOARD_PATH + "/_default/charts/total_executions_timeseries/export", "{\"filters\":null}").contentType(MediaType.APPLICATION_JSON),
+            Argument.of(byte[].class)
+        );
+        assertThat(exported.getStatus().getCode()).isEqualTo(200);
+    }
+
+    @Test
     void shouldReturnBuiltinDefaultDashboardDefinitions() {
         Map definitions = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/defaults/definitions"),
@@ -919,66 +155,6 @@ class DashboardControllerTest {
         assertThat((String) definitions.get("main")).contains("kpi_success_ratio");
         assertThat((String) definitions.get("flow")).contains("--NAMESPACE--").contains("--FLOW--");
         assertThat((String) definitions.get("namespace")).contains("kpi_success_ratio");
-    }
-
-    @Test
-    void shouldRejectDashboardCreationWithReservedDefaultId() {
-        String dashboardYaml = """
-            id: _default
-            title: Some Dashboard
-            timeWindow:
-              default: P30D
-              max: P365D
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  column: date
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-            """;
-
-        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-                DashboardController.DashboardResponse.class
-            )
-        );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid Dashboard: Dashboard id '_default' is reserved");
-    }
-
-    @Test
-    void shouldRejectDashboardUpdateToReservedDefaultId() {
-        String dashboardYaml = """
-            id: _default
-            title: Some Dashboard
-            timeWindow:
-              default: P30D
-              max: P365D
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  column: date
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-            """;
-
-        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                PUT(DASHBOARD_PATH + "/_default", dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-                DashboardController.DashboardResponse.class
-            )
-        );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: Dashboard id '_default' is reserved");
     }
 
     @Test
@@ -1134,5 +310,49 @@ class DashboardControllerTest {
         assertThat(chartData).isNotNull();
         assertThat(chartData.getTotal()).isGreaterThan(0L);
         assertThat(chartData.getResults()).isNotNull().isNotEmpty();
+    }
+
+    @Test
+    void shouldReturnAnEmptyPageWhenSearchingDashboards() {
+        PagedResults<?> results = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH),
+            PagedResults.class
+        );
+
+        assertThat(results.getTotal()).isZero();
+        assertThat(results.getResults()).isEmpty();
+    }
+
+    @Test
+    void shouldNotFindADashboardOtherThanTheBuiltInDefault() {
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(GET(DASHBOARD_PATH + "/" + IdUtils.create()))
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(404);
+    }
+
+    @Test
+    void shouldNotExposeDashboardCreation() {
+        String dashboardYaml = """
+            id: a-dashboard
+            title: A dashboard
+            charts:
+              - id: a_chart
+                type: io.kestra.plugin.core.dashboard.chart.Markdown
+                chartOptions:
+                  displayName: A chart
+                source:
+                  type: io.kestra.plugin.core.dashboard.chart.mardown.sources.Text
+                  content: hello
+            """;
+
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML))
+        );
+
+        assertThat(exception.getStatus().getCode()).isIn(404, 405);
     }
 }

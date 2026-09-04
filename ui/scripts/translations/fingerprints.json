@@ -1122,6 +1122,7 @@
   "no_code|fields|general|labels": "934b8899c3d9",
   "no_code|fields|general|listeners": "a16c88ba4c0c",
   "no_code|fields|general|outputs": "e7ce99764a2d",
+  "no_code|fields|general|policyRefs": "8dea678b710b",
   "no_code|fields|general|quotas": "422b384753c3",
   "no_code|fields|general|retry": "942087cc2d41",
   "no_code|fields|general|sla": "0653cccd663d",

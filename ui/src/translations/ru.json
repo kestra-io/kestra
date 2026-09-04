@@ -1725,7 +1725,8 @@
           "workerSelector": "Селектор Worker",
           "checks": "Проверки",
           "updated": "Обновлено",
-          "quotas": "Квоты"
+          "quotas": "Квоты",
+          "policyRefs": "Ссылки на Policy"
         }
       },
       "select": {

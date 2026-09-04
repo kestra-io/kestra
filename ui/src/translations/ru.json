@@ -2252,11 +2252,13 @@
       "collapse": "Свернуть"
     },
     "delete triggers": "Удалить triggers",
+    "delete triggers orphans only": "Будет удалено только состояние trigger, которое больше не объявлено в flow. Trigger, всё ещё объявленные в flow, сохраняются.",
     "bulk delete triggers": "Вы уверены, что хотите удалить {count} triggers?",
     "bulk success delete triggers": "{count} триггеры были успешно удалены",
     "delete trigger confirmation": "Вы уверены, что хотите удалить trigger {id}? WARNING: удаление trigger может привести к дублированию выполнений, если trigger все еще активен в flow.",
     "delete trigger success": "Триггер {id} был успешно удален",
     "delete trigger error": "Ошибка при удалении trigger {id}",
+    "delete trigger still declared": "Этот trigger всё ещё объявлен в flow. Удалите его из flow или используйте Restart.",
     "revision deleted": "Ревизия {revision} была успешно удалена",
     "delete revision confirm": "Вы уверены, что хотите удалить ревизию {revision}?",
     "delete revision error": "Ошибка при удалении ревизии {revision} с ошибкой {error}",

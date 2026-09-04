@@ -2252,11 +2252,13 @@
       "collapse": "折叠"
     },
     "delete triggers": "删除 triggers",
+    "delete triggers orphans only": "只会删除不再在 flow 中声明的 trigger 状态。仍在 flow 中声明的 trigger 会被保留。",
     "bulk delete triggers": "您确定要删除 {count} 个 triggers 吗？",
     "bulk success delete triggers": "{count} 个 trigger 已成功删除",
     "delete trigger confirmation": "您确定要删除trigger {id}吗？WARNING: 如果trigger仍在flow中激活，删除trigger可能会导致重复执行。",
     "delete trigger success": "触发器 {id} 已成功删除",
     "delete trigger error": "删除触发器 {id} 时出错",
+    "delete trigger still declared": "此 trigger 仍在 flow 中声明。请从 flow 中移除它或使用 Restart。",
     "revision deleted": "修订版 {revision} 已成功删除",
     "delete revision confirm": "您确定要删除修订版 {revision} 吗？",
     "delete revision error": "删除修订版 {revision} 时出错，错误信息 {error}",

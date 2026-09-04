@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
       },
       "trigger": {
-        "case_sub": "仅限企业版功能",
-        "case_title": "案例状态",
         "execution_sub": "对 flow 状态变化作出反应",
         "execution_title": "执行状态",
         "other_sub": "任何可用的 trigger 插件",
@@ -138,6 +136,7 @@
     "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如，PT30M, P1D)。",
     "update": "更新",
     "confirmation": "确认",
+    "toast confirm": "您确定吗？",
     "common": {
       "back": "返回",
       "openInNewTab": "在新标签页中打开"
@@ -344,9 +343,31 @@
     "select a state": "选择状态",
     "are you sure change state": "您确定要更改状态吗？",
     "yes": "是",
+    "no": "否",
     "change state done": "任务状态已更新",
     "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
     "change state current state": "当前状态是：",
+    "change state hint": {
+      "WARNING": [
+        "流程将被标记为WARNING。",
+        "接下来的tasks将被执行。",
+        "错误的tasks将被执行。"
+      ],
+      "FAILED": [
+        "该flow将被标记为FAILED。",
+        "不会执行其他task。",
+        "将执行错误tasks。"
+      ],
+      "SUCCESS": [
+        "由于此任务成功，flow 将重新启动。",
+        "所有被阻止的任务将被执行。",
+        "如果所有任务运行都成功，flow 将处于 SUCCESS 状态。"
+      ],
+      "RUNNING": [
+        "flow将重新启动，并将执行所有后续task。",
+        "所有被阻止的task将被执行。"
+      ]
+    },
     "replay execution title": "重放执行",
     "restart execution title": "重新启动执行",
     "replay execution description": "这将基于所选的执行创建一个新的执行。",
@@ -414,7 +435,8 @@
       "zoom-reset": "重置缩放",
       "zoom-fit": "适应屏幕",
       "invalid": "图形错误",
-      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。"
+      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
+      "load_error": "无法加载拓扑图。请重试。"
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "并发限制",
-      "warning": "更改运行计数器可能会破坏并发性，因此执行可能会超出允许的限制。"
+      "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。"
     },
     "flowConcurrency": {
       "loadError": "无法加载此 flow 的并发限制。",
@@ -515,6 +537,10 @@
       }
     },
     "use": "使用",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "插件安装失败",
@@ -648,6 +674,10 @@
     "open full page": "打开完整页面",
     "drill down preview": "预览",
     "errors": {
+      "400": {
+        "title": "错误请求",
+        "content": "服务器无法理解该请求。"
+      },
       "401": {
         "title": "未授权",
         "content": "你需要认证才能访问此页面。"
@@ -660,6 +690,114 @@
         "title": "页面未找到",
         "content": "请求的URL未在此服务器上找到。<br />这就是我们所知道的。",
         "flow or execution": "你正在寻找的流程或执行不存在。"
+      },
+      "409": {
+        "title": "冲突",
+        "content": "请求与资源的当前状态冲突。"
+      },
+      "422": {
+        "title": "无效实体",
+        "content": "提交的内容无法处理。"
+      },
+      "500": {
+        "title": "内部服务器错误",
+        "content": "我们这边出了点问题。请稍后再试。"
+      },
+      "503": {
+        "title": "服务不可用",
+        "content": "服务器暂时不可用。请稍后重试。"
+      },
+      "generic": {
+        "title": "出错了",
+        "content": "发生意外错误。请重试。"
+      },
+      "trace id": "追踪 ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI 请求失败"
+        },
+        "bad-request": {
+          "title": "错误请求"
+        },
+        "bulk-validation-failed": {
+          "title": "部分项目无法处理"
+        },
+        "conflict": {
+          "title": "冲突"
+        },
+        "entity-already-exists": {
+          "title": "实体已存在"
+        },
+        "forbidden": {
+          "title": "访问被拒绝"
+        },
+        "internal-error": {
+          "title": "内部服务器错误"
+        },
+        "invalid-argument": {
+          "title": "无效参数"
+        },
+        "invalid-entity": {
+          "title": "无效实体"
+        },
+        "invalid-format": {
+          "title": "无效值格式"
+        },
+        "invalid-json": {
+          "title": "无效 JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "无效的 plugin 类型"
+        },
+        "invalid-query-filters": {
+          "title": "无效查询过滤器"
+        },
+        "invalid-query-parameter": {
+          "title": "无效查询参数"
+        },
+        "invalid-request-body": {
+          "title": "无效的请求正文"
+        },
+        "locked": {
+          "title": "资源已锁定"
+        },
+        "method-not-allowed": {
+          "title": "方法不允许"
+        },
+        "migration-required": {
+          "title": "需要迁移"
+        },
+        "not-acceptable": {
+          "title": "不可接受"
+        },
+        "not-found": {
+          "title": "未找到资源"
+        },
+        "payload-too-large": {
+          "title": "Payload 过大"
+        },
+        "resource-expired": {
+          "title": "资源已过期"
+        },
+        "service-unavailable": {
+          "title": "服务不可用",
+          "detail": "服务器暂时不可用。请稍后重试。"
+        },
+        "timeout": {
+          "title": "操作超时"
+        },
+        "too-many-requests": {
+          "title": "请求过多"
+        },
+        "unauthenticated": {
+          "title": "需要身份验证"
+        },
+        "unsupported-media-type": {
+          "title": "不支持的媒体类型"
+        },
+        "validation-failed": {
+          "title": "验证失败"
+        }
       }
     },
     "back_to_dashboard": "返回仪表板",
@@ -677,7 +815,9 @@
     "label": "标签",
     "labels": "标签",
     "execution labels": "执行标签",
+    "show more labels": "显示另外 {count} 个 label",
     "wrong labels": "标签中不允许空键或值",
+    "invalid label key": "标签 key 无效。有效的 key 必须以小写字母开头,且只能包含小写字母、数字、连字符 (-)、下划线 (_) 或句点 (.)",
     "feeds": {
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"
@@ -694,20 +834,20 @@
     "bulk restart": "确定要重新开始 <code>{executionCount}</code> 个执行吗？",
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
     "cancel": "取消",
-    "errorLogs": "错误日志",
+    "errorLogs": "错误 logs",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？"
     },
     "product_tour": "产品导览",
-    "executions replayed": "<code>{executionCount}</code> 个执行已重放",
+    "executions replayed": "<code>{executionCount}</code> 个 Execution 已重放",
     "executions state changed": "<code>{executionCount}</code> 次执行的状态已更改",
-    "executions resumed": "<code>{executionCount}</code> 个执行已恢复",
-    "executions paused": "<code>{executionCount}</code> 次执行已暂停",
-    "executions unqueue": "<code>{executionCount}</code> 次执行未排队",
-    "executions force run": "<code>{executionCount}</code> 次执行被强制运行",
-    "executions restarted": "<code>{executionCount}</code> 个执行已重新开始",
-    "executions killed": "<code>{executionCount}</code> 个执行已终止",
-    "executions deleted": "<code>{executionCount}</code> 个执行已删除",
+    "executions resumed": "<code>{executionCount}</code> 个 execution 已恢复",
+    "executions paused": "<code>{executionCount}</code> 个执行已暂停",
+    "executions unqueue": "<code>{executionCount}</code> 个未排队的 Execution",
+    "executions force run": "<code>{executionCount}</code> 次强制执行",
+    "executions restarted": "<code>{executionCount}</code> 个执行已重启",
+    "executions killed": "<code>{executionCount}</code> 个 execution 已终止",
+    "executions deleted": "已删除 <code>{executionCount}</code> 个 execution",
     "invalid bulk replay": "无法重放执行",
     "invalid bulk resume": "无法恢复执行",
     "invalid bulk pause": "无法暂停执行",
@@ -770,6 +910,7 @@
     "metric": "指标",
     "aggregation": "聚合",
     "metric choice": "此flow没有可用的指标",
+    "metric filter no match": "没有指标匹配\"{term}\"",
     "of": "的",
     "title": "标题",
     "api": "API",
@@ -803,7 +944,7 @@
     "join_slack": "加入 Slack",
     "kestra": "Kestra",
     "error detected": "检测到错误。",
-    "warning detected": "检测到警告",
+    "warning detected": "检测到警告。",
     "informative notice": "注意事项",
     "open": "打开",
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
@@ -1449,7 +1590,8 @@
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
-      "inherited": "继承的KV对"
+      "inherited": "继承的KV对",
+      "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"
     },
     "expiration": "过期",
     "page": {
@@ -1537,6 +1679,7 @@
     "last error was": "上次错误是",
     "active": "活动",
     "flows imported": "Flow已导入",
+    "flows not imported": "未导入的Flows",
     "custom value": "自定义值",
     "chart": "图表",
     "chart preview": "图表预览",
@@ -1582,7 +1725,8 @@
           "workerSelector": "Worker 选择器",
           "checks": "检查",
           "updated": "已更新",
-          "quotas": "配额"
+          "quotas": "配额",
+          "policyRefs": "Policy 引用"
         }
       },
       "select": {
@@ -1789,7 +1933,8 @@
       "close_all_tabs": "关闭所有标签页",
       "close_all_panels": "关闭所有面板",
       "exit_fullscreen": "退出全屏",
-      "fullscreen": "全屏"
+      "fullscreen": "全屏",
+      "split_panel": "拆分面板"
     },
     "search_docs": "搜索",
     "no_results_found": "未找到结果",
@@ -1802,7 +1947,9 @@
       "triggers": "未找到Triggers",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
-      "secrets": "未找到Secrets"
+      "secrets": "未找到Secrets",
+      "all_columns_hidden": "所有列均已隐藏",
+      "all_columns_hidden_description": "在“自定义表格列”中至少重新开启一列，以再次查看数据。"
     },
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
@@ -1971,8 +2118,8 @@
         },
         "unavailable": {
           "title": "AI Copilot 不可用",
-          "detail": "未配置 AI 提供商。请管理员设置，然后重试。",
-          "retry": "重试"
+          "detail": "未配置 AI 提供商。请联系管理员进行设置。",
+          "docs": "查看文档"
         },
         "thinkingWords": [
           "编排",
@@ -2455,6 +2602,7 @@
         "message": "保存前请修正错误。",
         "title": "无法保存 flow"
       },
+      "schema_default_tooltip": "字段未设置时使用的默认值",
       "search_task_placeholder": "搜索或描述一个 task…",
       "shortcuts": {
         "add_after": "在选中项后插入一个块",

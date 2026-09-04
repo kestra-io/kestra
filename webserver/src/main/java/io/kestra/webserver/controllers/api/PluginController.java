@@ -337,7 +337,15 @@ public class PluginController {
             "RealtimeTriggerInterface) or app (implements PollingTriggerInterface)."
     )
     public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
-        List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
+        List<ApiTriggerPlugin> all = toTriggerPluginCatalog(pluginRegistry.plugins());
+
+        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
+    }
+
+    // A plugin installed in several versions registers one RegisteredPlugin per version, each
+    // exposing the same trigger classes - keep a single catalog entry per trigger type.
+    protected List<ApiTriggerPlugin> toTriggerPluginCatalog(List<RegisteredPlugin> plugins) {
+        return plugins.stream()
             .flatMap(
                 registeredPlugin -> registeredPlugin.getTriggers().stream()
                     .filter(c -> !isInternal(c))
@@ -345,13 +353,13 @@ public class PluginController {
                     .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
+            .collect(Collectors.toMap(ApiTriggerPlugin::type, dto -> dto, (first, duplicate) -> first, LinkedHashMap::new))
+            .values().stream()
             .sorted(
                 Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
                     .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER)
             )
             .toList();
-
-        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
     }
 
     protected ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
@@ -507,6 +515,7 @@ public class PluginController {
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),
                     plugin.getAppBlocks().stream(),
+                    plugin.getRules().stream(),
                     plugin.getAdditionalPlugins().stream()
                 )
                     .flatMap(i -> i)

@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -61,6 +62,6 @@ public class TenantValidationFilterTest {
                 )
         );
         assertThat(exception.code()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(exception.getMessage()).isEqualTo("Bad Request: Tenant must be 'main' for OSS version");
+        assertThat(Problems.detail(exception)).isEqualTo("Tenant must be 'main' for OSS version");
     }
 }

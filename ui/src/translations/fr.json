@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels} : plugin non installé pour ce type de trigger, aucune notification ne sera envoyée."
       },
       "trigger": {
-        "case_sub": "Fonctionnalité EE uniquement",
-        "case_title": "Statut du cas",
         "execution_sub": "Réagit aux changements d'état du flow",
         "execution_title": "État d'exécution",
         "other_sub": "Tout plugin de trigger disponible",
@@ -138,6 +136,7 @@
     "invalid duration": "Format de durée invalide. Veuillez utiliser le format ISO 8601 (par exemple, PT30M, P1D).",
     "update": "Mettre à jour",
     "confirmation": "Confirmation",
+    "toast confirm": "Êtes-vous sûr ?",
     "common": {
       "back": "Retour",
       "openInNewTab": "Ouvrir dans un nouvel onglet"
@@ -344,9 +343,31 @@
     "select a state": "Sélectionner un état",
     "are you sure change state": "Êtes-vous sûr de vouloir changer l'état ?",
     "yes": "Oui",
+    "no": "Non",
     "change state done": "L'état de la task a été mis à jour",
     "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?<br/>Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
     "change state current state": "Statut actuel :",
+    "change state hint": {
+      "WARNING": [
+        "Le flow sera marqué comme WARNING.",
+        "Les prochaines tasks seront exécutées.",
+        "Les tasks d'erreur seront exécutées."
+      ],
+      "FAILED": [
+        "Le flow sera marqué comme FAILED.",
+        "Aucune autre task ne sera exécutée.",
+        "Les tasks d'erreur seront exécutées."
+      ],
+      "SUCCESS": [
+        "Le flow redémarrera car cette task a réussi.",
+        "Toutes les tasks bloquées seront exécutées.",
+        "Le flow sera en état SUCCESS si toutes les exécutions de task réussissent."
+      ],
+      "RUNNING": [
+        "Le flow redémarrera et exécutera toutes les tâches suivantes.",
+        "Toutes les tâches bloquées seront exécutées."
+      ]
+    },
     "replay execution title": "Rejouer l'exécution",
     "restart execution title": "Redémarrer l'exécution",
     "replay execution description": "Cela créera une nouvelle exécution basée sur l'exécution sélectionnée.",
@@ -414,7 +435,8 @@
       "zoom-reset": "Zoom par défaut",
       "zoom-fit": "Voir tout",
       "invalid": "Erreur de graphe",
-      "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs."
+      "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
+      "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer."
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task condition": "Afficher la condition de la task",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrence",
-      "warning": "Modifier le compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
+      "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
     },
     "flowConcurrency": {
       "loadError": "Impossible de charger la limite de concurrence de ce flow.",
@@ -515,6 +537,10 @@
       }
     },
     "use": "Utiliser",
+    "plugin_card": {
+      "tasks": "tâche | tâches",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Échec de l'installation du plugin",
@@ -648,6 +674,10 @@
     "open full page": "Ouvrir la page complète",
     "drill down preview": "Aperçu",
     "errors": {
+      "400": {
+        "title": "Mauvaise requête",
+        "content": "La requête n'a pas pu être comprise par le serveur."
+      },
       "401": {
         "title": "Non authentifié",
         "content": "Vous devez être authentifié pour accéder à cette page."
@@ -660,6 +690,114 @@
         "title": "Page introuvable",
         "content": "L'URL demandée n'a pas été trouvée sur ce serveur.<br />C'est tout ce que nous savons.",
         "flow or execution": "Le flow ou l'exécution demandé est introuvable."
+      },
+      "409": {
+        "title": "Conflit",
+        "content": "La requête est en conflit avec l'état actuel de la ressource."
+      },
+      "422": {
+        "title": "Entité invalide",
+        "content": "Le contenu soumis n'a pas pu être traité."
+      },
+      "500": {
+        "title": "Erreur interne du serveur",
+        "content": "Un problème est survenu de notre côté. Veuillez réessayer plus tard."
+      },
+      "503": {
+        "title": "Service indisponible",
+        "content": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard."
+      },
+      "generic": {
+        "title": "Un problème est survenu",
+        "content": "Une erreur inattendue est survenue. Veuillez réessayer."
+      },
+      "trace id": "ID de trace",
+      "problems": {
+        "ai-request-failed": {
+          "title": "La requête AI a échoué"
+        },
+        "bad-request": {
+          "title": "Mauvaise requête"
+        },
+        "bulk-validation-failed": {
+          "title": "Certains éléments n'ont pas pu être traités"
+        },
+        "conflict": {
+          "title": "Conflit"
+        },
+        "entity-already-exists": {
+          "title": "L'entité existe déjà"
+        },
+        "forbidden": {
+          "title": "Accès refusé"
+        },
+        "internal-error": {
+          "title": "Erreur interne du serveur"
+        },
+        "invalid-argument": {
+          "title": "Argument invalide"
+        },
+        "invalid-entity": {
+          "title": "Entité invalide"
+        },
+        "invalid-format": {
+          "title": "Format de valeur invalide"
+        },
+        "invalid-json": {
+          "title": "JSON invalide"
+        },
+        "invalid-plugin-type": {
+          "title": "Type de plugin invalide"
+        },
+        "invalid-query-filters": {
+          "title": "Filtres de requête invalides"
+        },
+        "invalid-query-parameter": {
+          "title": "Paramètre de requête invalide"
+        },
+        "invalid-request-body": {
+          "title": "Corps de requête invalide"
+        },
+        "locked": {
+          "title": "La ressource est verrouillée"
+        },
+        "method-not-allowed": {
+          "title": "Méthode non autorisée"
+        },
+        "migration-required": {
+          "title": "Migration requise"
+        },
+        "not-acceptable": {
+          "title": "Non acceptable"
+        },
+        "not-found": {
+          "title": "Ressource introuvable"
+        },
+        "payload-too-large": {
+          "title": "Charge utile trop volumineuse"
+        },
+        "resource-expired": {
+          "title": "La ressource a expiré"
+        },
+        "service-unavailable": {
+          "title": "Service indisponible",
+          "detail": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard."
+        },
+        "timeout": {
+          "title": "Opération expirée"
+        },
+        "too-many-requests": {
+          "title": "Trop de requêtes"
+        },
+        "unauthenticated": {
+          "title": "Authentification requise"
+        },
+        "unsupported-media-type": {
+          "title": "Type de média non pris en charge"
+        },
+        "validation-failed": {
+          "title": "La validation a échoué"
+        }
       }
     },
     "back_to_dashboard": "Retour au tableau de bord",
@@ -677,7 +815,9 @@
     "label": "Label",
     "labels": "Labels",
     "execution labels": "Labels d'exécution",
+    "show more labels": "Afficher {count} étiquettes supplémentaires",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",
+    "invalid label key": "Key de label invalide. Une key valide doit commencer par une lettre minuscule et ne contenir que des lettres minuscules, des chiffres, des tirets (-), des underscores (_) ou des points (.)",
     "feeds": {
       "heading": "Tout sur Kestra.",
       "subheading": "Les dernières mises à jour, guides et histoires"
@@ -694,7 +834,7 @@
     "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> exécution(s) ?",
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> exécution(s) ?",
     "cancel": "Annuler",
-    "errorLogs": "Logs des erreurs",
+    "errorLogs": "Logs d'erreurs",
     "welcome_page": {
       "guide": "Besoin d'aide pour exécuter votre premier flow ?"
     },
@@ -702,11 +842,11 @@
     "executions replayed": "<code>{executionCount}</code> exécution(s) rejouée(s)",
     "executions state changed": "L'état de <code>{executionCount}</code> exécution(s) a été modifié",
     "executions resumed": "<code>{executionCount}</code> exécution(s) reprise(s)",
-    "executions paused": "<code>{executionCount}</code> exécution(s) en PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> exécution(s) en attente",
-    "executions force run": "<code>{executionCount}</code> exécution(s) forcée(s) en cours d'exécution",
+    "executions paused": "<code>{executionCount}</code> exécution(s) en pause",
+    "executions unqueue": "<code>{executionCount}</code> exécution(s) non mise(s) en file d'attente",
+    "executions force run": "<code>{executionCount}</code> exécution(s) forcée(s)",
     "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
-    "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",
+    "executions killed": "<code>{executionCount}</code> exécution(s) tuée(s)",
     "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
     "invalid bulk replay": "Impossible de rejouer les exécutions",
     "invalid bulk resume": "Impossible de reprendre les exécutions",
@@ -770,6 +910,7 @@
     "metric": "Métrique",
     "aggregation": "Agrégation",
     "metric choice": "Aucune métrique disponible pour ce flow",
+    "metric filter no match": "Aucune métrique ne correspond à \"{term}\"",
     "of": "de",
     "title": "Titre",
     "api": "API",
@@ -803,7 +944,7 @@
     "join_slack": "Rejoindre Slack",
     "kestra": "Kestra",
     "error detected": "Erreur(s) détectée(s).",
-    "warning detected": "Avertissement(s) détecté(s)",
+    "warning detected": "Avertissement(s) détecté(s).",
     "informative notice": "Note(s)",
     "open": "Afficher",
     "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
@@ -1449,7 +1590,8 @@
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
       },
-      "inherited": "Paires KV héritées"
+      "inherited": "Paires KV héritées",
+      "expiration_hint": "Expire actuellement le {date}. Laissez le champ intact pour conserver cette expiration ; choisir une durée la recalcule à partir de maintenant, et la vider la supprime."
     },
     "expiration": "Expiration",
     "page": {
@@ -1537,6 +1679,7 @@
     "last error was": "La dernière erreur était",
     "active": "Actif",
     "flows imported": "Flux importés",
+    "flows not imported": "Flows non importés",
     "custom value": "Valeur personnalisée",
     "chart": "Graphique",
     "chart preview": "Aperçu du graphique",
@@ -1582,7 +1725,8 @@
           "workerSelector": "Sélecteur de Worker",
           "checks": "Vérifications",
           "updated": "Mis à jour",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Références de Policy"
         }
       },
       "select": {
@@ -1789,7 +1933,8 @@
       "close_all_tabs": "Fermer tous les onglets",
       "close_all_panels": "Fermer tous les panneaux",
       "exit_fullscreen": "Quitter le mode plein écran",
-      "fullscreen": "Plein écran"
+      "fullscreen": "Plein écran",
+      "split_panel": "Diviser le panneau"
     },
     "search_docs": "Rechercher",
     "no_results_found": "Aucun résultat trouvé",
@@ -1802,7 +1947,9 @@
       "triggers": "Aucun Trigger trouvé",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
-      "secrets": "Aucun secret trouvé"
+      "secrets": "Aucun secret trouvé",
+      "all_columns_hidden": "Toutes les colonnes sont masquées",
+      "all_columns_hidden_description": "Réactivez au moins une colonne dans Personnaliser les colonnes du tableau pour revoir les données."
     },
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "dashboards": {
@@ -1971,8 +2118,8 @@
         },
         "unavailable": {
           "title": "AI Copilot n'est pas disponible",
-          "detail": "Aucun fournisseur d'IA n'est configuré. Demandez à un administrateur d'en configurer un, puis réessayez.",
-          "retry": "Réessayer"
+          "detail": "Aucun fournisseur d'AI n'est configuré. Demandez à un administrateur d'en configurer un.",
+          "docs": "Voir la documentation"
         },
         "thinkingWords": [
           "Orchestration",
@@ -2455,6 +2602,7 @@
         "message": "Corrigez les erreurs avant d'enregistrer.",
         "title": "Impossible d'enregistrer le flow"
       },
+      "schema_default_tooltip": "Valeur par défaut utilisée lorsque le champ n'est pas défini",
       "search_task_placeholder": "Rechercher ou décrire une tâche…",
       "shortcuts": {
         "add_after": "Insérer un bloc après la sélection",

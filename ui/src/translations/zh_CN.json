@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
       },
       "trigger": {
-        "case_sub": "仅限企业版功能",
-        "case_title": "案例状态",
         "execution_sub": "对 flow 状态变化作出反应",
         "execution_title": "执行状态",
         "other_sub": "任何可用的 trigger 插件",
@@ -138,6 +136,7 @@
     "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如，PT30M, P1D)。",
     "update": "更新",
     "confirmation": "确认",
+    "toast confirm": "您确定吗？",
     "common": {
       "back": "返回",
       "openInNewTab": "在新标签页中打开"
@@ -344,9 +343,31 @@
     "select a state": "选择状态",
     "are you sure change state": "您确定要更改状态吗？",
     "yes": "是",
+    "no": "否",
     "change state done": "任务状态已更新",
     "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
     "change state current state": "当前状态是：",
+    "change state hint": {
+      "WARNING": [
+        "流程将被标记为WARNING。",
+        "接下来的tasks将被执行。",
+        "错误的tasks将被执行。"
+      ],
+      "FAILED": [
+        "该flow将被标记为FAILED。",
+        "不会执行其他task。",
+        "将执行错误tasks。"
+      ],
+      "SUCCESS": [
+        "由于此任务成功，flow 将重新启动。",
+        "所有被阻止的任务将被执行。",
+        "如果所有任务运行都成功，flow 将处于 SUCCESS 状态。"
+      ],
+      "RUNNING": [
+        "flow将重新启动，并将执行所有后续task。",
+        "所有被阻止的task将被执行。"
+      ]
+    },
     "replay execution title": "重放执行",
     "restart execution title": "重新启动执行",
     "replay execution description": "这将基于所选的执行创建一个新的执行。",
@@ -516,6 +537,10 @@
       }
     },
     "use": "使用",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "插件安装失败",
@@ -792,6 +817,7 @@
     "execution labels": "执行标签",
     "show more labels": "显示另外 {count} 个 label",
     "wrong labels": "标签中不允许空键或值",
+    "invalid label key": "标签 key 无效。有效的 key 必须以小写字母开头,且只能包含小写字母、数字、连字符 (-)、下划线 (_) 或句点 (.)",
     "feeds": {
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"
@@ -884,6 +910,7 @@
     "metric": "指标",
     "aggregation": "聚合",
     "metric choice": "此flow没有可用的指标",
+    "metric filter no match": "没有指标匹配\"{term}\"",
     "of": "的",
     "title": "标题",
     "api": "API",
@@ -1652,6 +1679,7 @@
     "last error was": "上次错误是",
     "active": "活动",
     "flows imported": "Flow已导入",
+    "flows not imported": "未导入的Flows",
     "custom value": "自定义值",
     "chart": "图表",
     "chart preview": "图表预览",
@@ -1697,7 +1725,8 @@
           "workerSelector": "Worker 选择器",
           "checks": "检查",
           "updated": "已更新",
-          "quotas": "配额"
+          "quotas": "配额",
+          "policyRefs": "Policy 引用"
         }
       },
       "select": {

@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: Plugin für diesen Trigger-Typ nicht installiert, es wird keine Benachrichtigung gesendet."
       },
       "trigger": {
-        "case_sub": "Nur in der Enterprise Edition",
-        "case_title": "Case-Status",
         "execution_sub": "Reagiert auf Statusänderungen von Flows",
         "execution_title": "Execution-Status",
         "other_sub": "Jedes verfügbare Trigger-Plugin",
@@ -138,6 +136,7 @@
     "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
     "update": "Aktualisieren",
     "confirmation": "Bestätigung",
+    "toast confirm": "Bist du sicher?",
     "common": {
       "back": "Zurück",
       "openInNewTab": "In neuem Tab öffnen"
@@ -344,9 +343,31 @@
     "select a state": "Status auswählen",
     "are you sure change state": "Möchtest du den Status wirklich ändern?",
     "yes": "Ja",
+    "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
     "change state current state": "Aktueller Status:",
+    "change state hint": {
+      "WARNING": [
+        "Der Flow wird als WARNING markiert.",
+        "Die nächsten Tasks werden ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "FAILED": [
+        "Der Flow wird als FAILED markiert.",
+        "Keine andere Task wird ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "SUCCESS": [
+        "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
+        "Alle blockierten Tasks werden ausgeführt.",
+        "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
+      ],
+      "RUNNING": [
+        "Der flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "Alle blockierten Tasks werden ausgeführt."
+      ]
+    },
     "replay execution title": "Replay der Execution",
     "restart execution title": "Execution neu starten",
     "replay execution description": "Dadurch wird eine neue Execution auf Basis der ausgewählten Execution erstellt.",
@@ -516,6 +537,10 @@
       }
     },
     "use": "Verwenden",
+    "plugin_card": {
+      "tasks": "Task | Tasks",
+      "blueprints": "Blueprint | Blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
@@ -792,6 +817,7 @@
     "execution labels": "Execution-Labels",
     "show more labels": "Zeige {count} weitere Labels",
     "wrong labels": "Leere Keys oder Values sind in Labels nicht erlaubt",
+    "invalid label key": "Ungültiger Label-Key. Ein gültiger Key muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben, Zahlen, Bindestriche (-), Unterstriche (_) oder Punkte (.) enthalten.",
     "feeds": {
       "heading": "Alles rund um Kestra.",
       "subheading": "Die neuesten Updates, Anleitungen und Beiträge"
@@ -884,6 +910,7 @@
     "metric": "Metrik",
     "aggregation": "Aggregation",
     "metric choice": "Keine Metriken für diesen Flow verfügbar",
+    "metric filter no match": "Keine Metrik stimmt mit „{term}“ überein",
     "of": "von",
     "title": "Titel",
     "api": "API",
@@ -1652,6 +1679,7 @@
     "last error was": "Letzter Fehler war",
     "active": "Aktiv",
     "flows imported": "Flows importiert",
+    "flows not imported": "Flows nicht importiert",
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "chart preview": "Diagrammvorschau",
@@ -1697,7 +1725,8 @@
           "workerSelector": "Worker-Selektor",
           "checks": "Checks",
           "updated": "Aktualisiert",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Policy-Referenzen"
         }
       },
       "select": {

@@ -346,6 +346,10 @@
     "no": "Não",
     "change state done": "O estado da task foi atualizado",
     "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task <code>{task}</code> na execução <code>{id}</code>?<br/>Isso reiniciará a execução a partir da próxima task e reiniciará a execução pai, se houver.",
+    "interrupt": "Interromper",
+    "interrupt confirm": "Tem certeza de que deseja interromper o task run para a task <code>{task}</code> na execução <code>{id}</code>?<br/>Isso encerrará a task em execução no worker e definirá seu estado.",
+    "interrupt done": "O task run foi interrompido",
+    "interrupt target state": "Estado de destino",
     "change state current state": "Status atual é:",
     "change state hint": {
       "WARNING": [

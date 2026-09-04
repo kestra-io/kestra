@@ -346,6 +346,10 @@
     "no": "No",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
+    "interrupt": "Interrupt",
+    "interrupt confirm": "Are you sure you want to interrupt the task run for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will terminate the running task inside the worker and set its state.",
+    "interrupt done": "Task run has been interrupted",
+    "interrupt target state": "Target state",
     "change state current state": "Current status is:",
     "change state hint": {
       "WARNING": [

@@ -1704,6 +1704,53 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/interrupt", produces = MediaType.TEXT_JSON)
+    @Operation(tags = { "Executions" }, summary = "Interrupt a task run")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the task run cannot be interrupted")
+    @ApiResponse(responseCode = "404", description = "if the execution or task run is not found")
+    public Mono<HttpResponse<?>> interruptTaskRun(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @RequestBody(description = "the taskRun id and state to apply") @Body StateRequest stateRequest) throws Exception {
+
+        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (maybeExecution.isEmpty()) {
+            return Mono.just(HttpResponse.notFound());
+        }
+
+        var execution = maybeExecution.get();
+
+        if (execution.getState().isTerminated()) {
+            throw new ConflictException("Cannot interrupt task run: execution is already terminated.");
+        }
+
+        if (stateRequest.state() != State.Type.FAILED && stateRequest.state() != State.Type.CANCELLED) {
+            throw new IllegalArgumentException("Only FAILED or CANCELLED states are supported for interrupting a task run.");
+        }
+
+        TaskRun taskRun = execution.findTaskRunByTaskRunId(stateRequest.taskRunId());
+        if (taskRun.getState().getCurrent() != State.Type.RUNNING) {
+            throw new ConflictException("Cannot interrupt task run: task run is not in RUNNING state.");
+        }
+
+        return awaitBlockingAction(
+            execution.getId(), "Interrupt task run",
+            operationId -> killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution.getId())
+                    .taskRunId(stateRequest.taskRunId())
+                    .executionState(stateRequest.state())
+                    .isOnKillCascade(false)
+                    .tenantId(tenantService.resolveTenant())
+                    .operationId(operationId)
+                    .build()
+            )
+        ).map(r -> (HttpResponse<?>) r);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })

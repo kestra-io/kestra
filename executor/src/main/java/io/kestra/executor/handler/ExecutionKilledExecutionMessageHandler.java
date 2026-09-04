@@ -96,6 +96,52 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
             executorService.log(log, true, message);
         }
 
+        if (message.getTaskRunId() != null) {
+            try {
+                killQueue.emit(
+                    ExecutionKilledExecution
+                        .builder()
+                        .executionId(message.getExecutionId())
+                        .taskRunId(message.getTaskRunId())
+                        .executionState(message.getExecutionState())
+                        .isOnKillCascade(false)
+                        .state(ExecutionKilled.State.EXECUTED)
+                        .tenantId(message.getTenantId())
+                        .build()
+                );
+            } catch (QueueException e) {
+                log.error("Unable to kill the execution task run {}", message.getTaskRunId(), e);
+            }
+
+            executionStateStore.lock(message.getExecutionId(), execution -> {
+                if (execution != null && execution.getTaskRunList() != null) {
+                    execution.getTaskRunList().stream()
+                        .filter(tr -> !tr.getState().getCurrent().isTerminated() &&
+                            execution.findParents(tr).stream().anyMatch(parent -> parent.getId().equals(message.getTaskRunId())))
+                        .forEach(tr -> {
+                            try {
+                                killQueue.emit(
+                                    ExecutionKilledExecution
+                                        .builder()
+                                        .executionId(message.getExecutionId())
+                                        .taskRunId(tr.getId())
+                                        .executionState(State.Type.CANCELLED)
+                                        .isOnKillCascade(false)
+                                        .state(ExecutionKilled.State.EXECUTED)
+                                        .tenantId(message.getTenantId())
+                                        .build()
+                                );
+                            } catch (QueueException e) {
+                                log.error("Unable to kill the descendant execution task run {}", tr.getId(), e);
+                            }
+                        });
+                }
+                return null;
+            });
+
+            return Optional.empty();
+        }
+
         // Immediately fire the event in EXECUTED state to notify the Workers to kill
         // any remaining tasks for that executing regardless of if the execution exist or not.
         // Note, that this event will be a noop if all tasks for that execution are already killed or completed.

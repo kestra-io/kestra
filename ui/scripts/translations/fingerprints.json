@@ -2022,5 +2022,9 @@
   "worker information": "d9690f106922",
   "workerId": "283c035a5126",
   "wrong labels": "f62b1e53b73f",
-  "yes": "85a39ab345d6"
+  "yes": "85a39ab345d6",
+  "interrupt": "b62523141249",
+  "interrupt confirm": "b28db826a22c",
+  "interrupt done": "1d72b20087fc",
+  "interrupt target state": "ec34c7a485cb"
 }

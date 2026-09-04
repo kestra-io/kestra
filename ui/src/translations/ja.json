@@ -346,6 +346,10 @@
     "no": "いいえ",
     "change state done": "タスクの状態が更新されました",
     "change state confirm": "実行 <code>{id}</code> の <code>{task}</code> タスクのタスク実行状態を変更してもよろしいですか？<br/>これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
+    "interrupt": "中断",
+    "interrupt confirm": "実行 <code>{id}</code> の <code>{task}</code> task の task run を中断してもよろしいですか？<br/>worker 内で実行中の task を終了し、その状態を設定します。",
+    "interrupt done": "Task run が中断されました",
+    "interrupt target state": "対象の状態",
     "change state current state": "現在のステータスは:",
     "change state hint": {
       "WARNING": [

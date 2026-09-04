@@ -13,7 +13,7 @@ split-view). All flows through real keyboard interaction against a live
 dev server and backend, with mutations verified against the YAML the
 backend actually persisted — not just the DOM.
 
-## Fixture
+## Fixtures
 
 `tests/e2e/fixtures/flows/blocks-canvas.yaml` — one flow exercising every
 canvas shape the suite needs to walk and mutate:
@@ -23,11 +23,22 @@ canvas shape the suite needs to walk and mutate:
 - two top-level leaf tasks
 - empty top-level errors/finally sections (covers empty-state insertion)
 
+`tests/e2e/fixtures/flows/blocks-tall.yaml` — sixteen leaf tasks plus one
+block in each of errors, finally and afterExecution, used only by the
+scrolling spec. Scrolling only exists once the canvas overflows the
+viewport. Every section is populated deliberately: `buildSectionLanes`
+emits triggers → tasks → errors → finally → afterExecution, and an empty
+section still renders a drop zone carrying a `data-block-id`, which counts
+as a navigable stop — so an empty section would sit below the block the
+scroll tests treat as last. With all of them filled, `notify` in
+afterExecution is the final stop.
+
 ## Files
 
 | File | Covers |
 |---|---|
 | `blocks-navigation.spec.ts` | Keyboard-only canvas navigation |
+| `blocks-canvas-scroll.spec.ts` | Scrolling: palette-jump centring, the final-block boundary, status-bar clearance |
 | `blocks-insert.spec.ts` | Every insertion entry point |
 | `blocks-edit-forms.spec.ts` | Every generated-form input family |
 | `blocks-mutations.spec.ts` | Duplicate, delete, reorder, split view, command menu, save |
@@ -50,6 +61,19 @@ canvas shape the suite needs to walk and mutate:
 - Dock-pane focus: ArrowRight/ArrowLeft walks Inputs → Form → back to card
 - Escape backs out one level at a time (dock field → panel → gone)
 - Help overlay open/close (`?` / Escape)
+
+**Scrolling** (`blocks-canvas-scroll.spec.ts`) — a separate file because it
+needs the tall fixture, and a describe block only gets one `beforeEach`:
+- A command-palette `Go to` jump centres its destination, asserted as a
+  distance from the scrollport centre so neither `nearest` (parks it at the
+  edge) nor `start` (pins it to the top) passes
+- Jumping to the final block, which cannot be centred because nothing sits
+  beneath it, still leaves it fully visible and clear of the status bar
+- Arrow-stepping to that same final block keeps it clear of the status bar.
+  Stepping stays on `nearest`, and only the last block forces the case —
+  anything higher is pushed clear by the content below it, so the assertion
+  would hold with or without `scroll-padding-bottom`
+- Jumping back up leaves the destination fully within the scrollport
 
 **Insertion** (`blocks-insert.spec.ts`)
 - Insertion caret shows `⇧A` above / `A` below the focused block
@@ -153,6 +177,16 @@ to.
   executor at runtime (EE feature) in a way that poison-pills the queue and
   crash-loops the server on every boot — the flow properties panel
   deliberately does not offer it, and a test pins that.
+- **Overlay text matches must be scoped to the overlay.** The canvas renders
+  block labels carrying the same words as menu entries, and a card sitting
+  behind an overlay still looks visible to Playwright. `pickTask()` and
+  `goToSectionViaPalette()` both scope their lookup to the picker's listbox
+  and the command menu respectively.
+- **An empty section is still a navigable stop.** `BlockSectionLane` renders a
+  drop zone carrying a `data-block-id` when a section has no entries, and
+  `navigableCards()` counts it. Any test reasoning about "the last block"
+  has to account for every lane `buildSectionLanes` emits, not just the ones
+  the fixture happens to fill.
 
 ## Known gaps / follow-ups
 

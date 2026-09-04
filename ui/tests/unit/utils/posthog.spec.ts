@@ -3,6 +3,7 @@ import {describe, it, expect, vi, beforeEach} from "vitest"
 const posthogMock = {
     __loaded: false,
     capture: vi.fn(),
+    captureException: vi.fn(),
     opt_out_capturing: vi.fn(),
     reset: vi.fn(),
 }
@@ -21,6 +22,7 @@ describe("posthog queue", () => {
     beforeEach(() => {
         posthogMock.__loaded = false
         posthogMock.capture.mockClear()
+        posthogMock.captureException.mockClear()
         posthogMock.opt_out_capturing.mockClear()
         posthogMock.reset.mockClear()
         vi.resetModules()
@@ -62,5 +64,23 @@ describe("posthog queue", () => {
 
         expect(posthogMock.opt_out_capturing).toHaveBeenCalled()
         expect(posthogMock.reset).toHaveBeenCalled()
+    })
+
+    it("captures exceptions when enabled and skips when disabled", async () => {
+        const {capturePosthogException, initPosthogIfEnabled} = await import("../../../src/utils/posthog")
+
+        await initPosthogIfEnabled({isUiAnonymousUsageEnabled: true})
+
+        const error = new Error("boom")
+        capturePosthogException({isUiAnonymousUsageEnabled: true}, error, {handler: "vue"})
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(posthogMock.captureException).toHaveBeenCalledTimes(1)
+        expect(posthogMock.captureException).toHaveBeenCalledWith(error, {handler: "vue"})
+
+        capturePosthogException({isUiAnonymousUsageEnabled: false}, new Error("nope"))
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(posthogMock.captureException).toHaveBeenCalledTimes(1)
     })
 })

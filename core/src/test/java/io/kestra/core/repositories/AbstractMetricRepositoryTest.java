@@ -9,8 +9,6 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
-import com.devskiller.friendly_id.FriendlyId;
-
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
@@ -20,6 +18,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.kestra.plugin.core.dashboard.data.MetricsKPI;
@@ -39,7 +38,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void all() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         ZonedDateTime now = ZonedDateTime.now();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
@@ -141,7 +140,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void names() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
 
@@ -166,7 +165,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void findAllAsync() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         TaskRun taskRun2 = taskRun(tenant, executionId, "task");
@@ -195,7 +194,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     protected void fetchData() throws IOException {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
@@ -221,7 +220,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     protected void fetchValue() throws IOException {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
@@ -245,7 +244,7 @@ public abstract class AbstractMetricRepositoryTest {
         // A plugin-generated taskId (e.g. Ansible "<host> | <play> : <task>") can exceed the legacy
         // VARCHAR(150) task_id column and crash-loop the indexer; the column now allows up to 256.
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         String longTaskId = "a".repeat(200);
         MetricEntry counter = MetricEntry.of(taskRun(tenant, executionId, longTaskId), counter("counter"), null);
 
@@ -271,14 +270,14 @@ public abstract class AbstractMetricRepositoryTest {
             .namespace("namespace")
             .executionId(executionId)
             .taskId(taskId)
-            .id(FriendlyId.createFriendlyId())
+            .id(Base62Encoder.createId())
             .build();
     }
 
     @Test
     void shouldAggregateByFlowIdWithTaskIdFilter() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
 
         TaskRun taskRunA = taskRun(tenant, executionId, "taskA");
         TaskRun taskRunB = taskRun(tenant, executionId, "taskB");
@@ -303,7 +302,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void shouldAggregateByFlowIdWithDifferentAggregationTypes() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
 
         metricRepository.save(MetricEntry.of(taskRun1, counter("agg-metric"), null));
@@ -321,7 +320,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void shouldPaginateFindByExecutionId() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
 
         for (int i = 0; i < 5; i++) {
@@ -340,7 +339,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void shouldReturnDistinctTasksWithMetrics() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
 
         TaskRun taskRunA = taskRun(tenant, executionId, "taskA");
         TaskRun taskRunB = taskRun(tenant, executionId, "taskB");

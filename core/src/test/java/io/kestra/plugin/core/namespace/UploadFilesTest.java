@@ -13,7 +13,6 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -23,6 +22,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -49,7 +49,7 @@ public class UploadFilesTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + Base62Encoder.createId()),
             new FileInputStream(file)
         );
         UploadFiles uploadFile = UploadFiles.builder()
@@ -173,7 +173,7 @@ public class UploadFilesTest {
         return storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + Base62Encoder.createId()),
             new FileInputStream(file)
         );
     }

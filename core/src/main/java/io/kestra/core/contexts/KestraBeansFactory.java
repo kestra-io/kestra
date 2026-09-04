@@ -6,7 +6,6 @@ import java.util.Map;
 import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.contexts.configuration.StorageConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginSchemaBundleService;
@@ -18,11 +17,7 @@ import io.kestra.core.storages.StorageInterfaceFactory;
 import io.kestra.core.utils.ExecutorsUtils;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Bean;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Primary;
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.*;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
@@ -39,19 +34,19 @@ import static io.kestra.core.storages.StorageInterfaceFactory.KESTRA_STORAGE_TYP
 public class KestraBeansFactory {
 
     @Inject
-    Validator validator;
+    private Validator validator;
 
     @Inject
-    StorageConfig storageConfig;
+    private StorageConfig storageConfig;
 
     @Inject
-    protected StorageConfiguration storageConfiguration;
+    private StorageConfiguration storageConfiguration;
 
     @Inject
-    LogsConfig logsConfig;
+    private LogsConfig logsConfig;
 
     @Inject
-    RepositoryConfiguration repositoryConfiguration;
+    private RepositoryConfiguration repositoryConfiguration;
 
     // @Primary so unqualified injections (e.g. PluginAutoInstallService) resolve to this
     // icon-less catalog rather than the webserver's @Named("withIcons") variant.
@@ -62,12 +57,6 @@ public class KestraBeansFactory {
         ExecutorsUtils executorsUtils,
         PluginSchemaBundleService schemaBundleService) {
         return new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
-    }
-
-    @Requires(missingBeans = PluginRegistry.class)
-    @Singleton
-    public PluginRegistry pluginRegistry() {
-        return DefaultPluginRegistry.getOrCreate();
     }
 
     @Singleton

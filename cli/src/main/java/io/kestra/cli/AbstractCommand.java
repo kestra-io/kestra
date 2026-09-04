@@ -100,7 +100,8 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     /**
      * Specifies whether external plugins must be loaded.
-     * This method can be overridden by concrete commands.
+     * This method can be overridden by concrete commands. It is also evaluated before dependency
+     * injection, when the context properties are computed, so it must only rely on parsed options.
      *
      * @return {@code true} if external plugins must be loaded.
      */

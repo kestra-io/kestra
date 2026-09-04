@@ -1,4 +1,4 @@
-package io.kestra.queue;
+package io.kestra.core.queues;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import jakarta.annotation.Nullable;

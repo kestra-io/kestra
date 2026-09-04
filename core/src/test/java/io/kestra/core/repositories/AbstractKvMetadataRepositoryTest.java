@@ -281,6 +281,35 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(namespaces).doesNotContain(deletedNamespace);
     }
 
+    @Test
+    void shouldNotOverwriteWhenNamespaceAndKeyConcatenateToSameString() throws IOException {
+        String tenantId = TestsUtils.randomTenant();
+        PersistedKvMetadata first = PersistedKvMetadata.builder()
+            .tenantId(tenantId)
+            .namespace("company.team")
+            .name("x_y")
+            .build();
+        PersistedKvMetadata second = PersistedKvMetadata.builder()
+            .tenantId(tenantId)
+            .namespace("company.team_x")
+            .name("y")
+            .build();
+
+        kvMetadataRepositoryInterface.save(first);
+        kvMetadataRepositoryInterface.save(second);
+
+        Optional<PersistedKvMetadata> foundFirst = kvMetadataRepositoryInterface.findByName(tenantId, "company.team", "x_y");
+        Optional<PersistedKvMetadata> foundSecond = kvMetadataRepositoryInterface.findByName(tenantId, "company.team_x", "y");
+
+        assertThat(foundFirst).isPresent();
+        assertThat(foundFirst.get().getName()).isEqualTo("x_y");
+        assertThat(foundFirst.get().getNamespace()).isEqualTo("company.team");
+
+        assertThat(foundSecond).isPresent();
+        assertThat(foundSecond.get().getName()).isEqualTo("y");
+        assertThat(foundSecond.get().getNamespace()).isEqualTo("company.team_x");
+    }
+
     protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {
         return PersistedKvMetadata.builder()
             .tenantId(tenantId)

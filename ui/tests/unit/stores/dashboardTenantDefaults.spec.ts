@@ -69,6 +69,16 @@ describe("dashboard store tenant defaults", () => {
         expect(get).not.toHaveBeenCalled()
     })
 
+    it("does not ask for tenant defaults before the dashboard capability is known", {timeout: TEST_TIMEOUT_MS}, async () => {
+        isCustomDashboardsEnabled = undefined
+        get.mockResolvedValue({data: {defaultHomeDashboard: "tenant-default"}})
+
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+
+        await expect(useDashboardStore().getDashboardId(route)).resolves.toBe("default")
+        expect(get).not.toHaveBeenCalled()
+    })
+
     it("asks for tenant defaults when the instance can store dashboards", {timeout: TEST_TIMEOUT_MS}, async () => {
         isCustomDashboardsEnabled = true
         get.mockResolvedValue({data: {defaultHomeDashboard: "tenant-default"}})

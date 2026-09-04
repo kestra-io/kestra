@@ -93,7 +93,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     /** Loads the tenant default dashboards; an instance that cannot store dashboards has none and does not serve the route. */
     async function loadDefaults() {
-        if (useMiscStore().configs?.isCustomDashboardsEnabled === false) {
+        if (useMiscStore().configs?.isCustomDashboardsEnabled !== true) {
             defaultDashboards.value = {}
             return defaultDashboards.value
         }

@@ -36,6 +36,8 @@ import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.worker.WorkerGroups;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.queues.InMemoryWorkerQueue;
 import io.kestra.worker.queues.WorkerQueue;
@@ -48,12 +50,6 @@ import lombok.experimental.SuperBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Component-level tests for {@link WorkerTaskProcessor}'s behavior when the worker is shutting down,
- * covering the regression from <a href="https://github.com/kestra-io/kestra/issues/17124">#17124</a>:
- * a task that fails on its own during the termination grace period must still have its terminal
- * result emitted, while a task the shutdown actually interrupted is deferred for resubmission.
- */
 @KestraTest
 class WorkerTaskProcessorTest {
 
@@ -83,6 +79,61 @@ class WorkerTaskProcessorTest {
 
     @Inject
     private DispatchQueueInterface<LogEntry> logQueue;
+
+    @Test
+    void shouldAttachCompletedSubtaskWhenWorkingDirectoryRunIfIsInvalid() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkingDirectory workingDirectory = WorkingDirectory.builder()
+            .id("workingDirectory")
+            .type(WorkingDirectory.class.getName())
+            .tasks(List.of(
+                Return.builder().id("s1").type(Return.class.getName()).format(Property.ofValue("one")).build(),
+                Return.builder().id("s2").type(Return.class.getName()).runIf("{{ outputs.missing }}").format(Property.ofValue("two")).build()
+            ))
+            .build();
+        WorkerTask workerTask = workerTaskFor(workingDirectory);
+
+        processor.process(workerTask);
+
+        WorkerTaskResult parentFailure = drain(resultQueue).stream()
+            .filter(result -> result.getTaskRun().getId().equals(workerTask.getTaskRun().getId()) && result.getTaskRun().getState().isFailed())
+            .findFirst()
+            .orElseThrow();
+        assertThat(parentFailure.getPrecedingResults()).singleElement().satisfies(result ->
+        {
+            assertThat(result.taskRun().getTaskId()).isEqualTo("s1");
+            assertThat(result.taskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(result.outputs()).isNotEmpty();
+        });
+    }
+
+    @Test
+    void shouldAttachCompletedSubtasksWhenWorkingDirectoryPostExecuteFails() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkingDirectory workingDirectory = FailingPostWorkingDirectory.builder()
+            .id("workingDirectory")
+            .type(FailingPostWorkingDirectory.class.getName())
+            .tasks(List.of(
+                Return.builder().id("s1").type(Return.class.getName()).format(Property.ofValue("one")).build(),
+                Return.builder().id("s2").type(Return.class.getName()).format(Property.ofValue("two")).build()
+            ))
+            .build();
+        WorkerTask workerTask = workerTaskFor(workingDirectory);
+
+        processor.process(workerTask);
+
+        WorkerTaskResult parentFailure = drain(resultQueue).stream()
+            .filter(result -> result.getTaskRun().getId().equals(workerTask.getTaskRun().getId()) && result.getTaskRun().getState().isFailed())
+            .findFirst()
+            .orElseThrow();
+        assertThat(parentFailure.getPrecedingResults())
+            .extracting(result -> result.taskRun().getTaskId())
+            .containsExactly("s1", "s2");
+        assertThat(parentFailure.getPrecedingResults())
+            .allSatisfy(result -> assertThat(result.taskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS));
+    }
 
     @Test
     void shouldEmitFailedResultWhenTaskFailsOnItsOwnDuringShutdownDrain() throws Exception {
@@ -351,6 +402,16 @@ class WorkerTaskProcessorTest {
      * emitting a malformed asset. Constructed and executed directly by the processor, so no plugin
      * registration is needed.
      */
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class FailingPostWorkingDirectory extends WorkingDirectory {
+        @Override
+        public void postExecuteTasks(RunContext runContext, TaskRun taskRun) {
+            throw new RuntimeException("simulated postExecuteTasks failure");
+        }
+    }
+
     @SuperBuilder
     @Getter
     @NoArgsConstructor

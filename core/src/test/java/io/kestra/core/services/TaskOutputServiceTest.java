@@ -168,6 +168,31 @@ class TaskOutputServiceTest {
     }
 
     @Test
+    @SuppressWarnings({"deprecation", "removal"})
+    void shouldDetectStoredAndLegacyInlineOutputs() throws InternalException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TaskRun taskRun = TaskRun.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .executionId(IdUtils.create())
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("test-task")
+            .state(new State())
+            .build();
+
+        TaskRun taskRunWithEmptyInlineOutputs = taskRun.toBuilder().outputs(Map.of()).build();
+        assertThat(taskOutputService.hasOutputs(taskRun)).isFalse();
+        assertThat(taskOutputService.hasOutputs(taskRunWithEmptyInlineOutputs)).isFalse();
+
+        taskOutputService.saveOutputs(taskRun, Map.of("value", "stored"));
+
+        assertThat(taskOutputService.hasOutputs(taskRun)).isTrue();
+        assertThat(taskOutputService.hasOutputs(taskRunWithEmptyInlineOutputs)).isTrue();
+        assertThat(taskOutputService.hasOutputs(taskRun.toBuilder().id(IdUtils.create()).outputs(Map.of("value", "inline")).build())).isTrue();
+    }
+
+    @Test
     void saveOutputs_withTaskRunAndOutputInterface() throws InternalException {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

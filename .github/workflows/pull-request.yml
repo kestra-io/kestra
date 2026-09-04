@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: Checkout  # required so the local composite action below can resolve
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
-      uses: actions/checkout@v7
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Dependabot PRs are not forks, but GitHub still withholds repo secrets from
       # workflow runs it triggers, so create-github-app-token would fail with an
@@ -30,7 +30,7 @@ jobs:
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
-      uses: actions/create-github-app-token@v3
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       with:
         app-id: ${{ secrets.GH_BOT_APP_ID }}
         private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -78,7 +78,7 @@ jobs:
     - name: Check EE repo for branch with same name
       if: ${{ false && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) }}
       id: check-ee-branch
-      uses: actions/github-script@v9
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       with:
         github-token: ${{ steps.ee-token.outputs.token }}
         script: |
@@ -124,7 +124,7 @@ jobs:
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
     steps:
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: changes
         with:
           filters: |
@@ -163,14 +163,14 @@ jobs:
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
         if: env.GEMINI_API_KEY != ''
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         if: env.GEMINI_API_KEY != ''
         with:
           node-version-file: 'ui/.nvmrc'
@@ -217,10 +217,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: 'ui/.nvmrc'
 

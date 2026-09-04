@@ -5,11 +5,11 @@
                 <Play :size="18" />
             </span>
             <span class="product-tour-label">
-                {{ $t("onboarding.tour.menu") }}
+                {{ $t(tk(menuKey)) }}
             </span>
         </RouterLink>
         <span class="product-tour-dismiss">
-            <KsIconButton :tooltip="$t('onboarding.tour.actions.dismiss')" placement="top" @click="dismiss">
+            <KsIconButton :tooltip="$t(tk('actions.dismiss'))" placement="top" @click="dismiss">
                 <Close />
             </KsIconButton>
         </span>
@@ -22,7 +22,7 @@
 
     import {useProductTourMenuEntry} from "./useProductTourEntry"
 
-    const {visible, tourRoute, dismiss} = useProductTourMenuEntry()
+    const {visible, menuKey, tourRoute, tk, dismiss} = useProductTourMenuEntry()
 </script>
 
 <style scoped lang="scss">

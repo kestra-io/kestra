@@ -1376,6 +1376,7 @@
     "onboarding": {
       "tour": {
         "menu": "製品ツアー",
+        "menu_resume": "ツアーを再開",
         "menu_description": "flow を構築、実行、修正し、その後イベントから開始します",
         "step_of": "{total}ステップ中{current}",
         "actions": {

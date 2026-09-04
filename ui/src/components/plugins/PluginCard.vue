@@ -23,7 +23,10 @@
             </div>
 
             <div class="plugin-card__heading">
-                <h5 class="plugin-card__title">{{ title }}</h5>
+                <div class="plugin-card__title-row">
+                    <h5 class="plugin-card__title">{{ title }}</h5>
+                    <slot name="title-badge" />
+                </div>
                 <p v-if="description" class="plugin-card__description">
                     {{ description }}
                 </p>
@@ -104,6 +107,7 @@
 
     defineSlots<{
         icon?(): unknown
+        "title-badge"?(): unknown
         "footer-content"?(): unknown
     }>()
 
@@ -176,8 +180,17 @@
             min-width: 0;
         }
 
+        &__title-row {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            min-width: 0;
+        }
+
         &__title {
             margin: 0;
+            flex: 1 1 auto;
+            min-width: 0;
             font-size: var(--ks-font-size-md);
             font-weight: 600;
             line-height: 1.125rem;

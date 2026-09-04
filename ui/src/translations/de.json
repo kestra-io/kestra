@@ -1376,6 +1376,7 @@
     "onboarding": {
       "tour": {
         "menu": "Produkttour",
+        "menu_resume": "Tour fortsetzen",
         "menu_description": "Einen Flow erstellen, ausführen und reparieren und ihn dann von einem Event aus starten",
         "step_of": "Schritt {current} von {total}",
         "actions": {

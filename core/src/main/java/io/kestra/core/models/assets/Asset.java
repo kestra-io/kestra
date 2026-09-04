@@ -6,6 +6,7 @@ import java.util.*;
 import org.apache.commons.lang3.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Plugin;
@@ -46,6 +47,9 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String description;
 
     protected Map<String, Object> metadata;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<AssetAction> assetActions;
 
     @Nullable
     @Hidden
@@ -102,11 +106,29 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
-        this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null
-            ? this.metadata
-            : MapUtils.mergeWithNullableValues(previousAsset.getMetadata(), Optional.ofNullable(this.metadata).orElse(Collections.emptyMap()));
+        Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(new HashMap<>());
+        Map<String, Object> previousMetadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null);
+        if (previousMetadata == null) {
+            this.metadata = incomingMetadata;
+        } else {
+            Map<String, Object> mergedMetadata = MapUtils.mergeWithNullableValues(previousMetadata, incomingMetadata);
+            incomingMetadata.forEach((key, value) -> {
+                if (value == null) {
+                    mergedMetadata.remove(key);
+                }
+            });
+            this.metadata = mergedMetadata;
+        }
+
+        this.assetActions = this.assetActions != null
+            ? this.assetActions
+            : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
 
         return (T) this;
+    }
+
+    public void setAssetActions(List<AssetAction> assetActions) {
+        this.assetActions = assetActions;
     }
 
     @Override

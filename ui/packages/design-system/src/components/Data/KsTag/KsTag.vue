@@ -3,7 +3,8 @@
         disableTransitions
         v-bind="({...filteredProps(), ...$attrs} as any)"
         :type="elType"
-        :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error'}"
+        :size="elSize"
+        :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error', 'kel-tag--xs': size === 'xs'}"
         @close="emit('close')"
     >
         <template #default>
@@ -32,7 +33,7 @@
 
     const props = withDefaults(defineProps<{
         type?: KsTagType
-        size?: "large" | "default" | "small"
+        size?: "large" | "default" | "small" | "xs"
         closable?: boolean
         effect?: "dark" | "light" | "plain"
         icon?: string | Component
@@ -55,7 +56,9 @@
     // ElTag only accepts its five built-in types; "error" is applied via the kel-tag--error class instead
     const elType = computed(() => (props.type === "error" ? undefined : props.type))
 
-    const filteredProps = useFilteredProps(props, ["icon", "label", "plain", "type"])
+    const elSize = computed(() => (props.size === "xs" ? "small" : props.size))
+
+    const filteredProps = useFilteredProps(props, ["icon", "label", "plain", "size", "type"])
 </script>
 
 <style lang="scss">
@@ -116,6 +119,17 @@
             &:hover {
                 color: var(--ks-icon-default) !important;
                 background-color: transparent !important;
+            }
+        }
+
+        &.kel-tag--xs {
+            --kel-tag-font-size: var(--ks-font-size-xs);
+
+            height: var(--ks-spacing-4);
+            padding: 0 var(--ks-spacing-1);
+
+            .kel-tag__content {
+                font-weight: var(--ks-font-weight-medium);
             }
         }
 

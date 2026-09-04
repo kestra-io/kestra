@@ -1376,6 +1376,7 @@
     "onboarding": {
       "tour": {
         "menu": "Visite guidée du produit",
+        "menu_resume": "Reprendre la visite",
         "menu_description": "Construire, exécuter et corriger un flow, puis le démarrer à partir d'un événement",
         "step_of": "Étape {current} sur {total}",
         "actions": {

@@ -1,21 +1,25 @@
 import {computed, onMounted, ref, watch} from "vue"
 import {useRoute} from "vue-router"
 
-import {shouldShowWelcome} from "../../../utils/welcomeGuard"
 import {useProductTourStore} from "../../../stores/productTour"
+import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
 
 function useTourRoute() {
     const route = useRoute()
+    const variant = useTourVariant()
 
-    return computed(() => ({
-        name: "ai",
-        query: {tour: "start"},
-        params: {tenant: route.params.tenant},
-    }))
+    return computed(() => variant.entryRoute(route.params.tenant as string | undefined))
+}
+
+function useTourKey() {
+    const variant = useTourVariant()
+
+    return (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 }
 
 export function useProductTourMenuEntry() {
     const tourStore = useProductTourStore()
+    const variant = useTourVariant()
 
     const isNewInstance = ref(false)
 
@@ -29,7 +33,7 @@ export function useProductTourMenuEntry() {
 
     const refresh = async () => {
         try {
-            isNewInstance.value = await shouldShowWelcome()
+            isNewInstance.value = await variant.eligible()
         } catch {
             isNewInstance.value = false
         }
@@ -40,7 +44,9 @@ export function useProductTourMenuEntry() {
 
     return {
         visible,
+        menuKey: computed(() => (wasSkipped.value ? "menu_resume" : "menu")),
         tourRoute: useTourRoute(),
+        tk: useTourKey(),
         dismiss: () => tourStore.dismissMenuEntry(),
     }
 }
@@ -56,6 +62,7 @@ export function useProductTourNudge() {
     return {
         visible,
         tourRoute: useTourRoute(),
+        tk: useTourKey(),
         dismiss: () => tourStore.dismissBlueprintsNudge(),
     }
 }

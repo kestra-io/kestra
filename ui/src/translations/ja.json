@@ -1962,6 +1962,9 @@
         "label": "ダッシュボードを編集",
         "chart": "このチャートを編集"
       },
+      "creation": {
+        "label": "Dashboardを作成"
+      },
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",

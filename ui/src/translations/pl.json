@@ -1962,6 +1962,9 @@
         "label": "Edytuj Dashboard",
         "chart": "Edytuj ten wykres"
       },
+      "creation": {
+        "label": "Utwórz Dashboard"
+      },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",

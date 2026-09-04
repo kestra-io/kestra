@@ -1962,6 +1962,9 @@
         "label": "Редактировать Dashboard",
         "chart": "Редактировать этот график"
       },
+      "creation": {
+        "label": "Создать Dashboard"
+      },
       "no_description": "Нет описания",
       "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "others": "Другие",

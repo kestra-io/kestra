@@ -1962,6 +1962,9 @@
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
       },
+      "creation": {
+        "label": "Dashboard erstellen"
+      },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",

@@ -1962,6 +1962,9 @@
         "label": "编辑仪表板",
         "chart": "编辑此图表"
       },
+      "creation": {
+        "label": "创建 Dashboard"
+      },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",

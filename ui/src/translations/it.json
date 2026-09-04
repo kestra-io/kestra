@@ -1962,6 +1962,9 @@
         "label": "Modifica Dashboard",
         "chart": "Modifica questo grafico"
       },
+      "creation": {
+        "label": "Crea Dashboard"
+      },
       "no_description": "Nessuna descrizione",
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "others": "Altri",

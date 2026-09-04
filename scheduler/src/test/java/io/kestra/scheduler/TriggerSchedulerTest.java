@@ -732,7 +732,7 @@ class TriggerSchedulerTest {
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(2));
-        TriggerState triggerState = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        TriggerState triggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
         triggerStateStore.save(
             triggerState
                 .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
@@ -749,7 +749,7 @@ class TriggerSchedulerTest {
 
         // THEN
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
         assertThat(state.getBackfill().getCurrentDate()).isEqualTo(backfillStart);
     }
 

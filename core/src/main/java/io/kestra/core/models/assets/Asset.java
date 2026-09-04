@@ -17,6 +17,7 @@ import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -49,7 +50,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected Map<String, Object> metadata;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private List<AssetAction> assetActions;
+    private List<@Valid AssetAction> assetActions;
 
     @Nullable
     @Hidden

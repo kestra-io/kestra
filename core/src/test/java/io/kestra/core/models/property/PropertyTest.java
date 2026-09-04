@@ -7,6 +7,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
@@ -405,6 +409,84 @@ class PropertyTest {
         ).asList(WithSubtype.class);
         assertThat(renderedList).hasSize(1);
         assertThat(renderedList.get(0)).isInstanceOf(MySubtype.class);
+    }
+
+    @Test
+    void shouldRenderAgainWhenTheRenderContextChanges() throws Exception {
+        // a Property instance can be shared by multiple executions: the executor renders the tasks
+        // of the flow it keeps in its cache, so a rendering must never be reused by another context
+        Property<String> property = Property.<String> builder().expression("{{ version }}").build();
+
+        assertThat(Property.as(property, runContextFactory.of(Map.of("version", "1.3.9")), String.class)).isEqualTo("1.3.9");
+        assertThat(Property.as(property, runContextFactory.of(Map.of("version", "1.0.56")), String.class)).isEqualTo("1.0.56");
+    }
+
+    @Test
+    void shouldRenderListAndMapAgainWhenTheRenderContextChanges() throws Exception {
+        Property<List<String>> list = Property.<List<String>> builder().expression("""
+            ["{{ version }}"]""").build();
+        Property<Map<String, Object>> map = Property.<Map<String, Object>> builder().expression("""
+            {"version": "{{ version }}"}""").build();
+
+        var first = runContextFactory.of(Map.of("version", "1.3.9"));
+        assertThat(Property.asList(list, first, String.class)).containsExactly("1.3.9");
+        assertThat(Property.asMap(map, first, String.class, Object.class)).containsEntry("version", "1.3.9");
+
+        var second = runContextFactory.of(Map.of("version", "1.0.56"));
+        assertThat(Property.asList(list, second, String.class)).containsExactly("1.0.56");
+        assertThat(Property.asMap(map, second, String.class, Object.class)).containsEntry("version", "1.0.56");
+    }
+
+    @Test
+    void shouldCacheTheRenderingOfTheSameContext() throws Exception {
+        Property<Map<String, Object>> property = Property.<Map<String, Object>> builder().expression("""
+            {"version": "{{ version }}"}""").build();
+        var runContext = runContextFactory.of(Map.of("version", "1.3.9"));
+
+        Map<String, Object> first = Property.asMap(property, runContext, String.class, Object.class);
+        Map<String, Object> second = Property.asMap(property, runContext, String.class, Object.class);
+
+        assertThat(second).isSameAs(first);
+    }
+
+    @Test
+    void shouldNeverRenderAValueSetAtBuildTime() throws Exception {
+        Property<String> property = Property.ofValue("{{ version }}");
+
+        assertThat(Property.as(property, runContextFactory.of(Map.of("version", "1.3.9")), String.class)).isEqualTo("{{ version }}");
+        assertThat(Property.as(property.skipCache(), runContextFactory.of(Map.of("version", "1.3.9")), String.class)).isEqualTo("{{ version }}");
+    }
+
+    @Test
+    void shouldNeverRenderAValueSetThroughTheBuilder() throws Exception {
+        Property<String> property = Property.<String> builder().value("a value").build();
+
+        assertThat(Property.as(property, runContextFactory.of(Map.of()), String.class)).isEqualTo("a value");
+    }
+
+    @Test
+    void shouldGiveEachConcurrentRenderItsOwnValue() throws Exception {
+        // the executor renders the same property instance from several execution threads at once,
+        // so a render must never return the value another thread was rendering at the same moment
+        Property<String> property = Property.<String> builder().expression("{{ version }}").build();
+
+        int renders = 500;
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        try {
+            List<Future<Boolean>> results = IntStream.range(0, renders)
+                .mapToObj(i -> executor.submit(() ->
+                {
+                    String version = "1.3." + i;
+                    return version.equals(Property.as(property, runContextFactory.of(Map.of("version", version)), String.class));
+                }))
+                .toList();
+
+            for (Future<Boolean> result : results) {
+                assertThat(result.get()).isTrue();
+            }
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)

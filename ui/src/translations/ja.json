@@ -655,7 +655,7 @@
     "triggerId": "トリガーID",
     "tenantId": "tenant ID",
     "paused": "一時停止中",
-    "running": "RUNNING",
+    "running": "実行中",
     "Fold content lines": "複数行文字列を折りたたむ",
     "Unfold content lines": "複数行文字列を展開する",
     "Total": "合計",
@@ -1513,7 +1513,7 @@
             "webhook": "ウェブフック",
             "schedule": "スケジュール",
             "flowTrigger": "Flow トリガー",
-            "namespace": "namespace",
+            "namespace": "Namespaces",
             "secret": "シークレット"
           }
         },
@@ -2553,7 +2553,7 @@
       "error_task_noun": "エラータスク",
       "execution_context": "実行コンテキスト",
       "filter_data": "利用可能なデータをフィルター…",
-      "flow_inputs": "flow inputs",
+      "flow_inputs": "Flow inputs",
       "flowable_todo": "ネストされたtask (編集は近日公開)",
       "footer": {
         "canvas": "キャンバス",

@@ -42,7 +42,7 @@
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@google/genai": "^2.11.0",
-        "@hey-api/openapi-ts": "0.97.0",
+        "@hey-api/openapi-ts": "0.97.3",
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
         "@kestra-io/kestra-sdk": "*",
@@ -156,7 +156,8 @@
         "@codecov/vite-plugin": {
             "vite": "$vite"
         },
-        "dompurify": "^3.4.13"
+        "dompurify": "^3.4.13",
+        "js-yaml": "^4.3.1"
     },
     "lint-staged": {
         "**/*.{js,mjs,cjs,ts,vue}": [

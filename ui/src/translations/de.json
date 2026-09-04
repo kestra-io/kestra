@@ -1613,7 +1613,9 @@
       "raw": "Zeitliche Ansicht",
       "raw_details": "Vollständige Task-Logs und Flow-Logs im Rohformat nach Zeitstempel sortiert anzeigen",
       "compact": "Standardansicht",
-      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen"
+      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
+      "fullscreen": "Logs im Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
     },
     "execution_deletion": {
       "logs": "Logs löschen",

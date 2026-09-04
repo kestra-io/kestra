@@ -935,6 +935,8 @@
   "logs_download_truncated": "92217833852b",
   "logs_view|compact": "99f5151884f2",
   "logs_view|compact_details": "3c6a6734edd3",
+  "logs_view|exit_fullscreen": "37fd4e355ba3",
+  "logs_view|fullscreen": "443e7f3e7b08",
   "logs_view|raw": "2b922cb9cd59",
   "logs_view|raw_details": "a986406f51ce",
   "main_configuration": "21e35e55845f",

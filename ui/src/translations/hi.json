@@ -1613,7 +1613,9 @@
       "raw": "Temporal दृश्य",
       "raw_details": "सभी task logs और flow logs को कच्चे, टाइमस्टैम्प-क्रमबद्ध फ़ॉर्मैट में दिखाएँ",
       "compact": "पूर्व-निर्धारित दृश्य",
-      "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं"
+      "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं",
+      "fullscreen": "Logs पूर्ण स्क्रीन में",
+      "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें"
     },
     "execution_deletion": {
       "logs": "Logs हटाएं",

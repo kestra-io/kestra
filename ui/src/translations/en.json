@@ -1613,7 +1613,9 @@
       "raw": "Temporal view",
       "raw_details": "Show full task logs and flow logs in a raw, timestamp-ordered format",
       "compact": "Default view",
-      "compact_details": "Show task logs in a compact view grouped by each task"
+      "compact_details": "Show task logs in a compact view grouped by each task",
+      "fullscreen": "Full screen logs",
+      "exit_fullscreen": "Exit fullscreen"
     },
     "execution_deletion": {
       "logs": "Delete logs",

@@ -1613,7 +1613,9 @@
       "raw": "时间视图",
       "raw_details": "以原始、按时间戳排序的格式显示完整的 task logs 和 flow logs",
       "compact": "默认视图",
-      "compact_details": "按任务分组显示任务日志"
+      "compact_details": "按任务分组显示任务日志",
+      "fullscreen": "全屏日志",
+      "exit_fullscreen": "退出全屏"
     },
     "execution_deletion": {
       "logs": "删除日志",

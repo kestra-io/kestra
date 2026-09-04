@@ -27,15 +27,25 @@ const KsButton = defineComponent({
     },
 })
 
+const KsTooltip = defineComponent({
+    props: {content: {type: String, default: ""}},
+    setup(props, {slots}) {
+        return () => h("span", {"data-test": "pair-tooltip", "data-content": props.content}, slots.default?.())
+    },
+})
+
+const stubs = {
+    KsInput,
+    KsButton,
+    KsTag: {template: "<span><slot /></span>"},
+    KsTooltip,
+}
+
 const mountPairs = (comparator: Comparators) => mount(FilterKVPairs, {
     props: {modelValue: ["environment:production"], comparator},
     global: {
         mocks: {$t: (key: string) => key},
-        components: {
-            KsInput,
-            KsButton,
-            KsTag: {template: "<span><slot /></span>"},
-        },
+        components: stubs,
     },
 })
 
@@ -89,11 +99,7 @@ describe("FilterKVPairs", () => {
             },
             global: {
                 mocks: {$t: (key: string) => key},
-                components: {
-                    KsInput,
-                    KsButton,
-                    KsTag: {template: "<span><slot /></span>"},
-                },
+                components: stubs,
             },
         })
 
@@ -108,6 +114,29 @@ describe("FilterKVPairs", () => {
         expect(onUpdate).toHaveBeenLastCalledWith([
             "environment:staging",
             "team:platform",
+        ])
+    })
+
+    test("exposes the untruncated key and value as a tooltip on every pair", () => {
+        const wrapper = mount(FilterKVPairs, {
+            props: {
+                modelValue: [
+                    "foooooooooooooooooooooooooooo1:x",
+                    "foooooooooooooooooooooooooooo2:y",
+                ],
+                comparator: Comparators.IN,
+            },
+            global: {
+                mocks: {$t: (key: string) => key},
+                components: stubs,
+            },
+        })
+
+        const tooltips = wrapper.findAll("[data-test=\"pair-tooltip\"]")
+
+        expect(tooltips.map(tooltip => tooltip.attributes("data-content"))).toEqual([
+            "foooooooooooooooooooooooooooo1: x",
+            "foooooooooooooooooooooooooooo2: y",
         ])
     })
 })

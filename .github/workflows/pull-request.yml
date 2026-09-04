@@ -19,6 +19,8 @@ jobs:
       GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
     steps:
     - name: Checkout  # required so the local composite action below can resolve
+      with:
+        persist-credentials: false
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
       uses: actions/checkout@v7
 
@@ -169,6 +171,7 @@ jobs:
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
+          persist-credentials: false
 
       - uses: actions/setup-node@v7
         if: env.GEMINI_API_KEY != ''
@@ -187,6 +190,8 @@ jobs:
 
       - name: Commit them onto the pull request
         if: env.GEMINI_API_KEY != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
@@ -197,8 +202,10 @@ jobs:
             exit 0
           fi
           git commit -m "chore(core): localize to languages other than english"
+          # persist-credentials is disabled on checkout: authenticate this push with a one-off
+          # extraheader instead, so the token is never written to .git/config.
           # Generation is idempotent, so the run this push triggers finds nothing to do and stops.
-          git push origin HEAD:${{ github.head_ref }}
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)" push origin HEAD:${{ github.head_ref }}
 
   # Kept off the frontend test path: a translation typo shouldn't block those, and this check needs
   # neither a build nor `npm ci` — just the checked-out files and Node itself. It is what stops an
@@ -218,6 +225,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
         name: Checkout
 
       - uses: actions/setup-node@v7

@@ -283,7 +283,7 @@ export function untranslatedKeys(lang, messages, englishMessages) {
         .filter(([key, message]) => {
             const english = englishMessages[key]
             return english !== undefined
-                && message === english
+                && message.trim() === english.trim()
                 && !ALLOWED_ENGLISH_KEYS.has(key)
                 && !isNotProse(english)
                 && translatableWords(english).length > 0

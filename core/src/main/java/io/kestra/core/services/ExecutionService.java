@@ -190,6 +190,11 @@ public class ExecutionService {
         Map<String, TaskRun> byId = execution.getTaskRunList().stream()
             .collect(Collectors.toMap(TaskRun::getId, t -> t));
 
+        // Collect descendant taskruns that will be removed, so we can accumulate their stats.
+        List<TaskRun> removedTaskRuns = execution.getTaskRunList().stream()
+            .filter(taskRun -> isDescendantOf(taskRun, flowableTaskRunId, byId))
+            .toList();
+
         // Remove all descendants (not just direct children) of the iterating LoopUntil so that nested
         // LoopUntil tasks start the next iteration with a clean state and don't inherit stale outputs.
         List<TaskRun> newTaskRuns = execution
@@ -208,7 +213,16 @@ public class ExecutionService {
             .filter(Objects::nonNull)
             .toList();
 
-        return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+        // Accumulate stats from removed taskruns so execution statistics reflect all taskruns that ran.
+        ExecutionMetadata metadata = execution.getMetadata() != null
+            ? execution.getMetadata()
+            : ExecutionMetadata.builder().originalCreatedDate(Instant.now()).build();
+        if (!removedTaskRuns.isEmpty()) {
+            metadata = metadata.accumulateRemovedTaskRuns(removedTaskRuns);
+            log.info("Accumulated task runs: {}", metadata.getAccumulatedTaskRunCount());
+        }
+
+        return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);
     }
 
     private boolean isDescendantOf(TaskRun taskRun, String ancestorId, Map<String, TaskRun> byId) {

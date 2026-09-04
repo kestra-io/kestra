@@ -1040,7 +1040,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN: first evaluation is AT start, not the next minute
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(start.toInstant());
@@ -1062,7 +1062,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN: 12:00 is before start, so first evaluation is 12:01
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(Instant.parse("2024-06-15T12:01:00Z"));
@@ -1082,7 +1082,7 @@ class TriggerEventHandlerTest {
         handler.handle(clock, TEST_VNODE, event);
 
         // THEN: the occurrence at start/end is scheduled, backfill is not cleared
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
         assertThat(updated.get().getNextEvaluationDate()).isEqualTo(startAndEnd.toInstant());
@@ -1250,7 +1250,7 @@ class TriggerEventHandlerTest {
         assertThatThrownBy(() -> handler.handle(CLOCK, TEST_VNODE, event))
             .isInstanceOf(ConflictException.class);
 
-        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).get().extracting(s -> s.getBackfill().getPreviousNextExecutionDate()).isEqualTo(liveNextEvaluationDate);
     }
 

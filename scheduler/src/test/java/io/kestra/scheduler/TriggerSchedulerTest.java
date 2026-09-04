@@ -764,7 +764,7 @@ class TriggerSchedulerTest {
 
         ZonedDateTime start = ZonedDateTime.parse("2024-06-15T12:00:00Z");
         ZonedDateTime end = ZonedDateTime.parse("2024-06-15T12:05:00Z");
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow()
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow()
             .locked(clock, false)
             .backfill(clock, Backfill.builder().start(start).end(end).build());
         ConditionContext conditionContext = conditionService.conditionContext(

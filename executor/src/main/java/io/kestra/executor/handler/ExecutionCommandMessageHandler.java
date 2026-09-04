@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import java.util.List;
 import java.util.Optional;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
@@ -119,7 +120,22 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                return newExecution != null ? executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
+                if (newExecution != null) {
+                    if (execution.getId().equals(newExecution.getId())) {
+                        List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
+                        List<String> newIds = newExecution.getTaskRunList() != null ? newExecution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
+
+                        if (originalIds.size() != newIds.size() || !newIds.containsAll(originalIds)) {
+                            List<String> pruned = new java.util.ArrayList<>(originalIds);
+                            pruned.removeAll(newIds);
+                            if (!pruned.isEmpty()) {
+                                taskOutputService.deleteByTaskRunIds(newExecution, pruned);
+                            }
+                        }
+                    }
+                    return executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler");
+                }
+                return null;
             } catch (Exception e) {
                 log.error("Unable to process event for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
                 outcome = AsyncOperationProcessedEvent.Outcome.FAILED;

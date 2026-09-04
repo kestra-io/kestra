@@ -89,6 +89,48 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
             });
     }
 
+    @Override
+    public int deleteByTaskRunIds(String tenantId, String executionId, List<String> taskRunIds) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                var delete = DSL
+                    .using(configuration)
+                    .delete(this.jdbcRepository.getTable())
+                    .where(buildTenantCondition(tenantId))
+                    .and(EXECUTION_ID_FIELD.eq(executionId))
+                    .and(TASK_RUN_ID_FIELD.in(taskRunIds));
+
+                return delete.execute();
+            });
+    }
+
+    @Override
+    public List<TaskOutput> findByTaskRunIds(
+        String tenantId,
+        String executionId,
+        List<String> taskRunIds) {
+        if (taskRunIds == null || taskRunIds.isEmpty()) {
+            return List.of();
+        }
+
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                var select = DSL
+                    .using(configuration)
+                    .select()
+                    .from(this.jdbcRepository.getTable())
+                    .where(buildTenantCondition(tenantId))
+                    .and(EXECUTION_ID_FIELD.eq(executionId))
+                    .and(TASK_RUN_ID_FIELD.in(taskRunIds));
+
+                return select.fetch().map(AbstractJdbcTaskOutputRepository::map);
+            });
+    }
+
     private static TaskOutput map(org.jooq.Record record) {
         return new TaskOutput(record.get(TASK_RUN_ID_FIELD), record.get(TENANT_ID_FIELD), record.get(EXECUTION_ID_FIELD), record.get(VALUE_FIELD), record.get(URI_ID_FIELD));
     }

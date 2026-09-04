@@ -33,4 +33,17 @@ public interface TaskOutputRepositoryInterface {
      * @return the number of deleted outputs
      */
     int purgeByExecutionIds(List<String> executionIds);
+
+    /**
+     * Find all task outputs for the given task run ids.
+     */
+    List<TaskOutput> findByTaskRunIds(
+        String tenantId,
+        String executionId,
+        List<String> taskRunIds);
+
+    /**
+     * Delete all task outputs for a given list of task run ids.
+     */
+    int deleteByTaskRunIds(String tenantId, String executionId, List<String> taskRunIds);
 }

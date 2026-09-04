@@ -155,7 +155,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 // Remove all classes to this plugin from the registry
                 this.pluginClassByIdentifier.entrySet().removeIf(entry ->
                 {
-                    PluginClassAndMetadata metadata = entry.getValue();
+                    PluginClassAndMetadata<?> metadata = entry.getValue();
                     return metadata.type().getClassLoader().equals(current.getClassLoader());
                 });
 
@@ -226,7 +226,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 {
 
                     Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) cls;
-                    Class<Plugin> pluginBaseClass = plugin.baseClass(pluginClass.getName());
+                    Class<Plugin> pluginBaseClass = (Class<Plugin>) plugin.baseClass(pluginClass.getName());
 
                     return new SimpleEntry<>(
                         ClassTypeIdentifier.create(cls.getName()),
@@ -239,7 +239,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
         classes.putAll(plugin.getAliases().values().stream().map(e ->
         {
             Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) e.getValue();
-            Class<Plugin> pluginBaseClass = plugin.baseClass(pluginClass.getName());
+            Class<Plugin> pluginBaseClass = (Class<Plugin>) plugin.baseClass(pluginClass.getName());
 
             return new SimpleEntry<>(
                 ClassTypeIdentifier.create(e.getKey()),

@@ -136,6 +136,7 @@
     "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如，PT30M, P1D)。",
     "update": "更新",
     "confirmation": "确认",
+    "toast confirm": "您确定吗？",
     "common": {
       "back": "返回",
       "openInNewTab": "在新标签页中打开"
@@ -342,9 +343,31 @@
     "select a state": "选择状态",
     "are you sure change state": "您确定要更改状态吗？",
     "yes": "是",
+    "no": "否",
     "change state done": "任务状态已更新",
     "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
     "change state current state": "当前状态是：",
+    "change state hint": {
+      "WARNING": [
+        "流程将被标记为WARNING。",
+        "接下来的tasks将被执行。",
+        "错误的tasks将被执行。"
+      ],
+      "FAILED": [
+        "该flow将被标记为FAILED。",
+        "不会执行其他task。",
+        "将执行错误tasks。"
+      ],
+      "SUCCESS": [
+        "由于此任务成功，flow 将重新启动。",
+        "所有被阻止的任务将被执行。",
+        "如果所有任务运行都成功，flow 将处于 SUCCESS 状态。"
+      ],
+      "RUNNING": [
+        "flow将重新启动，并将执行所有后续task。",
+        "所有被阻止的task将被执行。"
+      ]
+    },
     "replay execution title": "重放执行",
     "restart execution title": "重新启动执行",
     "replay execution description": "这将基于所选的执行创建一个新的执行。",
@@ -514,6 +537,10 @@
       }
     },
     "use": "使用",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "插件安装失败",
@@ -1652,6 +1679,7 @@
     "last error was": "上次错误是",
     "active": "活动",
     "flows imported": "Flow已导入",
+    "flows not imported": "未导入的Flows",
     "custom value": "自定义值",
     "chart": "图表",
     "chart preview": "图表预览",
@@ -1697,7 +1725,8 @@
           "workerSelector": "Worker 选择器",
           "checks": "检查",
           "updated": "已更新",
-          "quotas": "配额"
+          "quotas": "配额",
+          "policyRefs": "Policy 引用"
         }
       },
       "select": {

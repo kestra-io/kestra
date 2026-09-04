@@ -136,6 +136,7 @@
     "invalid duration": "Formato de duração inválido. Por favor, use ISO 8601 (ex: PT30M, P1D).",
     "update": "Atualizar",
     "confirmation": "Confirmação",
+    "toast confirm": "Tem certeza?",
     "common": {
       "back": "Voltar",
       "openInNewTab": "Abrir em nova aba"
@@ -342,9 +343,31 @@
     "select a state": "Selecione um estado",
     "are you sure change state": "Tem certeza de que deseja alterar o estado?",
     "yes": "Sim",
+    "no": "Não",
     "change state done": "O estado da task foi atualizado",
     "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task para a task <code>{task}</code> na execução <code>{id}</code>?<br/>Isso reiniciará a execução a partir da próxima task e reiniciará a execução pai, se houver.",
     "change state current state": "Status atual é:",
+    "change state hint": {
+      "WARNING": [
+        "O flow será marcado como WARNING.",
+        "As próximas tasks serão executadas.",
+        "As tasks de erro serão executadas."
+      ],
+      "FAILED": [
+        "O flow será marcado como FAILED.",
+        "Nenhuma outra task será executada.",
+        "As tasks de erro serão executadas."
+      ],
+      "SUCCESS": [
+        "O flow será reiniciado pois esta task foi bem-sucedida.",
+        "Todas as tasks bloqueadas serão executadas.",
+        "O flow estará em estado de SUCCESS se todas as execuções das tasks forem bem-sucedidas."
+      ],
+      "RUNNING": [
+        "O flow será reiniciado e executará todas as próximas tasks.",
+        "Todas as tasks bloqueadas serão executadas."
+      ]
+    },
     "replay execution title": "Repetir execução",
     "restart execution title": "Reiniciar execução",
     "replay execution description": "Isso criará uma nova execução com base na execução selecionada.",
@@ -514,6 +537,10 @@
       }
     },
     "use": "Usar",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Falha na instalação do plugin",
@@ -1652,6 +1679,7 @@
     "last error was": "O último erro foi",
     "active": "Ativo",
     "flows imported": "Fluxos importados",
+    "flows not imported": "Flows não importados",
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "chart preview": "Pré-visualização do gráfico",
@@ -1697,7 +1725,8 @@
           "workerSelector": "Seletor de Worker",
           "checks": "Verificações",
           "updated": "Atualizado",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Referências de Policy"
         }
       },
       "select": {

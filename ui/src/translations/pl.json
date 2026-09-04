@@ -136,6 +136,7 @@
     "invalid duration": "Nieprawidłowy format czasu trwania. Użyj ISO 8601 (np. PT30M, P1D).",
     "update": "Aktualizuj",
     "confirmation": "Potwierdzenie",
+    "toast confirm": "Czy na pewno?",
     "common": {
       "back": "Wstecz",
       "openInNewTab": "Otwórz w nowej karcie"
@@ -342,9 +343,31 @@
     "select a state": "Wybierz status",
     "are you sure change state": "Czy na pewno chcesz zmienić status?",
     "yes": "Tak",
+    "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
     "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
     "change state current state": "Aktualny status:",
+    "change state hint": {
+      "WARNING": [
+        "Flow zostanie oznaczony jako WARNING.",
+        "Następne taski zostaną wykonane.",
+        "Taski błędów zostaną wykonane."
+      ],
+      "FAILED": [
+        "Flow zostanie oznaczony jako FAILED.",
+        "Żadne inne task nie będą wykonane.",
+        "Task błędów będą wykonane."
+      ],
+      "SUCCESS": [
+        "Flow zostanie uruchomiony ponownie, ponieważ ten task zakończył się sukcesem.",
+        "Wszystkie zablokowane taski zostaną wykonane.",
+        "Flow będzie w stanie SUCCESS, jeśli wszystkie uruchomienia tasków zakończą się sukcesem."
+      ],
+      "RUNNING": [
+        "Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.",
+        "Wszystkie zablokowane taski zostaną wykonane."
+      ]
+    },
     "replay execution title": "Replay egzekucji",
     "restart execution title": "Uruchom ponownie egzekucję",
     "replay execution description": "Spowoduje to utworzenie nowej egzekucji na podstawie wybranej egzekucji.",
@@ -514,6 +537,10 @@
       }
     },
     "use": "Użyj",
+    "plugin_card": {
+      "tasks": "Task | Taski",
+      "blueprints": "blueprint | blueprinty"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Instalacja pluginu nie powiodła się",
@@ -1652,6 +1679,7 @@
     "last error was": "Ostatni błąd to",
     "active": "Aktywny",
     "flows imported": "Zaimportowano Flowy",
+    "flows not imported": "Flowy niezaimportowane",
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "chart preview": "Podgląd wykresu",
@@ -1697,7 +1725,8 @@
           "workerSelector": "Worker Selector",
           "checks": "Kontrole",
           "updated": "Zaktualizowano",
-          "quotas": "Limity"
+          "quotas": "Limity",
+          "policyRefs": "Odwołania do polityk"
         }
       },
       "select": {

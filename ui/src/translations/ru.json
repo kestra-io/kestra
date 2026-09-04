@@ -136,6 +136,7 @@
     "invalid duration": "Неверный формат длительности. Используйте ISO 8601 (например, PT30M, P1D).",
     "update": "Обновить",
     "confirmation": "Подтверждение",
+    "toast confirm": "Вы уверены?",
     "common": {
       "back": "Назад",
       "openInNewTab": "Открыть в новой вкладке"
@@ -342,9 +343,31 @@
     "select a state": "Выберите состояние",
     "are you sure change state": "Вы уверены, что хотите изменить состояние?",
     "yes": "Да",
+    "no": "Нет",
     "change state done": "Состояние task было обновлено",
     "change state confirm": "Вы уверены, что хотите изменить состояние выполнения task для task <code>{task}</code> в исполнении <code>{id}</code>?<br/>После этого выполнение будет перезапущено со следующего task, а родительское выполнение, если таковое имеется, также будет перезапущено.",
     "change state current state": "Текущий статус:",
+    "change state hint": {
+      "WARNING": [
+        "Flow будет помечен как WARNING.",
+        "Следующие tasks будут выполнены.",
+        "Ошибка tasks будет выполнена."
+      ],
+      "FAILED": [
+        "Flow будет помечен как FAILED.",
+        "Никакие другие task не будут выполнены.",
+        "Ошибочные tasks будут выполнены."
+      ],
+      "SUCCESS": [
+        "Flow будет перезапущен, так как этот task был успешным.",
+        "Все заблокированные tasks будут выполнены.",
+        "Flow будет в состоянии SUCCESS, если все запуски tasks будут успешными."
+      ],
+      "RUNNING": [
+        "Flow будет перезапущен и выполнит все следующие tasks.",
+        "Все заблокированные tasks будут выполнены."
+      ]
+    },
     "replay execution title": "Повторное выполнение",
     "restart execution title": "Перезапустить выполнение",
     "replay execution description": "Это создаст новое выполнение на основе выбранного выполнения.",
@@ -514,6 +537,10 @@
       }
     },
     "use": "Использовать",
+    "plugin_card": {
+      "tasks": "задача | задачи",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Не удалось установить плагин",
@@ -1652,6 +1679,7 @@
     "last error was": "Последняя ошибка была",
     "active": "Активно",
     "flows imported": "Потоки импортированы",
+    "flows not imported": "Flows не импортированы",
     "custom value": "Пользовательское значение",
     "chart": "График",
     "chart preview": "Предварительный просмотр диаграммы",
@@ -1697,7 +1725,8 @@
           "workerSelector": "Селектор Worker",
           "checks": "Проверки",
           "updated": "Обновлено",
-          "quotas": "Квоты"
+          "quotas": "Квоты",
+          "policyRefs": "Ссылки на Policy"
         }
       },
       "select": {

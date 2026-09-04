@@ -18,6 +18,13 @@ public interface TaskOutputRepositoryInterface {
     Optional<TaskOutput> findById(String tenantId, String taskRunId);
 
     /**
+     * Returns whether a task output exists.
+     */
+    default boolean exists(String tenantId, String taskRunId) {
+        return findById(tenantId, taskRunId).isPresent();
+    }
+
+    /**
      * Save a task output.
      */
     TaskOutput save(TaskOutput taskOutput);

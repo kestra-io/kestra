@@ -206,15 +206,15 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             } catch (QueueException e) {
                 // If there is a QueueException it can either be caused by the message limit or another queue issue.
                 // We fail the task and try to resend it.
-                WorkerTaskResult failed = new WorkerTaskResult(workerTaskResult.getTaskRun().fail(), workerTaskResult.getOutputs());
+                WorkerTaskResult failed = workerTaskResult.withTaskRun(workerTaskResult.getTaskRun().fail());
                 if (e instanceof MessageTooBigException) {
                     // If it's a message too big, we remove the outputs
-                    failed = failed.withOutputs(null);
+                    failed = failed.withoutOutputs();
                 }
                 if (e instanceof UnsupportedMessageException) {
                     // Unsupported queue payloads are most likely caused by a bad output value,
                     // so retry without outputs instead of crashing the worker/controller loop.
-                    failed = failed.withOutputs(null);
+                    failed = failed.withoutOutputs();
                 }
                 RunContextLogger contextLogger = runContextLoggerFactory.create(workerTaskResult);
                 contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);

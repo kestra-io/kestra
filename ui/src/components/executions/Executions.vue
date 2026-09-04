@@ -144,7 +144,7 @@
                         <KsButton @click="isOpenLabelsModal = false">
                             {{ $t("cancel") }}
                         </KsButton>
-                        <KsButton type="primary" @click="setLabels()">
+                        <KsButton type="primary" :disabled="hasInvalidLabels" @click="setLabels()">
                             {{ $t("ok") }}
                         </KsButton>
                     </template>
@@ -452,6 +452,7 @@
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
     import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
+    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import * as Utils from "../../utils/utils"
@@ -540,6 +541,7 @@
     const executionsStore = useExecutionsStore()
 
     const executionLabels = ref<Label[]>([])
+    const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
     const recomputeInterval = ref(false)
     const isOpenLabelsModal = ref(false)
     const isOpenReplayModal = ref(false)
@@ -1100,11 +1102,24 @@
         )
     }
 
+    const onSetLabelsError = (e: unknown) => {
+        const problem = asProblem(e)
+        toast.error(
+            problemBulkBody(problem, t, te),
+            problemTitle(problem, t, te),
+        )
+    }
+
     const setLabels = () => {
         const filtered = filterValidLabels(executionLabels.value)
 
         if (filtered.error) {
             toast.error(t("wrong labels"), t("error"))
+            return
+        }
+
+        if (hasInvalidLabelKeys(filtered.labels)) {
+            toast.error(t("invalid label key"), t("error"))
             return
         }
 
@@ -1126,7 +1141,7 @@
                         toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    })
+                    }).catch(onSetLabelsError)
             } else {
                 return executionsStore
                     .bulkSetLabels({
@@ -1137,13 +1152,7 @@
                         toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    }).catch((e: unknown) => {
-                        const problem = asProblem(e)
-                        toast.error(
-                            problemBulkBody(problem, t, te),
-                            problemTitle(problem, t, te),
-                        )
-                    })
+                    }).catch(onSetLabelsError)
             }
         },
         )

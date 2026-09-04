@@ -64,6 +64,17 @@ describe("useRestoreUrl", () => {
         expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
     })
 
+    it("does not restore pagination from the saved query", async () => {
+        const router = createTestRouter()
+        await router.push({name: "home", params: {tenant: "main", dashboard: "default"}})
+        window.sessionStorage.setItem("home_main_restore_url", JSON.stringify({...SAVED_QUERY, page: "10", size: "100"}))
+
+        wrapper = mountRestoreUrl(router)
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
+    })
+
     it("leaves an explicit query untouched", async () => {
         const router = createTestRouter()
         const explicit = {"filters[timeRange][EQUALS]": "P7D"}

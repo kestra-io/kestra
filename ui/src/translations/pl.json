@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin nie jest zainstalowany dla tego typu Triggera, więc powiadomienie nie zostanie wysłane."
       },
       "trigger": {
-        "case_sub": "Funkcja tylko w Enterprise Edition",
-        "case_title": "Status sprawy",
         "execution_sub": "Reaguje na zmiany statusu Flow",
         "execution_title": "Status egzekucji",
         "other_sub": "Dowolny dostępny plugin Triggera",
@@ -138,6 +136,7 @@
     "invalid duration": "Nieprawidłowy format czasu trwania. Użyj ISO 8601 (np. PT30M, P1D).",
     "update": "Aktualizuj",
     "confirmation": "Potwierdzenie",
+    "toast confirm": "Czy na pewno?",
     "common": {
       "back": "Wstecz",
       "openInNewTab": "Otwórz w nowej karcie"
@@ -344,9 +343,31 @@
     "select a state": "Wybierz status",
     "are you sure change state": "Czy na pewno chcesz zmienić status?",
     "yes": "Tak",
+    "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
     "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
     "change state current state": "Aktualny status:",
+    "change state hint": {
+      "WARNING": [
+        "Flow zostanie oznaczony jako WARNING.",
+        "Następne taski zostaną wykonane.",
+        "Taski błędów zostaną wykonane."
+      ],
+      "FAILED": [
+        "Flow zostanie oznaczony jako FAILED.",
+        "Żadne inne task nie będą wykonane.",
+        "Task błędów będą wykonane."
+      ],
+      "SUCCESS": [
+        "Flow zostanie uruchomiony ponownie, ponieważ ten task zakończył się sukcesem.",
+        "Wszystkie zablokowane taski zostaną wykonane.",
+        "Flow będzie w stanie SUCCESS, jeśli wszystkie uruchomienia tasków zakończą się sukcesem."
+      ],
+      "RUNNING": [
+        "Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.",
+        "Wszystkie zablokowane taski zostaną wykonane."
+      ]
+    },
     "replay execution title": "Replay egzekucji",
     "restart execution title": "Uruchom ponownie egzekucję",
     "replay execution description": "Spowoduje to utworzenie nowej egzekucji na podstawie wybranej egzekucji.",
@@ -414,7 +435,8 @@
       "zoom-reset": "Zresetuj powiększenie",
       "zoom-fit": "Dopasuj",
       "invalid": "Błąd grafu",
-      "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów."
+      "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
+      "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie."
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",
@@ -464,7 +486,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limity Concurrency",
-      "warning": "Zmiana licznika uruchomień może naruszyć Concurrency, więc egzekucje mogą przekroczyć dozwolony limit"
+      "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit."
     },
     "flowConcurrency": {
       "loadError": "Nie udało się wczytać limitu Concurrency tego Flow.",
@@ -515,6 +537,10 @@
       }
     },
     "use": "Użyj",
+    "plugin_card": {
+      "tasks": "Task | Taski",
+      "blueprints": "blueprint | blueprinty"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Instalacja pluginu nie powiodła się",
@@ -791,6 +817,7 @@
     "execution labels": "Etykiety egzekucji",
     "show more labels": "Pokaż {count} więcej etykiet",
     "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
+    "invalid label key": "Nieprawidłowy key etykiety. Prawidłowy key musi zaczynać się małą literą i zawierać tylko małe litery, cyfry, myślniki (-), podkreślenia (_) lub kropki (.)",
     "feeds": {
       "heading": "Wszystko o Kestra.",
       "subheading": "Najnowsze aktualizacje, przewodniki i historie"
@@ -812,15 +839,15 @@
       "guide": "Potrzebujesz wskazówek, aby uruchomić swój pierwszy Flow?"
     },
     "product_tour": "Przewodnik po produkcie",
-    "executions replayed": "Uruchomiono Replay dla <code>{executionCount}</code> egzekucji",
+    "executions replayed": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji odtworzonych",
     "executions state changed": "Status <code>{executionCount}</code> egzekucji został zmieniony",
-    "executions resumed": "Wznowiono <code>{executionCount}</code> egzekucji",
-    "executions paused": "Wstrzymano <code>{executionCount}</code> egzekucji",
-    "executions unqueue": "Usunięto z kolejki <code>{executionCount}</code> egzekucji",
-    "executions force run": "Wymuszono uruchomienie <code>{executionCount}</code> egzekucji",
-    "executions restarted": "Uruchomiono ponownie <code>{executionCount}</code> egzekucji",
-    "executions killed": "Zabito <code>{executionCount}</code> egzekucji",
-    "executions deleted": "Usunięto <code>{executionCount}</code> egzekucji",
+    "executions resumed": "<code>{executionCount}</code> egzekucja wznowiona | <code>{executionCount}</code> egzekucje wznowione | <code>{executionCount}</code> egzekucji wznowionych",
+    "executions paused": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji wstrzymanych",
+    "executions unqueue": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji usuniętych z kolejki",
+    "executions force run": "<code>{executionCount}</code> wymuszona egzekucja | <code>{executionCount}</code> wymuszone egzekucje | <code>{executionCount}</code> wymuszonych egzekucji",
+    "executions restarted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji uruchomionych ponownie",
+    "executions killed": "<code>{executionCount}</code> egzekucja zabita | <code>{executionCount}</code> egzekucje zabite | <code>{executionCount}</code> egzekucji zabitych",
+    "executions deleted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji usuniętych",
     "invalid bulk replay": "Nie można uruchomić Replaya egzekucji",
     "invalid bulk resume": "Nie można wznowić egzekucji",
     "invalid bulk pause": "Nie można wstrzymać egzekucji",
@@ -883,6 +910,7 @@
     "metric": "Metryka",
     "aggregation": "Agregacja",
     "metric choice": "Brak dostępnych metryk dla tego Flow",
+    "metric filter no match": "Brak metryk pasujących do „{term}”",
     "of": "z",
     "title": "Tytuł",
     "api": "API",
@@ -916,7 +944,7 @@
     "join_slack": "Dołącz do Slacka",
     "kestra": "Kestra",
     "error detected": "Wykryto błąd(y).",
-    "warning detected": "Wykryto ostrzeżenie(a)",
+    "warning detected": "Wykryto ostrzeżenie(-a).",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
     "dependency task": "Task {taskId} jest zależnością innego Taska",
@@ -1652,6 +1680,7 @@
     "last error was": "Ostatni błąd to",
     "active": "Aktywny",
     "flows imported": "Zaimportowano Flowy",
+    "flows not imported": "Flowy niezaimportowane",
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "chart preview": "Podgląd wykresu",
@@ -1697,7 +1726,8 @@
           "workerSelector": "Worker Selector",
           "checks": "Kontrole",
           "updated": "Zaktualizowano",
-          "quotas": "Limity"
+          "quotas": "Limity",
+          "policyRefs": "Odwołania do polityk"
         }
       },
       "select": {
@@ -2089,8 +2119,8 @@
         },
         "unavailable": {
           "title": "AI Copilot nie jest dostępny",
-          "detail": "Nie skonfigurowano żadnego dostawcy AI. Poproś administratora o jego konfigurację, a potem spróbuj ponownie.",
-          "retry": "Spróbuj ponownie"
+          "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego ustawienie.",
+          "docs": "Wyświetl dokumentację"
         },
         "thinkingWords": [
           "Orchestrowanie",
@@ -2573,6 +2603,7 @@
         "message": "Napraw błędy przed zapisaniem.",
         "title": "Nie można zapisać Flow"
       },
+      "schema_default_tooltip": "Wartość domyślna używana, gdy pole nie jest ustawione",
       "search_task_placeholder": "Wyszukaj lub opisz Task…",
       "shortcuts": {
         "add_after": "Wstaw blok po zaznaczeniu",

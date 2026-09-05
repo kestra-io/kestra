@@ -57,7 +57,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         Triggers.Fields.TRIGGER_ID, "trigger_id",
         Triggers.Fields.EXECUTION_ID, "execution_id",
         Triggers.Fields.NEXT_EXECUTION_DATE, NEXT_EVALUATION_DATE_COLUMN,
-        Triggers.Fields.WORKER_ID, WORKER_ID_FIELD.getName()
+        Triggers.Fields.WORKER_ID, WORKER_ID_FIELD.getName(),
+        Triggers.Fields.DISABLED, "disabled"
     );
 
     @Override

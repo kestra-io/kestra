@@ -394,6 +394,29 @@ class RunContextLoggerTest {
     }
 
     @Test
+    void shouldMaskThrowableWhenLoggingToFile() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            true
+        );
+        String secret = "super-secret-value";
+        runContextLogger.usedSecret(secret);
+
+        runContextLogger.logger().error("Task failure {}", secret, new Exception("Task failure %s".formatted(secret)));
+
+        runContextLogger.closeLogFile();
+        String fileContent = java.nio.file.Files.readString(runContextLogger.getLogFile().toPath());
+        assertThat(fileContent)
+            .contains("Task failure ******")
+            .contains("java.lang.Exception: Task failure ******")
+            .doesNotContain(secret);
+    }
+
+    @Test
     void emitDynamicTaskRunLogs_seedsMDCWithDynamicTaskRunIdentity() {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, Map.of());

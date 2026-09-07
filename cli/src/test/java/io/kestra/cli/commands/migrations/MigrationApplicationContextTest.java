@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.cli.Kestra;
+import io.kestra.core.server.ServerInstanceFactory;
 import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationRunnerInterface;
 import io.kestra.core.migration.MigrationStartupRunner;
@@ -43,6 +44,15 @@ class MigrationApplicationContextTest {
         );
         ctx.start();
         return ctx;
+    }
+
+    @Test
+    void shouldRegisterTheKestraContext() {
+        // picocli builds every subcommand through this context, so a bean taking a KestraContext as
+        // a constructor parameter — as the EE licence service does — broke the whole CLI.
+        try (ApplicationContext ctx = migrationContext()) {
+            assertThat(ctx.getBean(ServerInstanceFactory.class)).isNotNull();
+        }
     }
 
     @Test

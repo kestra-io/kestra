@@ -20,7 +20,6 @@ const state = {
     confirm: vi.fn(),
     cancel: vi.fn(),
     reset: vi.fn(),
-    retry: vi.fn(),
     retryLastTurn: vi.fn(),
     loadThread: vi.fn(),
     restoreThread: vi.fn(),
@@ -40,7 +39,6 @@ const miscStore = reactive({
     copilotThreadTitle: null as string | null,
     copilotNewThread: false,
     configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
-    loadConfigs: vi.fn(),
     openCopilot: vi.fn(),
     promptCopilot: vi.fn(),
 })
@@ -69,7 +67,6 @@ describe("CopilotChat", () => {
         state.sendChat.mockReset()
         state.confirm.mockReset()
         state.reset.mockReset()
-        state.retry.mockReset()
         state.retryLastTurn.mockReset()
         state.loadThread.mockReset()
         state.restoreThread.mockReset()
@@ -80,7 +77,6 @@ describe("CopilotChat", () => {
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
         miscStore.configs = {isAiApiKeyConfigured: true}
-        miscStore.loadConfigs.mockReset()
         flowStore.flowYaml = ""
     })
 
@@ -327,23 +323,38 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
     })
 
-    it("retries from the unavailable state, re-checking whether a provider has been added", async () => {
+    // Configuring a provider is an instance-config change, so the unavailable state points at the
+    // docs rather than offering a retry that could never succeed within the session.
+    it("offers the configuration docs — not a retry — from the unavailable state", () => {
         state.unavailable.value = true
         const w = mountChat()
-        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
-        await flushPromises()
-        expect(miscStore.loadConfigs).toHaveBeenCalled()
-        expect(state.retry).toHaveBeenCalled()
+        const docs = w.find("[data-test=\"copilot-unavailable-docs\"]")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
+        expect(docs.attributes("target")).toBe("_blank")
+        expect(w.find("[data-test=\"copilot-unavailable-retry\"]").exists()).toBe(false)
     })
 
-    // kestra-io/kestra#18322: no provider configured is known from `/configs` before the first turn,
-    // so the surface must say so on load instead of offering a chat that can only fail.
-    it("shows the unavailable state on load when no AI provider is configured", () => {
+    // kestra-io/kestra-ee#10739: `/configs` says up front that no provider is configured, but the
+    // copilot still opens on the regular chat — the unavailable state waits for a send attempt.
+    it("opens on the regular chat when no AI provider is configured", () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
         const w = mountChat()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        expect(w.text()).toContain("Turn your idea into a workflow")
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
+        expect(w.find(".copilot-suggestions").exists()).toBe(true)
+    })
+
+    it("shows the unavailable state once a prompt is attempted with no AI provider configured", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        const w = mountChat()
+
+        // A quick-start suggestion is a send attempt like any other.
+        await w.find(".copilot-suggestion").trigger("click")
+
         expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
-        expect(w.find(".copilot-suggestions").exists()).toBe(false)
+        // The turn is short-circuited: it could only ever come back 503.
+        expect(state.sendChat).not.toHaveBeenCalled()
     })
 
     it("keeps the copilot usable when the availability flag is absent (older backend)", () => {
@@ -352,18 +363,6 @@ describe("CopilotChat", () => {
 
         miscStore.configs = undefined
         expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
-    })
-
-    it("clears the up-front unavailable state once a provider is configured", async () => {
-        miscStore.configs = {isAiApiKeyConfigured: false}
-        miscStore.loadConfigs.mockImplementation(async () => {
-            miscStore.configs = {isAiApiKeyConfigured: true}
-        })
-        const w = mountChat()
-        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
-        await flushPromises()
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
     })
 
     it("auto-scrolls the transcript to the bottom as new content arrives", async () => {

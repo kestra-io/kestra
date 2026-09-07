@@ -887,8 +887,8 @@ public class ExecutionController {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
                     String webhookKey = runContext.render(w.getKey()).trim();
-                    // compare via MessageDigest.isEqual to prevent timing attacks
-                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
+                    // compare via AuthUtils.constantTimeEquals to prevent timing attacks
+                    return AuthUtils.constantTimeEquals(webhookKey, key);
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook
                     log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
@@ -1350,7 +1350,7 @@ public class ExecutionController {
 
         if (!(execution.getState().canBeRestarted())) {
             throw new ConflictException(
-                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated or paused."
+                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated."
             );
         }
 
@@ -1378,7 +1378,7 @@ public class ExecutionController {
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
-                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
+                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated to be restarted, " +
                             "current state is '" + execution.get().getState().getCurrent() + "' !", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {

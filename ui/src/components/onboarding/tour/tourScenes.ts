@@ -281,7 +281,7 @@ export const TOUR_SCENES: TourScene[] = [
                 await actions.openExecution(
                     executionId,
                     undefined,
-                    {expression: "trigger.body", select: "trigger.variables"},
+                    {expression: "trigger.body", select: "trigger.body"},
                     "outputs",
                 )
             }

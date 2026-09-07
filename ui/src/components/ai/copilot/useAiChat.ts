@@ -94,7 +94,10 @@ export function useAiChat() {
     const notice = ref<NoticeCode | null>(null)
     /** The proposal awaiting a confirm/reject decision, if any. */
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
-    /** True when the backend reports no AI provider is configured (503) — render an "unavailable" state. */
+    /**
+     * True when the copilot has no provider to run on — either the backend said so mid-turn (503) or
+     * the caller knew from `/configs` before sending. Renders the "unavailable" state.
+     */
     const unavailable = ref(false)
     /** Title for the next thread created by `ensureThread` (e.g. a seeded "Fix with AI" turn); consumed once. */
     const nextThreadTitle = ref<string | null>(null)
@@ -248,14 +251,6 @@ export function useAiChat() {
         pendingConfirmation.value = null
         push({id: uid(), role: "USER", type: "TEXT", content: request.prompt})
         await runStream(`${base()}/${active.uid}/chat`, request)
-    }
-
-    /** Clears the unavailable state so the user can retry (e.g. after configuring a provider). */
-    function retry(): void {
-        unavailable.value = false
-        error.value = null
-        errorDetail.value = null
-        notice.value = null
     }
 
     /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
@@ -464,7 +459,6 @@ export function useAiChat() {
         confirm,
         cancel,
         reset,
-        retry,
         retryLastTurn,
         noteContext,
         noteModelChange,

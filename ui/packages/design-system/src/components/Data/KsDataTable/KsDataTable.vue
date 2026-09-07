@@ -478,6 +478,7 @@
 
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 2rem;
+        --ks-data-table-navbar-padding-block-start: 0;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -488,7 +489,7 @@
         }
 
         > .ks-data-table-navbar {
-            padding-block-start: var(--ks-data-table-navbar-padding-block-start, 0px);
+            padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
         .kel-pagination {

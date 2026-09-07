@@ -227,6 +227,27 @@ jobs:
       - name: Check translations
         run: node ui/scripts/translations/check-translations.mjs --scope oss
 
+  # Same shape as the translations gate above, and for the same reason: it needs neither a build nor
+  # `npm ci`, only the checked-out files and Node's own type stripping. An undeclared `var(--ks-…)`
+  # is dropped by the browser with nothing logged, so without this the mistake only surfaces when
+  # somebody measures a computed style — see kestra-io/kestra#18777.
+  tokens:
+    name: 'Design tokens - Undeclared --ks-* variables'
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.ui == 'true'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        name: Checkout
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: 'ui/.nvmrc'
+
+      - name: Check design tokens
+        run: node ui/scripts/tokens/check.ts
+
   frontend:
     name: Frontend - Tests
     needs: [file-changes]
@@ -313,7 +334,7 @@ jobs:
   required-checks:
     name: Required checks
     if: always()
-    needs: [file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
+    needs: [file-changes, tokens, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled

@@ -27,12 +27,12 @@
             </p>
         </KsAlert>
 
-        <template v-else-if="result !== undefined">
+        <template v-else-if="result !== undefined || fileResult !== undefined">
             <div class="result-section">
                 <span class="result-label">{{ $t("eval.preview") }}</span>
                 <VarValue
-                    v-if="execution && isFileResult"
-                    :value="result"
+                    v-if="execution && fileResult"
+                    :value="fileResult"
                     :execution="execution"
                 />
                 <KsEditor
@@ -67,6 +67,8 @@
         execution?: Execution;
         /** Suggested expression to seed the editor with (e.g. `{{ vars.x }}`). */
         expression?: string;
+        /** File URI of the selected value, previewed without waiting for an evaluation. */
+        fileUri?: string;
     }>()
 
     const editorBindings = useEditorBindings()
@@ -87,7 +89,12 @@
     const resultLang = ref<"json" | "">("")
     const error = ref<string | undefined>(undefined)
 
-    const isFileResult = computed(() => result.value !== undefined && Utils.isFile(result.value))
+    const fileResult = computed(() => {
+        if (result.value !== undefined) {
+            return Utils.isFile(result.value) ? result.value : undefined
+        }
+        return props.execution ? props.fileUri : undefined
+    })
 
     function clear() {
         result.value = undefined

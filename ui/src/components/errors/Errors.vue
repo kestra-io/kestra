@@ -19,7 +19,8 @@
     import {useI18n} from "vue-i18n"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import EmptyTemplate from "../../components/layout/EmptyTemplate.vue"
-    import sourceImg from "../../assets/errors/kestra-error.png"
+    import error404Img from "../../assets/errors/kestra-error.png"
+    import error403Img from "../../assets/errors/kestra-error-403.png"
     import useRouteContext from "../../composables/useRouteContext"
 
     const {t} = useI18n()
@@ -28,7 +29,13 @@
         code: number | string;
     }>()
 
-    const routeInfo = computed(() => ({title: t("errors." + props.code + ".title")}))
+    const sourceImg = computed(() =>
+        String(props.code) === "403" ? error403Img : error404Img,
+    )
+
+    const routeInfo = computed(() =>
+        ({title: t("errors." + props.code + ".title")}),
+    )
 
     useRouteContext(routeInfo)
 

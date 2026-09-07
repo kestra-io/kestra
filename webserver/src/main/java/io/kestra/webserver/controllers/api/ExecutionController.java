@@ -71,6 +71,7 @@ import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
+import io.kestra.webserver.annotation.AnonymousAccess;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -550,6 +551,7 @@ public class ExecutionController {
         );
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by POST webhook trigger")
@@ -564,6 +566,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by GET webhook trigger")
@@ -578,6 +581,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by PUT webhook trigger")

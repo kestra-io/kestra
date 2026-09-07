@@ -54,7 +54,7 @@
                         <KsDatePicker
                             v-model="scheduleDate"
                             type="datetime"
-                            :disabledDate="disabledScheduleDate"
+                            :disabledDate="isScheduleDayDisabled"
                         />
                     </KsFormItem>
                     <KsFormItem
@@ -268,8 +268,6 @@
     const hasPastScheduleDate = computed(() =>
         isPastScheduleDate(scheduleDate.value, new Date(validationClock.value)),
     )
-
-    const disabledScheduleDate = (day: Date) => isScheduleDayDisabled(day)
 
     const validationMessages = computed(() => {
         const messages: string[] = []

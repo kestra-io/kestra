@@ -36,11 +36,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
 11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere, and the interval filter's Apply-to row shipped with no visible selection for the same reason (kestra-io/kestra#18777). One command checks the whole repo:
 
-    ```bash
-    npm run tokens:check
-    ```
-
-    It reports every undeclared `var(--ks-…)` and proposes a replacement; see [scripts/tokens/README.md](scripts/tokens/README.md).
+    Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
 
 ## Best practices for keeping the design system healthy
@@ -265,7 +261,7 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 ### Checking a frontend change before pushing
 
 ```bash
-npm run check:types && npm run test:unit && npm run lint && npm run tokens:check
+npm run check:types && npm run test:unit && npm run lint
 ```
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.

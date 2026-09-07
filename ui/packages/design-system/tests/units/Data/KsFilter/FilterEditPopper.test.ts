@@ -318,4 +318,30 @@ describe("FilterEditPopper time range", () => {
             expect(startDate.getTime()).toBeLessThanOrEqual(endDate.getTime())
         })
     })
+
+    test("does not apply a start date later than the end date it defaults to", async () => {
+        const wrapper = await mountTimeRange({
+            id: "tr3",
+            key: "timeRange",
+            comparator: Comparators.EQUALS,
+            value: "PT24H",
+            valueLabel: "Last 24 hours",
+        } as AppliedFilter)
+
+        const select = wrapper.findComponent(FilterSelect)
+        select.vm.$emit("update:timeRangeMode", "custom")
+        select.vm.$emit("update:startDateValue", new Date(Date.now() + 3 * 24 * 60 * 60 * 1000))
+        await flushPromises()
+
+        // With no end date the range still gets one, from getFilterValue's `?? new Date()`, so a
+        // future start inverts it just as surely as an explicit end in the past.
+        const applied = (wrapper.emitted("update") ?? [])
+            .map(([filter]) => filter as AppliedFilter)
+            .filter(filter => typeof filter.value === "object" && filter.value !== null)
+
+        applied.forEach(filter => {
+            const {startDate, endDate} = filter.value as {startDate: Date; endDate: Date}
+            expect(startDate.getTime()).toBeLessThanOrEqual(endDate.getTime())
+        })
+    })
 })

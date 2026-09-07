@@ -391,12 +391,13 @@
             return
         }
 
-        // An inverted range is rejected by the API with a 422, so it is never applied: the date
-        // panels already rule out the day-level case, this covers two times on the same day.
-        if (isTimeRange.value && state.timeRangeMode === "custom"
-            && state.startDateValue && state.endDateValue
-            && state.startDateValue > state.endDateValue) {
-            return
+        // An inverted range is rejected by the API with a 422, so it is never applied. It compares
+        // the bounds getFilterValue will send, since an end left unset still defaults to now.
+        if (isTimeRange.value && state.timeRangeMode === "custom") {
+            const now = new Date()
+            if ((state.startDateValue ?? now) > (state.endDateValue ?? now)) {
+                return
+            }
         }
 
         const filterData = getFilterValue()

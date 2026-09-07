@@ -103,7 +103,7 @@ const undeclaredMessages = ruleMessages(undeclaredRuleName, {
 	rejected: (/** @type {string} */ message) => message,
 })
 
-const TOKEN_REGEX = /^--ks-[a-z0-9-]+$/i
+const TOKEN_REGEX = /^--ks-[A-Za-z0-9-]+$/
 
 /**
  * Reports a `var(--ks-…)` whose name is declared neither in the Figma palette nor anywhere in the
@@ -136,10 +136,13 @@ const undeclaredRule = (primary) => {
 				if (!isVarFunction(parsed)) return
 
 				// @ts-expect-error missing type
-				const first = parsed.nodes[0]
-				const token = first && isString(first.value) ? first.value.toLowerCase() : ""
+				const {nodes} = parsed
+				const first = nodes[0]
+				const token = first && isString(first.value) ? first.value : ""
 
 				if (!TOKEN_REGEX.test(token) || known.has(token)) return
+
+				const hasFallback = nodes.some((/** @type {{type: string}} */ n) => n.type === "div" && n.value === ",")
 
 				report({
 					result,
@@ -147,7 +150,7 @@ const undeclaredRule = (primary) => {
 					node,
 					index: offset + first.sourceIndex,
 					endIndex: offset + first.sourceIndex + token.length,
-					message: undeclaredMessages.rejected(undeclaredMessage(token, known)),
+					message: undeclaredMessages.rejected(undeclaredMessage(token, known, hasFallback)),
 				})
 			})
 		}

@@ -455,6 +455,14 @@
 </script>
 
 <style lang="scss">
+    // Registered rather than declared on the wrapper: a plain declaration there would shadow a value
+    // an ancestor sets, which is the opposite of the override hook this is meant to be.
+    @property --ks-data-table-navbar-padding-block-start {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 0;
+    }
+
     .load-error {
         display: flex;
         flex-direction: column;
@@ -478,7 +486,6 @@
 
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 2rem;
-        --ks-data-table-navbar-padding-block-start: 0;
         height: 100%;
         display: flex;
         flex-direction: column;

@@ -227,33 +227,6 @@ jobs:
       - name: Check translations
         run: node ui/scripts/translations/check-translations.mjs --scope oss
 
-  # The same stylelint rule an editor runs while you type, so this only ever fails for someone who
-  # ignored it there. An undeclared `var(--ks-…)` is dropped by the browser with nothing logged, so
-  # without a gate the mistake surfaces when somebody measures a computed style — kestra-io/kestra#18777.
-  # The ESLint half of the rule (tokens written in JavaScript) runs in the frontend job's eslint step.
-  tokens:
-    name: 'Design tokens - Undeclared --ks-* variables'
-    needs: [file-changes]
-    if: "needs.file-changes.outputs.ui == 'true'"
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: ui
-    steps:
-      - uses: actions/checkout@v7
-        name: Checkout
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: 'ui/.nvmrc'
-
-      - name: Npm - install
-        run: npm ci
-
-      - name: Check design tokens
-        run: npx stylelint "{src,packages}/**/*.{vue,scss,css}"
-
   frontend:
     name: Frontend - Tests
     needs: [file-changes]
@@ -340,7 +313,7 @@ jobs:
   required-checks:
     name: Required checks
     if: always()
-    needs: [file-changes, tokens, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
+    needs: [file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled

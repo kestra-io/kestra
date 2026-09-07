@@ -47,9 +47,10 @@ export const RETIRED = {
  * in a JS style object, or a runtime `setProperty` call.
  */
 export const declarationsIn = (source) => [
-    ...source.matchAll(/(?:#\{)?(--ks-[a-z0-9-]+)["']?\}?\s*:/gi),
-    ...source.matchAll(/setProperty\(\s*["'](--ks-[a-z0-9-]+)["']/gi),
-].map(match => match[1].toLowerCase())
+    ...source.matchAll(/(?:#\{)?(--ks-[a-z0-9-]+)["'`]?\}?\s*:/g),
+    ...source.matchAll(/setProperty\(\s*["'`](--ks-[a-z0-9-]+)["'`]/g),
+    ...source.matchAll(/@property\s+(--ks-[a-z0-9-]+)/g),
+].map(match => match[1])
 
 const walk = (directory, files = []) => {
     for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
@@ -65,7 +66,9 @@ const walk = (directory, files = []) => {
 let cache = null
 
 const scan = () => {
-    const known = new Set(JSON.parse(fs.readFileSync(PALETTE, "utf-8")).map(name => name.toLowerCase()))
+    // Names are compared exactly: custom properties are case-sensitive, so `--ks-Artwork-fill` and
+    // `--ks-artwork-fill` are two different tokens and only one of them is ever declared.
+    const known = new Set(JSON.parse(fs.readFileSync(PALETTE, "utf-8")))
     for (const root of ROOTS) {
         if (!fs.existsSync(root)) continue
         for (const file of walk(root)) {
@@ -113,12 +116,22 @@ export const suggest = (token, known) => {
         .map(({name}) => name)
 }
 
-/** The message both the stylelint rule and the ESLint rule report, so they read the same. */
-export const undeclaredMessage = (token, known) => {
+/**
+ * The message both the stylelint rule and the ESLint rule report, so they read the same.
+ * A usage carrying a fallback renders correctly, so it is only the dead name that is wrong there.
+ *
+ * @param {string} token
+ * @param {Set<string>} known
+ * @param {boolean} [hasFallback]
+ */
+export const undeclaredMessage = (token, known, hasFallback = false) => {
     const suggestions = suggest(token, known)
+    const consequence = hasFallback
+        ? "the fallback is what renders, so the name is dead weight"
+        : "an unresolved custom property is dropped by the browser"
     return suggestions.length > 0
-        ? `"${token}" is not declared: did you mean ${suggestions.join(", ")}? An unresolved custom property is dropped by the browser.`
-        : `"${token}" is not declared anywhere, so the declaration is dropped by the browser. Add it to the Figma palette or use an existing token.`
+        ? `"${token}" is not declared: did you mean ${suggestions.join(", ")}? Here ${consequence}.`
+        : `"${token}" is not declared anywhere. Here ${consequence}. Add it to the Figma palette or use an existing token.`
 }
 
 /**
@@ -126,9 +139,9 @@ export const undeclaredMessage = (token, known) => {
  * interpolation (`var(--ks-status-#{$state})`) are left out: their value is only known at runtime.
  */
 export const usagesIn = function* (source) {
-    for (const match of source.matchAll(/var\(\s*(--ks-[a-z0-9-]*)/gi)) {
-        const token = match[1].toLowerCase()
+    for (const match of source.matchAll(/var\(\s*(--ks-[A-Za-z0-9-]*)\s*(,)?/g)) {
+        const token = match[1]
         if (token.endsWith("-")) continue
-        yield {token, index: match.index + match[0].length - match[1].length}
+        yield {token, index: match.index + match[0].indexOf(token), hasFallback: Boolean(match[2])}
     }
 }

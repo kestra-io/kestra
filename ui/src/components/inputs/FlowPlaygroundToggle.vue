@@ -14,7 +14,7 @@
 .toggle{
     margin-right: 1rem;
     &.is-active{
-        --kel-switch-border-color: var(--ks-border-focus);
+        --kel-switch-border-color: var(--ks-toggle-active);
         ::v-deep(.kel-switch__label){
             color: var(--ks-text-primary);
         }

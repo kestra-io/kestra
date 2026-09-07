@@ -1,6 +1,6 @@
 // The fixtures below are CSS written as strings, so the rule under test would report itself.
 /* eslint-disable kestra-tokens/no-undeclared-ks-token */
-import {execFileSync} from "node:child_process"
+import {spawnSync} from "node:child_process"
 import {describe, expect, it} from "vitest"
 import {RuleTester} from "eslint"
 // @ts-expect-error - plain .mjs modules, so that both linters and this test load the same code
@@ -20,18 +20,14 @@ const report = (output: string): Warning[] => output.includes("[")
     : []
 
 const lintTolerant = (code: string, file = "probe.scss"): Warning[] => {
-    const run = () => execFileSync(
+    // Both streams: stylelint writes its report to stderr, and exits non-zero for a file carrying an
+    // error, so reading stdout alone would silently return an empty report for every case.
+    const {stdout, stderr} = spawnSync(
         process.execPath,
         ["node_modules/stylelint/bin/stylelint.mjs", "--stdin", `--stdin-filename=${file}`, "--formatter", "json"],
-        {input: code, encoding: "utf-8", cwd: process.cwd(), stdio: ["pipe", "pipe", "pipe"]},
+        {input: code, encoding: "utf-8", cwd: process.cwd()},
     )
-    try {
-        return report(run())
-    } catch (error) {
-        // A file carrying an error exits non-zero; stylelint still wrote the report first.
-        const {stdout, stderr} = error as {stdout?: string; stderr?: string}
-        return report(`${stdout ?? ""}${stderr ?? ""}`)
-    }
+    return report(`${stdout ?? ""}${stderr ?? ""}`)
 }
 
 const warningsFor = (code: string, file = "probe.scss") => lintTolerant(code, file).map(warning => warning.text)
@@ -67,6 +63,12 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
 
     it("accepts a declared token", () => {
         expect(warningsFor(".x { color: var(--ks-text-link); }")).toEqual([])
+    })
+
+    // Guards the helper as much as the rule: reading the wrong stream returns an empty report, which
+    // would make every "accepts" case above pass without ever seeing a warning.
+    it("reads the report stylelint actually writes", () => {
+        expect(warningsFor(".x { color: #fff; }")).toEqual([expect.stringContaining("Unexpected hex color")])
     })
 
     it("fails the build for an undeclared token while the rest of the config only warns", () => {

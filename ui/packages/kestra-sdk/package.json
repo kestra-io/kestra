@@ -29,7 +29,6 @@
     "./secrets": "./dist/secrets.js",
     "./services": "./dist/services.js",
     "./shared": "./dist/shared.js",
-    "./tenants": "./dist/tenants.js",
     "./triggers": "./dist/triggers.js",
     "./package.json": "./package.json"
   },

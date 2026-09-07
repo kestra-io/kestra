@@ -32,7 +32,8 @@ export const isExportableChart = (type: string): boolean => !isMarkdownChart(typ
 
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id
 
-export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property]
+/** `data` is undefined when the chart went away before its request answered, or when the request 404ed. */
+export const getPropertyValue = (data: Record<string, any> | undefined, property: "value" | "description"): string | undefined => data?.results?.[0]?.[property]
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false
 

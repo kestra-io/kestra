@@ -107,7 +107,10 @@
         return [
             {
                 "unused-path": props.data.unused,
-                disabled: node.value?.disabled || props.data.parent?.taskNode?.task?.disabled,
+                disabled: node.value?.disabled
+                    || props.data.node?.disabled
+                    || props.data.parent?.taskNode?.task?.disabled
+                    || props.data.parent?.taskNode?.disabled,
             },
             props.class,
         ]

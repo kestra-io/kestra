@@ -11,8 +11,6 @@ import io.kestra.core.models.collectors.MetricUsage;
 import io.kestra.core.reporter.AbstractReportable;
 import io.kestra.core.reporter.Schedules;
 import io.kestra.core.reporter.Types;
-import io.kestra.core.reporter.model.Count;
-import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 
@@ -30,20 +28,17 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
 
     private final FlowRepositoryInterface flowRepository;
     private final ExecutionStatisticsRepositoryInterface executionStatisticRepository;
-    private final DashboardRepositoryInterface dashboardRepository;
     private final ServerType serverType;
     private final MetricRegistry metricRegistry;
 
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
         ExecutionStatisticsRepositoryInterface executionStatisticRepository,
-        DashboardRepositoryInterface dashboardRepository,
         @Value("${kestra.server-type}") ServerType serverType,
         MetricRegistry metricRegistry) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;
         this.executionStatisticRepository = executionStatisticRepository;
-        this.dashboardRepository = dashboardRepository;
         this.serverType = serverType;
         this.metricRegistry = metricRegistry;
     }
@@ -59,7 +54,6 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
             .builder()
             .flows(FlowUsage.of(flowRepository))
             .executions(ExecutionUsage.of(executionStatisticRepository, interval.from(), interval.to()))
-            .dashboards(new Count(dashboardRepository.countAllForAllTenants()))
             .metrics(MetricUsage.of(metricRegistry))
             .build();
     }
@@ -82,7 +76,6 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     public static class UsageEvent implements Event {
         private ExecutionUsage executions;
         private FlowUsage flows;
-        private Count dashboards;
         private MetricUsage metrics;
     }
 }

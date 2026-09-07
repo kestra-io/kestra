@@ -3,9 +3,9 @@ package io.kestra.core.runners;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -629,13 +629,18 @@ public class FlowInputOutput {
                         yield uri;
                     } else {
                         File requestedFile = new File(current.toString());
-                        Path authorizedPath;
-                        try {
-                            authorizedPath = localPathFactory.createLocalPath().authorizedPath(requestedFile.toURI());
+                        // Read through LocalPath so allowed-paths is enforced and the stream is opened on the
+                        // path it validated, not on the one we were given, which a symlink swap could re-point.
+                        try (InputStream authorized = localPathFactory.createLocalPath().get(requestedFile.toURI())) {
+                            yield storageInterface.put(
+                                execution.getTenantId(),
+                                execution.getNamespace(),
+                                StorageContext.forInput(execution, id, requestedFile.getName()).getContextStorageURI(),
+                                authorized
+                            );
                         } catch (NoSuchFileException e) {
                             throw new IllegalArgumentException("The file '" + requestedFile + "' does not exist.", e);
                         }
-                        yield storageInterface.from(execution, id, requestedFile.getName(), authorizedPath.toFile());
                     }
                 }
                 case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current : JacksonMapper.toObject(current.toString());

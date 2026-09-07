@@ -100,28 +100,29 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());
 
+                // record this iteration's terminal state before deciding whether to keep looping
+                Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
+                int iterationCount = (Integer) outputs.get(Loop.ITERATION_COUNT_OUTPUT);
+                int runningIteration = (Integer) outputs.get(Loop.RUNNING_ITERATIONS_OUTPUT) - 1;
+                @SuppressWarnings("unchecked")
+                Map<String, Integer> terminatedByState = outputs.containsKey(Loop.TERMINATED_ITERATIONS_OUTPUT)
+                    ? (Map<String, Integer>) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT)
+                    : HashMap.newHashMap(6);
+                terminatedByState.merge(message.state().name(), 1, Integer::sum);
+                int terminatedIteration = terminatedByState.values().stream().mapToInt(Integer::intValue).sum();
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT) ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT) : new ArrayList<>();
+                if (!MapUtils.isEmpty(message.outputs())) {
+                    taskOutputs.add(buildIterationOutput(message));
+                }
+
                 if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
                     // the failure happened inside an isolated loop sub-execution: log inside the parent exec
+                    computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
                     logLoopIterationFailure(parentTaskRun, loop, executor, message);
                     // immediately terminate the loop
                     return terminateLoop(parentTaskRun, loop, executor, message.state());
                 } else {
-                    // increment iteration
-                    Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
-                    int iterationCount = (Integer) outputs.get(Loop.ITERATION_COUNT_OUTPUT);
-                    int runningIteration = (Integer) outputs.get(Loop.RUNNING_ITERATIONS_OUTPUT) - 1;
-                    @SuppressWarnings("unchecked")
-                    Map<String, Integer> terminatedByState = outputs.containsKey(Loop.TERMINATED_ITERATIONS_OUTPUT)
-                        ? (Map<String, Integer>) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT)
-                        : HashMap.newHashMap(6);
-                    terminatedByState.merge(message.state().name(), 1, Integer::sum);
-                    int terminatedIteration = terminatedByState.values().stream().mapToInt(Integer::intValue).sum();
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT) ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT) : new ArrayList<>();
-                    if (!MapUtils.isEmpty(message.outputs())) {
-                        taskOutputs.add(buildIterationOutput(message));
-                    }
-
                     // Check the next iteration index
                     int nextIndex = runningIteration + terminatedIteration;
                     if (nextIndex < iterationCount) {

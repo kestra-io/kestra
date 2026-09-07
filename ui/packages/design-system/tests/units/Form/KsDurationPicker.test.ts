@@ -140,6 +140,62 @@ describe("KsDurationPicker", () => {
         expect(emitted).toBeTruthy()
     })
 
+    test("keeps the typed text when an intermediate value parses to zero", async () => {
+        const wrapper = mount(KsDurationPicker, {
+            props: {modelValue: "PT5M"},
+            global: globalConfig,
+        })
+        await wrapper.vm.$nextTick()
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        for (const partial of ["P", "PT"]) {
+            await customInputEl.setValue(partial)
+            await wrapper.vm.$nextTick()
+            await wrapper.vm.$nextTick()
+            expect((customInputEl.element as HTMLInputElement).value).toBe(partial)
+        }
+
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBeNull()
+    })
+
+    test("emits the parsed value once the typed text becomes valid", async () => {
+        const wrapper = mount(KsDurationPicker, {
+            props: {modelValue: "PT5M"},
+            global: globalConfig,
+        })
+        await wrapper.vm.$nextTick()
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        for (const partial of ["P", "PT", "PT3", "PT30", "PT30S"]) {
+            await customInputEl.setValue(partial)
+            await wrapper.vm.$nextTick()
+        }
+        await wrapper.vm.$nextTick()
+
+        expect((customInputEl.element as HTMLInputElement).value).toBe("PT30S")
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe("PT30S")
+    })
+
+    test("unit spinner change rewrites the text canonically and emits", async () => {
+        const wrapper = mount(KsDurationPicker, {
+            props: {modelValue: "PT5M"},
+            global: globalConfig,
+        })
+        await wrapper.vm.$nextTick()
+
+        const minutesInput = wrapper.findAll(".ks-duration-picker__field input")[2]
+        await minutesInput.setValue("10")
+        await minutesInput.trigger("change")
+        await wrapper.vm.$nextTick()
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        expect((customInputEl.element as HTMLInputElement).value).toBe("PT10M")
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe("PT10M")
+    })
+
     test("empty modelValue results in null emit", async () => {
         const wrapper = mount(KsDurationPicker, {
             props: {modelValue: ""},

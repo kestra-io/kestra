@@ -24,8 +24,10 @@ public class DefaultStartupHook implements StartupHookInterface {
     @Inject
     private Optional<EditionProvider> editionProvider;
 
+    // Resolved lazily: an Optional here would instantiate a repository — and the datasource behind
+    // it — for every command, while only a server command ever reads it.
     @Inject
-    private Optional<SettingRepositoryInterface> settingRepositoryProvider;
+    private BeanProvider<SettingRepositoryInterface> settingRepositoryProvider;
 
     @Inject
     BeanProvider<McpServerService> mcpServerService;

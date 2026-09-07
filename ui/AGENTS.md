@@ -389,7 +389,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsTabs` / `KsTabPane` | Tabbed interface |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
-| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu |
+| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
 | `KsTopNavBar` | Top navigation bar |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |

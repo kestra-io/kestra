@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.hamcrest.Matchers;
@@ -1152,10 +1153,79 @@ class FlowControllerTest {
                     "by default /by-query endpoints should use specific PREFIX in legacy filter mapping, " +
                         "in this test, we should get all Flow when querying with namespace=io.kestra.tests, io.kestra.tests.subnamespace are accepted, but not io.kestra.tests2"
                 )
-                .isEqualTo(Helpers.FLOWS_COUNT - 1); // -1 because io.kestra.tests2 namespace
+                // -1 for the io.kestra.tests2 namespace, -2 for the invalid-draft-flow and
+                // webhook-draft fixtures, which the export endpoint excludes as drafts
+                .isEqualTo(Helpers.FLOWS_COUNT - 3);
         }
 
         file.delete();
+    }
+
+    @Test
+    void exportFlowsByQueryExcludesDrafts() throws IOException {
+        String savedId = "draftexportsaved";
+        String draftOnlyId = "draftexportdraftonly";
+
+        String savedSource = """
+            id: %s
+            namespace: %s
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: saved revision
+            """.formatted(savedId, TEST_NAMESPACE);
+        String draftOnTopSource = savedSource.replace("saved revision", "draft revision");
+        String draftOnlySource = """
+            id: %s
+            namespace: %s
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: never saved
+            """.formatted(draftOnlyId, TEST_NAMESPACE);
+
+        // saved normally, then a newer draft revision on top: the saved revision must still export
+        client.toBlocking().exchange(POST("/api/v1/main/flows", savedSource).contentType(MediaType.APPLICATION_YAML));
+        client.toBlocking().exchange(
+            PUT("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + savedId + "?draft=true", draftOnTopSource).contentType(MediaType.APPLICATION_YAML)
+        );
+        // only ever a draft: must not export at all
+        client.toBlocking().exchange(POST("/api/v1/main/flows?draft=true", draftOnlySource).contentType(MediaType.APPLICATION_YAML));
+
+        File file = File.createTempFile("flows", ".zip");
+        try {
+            byte[] zip = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/flows/export/by-query?filters[namespace][EQUALS]=" + TEST_NAMESPACE),
+                Argument.of(byte[].class)
+            );
+            Files.write(file.toPath(), zip);
+
+            try (ZipFile zipFile = new ZipFile(file)) {
+                List<String> names = zipFile.stream().map(ZipEntry::getName).toList();
+
+                assertThat(names)
+                    .as("a flow whose only revision is a draft is not exported")
+                    .doesNotContain(TEST_NAMESPACE + "-" + draftOnlyId + ".yml");
+                assertThat(names)
+                    .as("a draft-headed flow still exports, through its last saved revision")
+                    .contains(TEST_NAMESPACE + "-" + savedId + ".yml");
+
+                String exported = new String(
+                    zipFile.getInputStream(zipFile.getEntry(TEST_NAMESPACE + "-" + savedId + ".yml")).readAllBytes(),
+                    StandardCharsets.UTF_8
+                );
+                assertThat(exported)
+                    .as("the exported source is the saved revision, not the draft on top")
+                    .contains("saved revision")
+                    .doesNotContain("draft revision");
+            }
+        } finally {
+            file.delete();
+            client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + savedId));
+            client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + draftOnlyId));
+        }
     }
 
     @Test

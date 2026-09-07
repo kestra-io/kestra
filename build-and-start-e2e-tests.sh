@@ -20,7 +20,7 @@ echo "Building the image for this current repository"
 # background so the downloads overlap with the Gradle/npm build instead of
 # sitting on the critical path.
 BASE_IMAGE="$(sed -n 's/^ARG BASE_IMAGE="\(.*\)"/\1/p' Dockerfile)"
-docker pull -q "${BASE_IMAGE:-ghcr.io/kestra-io/kestra-base:latest-no-plugins}" > /dev/null 2>&1 &
+docker pull -q "${BASE_IMAGE:-ghcr.io/kestra-io/kestra-base:latest-slim}" > /dev/null 2>&1 &
 docker pull -q postgres > /dev/null 2>&1 &
 
 if [ "${E2E_USE_PREBUILT_EXE:-false}" = "true" ]; then

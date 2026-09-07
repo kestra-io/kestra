@@ -2,7 +2,7 @@
     <MetricsTable
         v-if="executionsStore.execution"
         ref="table"
-        :taskRunId="route.query.metric?.[0] ?? undefined"
+        :taskRunId="taskRunId"
         :showTask="true"
         :execution="executionsStore.execution"
         :optionalColumns="optionalColumns"
@@ -26,7 +26,7 @@
     </MetricsTable>
 </template>
 <script setup lang="ts">
-    import {onMounted, ref} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
     import {useExecutionsStore} from "../../stores/executions"
@@ -41,6 +41,8 @@
     const metricFilter = useMetricFilter()
 
     const table = ref<typeof MetricsTable>()
+
+    const taskRunId = computed(() => route.query["filters[metric][EQUALS]"] as string | undefined)
 
     const optionalColumns = ref([
         {
@@ -74,10 +76,6 @@
     }
 
     const refresh = () => {
-        table.value!.loadData(table.value!.onDataLoaded)
+        table.value?.reload()
     }
-
-    onMounted(() => {
-        table.value!.loadData(table.value!.onDataLoaded)
-    })
 </script>

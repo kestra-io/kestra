@@ -85,11 +85,14 @@ public class LoopCaseTest {
         assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 2);
     }
 
-    public void loopFailed(Execution execution) {
+    public void loopFailed(Execution execution) throws InternalException {
         // Then — first failing iteration terminates the loop immediately with transmitFailed=true (default)
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(1);
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        TaskRun loopTaskRun = execution.getTaskRunList().getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1));
 
         // Only one sub-execution ran before the loop was terminated
         List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);

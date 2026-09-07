@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import java.util.List;
 
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.runners.pebble.functions.KvFunction;
 import io.kestra.core.runners.pebble.functions.SecretFunction;
 
 import io.micronaut.context.ApplicationContext;
@@ -33,7 +34,7 @@ public class SecureVariableRendererFactory {
             // Explicitly create a new instance through the application context to ensure
             // eventual custom VariableRenderer implementation is used
             secureVariableRenderer = applicationContext.createBean(VariableRenderer.class);
-            secureVariableRenderer.setPebbleEngine(pebbleEngineFactory.createWithMaskedFunctions(secureVariableRenderer, List.of(SecretFunction.NAME)));
+            secureVariableRenderer.setPebbleEngine(pebbleEngineFactory.createWithMaskedFunctions(secureVariableRenderer, List.of(SecretFunction.NAME, KvFunction.NAME)));
         }
         return secureVariableRenderer;
     }

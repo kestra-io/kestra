@@ -647,6 +647,53 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findWithSourceExcludingDrafts_shouldFallBackToLastNonDraftRevision() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String publishedId = IdUtils.create();
+        String draftLatestId = IdUtils.create();
+        String draftOnlyId = IdUtils.create();
+        final List<Flow> toDelete = new ArrayList<>();
+
+        try {
+            FlowWithSource published = flowRepository.create(createTestingLogFlow(tenant, publishedId, "p1"));
+            toDelete.add(published);
+
+            FlowWithSource draftLatestR1 = flowRepository.create(createTestingLogFlow(tenant, draftLatestId, "head"));
+            toDelete.add(draftLatestR1);
+            FlowWithSource draftLatestR2 = flowRepository.update(createTestingLogFlow(tenant, draftLatestId, "wip", true), draftLatestR1);
+            toDelete.add(draftLatestR2);
+
+            FlowWithSource draftOnly = flowRepository.create(createTestingLogFlow(tenant, draftOnlyId, "wip", true));
+            toDelete.add(draftOnly);
+
+            // findWithSource keeps showing the latest revision, drafts included.
+            assertThat(flowRepository.findWithSource(Pageable.UNPAGED, tenant, null).stream().map(Flow::getId).toList())
+                .contains(publishedId, draftLatestId, draftOnlyId);
+
+            List<FlowWithSource> exportable = flowRepository.findWithSourceExcludingDrafts(Pageable.UNPAGED, tenant, null);
+
+            assertThat(exportable.stream().filter(f -> f.getId().equals(publishedId)).findFirst())
+                .isPresent()
+                .hasValueSatisfying(f -> assertThat(f.getRevision()).isEqualTo(published.getRevision()));
+
+            // A draft on top of a saved revision must not hide the saved one, otherwise external
+            // sync would read the flow as deleted.
+            assertThat(exportable.stream().filter(f -> f.getId().equals(draftLatestId)).findFirst())
+                .isPresent()
+                .hasValueSatisfying(f ->
+                {
+                    assertThat(f.getRevision()).isEqualTo(draftLatestR1.getRevision());
+                    assertThat(f.isDraft()).isFalse();
+                    assertThat(f.getSource()).contains("head");
+                });
+
+            assertThat(exportable.stream().map(Flow::getId).toList()).doesNotContain(draftOnlyId);
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
     void saveNoRevision() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = builder(tenant).build();

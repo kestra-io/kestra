@@ -1,6 +1,7 @@
 import {computed, provide, ref} from "vue";
 import TaskEnum from "../../../../../../src/components/no-code/components/tasks/TaskEnum.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
+import {expect, fireEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
@@ -55,6 +56,41 @@ export const WithSelection: Story = {
             enum: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         },
         root: "level",
+    },
+};
+
+export const WithSchemaDefault: Story = {
+    render,
+    args: {
+        modelValue: undefined,
+        schema: {
+            type: "string",
+            enum: ["QUEUE", "CANCEL", "FAIL"],
+            default: "QUEUE",
+        },
+        root: "concurrency.behavior",
+    },
+    async play({canvasElement}) {
+        const canvas = within(canvasElement);
+        const result = canvas.getByTestId("result");
+
+        // The schema default must not render as a selection when the value is unset.
+        expect(result.textContent).toBe("");
+
+        // Poppers teleport to body and earlier stories leave theirs behind hidden, so
+        // count only the open one.
+        const openPopper = () =>
+            [...canvasElement.ownerDocument.querySelectorAll<HTMLElement>(".kel-select__popper")]
+                .find(popper => popper.style.display !== "none");
+
+        // Picking the default value on the first try must write it — before the fix the
+        // select pretended QUEUE was selected, so choosing it emitted nothing.
+        const combobox = await canvas.findByRole("combobox", {}, {timeout: 15000});
+        fireEvent.click(combobox);
+        await waitFor(() => expect(openPopper()).toBeDefined());
+        const option = await within(openPopper()!).findByText("QUEUE");
+        fireEvent.click(option);
+        await waitFor(() => expect(result.textContent).toBe("\"QUEUE\""));
     },
 };
 

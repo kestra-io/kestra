@@ -46,6 +46,20 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/dropdown';
 
+    .kel-dropdown {
+        // Element Plus draws the split-button divider as the border colour at half opacity,
+        // which vanishes against every Kestra button fill; use the strong border token instead
+        .kel-dropdown__caret-button.kel-button::before {
+            background: var(--ks-border-strong);
+            opacity: 1;
+        }
+
+        // a primary button is filled, so use the lighter button-group divide colour instead
+        .kel-dropdown__caret-button.kel-button--primary:not(.is-disabled)::before {
+            background: var(--kel-button-divide-border-color);
+        }
+    }
+
     .kel-dropdown__popper {
         --kel-popper-border-radius: var(--ks-radius-base);
         --kel-dropdown-menuItem-hover-fill: var(--ks-bg-hover-elevated);

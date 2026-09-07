@@ -25,6 +25,7 @@
     import TaskEditor from "../components/TaskEditor.vue"
     import ValidationError from "../../../components/flows/ValidationError.vue"
     import {useFlowStore} from "../../../stores/flow"
+    import {splitValidationErrors} from "../../../utils/validationErrors"
 
     const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
@@ -109,7 +110,10 @@
     const lastValidatedValue = ref<string>()
 
 
-    const errors = computed(() => flowStore.taskError?.split(/, ?/))
+    const errors = computed(() => {
+        const split = splitValidationErrors(flowStore.taskError)
+        return split.length === 0 ? undefined : split
+    })
 
     const saveTask = () => {
         let result: string = flow.value

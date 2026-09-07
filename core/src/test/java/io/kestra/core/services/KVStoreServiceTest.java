@@ -50,6 +50,21 @@ class KVStoreServiceTest {
         Assertions.assertNotNull(storeService.get(MAIN_TENANT, "io.kestra", TEST_EXISTING_NAMESPACE));
     }
 
+    /**
+     * Regression test for issue #10244 — "development" shares the "dev" string prefix but is not one
+     * of its dot-delimited descendants, so it must not be treated as a child namespace (which would
+     * skip both the cross-namespace ACL check and the namespace-existence check).
+     */
+    @Test
+    void shouldNotTreatSiblingNamespaceSharingPrefixAsChild() {
+        // Before the fix, "development".startsWith("dev") made this silently succeed with no ACL or
+        // existence check at all. After the fix, "dev" is correctly treated as unrelated to
+        // "development" and is rejected — as a real ACL denial or, absent one, a not-found namespace.
+        Assertions.assertThrows(
+            KVStoreException.class, () -> storeService.get(MAIN_TENANT, "dev", "development")
+        );
+    }
+
     @Test
     void shouldDenyKVStoreAccessWhenAccessingFromPrefixSiblingNamespace() {
         assertThatThrownBy(() -> storeService.get(MAIN_TENANT, "prod", "prod2"))

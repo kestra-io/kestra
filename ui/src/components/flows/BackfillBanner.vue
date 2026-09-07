@@ -16,7 +16,6 @@
             <KsIconButton
                 v-if="!row.backfill.paused"
                 data-test="backfill-pause"
-                size="small"
                 :tooltip="$t('pause backfill')"
                 @click="emit('pause')"
             >
@@ -25,7 +24,6 @@
             <KsIconButton
                 v-else
                 data-test="backfill-resume"
-                size="small"
                 :tooltip="$t('continue backfill')"
                 @click="emit('resume')"
             >
@@ -33,7 +31,6 @@
             </KsIconButton>
             <KsIconButton
                 data-test="backfill-stop"
-                size="small"
                 :tooltip="$t('delete backfill')"
                 class="bf-stop"
                 @click="emit('stop')"

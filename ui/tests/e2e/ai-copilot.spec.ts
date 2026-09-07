@@ -447,17 +447,23 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         await expect(help).toContainText("Slack")
     })
 
-    // kestra-io/kestra#18322: an instance with no provider used to render a working-looking chat and
-    // only owned up after the first turn failed.
-    test("says the copilot is unavailable on load when no provider is configured", async ({page}) => {
+    // kestra-io/kestra-ee#10739: an instance with no provider used to land on the unavailable state,
+    // so OSS users met a blank page. The page now opens as usual and only owns up once a prompt is
+    // sent — which never reaches the network, since `/configs` already said there's no provider.
+    test("opens the page as usual with no provider, and says so once a prompt is sent", async ({page}) => {
         await stubAiProviderConfigured(page, false)
         await disableProductTour(page)
         await page.goto("/ui/ai", {waitUntil: "load"})
 
-        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible({timeout: 15000})
-        // Nothing invites a prompt: the composer is gone, and so is the empty state that hosts it
-        // together with the quick-action chips (Need Help is the page-layout marker for that block).
+        await expect(page.locator(D.chat)).toBeVisible({timeout: 15000})
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeHidden()
+        await expect(page.locator("[data-test=\"copilot-help\"]")).toBeVisible()
+
+        await page.locator(D.input).fill("build me a flow")
+        await page.locator(D.send).click()
+
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible()
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toContainText("No AI provider is configured")
         await expect(page.locator(D.input)).toBeHidden()
-        await expect(page.locator("[data-test=\"copilot-help\"]")).toBeHidden()
     })
 })

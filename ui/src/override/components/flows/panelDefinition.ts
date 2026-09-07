@@ -64,6 +64,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         },
         uid: "files",
         prepend: true,
+        preferredSize: 25,
         component: markRaw(FileExplorerWrapper),
     },
     {

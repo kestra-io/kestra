@@ -25,6 +25,7 @@ import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
@@ -193,7 +194,7 @@ public class AgentOrchestrator {
                 return log.get(i);
             }
         }
-        throw new IllegalStateException("No proposed action to resume in the thread log.");
+        throw new ConflictException("There is no proposed action to resume in this thread.");
     }
 
     private void resumePlan(final AgentLoopContext ctx, final boolean approve, final String reason, final TurnEventSink sink) {

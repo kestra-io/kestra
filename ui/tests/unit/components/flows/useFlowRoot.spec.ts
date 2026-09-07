@@ -21,6 +21,9 @@ vi.mock("../../../../src/stores/flow", async () => {
         flow: undefined,
         dependenciesCount: undefined,
         loadDependencies: vi.fn(),
+        loadFlow: vi.fn(),
+        loadGraph: vi.fn(),
+        isCreating: false,
     })
 
     return {useFlowStore: () => flowStore}
@@ -52,12 +55,16 @@ import {useFlowRoot} from "../../../../src/components/flows/composables/useFlowR
 describe("useFlowRoot", () => {
     const flowStore = useFlowStore()
     const loadDependencies = vi.mocked(flowStore.loadDependencies)
+    const loadFlow = vi.mocked(flowStore.loadFlow)
 
     beforeEach(() => {
         vi.useFakeTimers()
         flowStore.flow = undefined
         flowStore.dependenciesCount = undefined
         loadDependencies.mockReset()
+        loadFlow.mockReset()
+        loadFlow.mockResolvedValue(undefined)
+        vi.mocked(flowStore.loadGraph).mockReset()
     })
 
     afterEach(() => {
@@ -87,6 +94,35 @@ describe("useFlowRoot", () => {
             count: 1,
             disabled: false,
         })
+
+        scope.stop()
+    })
+
+    it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
+        flowStore.flow = {id: "myflow", namespace: "company.team"} as any
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot().setupLifecycle())
+        await nextTick()
+
+        expect(loadFlow).not.toHaveBeenCalled()
+        expect(flowStore.loadGraph).toHaveBeenCalledWith({flow: flowStore.flow})
+
+        scope.stop()
+    })
+
+    it("fetches the flow when the store holds another one", async () => {
+        flowStore.flow = {id: "otherflow", namespace: "company.team"} as any
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot().setupLifecycle())
+        await nextTick()
+
+        expect(loadFlow).toHaveBeenCalledWith(expect.objectContaining({
+            namespace: "company.team",
+            id: "myflow",
+            allowDeleted: true,
+        }))
 
         scope.stop()
     })

@@ -10,6 +10,7 @@
 
         <div class="list">
             <DraggableTableColumns
+                v-if="columns.length"
                 :columns="columns"
                 :visibleColumns="currentVisibleColumns"
                 :storageKey="storageKey"
@@ -25,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {Close} from "../utils/icons"
     import type {ColumnConfig} from "../composables/useTableColumns"
     import DraggableTableColumns from "../DraggableTableColumns.vue"
@@ -41,7 +42,13 @@
         updateColumns: [columns: string[]];
     }>()
 
+    // `useTableColumns` captures its column list at setup, so building the list before the page's
+    // columns arrive leaves it resolving against nothing; the `v-if` above defers that.
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
+
+    watch(() => props.visibleColumns, (columns) => {
+        currentVisibleColumns.value = columns
+    })
 
     const selectableColumns = computed(() => props.columns.filter(c => !c.condition || c.condition()))
 

@@ -94,7 +94,10 @@ export function useAiChat() {
     const notice = ref<NoticeCode | null>(null)
     /** The proposal awaiting a confirm/reject decision, if any. */
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
-    /** True when the backend reports no AI provider is configured (503) — render an "unavailable" state. */
+    /**
+     * True when the copilot has no provider to run on — either the backend said so mid-turn (503) or
+     * the caller knew from `/configs` before sending. Renders the "unavailable" state.
+     */
     const unavailable = ref(false)
     /** Title for the next thread created by `ensureThread` (e.g. a seeded "Fix with AI" turn); consumed once. */
     const nextThreadTitle = ref<string | null>(null)
@@ -130,10 +133,10 @@ export function useAiChat() {
         if (nextThreadTitle.value) {
             request = {...request, title: nextThreadTitle.value}
         }
-        // `showMessageOnError: false` opts out of the global "page not found" redirect: when no AI
-        // provider is configured the agentic endpoints (`AiAgentController`, `@Requires` the
-        // AiServiceManager bean) aren't registered, so this create 404s — surfaced as the copilot's
-        // own "unavailable" state by sendChat, not a full-page redirect.
+        // `showMessageOnError: false` keeps the global error toast quiet: when no AI provider is
+        // configured the agentic endpoints (`AiAgentController`, `@Requires` the AiServiceManager
+        // bean) aren't registered, so this create 404s — surfaced as the copilot's own
+        // "unavailable" state by sendChat instead.
         const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false})
         thread.value = data
         status.value = data.status
@@ -162,9 +165,9 @@ export function useAiChat() {
 
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
     async function loadThread(threadId: string): Promise<void> {
-        // `showMessageOnError: false` opts out of the global "page not found" so an expected 404 —
-        // the thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
-        // is handled here: forget the remembered id and start a fresh session instead of erroring out.
+        // `showMessageOnError: false` keeps the global error toast quiet for an expected 404 — the
+        // thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
+        // handled here by forgetting the remembered id and starting a fresh session.
         const response = await client
             .get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
             .catch((e: {status?: number; response?: {status?: number}}) => {
@@ -248,14 +251,6 @@ export function useAiChat() {
         pendingConfirmation.value = null
         push({id: uid(), role: "USER", type: "TEXT", content: request.prompt})
         await runStream(`${base()}/${active.uid}/chat`, request)
-    }
-
-    /** Clears the unavailable state so the user can retry (e.g. after configuring a provider). */
-    function retry(): void {
-        unavailable.value = false
-        error.value = null
-        errorDetail.value = null
-        notice.value = null
     }
 
     /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
@@ -433,7 +428,7 @@ export function useAiChat() {
     /**
      * True when the failure is a 404 — the agentic AI endpoints aren't registered because no AI
      * provider is configured (`AiAgentController` is `@Requires(AiServiceManager)`). Treated like a
-     * 503 (copilot unavailable), not the global not-found page.
+     * 503 (copilot unavailable) rather than a generic request failure.
      */
     function is404(e: unknown): boolean {
         if (e instanceof SseHttpError) return e.status === 404
@@ -464,7 +459,6 @@ export function useAiChat() {
         confirm,
         cancel,
         reset,
-        retry,
         retryLastTurn,
         noteContext,
         noteModelChange,

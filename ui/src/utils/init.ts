@@ -36,6 +36,7 @@ import createUnsavedChanged from "./unsavedChange"
 import createEventsRouter from "./eventsRouter"
 import "./global"
 import {useDocStore} from "../stores/doc"
+import {entityNotFoundGuard} from "./routeEntityGuard"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
@@ -87,6 +88,10 @@ export default async (
     if(guards.beforeResolve){
         router.beforeResolve(guards.beforeResolve.bind(null, router) as Parameters<typeof router.beforeResolve>[0])
     }
+
+    // After the edition's own guards, so an auth or tenant redirect wins over probing an entity
+    // the user is not going to be shown anyway.
+    router.beforeResolve(entityNotFoundGuard)
 
     if(guards.afterEach){
         router.afterEach(guards.afterEach.bind(null, router) as Parameters<typeof router.afterEach>[0])

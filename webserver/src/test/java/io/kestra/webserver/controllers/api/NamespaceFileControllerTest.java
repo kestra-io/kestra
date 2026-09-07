@@ -31,6 +31,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -287,6 +289,46 @@ class NamespaceFileControllerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         );
         assertNamespaceGetFileContentContent(namespace, URI.create("/_flowsFile"), "Hello");
+    }
+
+    @Test
+    void getFileContentOnDirectoryReturnsCleanNotFound() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Is a directory");
+    }
+
+    @Test
+    void createFileUnderAnExistingFileReturnsCleanConflict() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "child.txt", "Hello".getBytes())
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/t.txt/child.txt", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        String responseBody = e.getResponse().getBody(String.class).orElse("");
+        assertThat(responseBody).doesNotContain("_files");
+        assertThat(responseBody).doesNotContain("Internal server error");
     }
 
     @Test
@@ -574,7 +616,7 @@ class NamespaceFileControllerTest {
 
     private void assertForbiddenErrorThrown(Executable executable) {
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, executable);
-        assertThat(httpClientResponseException.getMessage()).startsWith("Illegal argument: Forbidden path: ");
+        assertThat(Problems.detail(httpClientResponseException)).startsWith("Forbidden path: ");
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {

@@ -62,3 +62,33 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
         warnSpy.mockRestore()
     })
 })
+
+describe("pluginsEnrichment store — fetchEnrichment titles", () => {
+    let store: any
+
+    beforeEach(async () => {
+        vi.clearAllMocks()
+        setActivePinia(createPinia())
+        const {usePluginsEnrichmentStore} = await import("../../../src/stores/pluginsEnrichment")
+        store = usePluginsEnrichmentStore()
+    })
+
+    it("enriches display titles from the public subgroups catalog", async () => {
+        mockedGet.mockImplementation(((url: string) => {
+            if (url.endsWith("/v1/plugins/subgroups")) {
+                return Promise.resolve({data: [
+                    {group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug", title: "Debug"},
+                    {group: "io.kestra.plugin.core", subGroup: null, title: "Core Plugins and tasks"},
+                    {group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"},
+                ]})
+            }
+            return Promise.reject(new Error("unavailable"))
+        }) as any)
+
+        await store.fetchEnrichment()
+
+        expect(store.getEnrichment({group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug"})?.title).toBe("Debug")
+        expect(store.getEnrichment({group: "io.kestra.plugin.core"})?.title).toBe("Core Plugins and tasks")
+        expect(store.getEnrichment({group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"})).toBeNull()
+    })
+})

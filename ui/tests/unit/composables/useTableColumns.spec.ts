@@ -1,5 +1,5 @@
 import {describe, test, expect, afterEach, beforeEach} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, nextTick} from "vue"
 import {mount} from "@vue/test-utils"
 
 import {useTableColumns, type ColumnConfig} from "../../../src/composables/useTableColumns"
@@ -27,8 +27,6 @@ const setup = (storageKey: string, initialVisibleColumns: string[] = []) => {
 }
 
 describe("useTableColumns", () => {
-    // The composable also writes a `ks-column-order-*` key, so the tree has to be cleared
-    // after the last test too or the repo's leak guard trips.
     beforeEach(() => localStorage.clear())
     afterEach(() => localStorage.clear())
 
@@ -83,5 +81,24 @@ describe("useTableColumns", () => {
         const table = setup("explicit", ["c"])
 
         expect(table.visibleColumns.value).toEqual(["c"])
+    })
+
+    test("should not persist a column order until the user reorders one", async () => {
+        const storedOrders = () => Object.keys(localStorage).filter(key => key.startsWith("ks-column-order"))
+
+        const table = setup("untouched")
+
+        expect(storedOrders()).toEqual([])
+
+        table.toggleColumn(COLUMNS[2])
+        await nextTick()
+
+        expect(storedOrders()).toEqual([])
+
+        table.reorderColumns(0, 2)
+        await nextTick()
+
+        expect(storedOrders()).toHaveLength(1)
+        expect(localStorage.getItem(storedOrders()[0])).toBe(JSON.stringify(["b", "c", "a"]))
     })
 })

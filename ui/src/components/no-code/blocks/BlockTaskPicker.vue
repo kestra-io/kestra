@@ -3,11 +3,13 @@
         <div
             v-if="taskPickerVisible"
             class="block-editor-picker-overlay"
+            :class="{'block-editor-picker-overlay--modal': modal}"
             @click="taskPickerVisible = false"
         >
             <div
                 class="block-editor-picker"
-                :style="pickerStyle"
+                :class="{'block-editor-picker--modal': modal}"
+                :style="modal ? undefined : pickerStyle"
                 data-test="block-editor-picker"
                 @click.stop
                 @keydown="onPickerKeydown"
@@ -126,7 +128,7 @@
     import {usePluginsStore} from "../../../stores/plugins"
     import type {TaskPickerApi} from "./useTaskPicker"
 
-    const props = defineProps<{picker: TaskPickerApi}>()
+    const props = defineProps<{picker: TaskPickerApi, modal?: boolean}>()
 
     const pluginsStore = usePluginsStore()
 
@@ -169,6 +171,17 @@
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         box-shadow: var(--ks-shadow-lg);
+    }
+
+    .block-editor-picker-overlay--modal {
+        background: var(--ks-bg-scrim);
+    }
+
+    .block-editor-picker--modal {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(440px, 90vw);
     }
 
     .block-editor-picker-context {

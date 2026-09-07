@@ -1,20 +1,43 @@
 package io.kestra.webserver.exceptions;
 
-import io.kestra.webserver.responses.BulkErrorResponse;
+import java.io.Serial;
+import java.util.List;
+import java.util.Set;
 
-import lombok.Getter;
+import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.webserver.errors.ProblemError;
+
+import jakarta.validation.ConstraintViolation;
 
 /**
- * Thrown by bulk action endpoints when one or more items fail validation.
- * Handled by {@link BulkValidationExceptionHandler}, which maps it to an HTTP 400
- * response carrying a {@link BulkErrorResponse} body.
+ * Thrown by a bulk endpoint when one or more of the submitted items is invalid.
+ *
+ * <p>Bulk endpoints validate every item up front and mutate nothing if any item is invalid, so this is a
+ * failed request rather than a partial success: each item's problem is reported as one entry of the
+ * resulting problem document's {@code errors} array.
+ *
+ * @see io.kestra.webserver.errors.ProblemTypes#BULK_VALIDATION_FAILED
  */
-@Getter
-public class BulkValidationException extends RuntimeException {
-    private final BulkErrorResponse bulkErrorResponse;
+public class BulkValidationException extends KestraRuntimeException {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    public BulkValidationException(BulkErrorResponse bulkErrorResponse) {
-        super(bulkErrorResponse.getMessage());
-        this.bulkErrorResponse = bulkErrorResponse;
+    private final transient List<ProblemError> errors;
+
+    /**
+     * @param message a sentence describing the failed operation as a whole
+     * @param errors  one entry per invalid item
+     */
+    public BulkValidationException(final String message, final List<ProblemError> errors) {
+        super(message);
+        this.errors = List.copyOf(errors);
+    }
+
+    public BulkValidationException(final String message, final Set<? extends ConstraintViolation<?>> violations) {
+        this(message, ProblemError.ofViolations(violations));
+    }
+
+    public List<ProblemError> errors() {
+        return this.errors;
     }
 }

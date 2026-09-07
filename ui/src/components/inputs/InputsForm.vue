@@ -21,10 +21,10 @@
                     >
                         <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
                         <KsButton
-                            type="text"
                             :icon="ContentCopyIcon"
-                            :tooltip="$t('copy_to_clipboard')"
-                            class="input-copy-btn"
+                            :tooltip="`${$t('copy_to_clipboard')}: ${inputRefExpression(input.id)}`"
+                            tooltipPlacement="right"
+                            link
                             @click.prevent="copyInputRef(input.id)"
                         />
                     </span>
@@ -411,6 +411,9 @@
     const editableItems = reactive<Record<string, string[]>>({})
     const isComputingValues = ref(false)
     let inputGeneration = 0
+    // Clearing a field submits nothing, so the validate round-trip legitimately answers
+    // `isDefault: true` for it — the default must not be written back over an input the user edited.
+    const userEditedInputs = new Set<string>()
 
     const DeleteOutline = markRaw(DeleteOutlineIcon) as Component
     const Pencil = markRaw(PencilIcon) as Component
@@ -511,6 +514,10 @@
     function updateDefaults(): void {
         for (const input of inputsMetaData.value) {
             const {type, id, value, defaults} = input
+            // A dynamic input is still the server's to recompute, so only a static one is protected.
+            if (userEditedInputs.has(id) && !dynamicInputIds.value.has(id)) {
+                continue
+            }
             if (value == null && typeof defaults === "string" && defaults.includes("{{")) {
                 continue
             }
@@ -542,6 +549,7 @@
 
     function onChange(input: InputMetaData): void {
         inputGeneration++
+        userEditedInputs.add(input.id)
         setTimeout(() => {
             inputsValidated.value.add(input.id)
         }, 2000)
@@ -978,6 +986,8 @@
     function invalidateValidationCache(): void {
         lastValidatedSignature = undefined
         pendingValidation = undefined
+        // A newly selected flow or execution brings its own inputs, which must take their defaults again.
+        userEditedInputs.clear()
     }
 
     watch(() => props.flow, () => {
@@ -1016,16 +1026,6 @@
     display: inline-flex;
     align-items: center;
     gap: var(--ks-spacing-1);
-
-    .input-copy-btn {
-        opacity: 0;
-        transition: opacity 0.15s ease-in-out;
-    }
-
-    &:hover .input-copy-btn,
-    &[draggable="true"]:focus-within .input-copy-btn {
-        opacity: 1;
-    }
 }
 
 .wizard-progress {

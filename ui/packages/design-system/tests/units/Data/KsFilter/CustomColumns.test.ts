@@ -44,6 +44,22 @@ describe("CustomColumns", () => {
         expect(countOf(wrapper)).toBe("2 of 2 columns visible")
     })
 
+    // The panel is built before its page's columns reach it, so `columns` is `[]` on the first
+    // render. Resolution used to run against that empty snapshot and never re-ran, leaving the
+    // counter on "0 of N" until a toggle recomputed it.
+    test("counts the columns once they arrive after the first render", async () => {
+        const wrapper = mount(CustomColumns, {
+            props: {storageKey: "late-columns", columns: [] as ColumnConfig[], visibleColumns: []},
+            global: {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]},
+        })
+        await nextTick()
+
+        await wrapper.setProps({columns: COLUMNS})
+        await nextTick()
+
+        expect(countOf(wrapper as ReturnType<typeof mountWith>)).toBe("2 of 2 columns visible")
+    })
+
     test("reports what was resolved without persisting it", async () => {
         const wrapper = mountWith([], "no-write-on-open")
 

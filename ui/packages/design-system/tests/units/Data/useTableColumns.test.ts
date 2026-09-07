@@ -1,5 +1,5 @@
 import {describe, test, expect, beforeEach} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, nextTick} from "vue"
 import {mount} from "@vue/test-utils"
 import {useTableColumns, type ColumnConfig} from "../../../src/components/Data/KsDataTable/filter/composables/useTableColumns"
 
@@ -36,6 +36,35 @@ describe("useTableColumns reorder", () => {
         expect(table.orderedColumns.value.map(c => c.prop)).toEqual(["c", "a", "b"])
         expect(table.visibleColumns.value).toEqual(["c", "a", "b"])
         expect(localStorage.getItem("columns_set-order")).toBe("c,a,b")
+    })
+
+    // The picker reaches the order through this copy, so the write-on-reorder guarantee has to hold here.
+    test("does not persist a column order until setColumnOrder is called", async () => {
+        const storedOrders = () => Object.keys(localStorage).filter(key => key.startsWith("ks-column-order"))
+
+        const table = setup("untouched")
+
+        expect(storedOrders()).toEqual([])
+
+        table.toggleColumn(COLUMNS[2])
+        await nextTick()
+
+        expect(storedOrders()).toEqual([])
+
+        table.setColumnOrder(["c", "a", "b"])
+        await nextTick()
+
+        expect(storedOrders()).toHaveLength(1)
+        expect(localStorage.getItem(storedOrders()[0])).toBe(JSON.stringify(["c", "a", "b"]))
+    })
+
+    test("ignores and drops an order left by the pre-v2 key", () => {
+        localStorage.setItem("ks-column-order-legacy", JSON.stringify(["c", "b", "a"]))
+
+        const table = setup("legacy")
+
+        expect(table.orderedColumns.value.map(c => c.prop)).toEqual(["a", "b", "c"])
+        expect(localStorage.getItem("ks-column-order-legacy")).toBeNull()
     })
 
     test("setColumnOrder keeps hidden columns hidden while reordering visible ones", () => {

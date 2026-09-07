@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
@@ -44,6 +45,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -250,9 +253,9 @@ class TriggerControllerTest {
         );
 
         // THEN
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).isEqualTo(
-            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
+        Problems.assertProblem(e, ProblemTypes.CONFLICT);
+        assertThat(Problems.detail(e)).isEqualTo(
+            "trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
                 .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
         );
     }
@@ -277,9 +280,9 @@ class TriggerControllerTest {
         );
 
         // THEN
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).isEqualTo(
-            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is a realtime trigger, reset it to kill and restart it"
+        Problems.assertProblem(e, ProblemTypes.CONFLICT);
+        assertThat(Problems.detail(e)).isEqualTo(
+            "trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is a realtime trigger, reset it to kill and restart it"
                 .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
         );
     }
@@ -299,8 +302,7 @@ class TriggerControllerTest {
             )
         );
         // THEN
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(e.getMessage()).isEqualTo("Not Found");
+        Problems.assertProblem(e, ProblemTypes.NOT_FOUND);
     }
 
     @Test
@@ -738,6 +740,28 @@ class TriggerControllerTest {
         } catch (TimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be enabled");
         }
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityWhenCreatingBackfillWithoutBackfillConfiguration() {
+        // GIVEN
+        Map<String, String> request = Map.of(
+            "namespace", "namespace",
+            "flowId", "flow",
+            "triggerId", "trigger"
+        );
+
+        // WHEN
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.PUT(TRIGGER_PATH + "/backfill/create", request),
+                ApiTriggerState.class
+            )
+        );
+
+        // THEN
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @Test

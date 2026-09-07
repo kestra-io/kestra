@@ -45,11 +45,20 @@ public class ConcurrencyLimitController {
     @ExecuteOn(TaskExecutors.IO)
     @Put("/{namespace}/{flowId}")
     @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
-    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body @Valid ConcurrencyLimit concurrencyLimit) {
-        var existing = concurrencyLimitRepository.findById(tenantService.resolveTenant(), concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId());
+    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(String namespace, String flowId, @Body @Valid ConcurrencyLimit concurrencyLimit) {
+        String tenantId = tenantService.resolveTenant();
+        var existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
         if (existing.isEmpty()) {
             return HttpResponse.notFound();
         }
-        return HttpResponse.ok(concurrencyLimitRepository.update(concurrencyLimit));
+
+        // The path identifies the resource; a body naming another flow must not retarget it.
+        ConcurrencyLimit toUpdate = ConcurrencyLimit.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .flowId(flowId)
+            .running(concurrencyLimit.getRunning())
+            .build();
+        return HttpResponse.ok(concurrencyLimitRepository.update(toUpdate));
     }
 }

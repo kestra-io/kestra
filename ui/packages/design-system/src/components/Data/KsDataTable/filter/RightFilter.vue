@@ -189,7 +189,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: .5rem;
+    gap: var(--ks-spacing-2);
     flex-shrink: 0;
     min-width: fit-content;
 

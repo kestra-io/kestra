@@ -1,6 +1,6 @@
 <template>
     <div class="plugin-list-wrapper">
-        <div v-if="isLoading || !pluginsData" class="loading-container">
+        <div v-if="!pluginsData" class="loading-container">
             <KsSkeleton animated :rows="8" />
         </div>
         <PluginList
@@ -12,12 +12,11 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref, computed} from "vue"
+    import {onMounted, computed} from "vue"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
     import PluginList from "./PluginList.vue"
 
-    const isLoading = ref(false)
     const pluginsStore = usePluginsStore()
 
     const pluginsData = computed(() => pluginsStore.plugins)

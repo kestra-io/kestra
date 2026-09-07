@@ -2643,8 +2643,6 @@
       "open_mode_hint": "Las tasks se abren en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
     },
     "blocks": "Bloques",
-    "flow_description": "Descripción del flow",
-    "flow_no_description": "Sin descripción. Añade una descripción a tu YAML de flow para documentar lo que hace.",
     "split_horizontal": "Dividir horizontalmente",
     "split_vertical": "Dividir verticalmente",
     "pwa": {

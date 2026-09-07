@@ -427,7 +427,7 @@
                     } else {
                         if (flow.value) {
                             if (playgroundStore.enabled) {
-                                const formData = normalizeInputValues(submitor, flattenInputs(flow.value.inputs), mergedInputs)
+                                const formData = normalizeInputValues(submitor, flattenInputs(flow.value.inputs), inputs.value)
                                 await playgroundStore.runUntilTask(
                                     playgroundStore.actionOptions?.taskId, 
                                     playgroundStore.actionOptions?.runDownstreamTasks || false, 

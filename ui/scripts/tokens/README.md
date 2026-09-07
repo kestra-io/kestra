@@ -59,7 +59,17 @@ WebStorm ships stylelint support: enable it under Languages & Frameworks → Sty
 Names built by interpolation (`var(--ks-status-#{$state})`) are skipped, since their value is only
 known at runtime.
 
-EE sets `KS_TOKEN_ROOTS=/path/to/ui-ee/src` so its own declarations count too.
+EE will need to set `KS_TOKEN_ROOTS=/path/to/ui-ee/src` so its own declarations count too. Nothing
+sets it yet: `ui-ee/eslint.config.js` spreads this config, so the eslint half goes live there as soon
+as this lands, and EE declares no `--ks-*` of its own today.
+
+## Known gaps
+
+- `var(--ks-…)` inside a template expression (`:style="{color: 'var(--ks-…)'}"`) is seen by neither
+  half: stylelint reads `<style>` blocks, and the eslint rule walks the script, not the
+  `vue-eslint-parser` template body. There are 46 such usages and all of them resolve today.
+- `.jsx` and `.tsx` are covered by the eslint half only, since stylelint cannot read a style written
+  as a JSX attribute.
 
 ## Adding a token
 

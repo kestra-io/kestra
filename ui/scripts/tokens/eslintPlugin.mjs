@@ -19,21 +19,22 @@ const noUndeclaredKsToken = {
         const known = new Set(knownTokens())
         declarationsIn(source.getText()).forEach(name => known.add(name))
 
-        const report = (node, token) => {
+        const report = (node, token, hasFallback, offset) => {
             if (known.has(token)) return
-            const raw = source.getText(node)
-            const offset = raw.indexOf(token)
-            const start = source.getLocFromIndex(node.range[0] + Math.max(offset, 0))
+            const at = offset ?? source.getText(node).indexOf(token)
+            const start = source.getLocFromIndex(node.range[0] + Math.max(at, 0))
             context.report({
                 node,
-                loc: offset < 0 ? node.loc : {start, end: source.getLocFromIndex(node.range[0] + offset + token.length)},
+                loc: at < 0 ? node.loc : {start, end: source.getLocFromIndex(node.range[0] + at + token.length)},
                 messageId: "undeclared",
-                data: {detail: undeclaredMessage(token, known)},
+                data: {detail: undeclaredMessage(token, known, hasFallback)},
             })
         }
 
+        // The offset is the one usagesIn found, so two occurrences of a token in one string do not
+        // both point at the first; +1 skips the quote the raw text starts with.
         const reportUsages = (node, text) => {
-            for (const {token} of usagesIn(text)) report(node, token)
+            for (const {token, index, hasFallback} of usagesIn(text)) report(node, token, hasFallback, index + 1)
         }
 
         return {
@@ -45,7 +46,7 @@ const noUndeclaredKsToken = {
                 if (callee?.name !== "cssVar") return
                 const [first] = node.arguments
                 if (first?.type === "Literal" && typeof first.value === "string" && first.value.startsWith("--ks-")) {
-                    report(first, first.value.toLowerCase())
+                    report(first, first.value, false)
                 }
             },
             Literal(node) {

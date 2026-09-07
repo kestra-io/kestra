@@ -33,7 +33,7 @@ const RETIRED: Record<string, string[]> = {
     "--ks-button-background-secondary-hover": ["--ks-btn-secondary-bg-hover"],
     "--ks-color-text-primary": ["--ks-text-primary"],
     "--ks-color-text-secondary": ["--ks-text-secondary"],
-    "--ks-surface-secondary": ["--ks-bg-elevated", "--ks-bg-surface"],
+    "--ks-surface-secondary": ["--ks-bg-base", "--ks-bg-elevated"],
     "--ks-tag-background": ["--ks-bg-tag"],
     "--ks-content-primary": ["--ks-text-primary"],
     "--ks-content-secondary": ["--ks-text-secondary"],
@@ -41,6 +41,9 @@ const RETIRED: Record<string, string[]> = {
     "--ks-content-success": ["--ks-text-success"],
     "--ks-border-active": ["--ks-border-focus"],
     "--ks-bg-body": ["--ks-bg-base"],
+    "--ks-shadow-md": ["--ks-shadow-base"],
+    "--ks-status-trace": ["--ks-status-neutral"],
+    "--ks-playground-bg-color": ["--ks-toggle-playground"],
 }
 
 const walk = (directory: string, files: string[] = []): string[] => {

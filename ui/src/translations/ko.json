@@ -2643,8 +2643,6 @@
       "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
-    "flow_description": "flow 설명",
-    "flow_no_description": "설명이 없습니다. flow YAML에 설명을 추가하여 flow의 기능을 문서화하세요.",
     "split_horizontal": "수평으로 분할",
     "split_vertical": "세로로 분할",
     "pwa": {

@@ -2643,8 +2643,6 @@
       "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
     },
     "blocks": "Bloki",
-    "flow_description": "Opis Flow",
-    "flow_no_description": "Brak opisu. Dodaj opis do YAML swojego Flow, aby udokumentować, co robi.",
     "split_horizontal": "Podziel w poziomie",
     "split_vertical": "Podziel pionowo",
     "pwa": {

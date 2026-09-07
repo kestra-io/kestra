@@ -1,6 +1,7 @@
 <template>
     <ElDropdownItem
         v-bind="({...filteredProps(), ...$attrs} as any)"
+        :class="{'is-danger': danger}"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -19,9 +20,10 @@
         disabled?: boolean
         divided?: boolean
         icon?: any
+        danger?: boolean
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["danger"])
 
     defineSlots<{
         default?(): unknown

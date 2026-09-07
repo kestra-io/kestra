@@ -239,6 +239,7 @@
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|titles|flow_metric_filters": "be7bb375be1e",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|titles|kv_filters": "dd9e52704f63",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|titles|log_filters": "c664f14eaf4e",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|titles|mcp_tools_filters": "5fcf18a7cdd7",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|titles|metric_filters": "0646471b8e96",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|titles|namespace_dashboard_filters": "130b885f2e24",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|titles|namespace_filters": "b85458562938",

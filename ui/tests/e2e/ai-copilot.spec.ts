@@ -234,7 +234,8 @@ test.describe("AI Copilot", () => {
         expect(new URL(page.url()).searchParams.get("blueprintSourceYaml")).toContain("id: demo")
     })
 
-    test("accepts a dashboard draft into the dashboard editor", async ({page}) => {
+    /** OSS cannot store dashboards (isCustomDashboardsEnabled: false), so the draft card hides its actions; the actionable path is covered by the EE suite. */
+    test("shows a dashboard draft without actions when the backend cannot store dashboards", async ({page}) => {
         await page.route("**/ai/threads/*/chat", async (route) => {
             await route.fulfill({
                 status: 200,
@@ -248,13 +249,12 @@ test.describe("AI Copilot", () => {
 
         await page.locator(D.input).fill("draft me a dashboard")
         await page.locator(D.send).click()
-        await expect(page.locator(D.draft)).toBeVisible()
+        const draft = page.locator(D.draft)
+        await expect(draft).toBeVisible()
+        await expect(draft).toContainText("id: my-dash")
 
-        await page.locator(D.draftOpen).click()
-        // The dashboard create editor seeds itself from the `sourceYaml` query.
-        await page.waitForURL(/\/dashboards\/new\?.*sourceYaml=/)
-        // Read the query param via URLSearchParams (form-decodes `+`→space); decodeURIComponent doesn't.
-        expect(new URL(page.url()).searchParams.get("sourceYaml")).toContain("id: my-dash")
+        await expect(page.locator(D.draftOpen)).toHaveCount(0)
+        await expect(page.locator(D.draftApply)).toHaveCount(0)
     })
 
     test("applies a flow draft directly and navigates to the created flow", async ({page}) => {
@@ -447,17 +447,23 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         await expect(help).toContainText("Slack")
     })
 
-    // kestra-io/kestra#18322: an instance with no provider used to render a working-looking chat and
-    // only owned up after the first turn failed.
-    test("says the copilot is unavailable on load when no provider is configured", async ({page}) => {
+    // kestra-io/kestra-ee#10739: an instance with no provider used to land on the unavailable state,
+    // so OSS users met a blank page. The page now opens as usual and only owns up once a prompt is
+    // sent — which never reaches the network, since `/configs` already said there's no provider.
+    test("opens the page as usual with no provider, and says so once a prompt is sent", async ({page}) => {
         await stubAiProviderConfigured(page, false)
         await disableProductTour(page)
         await page.goto("/ui/ai", {waitUntil: "load"})
 
-        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible({timeout: 15000})
-        // Nothing invites a prompt: the composer is gone, and so is the empty state that hosts it
-        // together with the quick-action chips (Need Help is the page-layout marker for that block).
+        await expect(page.locator(D.chat)).toBeVisible({timeout: 15000})
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeHidden()
+        await expect(page.locator("[data-test=\"copilot-help\"]")).toBeVisible()
+
+        await page.locator(D.input).fill("build me a flow")
+        await page.locator(D.send).click()
+
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toBeVisible()
+        await expect(page.locator("[data-test=\"copilot-unavailable\"]")).toContainText("No AI provider is configured")
         await expect(page.locator(D.input)).toBeHidden()
-        await expect(page.locator("[data-test=\"copilot-help\"]")).toBeHidden()
     })
 })

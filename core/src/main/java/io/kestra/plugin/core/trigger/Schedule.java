@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 @Schema(
     title = "Schedule a Flow with a CRON expression.",
     description = """
-        Runs a Flow on a cron schedule (5 fields by default; enable seconds with `withSeconds`). Tracks last scheduled date to support backfill. Changing the trigger `id` starts a new schedule from “now”. Default timezone is UTC; override via `timezone`.
+        Runs a Flow on a cron schedule (5 fields by default; enable seconds with `withSeconds`). Tracks last scheduled date to support backfill. Changing the trigger `id` starts a new schedule from “now”. When `timezone` is not set, the cron expression is evaluated in the timezone configured on the Kestra server.
 
         Multiple Schedule triggers can coexist on one Flow."""
 )
@@ -217,6 +217,11 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @PluginProperty
     private Boolean withSeconds = false;
 
+    @Schema(
+        title = "The timezone used to evaluate the cron expression",
+        description = "Defaults to the timezone configured on the Kestra server. " +
+            "Set it explicitly so the schedule does not depend on the server configuration."
+    )
     @PluginProperty
     @TimezoneId
     @Builder.Default

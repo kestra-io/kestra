@@ -33,13 +33,27 @@ vi.mock("vue-i18n", () => ({
 }))
 
 const dashboardFn = vi.fn()
-const updateDashboardFn = vi.fn().mockResolvedValue({})
-const validateDashboardFn = vi.fn().mockResolvedValue({})
+const updateDashboardFn = vi.fn().mockResolvedValue({data: {}})
+const validateDashboardFn = vi.fn().mockResolvedValue({data: {}})
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
     dashboard: (...args: any[]) => dashboardFn(...args),
-    updateDashboard: (...args: any[]) => updateDashboardFn(...args),
-    validateDashboard: (...args: any[]) => validateDashboardFn(...args),
+}))
+
+vi.mock("@kestra-io/kestra-sdk", () => ({
+    useClient: () => ({
+        get: vi.fn(),
+        post: (...args: any[]) => validateDashboardFn(...args),
+        put: (...args: any[]) => updateDashboardFn(...args),
+        delete: vi.fn(),
+    }),
+}))
+
+vi.mock("override/utils/route", () => ({
+    apiUrl: () => "/api/v1/main",
+    apiUrlWithoutTenants: () => "/api/v1",
+    basePath: () => "/ui/main",
+    baseUrl: "/",
 }))
 
 // Each `it` re-imports the dashboard store after `vi.resetModules()` (see
@@ -51,8 +65,8 @@ describe("dashboard store dirty tracking", () => {
     beforeEach(() => {
         vi.resetModules()
         dashboardFn.mockReset()
-        updateDashboardFn.mockReset().mockResolvedValue({})
-        validateDashboardFn.mockReset().mockResolvedValue({})
+        updateDashboardFn.mockReset().mockResolvedValue({data: {}})
+        validateDashboardFn.mockReset().mockResolvedValue({data: {}})
         setActivePinia(createPinia())
     })
 

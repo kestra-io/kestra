@@ -83,6 +83,7 @@
                     <ExpressionDebugger
                         :execution="execution"
                         :expression="expression"
+                        :fileUri="debuggedFileUri"
                     />
                 </div>
             </KsSplitterPanel>
@@ -435,6 +436,25 @@
         }else {
             expression.value = `{{ ${baseExpressionPath} }}`
         }
+    }
+
+    /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
+    const debuggedFileUri = computed(() => {
+        if (fileSelectedOutput.value) return fileSelectedOutput.value
+        const files = collectFileUris(previewedValue.value)
+        return files.length === 1 ? files[0] : undefined
+    })
+
+    function collectFileUris(value: unknown, found: string[] = []) {
+        if (typeof value === "string") {
+            if (Utils.isFile(value)) found.push(value)
+        } else if (value !== null && typeof value === "object") {
+            for (const child of Object.values(value)) {
+                collectFileUris(child, found)
+                if (found.length > 1) break
+            }
+        }
+        return found
     }
 
     function onSelectPath(path: string, value: unknown) {

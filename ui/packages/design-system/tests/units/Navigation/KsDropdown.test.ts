@@ -1,6 +1,6 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
-import {defineComponent} from "vue"
+import {defineComponent, nextTick} from "vue"
 import {ElDropdown} from "element-plus"
 import KestraDesignSystem from "../../../src/index"
 import KsDropdown from "../../../src/components/Navigation/KsDropdown/KsDropdown.vue"
@@ -73,6 +73,15 @@ describe("KsDropdownItem", () => {
             global: globalConfig,
         })
         expect(wrapper).toBeTruthy()
+    })
+
+    test("danger prop marks the rendered item", async () => {
+        mount(wrapInDropdown("<ks-dropdown-item danger>Delete</ks-dropdown-item>"), {
+            attrs: {persistent: true},
+            global: globalConfig,
+        })
+        await nextTick()
+        expect(document.body.querySelector("li.is-danger")).not.toBeNull()
     })
 })
 

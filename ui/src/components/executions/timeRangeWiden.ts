@@ -1,4 +1,5 @@
 import moment from "moment"
+import {FILTER_FIELD_PATTERN} from "./utils"
 
 export const FALLBACK_TIME_RANGE = "PT24H"
 
@@ -8,6 +9,7 @@ export const TIME_RANGE_WIDEN_STEPS = ["PT24H", "PT168H", "P30D"] as const
 const TIME_RANGE_EQUALS_KEY = "filters[timeRange][EQUALS]"
 const TIME_BOUND_KEY = /startDate|endDate|timeRange/
 const ABSOLUTE_DATE_KEY = /startDate|endDate/
+const DEFAULT_TIME_RANGE_FIELDS = new Set(["timeRange", "startDate", "endDate", "scope", "namespace"])
 
 export function timeRangeDurationMs(iso: string): number | undefined {
     const ms = moment.duration(iso).asMilliseconds()
@@ -68,11 +70,19 @@ export function queryHasAbsoluteDateFilter(query: Record<string, unknown>): bool
     return Object.keys(query).some(key => ABSOLUTE_DATE_KEY.test(key))
 }
 
+export function queryHasUserFilters(query: Record<string, unknown>): boolean {
+    return Object.keys(query).some((key) => {
+        const field = key.match(FILTER_FIELD_PATTERN)?.[1]
+        return field !== undefined && !DEFAULT_TIME_RANGE_FIELDS.has(field)
+    })
+}
+
 export async function widenEmptyTimeRange(options: {
     currentTimeRange: string | undefined;
     defaultTimeRange: string;
     hasAbsoluteDateFilter: boolean;
     alreadyAttempted: boolean;
+    hasUserFilters: boolean;
     currentTotal: number;
     search: (timeRange: string) => Promise<number>;
 }): Promise<{timeRange: string | undefined; widened: boolean}> {
@@ -81,11 +91,12 @@ export async function widenEmptyTimeRange(options: {
         defaultTimeRange,
         hasAbsoluteDateFilter,
         alreadyAttempted,
+        hasUserFilters,
         currentTotal,
         search,
     } = options
 
-    if (alreadyAttempted || hasAbsoluteDateFilter || currentTotal > 0) {
+    if (alreadyAttempted || hasAbsoluteDateFilter || hasUserFilters || currentTotal > 0) {
         return {timeRange: currentTimeRange, widened: false}
     }
 

@@ -458,6 +458,7 @@
         isSameTimeRange,
         queryHasAbsoluteDateFilter,
         queryHasTimeBound,
+        queryHasUserFilters,
         readTimeRangeFromQuery,
         widenEmptyTimeRange,
     } from "./timeRangeWiden"
@@ -739,6 +740,7 @@
             defaultTimeRange: chartDefaultDuration.value,
             hasAbsoluteDateFilter: hasAbsoluteDate,
             alreadyAttempted: hasAttemptedTimeRangeWiden || rangeUsed === undefined,
+            hasUserFilters: queryHasUserFilters(query),
             currentTotal: executionsStore.total ?? 0,
             search: async (timeRange) => {
                 await executionsStore.findExecutions(

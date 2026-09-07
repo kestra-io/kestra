@@ -4,11 +4,19 @@ import {
     isSameTimeRange,
     queryHasAbsoluteDateFilter,
     queryHasTimeBound,
+    queryHasUserFilters,
     readTimeRangeFromQuery,
     remainingWidenWindows,
     timeRangeWidenSequence,
     widenEmptyTimeRange,
 } from "../../../../src/components/executions/timeRangeWiden"
+
+const widenOpts = {
+    hasAbsoluteDateFilter: false,
+    alreadyAttempted: false,
+    hasUserFilters: false,
+    currentTotal: 0,
+}
 
 describe("timeRangeWidenSequence", () => {
     it("starts at 24 hours and then steps to 7 days and 30 days", () => {
@@ -66,6 +74,19 @@ describe("query time-range readers", () => {
         expect(queryHasAbsoluteDateFilter({"filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2026-01-02"})).toBe(true)
         expect(queryHasAbsoluteDateFilter({"filters[timeRange][EQUALS]": "PT24H"})).toBe(false)
     })
+
+    it("treats state, labels and flowId as user filters, but not the default time window", () => {
+        expect(queryHasUserFilters({"filters[timeRange][EQUALS]": "PT24H"})).toBe(false)
+        expect(queryHasUserFilters({
+            "filters[timeRange][EQUALS]": "PT24H",
+            "filters[scope][EQUALS]": "USER",
+            page: "1",
+            size: "10",
+        })).toBe(false)
+        expect(queryHasUserFilters({"filters[state][EQUALS]": "SUCCESS"})).toBe(true)
+        expect(queryHasUserFilters({"filters[labels][EQUALS][foo]": "bar"})).toBe(true)
+        expect(queryHasUserFilters({"filters[flowId][EQUALS]": "weekly_report"})).toBe(true)
+    })
 })
 
 describe("widenEmptyTimeRange", () => {
@@ -73,10 +94,9 @@ describe("widenEmptyTimeRange", () => {
         const search = vi.fn()
 
         const result = await widenEmptyTimeRange({
+            ...widenOpts,
             currentTimeRange: "PT24H",
             defaultTimeRange: FALLBACK_TIME_RANGE,
-            hasAbsoluteDateFilter: false,
-            alreadyAttempted: false,
             currentTotal: 12,
             search,
         })
@@ -89,11 +109,9 @@ describe("widenEmptyTimeRange", () => {
         const search = vi.fn().mockResolvedValueOnce(4)
 
         const result = await widenEmptyTimeRange({
+            ...widenOpts,
             currentTimeRange: "PT24H",
             defaultTimeRange: "PT24H",
-            hasAbsoluteDateFilter: false,
-            alreadyAttempted: false,
-            currentTotal: 0,
             search,
         })
 
@@ -105,11 +123,9 @@ describe("widenEmptyTimeRange", () => {
         const search = vi.fn().mockResolvedValue(0)
 
         const result = await widenEmptyTimeRange({
+            ...widenOpts,
             currentTimeRange: "PT24H",
             defaultTimeRange: "PT24H",
-            hasAbsoluteDateFilter: false,
-            alreadyAttempted: false,
-            currentTotal: 0,
             search,
         })
 
@@ -122,11 +138,9 @@ describe("widenEmptyTimeRange", () => {
         const search = vi.fn().mockResolvedValueOnce(3)
 
         const result = await widenEmptyTimeRange({
+            ...widenOpts,
             currentTimeRange: "PT1H",
             defaultTimeRange: "PT1H",
-            hasAbsoluteDateFilter: false,
-            alreadyAttempted: false,
-            currentTotal: 0,
             search,
         })
 
@@ -138,29 +152,39 @@ describe("widenEmptyTimeRange", () => {
         const search = vi.fn()
 
         await expect(widenEmptyTimeRange({
+            ...widenOpts,
             currentTimeRange: "PT5M",
             defaultTimeRange: "PT24H",
-            hasAbsoluteDateFilter: false,
-            alreadyAttempted: false,
-            currentTotal: 0,
             search,
         })).resolves.toEqual({timeRange: "PT5M", widened: false})
 
         await expect(widenEmptyTimeRange({
+            ...widenOpts,
             currentTimeRange: undefined,
             defaultTimeRange: "PT24H",
             hasAbsoluteDateFilter: true,
-            alreadyAttempted: false,
-            currentTotal: 0,
             search,
         })).resolves.toEqual({timeRange: undefined, widened: false})
 
         await expect(widenEmptyTimeRange({
+            ...widenOpts,
             currentTimeRange: "PT24H",
             defaultTimeRange: "PT24H",
-            hasAbsoluteDateFilter: false,
             alreadyAttempted: true,
-            currentTotal: 0,
+            search,
+        })).resolves.toEqual({timeRange: "PT24H", widened: false})
+
+        expect(search).not.toHaveBeenCalled()
+    })
+
+    it("does not widen when the empty result is from a user filter such as state", async () => {
+        const search = vi.fn()
+
+        await expect(widenEmptyTimeRange({
+            ...widenOpts,
+            currentTimeRange: "PT24H",
+            defaultTimeRange: "PT24H",
+            hasUserFilters: true,
             search,
         })).resolves.toEqual({timeRange: "PT24H", widened: false})
 

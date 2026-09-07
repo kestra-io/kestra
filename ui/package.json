@@ -32,6 +32,7 @@
         "test:unit:shuffle": "vitest run --project=unit --sequence.shuffle.files",
         "test:storybook": "vitest run --project=storybook",
         "translations:check": "node ./scripts/translations/check-translations.mjs --scope oss && node --experimental-strip-types ./scripts/translations/check.ts",
+        "tokens:check": "node --experimental-strip-types ./scripts/tokens/check.ts",
         "translations:generate": "node --experimental-strip-types ./scripts/translations/generate.ts",
         "lint": "oxlint --fix src packages tests && eslint --fix",
         "storybook": "storybook dev -p 6006",

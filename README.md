@@ -267,7 +267,7 @@ The YAML editor, the No-Code editor, and the AI Copilot all edit the same flow, 
 
 ### Plugin Development
 
-Create custom plugins to extend Kestra's capabilities. Check out our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) to get started. Plugins can also ship [UI artifacts](https://kestra.io/docs/plugin-developer-guide/plugin-ui), Vue components loaded into the Kestra UI at runtime, and custom file renderers that preview task outputs inline.
+Create custom plugins to extend Kestra's capabilities. Check out our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) to get started. Plugins can also define [UI artifacts](https://kestra.io/docs/plugin-developer-guide/plugin-ui) such as Topology nodes, which are Vue components loaded into the Kestra UI at runtime, and custom file renderers that preview task outputs inline.
 
 ### Infrastructure as Code
 

@@ -1,3 +1,4 @@
+import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import {provide, ref} from "vue";
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys";
 import {vueRouter} from "storybook-vue3-router";
@@ -16,13 +17,13 @@ export default {
                 component: {template: "<div>home</div>"}
             },
         ])]
-};
+} as Meta<typeof LowCodeEditor>;
 
-const Template = (args) => ({
+const Template: StoryFn<typeof LowCodeEditor> = (args) => ({
     setup() {
-        const axios = {}
+        const axios: any = {}
         provide(TOPOLOGY_CLICK_INJECTION_KEY, ref())
-        axios.get = async (uri) => mockClientFallback("GET", uri)
+        axios.get = async (uri: string) => mockClientFallback("GET", uri)
         setMockClient(axios);
 
         return () => (<div style="width:600px; height:600px;">
@@ -58,6 +59,5 @@ tasks:
       - echo "this will run since previous failure was allowed"
 `.trim(),
     isAllowedEdit: true,
-    viewType: "default",
     expandedSubflows: [],
 };

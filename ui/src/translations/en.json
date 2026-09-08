@@ -2643,8 +2643,6 @@
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
-    "flow_description": "Flow Description",
-    "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {

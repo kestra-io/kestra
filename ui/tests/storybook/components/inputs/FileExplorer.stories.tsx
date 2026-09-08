@@ -11,12 +11,13 @@ vi.mock("@kestra-io/kestra-sdk/files", () => ({
     ]),
 }))
 
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {provide} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 import FileExplorer, {FILES_OPEN_TAB_INJECTION_KEY, FILES_CLOSE_TAB_INJECTION_KEY} from "../../../../src/components/inputs/FileExplorer.vue";
 import {setMockClient} from "@kestra-io/kestra-sdk"
 
-const meta = {
+const meta: Meta<typeof FileExplorer> = {
     title: "inputs/FileExplorer",
     component: FileExplorer,
     decorators: [
@@ -31,13 +32,13 @@ const meta = {
 
 export default meta;
 
-export const Default = {
+export const Default: StoryObj<typeof FileExplorer> = {
     render: () => ({
         setup() {
-            const axios = {}
+            const axios: any = {}
 
             provide(FILES_OPEN_TAB_INJECTION_KEY, () => {})
-            provide(FILES_CLOSE_TAB_INJECTION_KEY, () => {})
+            provide(FILES_CLOSE_TAB_INJECTION_KEY, () => false)
 
 
             axios.get = () => {
@@ -47,7 +48,7 @@ export const Default = {
                         {fileName: "animals.txt", type: "File"},
                     ]
                 })}
-            
+
             setMockClient(axios);
 
 

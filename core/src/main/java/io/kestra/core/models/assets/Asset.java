@@ -126,10 +126,6 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         return (T) this;
     }
 
-    public void setAssetActions(List<AssetAction> assetActions) {
-        this.assetActions = assetActions;
-    }
-
     @Override
     public Asset toDeleted() {
         this.deleted = true;
@@ -163,6 +159,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withNamespace(String namespace) {
         this.namespace = namespace;
+        return this;
+    }
+
+    public Asset withAssetActions(List<AssetAction> assetActions) {
+        this.assetActions = assetActions;
         return this;
     }
 }

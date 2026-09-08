@@ -67,12 +67,12 @@ class AssetValidationTest {
 
     @Test
     void shouldRejectAnAssetActionWithABlankNamespaceOrFlowId() {
-        Custom asset = Custom.builder()
+        Asset asset = Custom.builder()
             .namespace("io.kestra")
             .id("my-asset")
             .type("MY_OWN_ASSET_TYPE")
-            .build();
-        asset.setAssetActions(List.of(new AssetAction("", null)));
+            .build()
+            .withAssetActions(List.of(new AssetAction("", null)));
 
         assertThat(modelValidator.isValid(asset))
             .get()

@@ -64,6 +64,7 @@
 <style lang="scss" scoped>
 .customize-columns-panel {
     height: fit-content;
+    max-height: 500px;
     display: flex;
     flex-direction: column;
     border-radius: 0.5rem;

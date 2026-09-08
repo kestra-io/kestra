@@ -2643,8 +2643,6 @@
       "open_mode_hint": "As tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
     },
     "blocks": "Blocos",
-    "flow_description": "Descrição do flow",
-    "flow_no_description": "Sem descrição. Adicione uma descrição ao seu flow YAML para documentar o que ele faz.",
     "split_horizontal": "Dividir horizontalmente",
     "split_vertical": "Dividir verticalmente",
     "pwa": {

@@ -2643,8 +2643,6 @@
       "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
-    "flow_description": "flow विवरण",
-    "flow_no_description": "कोई विवरण नहीं। अपने flow YAML में एक विवरण जोड़ें ताकि यह दस्तावेज़ित हो सके कि यह क्या करता है।",
     "split_horizontal": "क्षैतिज रूप से विभाजित करें",
     "split_vertical": "लंबवत विभाजित करें",
     "pwa": {

@@ -1,3 +1,4 @@
+import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import NoCode from "../../../../src/components/no-code/NoCode.vue";
 import InitialSchema from "../../../../src/stores/flow-schema.json";
 import {vueRouter} from "storybook-vue3-router";
@@ -15,7 +16,7 @@ export default {
     ],
     title: "Components/NoCode/Editor",
     component: NoCode,
-}
+} as Meta<typeof NoCode>
 
 const PLUGINS_RESPONSE = [{
     "name": "core",
@@ -40,10 +41,10 @@ const PLUGINS_RESPONSE = [{
     ]
 }]
 
-const Template = (args) => ({
+const Template: StoryFn<{flow: string; props?: Partial<InstanceType<typeof NoCode>["$props"]>}> = (args) => ({
     setup() {
         const flowStore = useFlowStore()
-        const axios = {}
+        const axios: any = {}
 
         flowStore.flowYaml = args.flow
         const props = {
@@ -52,7 +53,7 @@ const Template = (args) => ({
             ...args.props
         }
 
-        axios.get = (url) => {
+        axios.get = (url: string) => {
                 if (url.endsWith("plugins")) {
                     return Promise.resolve({
                         data: PLUGINS_RESPONSE
@@ -68,7 +69,7 @@ const Template = (args) => ({
                 })
             }
 
-        axios.post = (url) => {
+        axios.post = (url: string) => {
                 if(url.endsWith("flows/validate/task")){
                     return Promise.resolve({data: {}})
                 }
@@ -133,4 +134,3 @@ tasks:
        blockSchemaPath: "#/definitions/io.kestra.core.models.flows.Flow/properties/tasks/items",
     },
 };
-

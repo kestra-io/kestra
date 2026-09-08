@@ -44,7 +44,7 @@
     import {timeZones} from "../../../../utils/timeZones"
 
     const cron = defineModel<string>("cron", {required: true})
-    const timezone = defineModel<string>("timezone", {required: true})
+    const timezone = defineModel<string>("timezone")
 
     const {t} = useI18n()
 

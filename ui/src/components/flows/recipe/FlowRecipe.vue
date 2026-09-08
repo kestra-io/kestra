@@ -55,7 +55,7 @@
                             v-if="recipe.triggerType === 'execution'"
                             v-model:watchNamespace="recipe.watchNamespace"
                             v-model:includeSub="recipe.includeSub"
-                            :recipe="recipe"
+                            :states="recipe.states"
                             :namespaceOptions="namespaceOptions"
                             :namespacesLoading="namespacesLoading"
                             :toggleState="toggleState"
@@ -87,7 +87,8 @@
                         v-model:slackChannel="recipe.slackChannel"
                         v-model:teamsWebhook="recipe.teamsWebhook"
                         v-model:emailTo="recipe.emailTo"
-                        :recipe="recipe"
+                        :notify="recipe.notify"
+                        :triggerType="recipe.triggerType"
                         :channelAvailability="channelAvailability"
                         :toggleNotify="toggleNotify"
                     />

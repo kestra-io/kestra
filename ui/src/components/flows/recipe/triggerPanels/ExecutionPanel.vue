@@ -35,7 +35,7 @@
                 <KsCheckTag
                     v-for="stateName in watchableStates"
                     :key="stateName"
-                    :checked="recipe.states.includes(stateName)"
+                    :checked="states.includes(stateName)"
                     pill
                     @change="toggleState(stateName)"
                 >
@@ -43,10 +43,10 @@
                     {{ stateName }}
                 </KsCheckTag>
             </div>
-            <span v-if="recipe.states.length === 0" class="hint hint-error">
+            <span v-if="states.length === 0" class="hint hint-error">
                 {{ $t("recipe.execution.states_required") }}
             </span>
-            <span v-else-if="recipe.states.includes('FAILED')" class="hint hint-reco">
+            <span v-else-if="states.includes('FAILED')" class="hint hint-reco">
                 <Check class="hint-icon" />
                 {{ $t("recipe.execution.states_recommended") }}
             </span>
@@ -57,10 +57,9 @@
 <script setup lang="ts">
     import {STATES} from "@kestra-io/design-system"
     import Check from "vue-material-design-icons/Check.vue"
-    import type {RecipeState} from "../../../../composables/useFlowRecipe"
 
     withDefaults(defineProps<{
-        recipe: RecipeState
+        states: string[]
         namespaceOptions: string[]
         namespacesLoading?: boolean
         toggleState: (stateName: string) => void
@@ -68,7 +67,7 @@
         namespacesLoading: false,
     })
 
-    const watchNamespace = defineModel<string>("watchNamespace", {required: true})
+    const watchNamespace = defineModel<string>("watchNamespace")
     const includeSub = defineModel<boolean>("includeSub", {required: true})
 
     const watchableStates = ["FAILED", "WARNING", "SUCCESS", "KILLED", "PAUSED"]

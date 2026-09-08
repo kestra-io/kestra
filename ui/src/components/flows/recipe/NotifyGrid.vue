@@ -5,7 +5,7 @@
             :key="channel.key"
             role="checkbox"
             layout="column"
-            :selected="recipe.notify[channel.key]"
+            :selected="notify[channel.key]"
             :disabled="!channelAvailability[channel.key]"
             :ariaLabel="channel.label"
             @select="toggleNotify(channel.key)"
@@ -17,7 +17,7 @@
                     </KsIcon>
                 </div>
                 <KsIcon class="check-indicator" aria-hidden="true">
-                    <component :is="recipe.notify[channel.key] ? CheckboxMarked : CheckboxBlankOutline" />
+                    <component :is="notify[channel.key] ? CheckboxMarked : CheckboxBlankOutline" />
                 </KsIcon>
             </div>
             <span class="channel-label">{{ channel.label }}</span>
@@ -28,7 +28,7 @@
 
             <template #config>
                 <KsInput
-                    v-if="channel.key === 'slack' && recipe.triggerType === 'execution'"
+                    v-if="channel.key === 'slack' && triggerType === 'execution'"
                     v-model="slackChannel"
                     :placeholder="$t('recipe.notify.slack_channel_placeholder')"
                     size="small"
@@ -59,7 +59,7 @@
 <script setup lang="ts">
     import {computed, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import type {NotifyChannel, RecipeState} from "../../../composables/useFlowRecipe"
+    import type {NotifyChannel, TriggerType} from "../../../composables/useFlowRecipe"
     import SelectableTile from "./SelectableTile.vue"
 
     import Slack from "vue-material-design-icons/Slack.vue"
@@ -70,7 +70,8 @@
     import CheckboxBlankOutline from "vue-material-design-icons/CheckboxBlankOutline.vue"
 
     defineProps<{
-        recipe: RecipeState
+        notify: Record<NotifyChannel, boolean>
+        triggerType: TriggerType
         channelAvailability: Record<NotifyChannel, boolean>
         toggleNotify: (key: NotifyChannel) => void
     }>()

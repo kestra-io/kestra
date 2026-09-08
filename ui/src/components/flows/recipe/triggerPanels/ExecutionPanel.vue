@@ -2,7 +2,7 @@
     <KsForm class="execution-panel" labelPosition="top" @submit.prevent>
         <KsFormItem :label="$t('recipe.execution.watch_namespace')">
             <KsSelect
-                v-model="recipe.watchNamespace"
+                v-model="watchNamespace"
                 filterable
                 clearable
                 :loading="namespacesLoading"
@@ -20,13 +20,13 @@
 
         <KsFormItem>
             <KsCheckbox
-                v-model="recipe.includeSub"
+                v-model="includeSub"
                 data-test="recipe-include-sub"
             >
                 {{ $t("recipe.execution.include_sub") }}
             </KsCheckbox>
             <span class="hint">
-                {{ recipe.includeSub ? $t("recipe.execution.include_sub_hint_on") : $t("recipe.execution.include_sub_hint_off") }}
+                {{ includeSub ? $t("recipe.execution.include_sub_hint_on") : $t("recipe.execution.include_sub_hint_off") }}
             </span>
         </KsFormItem>
 
@@ -67,6 +67,9 @@
     }>(), {
         namespacesLoading: false,
     })
+
+    const watchNamespace = defineModel<string>("watchNamespace", {required: true})
+    const includeSub = defineModel<boolean>("includeSub", {required: true})
 
     const watchableStates = ["FAILED", "WARNING", "SUCCESS", "KILLED", "PAUSED"]
 </script>

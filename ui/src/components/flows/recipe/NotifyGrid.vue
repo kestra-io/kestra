@@ -29,21 +29,21 @@
             <template #config>
                 <KsInput
                     v-if="channel.key === 'slack' && recipe.triggerType === 'execution'"
-                    v-model="recipe.slackChannel"
+                    v-model="slackChannel"
                     :placeholder="$t('recipe.notify.slack_channel_placeholder')"
                     size="small"
                     data-test="recipe-slack-channel"
                 />
                 <KsInput
                     v-else-if="channel.key === 'teams'"
-                    v-model="recipe.teamsWebhook"
+                    v-model="teamsWebhook"
                     :placeholder="$t('recipe.notify.teams_webhook_placeholder')"
                     size="small"
                     data-test="recipe-teams-webhook"
                 />
                 <KsInput
                     v-else-if="channel.key === 'email'"
-                    v-model="recipe.emailTo"
+                    v-model="emailTo"
                     :placeholder="$t('recipe.notify.email_to_placeholder')"
                     size="small"
                     data-test="recipe-email-to"
@@ -74,6 +74,10 @@
         channelAvailability: Record<NotifyChannel, boolean>
         toggleNotify: (key: NotifyChannel) => void
     }>()
+
+    const slackChannel = defineModel<string>("slackChannel", {required: true})
+    const teamsWebhook = defineModel<string>("teamsWebhook", {required: true})
+    const emailTo = defineModel<string>("emailTo", {required: true})
 
     const {t} = useI18n()
 

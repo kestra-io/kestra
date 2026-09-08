@@ -19,6 +19,7 @@ const meta: Meta<typeof CopilotComposer> = {
     argTypes: {
         mode: {control: "select", options: ["ASK", "EDIT", "PLAN"]},
         disabled: {control: "boolean"},
+        streaming: {control: "boolean"},
     },
 }
 export default meta
@@ -28,5 +29,8 @@ export const Ask: Story = {args: {mode: "ASK"}}
 export const Build: Story = {args: {mode: "EDIT"}}
 export const Plan: Story = {args: {mode: "PLAN"}}
 
-// Disabled while a turn is streaming or awaiting confirmation.
+// Disabled while a turn is awaiting confirmation.
 export const Disabled: Story = {args: {mode: "ASK", disabled: true}}
+
+// Stop replaces send while a turn is streaming.
+export const Streaming: Story = {args: {mode: "ASK", disabled: true, streaming: true}}

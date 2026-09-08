@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -44,7 +45,14 @@ import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.PartialResponse;
+import dev.langchain4j.model.chat.response.PartialResponseContext;
+import dev.langchain4j.model.chat.response.PartialThinking;
+import dev.langchain4j.model.chat.response.PartialThinkingContext;
+import dev.langchain4j.model.chat.response.PartialToolCall;
+import dev.langchain4j.model.chat.response.PartialToolCallContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.chat.response.StreamingHandle;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -59,6 +67,8 @@ import lombok.extern.slf4j.Slf4j;
 @Requires(bean = AiServiceManager.class)
 @Slf4j
 public class AgentOrchestrator {
+    private static final long MODEL_CANCEL_POLL_MS = 50;
+
     private final AiServiceManager aiServiceManager;
     private final ToolCatalog catalog;
     private final ModeProfiles modeProfiles;
@@ -267,8 +277,7 @@ public class AgentOrchestrator {
                 .build();
 
             ChatResponse response = callModel(ctx.model(), request, sink);
-
-            if (sink.isCancelled()) {
+            if (sink.isCancelled() || response == null) {
                 abortCancelled(ctx);
                 return;
             }
@@ -422,18 +431,37 @@ public class AgentOrchestrator {
         done(sink, AgentThreadStatus.AWAITING_CONFIRMATION);
     }
 
+    @Nullable
     private ChatResponse callModel(final StreamingChatModel model, final ChatRequest request, final TurnEventSink sink) {
         CompletableFuture<ChatResponse> future = new CompletableFuture<>();
+        AtomicReference<StreamingHandle> handle = new AtomicReference<>();
         model.chat(request, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(final String partial) {
-                // The client may disconnect mid-stream; stop emitting tokens once the sink is cancelled.
-                if (sink.isCancelled()) {
+                if (abortIfCancelled(sink, handle, handle.get())) {
                     return;
                 }
                 if (partial != null && !partial.isEmpty()) {
                     sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(partial));
                 }
+            }
+
+            @Override
+            public void onPartialResponse(final PartialResponse partial, final PartialResponseContext context) {
+                if (abortIfCancelled(sink, handle, context.streamingHandle())) {
+                    return;
+                }
+                onPartialResponse(partial.text());
+            }
+
+            @Override
+            public void onPartialThinking(final PartialThinking thinking, final PartialThinkingContext context) {
+                abortIfCancelled(sink, handle, context.streamingHandle());
+            }
+
+            @Override
+            public void onPartialToolCall(final PartialToolCall toolCall, final PartialToolCallContext context) {
+                abortIfCancelled(sink, handle, context.streamingHandle());
             }
 
             @Override
@@ -443,15 +471,37 @@ public class AgentOrchestrator {
 
             @Override
             public void onError(final Throwable error) {
+                // Closing the HTTP stream after Stop looks like an I/O failure; ignore it so the
+                // turn is cancelled rather than failed.
+                if (sink.isCancelled()) {
+                    return;
+                }
                 future.completeExceptionally(error);
             }
         });
         try {
-
-            return future.get(modelCallTimeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            future.cancel(true);
-            throw new IllegalStateException("LLM streaming call timed out after " + modelCallTimeout, e);
+            // Stop must not wait out modelCallTimeout: after StreamingHandle.cancel() the provider
+            // often never calls onCompleteResponse, so a single future.get(timeout) would hang.
+            long deadlineNanos = System.nanoTime() + modelCallTimeout.toNanos();
+            while (!future.isDone()) {
+                if (abortIfCancelled(sink, handle, handle.get())) {
+                    return null;
+                }
+                long remainingNanos = deadlineNanos - System.nanoTime();
+                if (remainingNanos <= 0) {
+                    future.cancel(true);
+                    throw new IllegalStateException("LLM streaming call timed out after " + modelCallTimeout);
+                }
+                long waitMs = Math.min(TimeUnit.NANOSECONDS.toMillis(remainingNanos), MODEL_CANCEL_POLL_MS);
+                try {
+                    future.get(Math.max(waitMs, 1), TimeUnit.MILLISECONDS);
+                } catch (TimeoutException ignored) {
+                }
+            }
+            if (abortIfCancelled(sink, handle, handle.get())) {
+                return null;
+            }
+            return future.get();
         } catch (InterruptedException e) {
             future.cancel(true);
             Thread.currentThread().interrupt();
@@ -460,6 +510,21 @@ public class AgentOrchestrator {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw new IllegalStateException("LLM streaming call failed: " + cause.getMessage(), cause);
         }
+    }
+
+    private static boolean abortIfCancelled(final TurnEventSink sink, final AtomicReference<StreamingHandle> handle,
+        final StreamingHandle incoming) {
+        if (incoming != null) {
+            handle.compareAndSet(null, incoming);
+        }
+        if (!sink.isCancelled()) {
+            return false;
+        }
+        StreamingHandle captured = handle.get();
+        if (captured != null && !captured.isCancelled()) {
+            captured.cancel();
+        }
+        return true;
     }
 
     private void finishTurn(final AgentLoopContext ctx) {

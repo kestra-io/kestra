@@ -46,9 +46,11 @@
                     v-model:provider="selectedProvider"
                     :providers="providers"
                     :disabled="!canSend"
+                    :streaming="streaming"
                     :placeholder="$t('ai.copilot.emptyHelper')"
                     :rows="3"
                     @submit="onSubmit"
+                    @stop="cancel"
                 />
                 <div class="copilot-suggestions">
                     <KsButton
@@ -127,7 +129,9 @@
                     v-model:provider="selectedProvider"
                     :providers="providers"
                     :disabled="!canSend"
+                    :streaming="streaming"
                     @submit="onSubmit"
+                    @stop="cancel"
                 />
             </div>
         </template>
@@ -340,6 +344,12 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            const last = lastMessage.value
+            // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
+            if (!last || last.type === "CANCELLED") {
+                ending.value = false
+                return
+            }
             ending.value = true
             // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
             endTimer = setTimeout(() => (ending.value = false), 4300)

@@ -2065,6 +2065,7 @@
         "title": "AI Copilot",
         "placeholder": "Powiedz mi, co zbudować…",
         "send": "Wyślij",
+        "stop": "Zatrzymaj",
         "mode": {
           "ask": "Pytaj",
           "edit": "Edytuj",

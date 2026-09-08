@@ -5,7 +5,7 @@
  * renderable message list. The thread `status` is the single source of truth for
  * what the UI may do next:
  *   - IDLE                  → a new turn may be sent
- *   - RUNNING               → a turn is streaming; composer disabled (a 2nd turn 409s)
+ *   - RUNNING               → a turn is streaming; composer shows stop (a 2nd turn 409s)
  *   - AWAITING_CONFIRMATION → a proposal is suspended; call `confirm(...)` to resume
  *
  * Non-streaming calls (create/get) go through the `useClient()` facade — not the generated SDK AI
@@ -273,7 +273,7 @@ export function useAiChat() {
         await runStream(`${base()}/${active.uid}/confirm`, request)
     }
 
-    /** Cancels an in-flight stream (e.g. on unmount). */
+    /** Aborts an in-flight stream (stop button, or unmount). */
     function cancel(): void {
         abort?.abort()
     }
@@ -281,6 +281,7 @@ export function useAiChat() {
     /** Starts a fresh conversation: drops the current thread/transcript back to the empty state. */
     function reset(): void {
         cancel()
+        abort = null
         thread.value = null
         messages.value = []
         status.value = "IDLE"
@@ -318,7 +319,15 @@ export function useAiChat() {
                 notice.value = "emptyTurn"
             }
         } catch (e) {
-            if ((e as Error)?.name === "AbortError") return
+            if (isAbortError(e)) {
+                status.value = "IDLE"
+                // `reset()` nulls `abort` before the fetch rejects, so a New chat does not paint
+                // a cancelled marker onto the empty transcript.
+                if (abort !== null) {
+                    push({id: uid(), role: "SYSTEM", type: "CANCELLED"})
+                }
+                return
+            }
             // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
             if (is503(e)) unavailable.value = true
             else error.value = toErrorCode(e)
@@ -434,6 +443,10 @@ export function useAiChat() {
         if (e instanceof SseHttpError) return e.status === 404
         const err = e as {status?: number; response?: {status?: number}}
         return err?.status === 404 || err?.response?.status === 404
+    }
+
+    function isAbortError(e: unknown): boolean {
+        return e instanceof Error && (e.name === "AbortError" || e.name === "CanceledError")
     }
 
     return {

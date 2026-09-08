@@ -9,15 +9,28 @@ vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({post, get})}))
 
 let nextFrames: AiSseFrame[] = []
 let nextError: Error | null = null
+/** When true, streamSse waits until `signal` aborts instead of replaying `nextFrames`. */
+let hangUntilAbort = false
 /** Records the JSON body of the most recent stream (chat/confirm) so tests can assert what was sent. */
 let lastBody: Record<string, unknown> | null = null
 vi.mock("../../../../../src/components/ai/copilot/streamSse", async (importOriginal) => {
     const actual = await importOriginal<typeof import("../../../../../src/components/ai/copilot/streamSse")>()
     return {
         ...actual,
-        streamSse: vi.fn(async ({onFrame, body}: {onFrame: (f: AiSseFrame) => void; body: Record<string, unknown>}) => {
+        streamSse: vi.fn(async ({onFrame, body, signal}: {onFrame: (f: AiSseFrame) => void; body: Record<string, unknown>; signal?: AbortSignal}) => {
             lastBody = body
             if (nextError) throw nextError
+            if (hangUntilAbort) {
+                await new Promise<never>((_, reject) => {
+                    const fail = () => {
+                        const err = new Error("Aborted")
+                        err.name = "AbortError"
+                        reject(err)
+                    }
+                    if (signal?.aborted) fail()
+                    else signal?.addEventListener("abort", fail, {once: true})
+                })
+            }
             for (const f of nextFrames) onFrame(f)
         }),
     }
@@ -38,6 +51,7 @@ describe("useAiChat", () => {
         get.mockReset()
         nextFrames = []
         nextError = null
+        hangUntilAbort = false
         lastBody = null
         localStorage.clear()
         post.mockResolvedValue(idleThread())
@@ -114,6 +128,40 @@ describe("useAiChat", () => {
         expect(chat.pendingConfirmation.value).toBeNull()
         expect(chat.status.value).toBe("IDLE")
         expect(chat.messages.value.some((m) => m.type === "TOOL_RESULT" && m.toolResult?.outcome === "ok")).toBe(true)
+    })
+
+    it("cancel aborts a streaming turn, marks it cancelled, and returns to IDLE", async () => {
+        hangUntilAbort = true
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        expect(chat.status.value).toBe("RUNNING")
+        expect(chat.canSend.value).toBe(false)
+
+        chat.cancel()
+        await pending
+
+        expect(chat.streaming.value).toBe(false)
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
+        expect(chat.error.value).toBeNull()
+        expect(chat.messages.value.some((m) => m.type === "CANCELLED")).toBe(true)
+        expect(chat.messages.value.some((m) => m.role === "USER" && m.content === "hi")).toBe(true)
+    })
+
+    it("reset during a streaming turn does not leave a cancelled marker on the fresh chat", async () => {
+        hangUntilAbort = true
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+
+        chat.reset()
+        await pending
+
+        expect(chat.messages.value).toEqual([])
+        expect(chat.streaming.value).toBe(false)
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.thread.value).toBeNull()
     })
 
     it("does not send a second turn while not IDLE", async () => {

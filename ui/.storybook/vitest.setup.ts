@@ -1,5 +1,5 @@
 // Must stay the FIRST import: it patches window.fetch before any src/ or SDK module is evaluated.
-// preview.jsx imports it too — the install is idempotent. Importing from both files removes any
+// preview.ts imports it too — the install is idempotent. Importing from both files removes any
 // dependence on the relative order of this setup file and the one addon-vitest injects itself.
 import "./apiMock"
 
@@ -9,7 +9,7 @@ import "./apiMock"
 // sets __BROWSER__=false even in browser environments.
 // Suppress it so test output stays clean.
 const origWarn = console.warn.bind(console)
-console.warn = (...args) => {
+console.warn = (...args: any[]) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
     origWarn(...args)
 }

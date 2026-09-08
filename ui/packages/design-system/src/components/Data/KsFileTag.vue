@@ -1,5 +1,5 @@
 <template>
-    <KsTooltip :content="uri">
+    <KsTooltip :content="tooltip">
         <KsTag :icon="icon" :label="label" truncate />
     </KsTooltip>
 </template>
@@ -11,7 +11,7 @@
     import {fileExtension, fileIcon, fileName} from "../../utils/file"
 
     const props = defineProps<{
-        /** Storage URI of the file, shown in full in the tooltip. */
+        /** Storage URI of the file, always shown in full in the tooltip. */
         uri: string
         /** Label to display; defaults to the URI's last path segment. */
         name?: string
@@ -21,4 +21,7 @@
 
     // Generated storage URIs keep the extension the caller-supplied name often lacks.
     const icon = computed(() => fileIcon(fileExtension(props.uri) ? props.uri : label.value))
+
+    // A caller-supplied name is the part that gets clipped, so the tooltip has to carry it too.
+    const tooltip = computed(() => (props.name ? `${label.value} (${props.uri})` : props.uri))
 </script>

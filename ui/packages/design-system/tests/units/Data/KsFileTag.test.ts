@@ -2,6 +2,7 @@ import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsFileTag from "../../../src/components/Data/KsFileTag.vue"
+import KsTooltip from "../../../src/components/Feedback/KsTooltip.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -20,6 +21,24 @@ describe("KsFileTag", () => {
             global: globalConfig,
         })
         expect(wrapper.text()).toBe("report.csv")
+    })
+
+    test("carries the name into the tooltip, since that is the part that gets clipped", () => {
+        const wrapper = mount(KsFileTag, {
+            props: {uri: "kestra:///company/team/exec/outputs/8f2c1d.parquet", name: "a-very-long-output-name"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent(KsTooltip).props("content"))
+            .toBe("a-very-long-output-name (kestra:///company/team/exec/outputs/8f2c1d.parquet)")
+    })
+
+    test("leaves the tooltip as the bare URI when the label already comes from it", () => {
+        const wrapper = mount(KsFileTag, {
+            props: {uri: "kestra:///company/team/exec/outputs/report.csv"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent(KsTooltip).props("content"))
+            .toBe("kestra:///company/team/exec/outputs/report.csv")
     })
 
     test("picks the icon from the URI, whose extension the name often lacks", () => {

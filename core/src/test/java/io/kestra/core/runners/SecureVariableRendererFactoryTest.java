@@ -9,6 +9,11 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -33,6 +38,12 @@ class SecureVariableRendererFactoryTest {
 
     @Inject
     private VariableRenderer renderer;
+
+    @Inject
+    private KVMetadataStateStore kvMetadataStateStore;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     @MockBean(SecretService.class)
     SecretService testSecretService() {
@@ -149,6 +160,31 @@ class SecureVariableRendererFactoryTest {
         assertThat(result).contains("testuser");
         assertThat(result).contains("production");
         assertThat(result).doesNotContain("my-secret-value-12345");
+    }
+
+    /**
+     * Regression test for issue #10244 — the masked-functions list on this read-only renderer covered
+     * only secret(), so a caller-supplied expression like {@code {{ kv('KEY') }}} resolved to the
+     * plaintext K/V value with no KVSTORE permission check anywhere on the call path.
+     */
+    @Test
+    void shouldCreateDebugRendererThatMasksKv() throws IllegalVariableEvaluationException, IOException {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        KVStore kv = new InternalKVStore(tenant, "io.kestra.unittest", storageInterface, kvMetadataStateStore);
+        kv.put("SOME_KEY", new KVValueAndMetadata(null, "super-secret"));
+
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest", "tenantId", tenant)
+        );
+
+        // When
+        String result = debugRenderer.render("{{ kv('SOME_KEY') }}", context);
+
+        // Then
+        assertThat(result).isEqualTo("******");
+        assertThat(result).doesNotContain("super-secret");
     }
 
     @Test

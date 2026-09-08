@@ -1,5 +1,7 @@
 package io.kestra.core.models.assets;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.validations.ModelValidator;
@@ -57,6 +59,20 @@ class AssetValidationTest {
             .id("crn:aws s3:bucket")
             .type("MY_OWN_ASSET_TYPE")
             .build();
+
+        assertThat(modelValidator.isValid(asset))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+    }
+
+    @Test
+    void shouldRejectAnAssetActionWithABlankNamespaceOrFlowId() {
+        Custom asset = Custom.builder()
+            .namespace("io.kestra")
+            .id("my-asset")
+            .type("MY_OWN_ASSET_TYPE")
+            .build();
+        asset.setAssetActions(List.of(new AssetAction("", null)));
 
         assertThat(modelValidator.isValid(asset))
             .get()

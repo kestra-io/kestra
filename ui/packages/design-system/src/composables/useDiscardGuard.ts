@@ -1,9 +1,9 @@
-import {ref} from "vue"
-import {useI18n} from "vue-i18n"
-import {KsMessageBox} from "@kestra-io/design-system"
+import {getCurrentInstance, ref} from "vue"
+import {KsMessageBox} from "../components/Feedback/KsMessageBox"
 
 export function useDiscardGuard(isDirty: () => boolean | undefined, options?: {message?: string}) {
-    const {t} = useI18n({useScope: "global"})
+    const translate = getCurrentInstance()?.appContext.config.globalProperties.$t as ((key: string) => string) | undefined
+    const t = (key: string) => translate?.(key) ?? key
     const isConfirming = ref(false)
 
     function guardedClose(proceed: () => void) {
@@ -16,7 +16,7 @@ export function useDiscardGuard(isDirty: () => boolean | undefined, options?: {m
         }
         isConfirming.value = true
         KsMessageBox
-            .confirm(options?.message ?? t("discard changes confirmation"), t("confirmation"), {type: "warning", showCancelButton: true})
+            .confirm(options?.message ?? t("ks_discard_guard.message"), t("ks_discard_guard.title"), {type: "warning", showCancelButton: true})
             .then(() => proceed())
             .catch(() => {})
             .finally(() => {

@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "Attiva/disattiva menu",
+    "favourites": "Preferiti",
+    "to close": "per chiudere",
+    "tabs": "Schede",
+    "select": "Seleziona",
     "panel actions": "Azioni del pannello",
     "playground actions": "Azioni del playground",
     "bulk actions": "Azioni collettive",
@@ -223,6 +227,7 @@
       "invalid duration": "Formato durata non valido. Utilizzare il formato ISO 8601 (es. PT30M, P1D).",
       "leave empty for infinite": "Lascia vuoto per una durata infinita o digita una durata ISO 8601 (es. 'P1DT1H1M1S')",
       "duration example": "Esempio: 'P1DT1H1M1S'",
+      "examples": "Esempi:",
       "error": "Formato durata non valido, deve essere una durata ISO 8601 (es. P1DT1H1M1S)",
       "custom": "Personalizzato",
       "last5minutes": "Ultimi 5 minuti",
@@ -280,6 +285,7 @@
     "expiration date": "Data di scadenza",
     "healthcheck date": "Data HealthCheck",
     "last execution status": "Ultimo stato di esecuzione",
+    "jump to": "Vai a",
     "jump to...": "Vai a...",
     "contextBar": {
       "ai": "AI",
@@ -477,6 +483,7 @@
       "big_file_download_only": "Questo file è {size}. È troppo grande per essere aperto nell'editor, scaricalo invece.",
       "load_anyway": "Carica comunque",
       "load_error": "Impossibile caricare l'anteprima del file. Potrebbe trattarsi di un problema temporaneo o di autorizzazioni.",
+      "image_alt": "Anteprima dell'output immagine",
       "retry": "Riprova",
       "html_asset_warning": "Questa anteprima visualizza l'HTML in un frame isolato. Le risorse locali come immagini e fogli di stile riferiti tramite percorsi relativi non verranno caricate.",
       "html_preview_title": "Anteprima file HTML"
@@ -485,7 +492,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limiti di Concorrenza",
-      "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
+      "warning": "La modifica del contatore in esecuzione potrebbe corrompere la concurrency, quindi le esecuzioni potrebbero superare il limite consentito."
     },
     "flowConcurrency": {
       "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",
@@ -497,6 +504,8 @@
     "docsPage": {
       "notFound": "Questa pagina della documentazione non esiste. Potrebbe essere stata spostata o rinominata.",
       "loadError": "Impossibile caricare questa pagina della documentazione. Riprova.",
+      "close_menu": "Chiudi menu",
+      "open_menu": "Apri menu",
       "backToDocs": "Torna ai Docs"
     },
     "documentation": {
@@ -553,8 +562,10 @@
       "names": "Plugins",
       "release": "Note di rilascio",
       "beta": "Beta",
+      "beta_notice": "Questo plugin è attualmente in beta. Anche se è considerato sicuro da usare, tieni presente che la sua API potrebbe cambiare nelle versioni future in modo non compatibile con quelle precedenti, oppure il plugin potrebbe non essere più supportato.",
       "copy_type": "Copia tipo",
       "deprecated": "Deprecato",
+      "documentation_sections": "Sezioni della documentazione",
       "dynamic": "dinamico",
       "filter_all": "Tutti",
       "filter_properties": "Filtra proprietà…",
@@ -596,6 +607,8 @@
       "nav_overview": "Panoramica",
       "nav_properties": "Proprietà",
       "non_dynamic": "non dinamico",
+      "possible_values": "Valori consentiti",
+      "sub_type": "Sottotipo",
       "required": "Obbligatorio"
     },
     "last execution date": "Data ultima esecuzione",
@@ -833,20 +846,20 @@
     "bulk restart": "Sei sicuro di voler riavviare <code>{executionCount}</code> esecuzione/i?",
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
     "cancel": "Annulla",
-    "errorLogs": "Log degli errori",
+    "errorLogs": "Log di errore",
     "welcome_page": {
       "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?"
     },
     "product_tour": "Tour del prodotto",
-    "executions replayed": "<code>{executionCount}</code> esecuzione/i ripetute",
+    "executions replayed": "<code>{executionCount}</code> esecuzione(i) riprodotta(e)",
     "executions state changed": "Lo stato di <code>{executionCount}</code> esecuzione/i è stato cambiato",
-    "executions resumed": "<code>{executionCount}</code> esecuzione/i riprese",
-    "executions paused": "<code>{executionCount}</code> esecuzione(i) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> esecuzione(i) in coda",
-    "executions force run": "<code>{executionCount}</code> esecuzione/i forzata/e",
-    "executions restarted": "<code>{executionCount}</code> esecuzione/i riavviate",
-    "executions killed": "<code>{executionCount}</code> esecuzione/i kill",
-    "executions deleted": "<code>{executionCount}</code> esecuzione/i eliminate",
+    "executions resumed": "<code>{executionCount}</code> esecuzione(i) ripresa(e)",
+    "executions paused": "<code>{executionCount}</code> esecuzione(i) in pausa",
+    "executions unqueue": "<code>{executionCount}</code> esecuzione(i) non in coda",
+    "executions force run": "<code>{executionCount}</code> esecuzione(i) forzata/e",
+    "executions restarted": "<code>{executionCount}</code> esecuzione(i) riavviata(e)",
+    "executions killed": "<code>{executionCount}</code> esecuzione(i) killata(e)",
+    "executions deleted": "<code>{executionCount}</code> esecuzione(i) eliminata(e)",
     "invalid bulk replay": "Impossibile ripetere le esecuzioni",
     "invalid bulk resume": "Impossibile riprendere le esecuzioni",
     "invalid bulk pause": "Impossibile mettere in pausa le esecuzioni",
@@ -870,6 +883,7 @@
     "enable": "Abilita",
     "enabled": "Abilitato",
     "flow delete": "Sei sicuro di voler eliminare <code>{flowCount}</code> flow?",
+    "delete flow error": "Eliminazione del flow {id} non riuscita",
     "flows deleted": "<code>{count}</code> Flow eliminati",
     "flow disable": "Sei sicuro di voler disabilitare <code>{flowCount}</code> flow?",
     "flow enable": "Sei sicuro di voler abilitare <code>{flowCount}</code> flow?",
@@ -943,7 +957,7 @@
     "join_slack": "Unisciti a Slack",
     "kestra": "Kestra",
     "error detected": "Errore(i) rilevato(i).",
-    "warning detected": "Avvisi rilevati",
+    "warning detected": "Avviso/i rilevato/i.",
     "informative notice": "Note(s)",
     "open": "Apri",
     "dependency task": "Il task {taskId} è una dipendenza di un altro task",
@@ -1008,9 +1022,11 @@
         "file_already_exists": "Un file con questo nome esiste già",
         "file_conflicts_with_folder": "Una cartella con questo nome esiste già",
         "file_error": "Si è verificato un errore durante la creazione del file",
+        "file_success": "File \"{name}\" creato correttamente.",
         "folder": "Crea cartella",
         "folder_already_exists": "Una cartella con questo nome esiste già",
         "folder_conflicts_with_file": "Un file con questo nome esiste già",
+        "folder_success": "Cartella \"{name}\" creata correttamente.",
         "folder_error": "Si è verificato un errore durante la creazione della cartella"
       },
       "rename": {
@@ -1024,8 +1040,10 @@
       "delete": {
         "label": "Elimina",
         "file": "Elimina file",
+        "file_error": "Eliminazione del file non riuscita: {name}",
         "folder": "Elimina cartella",
         "files": "Elimina {count} file selezionati",
+        "bulk_success": "File selezionati eliminati con successo.",
         "folders": "Elimina {count} cartelle selezionate"
       },
       "move": {
@@ -1969,6 +1987,7 @@
         "csv": "Esporta in CSV",
         "ion": "Esporta in ION"
       },
+      "show_all_statuses": "Mostra tutti gli stati",
       "quick_filters": {
         "all": "Tutti",
         "running": "In esecuzione",

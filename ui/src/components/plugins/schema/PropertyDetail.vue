@@ -1,7 +1,7 @@
 <template>
     <div class="property-detail">
         <div v-if="subtype">
-            <span>SubType</span>
+            <span>{{ $t("plugins.sub_type") }}</span>
             <a v-if="subtype.startsWith('#')" :href="subtype" class="ref-type-link" @click.stop>
                 <KsTag type="info">
                     {{ className(subtype) }}
@@ -25,7 +25,7 @@
         </template>
 
         <div v-if="enumValues !== undefined">
-            <span>Possible Values</span>
+            <span>{{ $t("plugins.possible_values") }}</span>
             <div class="enum-values">
                 <KsTag v-for="(possibleValue, index) in enumValues" :key="index">
                     {{ possibleValue }}

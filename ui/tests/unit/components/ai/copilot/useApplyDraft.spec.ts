@@ -29,11 +29,18 @@ vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     updateFlow: (...a: unknown[]) => updateFlow(...a),
 }))
 
-const createDashboard = vi.fn().mockResolvedValue({})
-const updateDashboard = vi.fn().mockResolvedValue({})
-vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
-    createDashboard: (...a: unknown[]) => createDashboard(...a),
-    updateDashboard: (...a: unknown[]) => updateDashboard(...a),
+const clientPost = vi.fn().mockResolvedValue({data: {}})
+const clientPut = vi.fn().mockResolvedValue({data: {}})
+vi.mock("@kestra-io/kestra-sdk", async (importOriginal) => ({
+    ...await importOriginal<typeof import("@kestra-io/kestra-sdk")>(),
+    useClient: () => ({get: vi.fn(), post: (...a: unknown[]) => clientPost(...a), put: (...a: unknown[]) => clientPut(...a), delete: vi.fn()}),
+}))
+
+vi.mock("override/utils/route", () => ({
+    apiUrl: () => "/api/v1/main",
+    apiUrlWithoutTenants: () => "/api/v1",
+    basePath: () => "/ui/main",
+    baseUrl: "/",
 }))
 
 // A create rejection carrying the entity-already-exists problem document. The fallback branches on the
@@ -65,8 +72,8 @@ describe("useApplyDraft", () => {
         alert.mockResolvedValue(undefined)
         createFlow.mockResolvedValue({})
         updateFlow.mockResolvedValue({})
-        createDashboard.mockResolvedValue({})
-        updateDashboard.mockResolvedValue({})
+        clientPost.mockResolvedValue({data: {}})
+        clientPut.mockResolvedValue({data: {}})
         loadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: company.team"})
         loadGraph.mockResolvedValue(undefined)
     })
@@ -191,22 +198,24 @@ describe("useApplyDraft", () => {
         parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
         await useApplyDraft().apply(dashboardDraft())
-        expect(createDashboard).toHaveBeenCalledWith(
-            expect.objectContaining({body: "id: my-dash\ntitle: My dash"}),
-            expect.objectContaining({showMessageOnError: false}),
+        expect(clientPost).toHaveBeenCalledWith(
+            "/api/v1/main/dashboards",
+            "id: my-dash\ntitle: My dash",
+            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
         )
-        expect(updateDashboard).not.toHaveBeenCalled()
+        expect(clientPut).not.toHaveBeenCalled()
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "dashboards/update", params: {dashboard: "my-dash", tenant: "main"}}))
     })
 
     it("apply UPDATES the dashboard when create reports it already exists", async () => {
         parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
-        createDashboard.mockRejectedValueOnce(dashboardExists)
+        clientPost.mockRejectedValueOnce(dashboardExists)
         await useApplyDraft().apply(dashboardDraft())
-        expect(updateDashboard).toHaveBeenCalledWith(
-            expect.objectContaining({id: "my-dash", body: "id: my-dash\ntitle: My dash"}),
-            expect.objectContaining({showMessageOnError: false}),
+        expect(clientPut).toHaveBeenCalledWith(
+            "/api/v1/main/dashboards/my-dash",
+            "id: my-dash\ntitle: My dash",
+            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
         )
     })
 
@@ -215,7 +224,7 @@ describe("useApplyDraft", () => {
         await useApplyDraft().apply(dashboardDraft({yaml: "title: nope"}))
         expect(alert).toHaveBeenCalled()
         expect(confirm).not.toHaveBeenCalled()
-        expect(createDashboard).not.toHaveBeenCalled()
+        expect(clientPost).not.toHaveBeenCalled()
     })
 
     // --- apps (EE-only) ---

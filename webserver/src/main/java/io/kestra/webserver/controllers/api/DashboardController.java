@@ -7,16 +7,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import io.kestra.core.exceptions.AlreadyExistsException;
-import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -26,17 +24,12 @@ import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.settings.DashboardSettings;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.ChartDataService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.validations.TenantId;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
@@ -50,7 +43,6 @@ import io.kestra.webserver.utils.TimeLineSearch;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.scheduling.TaskExecutors;
@@ -58,7 +50,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -66,17 +57,25 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
+/**
+ * Serves the dashboards bundled with the edition. Storing and editing dashboards of one's own is an
+ * Enterprise feature, so the persistence-backed operations are added by the Enterprise subclass; this
+ * one resolves {@link Dashboard#DEFAULT_DASHBOARD_ID} and nothing else.
+ * <p>
+ * The by-id read and export routes are kept here because {@code io.kestra.plugin.kestra.dashboards.Export}
+ * defaults its {@code dashboardId} to that sentinel, so the task has to work against an instance that
+ * stores no dashboards. Charts are rendered from a definition through {@code charts/preview} instead,
+ * which is why no by-id chart-data route is served here.
+ */
 @Controller("/api/v1/{tenant}/dashboards")
 @Slf4j
 public class DashboardController {
-    public static final Pattern DASHBOARD_ID_PATTERN = Pattern.compile("^id:.*$", Pattern.MULTILINE);
-
     private static final String DEFAULT_MAIN_DEFINITION_RESOURCE = "dashboards/default_main_definition.yaml";
     private static final String DEFAULT_FLOW_DEFINITION_RESOURCE = "dashboards/default_flow_definition.yaml";
     private static final String DEFAULT_NAMESPACE_DEFINITION_RESOURCE = "dashboards/default_namespace_definition.yaml";
@@ -89,19 +88,26 @@ public class DashboardController {
     );
 
     @Inject
-    private DashboardRepositoryInterface dashboardRepository;
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private FlowRepositoryInterface flowRepository;
+    private ChartDataService chartDataService;
 
     @Inject
     protected TenantService tenantService;
 
     @Inject
-    protected SettingRepositoryInterface settingRepository;
-
-    @Inject
     protected ModelValidator modelValidator;
+
+    /**
+     * Resolves the dashboard a read operation applies to. Only the bundled default is known here;
+     * the Enterprise subclass widens this to the dashboards a tenant has stored.
+     */
+    protected Optional<Dashboard> findDashboard(String tenantId, String id) {
+        return Dashboard.DEFAULT_DASHBOARD_ID.equals(id)
+            ? Optional.of(Dashboard.defaultDashboard(tenantId))
+            : Optional.empty();
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get
@@ -111,7 +117,7 @@ public class DashboardController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The filter query") @Nullable @QueryValue String q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort) throws ConstraintViolationException {
-        return PagedResults.of(dashboardRepository.list(PageableUtils.from(page, size, sort), tenantService.resolveTenant(), q).map(DashboardResponse::new));
+        return PagedResults.of(new ArrayListTotal<>(List.of(), 0));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -119,17 +125,9 @@ public class DashboardController {
     @Operation(tags = { "Dashboards" }, summary = "Get a dashboard")
     public DashboardResponse getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id) throws ConstraintViolationException {
-        if (Dashboard.DEFAULT_DASHBOARD_ID.equals(id)) {
-            return new DashboardResponse(Dashboard.defaultDashboard(tenantService.resolveTenant()));
-        }
-
-        return dashboardRepository.get(tenantService.resolveTenant(), id).map(d ->
-        {
-            if (!DASHBOARD_ID_PATTERN.matcher(d.getSourceCode()).find()) {
-                d = d.toBuilder().sourceCode("id: " + d.getId() + "\n" + d.getSourceCode()).build();
-            }
-            return new DashboardResponse(d);
-        }).orElse(null);
+        return findDashboard(tenantService.resolveTenant(), id)
+            .map(DashboardResponse::new)
+            .orElse(null);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -139,192 +137,13 @@ public class DashboardController {
         return DEFAULT_DASHBOARD_DEFINITIONS;
     }
 
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(consumes = MediaType.APPLICATION_YAML)
-    @Operation(
-        tags = { "Dashboards" }, summary = "Create a dashboard from yaml source",
-        responses = @ApiResponse(
-            responseCode = "422",
-            description = "If the dashboard id is reserved ('" + Dashboard.DEFAULT_DASHBOARD_ID + "')"
-        )
-    )
-    public HttpResponse<DashboardResponse> createDashboard(
-        @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
-        Dashboard dashboardParsed = parseDashboard(dashboard);
-
-        if (dashboardParsed.getId() == null) {
-            throw new IllegalArgumentException("Dashboard id is mandatory");
-        }
-        assertNotReservedId(dashboardParsed.getId(), dashboardParsed);
-        modelValidator.validate(dashboardParsed);
-
-        Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), dashboardParsed.getId());
-        if (existingDashboard.isPresent()) {
-            throw AlreadyExistsException.of("Dashboard", dashboardParsed.getId());
-        }
-
-        return HttpResponse.ok(new DashboardResponse(this.save(null, dashboardParsed, dashboard)));
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate", consumes = MediaType.APPLICATION_YAML)
-    @Operation(tags = { "Dashboards" }, summary = "Validate dashboard from yaml source")
-    public ValidateConstraintViolation validateDashboard(
-        @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
-        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
-        validateConstraintViolationBuilder.index(0);
-
-        try {
-            Dashboard parsed = YamlParser.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
-
-            modelValidator.validate(parsed);
-        } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
-        } catch (RuntimeException re) {
-            // In case of any error, we add a validation violation so the error is displayed in the UI.
-            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
-            // in dev like incompatible plugin versions.
-            log.error("Unable to validate the dashboard", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the dashboard: " + re.getMessage());
-        }
-
-        return validateConstraintViolationBuilder.build();
-    }
-
-    @Put(uri = "{id}", consumes = MediaType.APPLICATION_YAML)
-    @ExecuteOn(TaskExecutors.IO)
-    @Operation(
-        tags = { "Dashboards" }, summary = "Update a dashboard",
-        responses = @ApiResponse(
-            responseCode = "422",
-            description = "If the dashboard id is reserved ('" + Dashboard.DEFAULT_DASHBOARD_ID + "')"
-        )
-    )
-    public HttpResponse<DashboardResponse> updateDashboard(
-        @Parameter(description = "The dashboard id") @PathVariable String id,
-        @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
-        assertNotReservedId(id, null);
-
-        Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
-        if (existingDashboard.isEmpty()) {
-            return HttpResponse.status(HttpStatus.NOT_FOUND);
-        }
-        Dashboard dashboardToSave = parseDashboard(dashboard);
-        if (!dashboardToSave.getId().equals(id)) {
-            throw new ConstraintViolationException(
-                Set.of(
-                    ManualConstraintViolation.of(
-                        "Illegal dashboard id update",
-                        dashboardToSave,
-                        Dashboard.class,
-                        "dashboard.id",
-                        dashboardToSave.getId()
-                    )
-                )
-            );
-        }
-        modelValidator.validate(dashboardToSave);
-
-        return HttpResponse.ok(new DashboardResponse(this.save(existingDashboard.get(), dashboardToSave, dashboard)));
-    }
-
-    private void assertNotReservedId(String id, Dashboard dashboardParsed) {
-        if (Dashboard.DEFAULT_DASHBOARD_ID.equals(id)) {
-            throw new InvalidException(dashboardParsed, "Dashboard id '" + Dashboard.DEFAULT_DASHBOARD_ID + "' is reserved");
-        }
-    }
-
-    private Dashboard parseDashboard(String dashboard) {
-        return YamlParser.parse(dashboard, Dashboard.class).toBuilder()
-            .tenantId(tenantService.resolveTenant())
-            .deleted(false).build();
-    }
-
-    protected Dashboard save(Dashboard previousDashboard, Dashboard dashboard, String source) {
-        return dashboardRepository.save(previousDashboard, dashboard, source);
-    }
-
-    @Delete(uri = "{id}")
-    @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Dashboards" }, summary = "Delete a dashboard")
-    public HttpResponse<Void> deleteDashboard(
-        @Parameter(description = "The dashboard id") @PathVariable String id) throws ConstraintViolationException {
-        String tenantId = tenantService.resolveTenant();
-        if (dashboardRepository.delete(tenantId, id) != null) {
-            removeDefaultDashboardReferences(id);
-            return HttpResponse.status(HttpStatus.NO_CONTENT);
-        } else {
-            return HttpResponse.status(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    private void removeDefaultDashboardReferences(String dashboardId) {
-        settingRepository.findByKey(OSS_DASHBOARD_SETTINGS)
-            .map(Setting::getValue)
-            .map(value -> JacksonMapper.ofJson(false).convertValue(value, DashboardSettings.class))
-            .ifPresent(settings ->
-            {
-                var builder = settings.toBuilder();
-
-                if (dashboardId.equals(settings.getDefaultHomeDashboard())) {
-                    builder.defaultHomeDashboard(null);
-                }
-                if (dashboardId.equals(settings.getDefaultFlowOverviewDashboard())) {
-                    builder.defaultFlowOverviewDashboard(null);
-                }
-                if (dashboardId.equals(settings.getDefaultNamespaceOverviewDashboard())) {
-                    builder.defaultNamespaceOverviewDashboard(null);
-                }
-
-                DashboardSettings updated = builder.build();
-                if (updated.equals(settings)) {
-                    return;
-                }
-
-                settingRepository.save(
-                    Setting.builder()
-                        .key(OSS_DASHBOARD_SETTINGS)
-                        .value(updated)
-                        .build()
-                );
-            });
-    }
-
-    public static final String OSS_DASHBOARD_SETTINGS = "kestra.oss.dashboard-settings";
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Dashboards" }, summary = "Get default dashboards")
-    @Get(uri = "/settings/default-dashboards")
-    public HttpResponse<DashboardSettings> getDefaultDashboards() {
-        return settingRepository.findByKey(OSS_DASHBOARD_SETTINGS)
-            .map(Setting::getValue)
-            .map(value -> JacksonMapper.ofJson(false).convertValue(value, DashboardSettings.class))
-            .map(HttpResponse::ok)
-            .orElse(HttpResponse.ok());
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{id}/charts/{chartId}")
-    @Operation(tags = { "Dashboards" }, summary = "Generate a dashboard chart data")
-    public PagedResults<Map<String, Object>> getDashboardChartData(
-        @Parameter(description = "The dashboard id") @PathVariable String id,
-        @Parameter(description = "The chart id") @PathVariable String chartId,
-        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body ChartFiltersOverrides globalFilter) throws IOException {
-        var fetchChartDataQuery = buildDashboardChardDataQuery(id, chartId, globalFilter);
-
-        if (fetchChartDataQuery == null)
-            return null;
-
-        return fetchChartData(fetchChartDataQuery);
-    }
-
-    private FetchChartDataQuery buildDashboardChardDataQuery(String id, String chartId, ChartFiltersOverrides globalFilter) {
+    protected FetchChartDataQuery buildDashboardChardDataQuery(String id, String chartId, ChartFiltersOverrides globalFilter) {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();
 
         filters = formatLabelsFilters(filters);
 
-        Dashboard dashboard = Dashboard.DEFAULT_DASHBOARD_ID.equals(id) ? Dashboard.defaultDashboard(tenantId) : dashboardRepository.get(tenantId, id).orElse(null);
+        Dashboard dashboard = findDashboard(tenantId, id).orElse(null);
         if (dashboard == null) {
             return null;
         }
@@ -418,12 +237,12 @@ public class DashboardController {
         return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable);
     }
 
-    private record FetchChartDataQuery(Chart<?> chart, List<QueryFilter> filters, ZonedDateTime startDate,
+    protected record FetchChartDataQuery(Chart<?> chart, List<QueryFilter> filters, ZonedDateTime startDate,
         ZonedDateTime endDate, String tenantId, Pageable pageable) {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private PagedResults<Map<String, Object>> fetchChartData(FetchChartDataQuery fetchChartDataQuery) throws IOException {
+    protected PagedResults<Map<String, Object>> fetchChartData(FetchChartDataQuery fetchChartDataQuery) throws IOException {
         var chart = fetchChartDataQuery.chart();
         var filters = fetchChartDataQuery.filters();
         var startDate = fetchChartDataQuery.startDate();
@@ -437,12 +256,12 @@ public class DashboardController {
 
             // StartDate & EndDate are only set in the globalFilter for JDBC
             // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
-            return PagedResults.of(this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, pageable));
+            return PagedResults.of(this.chartDataService.generate(tenantId, dataChart, startDate, endDate, pageable));
         } else if (chart instanceof DataChartKPI dataChartKPI) {
             DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
-            return PagedResults.of(new ArrayListTotal<>(this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1));
+            return PagedResults.of(new ArrayListTotal<>(this.chartDataService.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1));
         } else if (chart instanceof Markdown markdownChart) {
             if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
                 Optional<Flow> optionalFlow = flowRepository.findById(tenantId, flowDescription.getNamespace(), flowDescription.getFlowId());
@@ -460,31 +279,6 @@ public class DashboardController {
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate/chart", consumes = MediaType.APPLICATION_YAML)
-    @Operation(tags = { "Dashboards" }, summary = "Validate a chart from yaml source")
-    public ValidateConstraintViolation validateChart(
-        @RequestBody(description = "The chart definition as YAML") @Body String chart) throws ConstraintViolationException {
-        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
-        validateConstraintViolationBuilder.index(0);
-
-        try {
-            Chart<?> parsed = YamlParser.parse(chart, Chart.class);
-
-            modelValidator.validate(parsed);
-        } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
-        } catch (RuntimeException re) {
-            // In case of any error, we add a validation violation so the error is displayed in the UI.
-            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
-            // in dev like incompatible plugin versions.
-            log.error("Unable to validate the dashboard", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the chart: " + re.getMessage());
-        }
-
-        return validateConstraintViolationBuilder.build();
     }
 
     @ExecuteOn(TaskExecutors.IO)

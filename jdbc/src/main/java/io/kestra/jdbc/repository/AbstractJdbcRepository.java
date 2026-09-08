@@ -410,11 +410,11 @@ public abstract class AbstractJdbcRepository {
             return applyTriggerStateCondition(value, operation);
         }
 
-        if (field.equals(QueryFilter.Field.METADATA)) {
+        if (QueryFilter.Field.METADATA == field) {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
-        if (field.equals(QueryFilter.Field.ASSET_STATUS)) {
+        if (QueryFilter.Field.ASSET_STATUS == field) {
             return assetStatusCondition(value, operation);
         }
 

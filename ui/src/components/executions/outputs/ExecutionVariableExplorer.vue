@@ -1,6 +1,5 @@
 <template>
     <div class="variable-explorer">
-        <LoopIterationsNotice kind="outputs" class="execution-notice" />
         <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
             <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
@@ -34,6 +33,13 @@
                                     <ContentCopy :size="16" />
                                 </KsIconButton>
                             </div>
+
+                            <LoopIterationsNotice
+                                v-if="selectedLoopTaskId"
+                                kind="outputs"
+                                :taskId="selectedLoopTaskId"
+                                class="viewer-notice"
+                            />
 
                             <template v-if="selectedValue === undefined">
                                 <KsNoData
@@ -118,6 +124,7 @@
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
+    import {loopTaskIds} from "../../../utils/flowUtils"
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
@@ -363,6 +370,7 @@
 
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
+    const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
     const expression = ref<string>(seededExpression())
@@ -404,6 +412,8 @@
             selectedValue.value = item.value
         }
         selectedBase.value = item.expression
+        selectedTaskId.value = (execution.value?.taskRunList ?? [])
+            .find((taskRun) => taskRun.id === item.taskRunId)?.taskId
         expressionPath.value = item.expression
         previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
@@ -426,6 +436,13 @@
             expression.value = `{{ ${baseExpressionPath} }}`
         }
     }
+
+    /** The selected task output belongs to a Loop, whose iteration outputs live in the sub-executions. */
+    const selectedLoopTaskId = computed(() =>
+        selectedTaskId.value && loopTaskIds(executionsStore.flow).has(selectedTaskId.value)
+            ? selectedTaskId.value
+            : undefined,
+    )
 
     /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
     const debuggedFileUri = computed(() => {
@@ -478,7 +495,6 @@
 <style scoped lang="scss">
 .variable-explorer {
     display: flex;
-    flex-direction: column;
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -505,8 +521,8 @@
     }
 }
 
-.execution-notice {
-    padding: var(--ks-spacing-6) var(--ks-spacing-6) 0;
+.viewer-notice {
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) 0;
 }
 
 :deep(.kel-splitter),

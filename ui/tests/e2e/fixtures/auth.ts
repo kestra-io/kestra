@@ -1,4 +1,4 @@
-import {test as base, type BrowserContext, type Page} from "@playwright/test"
+import {expect, test as base, type BrowserContext, type Page} from "@playwright/test"
 import path from "path"
 import {fileURLToPath} from "url"
 
@@ -10,6 +10,9 @@ export const STORAGE_STATE = path.resolve(__dirname, "../.auth/user.json")
 
 /** Mirrors `AUTH_FLAG_KEY` in `ui/src/utils/basicAuth.ts`. */
 export const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
+
+/** Mirrors `MISSING_KEY_MESSAGE` in `ui/src/translations/i18n.ts`. */
+export const MISSING_KEY_MESSAGE = "[i18n] Missing translation key"
 
 /** Mirrors `STORAGE_KEY` in `ui/src/stores/productTour.ts`. */
 export const PRODUCT_TOUR_STORAGE_KEY = "kestra.productTour.state"
@@ -58,8 +61,18 @@ export const test = base.extend<{page: Page}, SharedContextFixtures>({
             dialog.accept().catch(() => {})
         })
 
+        // The app reports every translation key it could not resolve; a raw key on screen is a bug
+        // no locator would notice, so the test that rendered it fails here instead.
+        const missingTranslationKeys: string[] = []
+        page.on("console", (message) => {
+            if (message.type() === "error" && message.text().startsWith(MISSING_KEY_MESSAGE)) {
+                missingTranslationKeys.push(message.text())
+            }
+        })
+
         await use(page)
         await page.close()
+        expect(missingTranslationKeys, "translation keys rendered as their raw id").toEqual([])
     },
 })
 

@@ -3,7 +3,7 @@ import {apiFetch, beginStoryScope} from "./apiMock";
 import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
-import {globalI18n} from "../src/translations/i18n";
+import {globalI18n, setMissingKeyPolicy} from "../src/translations/i18n";
 import {configureClient, useClient} from "@kestra-io/kestra-sdk";
 import axios from "axios";
 import {createMemoryHistory} from "vue-router";
@@ -100,6 +100,7 @@ setup(async (app) => {
   // noisy "Not found" warnings in Storybook (it already falls back to the key).
   globalI18n.value.missingWarn = false;
   globalI18n.value.fallbackWarn = false;
+  setMissingKeyPolicy("silent");
   // Pin the SDK's fetch to the mock: the generated client resolves
   // `options.fetch ?? _config.fetch ?? globalThis.fetch`, so this makes the generated-SDK path
   // explicit rather than depending on the global patch alone.

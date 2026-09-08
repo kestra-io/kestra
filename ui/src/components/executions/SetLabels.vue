@@ -126,7 +126,7 @@
             })
 
             if (response) {
-                executionsStore.execution = response as any
+                executionsStore.applyLocalExecutionUpdate(response as any)
             }
 
             toast.success(t("Set labels done"))

@@ -97,11 +97,11 @@ Two checkers apply the same shared rules at different depths:
 
 | | `translations:check` ([`compareTranslations.ts`](compareTranslations.ts)) | PR gate ([`check-translations.mjs`](check-translations.mjs)) |
 |---|---|---|
-| Runs | Locally + at the end of the auto-translate workflow | CI, on every PR touching translations or UI source |
+| Runs | Locally + at the end of the auto-translate workflow | CI, on every PR touching translations or UI source, forks included |
 | Needs | `node_modules` (vue-i18n's real message compiler) | Nothing - Node builtins only, runs before `npm ci` |
-| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys, keys used in code but defined in no `en.json` |
+| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, **stale** keys (fingerprints), placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys, keys used in code but defined in no `en.json` |
 
-A clean `translations:check` run reports **No missing keys / No extra keys / No stale keys** for every language - anything less blocks the merge.
+A clean `translations:check` run reports **No missing keys / No extra keys / No stale keys** for every language - anything less blocks the merge. The PR gate applies the same staleness rule, so a fork PR, which gets no generated commit, cannot merge an edited English value without regenerating the other languages either.
 
 The PR gate runs as two ownership-scoped passes so a failure points at the right repository:
 

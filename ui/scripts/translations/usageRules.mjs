@@ -31,6 +31,12 @@ const EXTENSIONS = new Set([".vue", ".ts", ".js", ".mts", ".tsx"])
  */
 const CALL = /(?<![\w$])(?<fn>\$t[me]?|\$rt|(?<![.\w$])t[me]?|(?<![.\w$])rt|(?:i18n\.global|[\w$]+)\.t[me]?)\(\s*(?<quote>["'`])(?<key>(?:(?!\k<quote>)[^\\\n$]|\\.)+)\k<quote>\s*[,)]/g
 
+/**
+ * A key prefix completed at runtime: `t("crud.type." + type)`, `` t(`ai.copilot.error.${error}`) ``.
+ * Everything up to the last dot is a namespace that has to exist; what follows cannot be known.
+ */
+const PREFIX = /(?<![\w$])(?:\$t[me]?|\$rt|(?<![.\w$])t[me]?|(?<![.\w$])rt|(?:i18n\.global|[\w$]+)\.t[me]?)\(\s*(?:(?<quote>["'])(?<literal>(?:(?!\k<quote>)[^\\\n$])*)\k<quote>\s*\+|`(?<template>[^`$]*)\$\{)/g
+
 /** `<i18n-t keypath="...">` - the static attribute only, never the bound `:keypath="expr"`. */
 const KEYPATH = /(?<![:\w-])keypath=(?<quote>["'])(?<key>(?:(?!\k<quote>)[^\\\n$])+)\k<quote>/g
 
@@ -62,6 +68,39 @@ export function translationKeyUsages(source) {
     collect(CALL, (match) => /(?:^|\.|\$)te$/.test(match.groups.fn))
     collect(KEYPATH, () => false)
     return usages
+}
+
+/**
+ * Every namespace the source completes at runtime, with its 1-based line: `crud.type` for
+ * `t("crud.type." + type)`. A prefix with no dot (`t("open in " + item)`) names no namespace and is
+ * skipped. These are the keys the literal scan cannot see, and the ones a cleanup deletes first.
+ */
+export function translationNamespaceUsages(source) {
+    const usages = []
+    for (const match of source.matchAll(PREFIX)) {
+        const prefix = match.groups.literal ?? match.groups.template
+        const lastDot = prefix.lastIndexOf(".")
+        if (lastDot <= 0) continue
+        const namespace = prefix.slice(0, lastDot)
+        const line = source.slice(0, match.index).split("\n").length
+        usages.push({namespace, line})
+    }
+    return usages
+}
+
+/**
+ * The runtime-completed namespaces that exist in none of the given key sets: every key built under
+ * them renders as its raw id.
+ */
+export function undefinedNamespaceUsages(usagesByFile, definedKeys) {
+    const findings = []
+    for (const [file, usages] of Object.entries(usagesByFile)) {
+        for (const {namespace, line} of usages) {
+            if (definedKeys.has(namespace)) continue
+            findings.push({file, line, namespace})
+        }
+    }
+    return findings
 }
 
 /**

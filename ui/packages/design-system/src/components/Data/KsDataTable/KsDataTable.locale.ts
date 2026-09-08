@@ -8,13 +8,13 @@ export default {
     "de": {
         "ks_data_table": {
             "load_failed": "Diese Liste konnte nicht geladen werden.",
-            "retry": "Erneut versuchen",
+            "retry": "Versuche es erneut",
         },
     },
     "es": {
         "ks_data_table": {
-            "load_failed": "No se pudo cargar esta lista.",
-            "retry": "Intentar de nuevo",
+            "load_failed": "Esta lista no pudo ser cargada.",
+            "retry": "Inténtalo de nuevo",
         },
     },
     "fr": {
@@ -25,13 +25,13 @@ export default {
     },
     "hi": {
         "ks_data_table": {
-            "load_failed": "यह सूची लोड नहीं हो सकी।",
-            "retry": "पुन: प्रयास करें",
+            "load_failed": "यह सूची लोड नहीं की जा सकी।",
+            "retry": "पुनः प्रयास करें",
         },
     },
     "it": {
         "ks_data_table": {
-            "load_failed": "Impossibile caricare questo elenco.",
+            "load_failed": "Questo elenco non può essere caricato.",
             "retry": "Riprova",
         },
     },
@@ -43,32 +43,32 @@ export default {
     },
     "ko": {
         "ks_data_table": {
-            "load_failed": "이 목록을 불러올 수 없습니다.",
+            "load_failed": "이 목록을 로드할 수 없습니다.",
             "retry": "다시 시도",
         },
     },
     "pl": {
         "ks_data_table": {
-            "load_failed": "Nie udało się wczytać tej listy.",
+            "load_failed": "Nie można załadować tej listy.",
             "retry": "Spróbuj ponownie",
         },
     },
     "pt": {
         "ks_data_table": {
-            "load_failed": "Não foi possível carregar esta lista.",
+            "load_failed": "Esta lista não pôde ser carregada.",
             "retry": "Tentar novamente",
         },
     },
     "pt_BR": {
         "ks_data_table": {
-            "load_failed": "Não foi possível carregar esta lista.",
+            "load_failed": "Esta lista não pôde ser carregada.",
             "retry": "Tentar novamente",
         },
     },
     "ru": {
         "ks_data_table": {
-            "load_failed": "Не удалось загрузить этот список.",
-            "retry": "Повторить попытку",
+            "load_failed": "Этот список не удалось загрузить.",
+            "retry": "Повторите попытку",
         },
     },
     "zh_CN": {

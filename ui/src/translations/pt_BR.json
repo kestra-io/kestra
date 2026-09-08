@@ -2252,11 +2252,13 @@
       "collapse": "Recolher"
     },
     "delete triggers": "Excluir triggers",
+    "delete triggers orphans only": "Apenas o estado de trigger que não está mais declarado em um flow será excluído. Os trigger ainda declarados em um flow são mantidos.",
     "bulk delete triggers": "Tem certeza de que deseja excluir {count} triggers?",
     "bulk success delete triggers": "{count} triggers foram excluídos com sucesso",
     "delete trigger confirmation": "Tem certeza de que deseja excluir o trigger {id}? WARNING: excluir um trigger pode levar a execuções duplicadas se o trigger ainda estiver ativo em um flow.",
     "delete trigger success": "O Trigger {id} foi excluído com sucesso",
     "delete trigger error": "Erro ao excluir trigger {id}",
+    "delete trigger still declared": "Este trigger ainda está declarado no flow. Remova-o do flow ou use Restart.",
     "revision deleted": "A revisão {revision} foi excluída com sucesso",
     "delete revision confirm": "Tem certeza de que deseja excluir a revisão {revision}?",
     "delete revision error": "Erro ao excluir a revisão {revision} com erro {error}",

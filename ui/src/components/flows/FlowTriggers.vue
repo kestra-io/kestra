@@ -37,7 +37,6 @@
                 <KsButton @click="bulkSetDisabled(false)">{{ $t("enable") }}</KsButton>
                 <KsButton @click="bulkSetDisabled(true)">{{ $t("disable") }}</KsButton>
                 <KsButton @click="bulkUnlock()">{{ $t("unlock") }}</KsButton>
-                <KsButton v-if="userCan(action.DELETE)" @click="bulkDelete()">{{ $t("delete triggers") }}</KsButton>
             </template>
 
             <KsTableColumn type="expand">
@@ -205,15 +204,6 @@
                                         <LockOff class="mr-1" />
                                         {{ $t("unlock") }}
                                     </KsDropdownItem>
-                                    <KsDropdownItem
-                                        v-if="userCan(action.DELETE)"
-                                        divided
-                                        class="danger"
-                                        @click="confirmDeleteTrigger(scope.row)"
-                                    >
-                                        <Delete class="mr-1" />
-                                        {{ $t("delete") }}
-                                    </KsDropdownItem>
                                 </KsDropdownMenu>
                             </template>
                         </KsDropdown>
@@ -330,7 +320,6 @@
     import {ref, computed, watch, onMounted, useTemplateRef} from "vue"
 
     import Plus from "vue-material-design-icons/Plus.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import LockOff from "vue-material-design-icons/LockOff.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
@@ -754,36 +743,6 @@
                 "bulk success unlock",
                 t("unlock"),
             ),
-        )
-    }
-
-    const bulkDelete = () => {
-        toast.confirm(
-            t("bulk delete triggers", {count: selection.value.length}),
-            () => runBulk(
-                () => TriggersAPI.deleteTriggersByIds({body: selection.value}),
-                "bulk success delete triggers",
-                t("delete triggers"),
-            ),
-            "warning",
-        )
-    }
-
-    const confirmDeleteTrigger = (row: any) => {
-        toast.confirm(
-            t("delete trigger confirmation", {id: row.id}),
-            () => TriggersAPI.deleteTrigger({
-                namespace: row.namespace,
-                flowId: row.flowId,
-                triggerId: row.triggerId ?? row.id,
-            }).then(() => {
-                toast.success(t("delete trigger success", {id: row.id}))
-                loadDataAfterAction()
-            }).catch((error: unknown) => {
-                toast.error(t("delete trigger error", {id: row.id}))
-                console.error(error)
-            }),
-            "warning",
         )
     }
 

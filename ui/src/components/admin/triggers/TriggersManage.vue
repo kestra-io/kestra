@@ -249,8 +249,18 @@
                                     <LockOff class="mr-1" />
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
+                                <KsTooltip
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE) && !scope.row.missingSource"
+                                    :content="$t('delete trigger still declared')"
+                                    effect="light"
+                                >
+                                    <KsDropdownItem divided class="danger" disabled>
+                                        <Delete class="mr-1" />
+                                        {{ $t("delete") }}
+                                    </KsDropdownItem>
+                                </KsTooltip>
                                 <KsDropdownItem
-                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
+                                    v-else-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
                                     divided
                                     class="danger"
                                     @click="confirmDeleteTrigger(scope.row)"
@@ -801,7 +811,7 @@
             "deleteByTriggers",
             "bulk success delete triggers",
             null,
-            "WARNING: deleting triggers may lead to duplicate executions if the triggers are still active in flows",
+            t("delete triggers orphans only"),
         )
     }
 

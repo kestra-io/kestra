@@ -2252,11 +2252,13 @@
       "collapse": "संक्षिप्त करें"
     },
     "delete triggers": "ट्रिगर्स हटाएं",
+    "delete triggers orphans only": "केवल वही trigger state हटेगा जो अब flow पर declared नहीं है। flow पर अभी भी declared trigger बने रहेंगे।",
     "bulk delete triggers": "क्या आप वाकई {count} triggers को हटाना चाहते हैं?",
     "bulk success delete triggers": "{count} triggers सफलतापूर्वक हटा दिए गए हैं",
     "delete trigger confirmation": "क्या आप वाकई trigger {id} को हटाना चाहते हैं? WARNING: यदि trigger अभी भी किसी flow में सक्रिय है, तो उसे हटाने से duplicate executions हो सकते हैं।",
     "delete trigger success": "ट्रिगर {id} को सफलतापूर्वक हटा दिया गया है",
     "delete trigger error": "ट्रिगर {id} को हटाने में त्रुटि",
+    "delete trigger still declared": "यह trigger अभी भी flow पर declared है। इसे flow से हटाएँ या Restart का उपयोग करें।",
     "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",
     "delete revision confirm": "क्या आप वाकई संशोधन {revision} को हटाना चाहते हैं?",
     "delete revision error": "त्रुटि {error} के साथ संशोधन {revision} हटाने में त्रुटि",

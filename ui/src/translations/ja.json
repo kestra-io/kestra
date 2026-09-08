@@ -2252,11 +2252,13 @@
       "collapse": "折りたたむ"
     },
     "delete triggers": "トリガーを削除",
+    "delete triggers orphans only": "flow に宣言されていない trigger の状態のみ削除されます。flow に宣言されたままの trigger は保持されます。",
     "bulk delete triggers": "{count} 個のtriggerを削除してもよろしいですか？",
     "bulk success delete triggers": "{count} 個のtriggerが正常に削除されました",
     "delete trigger confirmation": "トリガー {id} を削除してもよろしいですか？WARNING: トリガーがまだflowでアクティブな場合、削除すると重複した実行が発生する可能性があります。",
     "delete trigger success": "トリガー{id}が正常に削除されました",
     "delete trigger error": "トリガー {id} の削除エラー",
+    "delete trigger still declared": "この trigger はまだ flow に宣言されています。flow から削除するか Restart を使用してください。",
     "revision deleted": "リビジョン{revision}が正常に削除されました",
     "delete revision confirm": "リビジョン {revision} を削除してもよろしいですか？",
     "delete revision error": "エラー: リビジョン {revision} の削除中にエラー {error} が発生しました。",

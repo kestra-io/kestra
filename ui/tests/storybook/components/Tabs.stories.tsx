@@ -1,8 +1,9 @@
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {ref} from "vue";
-import Tabs from "../../../src/components/Tabs.vue";
+import Tabs, {type Tab} from "../../../src/components/Tabs.vue";
 import {vueRouter} from "storybook-vue3-router";
 
-const meta = {
+const meta: Meta<typeof Tabs> = {
     title: "components/Tabs",
     component: Tabs,
     decorators: [
@@ -33,15 +34,12 @@ const tabs = [
     },
 ]
 
-/**
- * @type {import('@storybook/vue3-vite').StoryObj<typeof ShowCase>}
- */
-export const Default = {
+export const Default: StoryObj<typeof Tabs> = {
     render: () => ({
         setup(){
-            const activeTab = ref(tabs[0].name)
+            const activeTab = ref<string | undefined>(tabs[0].name)
 
-            function tabChanged(tab) {
+            function tabChanged(tab: Tab) {
                 activeTab.value = tab.name
             }
 

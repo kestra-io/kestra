@@ -59,7 +59,7 @@ public class TimeWindowValidator implements ConstraintValidator<TimeWindowValida
                     if (value.getWindowAdvance() != null) {
                         context.buildConstraintViolationWithTemplate("Time window of type `DAILY_TIME_WINDOW` cannot have a window advance.").addConstraintViolation();
                     }
-                    if (value.getStartTime() != null) {
+                    if (value.getDeadline() != null) {
                         context.buildConstraintViolationWithTemplate("Time window of type `DAILY_TIME_WINDOW` cannot have a deadline.").addConstraintViolation();
                     }
                     yield false;

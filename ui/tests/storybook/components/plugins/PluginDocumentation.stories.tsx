@@ -1,3 +1,4 @@
+import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
 import dashboardIntro from "../../../../src/assets/docs/dashboard_home.md?raw"
 import {setMockClient} from "@kestra-io/kestra-sdk"
@@ -8,11 +9,11 @@ export default {
     argTypes: {
         overrideIntro: {control: "text"},
     },
-};
+} as Meta<typeof PluginDocumentation>;
 
-const Template = (args) => ({
+const Template: StoryFn<typeof PluginDocumentation> = (args) => ({
     setup() {
-        const axios = {}
+        const axios: any = {}
         axios.get = () =>{
                 return  Promise.resolve({data: []})
             }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import io.kestra.cli.Kestra;
 import io.kestra.core.migration.MigrationStartupRunner;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -69,6 +70,12 @@ class NoDatabaseCommandContextTest {
             // assertions also pin the package prefixes NoDatabaseApplicationContext filters on.
             assertThat(ctx.containsBean(DataSource.class)).isFalse();
             assertThat(ctx.containsBean(MigrationStartupRunner.class)).isFalse();
+
+            // And no repository either: @RepositoryBean carries a @Requires(property =
+            // "kestra.server-type", ...) stereotype, which requiresServerType() also drops. Any
+            // bean that depends on a repository being present must be dropped here too, rather than
+            // fail on a repository this context never built.
+            assertThat(ctx.containsBean(FlowRepositoryInterface.class)).isFalse();
         }
     }
 

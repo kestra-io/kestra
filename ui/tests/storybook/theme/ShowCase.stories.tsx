@@ -1,7 +1,8 @@
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import ShowCase from "./ShowCase.vue";
 import {vueRouter} from "storybook-vue3-router";
 
-const meta = {
+const meta: Meta<typeof ShowCase> = {
     title: "theme/ShowCase",
     component: ShowCase,
     decorators: [
@@ -17,9 +18,6 @@ const meta = {
 
 export default meta;
 
-/**
- * @type {import('@storybook/vue3-vite').StoryObj<typeof ShowCase>}
- */
-export const ElementPlusPlayground = {
+export const ElementPlusPlayground: StoryObj<typeof ShowCase> = {
     render: () => <ShowCase />,
 }

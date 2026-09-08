@@ -1,3 +1,4 @@
+import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import {shallowRef} from "vue";
 import {expect, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
@@ -10,7 +11,6 @@ import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue";
 import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
 import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
-
 import SideBar from "../../../src/components/layout/SideBar.vue";
 
 export default {
@@ -45,9 +45,9 @@ export default {
       },
     ])
   ]
-};
+} as Meta<typeof SideBar>;
 
-const Template = (args) => ({
+const Template: StoryFn<typeof SideBar> = (args) => ({
   setup() {
     return () => <SideBar {...args} />;
   },

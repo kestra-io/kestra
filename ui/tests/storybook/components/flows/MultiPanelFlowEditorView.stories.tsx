@@ -1,3 +1,4 @@
+import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPanelFlowEditorView.vue";
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils";
@@ -25,13 +26,13 @@ export default {
             }
         ])
     ]
-};
+} as Meta<typeof MultiPanelFlowEditorView>;
 
-const Template = (args) => ({
+const Template: StoryFn<{flow: string}> = (args) => ({
     setup() {
-        const axios = {}
+        const axios: any = {}
         const flowStore = useFlowStore()
-        axios.get = async (uri) => {
+        axios.get = async (uri: string) => {
             if (uri.endsWith("/plugins")) {
                 return {data: []}
             }
@@ -42,10 +43,10 @@ const Template = (args) => ({
                 return {data: ["sanitychecks.flows.blueprints", "tutorial"]}
             }
             // Anything this story doesn't answer itself falls back to the shared table in
-            // .storybook/apiMock.js, which reports the route if nothing there covers it either.
+            // .storybook/apiMock.ts, which reports the route if nothing there covers it either.
             return mockClientFallback("GET", uri)
         }
-        axios.post = async (uri, data) => {
+        axios.post = async (uri: string, data?: unknown) => {
             if (uri.endsWith("/graph")) {
                 return {data: allowFailureDemo}
             }

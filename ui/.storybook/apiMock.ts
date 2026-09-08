@@ -3,7 +3,7 @@
 // WHY THIS EXISTS
 // ---------------
 // There is no backend behind Storybook, yet almost every component tree issues HTTP calls. Before
-// this module the only stub was `axios.defaults.adapter` (see preview.jsx), which covers just the 4
+// this module the only stub was `axios.defaults.adapter` (see preview.ts), which covers just the 4
 // files in src/ that still import axios. Everything else is fetch-based:
 //
 //   * the generated SDK (packages/kestra-sdk/src/openapi/*) resolves
@@ -18,7 +18,7 @@
 // `PromiseRejectionEvent`s, often after the story had already finished ("unknown test").
 //
 // So the interception has to happen at the fetch layer, which is what this module does. It is
-// imported FIRST by both `preview.jsx` (dev Storybook + tests) and `vitest.setup.js` (tests only) and
+// imported FIRST by both `preview.ts` (dev Storybook + tests) and `vitest.setup.ts` (tests only) and
 // deliberately imports nothing from `src/` or the SDK: pulling either in would evaluate
 // `override/utils/route.ts` and the SDK client before the patch is installed.
 //
@@ -26,6 +26,21 @@
 // nothing throws. But it is never silent — the route, the story that hit it and the URL are logged
 // once per story, so a blank-looking story is traceable to the missing mock in one line instead of
 // surfacing as an HTML-string-shaped prop three components deep.
+
+declare global {
+    interface Window {
+        __kestraRejectionReporter?: boolean
+    }
+}
+
+/** A payload, or a function of the request context returning one. */
+type ApiRouteHandler = ((context: {body?: unknown}) => unknown) | unknown
+
+type ApiRouteHandlers = Record<string, ApiRouteHandler>
+
+type RoutePattern = {key: string; segments: string[]}
+
+type MockedFetch = typeof fetch & {__kestraApiMock?: boolean}
 
 const API_MARKER = "/api/v1"
 
@@ -44,7 +59,7 @@ const API_MARKER = "/api/v1"
  * a missing mock into a `TypeError: data.map is not a function` deep inside a component. Each shape
  * below is the endpoint's `200` type from packages/kestra-sdk/src/openapi/types.gen.ts.
  */
-const HANDLERS = {
+const HANDLERS: ApiRouteHandlers = {
     // --- plugins ------------------------------------------------------------------------------
     "GET /plugins": {results: [], total: 0},
     "GET /plugins/groups/subgroups": [],
@@ -80,7 +95,7 @@ const HANDLERS = {
  * Patterned route keys (those containing a `:param` or trailing `*`), pre-split into segments.
  * Sorted with the most segments first so the most specific pattern wins.
  */
-function buildPatterns(handlers) {
+function buildPatterns(handlers: ApiRouteHandlers): RoutePattern[] {
     return Object.keys(handlers)
         .filter((key) => key.includes("/:") || key.endsWith("*"))
         .map((key) => ({key, segments: key.split("/")}))
@@ -90,8 +105,8 @@ function buildPatterns(handlers) {
 const PATTERNS = buildPatterns(HANDLERS)
 
 // Handlers registered by the CURRENT story; cleared by beginStoryScope so nothing leaks across stories.
-let storyHandlers = {}
-let storyPatterns = []
+let storyHandlers: ApiRouteHandlers = {}
+let storyPatterns: RoutePattern[] = []
 
 /**
  * Register handlers for the current story only, taking precedence over the global map — same
@@ -100,12 +115,12 @@ let storyPatterns = []
  * story-side mock the warning below refers to: `vi.mock()` cannot intercept the pre-bundled SDK in
  * a story file, so per-story data has to come in at the fetch layer, here.
  */
-export function mockStoryApiRoutes(handlers) {
+export function mockStoryApiRoutes(handlers: ApiRouteHandlers): void {
     Object.assign(storyHandlers, handlers)
     storyPatterns = buildPatterns(storyHandlers)
 }
 
-function matchesPattern(segments, requestSegments) {
+function matchesPattern(segments: string[], requestSegments: string[]): boolean {
     for (let i = 0; i < segments.length; i++) {
         const segment = segments[i]
         if (segment === "*") return true
@@ -121,7 +136,7 @@ function matchesPattern(segments, requestSegments) {
  * Matching on `URL.pathname` (never the raw string) keeps dev-server routes — `/@vite/`, `/@fs/`,
  * `/@id/`, `/__vitest_*`, `/monaco/*` — out of scope: none of them contain `/api/v1`.
  */
-function apiPath(rawUrl) {
+function apiPath(rawUrl: string): string | undefined {
     let pathname
     try {
         // blob:/data: URLs (monaco workers) throw or have no meaningful pathname — pass those through.
@@ -138,7 +153,7 @@ function apiPath(rawUrl) {
     return path.replace(/^\/main(?=\/|$)/, "")
 }
 
-const reported = new Set()
+const reported = new Set<string>()
 let currentStory = ""
 
 /**
@@ -150,14 +165,14 @@ let currentStory = ""
  * write, but nobody has to guess why it renders blank. De-duplicated per route because a polling
  * store multiplied by 55 story files would flood CI.
  */
-function reportUnmocked(key, rawUrl) {
+function reportUnmocked(key: string, rawUrl: string): void {
     if (reported.has(key)) return
     reported.add(key)
     // console.warn rather than console.error: some CI gates fail a build on console.error.
     // The key is what a handler must be registered under; the raw URL is what was actually called.
     console.warn(
         `[storybook] unmocked API request: ${key} — returning empty data, so this story renders without it.`
-        + " Add a handler in .storybook/apiMock.js (or mock it in the story)."
+        + " Add a handler in .storybook/apiMock.ts (or mock it in the story)."
         + `\n  story: ${currentStory || "unknown"}\n  url:   ${rawUrl}`,
     )
 }
@@ -166,7 +181,7 @@ function reportUnmocked(key, rawUrl) {
  * Scope the reporting to one story: names it in the warnings and clears the de-duplication record,
  * so an unmocked route is attributed to every story it affects rather than only the first.
  */
-export function beginStoryScope(label) {
+export function beginStoryScope(label?: string): void {
     currentStory = label ?? ""
     reported.clear()
     storyHandlers = {}
@@ -177,7 +192,7 @@ export function beginStoryScope(label) {
  * Resolve an API call to `{status, data}`. This is the single source of truth shared by the fetch
  * wrapper below and by `mockClientFallback()`, which story-local `setMockClient()` catch-alls use.
  */
-export function resolveApiRequest(method, rawUrl, context = {}) {
+export function resolveApiRequest(method: string, rawUrl: string, context: {body?: unknown} = {}): {status: number; data: unknown} {
     const path = apiPath(rawUrl) ?? rawUrl
     const upperMethod = method.toUpperCase()
     const key = `${upperMethod} ${path}`
@@ -211,12 +226,12 @@ export function resolveApiRequest(method, rawUrl, context = {}) {
  * Axios-like adapter over {@link resolveApiRequest}, for stories that install their own
  * `setMockClient()` and need a default for the URIs they don't handle themselves.
  */
-export function mockClientFallback(method, uri, data) {
+export function mockClientFallback(method: string, uri: string, data?: unknown): {data: unknown; status: number; statusText: string; headers: Record<string, string>} {
     const {status, data: payload} = resolveApiRequest(method, uri, {body: data})
     return {data: payload, status, statusText: "OK", headers: {"content-type": "application/json"}}
 }
 
-function jsonResponse({status, data}) {
+function jsonResponse({status, data}: {status: number; data: unknown}): Response {
     // Always a real JSON content-type with a non-empty body: with no content-type hey-api's
     // `getParseAs(null)` returns "stream" and hands a ReadableStream to the store, and a 204 or an
     // empty body is special-cased by both parsers into null/{}/response.body.
@@ -228,14 +243,14 @@ function jsonResponse({status, data}) {
 }
 
 /**
- * The installed wrapper, exported so `preview.jsx` can also hand it to `configureClient({fetch})`.
+ * The installed wrapper, exported so `preview.ts` can also hand it to `configureClient({fetch})`.
  * The generated SDK resolves `options.fetch ?? _config.fetch ?? globalThis.fetch`, so pinning it
  * there makes the generated-SDK path explicit instead of relying on the global patch alone.
  */
-export let apiFetch
+export let apiFetch: typeof fetch
 
-function installFetchMock() {
-    if (window.fetch.__kestraApiMock) {
+function installFetchMock(): void {
+    if ((window.fetch as MockedFetch).__kestraApiMock) {
         apiFetch = window.fetch
         return
     }
@@ -244,23 +259,23 @@ function installFetchMock() {
 
     // A plain function that never touches `this`: the SDK calls its fetch reference UNBOUND
     // (`const _fetch = opts.fetch!; await _fetch(request)`), so a method-style wrapper would break.
-    const wrapper = (input, init) => {
+    const wrapper: MockedFetch = (input, init) => {
         const isRequest = typeof Request !== "undefined" && input instanceof Request
-        const rawUrl = isRequest ? input.url : String(input)
+        const rawUrl = isRequest ? (input as Request).url : String(input)
         const path = apiPath(rawUrl)
 
         // Anything that is not an API call — Vite's module graph, monaco assets, the storybook and
         // vitest channels — goes to the untouched native fetch.
         if (path === undefined) return native(input, init)
 
-        const signal = init?.signal ?? (isRequest ? input.signal : undefined)
+        const signal = init?.signal ?? (isRequest ? (input as Request).signal : undefined)
         if (signal?.aborted) {
             return Promise.reject(new DOMException("Aborted", "AbortError"))
         }
 
-        const method = init?.method ?? (isRequest ? input.method : "GET")
+        const method = init?.method ?? (isRequest ? (input as Request).method : "GET")
         // `.clone()` so the original body stays intact for anything downstream.
-        const bodyPromise = isRequest && input.body ? input.clone().text() : Promise.resolve(init?.body)
+        const bodyPromise = isRequest && (input as Request).body ? (input as Request).clone().text() : Promise.resolve(init?.body)
 
         return bodyPromise
             .catch(() => undefined)
@@ -279,7 +294,7 @@ function installFetchMock() {
  *
  * Both spellings are needed: `/monaco/(esm|min)/vs` is the copy served from public/ at runtime, while
  * `monaco-editor/esm/vs` is what the Vite dev server serves out of node_modules during tests. The
- * previous filter in preview.jsx only listed the former, which is why these still reached the log.
+ * previous filter in preview.ts only listed the former, which is why these still reached the log.
  */
 const MONACO_STACK = /monaco-editor[/\\]esm[/\\]vs|[/\\]monaco[/\\](esm|min)[/\\]vs/
 
@@ -290,7 +305,7 @@ const MONACO_STACK = /monaco-editor[/\\]esm[/\\]vs|[/\\]monaco[/\\](esm|min)[/\\
  * that failed to load), and deliberately does NOT call preventDefault() except for the monaco
  * teardown race above, so vitest still reports everything that could point at a real problem.
  */
-function installRejectionReporter() {
+function installRejectionReporter(): void {
     if (window.__kestraRejectionReporter) return
     window.__kestraRejectionReporter = true
 
@@ -302,7 +317,7 @@ function installRejectionReporter() {
         }
 
         if (typeof Event !== "undefined" && reason instanceof Event) {
-            const target = reason.target
+            const target = reason.target as (EventTarget & {src?: string; currentSrc?: string}) | null
             console.error(`[storybook] unhandled rejection with a DOM ${reason.type} event`, target?.src ?? target?.currentSrc ?? target)
             return
         }

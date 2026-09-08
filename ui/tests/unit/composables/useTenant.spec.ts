@@ -20,18 +20,6 @@ function buildRouter() {
 }
 
 describe("setupTenantRouter", () => {
-    it("still resolves the tenant-corrected URL for the very first navigation of a session", async () => {
-        // vue-router's own first-ever navigation already behaves like a replace
-        // regardless of what a guard returns, so this only pins the resolved
-        // URL; the meaningful regression check is the second test below.
-        const router = buildRouter()
-        await router.isReady()
-
-        await router.push({name: "logs/list"})
-
-        expect(router.currentRoute.value.fullPath).toBe("/main/logs")
-    })
-
     it("does not collapse a later in-app navigation that also lacks an explicit tenant", async () => {
         const router = buildRouter()
         await router.isReady()

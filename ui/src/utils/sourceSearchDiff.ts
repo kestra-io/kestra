@@ -3,6 +3,7 @@ import {crossSearchResultKey} from "./crossResourceSearch"
 
 export type SourceMatch = Required<ApiSourceMatch>
 export type SourceSearchResult = Required<Omit<ApiSourceSearchResult, "matches">> & {matches: SourceMatch[]}
+export type SourceSearchSelectionGroup = SourceSearchResult
 
 
 export interface SelectionSummary {

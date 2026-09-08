@@ -252,13 +252,13 @@
                     <h3>{{ t('source_search.no_results_title', {query}) }}</h3>
                     <p>{{ t('source_search.no_results_description') }}</p>
 
-                    <p v-if="suggestedQuery">
-                        {{ t('source_search.did_you_mean', {suggestion: suggestedQuery}) }}
-                        <button type="button" @click="query = suggestedQuery">
-                            {{ suggestedQuery }}
-                        </button>
-                        ?
-                    </p>
+                    <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p">
+                        <template #suggestion>
+                            <KsButton text size="small" @click="query = suggestedQuery">
+                                {{ suggestedQuery }}
+                            </KsButton>
+                        </template>
+                    </i18n-t>
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
@@ -354,7 +354,7 @@
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
-    import {computeSelectionSummary, distinctSkipReasons, getSeparatorVariant, type ReplaceContext, type SourceSearchResult} from "../../utils/sourceSearchDiff"
+    import {computeSelectionSummary, distinctSkipReasons, getSeparatorVariant, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
 
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
@@ -493,7 +493,6 @@
         })
     }
 
-    const results = ref<SourceSearchResult[]>([])
     const suggestedQuery = ref<string | null>(null)
 
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
@@ -727,8 +726,7 @@
                 namespace: namespaceFilter.value,
                 ...searchFilters.value,
             })
-            results.value = crossResourceSearchStore.flows.results
-            if (results.value.length === 0) {
+            if (crossResourceSearchStore.flows.results.length === 0) {
                 const alternativeQuery = getSeparatorVariant(query.value)
 
                 if(alternativeQuery){
@@ -743,8 +741,6 @@
                     }
                 }
             }
-        } catch (e: any) {
-            results.value = []
         } finally {
             searchPending.value = false
         }
@@ -988,33 +984,6 @@
 
 .source-search__empty {
     height: auto;
-}
-
-.source-search__no-results-title {
-    margin: 0 auto;
-    max-width: 28rem;
-    font-size: var(--ks-font-size-sm);
-    font-weight: var(--ks-font-weight-medium);
-    line-height: var(--ks-line-height-base);
-    color: var(--ks-text-secondary);
-
-    :deep(code) {
-        padding: 0 var(--ks-spacing-1);
-        background: var(--ks-bg-base);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-primary);
-    }
-}
-
-.source-search__no-results-hint {
-    margin: var(--ks-spacing-2) auto 0;
-    max-width: 28rem;
-    font-size: var(--ks-font-size-sm);
-    line-height: var(--ks-line-height-base);
-    color: var(--ks-text-secondary);
 }
 
 .source-search__examples {

@@ -68,15 +68,12 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
     // Guards the helper as much as the rule: reading the wrong stream returns an empty report, which
     // would make every "accepts" case above pass without ever seeing a warning.
     it("reads the report stylelint actually writes", () => {
-        expect(warningsFor(".x { color: #fff; }")).toEqual([expect.stringContaining("Unexpected hex color")])
+        expect(lintTolerant(".x { color: var(--ks-nowhere); }")).toHaveLength(1)
     })
 
-    it("fails the build for an undeclared token while the rest of the config only warns", () => {
-        const reported = lintTolerant(".x { color: var(--ks-nowhere); border-color: #fff; }")
-        expect(reported.map(warning => [warning.rule, warning.severity])).toEqual([
-            ["ks/no-undeclared-custom-property", "error"],
-            ["color-no-hex", "warning"],
-        ])
+    it("reports at error severity, so a build fails rather than warns", () => {
+        expect(lintTolerant(".x { color: var(--ks-nowhere); }").map(warning => [warning.rule, warning.severity]))
+            .toEqual([["ks/no-undeclared-custom-property", "error"]])
     })
 
     it("accepts a token the file under lint declares itself, even when it is unsaved", () => {

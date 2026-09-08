@@ -16,20 +16,17 @@ The rule reports those as you type. There is no separate command to remember.
 
 | | linter | covers |
 |---|---|---|
-| `../../plugins/lint-custom-properties.mjs` | stylelint, `ks/no-undeclared-custom-property` | `<style>` blocks in `.vue`, plus `.scss` and `.css` |
+| `stylelintPlugin.mjs` | stylelint, `ks/no-undeclared-custom-property` | `<style>` blocks in `.vue`, plus `.scss` and `.css` |
 | `eslintPlugin.mjs` | eslint, `kestra-tokens/no-undeclared-ks-token` | `cssVar("--ks-…")` and `var(--ks-…)` written inside a string |
 
 Both read the same `knownTokens.mjs`, so they agree on what exists and phrase the report the same
 way. `npm run lint` and `npm run test:lint` run both.
 
-The stylelint half sits in the plugin that already held `ks/custom-property-pattern-usage`, and
-reuses its `var()` walking and index arithmetic.
-
-`stylelint.config.mjs` predates this and had been dormant, since stylelint itself was not installed:
-it reports 269 hex colours and 158 non-`--ks` custom properties across the repo. Those stay as
-warnings, visible while editing and ignored by the build; only `ks/no-undeclared-custom-property` is
-an error, because it is not a style preference but a declaration the browser throws away. Clearing
-the debt and promoting the rest is a separate job.
+`stylelint.config.mjs` and a `ks/custom-property-pattern-usage` plugin existed here from #6645 until
+#19084 deleted them, dormant the whole time because stylelint itself was never a dependency. This
+brings back a config that only carries the token rule, so the linter reports one thing and reports it
+for a reason; the 269 hex colours and 158 non-`--ks` properties the old config would have flagged are
+real debt, but enforcing them is a separate job with a separate cleanup.
 
 ## In your editor
 

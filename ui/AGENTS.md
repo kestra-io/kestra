@@ -221,6 +221,7 @@ Rules:
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
 - Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
 ### Performance
 

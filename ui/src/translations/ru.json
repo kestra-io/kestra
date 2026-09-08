@@ -654,7 +654,7 @@
     "triggerId": "Идентификатор Trigger",
     "tenantId": "ID tenant",
     "paused": "Пауза",
-    "running": "RUNNING",
+    "running": "Выполняется",
     "Fold content lines": "Свернуть многострочные строки",
     "Unfold content lines": "Развернуть многострочные строки",
     "Total": "Всего",
@@ -2077,7 +2077,7 @@
         "modelChanged": "Переключено на {model}.",
         "toolResult": {
           "detail": "Подробности",
-          "error": "{tool} FAILED",
+          "error": "{tool} не удалось",
           "ok": "{tool} завершено",
           "rejected": "{tool} отклонено"
         },

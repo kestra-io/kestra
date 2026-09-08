@@ -1,20 +1,19 @@
 // Must stay the FIRST import: it patches window.fetch before any src/ or SDK module is evaluated.
-import {apiFetch, beginStoryScope} from "./apiMock";
-import {setup} from "@storybook/vue3-vite";
-import {withThemeByClassName} from "@storybook/addon-themes";
-import initApp from "../src/utils/init";
-import {globalI18n} from "../src/translations/i18n";
-import {configureClient, useClient} from "@kestra-io/kestra-sdk";
-import axios from "axios";
-import {createMemoryHistory} from "vue-router";
-import {vueRouter} from "storybook-vue3-router";
+import {apiFetch, beginStoryScope} from "./apiMock"
+import {setup, type Preview} from "@storybook/vue3-vite"
+import {withThemeByClassName} from "@storybook/addon-themes"
+import initApp from "../src/utils/init"
+import {globalI18n, setMissingKeyPolicy} from "../src/translations/i18n"
+import {configureClient, useClient} from "@kestra-io/kestra-sdk"
+import axios from "axios"
+import {createMemoryHistory, type RouterOptions} from "vue-router"
+import {vueRouter} from "storybook-vue3-router"
+import "../src/styles/vendor.scss"
+import "../src/styles/app.scss"
+import en from "../src/translations/en.json"
 
-import "../src/styles/vendor.scss";
-import "../src/styles/app.scss";
-import en from "../src/translations/en.json";
-
-window.KESTRA_BASE_PATH = "/ui/";
-window.KESTRA_UI_PATH = "./";
+window.KESTRA_BASE_PATH = "/ui/"
+window.KESTRA_UI_PATH = "./"
 
 // No backend is running during storybook tests, so short-circuit every axios
 // request with an empty successful response instead of letting it hit the
@@ -29,7 +28,7 @@ window.KESTRA_UI_PATH = "./";
 // containing "/api/": the SDK does not set a fixed `baseURL`, so a request's
 // `config.url` is not guaranteed to contain that substring, and there is no
 // real backend for ANY request to legitimately reach in this environment.
-axios.defaults.adapter = async (config) => ({data: [], status: 200, statusText: "OK", headers: {}, config, request: {}});
+axios.defaults.adapter = async (config) => ({data: [], status: 200, statusText: "OK", headers: {}, config, request: {}})
 
 // Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
 // TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar
@@ -48,16 +47,13 @@ axios.defaults.adapter = async (config) => ({data: [], status: 200, statusText: 
 // once before any story ever mounts have no such race.
 for (const id of ["topnav-title-slot", "topnav-description-slot", "topnav-actions-slot"]) {
   if (!document.getElementById(id)) {
-    const el = document.createElement(id === "topnav-title-slot" ? "span" : "div");
-    el.id = id;
-    document.body.appendChild(el);
+    const el = document.createElement(id === "topnav-title-slot" ? "span" : "div")
+    el.id = id
+    document.body.appendChild(el)
   }
 }
 
-/**
- * @type {import('@storybook/vue3-vite').Preview}
- */
-const preview = {
+const preview: Preview = {
   parameters: {
     controls: {
       matchers: {
@@ -76,7 +72,7 @@ const preview = {
         {path: "/about", name: "about", component: {template: "<div>about</div>"}},
         {path: "/:pathMatch(.*)*", name: "catchAll", component: {template: "<div/>"}},
       ],
-      {vueRouterOptions: {history: createMemoryHistory()}},
+      {vueRouterOptions: {history: createMemoryHistory()} as RouterOptions},
     ),
     withThemeByClassName({
         themes: {
@@ -90,16 +86,17 @@ const preview = {
   // record, so an unmocked route is reported for every story it affects and points at the story to
   // fix rather than at nothing.
   beforeEach({title, name}) {
-    beginStoryScope(`${title} > ${name}`);
+    beginStoryScope(`${title} > ${name}`)
   },
-};
+}
 
 setup(async (app) => {
-  const {piniaStore} = await initApp(app, [], {}, en);
+  const {piniaStore} = await initApp(app, [], {}, en)
   // Isolated stories lack many namespaced i18n keys, so silence vue-i18n's
   // noisy "Not found" warnings in Storybook (it already falls back to the key).
-  globalI18n.value.missingWarn = false;
-  globalI18n.value.fallbackWarn = false;
+  globalI18n.value!.missingWarn = false
+  globalI18n.value!.fallbackWarn = false
+  setMissingKeyPolicy("silent")
   // Pin the SDK's fetch to the mock: the generated client resolves
   // `options.fetch ?? _config.fetch ?? globalThis.fetch`, so this makes the generated-SDK path
   // explicit rather than depending on the global patch alone.
@@ -108,8 +105,8 @@ setup(async (app) => {
   // `$http.post/put/delete` as TypeErrors. useClient() goes through the mocked fetch like
   // everything else.
   piniaStore.use(({store}) => {
-    store.$http = useClient();
-  });
+    store.$http = useClient()
+  })
 })
 
 // The unhandledrejection listener that used to live here now lives in ./apiMock, installed before
@@ -119,4 +116,4 @@ setup(async (app) => {
 
 import "../src/utils/monacoEnvironment"
 
-export default preview;
+export default preview

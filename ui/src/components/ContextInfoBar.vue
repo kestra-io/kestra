@@ -20,6 +20,7 @@
 
         <el-tooltip
             effect="light"
+            placement="top"
             :persistent="false"
             transition=""
             :hide-after="0"

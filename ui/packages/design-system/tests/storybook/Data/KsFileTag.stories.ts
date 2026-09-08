@@ -86,4 +86,8 @@ export const LongName: Story = {
         uri: "kestra:///company/team/6Yd2A/outputs/8f2c1d.parquet",
         name: "extremely-long-output-file-name-that-has-to-be-clipped",
     },
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const label = await waitFor(() => within(canvasElement).getByText("extremely-long-output-file-name-that-has-to-be-clipped"))
+        expect(label.scrollWidth).toBeGreaterThan(label.clientWidth)
+    },
 }

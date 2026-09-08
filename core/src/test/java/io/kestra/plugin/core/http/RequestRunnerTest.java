@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.http;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -26,6 +27,7 @@ public class RequestRunnerTest {
     }
 
     @Test
+    @Disabled("The remote page didn't work anymore")
     @ExecuteFlow("sanity-checks/request-basicauth.yaml")
     void requestBasicAuth(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);
@@ -33,6 +35,7 @@ public class RequestRunnerTest {
     }
 
     @Test
+    @Disabled("The remote page didn't work anymore")
     @ExecuteFlow("sanity-checks/request-basicauth-deprecated.yaml")
     void requestBasicAuthDeprecated(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);

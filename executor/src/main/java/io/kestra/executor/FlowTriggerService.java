@@ -2,6 +2,7 @@ package io.kestra.executor;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +39,9 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowTriggerService {
+    private static final int MAX_WARNED_CATCH_ALL_TRIGGERS = 1000;
+    private final Set<String> warnedCatchAllTriggers = ConcurrentHashMap.newKeySet();
+
     private final ConditionService conditionService;
     private final RunContextFactory runContextFactory;
     private final FlowService flowService;
@@ -59,6 +63,8 @@ public class FlowTriggerService {
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
         return allFlows
             .filter(flow -> !flow.isDisabled())
+            // a flow that could not be parsed carries no usable trigger: never evaluate one from it
+            .filter(flow -> !(flow instanceof FlowWithException))
             // a draft revision is never picked up implicitly: a Flow trigger on a flow whose latest
             // revision is a draft must not fire, like webhooks/schedules/subflows
             .filter(flow -> !flow.isDraft())
@@ -67,11 +73,47 @@ public class FlowTriggerService {
     }
 
     public Stream<io.kestra.plugin.core.trigger.Flow> flowTriggers(Flow flow) {
+        if (flow instanceof FlowWithException) {
+            return Stream.empty();
+        }
+
         return flow.getTriggers()
             .stream()
             .filter(Predicate.not(AbstractTrigger::isDisabled))
             .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
-            .map(io.kestra.plugin.core.trigger.Flow.class::cast);
+            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
+            .peek(trigger -> warnOnceIfCatchAll(flow, trigger));
+    }
+
+    /**
+     * Warns — once per flow revision and trigger — about a Flow trigger that matches <em>every</em> execution
+     * on the instance because it has no {@code dependsOn} and a {@code when} that is always true.
+     * <p>
+     * Defense in depth for a pre-2.0 flow whose trigger filtering lived in the removed {@code conditions} /
+     * {@code preconditions} properties: those now fail deserialization, so such a flow surfaces as a
+     * {@link FlowWithException} and is filtered out above rather than firing on everything. Should any read
+     * path still let one through, this at least names the flow in the logs instead of leaving an execution
+     * storm unexplained. Save-time validation raises the same shape as a warning
+     * ({@code FlowService.warnings}), which this mirrors at runtime.
+     */
+    private void warnOnceIfCatchAll(Flow flow, io.kestra.plugin.core.trigger.Flow trigger) {
+        if (!ListUtils.isEmpty(trigger.getDependsOn()) || (trigger.getWhen() != null && !"true".equals(trigger.getWhen()))) {
+            return;
+        }
+
+        // bounded: a warning is emitted at most once per flow revision + trigger, and the set is capped so a
+        // long-lived executor cannot grow it without limit
+        if (warnedCatchAllTriggers.size() < MAX_WARNED_CATCH_ALL_TRIGGERS && warnedCatchAllTriggers.add(flow.uid() + "/" + trigger.getId())) {
+            log.warn(
+                "The Flow trigger '{}' of flow '{}' in namespace '{}' (tenant {}, revision {}) has no 'dependsOn' and no 'when': it is evaluated for EVERY execution of EVERY flow. "
+                    + "If this flow comes from a Kestra 1.x version, its trigger filtering may have used the removed 'conditions'/'preconditions' properties - see the migration guide.",
+                trigger.getId(),
+                flow.getId(),
+                flow.getNamespace(),
+                flow.getTenantId(),
+                flow.getRevision()
+            );
+        }
     }
 
     /**

@@ -1035,11 +1035,7 @@ public class FlowController {
             .stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
-            .peek(throwConsumer(flow ->
-            {
-                GenericFlow genericFlowUpdated = parseFlowSource(FlowService.injectDisabled(flow.getSource(), disable));
-                flowService.update(genericFlowUpdated, flow);
-            }))
+            .peek(throwConsumer(flow -> setFlowDisabled(flow, disable)))
             .toList();
     }
 
@@ -1048,12 +1044,29 @@ public class FlowController {
             .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
-            .peek(throwConsumer(flow ->
-            {
-                GenericFlow genericFlowUpdated = parseFlowSource(FlowService.injectDisabled(flow.getSource(), disable));
-                flowService.update(genericFlowUpdated, flow);
-            }))
+            .peek(throwConsumer(flow -> setFlowDisabled(flow, disable)))
             .toList();
+    }
+
+    /**
+     * Re-saves the flow with `disabled` injected into its source.
+     * <p>
+     * The save re-validates the source, so a stored flow the current model can no longer parse — a 1.x flow
+     * whose trigger still carries the removed `conditions`/`preconditions`, say — cannot be disabled. That is
+     * reported as the validation failure it is (422 with the violations, like {@code PUT /flows}) rather than
+     * as a 500: {@code flowService.update} wraps violations in a {@link FlowProcessingException}, which maps
+     * to an internal error.
+     */
+    private void setFlowDisabled(FlowWithSource flow, boolean disable) throws FlowProcessingException, QueueException {
+        GenericFlow genericFlowUpdated = parseFlowSource(FlowService.injectDisabled(flow.getSource(), disable));
+        try {
+            flowService.update(genericFlowUpdated, flow);
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            }
+            throw e;
+        }
     }
 
     protected <T> T parseTaskTrigger(String input, Class<T> cls) throws ConstraintViolationException {

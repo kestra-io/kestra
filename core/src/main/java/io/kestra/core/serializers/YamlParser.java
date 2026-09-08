@@ -14,11 +14,13 @@ import org.apache.commons.io.IOUtils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
+import io.kestra.core.exceptions.UnknownPropertyException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 
 import jakarta.validation.ConstraintViolationException;
@@ -139,6 +141,21 @@ public final class YamlParser {
                         target,
                         (Class<T>) target.getClass(),
                         invalidTypeIdException.getPathReference(),
+                        null
+                    )
+                )
+            );
+        } else if (e.getCause() instanceof UnknownPropertyException unknownPropertyException) {
+            // a model that rejects unknown properties itself (see AbstractTrigger) already frames the error for
+            // the user: report it as-is rather than wrapped in a generic parsing message
+            return new ConstraintViolationException(
+                unknownPropertyException.getMessage(),
+                Collections.singleton(
+                    ManualConstraintViolation.of(
+                        unknownPropertyException.getMessage(),
+                        target,
+                        (Class<T>) target.getClass(),
+                        e instanceof JsonMappingException jsonMappingException ? jsonMappingException.getPathReference() : resource,
                         null
                     )
                 )

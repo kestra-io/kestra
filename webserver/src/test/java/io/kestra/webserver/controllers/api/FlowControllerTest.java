@@ -1390,6 +1390,35 @@ class FlowControllerTest {
         assertThat(taskFlow.isDisabled()).isFalse();
     }
 
+    /**
+     * Disabling re-saves the flow, so a stored flow the current model no longer validates (one saved by an
+     * older version, whose trigger still carries the removed `conditions`, for instance) cannot be disabled.
+     * That must be reported as the validation failure it is, not as a 500.
+     */
+    @Test
+    void disableFlowsByIdsShouldReportViolationsWhenTheStoredFlowNoLongerValidates() {
+        String source = """
+            id: no-longer-valid
+            namespace: io.kestra.unittest.legacy
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                removedInAFormerVersion: true
+            """;
+        jdbcFlowRepository.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+
+        List<IdWithNamespace> ids = List.of(new IdWithNamespace("io.kestra.unittest.legacy", "no-longer-valid"));
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(POST(FLOW_PATH + "/disable/by-ids", ids), BulkResponse.class)
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(exception.getMessage()).contains("removedInAFormerVersion");
+    }
+
     @Test
     void disableEnableFlowsByQuery() throws InterruptedException {
         Flow flow = generateFlow("toDisable", "io.kestra.unittest.disabled", "a");
@@ -1821,7 +1850,8 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        // triggers reject unknown properties themselves, with a message naming the trigger
+        assertThat(body.get(0).getConstraints()).contains("Unrecognized property \"unknownProp\" on trigger");
 
         resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerMissingProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());

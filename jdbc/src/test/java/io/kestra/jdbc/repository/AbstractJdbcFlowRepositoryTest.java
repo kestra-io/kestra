@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,6 +73,83 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         } finally {
             flow.ifPresent(value -> flowRepository.delete(value));
         }
+    }
+
+    /**
+     * A flow stored by Kestra 1.x whose trigger carries the removed `conditions` (or `preconditions`) must not
+     * be read back with the property silently dropped: the trigger would then match everything. It surfaces as
+     * a {@link FlowWithException}, like a trigger whose type no longer exists.
+     */
+    @Test
+    void shouldReturnFlowWithExceptionForLegacyTriggerConditions() {
+        assertLegacyTriggerPropertyIsRejected(
+            "legacy-trigger-conditions",
+            legacyTrigger(
+                "conditions", List.of(
+                    Map.of(
+                        "type", "io.kestra.plugin.core.condition.ExecutionFlow",
+                        "namespace", "io.kestra.unittest",
+                        "flowId", "dep-foreach"
+                    )
+                )
+            ),
+            "Unrecognized property \"conditions\" on trigger \"on_foreach\""
+        );
+    }
+
+    @Test
+    void shouldReturnFlowWithExceptionForLegacyTriggerPreconditions() {
+        assertLegacyTriggerPropertyIsRejected(
+            "legacy-trigger-preconditions",
+            legacyTrigger("preconditions", Map.of("id", "dep", "flows", List.of(Map.of("namespace", "io.kestra.unittest", "flowId", "dep-foreach")))),
+            "Unrecognized property \"preconditions\" on trigger \"on_foreach\""
+        );
+    }
+
+    /**
+     * A pre-2.0 Flow trigger, as an ordered map: the stored flow JSON has the trigger `id` before the removed
+     * property, which is what lets the error name the trigger.
+     */
+    private static Map<String, Object> legacyTrigger(String legacyProperty, Object value) {
+        Map<String, Object> trigger = new LinkedHashMap<>();
+        trigger.put("id", "on_foreach");
+        trigger.put("type", "io.kestra.plugin.core.trigger.Flow");
+        trigger.put("states", List.of("SUCCESS", "FAILED"));
+        trigger.put(legacyProperty, value);
+        return trigger;
+    }
+
+    private void assertLegacyTriggerPropertyIsRejected(String flowId, Map<String, Object> trigger, String expectedMessage) {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        dslContextWrapper.transaction(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+
+            context.insertInto(flowRepository.jdbcRepository.getTable())
+                .set(field("key"), tenant + "_io.kestra.unittest_" + flowId)
+                .set(field("source_code"), "id: " + flowId)
+                .set(
+                    field("value"), JacksonMapper.ofJson().writeValueAsString(
+                        Map.of(
+                            "id", flowId,
+                            "tenantId", tenant,
+                            "namespace", "io.kestra.unittest",
+                            "revision", 1,
+                            "deleted", false,
+                            "tasks", List.of(Map.of("id", "log", "type", "io.kestra.plugin.core.log.Log", "message", "hello")),
+                            "triggers", List.of(trigger)
+                        )
+                    )
+                )
+                .execute();
+        });
+
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenant, "io.kestra.unittest", flowId);
+
+        assertThat(flow).isPresent();
+        assertThat(flow.get()).isInstanceOf(FlowWithException.class);
+        assertThat(((FlowWithException) flow.get()).getException()).contains(expectedMessage);
     }
 
     @Test

@@ -25,6 +25,12 @@
 // non-Latin-script locale is still carrying the untouched English text - the
 // shape a failed generator run leaves behind, which every other check passes.
 //
+// Both scopes also compare every English message with the fingerprint its
+// translations were generated from: an edited English value whose twelve
+// translations were not regenerated is reported as stale. The design-system
+// locale files always had this; the JSON locales relied on the generator
+// running at PR time, which a fork PR never gets.
+//
 // Both scopes also read the source code: every literal key passed to `t()`,
 // `$t()` or `<i18n-t keypath>` has to exist in some `en.json` the app loads
 // (OSS + design system for OSS code, plus EE's own for EE code). The locale
@@ -49,6 +55,7 @@ import path from "node:path"
 import {fileURLToPath} from "node:url"
 import {allKeys, flattenStrings, leafKeys, placeholderProblems, shadowedOssKeys, untranslatedKeys} from "./translationRules.mjs"
 import {evalLocaleModule, staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
+import {staleKeys} from "./fingerprintRules.mjs"
 import {isScannedSourceFile, translationKeyUsages, undefinedKeyUsages} from "./usageRules.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -134,6 +141,21 @@ function readLanguage(dir, lang) {
     return fs.existsSync(file) ? unwrapLanguage(readJson(file), lang) : {}
 }
 
+/**
+ * Adds `result.stale` for every key whose English text no longer matches the fingerprint its
+ * translations were generated from - a new key, or an edited value that was not regenerated.
+ * Key paths are the generator's `a|b|c` form, as they appear in the fingerprints file.
+ */
+function checkStaleJson(result, label, dir, fingerprintsFile, fixHint) {
+    if (!fs.existsSync(fingerprintsFile)) return
+
+    const stale = staleKeys(readLanguage(dir, "en"), readJson(fingerprintsFile))
+    if (stale.length === 0) return
+
+    result.stale.push(...stale)
+    annotate("error", `[${label}] ${stale.length} key(s) have no up-to-date translation, either new or with an English source that changed after they were translated: ${stale.join(", ")} - ${fixHint}`)
+}
+
 /** Every key path, namespaces included, of OSS's `en.json` plus the design-system `en` blocks. */
 function ossDefinedKeys() {
     const keys = new Set(allKeys(readLanguage(ossTranslationsDir, "en")))
@@ -188,7 +210,7 @@ function checkDesignSystem(result) {
     const stale = staleLocaleEntries(localeFiles, fingerprintsFile)
     if (stale.length === 0) return
 
-    result.stale = stale.map(({file, key}) => `${file}: ${key}`)
+    result.stale.push(...stale.map(({file, key}) => `${file}: ${key}`))
     for (const {file, key} of stale) {
         annotate("error", `[OSS] Design-system string "${key}" in ${file} has no up-to-date translation - it is either new, or its English source changed after it was translated. Run \`npm run translations:generate\` in ui/`)
     }
@@ -207,6 +229,7 @@ function checkOss() {
     checkPlaceholders(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
     checkUntranslated(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
     checkDesignSystem(result)
+    checkStaleJson(result, "OSS", ossTranslationsDir, path.join(here, "fingerprints.json"), "run `npm run translations:generate` in kestra-io/kestra's ui/ and commit the result")
     checkUsedKeys(result, "OSS", ossRoot, ["ui/src", "ui/packages/design-system/src", "ui/packages/topology/src"].map(dir => path.join(ossRoot, dir)), ossDefinedKeys())
 
     const ossEn = readLanguage(ossTranslationsDir, "en")
@@ -243,6 +266,7 @@ function checkEe() {
     const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}, undefinedKeys: []}
     checkPlaceholders(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
     checkUntranslated(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
+    checkStaleJson(result, "EE", eeTranslationsDir, path.join(eeRoot, "ui-ee/scripts/translations/fingerprints.json"), "run `npm run translations:generate` in ui-ee/ and commit the result")
     const eeEn = readLanguage(eeTranslationsDir, "en")
     const eeEnKeys = leafKeys(eeEn)
 

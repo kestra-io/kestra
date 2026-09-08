@@ -6,7 +6,7 @@ import {vi} from "vitest";
 // submodule level. The Template below still uses setMockClient() as a catch-all for anything
 // exercised by user interaction (unlock/restart/backfill actions), since this story has no
 // play() function driving those paths.
-const mockState = vi.hoisted(() => ({triggers: []}))
+const mockState = vi.hoisted(() => ({triggers: [] as ApiTriggerAndState[]}))
 vi.mock("@kestra-io/kestra-sdk/triggers", () => ({
     searchTriggers: async () => ({results: mockState.triggers, total: mockState.triggers.length}),
 }))
@@ -17,12 +17,13 @@ vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
     listTriggerPlugins: async () => ({results: [], total: 0}),
 }))
 
+import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite";
 import Triggers from "../../../../src/components/admin/triggers/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {setMockClient} from "@kestra-io/kestra-sdk"
+import {setMockClient, type ApiTriggerAndState} from "@kestra-io/kestra-sdk"
 import {mockClientFallback} from "../../../../.storybook/apiMock";
 
-const meta = {
+const meta: Meta<typeof Triggers> = {
     title: "Components/Admin/Triggers",
     component: Triggers,
     decorators: [
@@ -117,14 +118,14 @@ const triggersData = [
             "locked": false
         }
     }
-]
+] as unknown as ApiTriggerAndState[]
 
-const Template = (args) => ({
+const Template: StoryFn<{triggers: ApiTriggerAndState[]}> = (args) => ({
     setup() {
         mockState.triggers = args.triggers
 
-        const store = {}
-        store.get = async function (uri) {
+        const store: any = {}
+        store.get = async function (uri: string) {
             if (uri.includes("/distinct-namespaces")) {
                 return {
                     data: [
@@ -137,15 +138,15 @@ const Template = (args) => ({
             }
 
             // Anything this story doesn't answer itself falls back to the shared table in
-            // .storybook/apiMock.js, which reports the route if nothing there covers it either.
+            // .storybook/apiMock.ts, which reports the route if nothing there covers it either.
             return mockClientFallback("GET", uri)
         }
 
-        store.post = async function (uri, data) {
+        store.post = async function (uri: string, data?: unknown) {
             return mockClientFallback("POST", uri, data)
         }
 
-        store.put = async function (uri, data) {
+        store.put = async function (uri: string, data?: unknown) {
             return mockClientFallback("PUT", uri, data)
         }
 
@@ -156,7 +157,7 @@ const Template = (args) => ({
     }
 });
 
-export const Default = {
+export const Default: StoryObj<{triggers: ApiTriggerAndState[]}> = {
     render: Template,
     args: {
         triggers: triggersData,

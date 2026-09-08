@@ -8,6 +8,7 @@
         :optionalColumns="optionalColumns"
     >
         <template #navbar>
+            <LoopIterationsNotice kind="metrics" />
             <KSFilter
                 :configuration="metricFilter"
                 :properties="{
@@ -32,6 +33,7 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {useMetricFilter} from "../filter/configurations"
     import MetricsTable from "../executions/MetricsTable.vue"
+    import LoopIterationsNotice from "./LoopIterationsNotice.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
 
     const {t} = useI18n()

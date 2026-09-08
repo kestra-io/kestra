@@ -1,5 +1,6 @@
 <template>
     <div class="variable-explorer">
+        <LoopIterationsNotice kind="outputs" class="execution-notice" />
         <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
             <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
@@ -118,6 +119,7 @@
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
+    import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -476,6 +478,7 @@
 <style scoped lang="scss">
 .variable-explorer {
     display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -500,6 +503,10 @@
     &__panel--debug {
         border-left: 1px solid var(--ks-border-default);
     }
+}
+
+.execution-notice {
+    padding: var(--ks-spacing-6) var(--ks-spacing-6) 0;
 }
 
 :deep(.kel-splitter),

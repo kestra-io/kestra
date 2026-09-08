@@ -4308,7 +4308,7 @@ export type ExportChartResponses = {
     /**
      * exportChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
@@ -4470,7 +4470,7 @@ export type ExportDashboardChartResponses = {
     /**
      * exportDashboardChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
@@ -10391,7 +10391,7 @@ export type ExportNamespaceFilesResponses = {
     /**
      * exportNamespaceFiles 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportNamespaceFilesResponse = ExportNamespaceFilesResponses[keyof ExportNamespaceFilesResponses];

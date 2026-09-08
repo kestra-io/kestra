@@ -16,7 +16,6 @@
             <KsIconButton
                 v-if="!row.backfill.paused"
                 data-test="backfill-pause"
-                size="small"
                 :tooltip="$t('pause backfill')"
                 @click="emit('pause')"
             >
@@ -25,7 +24,6 @@
             <KsIconButton
                 v-else
                 data-test="backfill-resume"
-                size="small"
                 :tooltip="$t('continue backfill')"
                 @click="emit('resume')"
             >
@@ -33,7 +31,6 @@
             </KsIconButton>
             <KsIconButton
                 data-test="backfill-stop"
-                size="small"
                 :tooltip="$t('delete backfill')"
                 class="bf-stop"
                 @click="emit('stop')"
@@ -93,8 +90,8 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.625rem 1rem;
-    background: var(--ks-background-card);
-    border-top: 1px dashed var(--ks-border-primary);
+    background: var(--ks-bg-base);
+    border-top: 1px dashed var(--ks-border-default);
 }
 
 .bf-meta {

@@ -1,4 +1,5 @@
-import {Topology} from "@kestra-io/topology"
+import type {Meta, StoryFn} from "@storybook/vue3-vite"
+import {Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
 import switchCaseLabels from "../../../fixtures/flowgraphs/switch-case-labels.json"
@@ -128,21 +129,21 @@ export default {
         isHorizontal: {control: "boolean"},
         isReadOnly: {control: "boolean"},
     },
-}
+} as Meta<typeof Topology>
 
-const Template = (args) => ({
+const Template: StoryFn<typeof Topology> = (args) => ({
     components: {Topology},
     setup() {
         return {args}
     },
-    template: `<div style="height: 600px; width: 100%;"><Topology v-bind="args" /></div>`,
+    template: "<div style=\"height: 600px; width: 100%;\"><Topology v-bind=\"args\" /></div>",
 })
 
 export const AllowFailure = Template.bind({})
 AllowFailure.args = {
     id: "story-allow-failure",
     source: ALLOW_FAILURE_SOURCE,
-    flowGraph: allowFailureDemo,
+    flowGraph: allowFailureDemo as unknown as FlowGraph,
     isReadOnly: true,
     isHorizontal: true,
 }
@@ -151,7 +152,7 @@ export const EachSequential = Template.bind({})
 EachSequential.args = {
     id: "story-each-sequential",
     source: EACH_SEQUENTIAL_SOURCE,
-    flowGraph: eachSequential,
+    flowGraph: eachSequential as unknown as FlowGraph,
     isReadOnly: true,
     isHorizontal: true,
 }
@@ -160,7 +161,7 @@ export const Vertical = Template.bind({})
 Vertical.args = {
     id: "story-vertical",
     source: ALLOW_FAILURE_SOURCE,
-    flowGraph: allowFailureDemo,
+    flowGraph: allowFailureDemo as unknown as FlowGraph,
     isReadOnly: true,
     isHorizontal: false,
 }
@@ -170,7 +171,7 @@ StatusShowcase.storyName = "Status Showcase"
 StatusShowcase.args = {
     id: "story-status-showcase",
     source: STATUS_SHOWCASE_SOURCE,
-    flowGraph: STATUS_SHOWCASE_GRAPH,
+    flowGraph: STATUS_SHOWCASE_GRAPH as unknown as FlowGraph,
     isReadOnly: true,
     isHorizontal: true,
 }
@@ -180,7 +181,7 @@ SwitchCaseLabels.storyName = "Switch Case Labels"
 SwitchCaseLabels.args = {
     id: "story-switch-case-labels",
     source: SWITCH_CASE_LABELS_SOURCE,
-    flowGraph: switchCaseLabels,
+    flowGraph: switchCaseLabels as unknown as FlowGraph,
     isReadOnly: true,
     isHorizontal: false,
 }

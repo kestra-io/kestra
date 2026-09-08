@@ -1,3 +1,4 @@
+import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite";
 import {ref} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 import {
@@ -7,8 +8,9 @@ import {
     waitFor
 } from "storybook/test";
 import LogLine from "../../../../src/components/logs/LogLine.vue";
+import type {Log} from "../../../../src/stores/logs";
 
-const ALLOWED_LEVELS = [
+const ALLOWED_LEVELS: Log["level"][] = [
     "TRACE",
     "DEBUG",
     "INFO",
@@ -16,7 +18,7 @@ const ALLOWED_LEVELS = [
     "ERROR",
 ];
 
-export default {
+const meta: Meta<typeof LogLine> = {
     title: "Components/Logs/LogLine",
     component: LogLine,
     argTypes: {
@@ -34,7 +36,7 @@ export default {
             description: "Log level"
         },
         excludeMetas: {
-            control: "array",
+            control: "object",
             description: "Array of meta fields to exclude from display"
         },
         title: {
@@ -71,17 +73,19 @@ export default {
     ])]
 };
 
-const Template = (args) => ({
+export default meta;
+
+const Template: StoryFn<typeof LogLine> = (args) => ({
     components: {LogLine},
     setup() {
         return () => {
-            args.log.level = args.level;
+            args.log.level = args.level!;
             return <LogLine {...args} />;
         }
     }
 });
 
-const argsDefaults = (level, message = "This is an info message") => ({
+const argsDefaults = (level: Log["level"], message = "This is an info message") => ({
     cursor: true,
     log: {
         level,
@@ -90,7 +94,7 @@ const argsDefaults = (level, message = "This is an info message") => ({
         namespace: "test-namespace",
         flowId: "flow-123",
         executionId: "exec-456"
-    },
+    } as Log,
     level
 })
 
@@ -114,12 +118,12 @@ WithTitle.args = {
         flowId: "flow-123",
         executionId: "exec-456",
         taskId: "task-789"
-    },
+    } as Log,
     level: "INFO",
     title: true
 };
 
-export const WithFilter = {
+export const WithFilter: StoryObj<typeof LogLine> = {
     render: () => {
         return {
             setup(){
@@ -168,19 +172,19 @@ WithExcludedMetas.args = {
         namespace: "test-namespace",
         flowId: "flow-123",
         executionId: "exec-456"
-    },
+    } as Log,
     level: "INFO",
     filter: "",
     excludeMetas: ["namespace", "flowId"],
     title: false
 };
 
-export const MultipleLogLinesWithAllLevels = () => {
+export const MultipleLogLinesWithAllLevels: StoryFn<typeof LogLine> = () => {
     return (
         <ks-card>
             {
                 ALLOWED_LEVELS.map((level, index) => {
-                    return <LogLine {...Info.args} cursor={false} level={level} log={{...Info.args.log, level}} style={{borderTop: index===0 ? "none" : "1px solid var(--ks-border-primary)"}} />
+                    return <LogLine {...Info.args} cursor={false} level={level} log={{...Info.args!.log, level} as Log} style={{borderTop: index===0 ? "none" : "1px solid var(--ks-border-primary)"}} />
                 })
             }
         </ks-card>
@@ -188,10 +192,10 @@ export const MultipleLogLinesWithAllLevels = () => {
 };
 
 // reproduction of https://github.com/kestra-io/kestra/pull/7133
-export const ShortLogWithoutContext = () => {
+export const ShortLogWithoutContext: StoryFn<typeof LogLine> = () => {
     return (
         <ks-card>
-            <LogLine log={{level: "INFO", message: "test"}} level="INFO" />
+            <LogLine log={{level: "INFO", message: "test"} as Log} level="INFO" />
         </ks-card>
     );
 }

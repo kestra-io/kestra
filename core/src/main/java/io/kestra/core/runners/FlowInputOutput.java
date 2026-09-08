@@ -3,7 +3,9 @@ package io.kestra.core.runners;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -68,17 +70,20 @@ public class FlowInputOutput {
     private final Optional<String> secretKey;
     private final Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
     private final ReusableInputsExpander reusableInputsExpander;
+    private final LocalPathFactory localPathFactory;
 
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
         Provider<RunContextFactory> runContextFactory,
         EncryptionConfig encryptionConfig,
-        ReusableInputsExpander reusableInputsExpander) {
+        ReusableInputsExpander reusableInputsExpander,
+        LocalPathFactory localPathFactory) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
         this.reusableInputsExpander = reusableInputsExpander;
+        this.localPathFactory = localPathFactory;
     }
 
     /**
@@ -623,7 +628,19 @@ public class FlowInputOutput {
                     if (URIFetcher.supports(uri)) {
                         yield uri;
                     } else {
-                        yield storageInterface.from(execution, id, current.toString().substring(current.toString().lastIndexOf("/") + 1), new File(current.toString()));
+                        File requestedFile = new File(current.toString());
+                        // Read through LocalPath so allowed-paths is enforced and the stream is opened on the
+                        // path it validated, not on the one we were given, which a symlink swap could re-point.
+                        try (InputStream authorized = localPathFactory.createLocalPath().get(requestedFile.toURI())) {
+                            yield storageInterface.put(
+                                execution.getTenantId(),
+                                execution.getNamespace(),
+                                StorageContext.forInput(execution, id, requestedFile.getName()).getContextStorageURI(),
+                                authorized
+                            );
+                        } catch (NoSuchFileException e) {
+                            throw new IllegalArgumentException("The file '" + requestedFile + "' does not exist.", e);
+                        }
                     }
                 }
                 case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current : JacksonMapper.toObject(current.toString());

@@ -275,7 +275,7 @@ export const CustomContent: Story = {
                             <div
                                 v-for="row in pagedData"
                                 :key="row.id"
-                                style="border: 1px solid var(--ks-border-primary); border-radius: 8px; padding: 12px"
+                                style="border: 1px solid var(--ks-border-default); border-radius: 8px; padding: 12px"
                             >
                                 <strong style="font-size: 13px">{{ row.id }}</strong>
                                 <p style="margin: 4px 0; font-size: 12px; color: var(--ks-text-secondary)">{{ row.namespace }}</p>
@@ -345,7 +345,7 @@ export const FitHeight: Story = {
     render: () => ({
         components: {KsDataTable},
         template: `
-            <div style="height: 400px; display: flex; flex-direction: column; border: 1px solid var(--ks-border-primary); border-radius: 8px; overflow: hidden">
+            <div style="height: 400px; display: flex; flex-direction: column; border: 1px solid var(--ks-border-default); border-radius: 8px; overflow: hidden">
                 <ks-data-table :total="0" fit-height>
                     <template #table>
                         <div style="overflow-y: auto; height: 100%; padding: 8px">

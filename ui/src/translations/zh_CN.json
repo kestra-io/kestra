@@ -2643,8 +2643,6 @@
       "open_mode_hint": "任务默认在模态框中打开。您可以在{settings}中将选项卡设为默认。"
     },
     "blocks": "区块",
-    "flow_description": "flow 描述",
-    "flow_no_description": "无描述。请在您的 flow YAML 中添加描述，以记录其功能。",
     "split_horizontal": "水平拆分",
     "split_vertical": "垂直拆分",
     "pwa": {

@@ -2643,8 +2643,6 @@
       "open_mode_hint": "Tasks werden standardmäßig in einem Modal geöffnet. Unter {settings} kannst du Tabs als Standard festlegen."
     },
     "blocks": "Blöcke",
-    "flow_description": "Flow-Beschreibung",
-    "flow_no_description": "Keine Beschreibung. Füge deinem Flow-YAML eine Beschreibung hinzu, um zu dokumentieren, was er tut.",
     "split_horizontal": "Horizontal teilen",
     "split_vertical": "Vertikal teilen",
     "pwa": {

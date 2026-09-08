@@ -2643,8 +2643,6 @@
       "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
     "blocks": "Blocchi",
-    "flow_description": "Descrizione del flow",
-    "flow_no_description": "Nessuna descrizione. Aggiungi una descrizione al tuo YAML del flow per documentare cosa fa.",
     "split_horizontal": "Dividi orizzontalmente",
     "split_vertical": "Dividi verticalmente",
     "pwa": {

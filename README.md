@@ -103,7 +103,7 @@ Kestra 2.0 is a major release. The highlights below are the short version. See [
 **Infrastructure**
 - Worker communication moved from the JDBC queue to a **gRPC worker-controller**, separating the control plane from the data plane. Task run outputs live in dedicated storage instead of inline in the execution record, which shrinks the database and speeds up the execution list. See [Architecture](https://kestra.io/docs/architecture).
 - Four new VM [task runners](https://kestra.io/docs/task-runners): AWS EC2, Azure Virtual Machine, Google Compute Engine, and Huawei Cloud CCI.
-- The `-no-plugins` image suffix is now `-slim`, and `KESTRA_PLUGINS_AUTO_INSTALL_ENABLED=true` fetches plugins from Maven Central on demand.
+- The `-no-plugins` image suffix is now `-slim`, and `KESTRA_PLUGINS_AUTO_INSTALL_ENABLED=true` fetches plugins from Maven Central on demand. The [Quick Start](#-quick-start) command below uses both.
 - `PurgeStorage` cleans internal storage by last-modified date, including files whose execution records are already gone.
 - [HTTP task URL filtering](https://kestra.io/docs/administrator-guide/security-hardening) lets operators allow-list or deny-list the URLs HTTP tasks may reach.
 

@@ -161,15 +161,6 @@ function whereToFilters(descriptor: DrillDownDescriptor, where?: unknown): Recor
     return out
 }
 
-export function chartSegmentDrillDown(
-    chart: {data?: Record<string, any>} | undefined,
-    column: {field?: string; key?: string} | undefined,
-    value: string,
-): {name: string; query: LocationQuery; timeFiltered: boolean} | null {
-    const target = chartDrillDownTarget(chart, [{column, value}])
-    return target && {name: target.name, timeFiltered: target.timeFiltered, query: target.query}
-}
-
 export function chartDrillDownTarget(
     chart: {data?: Record<string, any>} | undefined,
     dimensions: ClickDimension[],
@@ -187,13 +178,17 @@ export function chartDrillDownTarget(
         Object.assign(query, dimensionFilter(descriptor, column, value))
     }
 
+    const resolvedWindow = context?.dateRange
+        ? {[START_DATE_PARAM]: context.dateRange.startDate, [END_DATE_PARAM]: context.dateRange.endDate}
+        : routeTimeWindow(routeQuery)
+
     return {
         name: descriptor.route,
         timeFiltered: descriptor.timeFiltered,
         query,
-        timeWindow: context?.dateRange
-            ? {[START_DATE_PARAM]: context.dateRange.startDate, [END_DATE_PARAM]: context.dateRange.endDate}
-            : routeTimeWindow(routeQuery),
+        // A list declaring no time filter cannot take the clicked bucket either, so the target never
+        // carries a window that `buildFullQuery` would then have to know to ignore.
+        timeWindow: descriptor.timeFiltered ? resolvedWindow : undefined,
     }
 }
 

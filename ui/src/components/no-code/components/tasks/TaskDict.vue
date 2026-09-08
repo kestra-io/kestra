@@ -15,7 +15,7 @@
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         margin="m-0"
-                        placeholder="Key"
+                        :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                     />
                     <hr>
@@ -46,7 +46,7 @@
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         margin="m-0"
-                        placeholder="Key"
+                        :placeholder="$t('key')"
                         :haveError="duplicatedKeys.includes(item[0])"
                         :inputStyle="{minHeight: 'var(--kel-component-size)', padding: '7px 11px'}"
                     />

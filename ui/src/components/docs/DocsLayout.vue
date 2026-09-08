@@ -12,7 +12,7 @@
                 :class="['mobile-close-toggle']"
                 @click="mobileMenuOpen = false"
                 :icon="Close"
-                :aria-label="'Close menu'"
+                :aria-label="$t('docsPage.close_menu')"
                 link
             />
             <div v-if="!collapsed" class="menu-slot-wrapper">
@@ -26,7 +26,7 @@
                     :class="['mobile-menu-toggle']"
                     @click="mobileMenuOpen = !mobileMenuOpen"
                     :icon="Menu"
-                    :aria-label="'Open menu'"
+                    :aria-label="$t('docsPage.open_menu')"
                     link
                 />
                 <slot name="secondary-header" />

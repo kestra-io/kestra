@@ -437,12 +437,15 @@
         }
     }
 
-    /** The selected task output belongs to a Loop, whose iteration outputs live in the sub-executions. */
-    const selectedLoopTaskId = computed(() =>
-        selectedTaskId.value && loopTaskIds(executionsStore.flow).has(selectedTaskId.value)
-            ? selectedTaskId.value
-            : undefined,
-    )
+    // A Loop over an empty list has no iteration to send the reader to.
+    const selectedLoopTaskId = computed(() => {
+        const taskId = selectedTaskId.value
+        if (!taskId || !loopTaskIds(executionsStore.flow).has(taskId)) {
+            return undefined
+        }
+        const iterationCount = (selectedValue.value as {iterationCount?: unknown} | undefined)?.iterationCount
+        return Number(iterationCount) > 0 ? taskId : undefined
+    })
 
     /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
     const debuggedFileUri = computed(() => {

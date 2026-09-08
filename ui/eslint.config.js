@@ -38,6 +38,7 @@ export default defineConfig([
             // Semantic rules
             "vue/block-lang": ["error", {"script": {"lang": "ts"}}],
             "vue/component-api-style": ["error", ["script-setup"]],
+            "vue/no-mutating-props": "error",
             "vue/this-in-template": "error",
             "vue/block-order": ["error", {order: ["template", "script", "style"]}],
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],

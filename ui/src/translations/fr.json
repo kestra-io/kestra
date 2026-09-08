@@ -2643,8 +2643,6 @@
       "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
     },
     "blocks": "Blocs",
-    "flow_description": "Description du flow",
-    "flow_no_description": "Aucune description. Ajoutez une description à votre YAML de flow pour documenter ce qu'il fait.",
     "split_horizontal": "Diviser horizontalement",
     "split_vertical": "Diviser verticalement",
     "pwa": {

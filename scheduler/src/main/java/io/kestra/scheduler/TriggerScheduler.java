@@ -145,6 +145,7 @@ public class TriggerScheduler {
      */
     public void onStart(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         log.info("Starting trigger scheduling for {} vNodes", vNodesAssignments);
+        final long start = System.nanoTime();
 
         Map<String, TriggerState> triggers = triggerStateStore.findAllForVNodes(vNodesAssignments).stream()
             .collect(Collectors.toMap(TriggerId::uid, Function.identity(), (existing, replacement) ->
@@ -235,6 +236,8 @@ public class TriggerScheduler {
                     }
                 }
             });
+
+        log.debug("Started trigger scheduling in {}ms", Duration.ofNanos(System.nanoTime() - start).toMillis());
     }
 
     /**
@@ -249,8 +252,9 @@ public class TriggerScheduler {
      * @param scheduledTime the target time for which triggers should be evaluated and potentially scheduled;
      *        represents the scheduler’s current cycle timestamp.
      * @param vNodesAssignments the set of virtual node identifiers whose associated triggers should be evaluated.
+     * @return the number of triggers evaluated.
      */
-    public void onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
+    public int onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         metricScheduleLoopCounter.increment();
 
         ZonedDateTime zoneScheduleTime = ZonedDateTime.ofInstant(scheduledTime, clock.getZone());
@@ -269,6 +273,8 @@ public class TriggerScheduler {
 
         // Record metrics
         metricEvaluationLoopDuration.record(Duration.between(scheduledTime, clock.instant()));
+
+        return schedulableTriggers.size();
     }
 
     /**

@@ -14,19 +14,19 @@ export default {
     "es": {
         "ks_discard_guard": {
             "title": "Confirmación",
-            "message": "Tienes cambios no guardados. ¿Estás seguro de que deseas descartarlos?",
+            "message": "Tienes cambios sin guardar. ¿Estás seguro de que quieres descartarlos?",
         },
     },
     "fr": {
         "ks_discard_guard": {
             "title": "Confirmation",
-            "message": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir les abandonner ?",
+            "message": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir les ignorer ?",
         },
     },
     "hi": {
         "ks_discard_guard": {
             "title": "पुष्टि",
-            "message": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप वाकई उन्हें छोड़ना चाहते हैं?",
+            "message": "आपके पास सहेजे न गए परिवर्तन हैं। क्या आप वाकई उन्हें छोड़ना चाहते हैं?",
         },
     },
     "it": {
@@ -38,13 +38,13 @@ export default {
     "ja": {
         "ks_discard_guard": {
             "title": "確認",
-            "message": "保存されていない変更があります。本当に破棄しますか？",
+            "message": "保存されていない変更があります。破棄してもよろしいですか？",
         },
     },
     "ko": {
         "ks_discard_guard": {
             "title": "확인",
-            "message": "저장되지 않은 변경 사항이 있습니다. 정말로 취소하시겠습니까?",
+            "message": "저장되지 않은 변경 사항이 있습니다. 정말 폐기하시겠습니까?",
         },
     },
     "pl": {
@@ -74,7 +74,7 @@ export default {
     "zh_CN": {
         "ks_discard_guard": {
             "title": "确认",
-            "message": "您有未保存的更改。您确定要放弃它们吗？",
+            "message": "您有未保存的更改。确定要放弃它们吗？",
         },
     },
 }

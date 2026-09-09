@@ -104,20 +104,6 @@ public class TaskLogLineMatcher {
     }
 
     protected TaskLogMatch handle(Logger logger, RunContext runContext, Instant instant, TaskLogMatch match, String data, boolean forwardTraces) {
-    /**
-     * Replaces every {@code ::{...}::} block carrying encrypted outputs with {@code ******}, so a command or log
-     * line embedding one can be emitted without exposing the value it is meant to encrypt. Frames are matched
-     * textually and within a single line, as the payload may not be valid JSON.
-     */
-    public static String redactEncryptedOutputs(String text) {
-        if (text == null || !text.contains(ENCRYPTED_OUTPUTS_KEY)) {
-            return text;
-        }
-
-        return ENCRYPTED_LOG_DATA.matcher(text).replaceAll(REDACTED);
-    }
-
-    protected TaskLogMatch handle(Logger logger, RunContext runContext, Instant instant, TaskLogMatch match, String data) {
         String logData = redactEncryptedOutputs(data);
 
         if (match.metrics() != null) {
@@ -152,10 +138,22 @@ public class TaskLogLineMatcher {
 
         if (match.otlp() != null && !match.otlp().isEmpty()) {
             processOtlp(match.otlp(), logger, runContext, instant, forwardTraces);
-            handleOtlp(logger, runContext, instant, match.otlp(), logData);
         }
 
         return match;
+    }
+
+    /**
+     * Replaces every {@code ::{...}::} block carrying encrypted outputs with {@code ******}, so a command or log
+     * line embedding one can be emitted without exposing the value it is meant to encrypt. Frames are matched
+     * textually and within a single line, as the payload may not be valid JSON.
+     */
+    public static String redactEncryptedOutputs(String text) {
+        if (text == null || !text.contains(ENCRYPTED_OUTPUTS_KEY)) {
+            return text;
+        }
+
+        return ENCRYPTED_LOG_DATA.matcher(text).replaceAll(REDACTED);
     }
 
     /**
@@ -247,9 +245,7 @@ public class TaskLogLineMatcher {
                         builder = builder.addKeyValue("spanId", logRecord.spanId());
                     }
 
-                    builder.log(logRecord.body() != null ? logRecord.body().asText() : null);
-                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, toInstant(logRecord.timeUnixNano(), instant))
-                        .log(logRecord.body() != null ? redactEncryptedOutputs(logRecord.body().asText()) : null);
+                    builder.log(logRecord.body() != null ? redactEncryptedOutputs(logRecord.body().asText()) : null);
                 } catch (Exception e) {
                     logger.warn("Invalid OTLP log", e);
                 }

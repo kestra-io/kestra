@@ -356,6 +356,16 @@ describe("insertBlockWithPath", () => {
             name: Plugin 3
         `
 
+    test("rejects a path that holds a mapping rather than a sequence", () => {
+        expect(() =>
+            YamlUtils.insertBlockWithPath({
+                source: srcWithTasks,
+                parentPath: "tasks[0]",
+                newBlock: newValue,
+            }),
+        ).toThrow(/tasks\[0\].*not a sequence/)
+    })
+
     test("inserting a task", () => {
 
         const result = YamlUtils.insertBlockWithPath({

@@ -13,6 +13,7 @@ import {
     isSeq,
     isScalar,
     isNode,
+    isCollection,
     visit,
     type Range,
     type ToStringOptions,
@@ -388,18 +389,16 @@ export function swapBlocks({source, section, key1, key2, keyName}: {
 
 function getNodeIndexInParent(
     yamlDoc: Document<YAMLMap<Scalar<string>, Node>>,
-    patentNode: YAMLMap<Scalar<string>, Node>,
+    parentNode: YAMLSeq<unknown>,
     parentPath: (string|number)[],
     refPath?: string | number,
     position: "before" | "after" = "after",
 ) {
     if (refPath === undefined) {
-        return position === "before" ? 0 : patentNode.items.length - 1
+        return position === "before" ? 0 : parentNode.items.length - 1
     }
 
-    const indexNode = yamlDoc.getIn([...parentPath, refPath]) as any
-
-    return patentNode.items.indexOf(indexNode)
+    return parentNode.items.indexOf(yamlDoc.getIn([...parentPath, refPath]))
 }
 
 export function parsePath(path: string): (string | number)[] {
@@ -487,51 +486,44 @@ function lastSegmentKey(path: string): string {
         : (path.split(".").pop() as string)
 }
 
-function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPath: string) {
-    if (hasQuotedSegment(parentPath)) {
-        const segments = parsePath(parentPath)
-        if (segments.length <= 1) {
-            if (!yamlDoc.contents) {
-                throw new Error(`Document is empty, cannot insert block with path ${parentPath}`)
-            }
-            return yamlDoc.contents
-        }
-        const parentPathWithoutKey = joinPath(segments.slice(0, -1))
-        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<Scalar<string>, Node>
-        if (!parentNode) {
-            const newParentNode = createParentNode(parentPath)
-            const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
-            parentParentNode?.items.push(newParentNode)
-            return newParentNode.value
-        }
-        return parentNode
-    }
-    if(!parentPath.includes(".")){
-        if(!yamlDoc.contents){
+function nodeKind(node: unknown): string {
+    if (isMap(node)) return "mapping"
+    if (isScalar(node)) return "scalar"
+    return "value"
+}
+
+type ParentCollection = YAMLMap<Scalar<string>, Node> | YAMLSeq<unknown>
+
+function getParentNode(
+    yamlDoc: ReturnType<typeof parseDocumentTyped>,
+    parentPath: string,
+): ParentCollection {
+    const parentPathWithoutKey = hasQuotedSegment(parentPath)
+        ? joinPath(parsePath(parentPath).slice(0, -1))
+        : parentPath.substring(0, parentPath.lastIndexOf("."))
+
+    if (parentPathWithoutKey === "") {
+        if (!yamlDoc.contents) {
             throw new Error(`Document is empty, cannot insert block with path ${parentPath}`)
         }
         return yamlDoc.contents
-    } else {
-        const parentPathWithoutKey = parentPath.substring(0, parentPath.lastIndexOf("."))
-        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<Scalar<string>, Node>
-        if (!parentNode) {
-            const newParentNode = createParentNode(parentPathWithoutKey)
-            const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
-            parentParentNode?.items.push(newParentNode)
-            return newParentNode.value
-        }
+    }
+
+    const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey))
+    if (isCollection<Node>(parentNode)) {
         return parentNode
     }
+
+    const newParentKey = lastSegmentKey(
+        hasQuotedSegment(parentPath) ? parentPath : parentPathWithoutKey,
+    )
+    const newParentSeq = new YAMLSeq<unknown>()
+    getParentNode(yamlDoc, parentPathWithoutKey)
+        .items.push(new Pair(new Scalar(newParentKey), newParentSeq))
+    return newParentSeq
 }
 
-function createParentNode(parentPath: string) {
-    const newParentNode = new YAMLSeq()
-    const parentKey = lastSegmentKey(parentPath)
-    const parentKeyNode = new Pair(new Scalar(parentKey), newParentNode)
-    return parentKeyNode
-}
-
-function createPairNode(parentKey: string, newPropNode: Node) {
+function createPairNode(parentKey: string, newPropNode: Node): Pair<Scalar<string>, YAMLSeq<unknown>> {
     const newPairNodeValue = new YAMLSeq()
     newPairNodeValue.add(newPropNode)
     return new Pair(new Scalar(parentKey), newPairNodeValue)
@@ -554,17 +546,20 @@ export function insertBlockWithPath({
         position = "after"
     }
     const yamlDoc = parseDocumentTyped(source)
-    const newPropNode = yamlDoc.createNode(parseDocument(newBlock)) as any
+    const newPropNode = yamlDoc.createNode(parseDocument(newBlock)) as Node
 
     const parsedPath = parsePath(parentPath)
 
-    const parentNode = yamlDoc.getIn(parsedPath) as YAMLMap<Scalar<string>, Node>
+    const parentNode = yamlDoc.getIn(parsedPath)
 
     if (!parentNode) {
         const newPairNode = createPairNode(lastSegmentKey(parentPath), newPropNode)
-        const newParentNode = getParentNode(yamlDoc, parentPath)
-        newParentNode?.items.push(newPairNode)
+        getParentNode(yamlDoc, parentPath).items.push(newPairNode)
         return yamlDoc.toString(TOSTRING_OPTIONS)
+    }
+
+    if (!isSeq<unknown>(parentNode)) {
+        throw new Error(`Cannot insert a block at path ${parentPath}: that path holds a ${nodeKind(parentNode)}, not a sequence.`)
     }
 
     const index = getNodeIndexInParent(yamlDoc, parentNode, parsedPath, refPath)

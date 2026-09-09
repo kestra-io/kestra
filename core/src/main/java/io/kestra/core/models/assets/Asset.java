@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
@@ -53,7 +54,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(max = 100)
     @Schema(title = "The day-2 actions offered on this asset, each backing onto a flow.")
-    private List<@Valid AssetAction> assetActions;
+    private List<@Valid FlowAction> assetActions;
 
     @Nullable
     @Hidden
@@ -165,7 +166,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         return this;
     }
 
-    public Asset withAssetActions(List<AssetAction> assetActions) {
+    public Asset withAssetActions(List<FlowAction> assetActions) {
         this.assetActions = assetActions;
         return this;
     }

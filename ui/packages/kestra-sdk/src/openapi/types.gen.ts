@@ -426,18 +426,7 @@ export type Asset = {
     /**
      * The day-2 actions offered on this asset, each backing onto a flow.
      */
-    assetActions?: Array<AssetAction>;
-};
-
-export type AssetAction = {
-    /**
-     * The namespace of the flow backing this action.
-     */
-    namespace: string;
-    /**
-     * The id of the flow backing this action.
-     */
-    flowId: string;
+    assetActions?: Array<FlowAction>;
 };
 
 export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
@@ -987,6 +976,21 @@ export type Flow = AbstractFlow & {
      * Quotas can also be defined at the namespace and tenant level.
      */
     quotas?: Array<Quota>;
+};
+
+export type FlowAction = {
+    /**
+     * The namespace of the flow backing this action.
+     */
+    namespace: string;
+    /**
+     * The id of the flow backing this action.
+     */
+    flowId: string;
+    /**
+     * The label displayed on this action.
+     */
+    label?: string | null;
 };
 
 export type FlowControllerFlowWithDeprecatedTasks = {
@@ -4323,7 +4327,7 @@ export type ExportChartResponses = {
     /**
      * exportChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
@@ -4485,7 +4489,7 @@ export type ExportDashboardChartResponses = {
     /**
      * exportDashboardChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
@@ -10406,7 +10410,7 @@ export type ExportNamespaceFilesResponses = {
     /**
      * exportNamespaceFiles 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportNamespaceFilesResponse = ExportNamespaceFilesResponses[keyof ExportNamespaceFilesResponses];

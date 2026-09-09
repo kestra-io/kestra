@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.models.validations.ModelValidator;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -72,7 +73,7 @@ class AssetValidationTest {
             .id("my-asset")
             .type("MY_OWN_ASSET_TYPE")
             .build()
-            .withAssetActions(List.of(new AssetAction("", null)));
+            .withAssetActions(List.of(new FlowAction("", null, null)));
 
         assertThat(modelValidator.isValid(asset))
             .get()

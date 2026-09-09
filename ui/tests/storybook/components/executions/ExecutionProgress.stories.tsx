@@ -91,10 +91,13 @@ export const Default: Story = {
     play: expectState(/^Est\. remaining:/, [25, 30]),
 };
 
-/** The flow has never run to completion, so there is nothing to estimate from. */
+/** The flow has never run to completion, so there is nothing to estimate from and the progress bar is skipped. */
 export const NoBaseline: Story = {
     args: {avgDurationMs: null, startedMsAgo: 5 * MINUTE_MS},
-    play: expectState(/^No historical data/, [0, 0]),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+        await waitFor(() => expect(canvas.queryByRole("progressbar")).not.toBeInTheDocument());
+    },
 };
 
 /**

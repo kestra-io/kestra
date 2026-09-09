@@ -254,7 +254,7 @@
 
                     <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p">
                         <template #suggestion>
-                            <KsButton text size="small" @click="query = suggestedQuery">
+                            <KsButton type="text" size="small" @click="query = suggestedQuery">
                                 {{ suggestedQuery }}
                             </KsButton>
                         </template>
@@ -729,14 +729,14 @@
             if (crossResourceSearchStore.flows.results.length === 0) {
                 const alternativeQuery = getSeparatorVariant(query.value)
 
-                if(alternativeQuery){
+                if (alternativeQuery) {
                     const alternativeResponse = await FlowsAPI.searchFlowsBySourceCode({...searchFilters.value,
                         page: 1,
                         size: 200,
                         q: alternativeQuery,
                         namespace: namespaceFilter.value,
                     })
-                    if(alternativeResponse.results.length > 0){
+                    if (alternativeResponse.results.length > 0) {
                         suggestedQuery.value = alternativeQuery
                     }
                 }

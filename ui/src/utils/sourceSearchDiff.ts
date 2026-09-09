@@ -3,7 +3,12 @@ import {crossSearchResultKey} from "./crossResourceSearch"
 
 export type SourceMatch = Required<ApiSourceMatch>
 export type SourceSearchResult = Required<Omit<ApiSourceSearchResult, "matches">> & {matches: SourceMatch[]}
-export type SourceSearchSelectionGroup = SourceSearchResult
+export interface SourceSearchSelectionGroup {
+    namespace: string
+    id: string
+    editable: boolean
+    matches: {line: number; column: number}[]
+}
 
 
 export interface SelectionSummary {
@@ -11,7 +16,7 @@ export interface SelectionSummary {
     selectedMatchCount: number;
 }
 
-export function computeSelectionSummary(results: SourceSearchResult[], selectedMatchKeys: Set<string>): SelectionSummary {
+export function computeSelectionSummary(results: SourceSearchSelectionGroup[], selectedMatchKeys: Set<string>): SelectionSummary {
     let selectedFlowCount = 0
     let selectedMatchCount = 0
 

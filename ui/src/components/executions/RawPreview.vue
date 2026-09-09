@@ -1,6 +1,6 @@
 <template>
     <ListPreview v-if="type === 'LIST'" :value="content" />
-    <img v-else-if="type === 'IMAGE'" :src="imageContent" alt="Image output preview">
+    <img v-else-if="type === 'IMAGE'" :src="imageContent" :alt="$t('file_preview.image_alt')">
     <PdfPreview v-else-if="type === 'PDF'" :source="content" />
     <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="content" />
     <KsEditor

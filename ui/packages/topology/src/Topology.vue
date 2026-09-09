@@ -57,6 +57,9 @@
                 <template #details>
                     <slot name="taskDetails" v-bind="taskProps" />
                 </template>
+                <template #taskActions="taskActionProps">
+                    <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
+                </template>
             </TaskNode>
         </template>
 

@@ -16,6 +16,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -50,6 +51,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected Map<String, Object> metadata;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Size(max = 100)
+    @Schema(title = "The day-2 actions offered on this asset, each backing onto a flow.")
     private List<@Valid AssetAction> assetActions;
 
     @Nullable
@@ -107,29 +110,23 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
-        Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(new HashMap<>());
+        Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(Collections.emptyMap());
         Map<String, Object> previousMetadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null);
-        if (previousMetadata == null) {
-            this.metadata = incomingMetadata;
-        } else {
-            Map<String, Object> mergedMetadata = MapUtils.mergeWithNullableValues(previousMetadata, incomingMetadata);
-            incomingMetadata.forEach((key, value) -> {
-                if (value == null) {
-                    mergedMetadata.remove(key);
-                }
-            });
-            this.metadata = mergedMetadata;
-        }
+        Map<String, Object> mergedMetadata = previousMetadata == null
+            ? new HashMap<>(incomingMetadata)
+            : MapUtils.mergeWithNullableValues(previousMetadata, incomingMetadata);
+        incomingMetadata.forEach((key, value) -> {
+            if (value == null) {
+                mergedMetadata.remove(key);
+            }
+        });
+        this.metadata = mergedMetadata;
 
         this.assetActions = this.assetActions != null
             ? this.assetActions
             : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
 
         return (T) this;
-    }
-
-    public void setAssetActions(List<AssetAction> assetActions) {
-        this.assetActions = assetActions;
     }
 
     @Override
@@ -165,6 +162,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withNamespace(String namespace) {
         this.namespace = namespace;
+        return this;
+    }
+
+    public Asset withAssetActions(List<AssetAction> assetActions) {
+        this.assetActions = assetActions;
         return this;
     }
 }

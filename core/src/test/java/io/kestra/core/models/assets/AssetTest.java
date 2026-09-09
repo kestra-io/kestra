@@ -2,6 +2,7 @@ package io.kestra.core.models.assets;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -125,5 +126,53 @@ class AssetTest {
 
         // Then
         assertThat(updated.getNamespace()).isEqualTo("io.kestra");
+    }
+
+    @Test
+    void shouldDeleteAMetadataKeyWithAnExplicitNullOnCreation() {
+        // Given
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("keep", "value");
+        metadata.put("drop", null);
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").metadata(metadata).build();
+
+        // When
+        Custom created = incoming.toUpdated(null, false);
+
+        // Then
+        assertThat(created.getMetadata()).containsEntry("keep", "value");
+        assertThat(created.getMetadata()).doesNotContainKey("drop");
+    }
+
+    @Test
+    void shouldKeepAMetadataKeySetToAnEmptyString() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("_ttl", "2026-01-01T00:00:00.000Z")).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("_ttl", "")).build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getMetadata()).containsEntry("_ttl", "");
+    }
+
+    @Test
+    void shouldNotDeleteANestedMetadataKeyWithANull() {
+        // Given
+        Map<String, Object> nested = new HashMap<>();
+        nested.put("x", null);
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("m", Map.of("x", 1, "y", 2))).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("m", nested)).build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getMetadata()).extracting("m").isEqualTo(Map.of("x", 1, "y", 2));
     }
 }

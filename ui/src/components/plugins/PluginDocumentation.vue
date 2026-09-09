@@ -47,7 +47,7 @@
                     <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
                 </div>
 
-                <nav class="dp-nav" aria-label="Documentation sections" data-test="plugin-doc-nav">
+                <nav class="dp-nav" :aria-label="$t('plugins.documentation_sections')" data-test="plugin-doc-nav">
                     <button
                         type="button"
                         v-for="chip in navChips"
@@ -119,7 +119,7 @@
                 </KsInput>
             </div>
 
-            <nav class="dp-nav" aria-label="Documentation sections">
+            <nav class="dp-nav" :aria-label="$t('plugins.documentation_sections')">
                 <button
                     type="button"
                     v-for="tab in introTabs"

@@ -147,7 +147,7 @@
     }
 
     .date-filter-section {
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
         padding-top: 0.75rem;
 
         .form-label {
@@ -165,9 +165,9 @@
         }
 
         .date-filter-option {
-            background: var(--ks-background-body);
-            border: 1px solid var(--ks-border-primary);
-            border-radius: var(--ks-border-radius-sm);
+            background: var(--ks-bg-surface);
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-sm);
             color: var(--ks-text-primary);
             cursor: pointer;
             font-size: var(--ks-font-size-xs);
@@ -176,13 +176,13 @@
             transition: background 0.15s, border-color 0.15s;
 
             &:hover {
-                background: var(--ks-background-card);
+                background: var(--ks-bg-hover);
             }
 
             &.active {
-                background: var(--ks-background-card);
-                border-color: var(--ks-primary);
-                color: var(--ks-primary);
+                background: var(--ks-bg-tag-active);
+                border-color: var(--ks-border-focus);
+                color: var(--ks-text-link);
             }
         }
     }

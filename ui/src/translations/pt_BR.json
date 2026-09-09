@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "Alternar menu",
+    "favourites": "Favoritos",
+    "to close": "para fechar",
+    "tabs": "Abas",
+    "select": "Selecionar",
     "panel actions": "Ações do painel",
     "playground actions": "Ações do Playground",
     "bulk actions": "Ações em massa",
@@ -221,8 +225,9 @@
     "next_execution": "Próxima execução",
     "datepicker": {
       "invalid duration": "Formato de duração inválido. Use o formato ISO 8601 (ex: PT30M, P1D).",
-      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (ex: 'P1DT1H1M1S')",
+      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (por exemplo, 'P1DT1H1M1S')",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
+      "examples": "Exemplos:",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (ex: P1DT1H1M1S)",
       "custom": "Personalizado",
       "last5minutes": "Últimos 5 minutos",
@@ -280,6 +285,7 @@
     "expiration date": "Data de expiração",
     "healthcheck date": "Data do HealthCheck",
     "last execution status": "Último status de execução",
+    "jump to": "Ir para",
     "jump to...": "Ir para...",
     "contextBar": {
       "ai": "IA",
@@ -477,6 +483,7 @@
       "big_file_download_only": "Este arquivo tem {size}. É muito grande para abrir no editor, baixe-o em vez disso.",
       "load_anyway": "Carregar mesmo assim",
       "load_error": "Falha ao carregar a pré-visualização do arquivo. Pode ser um problema temporário ou de permissões.",
+      "image_alt": "Pré-visualização do output de imagem",
       "retry": "Tentar novamente",
       "html_asset_warning": "Esta pré-visualização renderiza o HTML em um quadro isolado. Recursos locais como imagens e folhas de estilo referenciados por caminhos relativos não serão carregados.",
       "html_preview_title": "Pré-visualização do arquivo HTML"
@@ -485,7 +492,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
-      "warning": "Alterar o contador em execução pode corromper a concorrência, fazendo com que as execuções excedam o limite permitido."
+      "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."
     },
     "flowConcurrency": {
       "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
@@ -497,6 +504,8 @@
     "docsPage": {
       "notFound": "Esta página da documentação não existe. Ela pode ter sido movida ou renomeada.",
       "loadError": "Não foi possível carregar esta página da documentação. Tente novamente.",
+      "close_menu": "Fechar menu",
+      "open_menu": "Abrir menu",
       "backToDocs": "Voltar aos Docs"
     },
     "documentation": {
@@ -553,8 +562,10 @@
       "names": "Plugins",
       "release": "Notas de lançamento",
       "beta": "Beta",
+      "beta_notice": "Este plugin está atualmente em beta. Embora seja considerado seguro para uso, esteja ciente de que sua API pode mudar em versões futuras de forma incompatível com versões anteriores, ou o plugin pode deixar de ter suporte.",
       "copy_type": "Copiar tipo",
       "deprecated": "Descontinuado",
+      "documentation_sections": "Seções da documentação",
       "dynamic": "dinâmico",
       "filter_all": "Todos",
       "filter_properties": "Filtrar propriedades…",
@@ -596,6 +607,8 @@
       "nav_overview": "Visão geral",
       "nav_properties": "Propriedades",
       "non_dynamic": "não dinâmico",
+      "possible_values": "Valores possíveis",
+      "sub_type": "Subtipo",
       "required": "Obrigatório"
     },
     "last execution date": "Data da última execução",
@@ -833,7 +846,7 @@
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
-    "errorLogs": "Logs de erros",
+    "errorLogs": "Logs de erro",
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?"
     },
@@ -841,12 +854,12 @@
     "executions replayed": "<code>{executionCount}</code> execução(ões) reproduzida(s)",
     "executions state changed": "O estado de <code>{executionCount}</code> execução(ões) foi alterado",
     "executions resumed": "<code>{executionCount}</code> execução(ões) retomada(s)",
-    "executions paused": "<code>{executionCount}</code> execução(ões) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> execução(ões) na fila",
-    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",
+    "executions paused": "<code>{executionCount}</code> execução(ões) pausada(s)",
+    "executions unqueue": "<code>{executionCount}</code> execução(ões) não enfileirada(s)",
+    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s)",
     "executions restarted": "<code>{executionCount}</code> execução(ões) reiniciada(s)",
-    "executions killed": "<code>{executionCount}</code> execução(ões) morta(s)",
-    "executions deleted": "<code>{executionCount}</code> execução(ões) deletada(s)",
+    "executions killed": "<code>{executionCount}</code> execução(ões) encerrada(s)",
+    "executions deleted": "<code>{executionCount}</code> execução(ões) excluída(s)",
     "invalid bulk replay": "Não foi possível reproduzir execuções",
     "invalid bulk resume": "Não foi possível retomar execuções",
     "invalid bulk pause": "Não foi possível pausar as execuções",
@@ -870,6 +883,7 @@
     "enable": "Ativar",
     "enabled": "Ativado",
     "flow delete": "Tem certeza de que deseja excluir <code>{flowCount}</code> flow(s)?",
+    "delete flow error": "Não foi possível excluir o flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flow disable": "Tem certeza de que deseja desativar <code>{flowCount}</code> flow(s)?",
     "flow enable": "Tem certeza de que deseja ativar <code>{flowCount}</code> flow(s)?",
@@ -943,7 +957,7 @@
     "join_slack": "Participar do Slack",
     "kestra": "Kestra",
     "error detected": "Erro(s) detectado(s).",
-    "warning detected": "Aviso(s) detectado(s)",
+    "warning detected": "Aviso(s) detectado(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
     "dependency task": "Task {taskId} é uma dependência de outra task",
@@ -1008,9 +1022,11 @@
         "file_already_exists": "Um arquivo com este nome já existe",
         "file_conflicts_with_folder": "Uma pasta com este nome já existe",
         "file_error": "Ocorreu um erro ao criar o arquivo",
+        "file_success": "Arquivo \"{name}\" criado com sucesso.",
         "folder": "Criar pasta",
         "folder_already_exists": "Uma pasta com este nome já existe",
         "folder_conflicts_with_file": "Um arquivo com este nome já existe",
+        "folder_success": "Pasta \"{name}\" criada com sucesso.",
         "folder_error": "Ocorreu um erro ao criar a pasta"
       },
       "rename": {
@@ -1024,8 +1040,10 @@
       "delete": {
         "label": "Excluir",
         "file": "Excluir arquivo",
+        "file_error": "Não foi possível excluir o arquivo: {name}",
         "folder": "Excluir pasta",
         "files": "Excluir {count} arquivos selecionados",
+        "bulk_success": "Arquivos selecionados excluídos com sucesso.",
         "folders": "Excluir {count} pastas selecionadas"
       },
       "move": {
@@ -1969,6 +1987,7 @@
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"
       },
+      "show_all_statuses": "Mostrar todos os status",
       "quick_filters": {
         "all": "Todos",
         "running": "Em execução",

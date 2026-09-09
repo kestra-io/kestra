@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowBlockedException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowId;
@@ -97,6 +98,9 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                     // Skip the flow: it is blocked by governance and must not run.
                     logBlockedByGovernance(rawFlow, triggerState, e);
                     return null;
+                } catch (FlowProcessingException e) {
+                    disableUnparseable(clock, triggerState, e);
+                    return null;
                 }
 
                 // Validate that the trigger still exists and is enabled before processing. This check covers several cases:
@@ -107,7 +111,7 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 // 2. and 3. can occur if the Flow has been updated but the associated TriggerEvent
                 // has not yet been processed. In these cases, 
                 final String triggerId = triggerState.getTriggerId();
-                Optional<AbstractTrigger> maybeTrigger = flow.getTriggers().stream().filter(it -> it.getId().equals(triggerId)).findFirst();
+                Optional<AbstractTrigger> maybeTrigger = ListUtils.emptyOnNull(flow.getTriggers()).stream().filter(it -> it.getId().equals(triggerId)).findFirst();
                 // Drafts are resolved away by the meta-store (find(revision=null) returns the latest
                 // non-draft revision), so no draft check is needed here — a draft never reaches this point.
                 if (flow.isDisabled() || maybeTrigger.isEmpty() || maybeTrigger.get().isDisabled()) {
@@ -156,6 +160,17 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
         } catch (DateTimeException e) {
             throw new InvalidTriggerConfigurationException();
         }
+    }
+
+    private void disableUnparseable(final Clock clock, final TriggerState triggerState, final FlowProcessingException e) {
+        triggerStateStore.save(triggerState.disabled(clock, true));
+        Logs.logTrigger(
+            triggerState,
+            LOG,
+            Level.WARN,
+            "Disabled: the flow cannot be parsed on this version ({}). Fix the flow and save it to re-enable the trigger.",
+            e.getMessage()
+        );
     }
 
     /**

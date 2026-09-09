@@ -246,6 +246,8 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
 
+`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead. It also fails when a file loses one, because the baseline has to come down with the code. With the repo's git hooks installed (`.github/.hooks/setup_hooks.sh`) the pre-commit hook does that for you through `check:ts-any -- --lock`, which only ever lowers numbers; without hooks, run `npm run check:ts-any -- --write` and commit the smaller numbers.
+
 Then read your own diff for the design-system violations that no linter catches:
 
 ```bash

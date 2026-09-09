@@ -14,6 +14,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -55,7 +56,7 @@ public class TriggerSchedulingLoop implements Runnable {
     private volatile Thread thread;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicReference<State> state = new AtomicReference<>(State.STARTING);
     private volatile CountDownLatch started = new CountDownLatch(1);
     private volatile CountDownLatch stopped = new CountDownLatch(1);
 
@@ -115,8 +116,15 @@ public class TriggerSchedulingLoop implements Runnable {
      **/
     @Override
     public void run() {
-        if (!this.running.compareAndSet(false, true)) {
+        State previous = state.getAndUpdate(current -> current == State.STARTING ? State.RUNNING : current);
+        if (State.RUNNING == previous) {
             throw new IllegalStateException("Already running");
+        }
+        if (State.STARTING != previous) {
+            // stop() already ran: release whoever waits on the latches, and never enter the loop.
+            started.countDown();
+            stopped.countDown();
+            return;
         }
 
         this.thread = Thread.currentThread();
@@ -128,13 +136,13 @@ public class TriggerSchedulingLoop implements Runnable {
         // duration says nothing about whether this loop can keep up.
         boolean coldEvaluation = true;
         try {
-            while (running.get()) {
+            while (isRunning()) {
                 long start = System.nanoTime();
                 try {
                     waitIfPaused();
 
                     // Check if the loop was stopped while being paused
-                    if (!running.get()) {
+                    if (!isRunning()) {
                         continue;
                     }
 
@@ -206,7 +214,7 @@ public class TriggerSchedulingLoop implements Runnable {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     LOG.warn("Interrupted while waiting in scheduling loop. Stopping.");
-                    running.set(false);
+                    state.compareAndSet(State.RUNNING, State.STOPPED);
                 } catch (Exception e) {
                     LOG.error("Error in scheduling loop", e);
                 } finally {
@@ -244,6 +252,7 @@ public class TriggerSchedulingLoop implements Runnable {
     public void prepareForStart() {
         this.started = new CountDownLatch(1);
         this.stopped = new CountDownLatch(1);
+        this.state.set(State.STARTING);
     }
 
     /**
@@ -267,22 +276,34 @@ public class TriggerSchedulingLoop implements Runnable {
      * This method blocks until the current processing loop is completed.
      */
     public void stop() {
-        if (!running.compareAndSet(true, false)) {
+        State previous = state.getAndSet(State.STOPPED);
+
+        if (State.STARTING == previous) {
+            // No thread to interrupt yet: the pending run() will see STOPPED and decline to start.
+            started.countDown();
+            stopped.countDown();
+            return;
+        }
+
+        if (State.RUNNING != previous) {
             LOG.debug("[{}] stop() called but not running", getClass().getSimpleName());
             return;
         }
 
         resume(); // In case it's paused and blocked
 
-        if (this.thread != null) {
-            this.thread.interrupt();
-            try {
-                if (!stopped.await(5, TimeUnit.SECONDS)) {
-                    LOG.warn("Timeout while waiting for {} to complete", this.thread.getName());
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        Thread runner = this.thread;
+        if (runner != null) {
+            runner.interrupt();
+        }
+
+        // Awaited even with no thread to interrupt: the loop exits on the state change, not the interrupt.
+        try {
+            if (!stopped.await(5, TimeUnit.SECONDS)) {
+                LOG.warn("Timeout while waiting for scheduling loop {} to complete", schedulingLoopId);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -292,7 +313,7 @@ public class TriggerSchedulingLoop implements Runnable {
         }
         pauseLock.lock();
         try {
-            while (paused.get() && running.get()) {
+            while (paused.get() && isRunning()) {
                 LOG.info("Paused. Waiting for scheduling loop to resume");
                 unpaused.await(); // Wait until resume() signals
                 LOG.info("Resumed");
@@ -431,7 +452,13 @@ public class TriggerSchedulingLoop implements Runnable {
      * @return {@code true} if running.
      */
     public boolean isRunning() {
-        return this.running.get();
+        return State.RUNNING == state.get();
+    }
+
+    private enum State {
+        STARTING,
+        RUNNING,
+        STOPPED
     }
 
     /**

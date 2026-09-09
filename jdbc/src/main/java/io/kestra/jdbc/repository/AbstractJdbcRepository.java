@@ -451,8 +451,16 @@ public abstract class AbstractJdbcRepository {
             return applyTriggerStateCondition(value, operation);
         }
 
-        if (field.equals(QueryFilter.Field.METADATA)) {
+        if (QueryFilter.Field.METADATA == field) {
             return findMetadataCondition((Map<?, ?>) value, operation);
+        }
+
+        if (QueryFilter.Field.ASSET_STATUS == field) {
+            return assetStatusCondition(value, operation);
+        }
+
+        if (QueryFilter.Field.LEASE_STATUS == field) {
+            return leaseStatusCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.TYPE) {
@@ -605,6 +613,14 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition findMetadataCondition(Map<?, ?> metadata, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition assetStatusCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: ASSET_STATUS");
+    }
+
+    protected Condition leaseStatusCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: LEASE_STATUS");
     }
 
     protected Condition getEnabledCondition(Object value, Op operation) {

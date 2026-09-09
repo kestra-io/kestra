@@ -94,23 +94,61 @@ describe("product tour store", () => {
         expect(store.state.tour.blueprintsNudgeDismissed).toBe(true)
     })
 
-    it("forgets progress that belongs to another instance", async () => {
+    it("forgets progress that belongs to another instance, tenant or variant", async () => {
         const {useProductTourStore} = await import("../../../src/stores/productTour")
         const store = useProductTourStore()
 
-        store.syncInstance("instance-a")
+        store.syncScope("instance-a:main:product_tour")
         store.startGuided()
         store.setStep("webhook_trigger")
         store.skip()
 
-        store.syncInstance("instance-a")
+        store.syncScope("instance-a:main:product_tour")
         expect(store.state.status).toBe("skipped")
         expect(store.state.currentStepId).toBe("webhook_trigger")
 
-        store.syncInstance("instance-b")
+        // Another tenant of the same instance is another scope: same instance is not enough.
+        store.syncScope("instance-a:other:product_tour")
         expect(store.state.status).toBe("not_started")
         expect(store.state.currentStepId).toBe(null)
-        expect(store.state.instanceUuid).toBe("instance-b")
+        expect(store.state.scope).toBe("instance-a:other:product_tour")
+    })
+
+    it("adopts a scope without discarding progress made before there was one", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.startGuided()
+        store.setStep("webhook_trigger")
+
+        store.syncScope("instance-a:main:product_tour")
+
+        expect(store.state.currentStepId).toBe("webhook_trigger")
+        expect(store.state.scope).toBe("instance-a:main:product_tour")
+    })
+
+    it("starts a variant at its own first scene, under its own guide id", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.startGuided({id: "infrastructure_tour", scenes: [{id: "catalog"}, {id: "request_form"}]})
+
+        expect(store.state.guideId).toBe("infrastructure_tour")
+        expect(store.state.currentStepId).toBe("catalog")
+    })
+
+    it("carries variant-owned progress, and keeps it out of the default tour's state", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.startGuided()
+        store.setData({deploymentId: "tour-sandbox"})
+
+        expect(store.state.data.deploymentId).toBe("tour-sandbox")
+        expect(store.state.tour).not.toHaveProperty("deploymentId")
+
+        store.startGuided()
+        expect(store.state.data).toEqual({})
     })
 
     it("restores a tour left in the middle of a scene", async () => {

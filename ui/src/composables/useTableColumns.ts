@@ -8,6 +8,7 @@ export interface ColumnConfig {
     minWidth?: number;
     description?: string;
     condition?: () => boolean;
+    group?: string;
 }
 
 export interface UseTableColumnsOptions {

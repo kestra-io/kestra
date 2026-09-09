@@ -30,6 +30,9 @@
                     <template #extra>
                         <slot name="extra" />
                     </template>
+                    <template v-if="$slots['data-options']" #data-options>
+                        <slot name="data-options" />
+                    </template>
                 </RightFilter>
             </template>
         </div>

@@ -114,7 +114,7 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
-            assertThat(doc.getDefs().size()).isEqualTo(4);
+            assertThat(doc.getDefs().size()).isEqualTo(5);
             assertThat(doc.getDocLicense()).isNull();
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerSelector")).get("type")).isEqualTo("object");
@@ -155,7 +155,7 @@ class ClassPluginDocumentationTest {
             ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
             assertThat(doc.getCls()).isEqualTo("io.kestra.core.models.property.DynamicPropertyExampleTask");
-            assertThat(doc.getDefs()).hasSize(9);
+            assertThat(doc.getDefs()).hasSize(10);
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
             assertThat(properties).hasSize(23);
 

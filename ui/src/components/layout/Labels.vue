@@ -49,7 +49,10 @@
     interface Label {
         key?: string;
         value: string;
+        /** Replaces the displayed value, keeping the `key:` prefix. */
         display?: string;
+        /** Replaces the whole displayed text, `key:` prefix included. */
+        text?: string;
     }
 
     const props = withDefaults(
@@ -76,6 +79,7 @@
     const hiddenLabels = computed(() => (overflows.value ? props.labels.slice(props.max) : []))
 
     const text = (label: Label) => {
+        if (label.text) return label.text
         const value = label.display ?? label.value
         return label.key ? `${label.key}:${value}` : value
     }

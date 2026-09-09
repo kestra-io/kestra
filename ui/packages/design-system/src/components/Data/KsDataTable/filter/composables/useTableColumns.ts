@@ -7,6 +7,7 @@ export interface ColumnConfig {
     default: boolean;
     description?: string;
     condition?: () => boolean;
+    group?: string;
 }
 
 export interface UseTableColumnsOptions {

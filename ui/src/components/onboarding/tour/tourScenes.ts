@@ -31,13 +31,14 @@ const expectState = (execution: any, expected: string, key: string) => {
     }
 }
 
-export interface TourSceneContext {
-    actions: TourActions;
+// Generic over the actions, so a tour variant can bring its own set.
+export interface TourSceneContext<A = TourActions> {
+    actions: A;
     store: ReturnType<typeof useProductTourStore>;
 }
 
-export interface TourScene {
-    /** Also the i18n key suffix: `onboarding.tour.scenes.<id>.*`. */
+export interface TourScene<A = TourActions> {
+    /** Also the i18n key suffix: `<variant i18n prefix>.scenes.<id>.*`. */
     id: string;
     step: number;
     targetSelector?: string;
@@ -47,10 +48,36 @@ export interface TourScene {
     callout?: boolean;
     confetti?: boolean;
     offersExit?: boolean;
-    enter?: (context: TourSceneContext) => Promise<void> | void;
-    action?: (context: TourSceneContext) => Promise<void> | void;
-    completedByUser?: (context: TourSceneContext & {route: TourRoute}) => boolean;
-    poll?: (context: TourSceneContext) => Promise<boolean>;
+    enter?: (context: TourSceneContext<A>) => Promise<void> | void;
+    action?: (context: TourSceneContext<A>) => Promise<void> | void;
+    completedByUser?: (context: TourSceneContext<A> & {route: TourRoute}) => boolean;
+    poll?: (context: TourSceneContext<A>) => Promise<boolean>;
+}
+
+type SceneShape = {id: string; step: number};
+
+export interface TourStepGroup {
+    step: number;
+    scenes: string[];
+}
+
+export const sceneIdsOf = (scenes: readonly SceneShape[]) => scenes.map((scene) => scene.id)
+
+export const stepGroupsOf = (scenes: readonly SceneShape[]): TourStepGroup[] =>
+    scenes.reduce((groups, scene) => {
+        const group = groups.find((candidate) => candidate.step === scene.step)
+        if (group) {
+            group.scenes.push(scene.id)
+        } else {
+            groups.push({step: scene.step, scenes: [scene.id]})
+        }
+        return groups
+    }, [] as TourStepGroup[])
+
+/** Falls back to the first scene, so a renamed or dropped scene id cannot strand the tour. */
+export const sceneIndexOf = (scenes: readonly SceneShape[], id: string | null) => {
+    const index = sceneIdsOf(scenes).indexOf(id ?? "")
+    return index >= 0 ? index : 0
 }
 
 export interface TourRoute {
@@ -314,24 +341,10 @@ export const TOUR_SCENES: TourScene[] = [
     },
 ]
 
-export const TOUR_SCENE_IDS = TOUR_SCENES.map((scene) => scene.id)
+export const TOUR_SCENE_IDS = sceneIdsOf(TOUR_SCENES)
 
 export const TOUR_TOTAL_STEPS = TOUR_SCENES.length
 
-export const TOUR_STEP_GROUPS: {step: number; scenes: string[]}[] = TOUR_SCENES.reduce(
-    (groups, scene) => {
-        const group = groups.find((candidate) => candidate.step === scene.step)
-        if (group) {
-            group.scenes.push(scene.id)
-        } else {
-            groups.push({step: scene.step, scenes: [scene.id]})
-        }
-        return groups
-    },
-    [] as {step: number; scenes: string[]}[],
-)
+export const TOUR_STEP_GROUPS = stepGroupsOf(TOUR_SCENES)
 
-export const tourSceneIndex = (id: string | null) => {
-    const index = TOUR_SCENE_IDS.indexOf(id ?? "")
-    return index >= 0 ? index : 0
-}
+export const tourSceneIndex = (id: string | null) => sceneIndexOf(TOUR_SCENES, id)

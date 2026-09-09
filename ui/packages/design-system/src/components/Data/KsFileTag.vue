@@ -1,6 +1,6 @@
 <template>
     <KsTooltip :content="tooltip">
-        <KsTag :icon="icon" :label="label" truncate />
+        <KsTag :icon="icon" :label="label" truncate class="kel-file-tag" />
     </KsTooltip>
 </template>
 

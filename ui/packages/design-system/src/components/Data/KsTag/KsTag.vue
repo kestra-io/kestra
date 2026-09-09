@@ -155,6 +155,11 @@
             }
         }
 
+          &.kel-file-tag {
+            margin-bottom: 8px;
+        }
+
+
         &.kel-tag--plain {
             --kel-tag-bg-color: var(--ks-bg-tag);
             --kel-tag-text-color: var(--ks-bg-tag);

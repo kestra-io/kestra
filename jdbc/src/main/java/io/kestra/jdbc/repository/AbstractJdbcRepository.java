@@ -459,8 +459,8 @@ public abstract class AbstractJdbcRepository {
             return assetStatusCondition(value, operation);
         }
 
-        if (QueryFilter.Field.LEASE_STATUS == field) {
-            return leaseStatusCondition(value, operation);
+        if (QueryFilter.Field.LEASE_EXPIRY == field) {
+            return leaseExpiryCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.TYPE) {
@@ -619,8 +619,8 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported field: ASSET_STATUS");
     }
 
-    protected Condition leaseStatusCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported field: LEASE_STATUS");
+    protected Condition leaseExpiryCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: LEASE_EXPIRY");
     }
 
     protected Condition getEnabledCondition(Object value, Op operation) {

@@ -223,8 +223,8 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
-        @JsonProperty("leaseStatus")
-        LEASE_STATUS("leaseStatus") {
+        @JsonProperty("leaseExpiry")
+        LEASE_EXPIRY("leaseExpiry") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
@@ -739,7 +739,7 @@ public record QueryFilter(
                     Field.NAMESPACE,
                     Field.METADATA,
                     Field.ASSET_STATUS,
-                    Field.LEASE_STATUS,
+                    Field.LEASE_EXPIRY,
                     Field.UPDATED,
                     Field.LOCKED
                 );

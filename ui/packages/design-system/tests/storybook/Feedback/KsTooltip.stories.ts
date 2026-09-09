@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 import KsTooltip from "../../../src/components/Feedback/KsTooltip.vue"
 
@@ -116,4 +117,36 @@ export const Disabled: Story = {
             </div>
         `,
     }),
+}
+
+/** Long unbroken content (e.g. a storage URI) must wrap within the tooltip max-width. */
+export const LongContent: Story = {
+    render: () => ({
+        components: {KsTooltip, KsButton},
+        setup() {
+            return {
+                content:
+                    "payload.json (kestra://qa/outputs/shell-commands-output-files/executions/3uxOJzMEzl9KgR69PnbnTF/tasks/run-metadata-extraction/2ZH2p7WIZSXxYylAlJyHh3/s7duRWDnVjMKzSYfJrDA-payload.json)",
+            }
+        },
+        template: `
+            <div style="padding:48px">
+                <ks-tooltip :content="content" placement="top">
+                    <ks-button>Hover for long URI</ks-button>
+                </ks-tooltip>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.hover(canvas.getByRole("button"))
+        const tooltip = await waitFor(() => {
+            const el = document.body.querySelector("[role=\"tooltip\"]") as HTMLElement | null
+            expect(el?.textContent ?? "").toContain("kestra://")
+            return el!
+        })
+        expect(tooltip.clientWidth).toBeLessThanOrEqual(320)
+        expect(tooltip.scrollWidth).toBeLessThanOrEqual(tooltip.clientWidth + 1)
+        expect(tooltip.clientHeight).toBeGreaterThan(24)
+    },
 }

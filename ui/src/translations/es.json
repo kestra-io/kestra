@@ -1648,6 +1648,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
+    "scheduleDateInPast": "La fecha de programación debe ser en el futuro",
     "warning": "Advertencia",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "docs": "Documentos",
@@ -1979,6 +1980,9 @@
       "edition": {
         "label": "Editar Dashboard",
         "chart": "Editar este gráfico"
+      },
+      "creation": {
+        "label": "Crear Dashboard"
       },
       "no_description": "Sin descripción",
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",

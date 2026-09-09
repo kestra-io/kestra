@@ -15,10 +15,11 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class ToJsonFilter implements Filter {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final ObjectMapper NULL_KEEPING_MAPPER = JacksonMapper.ofJsonKeepingNullValues();
 
     @Override
     public List<String> getArgumentNames() {
-        return null;
+        return List.of("includeNulls");
     }
 
     @Override
@@ -27,8 +28,10 @@ public class ToJsonFilter implements Filter {
             return "null";
         }
 
+        boolean includeNulls = Boolean.TRUE.equals(args.get("includeNulls"));
+
         try {
-            return MAPPER.writeValueAsString(input);
+            return (includeNulls ? NULL_KEEPING_MAPPER : MAPPER).writeValueAsString(input);
         } catch (JsonProcessingException e) {
             throw new PebbleException(e, "Unable to transform to json value '" + input + "' with type '" + input.getClass().getName() + "'", lineNumber, self.getName());
         }

@@ -111,6 +111,10 @@ public final class JacksonMapper {
         .copy()
         .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
 
+    public static ObjectMapper ofJsonKeepingNullValues() {
+        return NULL_CONTENT_MAPPER;
+    }
+
     /** @see #NULL_CONTENT_MAPPER */
     public static Map<String, Object> toMapKeepingNullValues(Object object) {
         return NULL_CONTENT_MAPPER.convertValue(object, MAP_TYPE_REFERENCE);

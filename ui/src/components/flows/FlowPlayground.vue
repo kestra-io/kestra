@@ -154,7 +154,7 @@
         display: flex;
         flex-direction: column;
         position: relative;
-        color: var(--ks-color-text-secondary);
+        color: var(--ks-text-secondary);
         background-color: var(--ks-bg-surface);
         overflow-y: auto;
     }

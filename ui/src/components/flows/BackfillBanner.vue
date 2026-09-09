@@ -93,8 +93,8 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.625rem 1rem;
-    background: var(--ks-background-card);
-    border-top: 1px dashed var(--ks-border-primary);
+    background: var(--ks-bg-base);
+    border-top: 1px dashed var(--ks-border-default);
 }
 
 .bf-meta {

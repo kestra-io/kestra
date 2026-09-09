@@ -429,19 +429,19 @@
         font-size: var(--ks-font-size-base);
         font-weight: 600;
         margin: 0;
-        color: var(--ks-color-text-primary);
+        color: var(--ks-text-primary);
     }
 }
 .execution-description {
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-color-text-secondary);
+    color: var(--ks-text-secondary);
 }
 
 .section-title {
     font-size: var(--ks-font-size-sm);
     font-weight: 600;
     margin: 20px 0 12px 0;
-    color: var(--ks-color-text-primary);
+    color: var(--ks-text-primary);
 }
 
 .radio-vertical {

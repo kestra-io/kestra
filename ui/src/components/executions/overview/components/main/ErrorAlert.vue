@@ -1,6 +1,6 @@
 <template>
     <div class="error-wrapper">
-        <KsAlert id="error" type="error" :closable="false" @click="expanded = !expanded">
+        <KsAlert id="error" type="error" :closable="false">
             <template #title>
                 <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}</span>
             </template>
@@ -128,7 +128,6 @@
 
     #error {
         overflow: hidden;
-        cursor: pointer;
 
         :deep(.kel-alert__content) {
             min-width: 0;

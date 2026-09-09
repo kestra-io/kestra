@@ -5,7 +5,7 @@
             :key="channel.key"
             role="checkbox"
             layout="column"
-            :selected="recipe.notify[channel.key]"
+            :selected="notify[channel.key]"
             :disabled="!channelAvailability[channel.key]"
             :ariaLabel="channel.label"
             @select="toggleNotify(channel.key)"
@@ -17,7 +17,7 @@
                     </KsIcon>
                 </div>
                 <KsIcon class="check-indicator" aria-hidden="true">
-                    <component :is="recipe.notify[channel.key] ? CheckboxMarked : CheckboxBlankOutline" />
+                    <component :is="notify[channel.key] ? CheckboxMarked : CheckboxBlankOutline" />
                 </KsIcon>
             </div>
             <span class="channel-label">{{ channel.label }}</span>
@@ -28,22 +28,22 @@
 
             <template #config>
                 <KsInput
-                    v-if="channel.key === 'slack' && recipe.triggerType === 'execution'"
-                    v-model="recipe.slackChannel"
+                    v-if="channel.key === 'slack' && triggerType === 'execution'"
+                    v-model="slackChannel"
                     :placeholder="$t('recipe.notify.slack_channel_placeholder')"
                     size="small"
                     data-test="recipe-slack-channel"
                 />
                 <KsInput
                     v-else-if="channel.key === 'teams'"
-                    v-model="recipe.teamsWebhook"
+                    v-model="teamsWebhook"
                     :placeholder="$t('recipe.notify.teams_webhook_placeholder')"
                     size="small"
                     data-test="recipe-teams-webhook"
                 />
                 <KsInput
                     v-else-if="channel.key === 'email'"
-                    v-model="recipe.emailTo"
+                    v-model="emailTo"
                     :placeholder="$t('recipe.notify.email_to_placeholder')"
                     size="small"
                     data-test="recipe-email-to"
@@ -59,7 +59,7 @@
 <script setup lang="ts">
     import {computed, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import type {NotifyChannel, RecipeState} from "../../../composables/useFlowRecipe"
+    import type {NotifyChannel, TriggerType} from "../../../composables/useFlowRecipe"
     import SelectableTile from "./SelectableTile.vue"
 
     import Slack from "vue-material-design-icons/Slack.vue"
@@ -70,10 +70,15 @@
     import CheckboxBlankOutline from "vue-material-design-icons/CheckboxBlankOutline.vue"
 
     defineProps<{
-        recipe: RecipeState
+        notify: Record<NotifyChannel, boolean>
+        triggerType: TriggerType
         channelAvailability: Record<NotifyChannel, boolean>
         toggleNotify: (key: NotifyChannel) => void
     }>()
+
+    const slackChannel = defineModel<string>("slackChannel", {required: true})
+    const teamsWebhook = defineModel<string>("teamsWebhook", {required: true})
+    const emailTo = defineModel<string>("emailTo", {required: true})
 
     const {t} = useI18n()
 

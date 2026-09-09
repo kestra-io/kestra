@@ -8,7 +8,7 @@
     />
     <div class="task-collection" :class="{'task-collection--filled': currentValue.length > 0}">
         <template v-if="componentType">
-            <Wrapper v-for="(item, index) in currentValue" :key="index" class="item-wrapper">
+            <Wrapper v-for="(item, index) in currentValue" :key="rowKey(item)" class="item-wrapper">
                 <template #tasks>
                     <InputText
                         :ref="el => { if (el) keyInputRefs[index] = el }"
@@ -39,7 +39,7 @@
             </Wrapper>
         </template>
         <template v-else>
-            <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
+            <KsRow v-for="(item, index) in currentValue" :key="rowKey(item)" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
                 <KsCol :span="6">
                     <InputText
                         :ref="el => { if (el) keyInputRefs[index] = el }"
@@ -72,6 +72,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, nextTick} from "vue"
+    import {rowKey} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {DeleteOutline} from "../../utils/icons"
 

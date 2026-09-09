@@ -198,7 +198,7 @@
                             </KsButton>
                         </div>
                     </template>
-                    <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="index">
+                    <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="rowKey(tag)">
                         <KsInput class="tag-key" required v-model="tag.key" :placeholder="$t('key')" />
                         <KsInput class="tag-value" required v-model="tag.value" :placeholder="$t('value')" />
                         <KsButton :icon="Delete" @click="removeSecretTag(index)" />
@@ -232,7 +232,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
-    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsPassword, rowKey} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"

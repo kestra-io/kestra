@@ -388,10 +388,12 @@
         const label = (parsedData.value.labels as string[])[dataIndex]
         const column = chartOptions?.column ?? ""
 
-        const raw = (generated.value?.results as Record<string, any>[] | undefined)
-            ?.find((row) => parseValue(row[column]) === label)?.[column]
-        const bucket = moment(raw as moment.MomentInput, moment.ISO_8601, true)
-        if (!bucket.isValid()) return undefined
+        const dates = (generated.value?.results as Record<string, any>[] | undefined)
+            ?.map((row) => moment(row[column] as moment.MomentInput, moment.ISO_8601, true))
+            .filter((date) => date.isValid() && date.format(grouping.value.format) === label) ?? []
+        if (!dates.length) return undefined
+
+        const bucket = moment.min(dates)
 
         return {
             startDate: bucket.toISOString(),

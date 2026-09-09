@@ -83,7 +83,7 @@ dependencies {
         api 'software.amazon.awssdk.crt:aws-crt:0.48.4'
 
         // Other libs
-        api "org.projectlombok:lombok:1.18.46"
+        api "org.projectlombok:lombok:1.18.48"
         api "org.codehaus.janino:janino:3.1.12"
         api "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
         api "org.slf4j:jul-to-slf4j:$slf4jVersion"

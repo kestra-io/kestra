@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.jooq.DSLContext;
+import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import io.micronaut.data.model.Pageable;
@@ -119,6 +121,15 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         return trigger;
     }
 
+    /**
+     * Binds the `value` column the way the repository of the dialect under test does: Postgres stores it as
+     * `jsonb` and rejects a character-varying bind, while H2 and MySQL store it as text. Mirrors what
+     * `PostgresRepository#persistFields` does on the production path.
+     */
+    private static Object jsonValue(DSLContext context, String json) {
+        return context.family() == SQLDialect.POSTGRES ? DSL.val(JdbcJsonbUtils.valueOf(json)) : json;
+    }
+
     private void assertLegacyTriggerPropertyIsRejected(String flowId, Map<String, Object> trigger, String expectedMessage) {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
@@ -126,22 +137,22 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         {
             DSLContext context = DSL.using(configuration);
 
+            String value = JacksonMapper.ofJson().writeValueAsString(
+                Map.of(
+                    "id", flowId,
+                    "tenantId", tenant,
+                    "namespace", "io.kestra.unittest",
+                    "revision", 1,
+                    "deleted", false,
+                    "tasks", List.of(Map.of("id", "log", "type", "io.kestra.plugin.core.log.Log", "message", "hello")),
+                    "triggers", List.of(trigger)
+                )
+            );
+
             context.insertInto(flowRepository.jdbcRepository.getTable())
                 .set(field("key"), tenant + "_io.kestra.unittest_" + flowId)
                 .set(field("source_code"), "id: " + flowId)
-                .set(
-                    field("value"), JacksonMapper.ofJson().writeValueAsString(
-                        Map.of(
-                            "id", flowId,
-                            "tenantId", tenant,
-                            "namespace", "io.kestra.unittest",
-                            "revision", 1,
-                            "deleted", false,
-                            "tasks", List.of(Map.of("id", "log", "type", "io.kestra.plugin.core.log.Log", "message", "hello")),
-                            "triggers", List.of(trigger)
-                        )
-                    )
-                )
+                .set(field("value"), jsonValue(context, value))
                 .execute();
         });
 

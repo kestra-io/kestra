@@ -5,6 +5,7 @@
     "type": "module",
     "packageManager": "npm@11.16.0",
     "engines": {
+        "node": ">=24",
         "npm": ">=11.7.0"
     },
     "workspaces": [

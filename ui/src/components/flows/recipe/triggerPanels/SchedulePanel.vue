@@ -10,7 +10,7 @@
 
         <KsFormItem :label="$t('recipe.schedule.cron')">
             <KsInput
-                v-model="recipe.cron"
+                v-model="cron"
                 class="cron-input"
                 :placeholder="DEFAULT_CRON"
                 data-test="recipe-cron-input"
@@ -20,7 +20,7 @@
 
         <KsFormItem :label="$t('recipe.schedule.timezone')">
             <KsSelect
-                v-model="recipe.timezone"
+                v-model="timezone"
                 filterable
                 clearable
                 :placeholder="$t('recipe.schedule.timezone_placeholder')"
@@ -40,13 +40,11 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import type {RecipeState} from "../../../../composables/useFlowRecipe"
     import {DEFAULT_CRON} from "../../../../utils/recipeToYaml"
     import {timeZones} from "../../../../utils/timeZones"
 
-    const props = defineProps<{
-        recipe: RecipeState
-    }>()
+    const cron = defineModel<string>("cron", {required: true})
+    const timezone = defineModel<string>("timezone")
 
     const {t} = useI18n()
 
@@ -65,14 +63,14 @@
 
     const selectedFrequency = computed({
         get() {
-            for (const [key, cron] of Object.entries(FREQUENCY_CRONS)) {
-                if (props.recipe.cron === cron) return key
+            for (const [key, candidate] of Object.entries(FREQUENCY_CRONS)) {
+                if (cron.value === candidate) return key
             }
             return "custom"
         },
         set(value: string) {
             if (value !== "custom" && FREQUENCY_CRONS[value]) {
-                props.recipe.cron = FREQUENCY_CRONS[value]
+                cron.value = FREQUENCY_CRONS[value]
             }
         },
     })

@@ -75,7 +75,7 @@ finally:
     type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
 `
 
-// Same mock transport NoCode.stories.jsx uses: no real backend runs in
+// Same mock transport NoCode.stories.tsx uses: no real backend runs in
 // Storybook, so `/flow` must resolve to the real flow-schema for the
 // schema-driven task form (params, outputs, pluginDefaults hints) to render.
 const PLUGINS_RESPONSE = [{

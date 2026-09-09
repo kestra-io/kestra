@@ -1,12 +1,28 @@
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {KsForm} from "@kestra-io/design-system";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
-import {flattenInputs, unflattenToForms} from "../../../../src/utils/inputs";
+import {flattenInputs, unflattenToForms, type FlowInput} from "../../../../src/utils/inputs";
+import type {InputMetaData, ValidationEventPayload} from "../../../../src/stores/executions";
+import type {Flow} from "../../../../src/stores/flow";
 import {setMockClient} from "@kestra-io/kestra-sdk"
 
-const meta = {
+declare global {
+    interface Window {
+        __appsWizardPending: () => number
+        __appsWizardFlush: () => void
+    }
+}
+
+type TestableEditor = Element & {__setValueInTests: (value: string) => void}
+
+type SelectedTrigger = InstanceType<typeof InputsForm>["$props"]["selectedTrigger"]
+
+const FLOW = {namespace: "ns1", id: "flowid1"} as Flow
+
+const meta: Meta<typeof InputsForm> = {
     title: "inputs/InputsForm",
     component: InputsForm,
     decorators: [
@@ -22,10 +38,12 @@ const meta = {
 
 export default meta;
 
-const Sut = defineComponent((props) => {
-    const axios = {}
+type Story = StoryObj<typeof InputsForm>;
 
-    axios.post = (uri) => {
+const Sut = defineComponent((props: {inputs: InputMetaData[]}) => {
+    const axios: any = {}
+
+    axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
             return {data: []}
         }
@@ -41,10 +59,10 @@ const Sut = defineComponent((props) => {
 
     setMockClient(axios);
 
-    const values = ref({});
+    const values = ref<Record<string, unknown> | undefined>({});
     return () => (<>
         <KsForm label-position="top" model={values.value}>
-            <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={{namespace: "ns1", id: "flowid1"}}
+            <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={FLOW}
                         onUpdate:modelValue={(value) => values.value = value}
             />
         </KsForm>
@@ -56,25 +74,22 @@ const Sut = defineComponent((props) => {
     props: {"inputs": {type: Array, required: true}}
 });
 
-/**
- * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
- */
-export const InputTypes = {
+export const InputTypes: Story = {
     async play({canvasElement}) {
         const can = within(canvasElement);
-        const popups = within(window.document);
+        const popups = within(window.document.body);
 
         // KsEditor is an async component: the form paints once Monaco's chunk has loaded.
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
             const editor = can.getByTestId("input-form-email").querySelector(".ks-monaco-editor");
             expect(editor).toBeTruthy();
-            return editor;
+            return editor as TestableEditor;
         }, {timeout: 15000, interval: 100});
         // wait for the setup to finish
         await waitFor(() => expect(typeof MonacoEditor.__setValueInTests).toBe("function"));
         MonacoEditor.__setValueInTests("foo@example.com");
         await waitFor(function testEmail() {
-            expect(can.getByTestId("test-content").textContent).to.include("foo@example.com");
+            expect(can.getByTestId("test-content").textContent).toContain("foo@example.com");
         });
 
         const input = await waitFor(() => within(can.getByTestId("input-form-resource_type")).getByRole("combobox"), {timeout: 4000, interval: 500});
@@ -83,7 +98,7 @@ export const InputTypes = {
         await userEvent.click(popups.getByText("Second value"));
 
         await waitFor(function testSelect() {
-            expect(can.getByTestId("test-content").textContent).to.include("Second value");
+            expect(can.getByTestId("test-content").textContent).toContain("Second value");
         });
 
         await userEvent.click(within(can.getByTestId("input-form-resource_type_multi")).getByRole("combobox"));
@@ -94,7 +109,7 @@ export const InputTypes = {
 
         await waitFor(function testMultiSelect() {
             expect(can.getByTestId("test-content").textContent)
-                .to.include("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
+                .toContain("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
         });
 
         await waitFor(function testBooleanField() {
@@ -143,7 +158,7 @@ export const InputTypes = {
                 id: "boolean_field",
                 type: "BOOL",
                 displayName: "Boolean field for required",
-                defaults: true  
+                defaults: true
             }]}
         />;
     }
@@ -151,9 +166,9 @@ export const InputTypes = {
 
 // Wizard harness: the validate mock expands FORM groups to dotted leaves, exactly like the
 // backend, so InputsForm receives the same flat-by-dotted-id metadata it does in production.
-const WizardSut = defineComponent((props) => {
-    const axios = {}
-    axios.post = (uri) => {
+const WizardSut = defineComponent((props: {inputs: FlowInput[]}) => {
+    const axios: any = {}
+    axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
             return {data: []}
         }
@@ -169,11 +184,11 @@ const WizardSut = defineComponent((props) => {
     setMockClient(axios)
 
     const onRecap = ref(false)
-    const values = ref({})
+    const values = ref<Record<string, unknown> | undefined>({})
     return () => (<>
         <ks-form label-position="top">
-            <InputsForm initialInputs={props.inputs} modelValue={values.value} mode="wizard"
-                        flow={{namespace: "ns1", id: "flowid1"}}
+            <InputsForm initialInputs={props.inputs as InputMetaData[]} modelValue={values.value} mode="wizard"
+                        flow={FLOW}
                         onUpdate:modelValue={(value) => values.value = value}
                         onUpdate:onRecap={(value) => onRecap.value = value}
             />
@@ -184,10 +199,7 @@ const WizardSut = defineComponent((props) => {
     props: {"inputs": {type: Array, required: true}}
 });
 
-/**
- * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
- */
-export const Wizard = {
+export const Wizard: Story = {
     async play({canvasElement}) {
         const can = within(canvasElement);
 
@@ -255,24 +267,24 @@ export const Wizard = {
 // from flat dotted leaves + formGroups before handing it to InputsForm — we mirror both here. The
 // validate callback is DEFERRED into a queue the play function releases manually, so we can observe
 // the Next button reading "Loading…" mid-round-trip and prove goNext awaits it.
-const AppsWizardSut = defineComponent((props) => {
+const AppsWizardSut = defineComponent((props: {inputs: FlowInput[]; formGroups: Record<string, {displayName?: string; description?: string}>}) => {
     const initial = unflattenToForms(props.inputs, props.formGroups)
 
-    const queue = []
-    function onValidation(event) {
+    const queue: (() => void)[] = []
+    function onValidation(event: ValidationEventPayload) {
         // hold the callback; the play function releases it via window.__appsWizardFlush()
         queue.push(() => event.callback({
-            inputs: props.inputs.map(x => ({input: x, enabled: true, isDefault: false, errors: []})),
+            inputs: props.inputs.map(x => ({input: x as InputMetaData, enabled: true, isDefault: false, errors: []})),
         }))
     }
     window.__appsWizardPending = () => queue.length
     window.__appsWizardFlush = () => queue.splice(0).forEach(fn => fn())
 
     const onRecap = ref(false)
-    const values = ref({})
+    const values = ref<Record<string, unknown> | undefined>({})
     return () => (<>
         <ks-form label-position="top">
-            <InputsForm initialInputs={initial} modelValue={values.value} mode="wizard"
+            <InputsForm initialInputs={initial as InputMetaData[]} modelValue={values.value} mode="wizard"
                         formGroups={props.formGroups}
                         onValidation={onValidation}
                         onUpdate:modelValue={(value) => values.value = value}
@@ -286,10 +298,7 @@ const AppsWizardSut = defineComponent((props) => {
     props: {inputs: {type: Array, required: true}, formGroups: {type: Object, required: true}},
 });
 
-/**
- * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
- */
-export const AppsWizard = {
+export const AppsWizard: Story = {
     async play({canvasElement}) {
         const can = within(canvasElement);
 
@@ -314,7 +323,7 @@ export const AppsWizard = {
         const editor = await waitFor(() => {
             const e = can.getByTestId("input-form-environment.region").querySelector(".ks-monaco-editor");
             expect(e).toBeTruthy();
-            return e;
+            return e as TestableEditor;
         }, {timeout: 5000, interval: 100});
         await waitFor(() => expect(typeof editor.__setValueInTests).toBe("function"));
         editor.__setValueInTests("eu-west");
@@ -341,10 +350,7 @@ export const AppsWizard = {
     }
 };
 
-/**
- * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
- */
-export const InputSelect = {
+export const InputSelect: Story = {
     async play({canvasElement}) {
         const can = within(canvasElement);
         await waitFor(function testDefaultSelectValue() {
@@ -374,9 +380,9 @@ export const InputSelect = {
 
 // Replay harness: mirrors FlowRun.fillInputsFromExecution — once the form signals ready, every leaf
 // is prefilled from a previous execution's `inputs` through the component's prefillInputValue.
-const PrefillSut = defineComponent((props) => {
-    const axios = {}
-    axios.post = (uri) => {
+const PrefillSut = defineComponent((props: {inputs: InputMetaData[]; executionInputs: Record<string, unknown>}) => {
+    const axios: any = {}
+    axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
             return {data: []}
         }
@@ -386,8 +392,8 @@ const PrefillSut = defineComponent((props) => {
     }
     setMockClient(axios)
 
-    const form = ref(null)
-    const values = ref({})
+    const form = ref<{prefillInputValue: (input: InputMetaData, value: unknown) => void} | null>(null)
+    const values = ref<Record<string, unknown> | undefined>({})
     const onReady = () => {
         for (const input of props.inputs) {
             const value = props.executionInputs[input.id]
@@ -399,7 +405,7 @@ const PrefillSut = defineComponent((props) => {
     return () => (<>
         <KsForm label-position="top" model={values.value}>
             <InputsForm ref={form} initialInputs={props.inputs} modelValue={values.value}
-                        flow={{namespace: "ns1", id: "flowid1"}}
+                        flow={FLOW}
                         onReady={onReady}
                         onUpdate:modelValue={(value) => values.value = value}
             />
@@ -413,10 +419,7 @@ const PrefillSut = defineComponent((props) => {
     }
 });
 
-/**
- * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
- */
-export const PrefillFromExecution = {
+export const PrefillFromExecution: Story = {
     async play({canvasElement}) {
         const can = within(canvasElement);
 
@@ -431,14 +434,14 @@ export const PrefillFromExecution = {
         // ...and the submission payload carries the same selection, JSON-encoded.
         await waitFor(function testMultiSelectSubmitted() {
             expect(can.getByTestId("test-content").textContent)
-                .to.include("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
+                .toContain("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
         });
 
         // A SECRET is never prefilled: execution.inputs holds the serialised EncryptedString, so
         // replaying it would submit "[object Object]" to be re-encrypted as the new secret value.
         expect(can.getByTestId("input-form-api_key")).toHaveValue("");
-        expect(can.getByTestId("test-content").textContent).not.to.include("aes_encrypted");
-        expect(can.getByTestId("test-content").textContent).not.to.include("[object Object]");
+        expect(can.getByTestId("test-content").textContent).not.toContain("aes_encrypted");
+        expect(can.getByTestId("test-content").textContent).not.toContain("[object Object]");
     },
     render() {
         return <PrefillSut
@@ -465,11 +468,11 @@ export const PrefillFromExecution = {
 // Clearing a field submits nothing at all (normalizeInputValues drops empty strings), which is what
 // made the round-trip report the input as un-set and write the default back over the user's edit.
 // Takes the emit("validation") branch so the FormData arrives here directly, no HTTP in the middle.
-const ClearedDefaultSut = defineComponent((props) => {
-    const values = ref({})
+const ClearedDefaultSut = defineComponent((props: {inputId: string; defaults: string}) => {
+    const values = ref<Record<string, unknown> | undefined>({})
     const roundTrips = ref(0)
 
-    function onValidation(event) {
+    function onValidation(event: ValidationEventPayload) {
         roundTrips.value++
         const submitted = event.formData?.get(props.inputId) ?? null
         event.callback({
@@ -512,10 +515,8 @@ const ClearedDefaultSut = defineComponent((props) => {
  * Clearing an input must leave it cleared: the validate round-trip answers `isDefault: true` for a
  * field that submitted nothing, and the resolved default used to land back in it.
  * https://github.com/kestra-io/kestra/issues/17897
- *
- * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
  */
-export const ClearedDefault = {
+export const ClearedDefault: Story = {
     async play({canvasElement}) {
         const can = within(canvasElement);
 
@@ -523,7 +524,7 @@ export const ClearedDefault = {
         const editor = await waitFor(function MonacoEditorReady() {
             const found = can.getByTestId("input-form-mystring").querySelector(".ks-monaco-editor");
             expect(found).toBeTruthy();
-            return found;
+            return found as TestableEditor;
         }, {timeout: 15000, interval: 100});
         await waitFor(() => expect(typeof editor.__setValueInTests).toBe("function"));
 
@@ -531,7 +532,7 @@ export const ClearedDefault = {
 
         // The default is prefilled, and the mount's validate has landed.
         await waitFor(function testDefaultPrefilled() {
-            expect(can.getByTestId("test-content").textContent).to.include("hello");
+            expect(can.getByTestId("test-content").textContent).toContain("hello");
             expect(roundTrips()).toBeGreaterThan(0);
         });
 
@@ -543,7 +544,7 @@ export const ClearedDefault = {
         const beforeTyping = roundTrips();
         editor.__setValueInTests("world");
         await waitFor(function testTypedValueValidated() {
-            expect(can.getByTestId("test-content").textContent).to.include("world");
+            expect(can.getByTestId("test-content").textContent).toContain("world");
             expect(roundTrips()).toBeGreaterThan(beforeTyping);
         }, {timeout: 5000, interval: 50});
 
@@ -561,8 +562,8 @@ export const ClearedDefault = {
         // because the default has not been written yet.
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        expect(can.getByTestId("test-content").textContent).to.include("\"mystring\": \"\"");
-        expect(can.getByTestId("test-content").textContent).not.to.include("hello");
+        expect(can.getByTestId("test-content").textContent).toContain("\"mystring\": \"\"");
+        expect(can.getByTestId("test-content").textContent).not.toContain("hello");
     },
     render() {
         return <ClearedDefaultSut inputId="mystring" defaults="hello" />;
@@ -571,9 +572,9 @@ export const ClearedDefault = {
 
 // The other two paths that seed MULTISELECT state: a trigger's stored inputs (a real array), and a
 // `defaults` value, which crosses the wire JSON-encoded as a string because Property serialises so.
-const StatePathSut = defineComponent((props) => {
-    const axios = {}
-    axios.post = (uri) => {
+const StatePathSut = defineComponent((props: {inputs: InputMetaData[]; selectedTrigger?: SelectedTrigger}) => {
+    const axios: any = {}
+    axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
             return {data: []}
         }
@@ -588,12 +589,12 @@ const StatePathSut = defineComponent((props) => {
     }
     setMockClient(axios)
 
-    const values = ref({})
+    const values = ref<Record<string, unknown> | undefined>({})
     return () => (<>
         <KsForm label-position="top" model={values.value}>
             <InputsForm initialInputs={props.inputs} modelValue={values.value}
                         selectedTrigger={props.selectedTrigger}
-                        flow={{namespace: "ns1", id: "flowid1"}}
+                        flow={FLOW}
                         onUpdate:modelValue={(value) => values.value = value}
             />
         </KsForm>
@@ -606,10 +607,7 @@ const StatePathSut = defineComponent((props) => {
     }
 });
 
-/**
- * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
- */
-export const MultiSelectStateSources = {
+export const MultiSelectStateSources: Story = {
     async play({canvasElement}) {
         const can = within(canvasElement);
 
@@ -622,14 +620,14 @@ export const MultiSelectStateSources = {
         }, {timeout: 5000, interval: 100});
         await waitFor(function testTriggerSubmitted() {
             expect(can.getByTestId("test-content").textContent)
-                .to.include("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
+                .toContain("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
         });
 
         // A string `defaults` is parsed before it reaches the control, so it renders as one option
         // rather than as a single tag reading the raw JSON text.
         const regions = can.getByTestId("input-form-regions");
         expect(regions).toHaveTextContent("eu");
-        expect(regions.textContent).not.to.include("[\"eu\"]");
+        expect(regions.textContent).not.toContain("[\"eu\"]");
     },
     render() {
         return <StatePathSut

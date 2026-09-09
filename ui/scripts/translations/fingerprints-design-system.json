@@ -1,6 +1,8 @@
 {
   "../../packages/design-system/src/components/Data/KsDataTable/KsBulkSelect.locale.ts|ks_bulk_select|all": "be32cb107e5a",
   "../../packages/design-system/src/components/Data/KsDataTable/KsBulkSelect.locale.ts|ks_bulk_select|selected": "894aa5fe9555",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsDataTable.locale.ts|ks_data_table|load_failed": "4123f0f5558a",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsDataTable.locale.ts|ks_data_table|retry": "d8b8392e2c54",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|add": "9fd728c66c9a",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|active key value pairs": "083b0e2a07f2",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|add_advanced_filter": "f71cb7ee1db3",
@@ -282,6 +284,8 @@
   "../../packages/design-system/src/components/Data/KsNoData.locale.ts|ks_no_data|no_results": "ea292be580ff",
   "../../packages/design-system/src/components/Data/KsNoData.locale.ts|ks_no_data|nothing_here": "5af6f0458838",
   "../../packages/design-system/src/components/Data/KsNoData.locale.ts|ks_no_data|will_appear": "c05b4cb8a2fb",
+  "../../packages/design-system/src/components/Feedback/useDiscardGuard.locale.ts|ks_discard_guard|message": "e8515d324597",
+  "../../packages/design-system/src/components/Feedback/useDiscardGuard.locale.ts|ks_discard_guard|title": "d743070540a1",
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|datepicker|custom duration": "37421efc80dd",
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|days": "e08c0aa8f558",
   "../../packages/design-system/src/components/Form/KsDurationPicker.locale.ts|hours": "21e8492938ab",

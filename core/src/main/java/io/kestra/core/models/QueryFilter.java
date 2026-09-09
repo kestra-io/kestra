@@ -216,13 +216,6 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
-        @JsonProperty("assetStatus")
-        ASSET_STATUS("assetStatus") {
-            @Override
-            public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
-            }
-        },
         @JsonProperty("leaseExpiry")
         LEASE_EXPIRY("leaseExpiry") {
             @Override
@@ -738,7 +731,7 @@ public record QueryFilter(
                     Field.TYPE,
                     Field.NAMESPACE,
                     Field.METADATA,
-                    Field.ASSET_STATUS,
+                    Field.STATUS,
                     Field.LEASE_EXPIRY,
                     Field.UPDATED,
                     Field.LOCKED

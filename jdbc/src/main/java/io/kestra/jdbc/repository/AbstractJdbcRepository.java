@@ -455,10 +455,6 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
-        if (QueryFilter.Field.ASSET_STATUS == field) {
-            return assetStatusCondition(value, operation);
-        }
-
         if (QueryFilter.Field.LEASE_EXPIRY == field) {
             return leaseExpiryCondition(value, operation);
         }
@@ -613,10 +609,6 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition findMetadataCondition(Map<?, ?> metadata, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
-    }
-
-    protected Condition assetStatusCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported field: ASSET_STATUS");
     }
 
     protected Condition leaseExpiryCondition(Object value, QueryFilter.Op operation) {

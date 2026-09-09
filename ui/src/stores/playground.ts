@@ -289,6 +289,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             if (hasMissing) {
                 readyToStart.value = true
                 actionOptions.value = {taskId, runDownstreamTasks}
+                executionsStore.flow = flowStore.flow
                 showInputPrompt.value = true
                 return
             }
@@ -302,6 +303,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 readyToStart.value = true
                 if (!customFormData && flowStore.flow && flowStore.flow.inputs?.length) {
                     actionOptions.value = {taskId, runDownstreamTasks}
+                    executionsStore.flow = flowStore.flow
                     showInputPrompt.value = true
                     return
                 }

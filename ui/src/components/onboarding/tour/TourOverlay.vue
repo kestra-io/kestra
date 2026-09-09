@@ -30,33 +30,33 @@
         >
             <template v-if="showIntro">
                 <div class="guide-top">
-                    <span class="guide-step">{{ $t(tk("intro.kicker")) }}</span>
+                    <span class="guide-step">{{ $t(translationKey("intro.kicker")) }}</span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ $t(tk("intro.skip")) }}
+                        {{ $t(translationKey("intro.skip")) }}
                     </KsButton>
                 </div>
 
                 <h3 class="guide-title">
-                    {{ $t(tk("intro.title")) }}
+                    {{ $t(translationKey("intro.title")) }}
                 </h3>
                 <div class="guide-body">
-                    {{ $t(tk("intro.body")) }}
+                    {{ $t(translationKey("intro.body")) }}
                 </div>
 
                 <ul class="guide-plan">
                     <li v-for="group in stepGroups" :key="group.step">
-                        {{ $t(tk(`steps.${group.step}`)) }}
+                        {{ $t(translationKey(`steps.${group.step}`)) }}
                     </li>
                 </ul>
 
                 <p class="guide-note">
-                    {{ $t(tk("intro.note")) }}
+                    {{ $t(translationKey("intro.note")) }}
                 </p>
 
                 <div class="guide-actions">
                     <span class="guide-spacer" />
                     <KsButton type="primary" @click="beginTour">
-                        {{ $t(tk("intro.start")) }}
+                        {{ $t(translationKey("intro.start")) }}
                     </KsButton>
                 </div>
             </template>
@@ -64,11 +64,11 @@
             <template v-else>
                 <div class="guide-top">
                     <span class="guide-step">
-                        {{ $t(tk("step_of"), {current: sceneIndex + 1, total: totalSteps}) }}
-                        <span class="guide-step-name">{{ $t(tk(`steps.${scene.step}`)) }}</span>
+                        {{ $t(translationKey("step_of"), {current: sceneIndex + 1, total: totalSteps}) }}
+                        <span class="guide-step-name">{{ $t(translationKey(`steps.${scene.step}`)) }}</span>
                     </span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ $t(tk("actions.skip")) }}
+                        {{ $t(translationKey("actions.skip")) }}
                     </KsButton>
                 </div>
 
@@ -121,7 +121,7 @@
 
                 <div class="guide-actions">
                     <KsButton v-if="sceneIndex > 0" :disabled="isBusy" @click="back">
-                        {{ $t(tk("actions.back")) }}
+                        {{ $t(translationKey("actions.back")) }}
                     </KsButton>
                     <span class="guide-spacer" />
                     <KsButton
@@ -129,7 +129,7 @@
                         :disabled="isWorking"
                         @click="finishTour"
                     >
-                        {{ $t(tk("actions.finish_now")) }}
+                        {{ $t(translationKey("actions.finish_now")) }}
                     </KsButton>
                     <KsButton
                         type="primary"
@@ -175,7 +175,7 @@
     const {trackOnboarding} = useOnboardingAnalytics({sceneIds, guideId: variant.id})
     const toast = useToast()
 
-    const tk = (suffix: string) => `${variant.i18nPrefix}.${suffix}`
+    const translationKey = (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 
     const consumeStartQuery = async () => {
         if (route.query.tour !== "start") {
@@ -235,7 +235,7 @@
         () => tourStore.isGuidedActive && !tourStore.state.tour.introSeen,
     )
 
-    const sceneKey = (suffix: string) => tk(`scenes.${scene.value.id}.${suffix}`)
+    const sceneKey = (suffix: string) => translationKey(`scenes.${scene.value.id}.${suffix}`)
 
     const isTickFilled = (step: number, tickIndex: number) => {
         if (step < scene.value.step) {
@@ -248,7 +248,7 @@
         return tickIndex <= (group?.scenes.indexOf(scene.value.id) ?? 0)
     }
     const nextLabel = computed(() =>
-        isWorking.value ? t(tk("actions.running")) : t(sceneKey("next")),
+        isWorking.value ? t(translationKey("actions.running")) : t(sceneKey("next")),
     )
 
     const track = (event: OnboardingTourEvent, additional: Record<string, unknown> = {}) => {
@@ -575,7 +575,7 @@
         stopPolling()
         variant.cleanup?.(actions)
         tourStore.skip()
-        toast.success(t(tk("actions.skipped_hint")), t(tk("menu")))
+        toast.success(t(translationKey("actions.skipped_hint")), t(translationKey("menu")))
     }
 
     const finishTour = () => {

@@ -46,7 +46,7 @@ export function useProductTourMenuEntry() {
         visible,
         menuKey: computed(() => (wasSkipped.value ? "menu_resume" : "menu")),
         tourRoute: useTourRoute(),
-        tk: useTourKey(),
+        translationKey: useTourKey(),
         dismiss: () => tourStore.dismissMenuEntry(),
     }
 }
@@ -62,7 +62,7 @@ export function useProductTourNudge() {
     return {
         visible,
         tourRoute: useTourRoute(),
-        tk: useTourKey(),
+        translationKey: useTourKey(),
         dismiss: () => tourStore.dismissBlueprintsNudge(),
     }
 }

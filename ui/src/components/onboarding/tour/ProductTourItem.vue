@@ -3,14 +3,14 @@
         <RouterLink :to="tourRoute" custom v-slot="{href, navigate}">
             <KsSideBarItem
                 class="link"
-                :title="$t(tk(menuKey))"
+                :title="$t(translationKey(menuKey))"
                 :icon="Play"
                 :href="href"
                 @click="navigate"
             />
         </RouterLink>
         <span class="dismiss">
-            <KsIconButton :tooltip="$t(tk('actions.dismiss'))" placement="top" @click="dismiss">
+            <KsIconButton :tooltip="$t(translationKey('actions.dismiss'))" placement="top" @click="dismiss">
                 <Close />
             </KsIconButton>
         </span>
@@ -23,7 +23,7 @@
     import Close from "vue-material-design-icons/Close.vue"
     import {useProductTourMenuEntry} from "./useProductTourEntry"
 
-    const {visible, menuKey, tourRoute, tk, dismiss} = useProductTourMenuEntry()
+    const {visible, menuKey, tourRoute, translationKey, dismiss} = useProductTourMenuEntry()
 </script>
 
 <style scoped lang="scss">

@@ -361,8 +361,6 @@
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
-    import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
     import {useTriggerFilter} from "../filter/configurations"
 
     const triggerFilter = useTriggerFilter()

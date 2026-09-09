@@ -358,8 +358,6 @@
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
-    import {useDiscardGuard} from "../../../composables/useDiscardGuard"
-    import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"

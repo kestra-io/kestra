@@ -249,8 +249,6 @@
     import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations"
     import {useTableColumns} from "@kestra-io/design-system"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
-    import {useTableColumns} from "../../composables/useTableColumns"
 
     const secretsFilter = useSecretsFilter()
 

@@ -27,6 +27,7 @@
                         :autoClose="2000"
                     >
                         <KsButton
+                            :aria-label="$t('toggle_word_wrap')"
                             :icon="Wrap"
                             type="default"
                             @click="wordWrap = !wordWrap"

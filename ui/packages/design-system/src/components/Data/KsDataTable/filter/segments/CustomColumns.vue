@@ -45,6 +45,8 @@
     import type {ColumnConfig} from "../composables/useTableColumns"
     import DraggableTableColumns from "../DraggableTableColumns.vue"
 
+    const SEARCH_THRESHOLD = 12
+
     const props = defineProps<{
         storageKey: string;
         columns: ColumnConfig[];
@@ -61,7 +63,6 @@
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
     const search = ref("")
 
-    const SEARCH_THRESHOLD = 12
     const showSearch = computed(() => props.columns.length > SEARCH_THRESHOLD)
 
     watch(() => props.visibleColumns, (columns) => {

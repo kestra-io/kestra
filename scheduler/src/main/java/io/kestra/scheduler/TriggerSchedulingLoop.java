@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -67,7 +66,7 @@ public class TriggerSchedulingLoop implements Runnable {
 
     private final BlockingQueue<Runnable> internalLoopCallables = new LinkedBlockingQueue<>();
 
-    private final Set<Integer> assignments = new HashSet<>();
+    private volatile Set<Integer> assignments = Set.of();
 
     // Metrics
     private final Timer metricEventLoopTickTimer;
@@ -333,10 +332,7 @@ public class TriggerSchedulingLoop implements Runnable {
     }
 
     public void setAssignments(final Set<Integer> assignments) {
-        this.assignments.clear();
-        if (assignments != null) {
-            this.assignments.addAll(assignments);
-        }
+        this.assignments = assignments == null ? Set.of() : Set.copyOf(assignments);
         this.initialized.set(false);
     }
 

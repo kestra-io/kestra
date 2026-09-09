@@ -231,6 +231,21 @@ class TriggerSchedulingLoopTest {
     }
 
     @Test
+    void shouldKeepAlreadyReturnedAssignmentsUnchangedWhenReassigned() {
+        // GIVEN
+        TriggerSchedulingLoop loop = createLoop();
+        loop.setAssignments(Set.of(1, 2));
+        Set<Integer> snapshot = loop.assignments();
+
+        // WHEN
+        loop.setAssignments(Set.of(3));
+
+        // THEN
+        assertThat(snapshot).containsExactlyInAnyOrder(1, 2);
+        assertThat(loop.assignments()).containsExactly(3);
+    }
+
+    @Test
     void shouldNotStartSchedulingWhenStoppedBeforeTheSubmissionRuns() throws InterruptedException {
         // GIVEN
         TriggerSchedulingLoop loop = createLoop();

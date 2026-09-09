@@ -84,7 +84,7 @@ public class CachedTriggerStateStore implements TriggerStateStore {
      * {@inheritDoc}
      */
     @Override
-    public Optional<TriggerState> findById(TriggerId triggerId) {
+    public Optional<TriggerState> findByIdWithoutAcl(TriggerId triggerId) {
         int vnode = VNodes.computeVNodeFromTrigger(triggerId, schedulerConfiguration.vnodes());
         Cache<String, TriggerState> cache = partitionedCache.get(vnode);
 
@@ -95,7 +95,7 @@ public class CachedTriggerStateStore implements TriggerStateStore {
             }
         }
 
-        Optional<TriggerState> state = delegate.findById(triggerId);
+        Optional<TriggerState> state = delegate.findByIdWithoutAcl(triggerId);
         state.ifPresent(s ->
         {
             partitionedCache

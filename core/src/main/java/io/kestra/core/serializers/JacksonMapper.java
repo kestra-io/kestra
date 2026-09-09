@@ -102,6 +102,28 @@ public final class JacksonMapper {
         return MAPPER.convertValue(object, MAP_TYPE_REFERENCE);
     }
 
+    /**
+     * Keeps null map entries and collection elements ({@code ALWAYS} content inclusion) while still omitting null
+     * bean properties ({@code NON_NULL} value inclusion). The single-argument {@code setDefaultPropertyInclusion}
+     * used by the other mappers sets both, which is why they drop null map entries.
+     */
+    private static final ObjectMapper NULL_CONTENT_MAPPER = MAPPER
+        .copy()
+        .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
+
+    /** @see #NULL_CONTENT_MAPPER */
+    public static Map<String, Object> toMapKeepingNullValues(Object object) {
+        return NULL_CONTENT_MAPPER.convertValue(object, MAP_TYPE_REFERENCE);
+    }
+
+    /** @see #NULL_CONTENT_MAPPER */
+    public static Map<String, Object> toMapKeepingNullValues(Object object, ZoneId zoneId) {
+        return NULL_CONTENT_MAPPER
+            .copy()
+            .setTimeZone(TimeZone.getTimeZone(zoneId.getId()))
+            .convertValue(object, MAP_TYPE_REFERENCE);
+    }
+
     public static <T> T toMap(Object map, Class<T> cls) {
         return MAPPER.convertValue(map, cls);
     }

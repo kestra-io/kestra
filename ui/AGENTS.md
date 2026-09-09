@@ -194,26 +194,25 @@ The general rule: **if you find yourself reaching for `{deep: true}` on a comput
 
 ### Unsaved input in modals (discard guard)
 
-Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. Use the shared `useDiscardGuard` composable — never reimplement the confirm-before-discard logic per modal.
-
-```ts
-// ui/src/composables/useDiscardGuard.ts (import path is relative to your component)
-import {useDiscardGuard} from "../../composables/useDiscardGuard"
-
-// isDirty: true when there is unsaved input worth a prompt
-const {guardedClose} = useDiscardGuard(() => /* isDirty */, {message: t("...")}) // message optional; defaults to "discard changes confirmation"
-const beforeClose = (done: () => void) => guardedClose(() => { reset(); done() })
-```
+Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. `KsDialog` and `KsDrawer` take a `dirty` prop and ask for confirmation themselves; never reimplement the confirm-before-discard logic per modal.
 
 ```vue
-<KsDialog :beforeClose="beforeClose" ... />
-<KsDrawer  :beforeClose="beforeClose" ... />
+<KsDialog v-model="visible" :dirty="isDirty" ... />
+<KsDrawer  v-model="visible" :dirty="isDirty" ... />
 ```
+
+```ts
+// isDirty: true when there is unsaved input worth a prompt, usually a comparison against a snapshot taken on open
+const baseline = ref("")
+const isDirty = computed(() => JSON.stringify(form.value) !== baseline.value)
+```
+
+`dirtyMessage` replaces the default confirmation text when the discarded thing is not a form (`TriggerFlow.vue` uses it for an unsubmitted execution). When the close also has to run cleanup, keep `:beforeClose="(done) => { reset(); done() }"` next to `:dirty`: the confirmation runs first, `beforeClose` only once the user agreed. The composable behind the prop, `useDiscardGuard(isDirty, {message?})` from `@kestra-io/design-system`, stays available for closes that do not go through a `Ks*` container.
 
 Rules:
 - **Guard only *accidental* close paths** — overlay click, `Escape`, the `X`. These all go through `beforeClose`. Explicit **Cancel / Save** buttons set `v-model = false` directly and **must not** be guarded (the user already expressed intent; a prompt there is friction). Note: a programmatic `v-model = false` does **not** trigger `beforeClose` (Element Plus only calls it for user-initiated closes), which is exactly why Cancel/Save bypass it.
 - **`isDirty` is per-modal.** Compare current input against a baseline captured on open (`JSON.stringify` snapshot), or "any meaningful input"; **ignore empty rows** (e.g. a blank label/tag row is not dirty). Reset dirty-relevant state on open so a reopen starts clean.
-- **`KsDialog` and `KsDrawer` both expose a `beforeClose` prop** with signature `(done) => void` — call `done()` to proceed with closing. (Element Plus's `ElDrawer.beforeClose` is a prop, not an event; `KsDrawer` forwards it.)
+- **`KsDialog` and `KsDrawer` both expose `dirty` and a `beforeClose` prop** with signature `(done) => void` — call `done()` to proceed with closing. (Element Plus's `ElDrawer.beforeClose` is a prop, not an event; `KsDrawer` forwards it.)
 - **Don't guard** read-only viewers, action/confirmation dialogs, or ephemeral forms that reset on every open.
 
 ### Icons
@@ -322,8 +321,8 @@ If your `<style>` block needs to exist:
 | Component | Purpose |
 |-----------|---------|
 | `KsAlert` | Alert banner for messages and status feedback |
-| `KsDialog` | Modal dialog (handles focus trap + Escape) |
-| `KsDrawer` | Side drawer / panel |
+| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close |
+| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
 | `KsLoading` (`vKsLoading`) | Loading spinner directive |
@@ -417,7 +416,7 @@ If your `<style>` block needs to exist:
 
 - `useTheme()` — detects and tracks dark / light mode via MutationObserver. Use this instead of reading `document.documentElement` yourself.
 - `useFilters`, `useSavedFilters`, `useDefaultFilter`, `usePreAppliedFilters`, `useRouteFilterPolicy`, `useTableColumns`, `useDataOptions`, `useDragAndDrop`, `usePeriodicRefresh` — data-table filter composables
-- `useDiscardGuard(isDirty, {message?})` — confirm-before-discard for data-entry modals; see "Unsaved input in modals (discard guard)"
+- `useDiscardGuard(isDirty, {message?})` — confirm-before-discard behind the `dirty` prop of `KsDialog` / `KsDrawer`; see "Unsaved input in modals (discard guard)"
 - `useTaskIcon()` — resolves the app-provided task-icon component via `TASK_ICON_INJECTION_KEY` (falling back to a generic placeholder icon). The app provides its own `TaskIcon` component once, at bootstrap (`app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)`) — the design system cannot own that component since it depends on the app's plugin-icon backend API. Used internally by `KsEditor` (Monaco suggestion icons) and the `@kestra-io/topology` package (graph node icons) so both share the same app-provided instance.
 
 ## Design tokens

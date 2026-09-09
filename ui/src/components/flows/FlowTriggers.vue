@@ -254,7 +254,7 @@
         v-model="isBackfillOpen"
         destroyOnClose
         :appendToBody="true"
-        :beforeClose="beforeBackfillClose"
+        :dirty="isBackfillDirty"
         scrollable
         large
     >
@@ -361,7 +361,6 @@
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useTriggerFilter} from "../filter/configurations"
 
     const triggerFilter = useTriggerFilter()
@@ -388,13 +387,12 @@
     // kept out of `backfill` so it never leaks into the submitted payload (cleanBackfill spreads backfill)
     const backfillInputsNoDefault = ref<Record<string, unknown>>({})
 
-    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+    const isBackfillDirty = computed(() => !!(
         backfill.value.start ||
         backfill.value.end ||
         Object.keys(backfillInputsNoDefault.value).length > 0 ||
         backfill.value.labels?.some((label: any) => label.key || label.value)
     ))
-    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
     const triggerId = ref<string | undefined>()
 
     const reloadLogs = ref<number | undefined>()

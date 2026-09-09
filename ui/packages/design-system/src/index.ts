@@ -191,6 +191,7 @@ export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterType
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
+export {useDiscardGuard} from "./composables/useDiscardGuard"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"

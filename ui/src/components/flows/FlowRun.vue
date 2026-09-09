@@ -54,6 +54,7 @@
                         <KsDatePicker
                             v-model="scheduleDate"
                             type="datetime"
+                            :disabledDate="isScheduleDayDisabled"
                         />
                     </KsFormItem>
                     <KsFormItem
@@ -117,6 +118,7 @@
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
+    import {buildScheduleDateParam, isPastScheduleDate, isScheduleDayDisabled} from "../../utils/scheduleDate"
     import moment from "moment-timezone"
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
@@ -261,6 +263,12 @@
         hasInvalidLabelKeys(executionLabels.value),
     )
 
+    const validationClock = ref(Date.now())
+
+    const hasPastScheduleDate = computed(() =>
+        isPastScheduleDate(scheduleDate.value, new Date(validationClock.value)),
+    )
+
     const validationMessages = computed(() => {
         const messages: string[] = []
         if (haveBadLabels.value) {
@@ -272,11 +280,14 @@
         if (haveInvalidLabelKeys.value) {
             messages.push(t("invalid label key"))
         }
+        if (hasPastScheduleDate.value) {
+            messages.push(t("scheduleDateInPast"))
+        }
         return messages
     })
 
     const flowCanBeExecuted = computed(() =>
-        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value),
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value && !hasPastScheduleDate.value),
     )
 
     const isDirty = computed(() =>
@@ -388,6 +399,8 @@
     }
 
     function onSubmit() {
+        validationClock.value = Date.now()
+
         if (form.value && flowCanBeExecuted.value) {
             checks.value = []
             executeClicked.value = false
@@ -432,9 +445,10 @@
                                 // Drafts are playground-only: omit the revision so the backend runs the latest published one.
                                 revision: flow.value.draft ? undefined : flow.value.revision,
                                 labels: labelStrings,
-                                scheduleDate: moment(scheduleDate.value)
-                                    .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-                                    .toISOString(true),
+                                scheduleDate: buildScheduleDateParam(
+                                    scheduleDate.value,
+                                    localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess(),
+                                ),
                                 nextStep: true,
                                 breakpoints: breakpoints.value,
                             })
@@ -448,6 +462,10 @@
             })
         }
     }
+
+    watch(scheduleDate, () => {
+        validationClock.value = Date.now()
+    })
 
     watch(inputs, () => {
         emit("updateInputs", inputs.value)

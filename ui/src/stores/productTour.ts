@@ -39,8 +39,6 @@ interface ProductTourState {
 
 const STORAGE_KEY = "kestra.productTour.state"
 
-const TOUR_START_SCENE = "copilot"
-
 const defaultTourState = (): TourProgress => ({
     namespace: TOUR_NAMESPACE,
     flowId: TOUR_FLOW_ID,
@@ -130,15 +128,15 @@ export const useProductTourStore = defineStore("productTour", () => {
         state.value = defaultState()
     }
 
-    const startGuided = (variant?: {id: string; scenes: {id: string}[]}) => {
+    const startGuided = (variant: {id: string; scenes: {id: string}[]}) => {
         const {menuDismissed, blueprintsNudgeDismissed} = state.value.tour
         state.value = {
             ...defaultState(),
             scope: state.value.scope,
             status: "in_progress",
             mode: "guided",
-            guideId: variant?.id ?? "product_tour",
-            currentStepId: variant?.scenes[0]?.id ?? TOUR_START_SCENE,
+            guideId: variant.id,
+            currentStepId: variant.scenes[0]?.id ?? null,
             startedAt: new Date().toISOString(),
             tour: {...defaultTourState(), menuDismissed, blueprintsNudgeDismissed},
         }

@@ -13,6 +13,8 @@ const installLocalStorage = () => {
     return entries
 }
 
+const TOUR = {id: "product_tour", scenes: [{id: "copilot"}, {id: "flow_generated"}]}
+
 describe("product tour store", () => {
     let persisted: Map<string, string>
 
@@ -30,7 +32,7 @@ describe("product tour store", () => {
         const {useProductTourStore} = await import("../../../src/stores/productTour")
         const store = useProductTourStore()
 
-        store.startGuided()
+        store.startGuided(TOUR)
 
         expect(store.state.status).toBe("in_progress")
         expect(store.state.mode).toBe("guided")
@@ -43,7 +45,7 @@ describe("product tour store", () => {
         const {useProductTourStore} = await import("../../../src/stores/productTour")
         const store = useProductTourStore()
 
-        store.startGuided()
+        store.startGuided(TOUR)
         store.setTourState({webhookKey: "order-events-abc", failedExecutionId: "exec-1"})
 
         expect(store.state.tour.webhookKey).toBe("order-events-abc")
@@ -69,14 +71,14 @@ describe("product tour store", () => {
 
         expect(store.isDismissed).toBe(false)
 
-        store.startGuided()
+        store.startGuided(TOUR)
         expect(store.isDismissed).toBe(false)
 
         store.skip()
         expect(store.isGuidedActive).toBe(false)
         expect(store.isDismissed).toBe(false)
 
-        store.startGuided()
+        store.startGuided(TOUR)
         store.complete()
         expect(store.isDismissed).toBe(true)
     })
@@ -90,7 +92,7 @@ describe("product tour store", () => {
         expect(store.state.tour.blueprintsNudgeDismissed).toBe(true)
         expect(store.isDismissed).toBe(false)
 
-        store.startGuided()
+        store.startGuided(TOUR)
         expect(store.state.tour.blueprintsNudgeDismissed).toBe(true)
     })
 
@@ -99,7 +101,7 @@ describe("product tour store", () => {
         const store = useProductTourStore()
 
         store.syncScope("instance-a:main:product_tour")
-        store.startGuided()
+        store.startGuided(TOUR)
         store.setStep("webhook_trigger")
         store.skip()
 
@@ -118,7 +120,7 @@ describe("product tour store", () => {
         const {useProductTourStore} = await import("../../../src/stores/productTour")
         const store = useProductTourStore()
 
-        store.startGuided()
+        store.startGuided(TOUR)
         store.setStep("webhook_trigger")
 
         store.syncScope("instance-a:main:product_tour")
@@ -141,13 +143,13 @@ describe("product tour store", () => {
         const {useProductTourStore} = await import("../../../src/stores/productTour")
         const store = useProductTourStore()
 
-        store.startGuided()
+        store.startGuided(TOUR)
         store.setData({deploymentId: "tour-sandbox"})
 
         expect(store.state.data.deploymentId).toBe("tour-sandbox")
         expect(store.state.tour).not.toHaveProperty("deploymentId")
 
-        store.startGuided()
+        store.startGuided(TOUR)
         expect(store.state.data).toEqual({})
     })
 
@@ -155,7 +157,7 @@ describe("product tour store", () => {
         const {useProductTourStore} = await import("../../../src/stores/productTour")
         const store = useProductTourStore()
 
-        store.startGuided()
+        store.startGuided(TOUR)
         store.setStep("webhook_trigger")
         store.setTourState({introSeen: true})
 

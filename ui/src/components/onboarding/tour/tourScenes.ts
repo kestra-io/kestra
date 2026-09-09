@@ -12,8 +12,6 @@ import {
     tourFlowSource,
 } from "./tourFlows"
 
-export const TOUR_STEP_GROUP_COUNT = 4
-
 export class TourSceneError extends Error {
     constructor(
         readonly key: string,
@@ -340,11 +338,3 @@ export const TOUR_SCENES: TourScene[] = [
         enter: ({actions}) => actions.openExecutionsList(),
     },
 ]
-
-export const TOUR_SCENE_IDS = sceneIdsOf(TOUR_SCENES)
-
-export const TOUR_TOTAL_STEPS = TOUR_SCENES.length
-
-export const TOUR_STEP_GROUPS = stepGroupsOf(TOUR_SCENES)
-
-export const tourSceneIndex = (id: string | null) => sceneIndexOf(TOUR_SCENES, id)

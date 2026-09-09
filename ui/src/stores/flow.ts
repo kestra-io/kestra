@@ -14,14 +14,20 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import type {FlowWithSource,  AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
+import type {
+    AbstractTrigger,
+    FlowWithSource,
+    PagedResultsFlow,
+    SourceSearchResult,
+    Task as SdkTask,
+} from "@kestra-io/kestra-sdk"
 import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
-import type {KestraRequestOptions} from "../utils/kestraHttp"
+import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
 import {splitValidationErrors} from "../utils/validationErrors"
 
 const textYamlHeader = {
@@ -45,7 +51,7 @@ export interface Input {
     id: string;
     type: InputType;
     required?: boolean;
-    defaults?: any;
+    defaults?: unknown;
 }
 
 export interface FlowValidations {
@@ -67,6 +73,32 @@ export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "task
     tasks?: Task[];
 }
 
+/**
+ * A route query only whose `filters[...]` keys reach the backend as filters, plus the paging and
+ * commit options `findFlows` reads off the same bag.
+ */
+type FlowSearchOptions = Record<string, unknown> & {
+    page?: number;
+    size?: number;
+    sort?: string;
+    /** `false` returns the page without replacing the store's `flows`/`total`. */
+    commit?: boolean;
+    onlyTotal?: boolean;
+}
+
+/** The source-code search query, with `sort` as the single key the store wraps into an array. */
+type SourceSearchOptions =
+    Omit<NonNullable<Parameters<typeof FlowsAPI.searchFlowsBySourceCode>[0]>, "sort"> & {sort?: string}
+
+/**
+ * A flow revision as `listFlowRevisions` returns it: same shape as any flow, except that `revision`
+ * is always filled - it is what the list is keyed on - where `FlowWithSource` leaves it optional.
+ */
+export type FlowRevision = FlowWithSource & {revision: number}
+
+/** `subflows` lists the subflow paths whose own graph is expanded inline. */
+type GraphSubflows = {params?: {subflows?: string | string[]}}
+
 export type FlowSaveOutcome =
     | "saved"
     | "redirect_to_update"
@@ -82,19 +114,19 @@ export function isSuccessfulFlowSaveOutcome(
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
     const flow = ref<Flow>()
-    const search = ref<any[]>()
+    const search = ref<SourceSearchResult[]>()
     const total = ref<number>(0)
     const flowGraph = ref<FlowGraph>()
     const invalidGraph = ref<boolean>(false)
-    const revisions = ref<any[]>()
+    const revisions = ref<FlowRevision[]>()
     const revisionsCount = ref<number>()
     const dependenciesCount = ref<number>()
     const filesSaveAll = ref<(() => Promise<void>) | null>(null)
     const hasDirtyEditorFiles = ref<boolean>(false)
     const flowValidation = ref<FlowValidations>()
     const taskError = ref<string>()
-    const metrics = ref<any[]>()
-    const tasksWithMetrics = ref<any[]>()
+    const metrics = ref<string[]>()
+    const tasksWithMetrics = ref<string[]>()
     const executeFlow = ref<boolean>(false)
     const isCreating = ref<boolean>(false)
     const readonlyToastShown = ref(false)
@@ -107,7 +139,7 @@ export const useFlowStore = defineStore("flow", () => {
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
 
-    const t = (key: string, values?: Record<string, any>) => {
+    const t = (key: string, values?: Record<string, unknown>) => {
         if (!globalI18n.value) {
             return key
         }
@@ -374,9 +406,6 @@ export const useFlowStore = defineStore("flow", () => {
                 params: {
                     subflows: expandedSubflows.value.join(","),
                 },
-                validateStatus: (status: number) => {
-                    return status === 200
-                },
             },
         })
     }
@@ -393,17 +422,19 @@ export const useFlowStore = defineStore("flow", () => {
         return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
     }
 
-    function toFlowSearchParams(options: {[key: string]: any}) {
-        const {sort, onlyTotal: _onlyTotal, commit: _commit, page, size, ...filterKeys} = options
+    function toFlowSearchParams(options: FlowSearchOptions) {
         return {
-            page,
-            size,
-            sort: sort ? [sort] : undefined,
-            filters: routeQueryToQueryFilters(filterKeys),
+            page: options.page,
+            size: options.size,
+            sort: options.sort ? [options.sort] : undefined,
+            filters: routeQueryToQueryFilters(options),
         }
     }
 
-    function findFlows(options: { [key: string]: any }): Promise<any> {
+    /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
+    function findFlows(options: FlowSearchOptions & { onlyTotal: true }): Promise<number>
+    function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow>
+    function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow | number> {
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
@@ -419,10 +450,10 @@ export const useFlowStore = defineStore("flow", () => {
             }
         })
     }
-    function searchFlows(options: { [key: string]: any }) {
+    function searchFlows(options: SourceSearchOptions) {
         const {sort, ...rest} = options
         return FlowsAPI.searchFlowsBySourceCode({...rest, sort: sort ? [sort] : undefined}).then(response => {
-            search.value = response.results as unknown as any[]
+            search.value = response.results
             total.value = response.total ?? 0
 
             return response
@@ -457,9 +488,11 @@ export const useFlowStore = defineStore("flow", () => {
                 allowDeleted: options.allowDeleted,
                 source: true,
             }, requestOptions) as Flow & {exception?: string}
-        } catch (e: any) {
-            if (options.deleted && e.status === 404) {
-                return e.body ?? {}
+        } catch (e) {
+            // A deleted flow answers 404 with a problem document rather than the flow, and the one
+            // caller (subflow-input autocompletion) only reads `inputs`, so an empty flow stands in.
+            if (options.deleted && (e as KestraHttpError).status === 404) {
+                return {} as Flow & {exception?: string}
             }
             throw e
         }
@@ -507,7 +540,7 @@ export const useFlowStore = defineStore("flow", () => {
             .then(data => {
                 return data
             })
-            .catch((e: any) => {
+            .catch((e: KestraHttpError) => {
                 if (e.status === 404) return null
                 throw e
             })
@@ -584,7 +617,7 @@ export const useFlowStore = defineStore("flow", () => {
             const count = Math.max(0, totalNodes - 1)
             dependenciesCount.value = count
             return {
-                ...(!onlyCount ? {data: transformResponse(data as any, options.subtype)} : {}),
+                ...(!onlyCount ? {data: transformResponse(data, options.subtype)} : {}),
                 count,
             }
         })
@@ -623,14 +656,14 @@ function deleteFlowAndDependencies() {
             if (data && data.nodes) {
                 const deps = data.nodes
                     .filter(
-                        (n: any) =>
+                        (n) =>
                             !(
                                 n.namespace === metadataForDelete.namespace &&
                                 n.id === metadataForDelete.id
                             ),
                     )
                     .map(
-                        (n: any) =>
+                        (n) =>
                             "<li>" +
                             n.namespace +
                             ".<code>" +
@@ -671,7 +704,7 @@ function deleteFlowAndDependencies() {
         })
     }
 
-    function loadGraph(options: { flow: Flow, params?: any }): Promise<any> {
+    function loadGraph(options: { flow: Flow, params?: { subflows?: string[] } }): Promise<FlowGraph | undefined> {
         const flowVar = options.flow
         return FlowsAPI.generateFlowGraph({
             namespace: flowVar.namespace,
@@ -681,12 +714,13 @@ function deleteFlowAndDependencies() {
         }).then(data => {
             invalidGraph.value = false
             flowGraph.value = data as unknown as FlowGraph
-            return data
+            return flowGraph.value
         }).catch(() => {
             invalidGraph.value = true
+            return undefined
         })
     }
-    function loadGraphFromSource(options: { flow: string, config?: any }) {
+    function loadGraphFromSource(options: { flow: string, config?: GraphSubflows }) {
         const subflows: string[] | undefined = options.config?.params?.subflows
             ? String(options.config.params.subflows).split(",").filter(Boolean)
             : undefined
@@ -728,7 +762,7 @@ function deleteFlowAndDependencies() {
             })
     }
 
-    function getGraphFromSourceResponse(options: { flow: string, config?: any }) {
+    function getGraphFromSourceResponse(options: { flow: string, config?: GraphSubflows }) {
         const subflows: string[] | undefined = options.config?.params?.subflows
             ? String(options.config.params.subflows).split(",").filter(Boolean)
             : undefined
@@ -740,13 +774,14 @@ function deleteFlowAndDependencies() {
         return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
     }
 
-    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<any[]> {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<FlowRevision[]> {
         return FlowsAPI.listFlowRevisions({namespace: options.namespace, id: options.id}).then(data => {
+            const flowRevisions = data as FlowRevision[]
             if (options.store !== false) {
-                revisions.value = data
+                revisions.value = flowRevisions
             }
             revisionsCount.value = Array.isArray(data) ? data.length : 0
-            return data
+            return flowRevisions
         })
     }
 
@@ -777,7 +812,7 @@ function deleteFlowAndDependencies() {
 
         return FlowsAPI.validateFlows({body: options.flow}, {withCredentials: true})
             .then(results => {
-                const validResults: any = results[0] ?? {}
+                const validResults: FlowValidations = results[0] ?? {}
 
                 const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
 
@@ -794,10 +829,15 @@ function deleteFlowAndDependencies() {
 
     function validateTask(options: { task: string, section: string }) {
         return FlowsAPI.validateTask(
-            {section: options.section as Parameters<typeof FlowsAPI.validateTask>[0]["section"], body: options.task as any},
+            {
+                section: options.section as Parameters<typeof FlowsAPI.validateTask>[0]["section"],
+                // The endpoint takes the task as YAML (see the header below), which the generated
+                // body type - an object schema - cannot express.
+                body: options.task as unknown as Parameters<typeof FlowsAPI.validateTask>[0]["body"],
+            },
             {withCredentials: true, headers: textYamlHeader.headers},
         ).then(result => {
-            taskError.value = (result as any).constraints
+            taskError.value = result.constraints
             return result
         })
     }

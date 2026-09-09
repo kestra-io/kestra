@@ -3,6 +3,7 @@
         v-model="model"
         :width="resolvedWidth"
         :class="{'is-form-layout': formLayout, 'is-fill': fill}"
+        :beforeClose="guardedBeforeClose"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @close="emit('close')"
     >
@@ -26,6 +27,7 @@
     import {ElDialog} from "element-plus"
     import KsScrollbar from "../Basic/KsScrollbar.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     defineOptions({inheritAttrs: false})
 
@@ -47,6 +49,9 @@
         scrollable?: boolean
         top?: string
         beforeClose?: (done: () => void) => void
+        /** Asks for confirmation before an overlay, Escape or X close while true. */
+        dirty?: boolean
+        dirtyMessage?: string
     }>(), {
         title: undefined,
         lockScroll: undefined,
@@ -60,6 +65,8 @@
         scrollable: false,
         top: undefined,
         beforeClose: undefined,
+        dirty: false,
+        dirtyMessage: undefined,
     })
 
     const resolvedWidth = computed(() => props.width ?? (props.large ? "min(750px, 90vw)" : "min(500px, 90vw)"))
@@ -74,7 +81,10 @@
         footer?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout", "fill", "scrollable"])
+    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout", "fill", "scrollable", "beforeClose", "dirty", "dirtyMessage"])
+
+    const {guardedClose} = useDiscardGuard(() => props.dirty, {get message() { return props.dirtyMessage }})
+    const guardedBeforeClose = (done: () => void) => guardedClose(() => (props.beforeClose ? props.beforeClose(done) : done()))
 </script>
 
 <style lang="scss">

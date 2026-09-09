@@ -11,6 +11,8 @@ import {
     isPair,
     isMap,
     isSeq,
+    isScalar,
+    isNode,
     visit,
     type Range,
     type ToStringOptions,
@@ -132,6 +134,13 @@ function transform(value: any): any {
     return value
 }
 
+function scalarKey(pair: Pair<unknown, unknown>): string | undefined {
+    if (isScalar(pair.key)) {
+        return typeof pair.key.value === "string" ? pair.key.value : undefined
+    }
+    return typeof pair.key === "string" ? pair.key : undefined
+}
+
 function getSectionNodeAndDocumentFromSource({source, section}: {
     source: string,
     section: string
@@ -147,12 +156,12 @@ function parseDocumentTyped(source: string) {
 
 function getSectionFromDocument({yamlDoc, section}:
     {
-        yamlDoc: Document<YAMLMap<{ value: string }, Node>>,
+        yamlDoc: Document<YAMLMap<Scalar<string>, Node>>,
         section: string
     }) {
     const sectionNode = yamlDoc.contents?.items?.find(
         (e) => e.key.value === section,
-    ) as { value: YAMLSeq<YAMLMap<{ value: string }, Node>> } | undefined
+    ) as { value: YAMLSeq<YAMLMap<Scalar<string>, Node>> } | undefined
     return sectionNode?.value
 }
 
@@ -160,10 +169,10 @@ function getPathFromId({node, id} : {
     node: Node,
     id: string
 }): (string | number)[] | undefined {
-    if (isSeq<{ value: Node }>(node)) {
+    if (isSeq<Node>(node)) {
         let index = 0
         for (const item of node.items) {
-            if (isMap<{ value: string }, Node>(item)) {
+            if (isMap<Scalar<string>, Node>(item)) {
                 const itemId = item.get("id") as string | undefined
                 if (itemId === id) {
                     return [index]
@@ -178,7 +187,7 @@ function getPathFromId({node, id} : {
         }
     }
 
-    if( isMap<{ value: string }, Node>(node)) {
+    if( isMap<Scalar<string>, Node>(node)) {
         const itemId = node.get("id") as string | undefined
         if (itemId === id) {
             return []
@@ -244,34 +253,38 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
     yamlDoc: Node,
     keyName: string,
     key: string,
-    callback?: (element: YAMLMap<{ value: string }, string | Node>) => any,
+    callback?: (element: YAMLMap<Scalar<string>, string | Node>) => Node | Document,
 }) {
-    function find(element?: Node): Node | void {
+    function find(element?: Node): Node | Document | void {
         if (!element) {
             return
         }
-        if (isMap<{ value: string }, string | Node>(element)) {
+        if (isMap<Scalar<string>, string | Node>(element)) {
             if (element.get("type") !== undefined && key === element.get(keyName)) {
                 return callback ? callback(element) : element
             }
         }
-        if (isSeq<{ value: Node }>(element)
-            || isMap<{ value: string }, Node>(element)) {
+        if (isSeq<Node>(element) || isMap<Scalar<string>, Node>(element)) {
             for (const [itemIndex, item] of element.items.entries()) {
                 const result = isMap(item)
                     ? find(item)
-                    : find(item.value ?? undefined)
+                    : isPair(item)
+                        ? find(item.value ?? undefined)
+                        : undefined
 
-                if (result) {
-                    if (callback) {
-                        if (isMap(element) && isPair<{ value: string }, Node>(item)) {
-                            element.set(item.key, result)
-                        } else {
-                            element.items[itemIndex] = result as any
-                        }
-                    } else if (result) {
-                        return result
-                    }
+                if (!result) {
+                    continue
+                }
+                if (!callback) {
+                    return result
+                }
+                // swapBlocks' callback yields a Document, which only reaches
+                // output because Document stringifies where a node is expected
+                const replacement = result as Node
+                if (isMap(element) && isPair<Scalar<string>, Node>(item)) {
+                    element.set(item.key, replacement)
+                } else {
+                    element.items[itemIndex] = replacement
                 }
             }
         }
@@ -279,15 +292,7 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
 
     const result = find(yamlDoc)
 
-    if (result === undefined) {
-        return undefined
-    }
-
-    if (callback) {
-        return new Document(result)
-    } else {
-        return new Document(result)
-    }
+    return result === undefined ? undefined : new Document(result)
 }
 
 export function extractBlockWithPath({source, path}: {
@@ -304,20 +309,13 @@ export function extractBlockWithPath({source, path}: {
     return new Document(doc).toString(TOSTRING_OPTIONS)
 }
 
-function extractBlockWithPathFromDocument({yamlDoc, path, callback}: {
-    yamlDoc: Document<YAMLMap<{ value: string }, Node>>,
+function extractBlockWithPathFromDocument({yamlDoc, path}: {
+    yamlDoc: Document<YAMLMap<Scalar<string>, Node>>,
     path: string,
-    callback?: (element: YAMLMap<{ value: string }, Node>) => any
 }) {
-    const parsedPath = parsePath(path)
-    const element = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>
+    const element = yamlDoc.getIn(parsePath(path))
     if (element === undefined) {
         return undefined
-    }
-    if (callback) {
-        const replacedEl = callback(element)
-        yamlDoc.setIn(parsedPath, replacedEl)
-        return new Document(replacedEl)
     }
     return new Document(element)
 }
@@ -368,10 +366,11 @@ export function swapBlocks({source, section, key1, key2, keyName}: {
     }
 
     visit(yamlDoc, {
-        Pair(_, pair: any) {
+        Pair(_, pair) {
             if (
-                pair.key.value === "dependsOn" &&
-                pair.value.items.map((e: any) => e.value).includes(key1)
+                scalarKey(pair) === "dependsOn" &&
+                isSeq(pair.value) &&
+                pair.value.items.some((e) => isScalar(e) && e.value === key1)
             ) {
                 throw {
                     message: "dependency task",
@@ -388,8 +387,8 @@ export function swapBlocks({source, section, key1, key2, keyName}: {
 }
 
 function getNodeIndexInParent(
-    yamlDoc: Document<YAMLMap<{ value: string }, Node>>,
-    patentNode: YAMLMap<{ value: string }, Node>,
+    yamlDoc: Document<YAMLMap<Scalar<string>, Node>>,
+    patentNode: YAMLMap<Scalar<string>, Node>,
     parentPath: (string|number)[],
     refPath?: string | number,
     position: "before" | "after" = "after",
@@ -498,7 +497,7 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
             return yamlDoc.contents
         }
         const parentPathWithoutKey = joinPath(segments.slice(0, -1))
-        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>
+        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<Scalar<string>, Node>
         if (!parentNode) {
             const newParentNode = createParentNode(parentPath)
             const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
@@ -514,7 +513,7 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
         return yamlDoc.contents
     } else {
         const parentPathWithoutKey = parentPath.substring(0, parentPath.lastIndexOf("."))
-        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>
+        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<Scalar<string>, Node>
         if (!parentNode) {
             const newParentNode = createParentNode(parentPathWithoutKey)
             const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
@@ -559,7 +558,7 @@ export function insertBlockWithPath({
 
     const parsedPath = parsePath(parentPath)
 
-    const parentNode = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>
+    const parentNode = yamlDoc.getIn(parsedPath) as YAMLMap<Scalar<string>, Node>
 
     if (!parentNode) {
         const newPairNode = createPairNode(lastSegmentKey(parentPath), newPropNode)
@@ -589,8 +588,8 @@ export function deleteBlock({source, section, key, keyName}: {
     }
     const yamlDoc = parseDocumentTyped(source)
     visit(yamlDoc, {
-        Pair(_, pair: any) {
-            if (pair.key.value === section) {
+        Pair(_, pair) {
+            if (scalarKey(pair) === section && isNode(pair.value)) {
                 visit(pair.value, {
                     Map(__, map) {
                         if (map.get(keyName) === key) {
@@ -635,19 +634,16 @@ export function replaceIdAndNamespace(source: string, id: string, namespace: str
 
 export function updateMetadata(source: string, metadata: Record<string, any>) {
     // TODO: check how to keep comments
-    const yamlDoc = parseDocument(source) as any
+    const yamlDoc = parseDocumentTyped(source)
 
-    if (!yamlDoc?.contents?.items) {
+    if (!isMap(yamlDoc.contents)) {
         return source
     }
 
     for (const property in metadata) {
-        if (
-            yamlDoc.contents.items.find((item: any) => item.key.value === property)
-        ) {
-            yamlDoc.contents.items.find(
-                (item: any) => item.key.value === property,
-            ).value = metadata[property]
+        const existing = yamlDoc.contents.items.find((item) => scalarKey(item) === property)
+        if (existing) {
+            existing.value = metadata[property]
         } else {
             yamlDoc.contents.items.push(
                 new Pair(new Scalar(property), metadata[property]),
@@ -697,24 +693,18 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
     }
     const updatedItems: Pair<Scalar<string>, Node>[] = []
     for (const prop of ORDERED_FLOW_ROOT_KEYS) {
-        const item = yamlDoc.contents?.items.find(
-            (e: any) => (e.key.value ?? e.key) === prop,
-        )
+        const item = yamlDoc.contents?.items.find((e) => scalarKey(e) === prop)
         if (item?.value && isItemTruthy(item.value)) {
             updatedItems.push(item)
-            if(isSeq(item.value)) {
+            if(isSeq<Node>(item.value)) {
                 if (!item.key.commentBefore) {
                     item.key.spaceBefore = true
                 }
-                item.value.items.forEach((seqItem: any, index: number) => {
+                item.value.items.forEach((seqItem, index) => {
                     if(index === 0) {
                         return
                     }
-                    if (seqItem.commentBefore) {
-                        seqItem.commentBefore.spaceBefore = true
-                    } else {
-                        seqItem.spaceBefore = true
-                    }
+                    seqItem.spaceBefore = true
                 })
 
             }
@@ -725,31 +715,36 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
 }
 
 export function getMetadata(source: string): Record<string, any> {
-    const yamlDoc = parseDocument(source) as any
-    if(!yamlDoc.contents?.items) return {}
+    const contents = parseDocumentTyped(source).contents
+    if (!isMap(contents)) return {}
     const metadata: Record<string, any> = {}
 
-    for (const item of yamlDoc.contents.items) {
-        if (!FLOW_SECTION_KEYS.includes(item.key.value)) {
-            metadata[item.key.value] =
-                isMap(item.value) || isSeq(item.value)
-                    ? item.value.toJSON()
-                    : item.value.value
+    for (const item of contents.items) {
+        const key = scalarKey(item)
+        if (key === undefined || (FLOW_SECTION_KEYS as readonly string[]).includes(key)) {
+            continue
         }
+        metadata[key] =
+            isMap(item.value) || isSeq(item.value)
+                ? item.value.toJSON()
+                : isScalar(item.value)
+                    ? item.value.value
+                    : undefined
     }
     return metadata
 }
 
-export function deleteMetadata(source: any, metadata: any) {
-    const yamlDoc = parseDocument(source) as any
+export function deleteMetadata(source: string, metadata: string) {
+    const yamlDoc = parseDocumentTyped(source)
 
-    if (!yamlDoc.contents.items) {
+    if (!isMap(yamlDoc.contents)) {
         return source
     }
 
-    const item = yamlDoc.contents.items.find((e: any) => e.key.value === metadata)
+    const items = yamlDoc.contents.items
+    const item = items.find((e) => scalarKey(e) === metadata)
     if (item) {
-        yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(item), 1)
+        items.splice(items.indexOf(item), 1)
     }
 
     return yamlDoc.toString(TOSTRING_OPTIONS)
@@ -799,45 +794,45 @@ export function isParentChildrenRelation({source, sections, key1, key2, keyName}
     )
 }
 
+export type FieldMatch<T extends string> = Record<T, any> & {range: Range}
+
+function pathOfPairs(ancestry: readonly (Document | Node | Pair)[]): string {
+    return ancestry
+        .filter((node) => isPair(node))
+        .map((node) => scalarKey(node) ?? "")
+        .join(".")
+}
+
 export function extractFieldFromMaps<T extends string>(
     source: string,
     fieldName: T,
-    parentPathPredicate = (_: any, __?: any) => true,
-    valuePredicate = (_: any) => true,
+    parentPathPredicate: (path: string) => boolean = () => true,
+    valuePredicate: (value: unknown) => boolean = () => true,
     keepEmptyFields: boolean = false,
-): (Record<T, any> & {range: Range})[] {
-    const yamlDoc = parseDocument(source) as any
-    const maps: any[] = []
+): FieldMatch<T>[] {
+    const yamlDoc = parseDocumentTyped(source)
+    const maps: FieldMatch<T>[] = []
     visit(yamlDoc, {
         Map(_, map, parent) {
-            if (
-                parentPathPredicate(
-                    parent
-                        .filter((p) => isPair(p))
-                        .map((p: any) => p?.key?.value)
-                        .join("."),
-                ) &&
-                map.items
-            ) {
-                let matched = false
-                for (const item of map.items as any[]) {
-                    if (item?.key?.value === fieldName) {
-                        const fieldValue = item?.value?.value ?? item.value?.items
-                        if (valuePredicate(fieldValue)) {
-                            maps.push({
-                                [fieldName]: fieldValue,
-                                range: map.range,
-                            })
-                            matched = true
-                        }
-                    }
+            if (!map.range || !parentPathPredicate(pathOfPairs(parent))) {
+                return
+            }
+            let matched = false
+            for (const item of map.items) {
+                if (scalarKey(item) !== fieldName) {
+                    continue
                 }
-                if (!matched && keepEmptyFields) {
-                    maps.push({
-                        [fieldName]: undefined,
-                        range: map.range,
-                    })
+                const value = item.value
+                const fieldValue =
+                    (isScalar(value) ? value.value : undefined) ??
+                    (isSeq(value) || isMap(value) ? value.items : undefined)
+                if (valuePredicate(fieldValue)) {
+                    maps.push({[fieldName]: fieldValue, range: map.range} as FieldMatch<T>)
+                    matched = true
                 }
+            }
+            if (!matched && keepEmptyFields) {
+                maps.push({[fieldName]: undefined, range: map.range} as FieldMatch<T>)
             }
         },
     })
@@ -862,17 +857,19 @@ export interface FlowSourceData {
 }
 
 export function extractTypedBlocksWithMeta(source: string): FlowSourceData {
-    const yamlDoc = parseDocument(source) as any
+    const yamlDoc = parseDocumentTyped(source)
     const blocks: TypedBlock[] = []
     visit(yamlDoc, {
-        Map(_, map: any, parents) {
-            const type = map.items?.find((item: any) => item?.key?.value === "type")?.value?.value
+        Map(_, map, parents) {
+            const typeNode = map.items.find((item) => scalarKey(item) === "type")?.value
+            const type = isScalar(typeNode) ? typeNode.value : undefined
             if (typeof type === "string" && map.range) {
-                const path = parents
-                    .filter((parent) => isPair(parent))
-                    .map((parent: any) => parent?.key?.value)
-                    .join(".")
-                blocks.push({type, value: map.toJSON(), range: map.range, path})
+                blocks.push({
+                    type,
+                    value: map.toJSON(),
+                    range: map.range,
+                    path: pathOfPairs(parents),
+                })
             }
         },
     })
@@ -895,7 +892,7 @@ function extractAllTypes(source: string, validTypes: string[] = []){
 export function getTypeAtPosition(
     source: string,
     position: { lineNumber: number; column: number },
-    validTypes: any,
+    validTypes: string[],
 ) {
     const types = extractAllTypes(source, validTypes)
 
@@ -996,12 +993,12 @@ export type YamlElement = {
     range?: [number, number, number];
 };
 
-export function localizeElementAtIndex(source: string, indexInSource: number): YamlElement {
+export function localizeElementAtIndex(source: string, indexInSource: number): YamlElement | undefined {
     const tillCursor = source.substring(0, indexInSource)
 
-    const indentAndYamlKey: any = extractIndentAndMaybeYamlKey(tillCursor)
-    let {yamlKey} = indentAndYamlKey
-    const {indent} = indentAndYamlKey
+    const indentAndYamlKey = extractIndentAndMaybeYamlKey(tillCursor)
+    let yamlKey = indentAndYamlKey?.yamlKey
+    const indent = indentAndYamlKey?.indent ?? 0
     let valueStartIndex
     if (yamlKey === undefined) {
         const parentKeyExtract = getParentKeyByChildIndent(
@@ -1015,51 +1012,63 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
             tillCursor.lastIndexOf(yamlKey + ":") + yamlKey.length + 1
     }
 
-    const yamlDoc = parseDocument(source) as any
-    const elements: any = []
+    if (yamlKey === undefined || valueStartIndex === undefined) {
+        return undefined
+    }
+
+    const yamlDoc = parseDocumentTyped(source)
+    const elements: Required<YamlElement>[] = []
 
     visit(yamlDoc, {
-        Pair(_: any, pair: any, parents: readonly any[]) {
-            if (pair.value?.range !== undefined && pair.key.value === yamlKey) {
-                const beforeElement = source.substring(0, pair.value.range[0])
-                elements.push({
-                    parents: parents
-                        .filter((p) => isMap(p))
-                        .map((p) => p.toJS(yamlDoc)),
-                    key: pair.key.value,
-                    value: pair.value.toJS(yamlDoc),
-                    range: [
-                        pair.value.range[0] -
-                        (beforeElement.length -
-                            beforeElement.replace(/\s*$/g, "").length),
-                        ...pair.value.range.slice(1),
-                    ],
-                })
+        Pair(_, pair, parents) {
+            const value = pair.value
+            if (!isNode(value) || !value.range || scalarKey(pair) !== yamlKey) {
+                return
             }
+            const range = value.range
+            const beforeElement = source.substring(0, range[0])
+            elements.push({
+                parents: parents
+                    .filter((p) => isMap(p))
+                    .map((p) => p.toJS(yamlDoc)),
+                key: yamlKey,
+                value: value.toJS(yamlDoc),
+                range: [
+                    range[0] -
+                    (beforeElement.length -
+                        beforeElement.replace(/\s*$/g, "").length),
+                    range[1],
+                    range[2],
+                ],
+            })
         },
     })
 
     const filter = elements.filter(
-        (map: any) =>
-            map.range[0] <= valueStartIndex && valueStartIndex <= map.range[2],
+        (element) =>
+            element.range[0] <= valueStartIndex && valueStartIndex <= element.range[2],
     )
-    return filter.sort((a: any, b: any) => b.range[0] - a.range[0])?.[0]
+    return filter.sort((a, b) => b.range[0] - a.range[0])?.[0]
+}
+
+function chartItemsOf(map: YAMLMap<unknown, unknown>): Node[] {
+    const items: Node[] = []
+    for (const item of map.items) {
+        if (scalarKey(item) === "charts" && isSeq<Node>(item.value)) {
+            items.push(...item.value.items)
+        }
+    }
+    return items
 }
 
 export function getAllCharts(source: string) {
-    const yamlDoc = parseDocument(source) as any
+    const yamlDoc = parseDocumentTyped(source)
     const charts: string[] = []
 
     visit(yamlDoc, {
         Map(_, map) {
-            if (map.items) {
-                for (const item of map.items as any[]) {
-                    if (item?.key?.value === "charts" && item?.value?.items) {
-                        for (const chartItem of item.value.items) {
-                            charts.push(chartItem.toJSON())
-                        }
-                    }
-                }
+            for (const chartItem of chartItemsOf(map)) {
+                charts.push(chartItem.toJSON())
             }
         },
     })
@@ -1068,30 +1077,20 @@ export function getAllCharts(source: string) {
 }
 
 export function getChartAtPosition(source: string, position: { lineNumber: number; column: number }) {
-    const yamlDoc = parseDocument(source) as any
+    const yamlDoc = parseDocumentTyped(source)
     const lineCounter = new LineCounter()
     parseDocument(source, {lineCounter})
     const cursorIndex =
         lineCounter.lineStarts[position.lineNumber - 1] + position.column
 
-    let chart: any
+    let chart: Node | undefined
     visit(yamlDoc, {
         Map(_, map) {
-            if (map.items) {
-                for (const item of map.items as any[]) {
-                    if (item?.key?.value === "charts") {
-                        if (item?.value?.items) {
-                            for (const chartItem of item.value.items) {
-                                if (
-                                    chartItem.range[0] <= cursorIndex &&
-                                    chartItem.range[1] >= cursorIndex
-                                ) {
-                                    chart = chartItem
-                                    return visit.BREAK
-                                }
-                            }
-                        }
-                    }
+            for (const chartItem of chartItemsOf(map)) {
+                const range = chartItem.range
+                if (range && range[0] <= cursorIndex && range[1] >= cursorIndex) {
+                    chart = chartItem
+                    return visit.BREAK
                 }
             }
         },
@@ -1104,30 +1103,28 @@ export function getTasksLines(
     source: string,
 ):Record<string, {start: number, end: number}> {
     const paddedSource = source + "\n"
-    const yamlDoc = parseDocument(paddedSource) as any
+    const yamlDoc = parseDocumentTyped(paddedSource)
     const lineCounter = new LineCounter()
     parseDocument(paddedSource, {lineCounter})
 
     let tasksLines: Record<string, {start: number, end: number}> = {}
     visit(yamlDoc, {
         Map(_, map) {
-            if (map.items) {
-                for (const item of map.items as any[]) {
-                    if (item?.key?.value === "tasks") { // visit only root tasks block for now
-                        if (item?.value?.items) {
-                            for (const task of item.value.items) {
-                                if(isMap(task)){
-                                    const foundChilTasksLines = getTasksAndFlowableLines(lineCounter, task)
-                                    tasksLines = {
-                                        ...tasksLines,
-                                        ...foundChilTasksLines,
-                                    }
-                                }
+            for (const item of map.items) {
+                if (scalarKey(item) !== "tasks") { // visit only root tasks block for now
+                    continue
+                }
+                if (isSeq(item.value)) {
+                    for (const task of item.value.items) {
+                        if (isMap(task)) {
+                            tasksLines = {
+                                ...tasksLines,
+                                ...getTasksAndFlowableLines(lineCounter, task),
                             }
                         }
-                        return visit.BREAK
                     }
                 }
+                return visit.BREAK
             }
         },
     })

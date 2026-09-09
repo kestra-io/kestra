@@ -1052,6 +1052,24 @@ describe("getMetadata", () => {
     })
 })
 
+describe("updateMetadata", () => {
+    test("keeps a comment that precedes a task", () => {
+        const yaml = `id: flow
+namespace: dev
+tasks:
+  - id: first
+    type: io.kestra.plugin.core.log.Log
+  # keep me
+  - id: second
+    type: io.kestra.plugin.core.log.Log
+`
+        const updated = YamlUtils.updateMetadata(yaml, {description: "updated"})
+
+        expect(updated).toContain("# keep me")
+        expect(updated).toContain("description: updated")
+    })
+})
+
 describe("get lines infos", () => {
     test("get tasks lines", () => {
         const yamlString = `# this count as an empty line

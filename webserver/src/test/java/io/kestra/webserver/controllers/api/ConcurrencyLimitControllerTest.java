@@ -66,5 +66,25 @@ class ConcurrencyLimitControllerTest {
         );
         assertThat(updated).isNotNull();
         assertThat(updated.getRunning()).isEqualTo(99);
+
+        // the flow-scoped GET returns the same record
+        ConcurrencyLimit scoped = client.toBlocking().retrieve(
+            GET("/api/v1/main/concurrency-limit/" + concurrencyLimit.getNamespace() + "/" + concurrencyLimit.getFlowId()),
+            ConcurrencyLimit.class
+        );
+        assertThat(scoped.getNamespace()).isEqualTo(concurrencyLimit.getNamespace());
+        assertThat(scoped.getFlowId()).isEqualTo(concurrencyLimit.getFlowId());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenGettingConcurrencyLimitForUnknownFlow() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                GET("/api/v1/main/concurrency-limit/unknown.namespace/unknown-flow")
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 }

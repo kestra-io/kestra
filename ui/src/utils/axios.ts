@@ -94,7 +94,7 @@ export const createAxios = (
 
     instance.interceptors.response.use(
         (response) => response,
-        async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean, skipAuthErrorHandling?: boolean}}) => {
+        async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean, skipAuthErrorHandling?: boolean, ignoreNotFound?: boolean}}) => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 const coreStore = useCoreStore()
                 coreStore.message = {
@@ -110,8 +110,12 @@ export const createAxios = (
             }
 
             if (errorResponse.response.status === 404) {
-                const coreStore = useCoreStore()
-                coreStore.error = errorResponse.response.status
+                // A caller that treats a missing record as a normal outcome opts out of the
+                // global not-found page and handles the rejection itself.
+                if (errorResponse.config?.ignoreNotFound !== true) {
+                    const coreStore = useCoreStore()
+                    coreStore.error = errorResponse.response.status
+                }
                 return Promise.reject(errorResponse)
             }
 

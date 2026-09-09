@@ -63,19 +63,8 @@
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 
-    // A duration typed by hand or shipped as a `defaultDuration` may use an equivalent spelling of
-    // an option above (P30D for PT720H), which would otherwise render as the raw ISO string.
-    const RELATIVE_DATE_ALIASES: Record<string, string> = {
-        P1D: "PT24H",
-        P2D: "PT48H",
-        P7D: "PT168H",
-        P30D: "PT720H",
-        P365D: "PT8760H",
-    }
-
     const getRelativeDateLabel = (value: string): string => {
-        const normalized = RELATIVE_DATE_ALIASES[value] ?? value
-        const found = RELATIVE_DATE.find((item) => item.value === normalized)
+        const found = RELATIVE_DATE.find((item) => item.value === value)
         return found ? found.label : value
     }
 

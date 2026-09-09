@@ -7,15 +7,12 @@ import {Comparators, type AppliedFilter} from "../../../../src/components/Data/K
 
 const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
 
-const timeRangeChip = (value: string): AppliedFilter => ({
+const timeRangeChip = (value: string) => ({
     id: "f1",
     key: "timeRange",
-    keyLabel: "Time Range",
     comparator: Comparators.EQUALS,
-    comparatorLabel: "is",
     value,
-    valueLabel: value,
-})
+} as AppliedFilter)
 
 const mountChip = (value: string) =>
     mount(FilterChip, {
@@ -24,10 +21,13 @@ const mountChip = (value: string) =>
     })
 
 describe("FilterChip relative date labels", () => {
-    test.each(["PT720H", "P30D"])("labels %s as the last-30-days option rather than the raw duration", (value) => {
+    test.each([
+        ["PT720H", "datepicker.last30days"],
+        ["PT168H", "datepicker.last7days"],
+    ])("labels %s as %s rather than the raw duration", (value, label) => {
         const wrapper = mountChip(value)
 
-        expect(wrapper.text()).toContain("datepicker.last30days")
+        expect(wrapper.text()).toContain(label)
         expect(wrapper.text()).not.toContain(value)
     })
 

@@ -36,6 +36,8 @@ public class TriggerSchedulingLoop implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(TriggerSchedulingLoop.class);
 
     private static final long SCHEDULE_INTERVAL_MILLIS = Duration.ofSeconds(1).toMillis();
+    // Trigger work overrunning the interval has already cost a scheduling slot, so only jitter is tolerated.
+    private static final long MAX_CYCLE_WORK_MILLIS = SCHEDULE_INTERVAL_MILLIS + (SCHEDULE_INTERVAL_MILLIS / 10);
 
     private final int schedulingLoopId;
     private final TriggerScheduler triggerScheduler;
@@ -122,19 +124,13 @@ public class TriggerSchedulingLoop implements Runnable {
         // submission cannot race startup and be silently dropped (see awaitStarted/stop).
         this.started.countDown();
         Instant nextScheduleTime = clock.instant();
-        // Use the monotonic clock to measure the loop period.
-        long tick = System.nanoTime();
+        // An evaluation that follows an initialization re-reads the whole trigger set on a cold path, so its
+        // duration says nothing about whether this loop can keep up.
+        boolean coldEvaluation = true;
         try {
             while (running.get()) {
                 long start = System.nanoTime();
                 try {
-                    long elapsed = (start - tick) / 1_000_000;
-                    if (elapsed > (SCHEDULE_INTERVAL_MILLIS + (SCHEDULE_INTERVAL_MILLIS / 10))) {
-                        // useful for debugging unexpected schedule delay
-                        LOG.warn("Thread starvation or too many triggers to evaluate (elapsed since previous loop {}ms)", elapsed);
-                    }
-                    tick = start;
-
                     waitIfPaused();
 
                     // Check if the loop was stopped while being paused
@@ -155,21 +151,48 @@ public class TriggerSchedulingLoop implements Runnable {
                         continue;
                     }
 
-                    final Instant now = clock.instant();
-
                     if (!initialized.get()) {
-                        triggerScheduler.onStart(clock, now, assignments);
+                        triggerScheduler.onStart(clock, clock.instant(), assignments);
                         initialized.set(true);
+                        // setAssignments() resets `initialized`, so a rebalance goes through here too.
+                        coldEvaluation = true;
                     }
+
+                    // Only the trigger work is measured: a pause, the initialization above and the end-loop
+                    // actions below are not the load this loop is sized for.
+                    long workStart = System.nanoTime();
 
                     // Process all received triggers events for current assignments.
-                    processTriggerEvents();
+                    int processedEvents = processTriggerEvents();
+
+                    // Sampled after the initialization and the event drain, either of which can take seconds:
+                    // this instant is the eligibility cut-off, the schedule date of the executions created from
+                    // it, and the left bound of scheduler.evaluation.loop.duration.
+                    Instant now = clock.instant();
 
                     // Check whether triggers should be scheduled
-                    if (now.isAfter(nextScheduleTime) || now.equals(nextScheduleTime)) {
-                        triggerScheduler.onSchedule(clock, now, assignments);
-                        nextScheduleTime = nextScheduleTime.plusMillis(SCHEDULE_INTERVAL_MILLIS);
+                    int evaluatedTriggers = 0;
+                    boolean evaluated = !now.isBefore(nextScheduleTime);
+                    if (evaluated) {
+                        evaluatedTriggers = triggerScheduler.onSchedule(clock, now, assignments);
+                        // Move to the first slot after `now`: the slots in between are not replayed, since the
+                        // evaluation above already served their triggers, but the one-second grid is kept so
+                        // that the schedule dates never drift.
+                        long slots = (now.toEpochMilli() - nextScheduleTime.toEpochMilli()) / SCHEDULE_INTERVAL_MILLIS + 1;
+                        nextScheduleTime = nextScheduleTime.plusMillis(SCHEDULE_INTERVAL_MILLIS * slots);
                     }
+
+                    long workMillis = (System.nanoTime() - workStart) / 1_000_000;
+                    if (workMillis > MAX_CYCLE_WORK_MILLIS && !coldEvaluation) {
+                        LOG.warn(
+                            "Scheduling loop {} cannot keep up with its trigger load: one cycle spent {}ms processing {} trigger event(s) and evaluating {} trigger(s).",
+                            schedulingLoopId,
+                            workMillis,
+                            processedEvents,
+                            evaluatedTriggers
+                        );
+                    }
+                    coldEvaluation &= !evaluated;
 
                     // Execute end-loop actions
                     doOnEndLoop();

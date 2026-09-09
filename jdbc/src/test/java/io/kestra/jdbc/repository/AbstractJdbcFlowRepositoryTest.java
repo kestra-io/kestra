@@ -95,7 +95,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                     )
                 )
             ),
-            "Unrecognized property \"conditions\" on trigger \"on_foreach\""
+            "Unrecognized property \"conditions\" on trigger \"on_foreach\" (io.kestra.plugin.core.trigger.Flow): "
+                + "trigger conditions were replaced by \"when\" in 2.0 (and by \"dependsOn\" on io.kestra.plugin.core.trigger.Flow) "
+                + "- see the migration guide https://kestra.io/docs/migration-guide/v2.0.0"
         );
     }
 
@@ -104,7 +106,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         assertLegacyTriggerPropertyIsRejected(
             "legacy-trigger-preconditions",
             legacyTrigger("preconditions", Map.of("id", "dep", "flows", List.of(Map.of("namespace", "io.kestra.unittest", "flowId", "dep-foreach")))),
-            "Unrecognized property \"preconditions\" on trigger \"on_foreach\""
+            "Unrecognized property \"preconditions\" on trigger \"on_foreach\" (io.kestra.plugin.core.trigger.Flow): "
+                + "trigger preconditions were replaced by \"dependsOn\" in 2.0 "
+                + "- see the migration guide https://kestra.io/docs/migration-guide/v2.0.0"
         );
     }
 
@@ -160,7 +164,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
         assertThat(flow).isPresent();
         assertThat(flow.get()).isInstanceOf(FlowWithException.class);
-        assertThat(((FlowWithException) flow.get()).getException()).contains(expectedMessage);
+        // exact: the framed message is what the API and the UI show, with no Jackson wrapping around it
+        assertThat(((FlowWithException) flow.get()).getException())
+            .isEqualTo("Flow 'io.kestra.unittest/" + flowId + "': " + expectedMessage);
     }
 
     @Test

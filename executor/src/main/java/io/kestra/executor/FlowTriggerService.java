@@ -39,15 +39,15 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowTriggerService {
-    private static final int MAX_WARNED_CATCH_ALL_TRIGGERS = 1000;
-    private final Set<String> warnedCatchAllTriggers = ConcurrentHashMap.newKeySet();
-
     private final ConditionService conditionService;
     private final RunContextFactory runContextFactory;
     private final FlowService flowService;
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionOutputService executionOutputService;
     private final ExecutionDepthConfiguration executionDepthConfiguration;
+
+    private static final int MAX_WARNED_CATCH_ALL_TRIGGERS = 1000;
+    private final Set<String> warnedCatchAllTriggers = ConcurrentHashMap.newKeySet();
 
     public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore,
         ExecutionOutputService executionOutputService,
@@ -63,7 +63,8 @@ public class FlowTriggerService {
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
         return allFlows
             .filter(flow -> !flow.isDisabled())
-            // a flow that could not be parsed carries no usable trigger: never evaluate one from it
+            // belt and braces: flowTriggers() below already drops it, and a FlowWithException carries no
+            // trigger anyway - but a caller reading this stream should not have to know that
             .filter(flow -> !(flow instanceof FlowWithException))
             // a draft revision is never picked up implicitly: a Flow trigger on a flow whose latest
             // revision is a draft must not fire, like webhooks/schedules/subflows
@@ -73,6 +74,8 @@ public class FlowTriggerService {
     }
 
     public Stream<io.kestra.plugin.core.trigger.Flow> flowTriggers(Flow flow) {
+        // load-bearing: this is the entry point every caller funnels through, and a FlowWithException has no
+        // trigger list at all, so without it the stream below throws on a null getTriggers()
         if (flow instanceof FlowWithException) {
             return Stream.empty();
         }
@@ -95,14 +98,19 @@ public class FlowTriggerService {
      * path still let one through, this at least names the flow in the logs instead of leaving an execution
      * storm unexplained. Save-time validation raises the same shape as a warning
      * ({@code FlowService.warnings}), which this mirrors at runtime.
+     * <p>
+     * At most {@value #MAX_WARNED_CATCH_ALL_TRIGGERS} distinct triggers are ever warned about; beyond that the
+     * warning is dropped rather than tracked.
      */
     private void warnOnceIfCatchAll(Flow flow, io.kestra.plugin.core.trigger.Flow trigger) {
         if (!ListUtils.isEmpty(trigger.getDependsOn()) || (trigger.getWhen() != null && !"true".equals(trigger.getWhen()))) {
             return;
         }
 
-        // bounded: a warning is emitted at most once per flow revision + trigger, and the set is capped so a
-        // long-lived executor cannot grow it without limit
+        // Bounded: at most one warning per flow revision + trigger, and the set stops growing at
+        // MAX_WARNED_CATCH_ALL_TRIGGERS distinct triggers - past that, further catch-all triggers are not
+        // warned about at all, which is the accepted trade for not letting a long-lived executor grow this
+        // set without limit.
         if (warnedCatchAllTriggers.size() < MAX_WARNED_CATCH_ALL_TRIGGERS && warnedCatchAllTriggers.add(flow.uid() + "/" + trigger.getId())) {
             log.warn(
                 "The Flow trigger '{}' of flow '{}' in namespace '{}' (tenant {}, revision {}) has no 'dependsOn' and no 'when': it is evaluated for EVERY execution of EVERY flow. "

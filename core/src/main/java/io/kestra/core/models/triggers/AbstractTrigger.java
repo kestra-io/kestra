@@ -141,7 +141,24 @@ abstract public class AbstractTrigger implements TriggerInterface {
      * runtime exception of another kind would escape those handlers.
      * <p>
      * The trigger is named only when its {@code id} was read before the offending property, which is the order
-     * of both the YAML users write and the stored flow JSON.
+     * of both the YAML users write and the stored flow JSON; otherwise the message says {@code "<unknown>"} and
+     * the caller identifies the trigger from the flow and the property.
+     * <p>
+     * Consequences to know about before touching a trigger class:
+     * <ul>
+     * <li>Jackson consults an any-setter <em>before</em> its unknown-property handling, so neither
+     * {@code @JsonIgnoreProperties(ignoreUnknown = true)} on a trigger nor a mapper's
+     * {@code FAIL_ON_UNKNOWN_PROPERTIES} has any effect on triggers any more. Ignoring a specific property
+     * still works: {@code @JsonIgnoreProperties({"foo"})} names it explicitly, and Jackson drops it before
+     * reaching here.</li>
+     * <li>A trigger deserialized through a builder — {@code @Jacksonized}, or any
+     * {@code @JsonDeserialize(builder = …)} — does not go through this method, which silently re-opens the
+     * hole for that trigger. Do not add one without moving the check into the builder.</li>
+     * <li>A flow authored against a <em>newer</em> plugin version than the one installed (a rollback, or a
+     * pinned version) fails the same way and becomes a {@code FlowWithException}: a property the installed
+     * class does not declare is indistinguishable from a removed one, and failing closed is the safe reading
+     * of both.</li>
+     * </ul>
      */
     @JsonAnySetter
     public void failOnUnknownProperty(String name, Object value) {

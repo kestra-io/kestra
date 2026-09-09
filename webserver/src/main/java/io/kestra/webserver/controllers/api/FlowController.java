@@ -1052,10 +1052,14 @@ public class FlowController {
      * Re-saves the flow with `disabled` injected into its source.
      * <p>
      * The save re-validates the source, so a stored flow the current model can no longer parse — a 1.x flow
-     * whose trigger still carries the removed `conditions`/`preconditions`, say — cannot be disabled. That is
-     * reported as the validation failure it is (422 with the violations, like {@code PUT /flows}) rather than
-     * as a 500: {@code flowService.update} wraps violations in a {@link FlowProcessingException}, which maps
-     * to an internal error.
+     * whose trigger still carries the removed `conditions`/`preconditions`, say — cannot be disabled, and the
+     * caller gets its constraint violations as a 422, like {@code PUT /flows}. That is what the unwrapping
+     * below is for: {@code flowService.update} reports them inside a {@link FlowProcessingException}, which is
+     * mapped to an internal error. {@code parseFlowSource} sits outside the try on purpose — it raises a
+     * {@code ConstraintViolationException} directly, which is already a 422.
+     * <p>
+     * Bulk disable still aborts on the first failing flow, leaving the flows processed before it disabled: the
+     * response carries a count, not a per-flow outcome, so partial success cannot be reported as things stand.
      */
     private void setFlowDisabled(FlowWithSource flow, boolean disable) throws FlowProcessingException, QueueException {
         GenericFlow genericFlowUpdated = parseFlowSource(FlowService.injectDisabled(flow.getSource(), disable));

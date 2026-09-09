@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.kestra.core.exceptions.UnknownPropertyException;
 import io.kestra.core.serializers.JacksonMapper;
 
 import lombok.EqualsAndHashCode;
@@ -32,7 +33,7 @@ public class FlowWithException extends FlowWithSource {
             .revision(flow.getRevision())
             .deleted(flow.isDeleted())
             .disabled(flow.isDisabled())
-            .exception(exception.getMessage())
+            .exception(exceptionMessage(flow.getNamespace(), flow.getId(), exception))
             .tasks(List.of())
             // an execution is still created for a blocked flow and then failed, so it must keep carrying these:
             // dropping them leaves label-based filtering, notifications and SLA alerting blind to the failure
@@ -56,6 +57,8 @@ public class FlowWithException extends FlowWithSource {
 
     public static Optional<FlowWithException> from(JsonNode jsonNode, Exception exception) {
         if (jsonNode.hasNonNull("id") && jsonNode.hasNonNull("namespace")) {
+            final String id = jsonNode.get("id").asText();
+            final String namespace = jsonNode.get("namespace").asText();
 
             final String tenantId;
             if (jsonNode.hasNonNull("tenant_id")) {
@@ -69,13 +72,13 @@ public class FlowWithException extends FlowWithSource {
             }
 
             var flow = FlowWithException.builder()
-                .id(jsonNode.get("id").asText())
+                .id(id)
                 .tenantId(tenantId)
-                .namespace(jsonNode.get("namespace").asText())
+                .namespace(namespace)
                 .revision(jsonNode.hasNonNull("revision") ? jsonNode.get("revision").asInt() : 1)
                 .deleted(jsonNode.hasNonNull("deleted") && jsonNode.get("deleted").asBoolean())
                 .disabled(jsonNode.hasNonNull("disabled") && jsonNode.get("disabled").asBoolean())
-                .exception(exception.getMessage())
+                .exception(exceptionMessage(namespace, id, exception))
                 .tasks(List.of())
                 .source(jsonNode.hasNonNull("source") ? jsonNode.get("source").asText() : null)
                 .build();
@@ -84,6 +87,28 @@ public class FlowWithException extends FlowWithSource {
 
         // if there is no id and namespace, we return null as we cannot create a meaningful FlowWithException
         return Optional.empty();
+    }
+
+    /**
+     * The message shown for this flow by the API and the UI.
+     * <p>
+     * A model that frames its own error — see {@link io.kestra.core.models.triggers.AbstractTrigger} rejecting
+     * a property it does not declare — has that message buried under Jackson's wrapping
+     * ({@code Problem deserializing "any-property" … (through reference chain …)}). The framed message is what
+     * tells the user what to change, so it is used instead, prefixed with the flow it belongs to since this
+     * text also travels to logs and execution failures where the flow is not otherwise named.
+     */
+    private static String exceptionMessage(String namespace, String id, Exception exception) {
+        // bounded: a cause chain this deep is a bug, and this must never loop on a self-referencing cause
+        Throwable cause = exception;
+        for (int depth = 0; cause != null && depth < 10; depth++) {
+            if (cause instanceof UnknownPropertyException unknownProperty) {
+                return "Flow '" + namespace + "/" + id + "': " + unknownProperty.getMessage();
+            }
+            cause = cause.getCause() == cause ? null : cause.getCause();
+        }
+
+        return exception.getMessage();
     }
 
     /** {@inheritDoc} **/

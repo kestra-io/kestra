@@ -158,7 +158,7 @@ Manual smoke test on an EE-only surface (IAM, Tenants, Apps) to confirm the merg
   - OSS: `feat(core): add Turkish as a supported UI language`
   - EE: `feat(core): add Turkish as a supported UI language`
 - **Merge OSS first.** EE CI checks out OSS `develop` (or passes `--oss-root`), and the EE wrapper imports `kestra/src/translations/tr.json` from the sibling checkout - until the OSS PR is merged, EE CI cannot resolve the new locale and both the build and the translation gate fail.
-- The PR gate (`check-translations.mjs`) runs on both PRs before `npm ci`; the full `translations:check` runs locally and on the auto-translate workflow.
+- The gate (`check-translations.mjs`) runs on both PRs before `npm ci`, and again on the pushes that merge them; `npm run translations:check` runs the gate and then the compiler-backed comparer, locally and at the end of the auto-translate workflow.
 - After both merge, the scheduled auto-translate bot (every 3h on weekdays, both repos) keeps the new language filled as English keys evolve - no ongoing manual work.
 - No backport: a new language is a feature and ships from `develop` only.
 

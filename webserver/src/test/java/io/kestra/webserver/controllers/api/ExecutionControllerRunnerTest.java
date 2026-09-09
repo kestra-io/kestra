@@ -939,6 +939,48 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "previewredirectedfilefromexecution")
+    void previewRedirectedFileFromExecutionKeepsQueryParameters() throws TimeoutException, QueueException {
+        String tenantId = "previewredirectedfilefromexecution";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        // Given - two executions of the same flow, the previewed file belongs to the first one
+        // (this is what happens for a subflow reading a file produced by its parent execution)
+        Map<String, Object> multilineInputs = new HashMap<>(inputs);
+        multilineInputs.put(
+            "file",
+            Objects.requireNonNull(
+                ExecutionControllerRunnerTest.class.getClassLoader().getResource("data/multiline.txt")
+            ).getPath()
+        );
+
+        Execution owner = runnerUtils.runOne(
+            tenantId, TESTS_FLOW_NS, "inputs", null,
+            (flow, execution) -> flowIO.readExecutionInputs(flow, execution, multilineInputs)
+        );
+        Execution other = runnerUtils.runOne(
+            tenantId, TESTS_FLOW_NS, "inputs", null,
+            (flow, execution) -> flowIO.readExecutionInputs(flow, execution, multilineInputs)
+        );
+
+        String ownerPath = (String) owner.getInputs().get("file");
+
+        // When - the preview is requested on the other execution, which redirects to the owning one
+        Map<String, Object> preview = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/" + tenantId + "/executions/" + other.getId() + "/file/preview?path=" + ownerPath
+                    + "&maxRows=1"
+            ),
+            Map.class
+        );
+
+        // Then - maxRows survived the redirect
+        assertThat(preview).isNotNull();
+        assertThat(preview).containsEntry("truncated", true);
+        assertThat(preview.get("content").toString().lines()).containsExactly("first");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "previewlocalfilefromexecution")
     void previewLocalFileFromExecution() throws TimeoutException, QueueException, IOException {
         String tenantId = "previewlocalfilefromexecution";

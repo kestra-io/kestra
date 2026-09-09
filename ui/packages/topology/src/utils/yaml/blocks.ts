@@ -34,10 +34,8 @@ function getSectionFromDocument({yamlDoc, section}:
         yamlDoc: Document<YAMLMap<Scalar<string>, Node>>,
         section: string
     }) {
-    const sectionNode = yamlDoc.contents?.items?.find(
-        (e) => e.key.value === section,
-    ) as { value: YAMLSeq<YAMLMap<Scalar<string>, Node>> } | undefined
-    return sectionNode?.value
+    const value = yamlDoc.contents?.items?.find((e) => scalarKey(e) === section)?.value
+    return isSeq<YAMLMap<Scalar<string>, Node>>(value) ? value : undefined
 }
 
 function getPathFromId({node, id} : {
@@ -315,10 +313,14 @@ function getParentNode(
     if (isCollection<Node>(parentNode)) {
         return parentNode
     }
+    // an empty `tasks:` parses to null, which still wants the parent created
+    if (parentNode !== undefined && parentNode !== null) {
+        throw new Error(
+            `Cannot insert a block at path ${parentPath}: ${parentPathWithoutKey} holds a ${nodeKind(parentNode)}, not a collection.`,
+        )
+    }
 
-    const newParentKey = lastSegmentKey(
-        hasQuotedSegment(parentPath) ? parentPath : parentPathWithoutKey,
-    )
+    const newParentKey = lastSegmentKey(parentPathWithoutKey)
     const newParentSeq = new YAMLSeq<unknown>()
     getParentNode(yamlDoc, parentPathWithoutKey)
         .items.push(new Pair(new Scalar(newParentKey), newParentSeq))

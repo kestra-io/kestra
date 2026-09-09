@@ -235,6 +235,26 @@ describe("insertBlockWithPath", () => {
             name: Plugin 3
         `
 
+    test("rejects a parent path that holds a scalar rather than a collection", () => {
+        expect(() =>
+            YamlUtils.insertBlockWithPath({
+                source: "id: t\nnamespace: n\nfoo: bar\n",
+                parentPath: "foo.tasks",
+                newBlock: "id: new\ntype: io.kestra.plugin.core.log.Log\n",
+            }),
+        ).toThrow(/foo.*not a collection/)
+    })
+
+    test("names a created parent after its own path segment, not the quoted leaf", () => {
+        const result = YamlUtils.insertBlockWithPath({
+            source: "id: t\nnamespace: n\ntasks:\n  - id: sw\n    type: io.kestra.plugin.core.flow.Switch\n",
+            parentPath: "tasks[0].cases[\"1.0\"]",
+            newBlock: "id: new\ntype: io.kestra.plugin.core.log.Log\n",
+        })
+
+        expect(result).toContain("cases:")
+    })
+
     test("rejects a path that holds a mapping rather than a sequence", () => {
         expect(() =>
             YamlUtils.insertBlockWithPath({

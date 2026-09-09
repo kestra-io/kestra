@@ -219,7 +219,6 @@ public class ExecutionService {
             : ExecutionMetadata.builder().originalCreatedDate(Instant.now()).build();
         if (!removedTaskRuns.isEmpty()) {
             metadata = metadata.accumulateRemovedTaskRuns(removedTaskRuns);
-            log.info("Accumulated task runs: {}", metadata.getAccumulatedTaskRunCount());
         }
 
         return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);

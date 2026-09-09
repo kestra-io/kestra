@@ -17,7 +17,7 @@
                 <p class="block-editor-picker-context">{{ $t('block_editor.inserting_into', {section: sectionLabel}) }}</p>
 
                 <KsInput
-                    :ref="(el) => (picker.pickerSearchInput.value = el)"
+                    :ref="setSearchInput"
                     v-model="taskPickerSearch"
                     :placeholder="$t('block_editor.search_task_placeholder')"
                     :aria-label="$t('block_editor.search_task_placeholder')"
@@ -122,6 +122,7 @@
 </template>
 
 <script setup lang="ts">
+    import type {ComponentPublicInstance} from "vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import {KsInput, vKsLoading} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"
@@ -129,6 +130,11 @@
     import type {TaskPickerApi} from "./useTaskPicker"
 
     const props = defineProps<{picker: TaskPickerApi, modal?: boolean}>()
+
+    const {pickerSearchInput} = props.picker
+    const setSearchInput = (el: Element | ComponentPublicInstance | null) => {
+        pickerSearchInput.value = el
+    }
 
     const pluginsStore = usePluginsStore()
 

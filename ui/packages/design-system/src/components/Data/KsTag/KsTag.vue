@@ -3,7 +3,7 @@
         disableTransitions
         v-bind="({...filteredProps(), ...$attrs} as any)"
         :type="elType"
-        :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error'}"
+        :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error', 'kel-tag--truncate': truncate}"
         @close="emit('close')"
     >
         <template #default>
@@ -11,9 +11,7 @@
                 <component :is="icon" v-if="icon" />
                 <slot v-else name="icon" />
             </KsIcon>
-            <template v-if="label">
-                {{ label }}
-            </template>
+            <span v-if="label" class="kel-tag__label">{{ label }}</span>
             <slot v-else-if="$slots.default" />
         </template>
     </ElTag>
@@ -39,6 +37,8 @@
         round?: boolean
         label?: string
         plain?: boolean
+        /** Clips the label with an ellipsis instead of letting the tag outgrow its container. */
+        truncate?: boolean
     }>(), {
         effect: "plain",
     })
@@ -55,7 +55,7 @@
     // ElTag only accepts its five built-in types; "error" is applied via the kel-tag--error class instead
     const elType = computed(() => (props.type === "error" ? undefined : props.type))
 
-    const filteredProps = useFilteredProps(props, ["icon", "label", "plain", "type"])
+    const filteredProps = useFilteredProps(props, ["icon", "label", "plain", "type", "truncate"])
 </script>
 
 <style lang="scss">
@@ -137,6 +137,22 @@
 
         &.kel-tag--default.kel-tag--plain [class*="kel-icon"] .material-design-icon {
             color: var(--ks-icon-muted);
+        }
+
+        &.kel-tag--truncate {
+            max-width: 100%;
+
+            .kel-tag__content {
+                min-width: 0;
+            }
+
+            .kel-tag__label,
+            .kel-tag__content > span {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
         }
 
         &.kel-tag--plain {

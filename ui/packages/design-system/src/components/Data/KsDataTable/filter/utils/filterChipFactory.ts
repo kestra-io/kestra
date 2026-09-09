@@ -77,6 +77,7 @@ export const createCustomRangeFilter = (
     startDate: Date,
     endDate: Date,
     comparator = Comparators.GREATER_THAN_OR_EQUAL_TO,
+    meta?: Record<string, string>,
 ): AppliedFilter =>
     createAppliedFilter(
         key,
@@ -85,6 +86,7 @@ export const createCustomRangeFilter = (
         {startDate, endDate},
         `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
         keyOfComparator(comparator),
+        meta,
     )
 
 export const processFieldValue = (

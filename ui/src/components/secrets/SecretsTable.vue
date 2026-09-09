@@ -141,7 +141,7 @@
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
-            :beforeClose="beforeSecretClose"
+            :dirty="isSecretDirty"
             formLayout
             scrollable
         >
@@ -249,7 +249,6 @@
     import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations"
     import {useTableColumns} from "../../composables/useTableColumns"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const secretsFilter = useSecretsFilter()
 
@@ -320,8 +319,7 @@
     })
 
     const secretBaseline = ref("")
-    const {guardedClose: guardSecretClose} = useDiscardGuard(() => JSON.stringify(secret.value) !== secretBaseline.value)
-    const beforeSecretClose = (done: () => void) => guardSecretClose(() => done())
+    const isSecretDirty = computed(() => JSON.stringify(secret.value) !== secretBaseline.value)
 
     const hasNamespaceColumn = props.namespace === undefined || props.namespaceColumn
 

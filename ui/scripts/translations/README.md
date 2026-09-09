@@ -7,7 +7,7 @@ This directory holds the tooling that keeps the Kestra UI translated. This READM
 - English is the single source of truth: [`ui/src/translations/en.json`](../../src/translations/en.json) here, `ui-ee/src/translations/ee_translations/en.json` in EE. The twelve other languages are **generated** from it via Gemini - never hand-written.
 - Every key carries a **fingerprint** of the English text its translations were generated from. Editing an English value (even just capitalisation) marks the key stale in all languages and fails the check until regenerated.
 - **One shared implementation** lives here. EE keeps only thin entry points that import from this directory, so the two repositories cannot drift into different prompts, rules, or change detection.
-- Two commands, the same in both repositories: `npm run translations:generate` (needs `GEMINI_API_KEY`) and `npm run translations:check` (must report no missing / no extra / no stale keys for every language).
+- Two commands, the same in both repositories: `npm run translations:generate` (needs `GEMINI_API_KEY`) and `npm run translations:check`, which runs the PR gate and then the compiler-backed comparer, so a green local run is the same verdict CI gives.
 - A scheduled GitHub Action runs the generator every 3 hours on weekdays and opens a bot PR when there is anything to translate. A dependency-free PR gate checks key parity and placeholders on every PR.
 
 ## The files
@@ -95,13 +95,13 @@ Key points:
 
 Two checkers apply the same shared rules at different depths:
 
-| | `translations:check` ([`compareTranslations.ts`](compareTranslations.ts)) | PR gate ([`check-translations.mjs`](check-translations.mjs)) |
+| | Comparer ([`compareTranslations.ts`](compareTranslations.ts)) | PR gate ([`check-translations.mjs`](check-translations.mjs)) |
 |---|---|---|
-| Runs | Locally + at the end of the auto-translate workflow | CI, on every PR touching translations or UI source, forks included |
+| Runs | Second half of `npm run translations:check`, and at the end of the auto-translate workflow | CI, on every PR touching translations or UI source (forks included) and on every push to `develop` and `releases/*`; first half of `npm run translations:check` |
 | Needs | `node_modules` (vue-i18n's real message compiler) | Nothing - Node builtins only, runs before `npm ci` |
 | Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, **stale** keys (fingerprints), placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys, keys used in code but defined in no `en.json` |
 
-A clean `translations:check` run reports **No missing keys / No extra keys / No stale keys** for every language - anything less blocks the merge. The PR gate applies the same staleness rule, so a fork PR, which gets no generated commit, cannot merge an edited English value without regenerating the other languages either.
+A clean `translations:check` run prints `Translation check passed (scope: oss)` from the gate and then **No missing keys / No extra keys / No stale keys** for every language from the comparer - anything less blocks the merge. `translations:check` runs both on purpose: the gate carries the rules the comparer does not have (used-but-undefined keys, runtime-built namespaces, EE keys shadowing OSS keys) and the comparer carries the real message compiler the dependency-free gate cannot load, so neither alone matches CI. The gate applies the same staleness rule, so a fork PR, which gets no generated commit, cannot merge an edited English value without regenerating the other languages either.
 
 The PR gate runs as two ownership-scoped passes so a failure points at the right repository:
 
@@ -143,7 +143,7 @@ sequenceDiagram
 
 1. Add the key to `en.json` (here, or `ee_translations/en.json` for EE-only strings). Reuse existing generic keys (`cancel`, `save`, `delete`, ...) instead of duplicating.
 2. Run `npm run translations:generate`, commit the locale files **and** `fingerprints.json` together.
-3. Run `npm run translations:check` - every language must report no missing / extra / stale keys.
+3. Run `npm run translations:check` - the gate must pass and every language must report no missing / extra / stale keys.
 
 Merging with only `en.json` updated also works - the bot fills the languages within a few hours - but the PR gate flags the missing keys, so generating yourself is the clean path.
 

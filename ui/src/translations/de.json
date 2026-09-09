@@ -426,6 +426,7 @@
       "expression": "Ausdruck"
     },
     "attempt": "Versuch",
+    "iteration": "Iteration",
     "name": "Name",
     "key": "Key",
     "value": "Value",

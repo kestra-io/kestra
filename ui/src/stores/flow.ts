@@ -19,6 +19,7 @@ import type {
     FlowWithSource,
     PagedResultsFlow,
     SourceSearchResult,
+    SourceSearchScope,
     Task as SdkTask,
 } from "@kestra-io/kestra-sdk"
 import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
@@ -86,9 +87,25 @@ type FlowSearchOptions = Record<string, unknown> & {
     onlyTotal?: boolean;
 }
 
-/** The source-code search query, with `sort` as the single key the store wraps into an array. */
-type SourceSearchOptions =
-    Omit<NonNullable<Parameters<typeof FlowsAPI.searchFlowsBySourceCode>[0]>, "sort"> & {sort?: string}
+/**
+ * The source-code search query, with `sort` as the single key the store wraps into an array.
+ * Spelled out rather than derived from `typeof FlowsAPI.searchFlowsBySourceCode`: deriving it puts
+ * this module's own `@kestra-io/kestra-sdk/flows` instance into the store's exported types, and EE
+ * — which imports this store and has its own SDK build — then resolves its SDK to OSS's copy and
+ * loses every EE-only endpoint.
+ */
+type SourceSearchOptions = {
+    page?: number;
+    size?: number;
+    sort?: string;
+    q?: string | null;
+    namespace?: string | null;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope;
+    tenant?: string;
+}
 
 /**
  * A flow revision as `listFlowRevisions` returns it: same shape as any flow, except that `revision`

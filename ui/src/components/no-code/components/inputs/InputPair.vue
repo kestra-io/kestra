@@ -11,7 +11,7 @@
     <div class="mt-1 mb-2 w-100 wrapper">
         <KsRow
             v-for="(pair, index) in internalPairs"
-            :key="index"
+            :key="rowKey(pair)"
             :gutter="10"
             align="middle"
         >
@@ -42,6 +42,7 @@
 
 <script setup lang="ts">
     import {watch, computed, ref} from "vue"
+    import {rowKey} from "@kestra-io/design-system"
     import {PairField} from "../../utils/types"
 
     import {DeleteOutline} from "../../utils/icons"

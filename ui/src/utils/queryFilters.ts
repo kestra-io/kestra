@@ -1,9 +1,15 @@
 import type {LocationQuery} from "vue-router"
-import {decodeFilterValue, parseFilterKey} from "@kestra-io/design-system"
+import {parseFilterKey} from "@kestra-io/design-system"
 import type {LogicalOperator} from "@kestra-io/design-system"
 import type {QueryFilter, QueryFilterField, QueryFilterLogical, QueryFilterOp} from "@kestra-io/kestra-sdk"
 
 const QUERY_FILTER_LOGICAL: Record<LogicalOperator, QueryFilterLogical> = {AND: "and", OR: "or"}
+
+/** Coerces a query param to the leaf shape a filter takes, dropping the empty slots of a list. */
+const filterLeafValue = (value: unknown): string | string[] =>
+    Array.isArray(value)
+        ? value.filter(item => item !== null && item !== undefined).map(String)
+        : String(value)
 
 /**
  * Builds a `QueryFilter` group node. TExecutions.tshe backend rejects a node that also carries a
@@ -104,8 +110,12 @@ class FilterNodeBuilder {
  * labels `subKey` into a `"key:value"` string — this preserves the LABELS sub-key structure and
  * nested AND/OR grouping needed for a faithful backend request, by porting
  * `QueryFilterFormatBinder`'s tree-building.
+ *
+ * Accepts any bag, not just a `LocationQuery`: bulk actions hand over the list page's route query
+ * with their own options (`latestRevision`, `newStatus`, ...) merged in, and only `filters[...]`
+ * keys are read.
  */
-export const routeQueryToQueryFilters = (query: LocationQuery): QueryFilter[] => {
+export const routeQueryToQueryFilters = (query: Record<string, unknown>): QueryFilter[] => {
     const root = new FilterNodeBuilder()
 
     for (const [key, value] of Object.entries(query)) {
@@ -121,7 +131,7 @@ export const routeQueryToQueryFilters = (query: LocationQuery): QueryFilter[] =>
             parsed.field as QueryFilterField,
             parsed.operation as QueryFilterOp,
             parsed.subKey,
-            decodeFilterValue(value) as string | string[],
+            filterLeafValue(value),
         )
     }
 

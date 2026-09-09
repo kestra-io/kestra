@@ -253,6 +253,7 @@
     import {Execution} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+    import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
@@ -516,7 +517,7 @@
 
     const props = withDefaults(
         defineProps<{
-            flowGraph: Record<string, any>;
+            flowGraph: FlowGraph;
             flowId?: string;
             namespace?: string;
             execution?: Record<string, any>;

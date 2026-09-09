@@ -214,7 +214,7 @@
             return executionId === execution?.value?.id
                 ? execution?.value
                 : Object.values(subflowsExecutions?.value || {})
-                    .find((exec: any) => exec.id === executionId)
+                    .find(exec => exec.id === executionId)
         }
         return undefined
     })

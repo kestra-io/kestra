@@ -24,8 +24,10 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.AccessScope;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.repositories.NamespaceAccessControl;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
@@ -33,6 +35,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.services.JdbcFilterService;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -58,6 +61,15 @@ public abstract class AbstractJdbcRepository {
     // Micronaut field-injects this for bean-managed repositories; log-store plugins (deserialized,
     // not bean-managed) set it in AbstractJdbcLogDataStore.initFrom — hence protected, not private.
     protected SystemFlowsConfiguration systemFlowsConfiguration;
+
+    @Inject
+    // Injected lazily as a provider: the EE bean depends on the
+    // role repository, which itself extends this base, so eager injection would be a circular dependency.
+    protected BeanProvider<NamespaceAccessControl> namespaceAccessControlProvider;
+
+    protected NamespaceAccessControl namespaceAccessControl() {
+        return namespaceAccessControlProvider != null ? namespaceAccessControlProvider.get() : NamespaceAccessControl.GLOBAL;
+    }
 
     protected Condition defaultFilter() {
         return DELETED_FIELD.eq(false);
@@ -87,6 +99,35 @@ public abstract class AbstractJdbcRepository {
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
         return deleted ? tenant.and(DELETED_FIELD.in(true, false)) : tenant.and(DELETED_FIELD.eq(false));
+    }
+
+    protected Condition aclCondition(Resource resource) {
+        return aclCondition(resource, "namespace");
+    }
+
+    /**
+     * The one namespace-ACL clause every JDBC repository ANDs onto its tenant filter, translating the
+     * backend-agnostic {@link AccessScope} from {@link NamespaceAccessControl} into jOOQ: {@code GLOBAL}
+     * imposes no restriction, {@code DENY_ALL} matches nothing, {@code NAMESPACES} matches a granted
+     * namespace or its dot-delimited subtree ({@code io.kestrax} is not inside {@code io.kestra}).
+     *
+     * @param namespaceColumn the column holding the namespace, which is not always named {@code namespace}.
+     */
+    protected Condition aclCondition(Resource resource, String namespaceColumn) {
+        AccessScope scope = namespaceAccessControl().namespaceScope(resource);
+        Field<String> column = field(namespaceColumn, String.class);
+        return switch (scope.kind()) {
+            case GLOBAL -> DSL.noCondition();
+            case DENY_ALL -> DSL.falseCondition();
+            case NAMESPACES -> {
+                List<Condition> ors = new ArrayList<>(scope.namespaces().size() * 2);
+                for (String namespace : scope.namespaces()) {
+                    ors.add(column.eq(namespace));
+                    ors.add(column.startsWith(namespace + "."));
+                }
+                yield DSL.or(ors);
+            }
+        };
     }
 
     protected Condition buildTenantCondition(String tenantId) {

@@ -63,10 +63,8 @@ public abstract class AbstractJdbcRepository {
     protected SystemFlowsConfiguration systemFlowsConfiguration;
 
     @Inject
-    // Injected lazily as a provider: the EE bean depends (via CurrentUserContext → RBACService) on the
+    // Injected lazily as a provider: the EE bean depends on the
     // role repository, which itself extends this base, so eager injection would be a circular dependency.
-    // Resolved only when a query is built, by which point the bean graph is complete; null for
-    // non-bean-managed instances (deserialized log-store plugins), which enforce ACL another way.
     protected BeanProvider<NamespaceAccessControl> namespaceAccessControlProvider;
 
     protected NamespaceAccessControl namespaceAccessControl() {
@@ -119,7 +117,7 @@ public abstract class AbstractJdbcRepository {
         AccessScope scope = namespaceAccessControl().namespaceScope(resource);
         Field<String> column = field(namespaceColumn, String.class);
         return switch (scope.kind()) {
-            case GLOBAL -> DSL.trueCondition();
+            case GLOBAL -> DSL.noCondition();
             case DENY_ALL -> DSL.falseCondition();
             case NAMESPACES -> {
                 List<Condition> ors = new ArrayList<>(scope.namespaces().size() * 2);

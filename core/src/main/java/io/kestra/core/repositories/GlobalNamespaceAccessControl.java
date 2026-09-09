@@ -7,7 +7,7 @@ import jakarta.inject.Singleton;
 
 /**
  * Default OSS {@link NamespaceAccessControl}: grants global access to every resource, since OSS has no
- * namespace ACL. EE replaces this bean with a {@code CurrentUserContext} implementation.
+ * namespace ACL.
  */
 @Singleton
 public class GlobalNamespaceAccessControl implements NamespaceAccessControl {

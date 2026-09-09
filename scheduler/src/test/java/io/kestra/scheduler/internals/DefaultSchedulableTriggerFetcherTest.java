@@ -62,8 +62,8 @@ class DefaultSchedulableTriggerFetcherTest {
 
         // Then the valid trigger is still evaluated and the broken one is disabled until its flow is saved again
         assertThat(schedulable).extracting(context -> context.flow().getId()).containsExactly("valid");
-        assertThat(triggerStateStore.findById(brokenState).orElseThrow().isDisabled()).isTrue();
-        assertThat(triggerStateStore.findById(validState).orElseThrow().isDisabled()).isFalse();
+        assertThat(triggerStateStore.findByIdWithoutAcl(brokenState).orElseThrow().isDisabled()).isTrue();
+        assertThat(triggerStateStore.findByIdWithoutAcl(validState).orElseThrow().isDisabled()).isFalse();
     }
 
     private static FlowWithSource flow(String id) {

@@ -221,6 +221,7 @@ Rules:
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
 - Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
 ### Performance
 
@@ -359,7 +360,7 @@ If your `<style>` block needs to exist:
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
-| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
+| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
 | `KsAvatar` | Avatar with fallback |
 | `KsProgress` | Progress bar |
 | `KsPagination` | Pagination controls |
@@ -369,7 +370,9 @@ If your `<style>` block needs to exist:
 | `KsDateAgo` | Relative time display ("2 hours ago") |
 | `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
+| `KsFileTag` | Storage URI rendered as a file reference: a `KsTag` whose symbol comes from the extension, with a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
 | `KsTree` | Hierarchical tree view |
+| `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
 | `KsExecutionStatus` | Execution / task status badge with icon and color |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
@@ -402,6 +405,7 @@ If your `<style>` block needs to exist:
 - `dateUtils` — `dateFilter()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
+- `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.

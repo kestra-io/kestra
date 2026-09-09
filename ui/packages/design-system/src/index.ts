@@ -96,6 +96,7 @@ import KsEmptyState from "./components/Data/KsEmptyState.vue"
 import KsEntityLink from "./components/Data/KsEntityLink/KsEntityLink.vue"
 export type {KsEntityLinkEntity} from "./components/Data/KsEntityLink/KsEntityLink.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
+import KsFileTag from "./components/Data/KsFileTag.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
@@ -176,6 +177,7 @@ export {cssVar} from "./utils/css"
 export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
+export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
@@ -305,6 +307,7 @@ const components: Record<string, Component> = {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -415,6 +418,7 @@ export {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -553,6 +557,7 @@ declare module "vue" {
         KsEmptyState: typeof KsEmptyState
         KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
+        KsFileTag: typeof KsFileTag
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm
         KsFormItem: typeof KsFormItem

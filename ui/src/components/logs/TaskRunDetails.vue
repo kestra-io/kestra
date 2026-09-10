@@ -6,6 +6,8 @@
         :minItemSize="50"
         keyField="id"
         class="log-wrapper"
+        data-test="task-run-scroller"
+        :class="{'full-height': fullHeight}"
     >
         <template
             #default="{
@@ -57,7 +59,8 @@
                         :minItemSize="32"
                         keyField="index"
                         class="log-lines"
-                        :class="{'single-line': currentTaskRuns.length === 1}"
+                        data-test="task-run-log-scroller"
+                        :class="{'single-line': currentTaskRuns.length === 1, 'full-height': fullHeight}"
                         :ref="
                             (el) =>
                                 logsScrollerRef(
@@ -325,6 +328,7 @@
         level?: string
         showLogs?: boolean
         hideTaskHeader?: boolean
+        fullHeight?: boolean
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -342,6 +346,7 @@
         level: undefined,
         showLogs: undefined,
         hideTaskHeader: false,
+        fullHeight: false,
     })
 
     const emit = defineEmits<{
@@ -1296,5 +1301,14 @@
       }
     }
   }
+}
+
+.log-wrapper.full-height {
+  flex: 1;
+  min-height: 0;
+}
+
+.log-wrapper .log-lines.full-height {
+  max-height: calc(100vh - 250px);
 }
 </style>

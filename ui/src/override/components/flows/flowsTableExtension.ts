@@ -1,5 +1,5 @@
 import type {Component} from "vue"
-import type {ColumnConfig} from "../../../composables/useTableColumns"
+import {type ColumnConfig} from "@kestra-io/design-system"
 
 export interface FlowsTableFlowRef {
     id: string;

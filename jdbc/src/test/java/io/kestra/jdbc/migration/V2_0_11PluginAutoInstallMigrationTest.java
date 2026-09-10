@@ -18,8 +18,10 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -139,6 +141,49 @@ class V2_0_11PluginAutoInstallMigrationTest {
         migration.migrate();
 
         // Then
+        verify(autoInstallService, never()).installMissingTypes(anySet());
+    }
+
+    @Test
+    void shouldNotFailWhenTheServiceCannotBeResolved() {
+        // Given — resolving PluginAutoInstallService transitively pulls in a repository and therefore
+        // the queue, so a misconfigured queue fails right here. That must not abort the migration, and
+        // with it startup and `kestra migrate run`. Regression test for kestra-ee#7547.
+        insertFlowRow(null, "flow-a", 1, false, "source-a-rev1");
+        migration = new V2_0_11PluginAutoInstallMigration(
+            dslContextWrapper,
+            () ->
+            {
+                throw new IllegalStateException("Unable to connect to redis/<unresolved>:6379");
+            },
+            () -> mock(PluginRegistry.class)
+        );
+
+        // When / Then
+        assertThatCode(() -> migration.migrate()).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldNotFailWhenTheInstallFails() {
+        // Given
+        insertFlowRow(null, "flow-a", 1, false, "source-a-rev1");
+        when(autoInstallService.isEnabled()).thenReturn(true);
+        when(autoInstallService.findMissingTypes("source-a-rev1")).thenReturn(Set.of("io.kestra.plugin.a.TaskA"));
+        doThrow(new RuntimeException("plugin repository unreachable"))
+            .when(autoInstallService).installMissingTypes(anySet());
+
+        // When / Then
+        assertThatCode(() -> migration.migrate()).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldNotFailWhenTheFlowCrawlFails() {
+        // Given — the flows table is gone, so the crawl itself throws
+        dsl.execute("DROP TABLE flows");
+        when(autoInstallService.isEnabled()).thenReturn(true);
+
+        // When / Then
+        assertThatCode(() -> migration.migrate()).doesNotThrowAnyException();
         verify(autoInstallService, never()).installMissingTypes(anySet());
     }
 

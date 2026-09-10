@@ -36,6 +36,12 @@
     import {EditorElement, Panel} from "../utils/multiPanelTypes"
     import {useStoredPanels} from "../composables/useStoredPanels"
 
+    interface PreSerializedPanel {
+        tabs: string[];
+        activeTab: string | undefined;
+        size: number;
+    }
+
     const splitOrientation = useStorage<"vertical" | "horizontal">("editor-split-orientation", "vertical")
 
     function toggleOrientation() {
@@ -47,7 +53,7 @@
         defaultActiveTabs: string[];
         saveKey?: string;
         bottomVisible?: boolean;
-        preSerializePanels?: (panels: Panel[]) => any;
+        preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[];
     }>(), {
         bottomVisible: false,
         preSerializePanels: undefined,

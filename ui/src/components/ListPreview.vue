@@ -43,7 +43,7 @@
 
     const props = defineProps({
         value: {
-            type: Array as () => Record<string, any>[],
+            type: Array as () => Record<string, unknown>[],
             required: true,
         },
     })
@@ -81,7 +81,7 @@
     })
 
 
-    const isComplex = (data: any): boolean => {
+    const isComplex = (data: unknown): boolean => {
         return data !== null && typeof data === "object"
     }
 
@@ -89,12 +89,12 @@
         return `${rowIndex}-${column}`
     }
 
-    const needsExpansion = (data: any): boolean => {
+    const needsExpansion = (data: unknown): boolean => {
         const stringified = JSON.stringify(data, null, 2)
         return stringified.length > MAX_CELL_CHARS
     }
 
-    const getTruncatedContent = (data: any, rowIndex: number, column: string): string => {
+    const getTruncatedContent = (data: unknown, rowIndex: number, column: string): string => {
         const cellKey = getCellKey(rowIndex, column)
         const stringified = JSON.stringify(data, null, 2)
 

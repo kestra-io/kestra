@@ -23,7 +23,7 @@
             response?: {status?: number}
             request?: {url: string; method: string}
         }
-        page: any
+        page: ReturnType<typeof pageFromRoute>
     }
 
     const props = withDefaults(defineProps<{
@@ -36,7 +36,7 @@
     const route = useRoute()
     const {t, te} = useI18n()
     const apiStore = useApiStore()
-    const notifications = ref<any>()
+    const notifications = ref<{close: () => void} | undefined>()
 
     const close = () => {
         if (notifications.value) {

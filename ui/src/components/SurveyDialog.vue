@@ -149,7 +149,7 @@
         emit("close")
     }
 
-    const trackSurveyEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
+    const trackSurveyEvent = (eventName: string, additionalData: Record<string, string | string[] | boolean | undefined> = {}) => {
         const configs = miscStore.configs
 
         apiStore.posthogEvents({

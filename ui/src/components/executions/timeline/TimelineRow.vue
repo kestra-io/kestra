@@ -1,14 +1,10 @@
 <template>
     <div class="timeline-row">
-        <div
-            class="timeline-row-label"
-            role="button"
-            tabindex="0"
-            @click="$emit('drill-in')"
-            @keydown.enter="$emit('drill-in')"
-        >
-            <span class="name">
-                {{ label }}
+        <div class="timeline-row-label">
+            <div class="name-row">
+                <button type="button" class="name-button" @click="$emit('drill-in')">
+                    {{ label }}
+                </button>
                 <KsIconButton
                     class="open-icon"
                     :tooltip="$t('executionsTimeline.row.openOwnPage')"
@@ -17,7 +13,7 @@
                 >
                     <OpenInNew />
                 </KsIconButton>
-            </span>
+            </div>
             <span v-if="total !== undefined" class="counts">
                 <span>{{ $t("executionsTimeline.row.runsCount", {count: total}) }}</span>
                 <span v-if="failed" class="fail">{{ $t("executionsTimeline.row.failedCount", {count: failed}) }}</span>
@@ -34,6 +30,7 @@
                     :leftPercent="bar.leftPercent"
                     :widthPercent="bar.widthPercent"
                     :dimmed="bar.dimmed"
+                    :intensity="bar.intensity"
                     @show-only-flow="$emit('show-only-flow', $event)"
                 />
             </div>
@@ -82,6 +79,7 @@
         dimmed: boolean;
         execution?: TimelineExecution;
         bucket?: StateBucket;
+        intensity?: number;
     }
 
     const rangeSpanMs = computed(() => Math.max(props.rangeEndMs - props.rangeStartMs, 1))
@@ -108,6 +106,7 @@
 
             if (isBucketedByLane.value[lane]) {
                 const buckets = bucketize(laneExecutions, props.rangeStartMs, props.rangeEndMs, props.availableWidthPx)
+                const maxBucketTotal = Math.max(...buckets.map(b => b.total), 1)
                 buckets.forEach((bucket, index) => {
                     result.push({
                         key: `bucket-${lane}-${index}`,
@@ -116,6 +115,7 @@
                         widthPercent: toPercent(bucket.endMs) - toPercent(bucket.startMs),
                         dimmed: Object.keys(bucket.byState).every(state => props.dimmedStates.has(state)),
                         bucket,
+                        intensity: bucket.total / maxBucketTotal,
                     })
                 })
             } else {
@@ -162,52 +162,61 @@
 }
 
 .timeline-row-label {
-    width: 11.25rem;
+    width: var(--timeline-row-label-width, 11.25rem);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: var(--ks-spacing-1);
+}
+
+.name-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+}
+
+.name-button {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
     background: none;
     border: none;
     padding: 0;
+    font: inherit;
     text-align: left;
     cursor: pointer;
+    font-size: var(--ks-font-size-sm);
+    color: var(--ks-text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
-    .name {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-1);
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-primary);
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .open-icon {
-        opacity: 0;
-    }
-
-    &:hover .open-icon {
-        opacity: 1;
-    }
-
-    &:hover .name {
+    &:hover {
         color: var(--ks-text-link);
     }
+}
 
-    .counts {
-        display: flex;
-        gap: var(--ks-spacing-2);
-        font-size: var(--ks-font-size-2xs);
-        color: var(--ks-text-secondary);
-    }
+.open-icon {
+    opacity: 0;
+    flex-shrink: 0;
+}
 
-    .fail {
-        color: var(--ks-chart-failed);
-        font-weight: 600;
-    }
+.timeline-row-label:hover .open-icon {
+    opacity: 1;
+}
+
+.counts {
+    display: flex;
+    gap: var(--ks-spacing-2);
+    font-size: var(--ks-font-size-2xs);
+    color: var(--ks-text-secondary);
+}
+
+.fail {
+    color: var(--ks-chart-failed);
+    font-weight: 600;
 }
 
 .timeline-lanes {

@@ -2,6 +2,7 @@ import {describe, expect, it} from "vitest"
 import {
     assignLanes,
     bucketize,
+    buildAxisTicks,
     countByState,
     groupByNamespace,
     shouldBucketRow,
@@ -138,5 +139,35 @@ describe("countByState", () => {
             {state: "SUCCESS", count: 2},
             {state: "FAILED", count: 1},
         ])
+    })
+})
+
+describe("buildAxisTicks", () => {
+    it("should return tickCount + 1 evenly spaced ticks across the range", () => {
+        const ticks = buildAxisTicks(0, 60_000, 6, 60_000 + 120_000)
+
+        expect(ticks).toHaveLength(7)
+        expect(ticks.map(t => t.ms)).toEqual([0, 10_000, 20_000, 30_000, 40_000, 50_000, 60_000])
+        expect(ticks.every(t => !t.isNow)).toBe(true)
+    })
+
+    it("should flag only the last tick as now when the range end is pinned to now", () => {
+        const rangeEndMs = 60_000
+        const nowMs = rangeEndMs + 1_000
+
+        const ticks = buildAxisTicks(0, rangeEndMs, 6, nowMs)
+
+        expect(ticks.slice(0, -1).every(t => !t.isNow)).toBe(true)
+        expect(ticks.at(-1)?.isNow).toBe(true)
+    })
+
+    it("should not flag any tick as now when the range end is far from now", () => {
+        const ticks = buildAxisTicks(0, 60_000, 6, 60_000 + 120_000)
+
+        expect(ticks.every(t => !t.isNow)).toBe(true)
+    })
+
+    it("should return no ticks for a zero-width range", () => {
+        expect(buildAxisTicks(1_000, 1_000, 6, 1_000)).toEqual([])
     })
 })

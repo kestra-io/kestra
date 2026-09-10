@@ -455,8 +455,8 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
-        if (QueryFilter.Field.LEASE_EXPIRY == field) {
-            return leaseExpiryCondition(value, operation);
+        if (QueryFilter.Field.ASSET_EXPIRY == field) {
+            return assetExpiryCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.TYPE) {
@@ -611,8 +611,8 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
-    protected Condition leaseExpiryCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported field: LEASE_EXPIRY");
+    protected Condition assetExpiryCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: ASSET_EXPIRY");
     }
 
     protected Condition getEnabledCondition(Object value, Op operation) {

@@ -45,24 +45,28 @@
             </div>
 
             <div v-if="focusedTaskRun" class="failure-debug-panel__actions">
-                <Restart
-                    component="KsButton"
-                    isReplay
-                    tooltipPosition="bottom"
-                    :execution="execution"
-                    :taskRun="focusedTaskRun"
-                    :attemptIndex="focusedAttemptIndex"
-                />
-                <span class="failure-debug-panel__restart-caption">{{ $t("failureDebugPanel.restart.caption") }}</span>
-                <KsButton v-if="canUseCopilot" :icon="AiIcon" link @click="askCopilot">
-                    {{ $t("failureDebugPanel.copilot.ask") }}
-                </KsButton>
-                <KsButton v-if="canEditFlow" tag="router-link" :to="editFlowRoute" :icon="Pencil" link>
-                    {{ $t("edit flow") }}
-                </KsButton>
-                <KsIconButton :tooltip="$t('failureDebugPanel.copyError')" placement="top" @click="copyFocusedError">
-                    <ContentCopy />
-                </KsIconButton>
+                <div class="failure-debug-panel__actions-row">
+                    <Restart
+                        component="KsButton"
+                        isReplay
+                        tooltipPosition="bottom"
+                        :execution="execution"
+                        :taskRun="focusedTaskRun"
+                        :attemptIndex="focusedAttemptIndex"
+                    />
+                    <div class="failure-debug-panel__actions-secondary">
+                        <KsButton v-if="canUseCopilot" :icon="AiIcon" link @click="askCopilot">
+                            {{ $t("failureDebugPanel.copilot.ask") }}
+                        </KsButton>
+                        <KsButton v-if="canEditFlow" tag="router-link" :to="editFlowRoute" :icon="Pencil" link>
+                            {{ $t("edit flow") }}
+                        </KsButton>
+                        <KsButton :icon="ContentCopy" link @click="copyFocusedError">
+                            {{ $t("failureDebugPanel.copyError") }}
+                        </KsButton>
+                    </div>
+                </div>
+                <p class="failure-debug-panel__restart-caption">{{ $t("failureDebugPanel.restart.caption") }}</p>
             </div>
 
             <KsCard shadow="never" class="failure-debug-panel__timeline">
@@ -468,12 +472,29 @@
 
     .failure-debug-panel__actions {
         display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+    }
+
+    .failure-debug-panel__actions-row {
+        display: flex;
         align-items: center;
+        justify-content: space-between;
         flex-wrap: wrap;
         gap: var(--ks-spacing-3);
     }
 
+    // The three utility actions share one visual language (link-style KsButton, icon + label)
+    // rather than mixing a labelled button with a bare icon button — same weight, same shape.
+    .failure-debug-panel__actions-secondary {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-1);
+    }
+
     .failure-debug-panel__restart-caption {
+        margin: 0;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
     }

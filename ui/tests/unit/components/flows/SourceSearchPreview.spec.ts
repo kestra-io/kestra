@@ -213,7 +213,8 @@ describe("SourceSearchPreview", () => {
         expect(wrapper.find("[data-test='ks-editor']").exists()).toBe(false)
         expect(wrapper.text()).toContain("analytics-prod")
         expect(wrapper.text()).toContain("analytics-eu")
-        expect(wrapper.find(".source-search-preview__confirm-bar").exists()).toBe(true)
+        expect(wrapper.find(".source-search-preview__confirm-msg").find("span").text())
+            .toBe("Replace 1 match across 1 editable flows. 2 read-only flows will be skipped.")
     })
 
     test("emits cancel and replace-all from the confirm bar", async () => {

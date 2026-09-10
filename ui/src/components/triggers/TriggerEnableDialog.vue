@@ -24,11 +24,7 @@
                 {{ $t("trigger enable dialog.options.skip") }}
             </KsRadio>
             <KsRadio value="FOLLOW_CONFIGURATION" class="radio-item">
-                <i18n-t keypath="trigger enable dialog.options.follow" scope="global">
-                    <template #property>
-                        <code>recoverMissedSchedules</code>
-                    </template>
-                </i18n-t>
+                <span v-html="$t('trigger enable dialog.options.follow', {property: '<code>recoverMissedSchedules</code>'})" />
             </KsRadio>
         </KsRadioGroup>
 

@@ -139,22 +139,7 @@
 
                 <div class="source-search__spacer" />
 
-                <i18n-t
-                    v-if="!showLoadingState"
-                    keypath="source_search.summary_cross"
-                    tag="span"
-                    class="source-search__summary"
-                >
-                    <template #matches>
-                        <strong>{{ $t('source_search.match_count', summaryMatchCount) }}</strong>
-                    </template>
-                    <template #resources>
-                        <strong>{{ $t('source_search.count_resources', summaryResourceCount) }}</strong>
-                    </template>
-                    <template #types>
-                        <strong>{{ $t('source_search.count_types', summaryActiveTypeCount) }}</strong>
-                    </template>
-                </i18n-t>
+                <span v-if="!showLoadingState" class="source-search__summary" v-html="summaryCross" />
 
                 <div v-if="!showLoadingState" class="source-search__match-nav">
                     <KsIconButton
@@ -324,6 +309,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import debounce from "lodash/debounce"
+    import _escape from "lodash/escape"
     import TopNavBar from "../layout/TopNavBar.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import SourceSearchResults from "./SourceSearchResults.vue"
@@ -503,6 +489,12 @@
     const summaryMatchCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.countFor(type), 0))
     const summaryResourceCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.resourceCountFor(type), 0))
     const summaryActiveTypeCount = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.countFor(type) > 0).length)
+    const strong = (value: string) => `<strong>${_escape(value)}</strong>`
+    const summaryCross = computed(() => t("source_search.summary_cross", {
+        matches: strong(t("source_search.match_count", summaryMatchCount.value)),
+        resources: strong(t("source_search.count_resources", summaryResourceCount.value)),
+        types: strong(t("source_search.count_types", summaryActiveTypeCount.value)),
+    }))
 
     const anyCountingSelected = computed(() => selectedTypes.value.some((type) => crossResourceSearchStore.statusFor(type) === "counting"))
     const failedSelectedTypes = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.statusFor(type) === "failed"))

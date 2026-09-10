@@ -94,11 +94,7 @@
         <template v-if="!hintDismissed" #footer>
             <div class="task-edit-modal-hint" data-test="task-edit-modal-open-mode-hint">
                 <KsText size="small">
-                    <i18n-t keypath="block_editor.open_mode_hint" scope="global">
-                        <template #settings>
-                            <router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>
-                        </template>
-                    </i18n-t>
+                    {{ openModeHint[0] }}<router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>{{ openModeHint[1] }}
                 </KsText>
                 <KsIconButton
                     class="task-edit-modal-hint-dismiss"
@@ -129,6 +125,7 @@
     import type {BlockSection} from "../../../utils/flowableBlockOps"
     import type {Crumb} from "../utils/useFieldNavigation"
     import {storageKeys} from "../../../utils/constants"
+    import {splitTranslation} from "../../../utils/splitTranslation"
 
     const props = defineProps<{
         task?: Record<string, unknown>
@@ -154,6 +151,7 @@
     }>()
 
     const {t} = useI18n()
+    const openModeHint = computed(() => splitTranslation(t, "block_editor.open_mode_hint", "settings"))
     const pluginsStore = usePluginsStore()
 
     const hintDismissed = ref(localStorage.getItem(storageKeys.TASK_EDIT_MODE_HINT_DISMISSED) === "true")

@@ -57,6 +57,9 @@
                 <KsButton v-if="canUseCopilot" :icon="AiIcon" link @click="askCopilot">
                     {{ $t("failureDebugPanel.copilot.ask") }}
                 </KsButton>
+                <KsButton v-if="canEditFlow" tag="router-link" :to="editFlowRoute" :icon="Pencil" link>
+                    {{ $t("edit flow") }}
+                </KsButton>
                 <KsIconButton :tooltip="$t('failureDebugPanel.copyError')" placement="top" @click="copyFocusedError">
                     <ContentCopy />
                 </KsIconButton>
@@ -119,10 +122,12 @@
 <script setup lang="ts">
     import {computed, nextTick, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
     import {State, KsExecutionStatus} from "@kestra-io/design-system"
     import Close from "vue-material-design-icons/Close.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import BugOutline from "vue-material-design-icons/BugOutline.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
 
     import AiIcon from "../../ai/AiIcon.vue"
     import Restart from "../overview/components/actions/Restart.vue"
@@ -131,6 +136,7 @@
     import FailureLogPanel from "./FailureLogPanel.vue"
 
     import resource from "../../../models/resource"
+    import action from "../../../models/action"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {useExecutionsStore, type Execution} from "../../../stores/executions"
@@ -151,6 +157,7 @@
     const taskRunList = computed(() => (props.execution.taskRunList ?? []) as FailureTaskRun[])
 
     const {t} = useI18n()
+    const route = useRoute()
     const toast = useToast()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
@@ -198,6 +205,21 @@
     })
 
     const canUseCopilot = computed(() => !!authStore.user?.hasAny(resource.COPILOT))
+
+    const canEditFlow = computed(() =>
+        authStore.user?.isAllowed(resource.FLOW, action.UPDATE, props.execution.namespace),
+    )
+
+    // The editor is its own child route now, so target it directly: passing `tab` to the parent
+    // still resolves through the redirect but logs a discarded-param warning on every render.
+    const editFlowRoute = computed(() => ({
+        name: "flows/update/edit",
+        params: {
+            namespace: route.params.namespace as string,
+            id: route.params.flowId as string,
+            tenant: route.params.tenant as string,
+        },
+    }))
 
     const structuralNodes = computed<StructuralNode[]>(() => {
         const focused = focusedTaskRun.value

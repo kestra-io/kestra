@@ -2116,13 +2116,6 @@
           "pending": "承認待ち",
           "revise": "修正に返信"
         },
-        "diff": {
-          "ariaLabel": "提案された変更の差分",
-          "noChanges": "変更なし",
-          "added": "{count} 行追加 | {count} 行追加",
-          "removed": "{count} 行削除 | {count} 行削除",
-          "hiddenLines": "{count} 行の変更なしを非表示 | {count} 行の変更なしを非表示"
-        },
         "notice": {
           "emptyTurn": "アシスタントが応答を返しませんでした。もう一度お試しください。",
           "retry": "再試行"

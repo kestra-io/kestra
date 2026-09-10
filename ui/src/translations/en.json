@@ -2116,13 +2116,6 @@
           "pending": "Pending approval",
           "revise": "Reply to revise"
         },
-        "diff": {
-          "ariaLabel": "Diff of the proposed change",
-          "noChanges": "No changes",
-          "added": "{count} line added | {count} lines added",
-          "removed": "{count} line removed | {count} lines removed",
-          "hiddenLines": "{count} unchanged line hidden | {count} unchanged lines hidden"
-        },
         "notice": {
           "emptyTurn": "The assistant didn't return a response. Please try again.",
           "retry": "Retry"

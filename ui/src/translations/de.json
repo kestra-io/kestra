@@ -2116,13 +2116,6 @@
           "pending": "Wartet auf Genehmigung",
           "revise": "Zur Überarbeitung antworten"
         },
-        "diff": {
-          "ariaLabel": "Diff der vorgeschlagenen Änderung",
-          "noChanges": "Keine Änderungen",
-          "added": "{count} Zeile hinzugefügt | {count} Zeilen hinzugefügt",
-          "removed": "{count} Zeile entfernt | {count} Zeilen entfernt",
-          "hiddenLines": "{count} unveränderte Zeile ausgeblendet | {count} unveränderte Zeilen ausgeblendet"
-        },
         "notice": {
           "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuche es erneut.",
           "retry": "Wiederholen"

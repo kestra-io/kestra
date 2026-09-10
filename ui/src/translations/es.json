@@ -2116,13 +2116,6 @@
           "pending": "Pendiente de aprobación",
           "revise": "Responder para revisar"
         },
-        "diff": {
-          "ariaLabel": "Diferencias del cambio propuesto",
-          "noChanges": "Sin cambios",
-          "added": "{count} línea añadida | {count} líneas añadidas",
-          "removed": "{count} línea eliminada | {count} líneas eliminadas",
-          "hiddenLines": "{count} línea sin cambios oculta | {count} líneas sin cambios ocultas"
-        },
         "notice": {
           "emptyTurn": "El asistente no devolvió una respuesta. Por favor, inténtalo de nuevo.",
           "retry": "Reintentar"

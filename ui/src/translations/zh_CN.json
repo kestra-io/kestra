@@ -2116,13 +2116,6 @@
           "pending": "待批准",
           "revise": "回复以修改"
         },
-        "diff": {
-          "ariaLabel": "拟议更改的差异",
-          "noChanges": "无更改",
-          "added": "新增 {count} 行",
-          "removed": "删除 {count} 行",
-          "hiddenLines": "隐藏了 {count} 行未更改内容"
-        },
         "notice": {
           "emptyTurn": "助手未返回响应。请重试。",
           "retry": "重试"

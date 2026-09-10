@@ -28,6 +28,8 @@
                 :aria-label="$t('topology-graph.add-task')"
                 data-test="topology-edge-add-task"
                 @click.stop="emit('add-task', addTarget)"
+                @keydown.enter.stop.prevent="emit('add-task', addTarget)"
+                @keydown.space.stop.prevent="emit('add-task', addTarget)"
                 @mouseenter="hovered = true"
                 @mouseleave="hovered = false"
             >
@@ -151,6 +153,10 @@
     }
 
     .edge-add-button {
+        /* vue-flow paints .vue-flow__nodes (z-index 0) after the label layer, so without this lift
+           an edge midpoint falling inside an adjacent node buries the button. */
+        position: absolute;
+        z-index: 1;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -167,7 +173,8 @@
         transition: opacity 0.12s, border-color 0.12s, color 0.12s;
     }
 
-    .edge-add-button--visible {
+    .edge-add-button--visible,
+    .edge-add-button:focus-visible {
         opacity: 1;
         pointer-events: auto;
     }

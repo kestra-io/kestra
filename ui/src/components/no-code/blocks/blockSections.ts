@@ -95,6 +95,22 @@ export function resolveTaskInsertionTarget(
     return {parentPath, refIndex}
 }
 
+/**
+ * Resolves a task id whose section is unknown: the topology's edge `+` only carries the neighbouring
+ * task's id, so an `errors` or `finally` lane resolved against `tasks` would silently find nothing.
+ * Task ids are unique flow-wide, so the first section that matches is the right one.
+ */
+export function resolveTaskInsertionTargetInAnySection(
+    source: string,
+    taskId: string,
+): {parentPath: string; refIndex: number; section: BlockSection} | undefined {
+    for (const section of ALL_SECTIONS) {
+        const target = resolveTaskInsertionTarget(source, section, taskId)
+        if (target) return {...target, section}
+    }
+    return undefined
+}
+
 export function findNestedPath(items: Record<string, unknown>[], id: string, prefix: string): string | undefined {
     for (let index = 0; index < items.length; index++) {
         const item = items[index]

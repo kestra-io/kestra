@@ -71,6 +71,7 @@ import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
+import io.kestra.webserver.annotation.AnonymousAccess;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -550,6 +551,7 @@ public class ExecutionController {
         );
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by POST webhook trigger")
@@ -564,6 +566,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by GET webhook trigger")
@@ -578,6 +581,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    @AnonymousAccess
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by PUT webhook trigger")
@@ -997,10 +1001,12 @@ public class ExecutionController {
             }
             default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
         };
+        // `private`, not `public`: this file is tenant-scoped, so a shared cache must not replay it
+        // to a different requester, even though the content itself never changes.
         return HttpResponse.ok(
             new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
                 .attach(FilenameUtils.getName(path.toString()))
-        );
+        ).header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
     }
 
     private URI nsFileToInternalStorageURI(URI path, Execution execution) throws IOException {
@@ -2099,7 +2105,11 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
         }
 
-        HttpResponse<?> validateResponse = this.validateFile(execution.get(), path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file/preview?path=" + path);
+        // keep the preview parameters, otherwise a redirect to the owning execution would lose them
+        String redirect = "/api/v1/" + this.getTenant() + "executions/{executionId}/file/preview?path=" + path
+            + (maxRows != null ? "&maxRows=" + maxRows : "")
+            + "&encoding=" + encoding;
+        HttpResponse<?> validateResponse = this.validateFile(execution.get(), path, redirect);
         if (validateResponse != null) {
             return validateResponse;
         }

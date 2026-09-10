@@ -61,10 +61,6 @@
     @use 'element-plus/theme-chalk/src/tooltip';
 
     .kel-popper.ks-tooltip {
-        // Long unbroken strings (storage URIs) must wrap rather than stretch across the page.
-        max-width: min(20rem, 90vw);
-        overflow-wrap: anywhere;
-
         &.is-light,
         &.is-dark {
             background: var(--ks-bg-input);

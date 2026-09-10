@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, waitFor, within} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 import KsFileTag from "../../../src/components/Data/KsFileTag.vue"
 
 const meta: Meta<typeof KsFileTag> = {
@@ -89,5 +89,29 @@ export const LongName: Story = {
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
         const label = await waitFor(() => within(canvasElement).getByText("extremely-long-output-file-name-that-has-to-be-clipped"))
         expect(label.scrollWidth).toBeGreaterThan(label.clientWidth)
+    },
+}
+
+/** Full storage URI in the tooltip must wrap instead of stretching across the page (#19180). */
+export const LongUriTooltip: Story = {
+    render: (args) => ({
+        components: {KsFileTag},
+        setup() { return {args} },
+        template: "<div style=\"width:180px;padding:48px\"><ks-file-tag v-bind=\"args\" /></div>",
+    }),
+    args: {
+        uri: "kestra://qa/outputs/shell-commands-output-files/executions/3uxOJzMEzl9KgR69PnbnTF/tasks/run-metadata-extraction/2ZH2p7WIZSXxYylAlJyHh3/s7duRWDnVjMKzSYfJrDA-payload.json",
+        name: "payload.json",
+    },
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+        await userEvent.hover(canvas.getByText("payload.json"))
+        const tooltip = await waitFor(() => {
+            const el = document.body.querySelector(".ks-file-tag-tooltip") as HTMLElement | null
+            expect(el?.textContent ?? "").toContain("kestra://")
+            return el!
+        })
+        expect(tooltip.clientWidth).toBeLessThanOrEqual(320)
+        expect(tooltip.scrollWidth).toBeLessThanOrEqual(tooltip.clientWidth + 1)
     },
 }

@@ -41,6 +41,15 @@ describe("KsFileTag", () => {
             .toBe("kestra:///company/team/exec/outputs/report.csv")
     })
 
+    test("scopes URI wrapping to its own popper class so other KsTooltip consumers stay uncapped", () => {
+        const wrapper = mount(KsFileTag, {
+            props: {uri: "kestra:///company/team/exec/outputs/report.csv"},
+            global: globalConfig,
+        })
+        const attrs = wrapper.findComponent(KsTooltip).vm.$attrs as {popperClass?: string}
+        expect(attrs.popperClass).toBe("ks-file-tag-tooltip")
+    })
+
     test("picks the icon from the URI, whose extension the name often lacks", () => {
         const wrapper = mount(KsFileTag, {
             props: {uri: "kestra:///company/team/exec/outputs/8f2c1d.png", name: "screenshot"},

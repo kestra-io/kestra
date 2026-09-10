@@ -5,6 +5,11 @@ type Translate = (key: string, named?: Record<string, unknown>) => string
 
 export const ALL_SECTIONS: BlockSection[] = ["tasks", "triggers", "errors", "finally", "afterExecution"]
 
+/** Sections that hold tasks. `triggers` is excluded: a flow may legally reuse a trigger id for a task
+ *  (FlowValidator checks task ids and trigger ids as two separate sets), so searching it when resolving
+ *  a task would route the insertion into `triggers:`. */
+const TASK_SECTIONS: BlockSection[] = ["tasks", "errors", "finally", "afterExecution"]
+
 const SECTION_SENTINEL_PREFIX = "__section:"
 const LANE_SENTINEL_PREFIX = "__lane:"
 
@@ -98,13 +103,13 @@ export function resolveTaskInsertionTarget(
 /**
  * Resolves a task id whose section is unknown: the topology's edge `+` only carries the neighbouring
  * task's id, so an `errors` or `finally` lane resolved against `tasks` would silently find nothing.
- * Task ids are unique flow-wide, so the first section that matches is the right one.
+ * Task ids are unique across the sections that hold tasks, so the first match is the right one.
  */
 export function resolveTaskInsertionTargetInAnySection(
     source: string,
     taskId: string,
 ): {parentPath: string; refIndex: number; section: BlockSection} | undefined {
-    for (const section of ALL_SECTIONS) {
+    for (const section of TASK_SECTIONS) {
         const target = resolveTaskInsertionTarget(source, section, taskId)
         if (target) return {...target, section}
     }

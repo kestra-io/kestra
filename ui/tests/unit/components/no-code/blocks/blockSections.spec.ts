@@ -196,5 +196,30 @@ errors:
             // Then
             expect(target).toBeUndefined()
         })
+
+        it("ignores triggers, which may legally reuse a task id", () => {
+            // Given
+            const flowWithCollidingTrigger = `id: id-collision
+namespace: company.team
+tasks:
+  - id: ok
+    type: io.kestra.plugin.core.log.Log
+    message: ok
+errors:
+  - id: nightly
+    type: io.kestra.plugin.core.log.Log
+    message: notify
+triggers:
+  - id: nightly
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 3 * * *"
+`
+
+            // When
+            const target = resolveTaskInsertionTargetInAnySection(flowWithCollidingTrigger, "nightly")
+
+            // Then
+            expect(target).toEqual({parentPath: "errors", refIndex: 0, section: "errors"})
+        })
     })
 })

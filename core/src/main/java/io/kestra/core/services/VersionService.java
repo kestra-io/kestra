@@ -1,9 +1,14 @@
 package io.kestra.core.services;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.Map;
 import java.util.Optional;
 
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.utils.Version;
 import io.kestra.core.utils.VersionProvider;
 
 import jakarta.inject.Inject;
@@ -20,6 +25,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VersionService {
     private static final String MIN_VERSION = "1.0.0";
+
+    /**
+     * How long after an upgrade {@link #pendingUpgradeNotice()} keeps reporting it, so that a user who
+     * joins the instance long afterwards is not told about a migration that never concerned them.
+     */
+    private static final Duration UPGRADE_NOTICE_WINDOW = Duration.ofDays(30);
+
+    private static final String PREVIOUS_VERSION_KEY = "version";
+    private static final String UPGRADED_AT_KEY = "upgradedAt";
 
     private final Provider<SettingRepositoryInterface> settingRepository;
     private final Provider<VersionProvider> versionProvider;
@@ -69,6 +83,19 @@ public class VersionService {
             }
 
             log.info("Updating instance version from {} to {}", settingVersion.orElse("none"), softwareVersion);
+
+            // The version being replaced is only knowable here, so record it before it is overwritten.
+            // Nothing is recorded on a fresh install, which is what keeps the notice from firing there.
+            settingVersion.ifPresent(previous -> settingRepository.get().save(
+                Setting.builder()
+                    .key(Setting.INSTANCE_PREVIOUS_VERSION)
+                    .value(Map.of(
+                        PREVIOUS_VERSION_KEY, previous,
+                        UPGRADED_AT_KEY, Instant.now().toString()
+                    ))
+                    .build()
+            ));
+
             settingRepository.get().save(
                 Setting.builder()
                     .key(Setting.INSTANCE_VERSION)
@@ -76,5 +103,71 @@ public class VersionService {
                     .build()
             );
         }
+    }
+
+    /**
+     * Returns the major or minor upgrade this instance recently went through, if users should still be
+     * told about it.
+     * <p>
+     * Empty when the instance was freshly installed, when only the patch version moved, when the version
+     * moved backwards, when either version is unparsable (a development build reports {@code Snapshot}),
+     * or when the upgrade is older than {@link #UPGRADE_NOTICE_WINDOW}.
+     *
+     * @return the upgrade worth reporting, or empty.
+     */
+    public Optional<VersionUpgrade> pendingUpgradeNotice() {
+        Optional<Setting> setting = settingRepository.get().findByKey(Setting.INSTANCE_PREVIOUS_VERSION);
+        if (setting.isEmpty() || !(setting.get().getValue() instanceof Map<?, ?> value)) {
+            return Optional.empty();
+        }
+
+        Object from = value.get(PREVIOUS_VERSION_KEY);
+        Object at = value.get(UPGRADED_AT_KEY);
+        if (from == null || at == null) {
+            return Optional.empty();
+        }
+
+        final Instant upgradedAt;
+        try {
+            upgradedAt = Instant.parse(at.toString());
+        } catch (DateTimeParseException e) {
+            return Optional.empty();
+        }
+
+        if (upgradedAt.isBefore(Instant.now().minus(UPGRADE_NOTICE_WINDOW))) {
+            return Optional.empty();
+        }
+
+        final String to = versionProvider.get().getVersion();
+        final Version previous;
+        final Version current;
+        try {
+            previous = Version.of(from.toString());
+            current = Version.of(to);
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+
+        if (!previous.isBefore(current)) {
+            return Optional.empty();
+        }
+
+        boolean sameMajorAndMinor = previous.majorVersion() == current.majorVersion()
+            && previous.minorVersion() == current.minorVersion();
+        if (sameMajorAndMinor) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new VersionUpgrade(from.toString(), to, upgradedAt));
+    }
+
+    /**
+     * A recent major or minor upgrade of the instance.
+     *
+     * @param from the version the instance ran before the upgrade.
+     * @param to the version it runs now.
+     * @param at when the upgrade was first observed.
+     */
+    public record VersionUpgrade(String from, String to, Instant at) {
     }
 }

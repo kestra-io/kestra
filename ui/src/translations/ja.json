@@ -1,5 +1,9 @@
 {
   "ja": {
+    "versionUpgradeNotice": {
+      "message": "Kestraが{version}にアップグレードされました。これには、Flowの更新が必要となる破壊的変更が含まれている可能性があります。",
+      "cta": "変更点を確認"
+    },
     "loading": "読み込み中...",
     "more actions": "その他のアクション",
     "recipe": {

@@ -16,6 +16,7 @@ public class Setting implements HasUID {
     public static final String INSTANCE_UUID = "instance.uuid";
     public static final String INSTANCE_VERSION = "instance.version";
     public static final String INSTANCE_EDITION = "instance.edition";
+    public static final String INSTANCE_PREVIOUS_VERSION = "instance.previous-version";
 
     @NotNull
     private String key;

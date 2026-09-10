@@ -1,7 +1,8 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
@@ -12,17 +13,14 @@ vi.mock("vue-router", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 const flow = {namespace: "io.kestra.tests", id: "my_flow"} as any
 const initialInputs = [{id: "region", type: "SELECT", values: ["a", "b"]}] as any
 
 function mountForm(inputs: any = initialInputs) {
-    return mount(InputsForm, {
+    return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
         props: {flow, initialInputs: inputs},

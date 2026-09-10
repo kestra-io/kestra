@@ -1,7 +1,8 @@
 import {describe, test, expect, beforeEach, afterEach, vi} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginGroup from "../../../../src/components/plugins/PluginGroup.vue"
 
@@ -93,20 +94,12 @@ vi.mock("../../../../src/stores/pluginsEnrichment", () => ({
     }),
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {en: {}},
-})
-
 async function mountGroup(name: string) {
     Object.keys(routeParams).forEach(key => delete routeParams[key])
     routeParams.name = name
-    const wrapper = mount(PluginGroup, {
+    const wrapper = i18nMount(PluginGroup, {
         global: {
-            plugins: [i18n, KestraDesignSystem],
+            plugins: [KestraDesignSystem],
             stubs: {
                 PluginLayout: {template: "<div><slot /></div>"},
                 TaskIcon: true,

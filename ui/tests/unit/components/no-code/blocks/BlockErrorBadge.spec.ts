@@ -1,18 +1,14 @@
 import {describe, expect, test} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import BlockErrorBadge from "../../../../../src/components/no-code/blocks/BlockErrorBadge.vue"
+import {i18nMount} from "../../../i18nMount"
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 function mountBadge(issues: string[]) {
-    return mount(BlockErrorBadge, {global: globalConfig, props: {issues}})
+    return i18nMount(BlockErrorBadge, {global: globalConfig, props: {issues}})
 }
 
 describe("BlockErrorBadge", () => {

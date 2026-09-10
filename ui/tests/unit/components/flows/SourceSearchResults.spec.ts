@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import KestraDesignSystem from "@kestra-io/design-system"
 import SourceSearchResults from "../../../../src/components/flows/SourceSearchResults.vue"
 import type {SearchResourceType, SearchStatus} from "../../../../src/utils/crossResourceSearch"
@@ -21,15 +22,13 @@ vi.mock("vue-router", () => ({
     },
 }))
 
-const i18n = createI18n({legacy: false, locale: "en", messages: en})
-
 const RouterLinkProbe = {
     props: ["to"],
     template: "<a :data-to=\"JSON.stringify(to)\"><slot /></a>",
 }
 
 const globalConfig = {
-    plugins: [i18n, KestraDesignSystem],
+    plugins: [KestraDesignSystem],
     stubs: {RouterLink: RouterLinkProbe},
 }
 
@@ -61,7 +60,8 @@ function baseProps(overrides: Record<string, unknown> = {}) {
 }
 
 function mountResults(overrides: Record<string, unknown> = {}) {
-    return mount(SourceSearchResults, {
+    return i18nMount(SourceSearchResults, {
+        locales: en,
         props: baseProps(overrides) as InstanceType<typeof SourceSearchResults>["$props"],
         global: globalConfig,
     })

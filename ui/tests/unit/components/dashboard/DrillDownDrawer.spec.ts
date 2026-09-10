@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, afterAll, beforeEach} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import KsDataTable from "@kestra-io/design-system/components/Data/KsDataTable/KsDataTable.vue"
@@ -19,7 +20,6 @@ import en from "../../../../src/translations/en.json"
 // Real messages (not an empty i18n instance): catches key collisions/typos that a bare $t()
 // call can't surface any other way, e.g. a key silently shadowed by a same-named object elsewhere
 // in en.json, which resolves to the raw key string instead of the translated text.
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: en})
 
 // KsDrawer teleports to document.body and adds Element Plus transition/overlay machinery that's
 // irrelevant here; a plain v-if stub keeps the assertions focused on DrillDownDrawer's own wiring.
@@ -38,8 +38,9 @@ const stubs = {
 }
 
 function mountDrawer() {
-    return mount(DrillDownDrawer, {
-        global: {plugins: [i18n, KestraDesignSystem], stubs},
+    return i18nMount(DrillDownDrawer, {
+        locales: en,
+        global: {plugins: [KestraDesignSystem], stubs},
     })
 }
 

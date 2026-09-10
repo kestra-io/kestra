@@ -1,17 +1,8 @@
 import {describe, expect, it, vi} from "vitest"
 import {defineComponent, h} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import BasicNode from "../../../src/nodes/BasicNode.vue"
-
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {}},
-    missingWarn: false,
-    fallbackWarn: false,
-})
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const CLS = "io.kestra.plugin.core.log.Log"
 
@@ -28,7 +19,7 @@ const TaskIconSpy = defineComponent({
 })
 
 function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<string, string> = {}) {
-    return mount(BasicNode, {
+    return i18nMount(BasicNode, {
         props: {
             id: "root.my-task",
             data: {node: {task: {id: "my-task", type: CLS}}, color: "default"},
@@ -36,7 +27,6 @@ function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<strin
             ...props,
         },
         global: {
-            plugins: [i18n],
             // KsTooltip wraps the title in an element-plus popper; render only its default slot.
             stubs: {KsTooltip: {template: "<span><slot /></span>"}},
             provide: {[TASK_ICON_INJECTION_KEY as symbol]: TaskIconSpy},

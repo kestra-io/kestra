@@ -1,7 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {computed} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 const publishDraft = vi.fn().mockResolvedValue("saved")
@@ -74,33 +72,27 @@ vi.mock("../../../../../src/components/flows/useFlowEditorActions", () => ({
 }))
 
 import Actions from "../../../../../src/override/components/flows/Actions.vue"
+import {i18nMount} from "../../../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {
-        en: {
-            restore: "Restore",
-            "edit flow": "Edit flow",
-            "delete logs": "Delete logs",
-            save_and_execute: "Save & Execute",
-            copy: "Copy",
-            flow_export: "Export flow",
-            delete: "Delete",
-            save: "Save",
-            save_as_draft: "Save as draft",
-            publish: "Publish",
-            actions: "Actions",
-        },
-    },
-})
+const messages = {
+    restore: "Restore",
+    "edit flow": "Edit flow",
+    "delete logs": "Delete logs",
+    save_and_execute: "Save & Execute",
+    copy: "Copy",
+    flow_export: "Export flow",
+    delete: "Delete",
+    save: "Save",
+    save_as_draft: "Save as draft",
+    publish: "Publish",
+    actions: "Actions",
+}
 
 function mountActions() {
-    return mount(Actions, {
+    return i18nMount(Actions, {
+        messages,
         global: {
-            plugins: [i18n, KestraDesignSystem],
+            plugins: [KestraDesignSystem],
             stubs: {TriggerFlow: true, Dashboards: true, FlowPlaygroundToggle: true},
         },
     })

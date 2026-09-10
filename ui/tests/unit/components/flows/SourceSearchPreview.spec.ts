@@ -1,7 +1,8 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
 import {onMounted} from "vue"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 
@@ -73,8 +74,6 @@ vi.mock("vue-router", () => ({
 import SourceSearchPreview from "../../../../src/components/flows/SourceSearchPreview.vue"
 import en from "../../../../src/translations/en.json"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: en})
-
 const RouterLinkProbe = {
     props: ["to"],
     template: "<a data-test=\"router-link-probe\" :data-to=\"JSON.stringify(to)\"><slot /></a>",
@@ -83,7 +82,7 @@ const RouterLinkProbe = {
 function createGlobal() {
     setActivePinia(createPinia())
     return {
-        plugins: [i18n, KestraDesignSystem],
+        plugins: [KestraDesignSystem],
         stubs: {RouterLink: RouterLinkProbe},
     }
 }
@@ -113,7 +112,8 @@ describe("SourceSearchPreview", () => {
     })
 
     test("shows empty state when nothing is selected", async () => {
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps(),
             global: createGlobal(),
         })
@@ -127,7 +127,8 @@ describe("SourceSearchPreview", () => {
     test("fetches source via store for a flows selection", async () => {
         mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
 
-        mount(SourceSearchPreview, {
+        i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: "my-flow"}),
             global: createGlobal(),
         })
@@ -140,7 +141,8 @@ describe("SourceSearchPreview", () => {
         const source = "id: my-flow\nnamespace: ns\ntasks: []"
         mockLoadFlow.mockResolvedValue({source})
 
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 2, column: 0}, query: ""}),
             global: createGlobal(),
         })
@@ -154,7 +156,8 @@ describe("SourceSearchPreview", () => {
     test("shows error state when loadFlow rejects", async () => {
         mockLoadFlow.mockRejectedValue(new Error("404 Not Found"))
 
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "flows", namespace: "ns", id: "missing-flow", line: 1, column: 0}, query: ""}),
             global: createGlobal(),
         })
@@ -167,7 +170,8 @@ describe("SourceSearchPreview", () => {
     test("resets to empty state when selection becomes null", async () => {
         mockLoadFlow.mockResolvedValue({source: "id: flow\nnamespace: ns"})
 
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "flows", namespace: "ns", id: "flow", line: 1, column: 0}, query: ""}),
             global: createGlobal(),
         })
@@ -197,7 +201,8 @@ describe("SourceSearchPreview", () => {
             ],
         }
 
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({
                 selection: {type: "flows", namespace: "ns", id: "flow", line: 3, column: 0},
                 query: "analytics-prod",
@@ -233,7 +238,8 @@ describe("SourceSearchPreview", () => {
             ],
         }
 
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({
                 selection: {type: "flows", namespace: "ns", id: "flow", line: 3, column: 0},
                 query: "analytics-prod",
@@ -255,7 +261,8 @@ describe("SourceSearchPreview", () => {
     })
 
     test("renders a metadata card for a namespace file selection without calling loadFlow", async () => {
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "files", namespace: "company.data", path: "scripts/extract.py"}, query: "extract"}),
             global: createGlobal(),
         })
@@ -268,7 +275,8 @@ describe("SourceSearchPreview", () => {
     })
 
     test("renders a metadata card for a KV selection with the value withheld", async () => {
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({
                 selection: {type: "kv", namespace: "company.data", key: "landing-bucket"},
                 query: "bucket",
@@ -283,7 +291,8 @@ describe("SourceSearchPreview", () => {
     })
 
     test("renders a metadata card for a secret selection and never shows a value", async () => {
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "secrets", namespace: "company.data", key: "aws-access-key"}, query: "aws"}),
             global: createGlobal(),
         })
@@ -296,7 +305,8 @@ describe("SourceSearchPreview", () => {
         mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
         mockRoute.params = {tenant: "acme"}
 
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: ""}),
             global: createGlobal(),
         })
@@ -312,7 +322,8 @@ describe("SourceSearchPreview", () => {
     test("resolves the Open in editor link without a tenant in OSS single-tenant mode", async () => {
         mockLoadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: ns"})
 
-        const wrapper = mount(SourceSearchPreview, {
+        const wrapper = i18nMount(SourceSearchPreview, {
+            locales: en,
             props: baseProps({selection: {type: "flows", namespace: "ns", id: "my-flow", line: 1, column: 0}, query: ""}),
             global: createGlobal(),
         })

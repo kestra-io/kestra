@@ -1,9 +1,6 @@
 import {describe, expect, it} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import TableQuickFilter from "../../../../src/components/dashboard/sections/TableQuickFilter.vue"
-
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false})
+import {i18nMount} from "../../i18nMount"
 
 const EXECUTIONS = "io.kestra.plugin.core.dashboard.data.Executions"
 
@@ -22,9 +19,9 @@ const executionsChart = (where?: unknown) => ({
 })
 
 const mountFilter = (chart: Record<string, unknown>) =>
-    mount(TableQuickFilter, {
+    i18nMount(TableQuickFilter, {
         props: {chart: chart as never},
-        global: {plugins: [i18n], stubs: {Motion: true}},
+        global: {stubs: {Motion: true}},
     })
 
 const tabButtons = (wrapper: ReturnType<typeof mountFilter>) =>

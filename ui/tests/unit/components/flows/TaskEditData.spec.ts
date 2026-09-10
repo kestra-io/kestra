@@ -1,20 +1,13 @@
 import {describe, it, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import TaskEditData from "../../../../src/components/flows/TaskEditData.vue"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {en: {
-        expand: "Expand",
-        collapse: "Collapse",
-        copied: "Copied",
-        block_editor: {filter_data: "Filter", no_data_matches: "No data matches"},
-    }},
-})
+const messages = {
+    expand: "Expand",
+    collapse: "Collapse",
+    copied: "Copied",
+    block_editor: {filter_data: "Filter", no_data_matches: "No data matches"},
+}
 
 const sections = [
     {key: "up", label: "Upstream outputs", chips: [
@@ -27,9 +20,9 @@ const sections = [
 ]
 
 function render() {
-    return mount(TaskEditData, {
+    return i18nMount(TaskEditData, {
+        messages,
         props: {kind: "inputs", title: "Inputs", subtitle: "data you can use", sections, filterable: true},
-        global: {plugins: [i18n]},
     })
 }
 

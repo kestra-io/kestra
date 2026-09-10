@@ -1,7 +1,8 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
 import {useExecutionsStore, type ValidationResponse} from "../../../../src/stores/executions"
@@ -12,10 +13,7 @@ vi.mock("vue-router", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 const flow = {namespace: "company.team", id: "get_data"} as any
@@ -58,7 +56,7 @@ function stubAlwaysResolving(id: string, value: string, input: Record<string, un
 // `shallow` keeps KsEditor out of jsdom: a STRING input renders as Monaco, which cannot be typed
 // into here.
 function mountForm(inputs: any[]) {
-    return mount(InputsForm, {
+    return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
         props: {flow, initialInputs: inputs as any},

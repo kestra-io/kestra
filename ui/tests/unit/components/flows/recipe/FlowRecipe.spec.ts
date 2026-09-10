@@ -1,6 +1,4 @@
 import {describe, test, expect, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 
 vi.mock("override/stores/misc", () => ({
@@ -121,10 +119,7 @@ const messages = {
 
 const globalConfig = {
     global: {
-        plugins: [
-            createI18n({legacy: false, locale: "en", messages}),
-            createPinia(),
-        ],
+        plugins: [createPinia()],
         stubs: {
             KsText: {template: "<span><slot /></span>"},
             KsIcon: {template: "<span />"},
@@ -152,8 +147,9 @@ const globalConfig = {
 }
 
 import FlowRecipe from "../../../../../src/components/flows/recipe/FlowRecipe.vue"
+import {i18nMount} from "../../../i18nMount"
 
-const next = async (wrapper: ReturnType<typeof mount>) => {
+const next = async (wrapper: ReturnType<typeof i18nMount>) => {
     await wrapper.find("[data-test='recipe-next-btn']").trigger("click")
     await wrapper.vm.$nextTick()
 }
@@ -161,7 +157,7 @@ const next = async (wrapper: ReturnType<typeof mount>) => {
 describe("FlowRecipe", () => {
     test("Next is disabled on the notify step until a channel is selected", async () => {
         // Given — a valid default trigger (execution + FAILED), advance to the notify step
-        const wrapper = mount(FlowRecipe, globalConfig)
+        const wrapper = i18nMount(FlowRecipe, {locales: messages, ...globalConfig})
         await new Promise(r => setTimeout(r, 0))
         await next(wrapper)
 
@@ -173,7 +169,7 @@ describe("FlowRecipe", () => {
 
     test("shows no-channel warning on the notify step when no channel is selected", async () => {
         // Given
-        const wrapper = mount(FlowRecipe, globalConfig)
+        const wrapper = i18nMount(FlowRecipe, {locales: messages, ...globalConfig})
         await new Promise(r => setTimeout(r, 0))
 
         // When — advance to the notify step
@@ -185,7 +181,7 @@ describe("FlowRecipe", () => {
     })
 
     test("trigger cards use unique keys", () => {
-        const wrapper = mount(FlowRecipe, globalConfig)
+        const wrapper = i18nMount(FlowRecipe, {locales: messages, ...globalConfig})
         const cards = wrapper.findAll("[data-test='recipe-trigger-types'] button[role='radio']")
         expect(cards.length).toBe(4)
     })
@@ -195,7 +191,8 @@ describe("FlowRecipe", () => {
         // :name="card.icon" />` silently rendered an empty icon for every
         // trigger-type card. Found by /qa on 2026-07-03.
         // Report: .gstack/qa-reports/qa-report-localhost-2026-07-03.md
-        const wrapper = mount(FlowRecipe, {
+        const wrapper = i18nMount(FlowRecipe, {
+            locales: messages,
             ...globalConfig,
             global: {
                 ...globalConfig.global,
@@ -214,7 +211,8 @@ describe("FlowRecipe", () => {
 
     test("emits submit with yaml once a channel is picked and create is clicked", async () => {
         // Given
-        const wrapper = mount(FlowRecipe, {
+        const wrapper = i18nMount(FlowRecipe, {
+            locales: messages,
             ...globalConfig,
             global: {
                 ...globalConfig.global,

@@ -1,27 +1,22 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
 import {h} from "vue"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginCard from "../../../../src/components/plugins/PluginCard.vue"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            plugin_card: {
-                tasks: "task | tasks",
-                blueprints: "blueprint | blueprints",
-            },
-        },
+const messages = {
+    plugin_card: {
+        tasks: "task | tasks",
+        blueprints: "blueprint | blueprints",
     },
-})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
+}
+
+const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("PluginCard", () => {
     test("renders title and description", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", description: "Query data."},
             global: globalConfig,
         })
@@ -30,7 +25,8 @@ describe("PluginCard", () => {
     })
 
     test("omits description block when not provided", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery"},
             global: globalConfig,
         })
@@ -38,7 +34,8 @@ describe("PluginCard", () => {
     })
 
     test("renders categories as tags", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", categories: ["DATABASE", "CLOUD"]},
             global: globalConfig,
         })
@@ -50,7 +47,8 @@ describe("PluginCard", () => {
     })
 
     test("omits tags block when categories empty", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", categories: []},
             global: globalConfig,
         })
@@ -58,7 +56,8 @@ describe("PluginCard", () => {
     })
 
     test("renders task count when provided", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", taskCount: 12},
             global: globalConfig,
         })
@@ -69,7 +68,8 @@ describe("PluginCard", () => {
     })
 
     test("renders distinct labels for task and blueprint counts", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", taskCount: 1, blueprintCount: 1},
             global: globalConfig,
         })
@@ -81,7 +81,8 @@ describe("PluginCard", () => {
     })
 
     test("hides count when value is 0", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", taskCount: 0, blueprintCount: 0},
             global: globalConfig,
         })
@@ -89,7 +90,8 @@ describe("PluginCard", () => {
     })
 
     test("renders task and blueprint counts together", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", taskCount: 12, blueprintCount: 4},
             global: globalConfig,
         })
@@ -97,7 +99,8 @@ describe("PluginCard", () => {
     })
 
     test("omits footer when no counts and not clickable", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", clickable: false},
             global: globalConfig,
         })
@@ -106,7 +109,8 @@ describe("PluginCard", () => {
     })
 
     test("emits click when clickable and clicked", async () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery"},
             global: globalConfig,
         })
@@ -115,7 +119,8 @@ describe("PluginCard", () => {
     })
 
     test("does not emit click when not clickable", async () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", clickable: false},
             global: globalConfig,
         })
@@ -124,7 +129,8 @@ describe("PluginCard", () => {
     })
 
     test("applies clickable class when clickable", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery"},
             global: globalConfig,
         })
@@ -132,7 +138,8 @@ describe("PluginCard", () => {
     })
 
     test("renders icon block when iconCls provided", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery", iconCls: "io.kestra.plugin.gcp.bigquery"},
             global: globalConfig,
         })
@@ -140,7 +147,8 @@ describe("PluginCard", () => {
     })
 
     test("renders icon block when #icon slot provided (without iconCls)", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery"},
             slots: {icon: () => h("svg", {class: "custom-icon"})},
             global: globalConfig,
@@ -150,7 +158,8 @@ describe("PluginCard", () => {
     })
 
     test("omits icon block when no iconCls and no icon slot", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery"},
             global: globalConfig,
         })
@@ -158,7 +167,8 @@ describe("PluginCard", () => {
     })
 
     test("chevron is purely decorative (not a button)", () => {
-        const wrapper = mount(PluginCard, {
+        const wrapper = i18nMount(PluginCard, {
+            messages,
             props: {title: "BigQuery"},
             global: globalConfig,
         })

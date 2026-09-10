@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeEach, afterAll} from "vitest"
-import {mount, RouterLinkStub} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {RouterLinkStub} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia} from "pinia"
 
 const route = {
@@ -32,9 +33,10 @@ import Actions from "../../../../src/override/components/namespaces/Actions.vue"
 
 const messages = {en: {create_flow: "Create Flow", "kv.inherited": "Inherited", "kv.add": "Add"}}
 
-const mountActions = () => mount(Actions, {
+const mountActions = () => i18nMount(Actions, {
+    locales: messages,
     global: {
-        plugins: [createI18n({legacy: false, locale: "en", messages}), createPinia()],
+        plugins: [createPinia()],
         stubs: {
             RouterLink: RouterLinkStub,
             KsButton: {props: ["to"], template: "<a><slot /></a>"},

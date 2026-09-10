@@ -1,18 +1,15 @@
 import {describe, test, expect, afterEach} from "vitest"
-import {mount} from "@vue/test-utils"
 import {defineComponent, nextTick, ref} from "vue"
-import {createI18n} from "vue-i18n"
 import {ElSelect} from "element-plus"
-import KestraDesignSystem from "../../../src/index"
 import KsSelect from "../../../src/components/Form/KsSelect/KsSelect.vue"
 import KsOption from "../../../src/components/Form/KsSelect/KsOption.vue"
+import {i18nMount} from "../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en"})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
+const globalConfig = {}
 
 describe("KsSelect", () => {
     test("renders trigger with placeholder", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {placeholder: "Select a status"},
             global: globalConfig,
         })
@@ -21,7 +18,7 @@ describe("KsSelect", () => {
     })
 
     test("renders options via KsOption", () => {
-        const wrapper = mount(
+        const wrapper = i18nMount(
             defineComponent({
                 components: {KsSelect, KsOption},
                 template: `<ks-select placeholder="Pick">
@@ -35,7 +32,7 @@ describe("KsSelect", () => {
     })
 
     test("small size applies kel-select--small class", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {size: "small"},
             global: globalConfig,
         })
@@ -43,7 +40,7 @@ describe("KsSelect", () => {
     })
 
     test("disabled applies is-disabled class", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {disabled: true},
             global: globalConfig,
         })
@@ -51,7 +48,7 @@ describe("KsSelect", () => {
     })
 
     test("multiple mode renders select wrapper", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {multiple: true, placeholder: "Select statuses"},
             global: globalConfig,
         })
@@ -59,7 +56,7 @@ describe("KsSelect", () => {
     })
 
     test("filterable mode renders input", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {filterable: true, placeholder: "Filter…"},
             global: globalConfig,
         })
@@ -67,7 +64,7 @@ describe("KsSelect", () => {
     })
 
     test("loading renders a spinning suffix icon", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {loading: true},
             global: globalConfig,
         })
@@ -75,7 +72,7 @@ describe("KsSelect", () => {
     })
 
     test("loading drives only the suffix spinner, not ElSelect (dropdown stays usable)", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {loading: true},
             global: globalConfig,
         })
@@ -85,7 +82,7 @@ describe("KsSelect", () => {
     })
 
     test("no spinner when loading is falsy", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {placeholder: "Idle"},
             global: globalConfig,
         })
@@ -93,7 +90,7 @@ describe("KsSelect", () => {
     })
 
     test("colorMap colors the selected value and the dropdown options", async () => {
-        const wrapper = mount(
+        const wrapper = i18nMount(
             defineComponent({
                 components: {KsSelect, KsOption},
                 data: () => ({value: "A"}),
@@ -117,7 +114,7 @@ describe("KsSelect", () => {
     })
 
     test("without colorMap, selected value and options render with no inline color (unaffected)", async () => {
-        const wrapper = mount(
+        const wrapper = i18nMount(
             defineComponent({
                 components: {KsSelect, KsOption},
                 data: () => ({value: "A"}),
@@ -149,8 +146,8 @@ describe("KsSelect", () => {
          * The button's visibility derives from ElSelect's registered options, reached through a
          * template ref that is only populated after the first render — so it appears one tick in.
          */
-        const mountAndSettle = async (component: Parameters<typeof mount>[0]) => {
-            const wrapper = mount(component, {global: globalConfig})
+        const mountAndSettle = async (component: Parameters<typeof i18nMount>[0]) => {
+            const wrapper = i18nMount(component, {global: globalConfig})
             await nextTick()
             return wrapper
         }
@@ -168,7 +165,7 @@ describe("KsSelect", () => {
         })
 
         test("does not render select-all button when there are no options", () => {
-            mount(KsSelect, {
+            i18nMount(KsSelect, {
                 props: {selectAll: true, multiple: true},
                 global: globalConfig,
             })
@@ -194,7 +191,7 @@ describe("KsSelect", () => {
         })
 
         test("does not render select-all button when selectAll is true but multiple is false", () => {
-            mount(
+            i18nMount(
                 defineComponent({
                     components: {KsSelect, KsOption},
                     template: `<ks-select :selectAll="true" :multiple="false">
@@ -207,7 +204,7 @@ describe("KsSelect", () => {
         })
 
         test("does not render select-all button when multiple is true but selectAll is false", () => {
-            mount(
+            i18nMount(
                 defineComponent({
                     components: {KsSelect, KsOption},
                     template: `<ks-select :multiple="true">
@@ -385,7 +382,7 @@ describe("KsSelect", () => {
         })
 
         test("custom header slot renders alone when selectAll is not set", () => {
-            mount(
+            i18nMount(
                 defineComponent({
                     components: {KsSelect},
                     template: `<ks-select :multiple="true">

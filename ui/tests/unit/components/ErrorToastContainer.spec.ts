@@ -1,6 +1,4 @@
 import {describe, it, expect, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import en from "../../../src/translations/en.json"
 
 // The "Fix with AI" button only renders in a flow editor context.
@@ -10,8 +8,8 @@ const promptCopilot = vi.fn()
 vi.mock("override/stores/misc", () => ({useMiscStore: () => ({promptCopilot})}))
 
 import ErrorToastContainer from "../../../src/components/ErrorToastContainer.vue"
+import {i18nMount} from "../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: en})
 const stubs = {
     KsButton: {name: "KsButton", template: "<button><slot /></button>"},
     KsMarkdown: {name: "KsMarkdown", template: "<div />"},
@@ -19,9 +17,10 @@ const stubs = {
 }
 
 const mountContainer = (props: Record<string, unknown>) =>
-    mount(ErrorToastContainer, {
+    i18nMount(ErrorToastContainer, {
+        locales: en,
         props: {detail: "", items: [], ...props},
-        global: {plugins: [i18n], stubs},
+        global: {stubs},
     })
 
 describe("ErrorToastContainer", () => {

@@ -1,6 +1,6 @@
 import {describe, expect, it, vi, beforeEach} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
 
 const {generate} = vi.hoisted(() => ({generate: vi.fn()}))
 
@@ -16,8 +16,6 @@ vi.mock("vue-router", () => ({
 
 import Table from "../../../../src/components/dashboard/sections/Table.vue"
 
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false})
-
 const EXECUTIONS = "io.kestra.plugin.core.dashboard.data.Executions"
 
 const ALL_STATES = [
@@ -29,7 +27,7 @@ const ALL_STATES = [
 ]
 
 const mountTable = (where?: unknown) =>
-    mount(Table, {
+    i18nMount(Table, {
         props: {
             dashboardId: "d1",
             chart: {
@@ -39,7 +37,6 @@ const mountTable = (where?: unknown) =>
             },
         },
         global: {
-            plugins: [i18n],
             stubs: {KsDataTable: true, KsTableColumn: true, KsTableEmpty: true, KsNoData: true, TableQuickFilter: true, Motion: true},
         },
     })

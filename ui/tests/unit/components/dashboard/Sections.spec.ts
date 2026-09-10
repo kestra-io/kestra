@@ -1,6 +1,7 @@
 import {describe, it, expect, vi} from "vitest"
-import {createI18n} from "vue-i18n"
-import {mount, flushPromises} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import KestraDesignSystem from "@kestra-io/design-system"
 import KsDropdown from "@kestra-io/design-system/components/Navigation/KsDropdown/KsDropdown.vue"
 import KsButton from "@kestra-io/design-system/components/Basic/KsButton/KsButton.vue"
@@ -41,15 +42,14 @@ vi.mock("../../../../src/components/dashboard/dashboard-types", () => ({
 import Sections from "../../../../src/components/dashboard/sections/Sections.vue"
 import en from "../../../../src/translations/en.json"
 
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: en})
-
 function mountSections(charts: any[], stubs?: Record<string, any>) {
-    return mount(Sections, {
+    return i18nMount(Sections, {
+        locales: en,
         props: {
             dashboard: {id: "default", title: "", deleted: false, charts},
             charts,
         },
-        global: {plugins: [i18n, KestraDesignSystem], stubs},
+        global: {plugins: [KestraDesignSystem], stubs},
     })
 }
 

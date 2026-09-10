@@ -1,6 +1,6 @@
 import {describe, expect, it, vi, beforeEach, afterEach} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
 
 const {generate} = vi.hoisted(() => ({generate: vi.fn()}))
 
@@ -16,10 +16,8 @@ vi.mock("vue-router", () => ({
 
 import Table from "../../../../src/components/dashboard/sections/Table.vue"
 
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false})
-
 const mountTable = () =>
-    mount(Table, {
+    i18nMount(Table, {
         props: {
             dashboardId: "d1",
             chart: {
@@ -29,7 +27,6 @@ const mountTable = () =>
             },
         },
         global: {
-            plugins: [i18n],
             stubs: {KsDataTable: true, KsTableColumn: true, KsNoData: true, TableQuickFilter: true, Motion: true},
         },
     })

@@ -1,6 +1,4 @@
 import {describe, it, expect, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 vi.mock("vue-router", () => ({
@@ -48,9 +46,11 @@ vi.mock("../../../../src/components/flows/TaskEditData.vue", () => ({
 }))
 
 import TaskEdit from "../../../../src/components/flows/TaskEdit.vue"
+import {i18nMount} from "../../i18nMount"
 
 function mountTaskEdit() {
-    return mount(TaskEdit, {
+    return i18nMount(TaskEdit, {
+        messages: {close: "Close"},
         props: {
             task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log", message: "hi"},
             section: "tasks",
@@ -59,10 +59,7 @@ function mountTaskEdit() {
             presentation: "panel",
         },
         global: {
-            plugins: [
-                createI18n({legacy: false, locale: "en", messages: {en: {close: "Close"}}}),
-                KestraDesignSystem,
-            ],
+            plugins: [KestraDesignSystem],
         },
     })
 }

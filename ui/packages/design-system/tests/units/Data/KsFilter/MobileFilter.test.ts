@@ -1,12 +1,10 @@
 import {describe, test, expect, vi, afterEach} from "vitest"
-import {mount} from "@vue/test-utils"
 import {computed, ref} from "vue"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import MobileFilter from "../../../../src/components/Data/KsDataTable/filter/MobileFilter.vue"
 import {FILTER_CONTEXT_INJECTION_KEY} from "../../../../src/components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 import type {FilterContext} from "../../../../src/components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 import type {AppliedFilter, FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
+import {i18nMount} from "../../i18nMount"
 
 const KEYS: FilterKeyConfig[] = [
     {key: "namespace", label: "Namespace", valueType: "text", comparators: ["*=", "^="]},
@@ -66,9 +64,8 @@ const makeCtx = (over: Partial<FilterContext> = {}): FilterContext => ({
 })
 
 const mountWith = (ctx: FilterContext) =>
-    mount(MobileFilter, {
+    i18nMount(MobileFilter, {
         global: {
-            plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
             provide: {[FILTER_CONTEXT_INJECTION_KEY as symbol]: ctx},
         },
     })

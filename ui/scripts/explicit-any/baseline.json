@@ -258,7 +258,6 @@
   "src/stores/playground.ts": 3,
   "src/stores/plugins.ts": 5,
   "src/stores/routeTabs.ts": 1,
-  "src/translations/i18n.ts": 5,
   "src/utils/analytics/eventNaming.spec.ts": 1,
   "src/utils/analytics/eventNaming.ts": 7,
   "src/utils/eventsRouter.ts": 2,

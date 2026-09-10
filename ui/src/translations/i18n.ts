@@ -6,8 +6,10 @@ const translations = import.meta.glob(["./*.json", "!./en.json"])
 import {SUPPORT_LOCALES} from "./languages"
 
 type Locales = (typeof SUPPORT_LOCALES)[number]
+type TranslationMessages = Record<string, Record<string, unknown>>
+type TranslationModule = {default: TranslationMessages}
 
-export const globalI18n = ref<I18n<any, any, any, Locales, false>["global"]>()
+export const globalI18n = ref<I18n<Record<string, unknown>, Record<string, unknown>, Record<string, unknown>, Locales, false>["global"]>()
 
 /**
  * What happens when `t()` is asked for a key no locale defines.
@@ -97,8 +99,8 @@ export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[num
   document.querySelector("html")?.setAttribute("lang", locale.replace(/_/g, "-"))
 }
 
-export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number], additionalTranslationsProvider: Record<string, () => Promise<any>>) {
-  let messages = {} as any
+export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number], additionalTranslationsProvider: Record<string, () => Promise<TranslationModule>>) {
+  let messages: TranslationMessages
 
   if(additionalTranslationsProvider[locale]){
     // load additional translations from the provider
@@ -106,7 +108,7 @@ export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOC
     messages = additionalTranslations.default
   }else{
     // load locale messages with dynamic import
-    messages = await translations[`./${locale}.json`]()
+    messages = await translations[`./${locale}.json`]() as TranslationMessages
   }
 
   // set locale and locale message

@@ -113,30 +113,29 @@
             </div>
         </section>
 
-        <div v-if="shouldRender && !isOpen" ref="reopenWrapperRef" class="failure-debug-reopen">
-            <KsButton :icon="BugOutline" @click="reopen">
-                {{ $t("failureDebugPanel.reopen") }}
-            </KsButton>
-        </div>
-
         <div role="status" aria-live="polite" class="visually-hidden">
             {{ announcement }}
         </div>
 
         <div class="debug-underlay" :class="{'is-dimmed': shouldRender && isOpen}">
-            <slot />
+            <!-- The reopen trigger is placed by the caller (next to "Copy All Logs" in Gantt.vue) -->
+            <slot
+                :shouldRender="shouldRender"
+                :isOpen="isOpen"
+                :reopen="reopen"
+                :setReopenRef="setReopenWrapperRef"
+            />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch} from "vue"
+    import {computed, nextTick, ref, watch, type ComponentPublicInstance} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
     import {State, KsExecutionStatus} from "@kestra-io/design-system"
     import Close from "vue-material-design-icons/Close.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import BugOutline from "vue-material-design-icons/BugOutline.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
 
     import AiIcon from "../../ai/AiIcon.vue"
@@ -176,11 +175,16 @@
     const headingId = "failure-debug-panel-heading"
 
     const panelHeadingRef = ref<HTMLElement>()
+    // Set by the caller via the slot's `setReopenRef`, since the reopen trigger's markup now
+    // lives in the caller's own template (see the `slot` usage below) rather than in this one.
     const reopenWrapperRef = ref<HTMLElement>()
+    function setReopenWrapperRef(el: Element | ComponentPublicInstance | null) {
+        reopenWrapperRef.value = (el as HTMLElement) ?? undefined
+    }
     const miniTimelineRef = ref<InstanceType<typeof FailureMiniTimeline>>()
 
     // Starts closed: a failed execution is common enough that hijacking the Gantt view on every
-    // visit would be disruptive. The reopen affordance below doubles as the initial entry point.
+    // visit would be disruptive. The caller's reopen trigger doubles as the initial entry point.
     const isOpen = ref(false)
     const hasAnnounced = ref(false)
     const announcement = ref("")
@@ -535,16 +539,6 @@
         margin: 0;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
-    }
-
-    // A plain button, not an alert: an alert here duplicated the Gantt stage's own "Failed"
-    // status pill sitting in the row directly below it — two separate red "this failed" signals
-    // stacked at the top of the page. The stage already carries that signal; this only needs to
-    // be the action.
-    .failure-debug-reopen {
-        position: relative;
-        z-index: 5;
-        margin-bottom: var(--ks-spacing-4);
     }
 
     .visually-hidden {

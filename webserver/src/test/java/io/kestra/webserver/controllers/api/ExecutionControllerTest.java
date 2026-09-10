@@ -12,6 +12,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -22,6 +25,9 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledTaskRuns;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
@@ -29,6 +35,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
@@ -50,6 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.GET;
+import static io.micronaut.http.HttpRequest.POST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -58,6 +66,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ExecutionControllerTest {
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
@@ -561,6 +572,151 @@ class ExecutionControllerTest {
             Execution reloaded = client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId()), Execution.class);
             assertThat(reloaded.getLabels()).doesNotContain(new Label(Label.CORRELATION_ID, "spoofed"));
         }
+    }
+
+    @Test
+    void shouldInterruptTaskRunAndItsNonTerminatedChildrenWhenInterruptingARunningTaskRun() throws Exception {
+        // Given
+        Execution execution = runningExecution();
+        String parentTaskRunId = execution.getTaskRunList().getFirst().getId();
+        String runningChildTaskRunId = execution.getTaskRunList().get(1).getId();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<ExecutionKilledTaskRuns> interrupted = new AtomicReference<>();
+        killQueue.addListener(killed -> {
+            if (killed instanceof ExecutionKilledTaskRuns taskRuns && execution.getId().equals(taskRuns.getExecutionId())) {
+                interrupted.set(taskRuns);
+                latch.countDown();
+            }
+        });
+
+        // When
+        HttpResponse<Execution> response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                new ExecutionController.StateRequest(parentTaskRunId, State.Type.CANCELLED)
+            ),
+            Execution.class
+        );
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+        // The terminated child and the task run of another branch are left alone.
+        assertThat(interrupted.get().getTaskRunIds()).containsExactlyInAnyOrder(parentTaskRunId, runningChildTaskRunId);
+        assertThat(interrupted.get().getTaskRunState()).isEqualTo(State.Type.CANCELLED);
+        assertThat(interrupted.get().getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenInterruptingATaskRunToANonInterruptedState() {
+        Execution execution = runningExecution();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest(execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldReturnConflictWhenInterruptingATaskRunThatIsNotRunning() {
+        Execution execution = runningExecution();
+        String terminatedTaskRunId = execution.getTaskRunList().get(2).getId();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest(terminatedTaskRunId, State.Type.FAILED)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldReturnConflictWhenInterruptingATaskRunOfATerminatedExecution() {
+        Execution execution = terminatedExecution();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest(IdUtils.create(), State.Type.FAILED)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenInterruptingAnUnknownTaskRun() {
+        Execution execution = runningExecution();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest("taskrun_id_not_found", State.Type.FAILED)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    /**
+     * A running execution holding, in order: a running parent task run, a running child of that parent,
+     * a terminated child of that parent, and a running task run of another branch.
+     */
+    private Execution runningExecution() {
+        String executionId = IdUtils.create();
+        TaskRun parent = taskRun(executionId, "parent", null, State.Type.RUNNING);
+        TaskRun runningChild = taskRun(executionId, "running-child", parent.getId(), State.Type.RUNNING);
+        TaskRun terminatedChild = taskRun(executionId, "terminated-child", parent.getId(), State.Type.SUCCESS);
+        TaskRun otherBranch = taskRun(executionId, "other-branch", null, State.Type.RUNNING);
+
+        Execution execution = Execution.builder()
+            .id(executionId)
+            .tenantId(MAIN_TENANT)
+            .namespace(TESTS_FLOW_NS)
+            .flowId("minimal")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .taskRunList(List.of(parent, runningChild, terminatedChild, otherBranch))
+            .build();
+        executionRepository.save(execution);
+        return execution;
+    }
+
+    private static TaskRun taskRun(String executionId, String taskId, String parentTaskRunId, State.Type state) {
+        State taskRunState = new State().withState(State.Type.RUNNING);
+        if (State.Type.RUNNING != state) {
+            taskRunState = taskRunState.withState(state);
+        }
+
+        return TaskRun.builder()
+            .id(IdUtils.create())
+            .executionId(executionId)
+            .tenantId(MAIN_TENANT)
+            .namespace(TESTS_FLOW_NS)
+            .flowId("minimal")
+            .taskId(taskId)
+            .parentTaskRunId(parentTaskRunId)
+            .state(taskRunState)
+            .build();
     }
 
     private Execution terminatedExecution() {

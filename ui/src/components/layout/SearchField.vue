@@ -17,7 +17,7 @@
 
 <script lang="ts" setup>
     import {ref, watch, onMounted, onUnmounted} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import debounce from "lodash/debounce"
 
     const props = withDefaults(defineProps<{
@@ -48,7 +48,7 @@
         searchDebounce = debounce(() => {
             emit("search", search.value)
             if (props.router !== false) {
-                const query: Record<string, any> = {
+                const query: LocationQueryRaw = {
                     ...route.query,
                     q: search.value,
                     page: 1,

@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue"
+    import {computed, onMounted, ref, type Ref} from "vue"
     import {useStorage} from "@vueuse/core"
     import {useScrollMemory} from "../../composables/useScrollMemory"
 
@@ -50,7 +50,7 @@
     })
 
     const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null)
-    useScrollMemory(ref("context-panel-news"), scrollableElement as any)
+    useScrollMemory(ref("context-panel-news"), scrollableElement as unknown as Ref<HTMLElement | null>)
 </script>
 
 <style scoped lang="scss">

@@ -29,8 +29,7 @@
     const {t} = useI18n()
     // Access $moment from globalProperties since it's registered as a plugin
     const instance = getCurrentInstance()
-    // FIXME: any - $moment is registered as a global property via Vue plugin
-    const $moment = instance?.appContext.config.globalProperties.$moment as any // FIXME: any
+    const $moment = (instance?.appContext.config.globalProperties.$moment ?? moment) as typeof moment
 
     const shortcuts = computed(() => [
         {

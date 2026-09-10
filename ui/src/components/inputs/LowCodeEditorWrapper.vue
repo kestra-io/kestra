@@ -1,5 +1,15 @@
 <template>
     <div id="topologyWrapper" v-ks-loading="isLoading" class="vue-flow">
+        <KsAlert
+            v-if="flowGraph && invalidGraph"
+            :title="$t('topology-graph.invalid')"
+            type="error"
+            class="stale-graph"
+            :closable="false"
+            data-test="topology-stale-graph"
+        >
+            {{ $t('topology-graph.invalid_description') }}
+        </KsAlert>
         <LowCodeEditor
             v-if="flowGraph"
             :flowGraph="flowGraph"
@@ -73,6 +83,15 @@
 <style scoped>
     .vue-flow {
         height: 100%;
+        position: relative;
+    }
+    .stale-graph {
+        position: absolute;
+        z-index: 2;
+        top: var(--ks-spacing-2);
+        left: var(--ks-spacing-2);
+        right: var(--ks-spacing-2);
+        width: auto;
     }
     :deep(.vue-flow__panel.bottom) {
         bottom: 2rem !important;

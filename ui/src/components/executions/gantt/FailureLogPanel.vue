@@ -102,7 +102,8 @@
 
         .line {
             flex-shrink: 0;
-            padding: var(--ks-spacing-1) 0;
+            padding-top: var(--ks-spacing-1);
+            padding-bottom: var(--ks-spacing-1);
             border-top: 1px solid var(--ks-border-default);
 
             &:first-child {

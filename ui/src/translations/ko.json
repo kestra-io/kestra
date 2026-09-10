@@ -202,6 +202,7 @@
     "gantt": "간트",
     "gantt_no_tasks_executed": "이 실행은 어떤 task도 실행하지 않고 종료되었습니다.  \n개요와 logs를 확인하여 이유를 알아보세요.",
     "gantt_no_tasks_match_filters": "검색, 상태 또는 log-level 필터를 조정해 보세요.",
+    "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
     "executionsTimeline": {
       "breadcrumb": {
         "all": "전체",
@@ -236,7 +237,6 @@
         "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
       }
     },
-    "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
     "logs": "Logs",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",

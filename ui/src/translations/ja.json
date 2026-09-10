@@ -202,6 +202,7 @@
     "gantt": "ガント",
     "gantt_no_tasks_executed": "このExecutionは、タスクを実行せずに終了しました。  \n理由を確認するには、概要とLogsをチェックしてください。",
     "gantt_no_tasks_match_filters": "検索、状態、またはログレベルのフィルターを調整してみてください。",
+    "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
     "executionsTimeline": {
       "breadcrumb": {
         "all": "すべて",
@@ -236,7 +237,6 @@
         "description": "この期間の実行の読み込み中にエラーが発生しました。"
       }
     },
-    "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
     "logs": "Logs",
     "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",

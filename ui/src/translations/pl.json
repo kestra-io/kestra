@@ -202,6 +202,7 @@
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "Ta egzekucja zakończyła się bez uruchomienia żadnego Taska.\nSprawdź jej przegląd i logi, aby poznać przyczynę.",
     "gantt_no_tasks_match_filters": "Spróbuj dostosować filtry wyszukiwania, statusu lub poziomu logów.",
+    "gantt_no_tasks_match_filters_title": "Żaden Task nie pasuje do wybranych filtrów.",
     "executionsTimeline": {
       "breadcrumb": {
         "all": "Wszystkie",
@@ -236,7 +237,6 @@
         "description": "Wystąpił błąd podczas ładowania wykonań dla tego zakresu."
       }
     },
-    "gantt_no_tasks_match_filters_title": "Żaden Task nie pasuje do wybranych filtrów.",
     "logs": "Logs",
     "no_logs_data_description": "Dostosuj filtry, zmień zakres czasu lub sprawdź, czy Flow był ostatnio uruchamiany.",
     "no_logs_data_title": "Nie znaleziono logów dla wybranych filtrów.",

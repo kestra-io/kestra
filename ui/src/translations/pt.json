@@ -202,6 +202,7 @@
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "Esta execução terminou sem executar nenhuma task.  \nVerifique sua visão geral e logs para encontrar o motivo.",
     "gantt_no_tasks_match_filters": "Tente ajustar os filtros de busca, estado ou nível de log.",
+    "gantt_no_tasks_match_filters_title": "Nenhuma task corresponde aos filtros selecionados.",
     "executionsTimeline": {
       "breadcrumb": {
         "all": "Todos",
@@ -236,7 +237,6 @@
         "description": "Ocorreu um erro ao carregar as execuções deste período."
       }
     },
-    "gantt_no_tasks_match_filters_title": "Nenhuma task corresponde aos filtros selecionados.",
     "logs": "Logs",
     "no_logs_data_description": "Por favor, tente ajustar seus filtros, alterar o intervalo de tempo ou verifique se o flow foi executado recentemente.",
     "no_logs_data_title": "Nenhum log encontrado para os filtros selecionados.",

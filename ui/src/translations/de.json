@@ -202,6 +202,7 @@
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "Diese Execution endete, ohne dass ein Task ausgeführt wurde.\nDen Grund findest du in der Übersicht und in den Logs.",
     "gantt_no_tasks_match_filters": "Passe die Filter für Suche, Status oder Log-Level an.",
+    "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "executionsTimeline": {
       "breadcrumb": {
         "all": "Alle",
@@ -236,7 +237,6 @@
         "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
       }
     },
-    "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
     "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",

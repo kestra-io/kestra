@@ -202,6 +202,7 @@
     "gantt": "甘特图",
     "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
     "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
+    "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
     "executionsTimeline": {
       "breadcrumb": {
         "all": "全部",
@@ -236,7 +237,6 @@
         "description": "加载此时间范围的执行记录时出错。"
       }
     },
-    "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
     "logs": "日志",
     "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_logs_data_title": "未找到所选过滤器的日志。",

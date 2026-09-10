@@ -2646,6 +2646,44 @@
       "install_description": "Instale o Kestra como uma aplicação para um acesso mais rápido e uma experiência em ecrã inteiro.",
       "install": "Instalar",
       "dismiss": "Agora não"
+    },
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} execução | {count} execuções",
+        "failed": "{count} falhadas"
+      },
+      "toolbar": {
+        "panBack": "Recuar",
+        "panForward": "Avançar",
+        "zoomIn": "Aumentar zoom",
+        "zoomOut": "Diminuir zoom"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} execução | {count} execuções",
+        "failedCount": "{count} falhadas"
+      },
+      "bucket": {
+        "hint": "Agregado: aumente o zoom para ver o detalhe de cada execução"
+      },
+      "popover": {
+        "openExecution": "Abrir execução",
+        "showOnlyFlow": "Mostrar apenas este flow"
+      },
+      "empty": {
+        "description": "Não existem execuções no período e filtros selecionados.",
+        "resetFilters": "Repor filtros",
+        "widenRange": "Alargar para 7 dias"
+      },
+      "error": {
+        "title": "Não foi possível carregar a linha do tempo",
+        "description": "Ocorreu um erro ao carregar as execuções deste período."
+      }
+    },
+    "chart mode": {
+      "counts": "Contagens",
+      "timeline": "Linha do tempo"
     }
   }
 }

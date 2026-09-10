@@ -2646,6 +2646,44 @@
       "install_description": "Installiere Kestra als App für schnelleren Zugriff und eine Vollbild-Ansicht.",
       "install": "Installieren",
       "dismiss": "Nicht jetzt"
+    },
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Alle",
+        "total": "{count} Ausführung | {count} Ausführungen",
+        "failed": "{count} fehlgeschlagen"
+      },
+      "toolbar": {
+        "panBack": "Zurück schwenken",
+        "panForward": "Vorwärts schwenken",
+        "zoomIn": "Vergrößern",
+        "zoomOut": "Verkleinern"
+      },
+      "row": {
+        "openOwnPage": "Diese Seite öffnen",
+        "runsCount": "{count} Ausführung | {count} Ausführungen",
+        "failedCount": "{count} fehlgeschlagen"
+      },
+      "bucket": {
+        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene"
+      },
+      "popover": {
+        "openExecution": "Ausführung öffnen",
+        "showOnlyFlow": "Nur diesen Flow anzeigen"
+      },
+      "empty": {
+        "description": "Keine Ausführungen im gewählten Zeitraum und Filtern.",
+        "resetFilters": "Filter zurücksetzen",
+        "widenRange": "Auf 7 Tage erweitern"
+      },
+      "error": {
+        "title": "Zeitachse konnte nicht geladen werden",
+        "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
+      }
+    },
+    "chart mode": {
+      "counts": "Anzahl",
+      "timeline": "Zeitachse"
     }
   }
 }

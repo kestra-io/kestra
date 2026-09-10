@@ -52,7 +52,7 @@
 
     export interface Preview {
         truncated?: boolean;
-        type?: "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
+        type?: "TEXT" | "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
         content?: any;
         extension?: string;
     }

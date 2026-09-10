@@ -275,6 +275,38 @@ describe("CopilotChat", () => {
         expect(state.confirm).toHaveBeenCalledWith("REJECT", undefined, undefined)
     })
 
+    it("passes the open flow's buffer as the diff before-source when the pending action targets it", () => {
+        routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+        state.pendingConfirmation.value = {
+            confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+            arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team\ndescription: x"},
+        }
+        const w = mountChat()
+        expect(w.findComponent({name: "ProposedActionCard"}).props("currentFlowSource")).toBe("id: my-flow\nnamespace: company.team")
+    })
+
+    it("omits the diff before-source when the pending action targets a different flow than the one open", () => {
+        routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+        state.pendingConfirmation.value = {
+            confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+            arguments: {namespace: "company.team", flowId: "other-flow", body: "id: other-flow"},
+        }
+        const w = mountChat()
+        expect(w.findComponent({name: "ProposedActionCard"}).props("currentFlowSource")).toBeUndefined()
+    })
+
+    it("omits the diff before-source outside a flow route", () => {
+        routeStub = {name: "flows/list", params: {}}
+        state.pendingConfirmation.value = {
+            confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+            arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow"},
+        }
+        const w = mountChat()
+        expect(w.findComponent({name: "ProposedActionCard"}).props("currentFlowSource")).toBeUndefined()
+    })
+
     it("disables the composer when a turn cannot be sent", () => {
         state.canSend.value = false
         const w = mountChat()

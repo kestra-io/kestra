@@ -2116,6 +2116,13 @@
           "pending": "Oczekuje na zatwierdzenie",
           "revise": "Odpowiedz, aby poprawić"
         },
+        "diff": {
+          "ariaLabel": "Różnice w proponowanej zmianie",
+          "noChanges": "Brak zmian",
+          "added": "{count} dodana linia | {count} dodane linie | {count} dodanych linii",
+          "removed": "{count} usunięta linia | {count} usunięte linie | {count} usuniętych linii",
+          "hiddenLines": "{count} niezmieniona linia ukryta | {count} niezmienione linie ukryte | {count} niezmienionych linii ukrytych"
+        },
         "notice": {
           "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie.",
           "retry": "Ponów próbę"

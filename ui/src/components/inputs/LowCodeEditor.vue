@@ -25,6 +25,7 @@
             :customActions="customActions"
             :showDetailsToggle="props.showDetailsToggle && hasExtraDetails"
             :taskDetailsVersion="taskDetailsVersion"
+            :validationIssuesByTask="validationIssuesByTask"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -75,6 +76,29 @@
         </Topology>
 
         <BlockTaskPicker :picker="taskPicker" modal />
+
+        <TaskEditModal
+            v-if="modalTarget"
+            :task="modalTaskData"
+            :taskRaw="modalTaskRaw"
+            :section="modalSection"
+            :flowId="props.flowId ?? ''"
+            :namespace="props.namespace ?? ''"
+            :editorKey="modalItemPath"
+            :parentPath="modalTarget.parentPath"
+            :refPath="modalTarget.refPath"
+            :blockSchemaPath="modalTarget.blockSchemaPath"
+            :crumbs="modalCrumbs"
+            :creating="modalTarget.creating"
+            @update:task="onModalTaskEdited"
+            @close="closeModal"
+            @open-in-tabs="onModalOpenInTabs"
+            @navigate="popModalTo"
+            @select-nested="onModalSelectNested"
+            @created="resolveCreatedTarget"
+        />
+
+        <UndoToast :state="undoState" @undo="performUndo" />
 
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
@@ -259,9 +283,28 @@
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
+    import TaskEditModal from "../no-code/blocks/TaskEditModal.vue"
+    import UndoToast from "../no-code/blocks/UndoToast.vue"
     import {useTaskPicker} from "../no-code/blocks/useTaskPicker"
-    import {laneDisplayLabelFromPath, sectionDisplayLabel} from "../no-code/blocks/blockSections"
-    import {errorsLaneTarget} from "../../utils/flowableBlockOps"
+    import {useTaskEditModalStack, modalItemPathOf} from "../no-code/blocks/useTaskEditModalStack"
+    import {useEditTarget, taskCrumbAt} from "../no-code/blocks/useEditTarget"
+    import {useYamlUndo} from "../no-code/blocks/useYamlUndo"
+    import type {Crumb} from "../no-code/utils/useFieldNavigation"
+    import {
+        laneDisplayLabelFromPath,
+        sectionDisplayLabel,
+        sectionFromParentPath,
+        resolveTaskInsertionTarget,
+        isTaskListPath,
+    } from "../no-code/blocks/blockSections"
+    import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
+    import {
+        errorsLaneTarget,
+        groupValidationIssuesByTask,
+        updateBlockAtPath,
+        type BlockSection,
+    } from "../../utils/flowableBlockOps"
+    import {trackAuthoringAction} from "../../utils/tabTracking"
     import {useAuthStore} from "override/stores/auth"
     import action from "../../models/action"
     import resource from "../../models/resource"
@@ -674,6 +717,20 @@
         }
     }
 
+    // Topology renders the whole graph, so every graph-originated mutation needs the graph
+    // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
+        flowStore,
+        (name: string) => t("block_editor.block_deleted", {name}),
+    )
+
+    function applyGraphYaml(yaml: string) {
+        applyYamlWithUndo(yaml)
+        flowStore.loadGraphFromSource({flow: yaml}).catch((error: unknown) => {
+            console.error("Error loading graph:", error)
+        })
+    }
+
     const onDelete = (event: any) => {
         const flowParsed = YAML_UTILS.parse(props.source)
         toast.confirm(
@@ -692,43 +749,95 @@
                     }
                     return
                 }
-                const updatedYmlSource = YAML_UTILS.deleteBlock({
-                    source: props.source ?? "",
-                    section,
-                    key: event.id,
+                const taskType = flowParsed.tasks.find((e: any) => e.id === event.id)?.type as string | undefined
+                deleteWithUndo(event.id, () => {
+                    const updatedYmlSource = YAML_UTILS.deleteBlock({
+                        source: props.source ?? "",
+                        section,
+                        key: event.id,
+                    })
+                    applyGraphYaml(updatedYmlSource)
+                    trackAuthoringAction("task_deleted", "topology", {task_type: taskType})
                 })
-                emit(
-                    "on-edit",
-                    updatedYmlSource,
-                    true,
-                )
             },
         )
     }
 
+    function blockSchemaPathFor(section: BlockSection): string {
+        return [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/")
+    }
+
     const onCreateNewTask = (event: [string, "before" | "after"]) => {
-        topologyClick.value = {
-            action: "create",
-            params: {
-                section: SECTIONS.TASKS.toLowerCase() as any,
-                position: event[1],
-                id: event[0],
-            },
-        }
+        const [taskId, position] = event
+        const target = resolveTaskInsertionTarget(props.source ?? "", "tasks", taskId)
+        if (!target) return
+        taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex, undefined, position)
     }
 
     const onEditTask = (event: {
         task: Record<string, any>;
         section?: string;
     }) => {
+        const section = (event.section ?? SECTIONS.TASKS).toLowerCase() as BlockSection
+        const target = resolveTaskInsertionTarget(props.source ?? "", section, event.task.id)
+        if (!target) return
+        pushModalTarget({
+            parentPath: target.parentPath,
+            blockSchemaPath: blockSchemaPathFor(section),
+            refPath: target.refIndex,
+        })
+    }
+
+    const {modalStack, modalTarget, pushModalTarget, resolveCreatedTarget, popModalTo, closeModal} = useTaskEditModalStack()
+
+    const modalItemPath = computed<string>(() => {
+        const target = modalTarget.value
+        return target ? modalItemPathOf(target) : ""
+    })
+
+    const modalCrumbs = computed<Crumb[]>(() =>
+        modalStack.value.map((target) => taskCrumbAt(flowSource.value, modalItemPathOf(target))),
+    )
+
+    const alwaysResolved = computed(() => true)
+
+    const {
+        path: modalPath,
+        data: modalTaskData,
+        raw: modalTaskRaw,
+    } = useEditTarget(flowSource, modalItemPath, alwaysResolved, alwaysResolved)
+
+    const modalSection = computed<BlockSection>(() =>
+        modalTarget.value ? sectionFromParentPath(modalTarget.value.parentPath) : "tasks",
+    )
+
+    function onModalTaskEdited(newContent: string) {
+        if (!modalPath.value) return
+        applyGraphYaml(updateBlockAtPath(flowSource.value, modalPath.value, newContent))
+        trackAuthoringAction("task_edited", "topology", {task_type: modalTaskData.value?.type as string | undefined})
+    }
+
+    function onModalOpenInTabs() {
+        const target = modalTarget.value
+        const id = modalTaskData.value?.id
+        if (!target || id == null) return
         topologyClick.value = {
             action: "edit",
             params: {
-                section: (event.section ?? SECTIONS.TASKS).toLowerCase() as any,
-                id: event.task.id,
+                section: sectionFromParentPath(target.parentPath) as any,
+                id: String(id),
             },
         }
+        closeModal()
     }
+
+    function onModalSelectNested(parentPath: string, blockSchemaPath: string, refPath: number | undefined) {
+        pushModalTarget({parentPath, blockSchemaPath, refPath})
+    }
+
+    const validationIssuesByTask = computed<Map<string, string[]>>(() =>
+        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+    )
 
     const taskPicker = useTaskPicker({
         pluginsStore,
@@ -738,13 +847,15 @@
         focusedBlockPath: () => undefined,
         focusCanvasCard: (id) => {
             if (!id) return
-            topologyClick.value = {
-                action: "edit",
-                params: {
-                    section: SECTIONS.TASKS.toLowerCase() as any,
-                    id,
-                },
-            }
+            // The insert already landed, so the source has to be read live from the store —
+            // props.source only catches up on the next render.
+            const target = resolveTaskInsertionTarget(flowStore.flowYaml ?? "", "tasks", id)
+            if (!target) return
+            pushModalTarget({
+                parentPath: target.parentPath,
+                blockSchemaPath: blockSchemaPathFor("tasks"),
+                refPath: target.refIndex,
+            })
         },
         sectionList: (section) => {
             const list = YAML_UTILS.parse<Record<string, any>>(props.source ?? "")?.[section]
@@ -753,7 +864,8 @@
         sectionDisplayLabel: (section) => sectionDisplayLabel(t, section),
         laneDisplayLabel: (parentPath) => laneDisplayLabelFromPath(t, parentPath),
         flowYaml: computed(() => props.source ?? ""),
-        applyYaml: (yaml) => emit("on-edit", yaml, true),
+        applyYaml: applyGraphYaml,
+        surface: "topology",
     })
 
     const onPickerEscape = (event: KeyboardEvent) => {
@@ -777,6 +889,41 @@
         if (!target) return
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }
+
+    async function saveFlowFromModal() {
+        const outcome = await flowStore.save?.()
+        if (outcome === "blocked") {
+            coreStore.message = {
+                variant: "error",
+                title: t("block_editor.save_blocked.title"),
+                content: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
+            }
+        }
+    }
+
+    // Only a lane of tasks can be filled from the task picker; every other list (e.g. flow
+    // inputs) needs its own schema-driven form, stacked on the modal like any nested edit.
+    function createNestedBlock(parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) {
+        if (isTaskListPath(parentPath)) {
+            taskPicker.openTaskPickerAtPath(parentPath, refPath ?? -1, undefined, "after", anchorEl)
+            return
+        }
+        pushModalTarget({parentPath, blockSchemaPath, refPath, creating: true})
+    }
+
+    // TaskEditModalForm re-provides the path/section keys it needs for its own subtree — this
+    // only has to cover what it doesn't: schema resolution and the nested-edit/save callbacks.
+    useBlockEditorProvides({
+        props: {},
+        flowYaml: flowSource,
+        validationIssuesByTask,
+        inlineEditPanel: ref(),
+        createTask: createNestedBlock,
+        editTask: (parentPath, blockSchemaPath, refPath) => pushModalTarget({parentPath, blockSchemaPath, refPath}),
+        closeTask: () => closeModal(),
+        updateYaml: (yaml: string) => applyGraphYaml(yaml),
+        saveFlow: () => saveFlowFromModal(),
+    })
 
     const fitViewOrientation = () => {
         if(vueFlow.value){

@@ -442,7 +442,8 @@
       "zoom-fit": "Adatta",
       "invalid": "Errore del grafico",
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
-      "load_error": "Impossibile caricare il grafico della topologia. Riprova."
+      "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
+      "add-task": "Aggiungi task"
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",

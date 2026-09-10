@@ -202,6 +202,7 @@
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
     import {usePlaygroundRun} from "../../../composables/playground/usePlaygroundRun"
+    import {trackAuthoringAction} from "../../../utils/tabTracking"
 
     const {t} = useI18n()
     const flowStore = useFlowStore()
@@ -323,6 +324,7 @@
     function onInlineTaskEdited(newContent: string) {
         if (!editingPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, editingPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: editingTaskData.value?.type as string | undefined})
     }
 
     // The entry now exists, so hand the tab over to the edit surface pointed at it.
@@ -352,6 +354,7 @@
     function onModalTaskEdited(newContent: string) {
         if (!modalPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, modalPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: modalTaskData.value?.type as string | undefined})
     }
 
     function onModalOpenInTabs() {
@@ -491,6 +494,7 @@
         laneDisplayLabel: laneDisplayLabelFromPath,
         flowYaml,
         applyYaml,
+        surface: "no_code",
     })
 
     const {

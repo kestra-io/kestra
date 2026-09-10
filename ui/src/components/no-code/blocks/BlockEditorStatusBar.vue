@@ -42,25 +42,18 @@
         </span>
     </div>
 
-    <Transition name="block-editor-undo">
-        <div v-if="undoState" class="block-editor-undo" role="status" aria-live="polite">
-            <span class="block-editor-undo-label">{{ undoState.label }}</span>
-            <button
-                type="button"
-                class="block-editor-undo-btn"
-                data-test="block-editor-undo"
-                @click="emit('undo')"
-            >
-                {{ $t("block_editor.undo") }}
-            </button>
-        </div>
-    </Transition>
+    <UndoToast
+        :state="undoState"
+        style="--undo-toast-offset: calc(var(--status-bar-height) + var(--ks-spacing-3))"
+        @undo="emit('undo')"
+    />
 </template>
 
 <script setup lang="ts">
     import Keyboard from "vue-material-design-icons/Keyboard.vue"
     import {displayKeys, type FooterHint} from "./shortcutHints"
     import type {BlockEditorKeyBinding, BlockEditorKeymapGroup} from "./keymap"
+    import UndoToast from "./UndoToast.vue"
 
     defineProps<{
         shortcutsOpen: boolean
@@ -235,64 +228,4 @@
         color: var(--ks-text-secondary);
     }
 
-    .block-editor-undo {
-        position: absolute;
-        bottom: calc(var(--status-bar-height) + var(--ks-spacing-3));
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 11;
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-2) var(--ks-spacing-2) var(--ks-spacing-4);
-        background: var(--ks-bg-elevated);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
-        box-shadow: var(--ks-shadow-sm);
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-primary);
-    }
-
-    .block-editor-undo-label {
-        white-space: nowrap;
-    }
-
-    .block-editor-undo-btn {
-        border: none;
-        background: transparent;
-        color: var(--ks-text-link);
-        font-weight: 600;
-        font-size: var(--ks-font-size-sm);
-        cursor: pointer;
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
-        border-radius: var(--ks-radius-sm);
-        transition: background-color 0.12s;
-    }
-
-    .block-editor-undo-btn:hover {
-        background: var(--ks-bg-hover);
-    }
-
-    .block-editor-undo-btn:focus-visible {
-        outline: 2px solid var(--ks-border-focus);
-        outline-offset: 1px;
-    }
-
-    .block-editor-undo-enter-active,
-    .block-editor-undo-leave-active {
-        transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-
-    .block-editor-undo-enter-from,
-    .block-editor-undo-leave-to {
-        opacity: 0;
-        transform: translate(-50%, 8px);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .block-editor-undo-enter-active,
-        .block-editor-undo-leave-active {
-            transition: none;
-        }
-    }
 </style>

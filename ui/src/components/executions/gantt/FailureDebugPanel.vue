@@ -1,113 +1,119 @@
 <template>
-    <section
-        v-if="shouldRender"
-        v-show="isOpen"
-        role="region"
-        :aria-labelledby="headingId"
-        class="failure-debug-panel"
-        @keydown="onKeydown"
-    >
-        <header class="failure-debug-panel__header">
-            <div class="failure-debug-panel__heading">
-                <h3 :id="headingId" ref="panelHeadingRef" tabindex="-1">
-                    {{ $t("failureDebugPanel.title") }}
-                </h3>
-                <p v-if="focusedTaskRun" class="failure-debug-panel__subtitle">
-                    {{ $t("failureDebugPanel.subtitle", {taskId: focusedTaskRun.taskId}) }}
-                </p>
-            </div>
-            <KsIconButton :tooltip="$t('close')" placement="top" @click="close">
-                <Close />
-            </KsIconButton>
-        </header>
-
-        <div
-            v-if="failedTaskRuns.length > 1"
-            role="tablist"
-            :aria-label="$t('failureDebugPanel.switcher.label')"
-            class="failure-switcher"
+    <div class="debug-overlay">
+        <section
+            v-if="shouldRender"
+            v-show="isOpen"
+            role="region"
+            :aria-labelledby="headingId"
+            class="failure-debug-panel"
+            @keydown="onKeydown"
         >
-            <button
-                v-for="taskRun in failedTaskRuns"
-                :key="taskRun.id"
-                type="button"
-                role="tab"
-                :aria-selected="taskRun.id === focusedId ? 'true' : 'false'"
-                :tabindex="taskRun.id === focusedId ? 0 : -1"
-                class="failure-switcher__tab"
-                :class="{'is-active': taskRun.id === focusedId}"
-                @click="focusFailure(taskRun.id)"
+            <header class="failure-debug-panel__header">
+                <div class="failure-debug-panel__heading">
+                    <h3 :id="headingId" ref="panelHeadingRef" tabindex="-1">
+                        {{ $t("failureDebugPanel.title") }}
+                    </h3>
+                    <p v-if="focusedTaskRun" class="failure-debug-panel__subtitle">
+                        {{ $t("failureDebugPanel.subtitle", {taskId: focusedTaskRun.taskId}) }}
+                    </p>
+                </div>
+                <KsIconButton :tooltip="$t('close')" placement="top" @click="close">
+                    <Close />
+                </KsIconButton>
+            </header>
+
+            <div
+                v-if="failedTaskRuns.length > 1"
+                role="tablist"
+                :aria-label="$t('failureDebugPanel.switcher.label')"
+                class="failure-switcher"
             >
-                <KsExecutionStatus size="small" :status="taskRun.state.current" tabindex="-1" />
-                <code>{{ taskRun.taskId }}</code>
-            </button>
-        </div>
+                <button
+                    v-for="taskRun in failedTaskRuns"
+                    :key="taskRun.id"
+                    type="button"
+                    role="tab"
+                    :aria-selected="taskRun.id === focusedId ? 'true' : 'false'"
+                    :tabindex="taskRun.id === focusedId ? 0 : -1"
+                    class="failure-switcher__tab"
+                    :class="{'is-active': taskRun.id === focusedId}"
+                    @click="focusFailure(taskRun.id)"
+                >
+                    <KsExecutionStatus size="small" :status="taskRun.state.current" tabindex="-1" />
+                    <code>{{ taskRun.taskId }}</code>
+                </button>
+            </div>
 
-        <div v-if="focusedTaskRun" class="failure-debug-panel__actions">
-            <Restart
-                component="KsButton"
-                type="primary"
-                isReplay
-                tooltipPosition="bottom"
-                :execution="execution"
-                :taskRun="focusedTaskRun"
-                :attemptIndex="focusedAttemptIndex"
-            />
-            <span class="failure-debug-panel__restart-caption">{{ $t("failureDebugPanel.restart.caption") }}</span>
-            <KsButton v-if="canUseCopilot" :icon="AiIcon" link @click="askCopilot">
-                {{ $t("failureDebugPanel.copilot.ask") }}
+            <div v-if="focusedTaskRun" class="failure-debug-panel__actions">
+                <Restart
+                    component="KsButton"
+                    type="primary"
+                    isReplay
+                    tooltipPosition="bottom"
+                    :execution="execution"
+                    :taskRun="focusedTaskRun"
+                    :attemptIndex="focusedAttemptIndex"
+                />
+                <span class="failure-debug-panel__restart-caption">{{ $t("failureDebugPanel.restart.caption") }}</span>
+                <KsButton v-if="canUseCopilot" :icon="AiIcon" link @click="askCopilot">
+                    {{ $t("failureDebugPanel.copilot.ask") }}
+                </KsButton>
+                <KsIconButton :tooltip="$t('failureDebugPanel.copyError')" placement="top" @click="copyFocusedError">
+                    <ContentCopy />
+                </KsIconButton>
+            </div>
+
+            <div class="failure-debug-panel__grid">
+                <section class="failure-debug-panel__section">
+                    <h4>{{ $t("failureDebugPanel.miniTimeline.title") }}</h4>
+                    <p class="failure-debug-panel__hint">{{ $t("failureDebugPanel.miniTimeline.dragHint") }}</p>
+                    <FailureMiniTimeline
+                        v-if="focusedId"
+                        ref="miniTimelineRef"
+                        :nodes="structuralNodes"
+                        :focusedId="focusedId"
+                        @focus-task="focusFailureFromNeighbor"
+                        @select-range="onSelectRange"
+                    />
+                </section>
+
+                <section class="failure-debug-panel__section">
+                    <h4>{{ $t("failureDebugPanel.structuralImpact.title") }}</h4>
+                    <FailureStructuralImpact
+                        v-if="focusedId"
+                        :nodes="structuralNodes"
+                        :focusedId="focusedId"
+                        :flow="flow"
+                        @focus="focusFailureFromNeighbor"
+                    />
+                </section>
+
+                <section class="failure-debug-panel__section">
+                    <h4>{{ $t("failureDebugPanel.logs.title") }}</h4>
+                    <FailureLogPanel
+                        v-if="focusedTaskRun"
+                        :executionId="execution.id"
+                        :executionKind="execution.kind ?? undefined"
+                        :taskRunId="focusedTaskRun.id"
+                        :timeRange="timeRange"
+                    />
+                </section>
+            </div>
+        </section>
+
+        <div v-if="shouldRender && !isOpen" ref="reopenWrapperRef" class="failure-debug-reopen">
+            <KsButton :icon="BugOutline" @click="reopen">
+                {{ $t("failureDebugPanel.reopen", {count: failedTaskRuns.length}) }}
             </KsButton>
-            <KsIconButton :tooltip="$t('failureDebugPanel.copyError')" placement="top" @click="copyFocusedError">
-                <ContentCopy />
-            </KsIconButton>
         </div>
 
-        <div class="failure-debug-panel__grid">
-            <section class="failure-debug-panel__section">
-                <h4>{{ $t("failureDebugPanel.miniTimeline.title") }}</h4>
-                <p class="failure-debug-panel__hint">{{ $t("failureDebugPanel.miniTimeline.dragHint") }}</p>
-                <FailureMiniTimeline
-                    v-if="focusedId"
-                    ref="miniTimelineRef"
-                    :nodes="structuralNodes"
-                    :focusedId="focusedId"
-                    @focus-task="focusFailureFromNeighbor"
-                    @select-range="onSelectRange"
-                />
-            </section>
-
-            <section class="failure-debug-panel__section">
-                <h4>{{ $t("failureDebugPanel.structuralImpact.title") }}</h4>
-                <FailureStructuralImpact
-                    v-if="focusedId"
-                    :nodes="structuralNodes"
-                    :focusedId="focusedId"
-                    :flow="flow"
-                    @focus="focusFailureFromNeighbor"
-                />
-            </section>
-
-            <section class="failure-debug-panel__section">
-                <h4>{{ $t("failureDebugPanel.logs.title") }}</h4>
-                <FailureLogPanel
-                    v-if="focusedTaskRun"
-                    :executionId="execution.id"
-                    :executionKind="execution.kind ?? undefined"
-                    :taskRunId="focusedTaskRun.id"
-                    :timeRange="timeRange"
-                />
-            </section>
+        <div role="status" aria-live="polite" class="visually-hidden">
+            {{ announcement }}
         </div>
-    </section>
 
-    <div v-if="shouldRender && !isOpen" ref="reopenWrapperRef" class="failure-debug-reopen">
-        <KsButton :icon="BugOutline" @click="reopen">
-            {{ $t("failureDebugPanel.reopen", {count: failedTaskRuns.length}) }}
-        </KsButton>
-    </div>
-
-    <div role="status" aria-live="polite" class="visually-hidden">
-        {{ announcement }}
+        <div class="debug-underlay" :class="{'is-dimmed': shouldRender && isOpen}">
+            <slot />
+        </div>
     </div>
 </template>
 
@@ -341,16 +347,31 @@
 </script>
 
 <style scoped lang="scss">
+    .debug-overlay {
+        position: relative;
+    }
+
+    .debug-underlay {
+        &.is-dimmed {
+            filter: blur(1.5px) saturate(0.7);
+            opacity: 0.55;
+            pointer-events: none;
+            user-select: none;
+        }
+    }
+
     .failure-debug-panel {
+        position: relative;
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-4);
-        margin-bottom: var(--ks-spacing-4);
-        padding: var(--ks-spacing-4);
-        background: var(--ks-status-background-failed);
+        margin-bottom: calc(-1 * var(--ks-spacing-6));
+        padding: var(--ks-spacing-5);
+        background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-status-border-failed);
-        border-radius: var(--ks-radius-base);
-        box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
+        border-radius: var(--ks-radius-xl);
+        box-shadow: 0 12px 32px 0 var(--ks-shadow-elevated);
+        z-index: 5;
 
         h3, h4 {
             margin: 0;
@@ -448,6 +469,8 @@
     }
 
     .failure-debug-reopen {
+        position: relative;
+        z-index: 5;
         margin-bottom: var(--ks-spacing-4);
     }
 

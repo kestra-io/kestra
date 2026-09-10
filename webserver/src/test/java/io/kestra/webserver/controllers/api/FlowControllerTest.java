@@ -51,6 +51,7 @@ import io.kestra.webserver.models.flows.SourceSearchReplacePreviewResponse;
 import io.kestra.webserver.models.flows.SourceSearchResult;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.errors.ProblemTypes;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;

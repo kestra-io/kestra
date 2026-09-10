@@ -5,7 +5,7 @@
   "packages/design-system/src/components/Data/KsAvatar.vue": 1,
   "packages/design-system/src/components/Data/KsCollapse/KsCollapse.vue": 1,
   "packages/design-system/src/components/Data/KsCollapse/KsCollapseItem.vue": 1,
-  "packages/design-system/src/components/Data/KsDataTable/KsDataTable.vue": 31,
+  "packages/design-system/src/components/Data/KsDataTable/KsDataTable.vue": 13,
   "packages/design-system/src/components/Data/KsDataTable/filter/MainFilter.vue": 2,
   "packages/design-system/src/components/Data/KsDataTable/filter/RightFilter.vue": 1,
   "packages/design-system/src/components/Data/KsDataTable/filter/composables/useRouteFilterPolicy.ts": 7,

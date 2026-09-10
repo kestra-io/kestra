@@ -98,6 +98,17 @@
     const MAX_PAGE_SIZE = 1000
     const MAX_PAGE = 1_000_000
 
+    type Row = unknown
+    type RowKey = (row: any) => string
+
+    function rowKeyFor(row: Row, rowKey: string | RowKey | undefined): unknown {
+        if (typeof rowKey === "function") return rowKey(row)
+        if (typeof row === "object" && row !== null && rowKey) {
+            return (row as Record<string, unknown>)[rowKey]
+        }
+        return undefined
+    }
+
     const props = withDefaults(defineProps<{
         data?: any[]
         total?: number
@@ -192,16 +203,14 @@
 
     const composedRowClassName = computed(() => {
         const forced = new Set(props.forceExpandedRowKeys ?? [])
-        const userClass = attrs.rowClassName as ((arg: any) => string) | string | undefined
+        const userClass = attrs.rowClassName as ((arg: {row: Row}) => string) | string | undefined
 
         if (!forced.size && !userClass) return undefined
 
-        return (arg: {row: any}) => {
+        return (arg: {row: Row}) => {
             const base = typeof userClass === "function" ? userClass(arg) : (userClass ?? "")
             if (!forced.size) return base
-            const key = typeof props.rowKey === "function"
-                ? (props.rowKey as (row: any) => string)(arg.row)
-                : (arg.row as any)?.[props.rowKey as string]
+            const key = rowKeyFor(arg.row, props.rowKey)
             return [base, forced.has(String(key)) ? "ks-row-force-expanded" : ""].filter(Boolean).join(" ")
         }
     })
@@ -246,11 +255,11 @@
             : props.total,
     )
 
-    const selectionChanged = (rawSelection: any[]) => {
+    const selectionChanged = (rawSelection: Row[]) => {
         hasSelection.value = rawSelection.length > 0
 
-        const mapper = props.selectionMapper ?? ((e: any) => e)
-        mappedSelection.value = rawSelection.map(mapper)
+        const mapper = props.selectionMapper ?? ((e: unknown) => e)
+        mappedSelection.value = rawSelection.map(element => mapper(element))
 
         if (queryBulkAction.value && props.data && rawSelection.length < pageSelectableCount.value) {
             queryBulkAction.value = false
@@ -259,16 +268,12 @@
         emit("selection-change", rawSelection)
     }
 
-    const onSelect = async (selection: any[], row: any) => {
+    const onSelect = async (selection: Row[], row: Row) => {
         const data = props.data ?? []
         const currentIndex = data.indexOf(row)
         const rowKey = props.rowKey
 
-        const isChecked = selection.some(s =>
-            typeof rowKey === "function"
-                ? rowKey(s) === rowKey(row)
-                : s[rowKey as string] === row[rowKey as string],
-        )
+        const isChecked = selection.some(s => rowKeyFor(s, rowKey) === rowKeyFor(row, rowKey))
 
         if (isShiftPressed.value && lastCheckedIndex.value !== null) {
             const start = Math.min(lastCheckedIndex.value, currentIndex)
@@ -297,21 +302,18 @@
         queryBulkAction.value = false
     }
 
-    const setSelection = (selection: any[]) => {
+    const setSelection = (selection: Row[]) => {
         tableRef.value?.clearSelection()
         if (Array.isArray(selection)) {
-            const isFunction = typeof props.rowKey === "function"
             selection.forEach(sel => {
-                const row = props.data.find(r => isFunction
-                    ? (props.rowKey as (row: any) => any)(r) === (props.rowKey as (row: any) => any)(sel)
-                    : r[props.rowKey as string] === sel[props.rowKey as string])
+                const row = props.data.find(r => rowKeyFor(r, props.rowKey) === rowKeyFor(sel, props.rowKey))
                 if (row) tableRef.value?.toggleRowSelection(row, true)
             })
         }
         selectionChanged(selection)
     }
 
-    const toggleRowExpansion = (row: any, expand?: boolean) => {
+    const toggleRowExpansion = (row: Row, expand?: boolean) => {
         tableRef.value?.toggleRowExpansion(row, expand)
     }
 
@@ -396,10 +398,7 @@
             const currentSelection = tableRef.value?.getSelectionRows() ?? []
             const rowKey = props.rowKey
             const validSelection = currentSelection.filter((sel: unknown) => {
-                const isFunction = typeof rowKey === "function"
-                return props.data.some(r => isFunction
-                    ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
+                return props.data.some(r => rowKeyFor(r, rowKey) === rowKeyFor(sel, rowKey))
             })
             if (validSelection.length !== currentSelection.length) {
                 tableRef.value?.clearSelection()
@@ -426,7 +425,7 @@
         emit("page-changed", {page: 1, size})
     }
 
-    const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
+    const onSortChange = (sort: {column: unknown; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
             const key = props.sortKeyMapper?.(sort.prop) ?? sort.prop
             internalSort.value = `${key}:${sort.order === "descending" ? "desc" : "asc"}`
@@ -584,7 +583,7 @@
         }
 
         // element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own
-        // height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any
+        // height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. a
         // empty-state layout). Subtract the header height we already track for the bulk-select overlay above.
         .kel-table__empty-block {
             height: calc(100% - var(--table-header-height, 0px)) !important;

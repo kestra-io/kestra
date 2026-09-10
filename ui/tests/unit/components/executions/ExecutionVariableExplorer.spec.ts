@@ -157,6 +157,27 @@ describe("ExecutionVariableExplorer", () => {
         expect(filePreview.props("path")).toBe(fileUri)
     })
 
+    test("offers the lone file nested in a selection to the debugger without hiding the tree", async () => {
+        const fileUri = "kestra:///outputs/products.json"
+        const wrapper = mountExplorer({
+            transform: {
+                vars: {},
+                exitCode: 0,
+                outputFiles: {"products.json": fileUri},
+            },
+        })
+        await flushPromises()
+
+        await selectVariable(wrapper, "transform")
+
+        const expressionDebugger = wrapper.findComponent({name: "ExpressionDebugger"})
+        expect(expressionDebugger.props("fileUri")).toBe(fileUri)
+        expect(expressionDebugger.props("expression")).toBe("{{ vars.transform }}")
+        // the selection keeps showing the tree, the file is only offered on the side
+        expect(wrapper.findComponent({name: "FilePreview"}).exists()).toBe(false)
+        expect(wrapper.findAll(".json-tree__row").length).toBeGreaterThan(0)
+    })
+
     test("does not re-root the tree when selecting intermediate object rows", async () => {
         const wrapper = mountExplorer({
             bundle: {

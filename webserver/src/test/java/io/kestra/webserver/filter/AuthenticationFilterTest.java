@@ -1,5 +1,7 @@
 package io.kestra.webserver.filter;
 
+import java.net.URI;
+
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -330,5 +332,39 @@ class AuthenticationFilterTest {
             )
         ).block();
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void encodedSeparatorShouldNotBypassAuthentication() {
+        // GHSA-rjhm-qm6w-m7x9: the filter used to be registered on the Ant
+        // pattern "/api/v1/**", matched against the raw, percent-encoded request target. A raw target
+        // such as "/api/v1%2Fdashboards" tokenises as two segments ("api", "v1%2Fdashboards"), never
+        // matching the pattern, so the filter was skipped entirely, while TenantAliasingRooter decoded
+        // the same target, rewrote it to "/api/v1/main/dashboards" and dispatched it straight into the
+        // controller with no authentication check having run.
+        TestAuthFilter.ENABLED = false;
+        try {
+            // control: the filter runs today and denies
+            assertUnauthorized("/api/v1/main/dashboards");
+            // control: raw tokenises as 3 segments (api / v1 / main%2Fdashboards), still matched today
+            assertUnauthorized("/api/v1/main%2Fdashboards");
+            // used to 404 by luck of EXCLUDED_ROUTES matching the decoded path; must now be 401
+            assertUnauthorized("/api/v1%2Fmain/dashboards");
+            // the bypass itself: used to be rewritten to /api/v1/main/dashboards and served unauthenticated
+            assertUnauthorized("/api/v1%2Fdashboards");
+        } finally {
+            TestAuthFilter.ENABLED = true;
+        }
+    }
+
+    private void assertUnauthorized(String rawTarget) {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET(URI.create(rawTarget))),
+            () -> "raw target " + rawTarget + " should not bypass authentication"
+        );
+        assertThat(e.getStatus().getCode())
+            .as("raw target %s should not bypass authentication", rawTarget)
+            .isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
     }
 }

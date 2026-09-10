@@ -11,7 +11,6 @@ import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.services.AbstractFilterService;
 import io.kestra.core.utils.Either;
-import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 
 import io.micronaut.context.annotation.Requires;
@@ -23,7 +22,7 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 import static org.jooq.impl.DSL.*;
 
 @Singleton
-@Requires(bean = AbstractJdbcDashboardRepository.class)
+@Requires(bean = AbstractJdbcExecutionRepository.class)
 public class JdbcFilterService extends AbstractFilterService<SelectConditionStep<Record>> {
     @Inject
     private Provider<AbstractJdbcExecutionRepository> executionRepositoryInterface;

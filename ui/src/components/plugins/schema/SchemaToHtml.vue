@@ -2,9 +2,7 @@
     <div class="schema-root">
         <div v-if="!compact" class="schema-header">
             <KsAlert v-if="schema.properties?.$beta" type="info" :closable="false">
-                This plugin is currently in beta. While it is considered safe for use, please be aware that its API
-                could change in ways that are not compatible with earlier versions in future releases, or it might
-                become unsupported.
+                {{ $t("plugins.beta_notice") }}
             </KsAlert>
 
             <div v-if="schema.properties?.description" class="markdown plugin-description">

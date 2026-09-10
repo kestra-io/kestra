@@ -34,7 +34,7 @@
                     </li>
                 </template>
                 <li v-else>
-                    Loading Menu...
+                    {{ $t("loading") }}
                 </li>
             </ul>
         </div>
@@ -203,7 +203,7 @@
             }
 
             &:hover {
-                color: var(--ks-primary);
+                color: var(--ks-text-link);
                 background-color: var(--ks-btn-secondary-bg-hover);
             }
 

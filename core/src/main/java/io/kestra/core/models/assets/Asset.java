@@ -12,6 +12,7 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     protected String tenantId;
 
     @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")

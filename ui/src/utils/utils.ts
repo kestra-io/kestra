@@ -1,6 +1,6 @@
 import {computed} from "vue"
 import moment from "moment"
-import {copyToClipboard} from "@kestra-io/design-system"
+import {copyToClipboard, fileUtils} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -11,15 +11,9 @@ export function uid() {
         Date.now().toString(16).slice(4)
 }
 
-/**
- * Checks whether a value is a supported file URI.
- *
- * @param value Value to validate.
- * @returns `true` if the value is a string with a supported file prefix.
- */
+/** Checks whether a value is a supported file URI. */
 export function isFile(value: unknown): boolean {
-    const PREFIXES = ["kestra:///", "file://", "nsfile://"]
-    return typeof value === "string" && PREFIXES.some(p => value.startsWith(p))
+    return fileUtils.isFileUri(value)
 }
 
 /**

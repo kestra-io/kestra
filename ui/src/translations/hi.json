@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: इस trigger प्रकार के लिए प्लगइन स्थापित नहीं है, कोई सूचना नहीं भेजी जाएगी।"
       },
       "trigger": {
-        "case_sub": "EE-मात्र सुविधा",
-        "case_title": "केस स्थिति",
         "execution_sub": "flow स्थिति परिवर्तनों पर प्रतिक्रिया करता है",
         "execution_title": "एक्सेक्यूशन स्थिति",
         "other_sub": "कोई भी उपलब्ध trigger प्लगइन",
@@ -113,6 +111,10 @@
       }
     },
     "toggle menu": "मेनू टॉगल करें",
+    "favourites": "पसंदीदा",
+    "to close": "बंद करने के लिए",
+    "tabs": "टैब",
+    "select": "चुनें",
     "panel actions": "पैनल क्रियाएँ",
     "playground actions": "प्लेग्राउंड क्रियाएँ",
     "bulk actions": "सामूहिक क्रियाएँ",
@@ -138,6 +140,7 @@
     "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
     "update": "अपडेट करें",
     "confirmation": "पुष्टि",
+    "toast confirm": "क्या आप निश्चित हैं?",
     "common": {
       "back": "वापस",
       "openInNewTab": "नए टैब में खोलें"
@@ -224,6 +227,7 @@
       "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
       "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या ISO 8601 अवधि टाइप करें (उदाहरण के लिए, 'P1DT1H1M1S')",
       "duration example": "उदाहरण: 'P1DT1H1M1S'",
+      "examples": "उदाहरण:",
       "error": "अमान्य अवधि प्रारूप, ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए, P1DT1H1M1S)",
       "custom": "कस्टम",
       "last5minutes": "पिछले 5 मिनट",
@@ -281,6 +285,7 @@
     "expiration date": "समाप्ति तिथि",
     "healthcheck date": "HealthCheck दिनांक",
     "last execution status": "अंतिम निष्पादन स्थिति",
+    "jump to": "यहाँ जाएँ",
     "jump to...": "कूदें...",
     "contextBar": {
       "ai": "एआई",
@@ -344,9 +349,31 @@
     "select a state": "एक स्थिति चुनें",
     "are you sure change state": "क्या आप वाकई स्थिति बदलना चाहते हैं?",
     "yes": "हाँ",
+    "no": "नहीं",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
     "change state confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run state बदलना चाहते हैं?<br/>यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
     "change state current state": "वर्तमान स्थिति है:",
+    "change state hint": {
+      "WARNING": [
+        "Flow को WARNING के रूप में चिह्नित किया जाएगा।",
+        "अगले tasks निष्पादित किए जाएंगे।",
+        "त्रुटि tasks निष्पादित किए जाएंगे।"
+      ],
+      "FAILED": [
+        "Flow को FAILED के रूप में चिह्नित किया जाएगा।",
+        "कोई अन्य task निष्पादित नहीं किया जाएगा।",
+        "Error tasks निष्पादित किए जाएंगे।"
+      ],
+      "SUCCESS": [
+        "Flow पुनः शुरू होगा क्योंकि यह task सफल रहा।",
+        "सभी अवरुद्ध tasks निष्पादित किए जाएंगे।",
+        "यदि सभी task रन सफल होते हैं, तो Flow SUCCESS स्थिति में होगा।"
+      ],
+      "RUNNING": [
+        "flow पुनः आरंभ होगा और सभी अगले tasks निष्पादित होंगे।",
+        "सभी अवरुद्ध tasks निष्पादित किए जाएंगे।"
+      ]
+    },
     "replay execution title": "प्रदर्शन पुनः चलाएं",
     "restart execution title": "निष्पादन पुनः प्रारंभ करें",
     "replay execution description": "यह चयनित execution के आधार पर एक नया execution बनाएगा।",
@@ -414,7 +441,8 @@
       "zoom-reset": "ज़ूम रीसेट करें",
       "zoom-fit": "फिट",
       "invalid": "ग्राफ़ त्रुटि",
-      "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।"
+      "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
+      "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।"
     },
     "show task logs": "Task Logs दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",
@@ -456,6 +484,7 @@
       "big_file_download_only": "यह फ़ाइल {size} है। यह एडिटर में खोलने के लिए बहुत बड़ी है, इसके बजाय इसे डाउनलोड करें।",
       "load_anyway": "फिर भी लोड करें",
       "load_error": "फ़ाइल पूर्वावलोकन लोड करने में विफल। यह एक अस्थायी समस्या या अनुमति संबंधी समस्या हो सकती है।",
+      "image_alt": "इमेज output का पूर्वावलोकन",
       "retry": "पुनः प्रयास करें",
       "html_asset_warning": "यह पूर्वावलोकन HTML को एक सैंडबॉक्स्ड फ्रेम में रेंडर करता है। सापेक्ष पथों द्वारा संदर्भित स्थानीय संसाधन जैसे चित्र और स्टाइलशीट लोड नहीं होंगे।",
       "html_preview_title": "HTML फ़ाइल पूर्वावलोकन"
@@ -476,6 +505,8 @@
     "docsPage": {
       "notFound": "यह डॉक्युमेंटेशन पेज मौजूद नहीं है। इसे हटाया या इसका नाम बदला गया हो सकता है।",
       "loadError": "यह डॉक्युमेंटेशन पेज लोड नहीं हो सका। कृपया फिर से प्रयास करें।",
+      "close_menu": "मेनू बंद करें",
+      "open_menu": "मेनू खोलें",
       "backToDocs": "Docs पर वापस जाएँ"
     },
     "documentation": {
@@ -515,6 +546,10 @@
       }
     },
     "use": "उपयोग करें",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "ब्लूप्रिंट | ब्लूप्रिंट"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "plugin इंस्टॉलेशन विफल रहा",
@@ -525,11 +560,13 @@
         "timeout": "plugin इंस्टॉलेशन में अपेक्षा से अधिक समय लग रहा है। flow सेव नहीं हुआ, इंस्टॉलेशन पूरा होने पर दोबारा सेव करें।",
         "title": "{count} plugin इंस्टॉल हो रहा है | {count} plugins इंस्टॉल हो रहे हैं"
       },
-      "names": "plugins",
+      "names": "प्लगइन",
       "release": "रिलीज़ नोट्स",
       "beta": "बीटा",
+      "beta_notice": "यह प्लगइन वर्तमान में बीटा में है। इसे उपयोग के लिए सुरक्षित माना जाता है, लेकिन ध्यान रखें कि भविष्य की रिलीज़ में इसका API पुराने संस्करणों से असंगत तरीके से बदल सकता है, या इसका समर्थन बंद हो सकता है।",
       "copy_type": "प्रकार कॉपी करें",
       "deprecated": "पुराना",
+      "documentation_sections": "दस्तावेज़ीकरण अनुभाग",
       "dynamic": "गतिशील",
       "filter_all": "सभी",
       "filter_properties": "गुण फ़िल्टर करें…",
@@ -571,6 +608,8 @@
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
+      "possible_values": "संभावित मान",
+      "sub_type": "उपप्रकार",
       "required": "आवश्यक"
     },
     "last execution date": "अंतिम निष्पादन तिथि",
@@ -579,7 +618,7 @@
     "no revisions": "कोई संशोधन नहीं",
     "side-by-side": "साइड-बाय-साइड",
     "line-by-line": "लाइन-बाय-लाइन",
-    "template": "template",
+    "template": "टेम्पलेट",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "test_event": {
@@ -628,8 +667,8 @@
     "conditions": "शर्तें",
     "triggerId": "ट्रिगर ID",
     "tenantId": "tenant ID",
-    "paused": "PAUSED",
-    "running": "RUNNING",
+    "paused": "रोका गया",
+    "running": "चल रहा है",
     "Fold content lines": "मल्टीलाइन स्ट्रिंग्स फोल्ड करें",
     "Unfold content lines": "मल्टीलाइन स्ट्रिंग्स अनफोल्ड करें",
     "Total": "कुल",
@@ -787,10 +826,11 @@
     "disabled flow title": "यह flow अक्षम है",
     "disabled flow desc": "यह flow अक्षम है, कृपया इसे निष्पादित करने के लिए सक्षम करें।",
     "label": "Label",
-    "labels": "labels",
+    "labels": "Labels",
     "execution labels": "निष्पादन labels",
     "show more labels": "{count} और लेबल दिखाएं",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
+    "invalid label key": "अमान्य लेबल key. मान्य key एक लोअरकेस अक्षर से शुरू होनी चाहिए और इसमें केवल लोअरकेस अक्षर, अंक, हाइफ़न (-), अंडरस्कोर (_) या पीरियड (.) होने चाहिए.",
     "feeds": {
       "heading": "सभी चीजें Kestra।",
       "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ"
@@ -844,6 +884,7 @@
     "enable": "सक्षम करें",
     "enabled": "सक्षम",
     "flow delete": "क्या आप वाकई <code>{flowCount}</code> flow(s) को हटाना चाहते हैं?",
+    "delete flow error": "flow {id} को हटाया नहीं जा सका",
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
     "flow disable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को अक्षम करना चाहते हैं?",
     "flow enable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को सक्षम करना चाहते हैं?",
@@ -856,7 +897,7 @@
     "reset": "पुनः प्रारंभ करें",
     "validate": "मान्य करें",
     "add error handler": "एक त्रुटि हैंडलर जोड़ें",
-    "taskDefaults": "taskDefaults",
+    "taskDefaults": "Task डिफ़ॉल्ट",
     "disabled": "अक्षम",
     "before": "पहले",
     "after": "बाद में",
@@ -883,6 +924,7 @@
     "metric": "मेट्रिक",
     "aggregation": "एकत्रीकरण",
     "metric choice": "इस flow के लिए कोई मेट्रिक्स उपलब्ध नहीं है",
+    "metric filter no match": "कोई भी metric \"{term}\" से मेल नहीं खाता है",
     "of": "का",
     "title": "शीर्षक",
     "api": "API",
@@ -981,9 +1023,11 @@
         "file_already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है",
         "file_conflicts_with_folder": "इस नाम का एक फ़ोल्डर पहले से मौजूद है",
         "file_error": "फ़ाइल बनाते समय त्रुटि हुई",
+        "file_success": "फ़ाइल \"{name}\" सफलतापूर्वक बनाई गई।",
         "folder": "फ़ोल्डर बनाएँ",
         "folder_already_exists": "इस नाम का एक फ़ोल्डर पहले से मौजूद है",
         "folder_conflicts_with_file": "इस नाम की एक फ़ाइल पहले से मौजूद है",
+        "folder_success": "फ़ोल्डर \"{name}\" सफलतापूर्वक बनाया गया।",
         "folder_error": "फ़ोल्डर बनाते समय त्रुटि हुई"
       },
       "rename": {
@@ -997,8 +1041,10 @@
       "delete": {
         "label": "हटाएं",
         "file": "फ़ाइल हटाएं",
+        "file_error": "फ़ाइल हटाई नहीं जा सकी: {name}",
         "folder": "फ़ोल्डर हटाएं",
         "files": "{count} चयनित फ़ाइलें हटाएं",
+        "bulk_success": "चयनित फ़ाइलें सफलतापूर्वक हटा दी गईं।",
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
       "move": {
@@ -1602,6 +1648,7 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
+    "scheduleDateInPast": "शेड्यूल की तारीख भविष्य में होनी चाहिए",
     "warning": "चेतावनी",
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "docs": "डॉक्स",
@@ -1651,6 +1698,7 @@
     "last error was": "अंतिम त्रुटि थी",
     "active": "सक्रिय",
     "flows imported": "फ़्लोज़ आयात किए गए",
+    "flows not imported": "Flows आयात नहीं किए गए",
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "chart preview": "चार्ट पूर्वावलोकन",
@@ -1696,7 +1744,8 @@
           "workerSelector": "वर्कर सेलेक्टर",
           "checks": "जांचें",
           "updated": "अपडेट किया गया",
-          "quotas": "कोटा"
+          "quotas": "कोटा",
+          "policyRefs": "पॉलिसी संदर्भ"
         }
       },
       "select": {
@@ -1932,6 +1981,9 @@
         "label": "डैशबोर्ड संपादित करें",
         "chart": "इस चार्ट को संपादित करें"
       },
+      "creation": {
+        "label": "डैशबोर्ड बनाएँ"
+      },
       "no_description": "कोई विवरण नहीं",
       "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "others": "अन्य",
@@ -1942,6 +1994,7 @@
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"
       },
+      "show_all_statuses": "सभी स्थितियाँ दिखाएँ",
       "quick_filters": {
         "all": "सभी",
         "running": "चल रहा है",
@@ -2161,7 +2214,6 @@
     "submit": "प्रस्तुत करें",
     "accept": "स्वीकारें",
     "reject": "अस्वीकार करें",
-    "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
     "last modified": "अंतिम संशोधित",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
     "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
@@ -2524,7 +2576,7 @@
       "error_task_noun": "एक त्रुटि task",
       "execution_context": "एक्सेक्यूशन कॉन्टेक्स्ट",
       "filter_data": "उपलब्ध डेटा फ़िल्टर करें…",
-      "flow_inputs": "flow inputs",
+      "flow_inputs": "Flow inputs",
       "flowable_todo": "नेस्टेड task (एडिटिंग जल्द आ रही है)",
       "footer": {
         "canvas": "कैनवास",
@@ -2613,8 +2665,6 @@
       "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
-    "flow_description": "flow विवरण",
-    "flow_no_description": "कोई विवरण नहीं। अपने flow YAML में एक विवरण जोड़ें ताकि यह दस्तावेज़ित हो सके कि यह क्या करता है।",
     "split_horizontal": "क्षैतिज रूप से विभाजित करें",
     "split_vertical": "लंबवत विभाजित करें",
     "pwa": {

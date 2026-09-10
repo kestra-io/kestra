@@ -165,7 +165,7 @@ export default defineConfig(({mode}) => {
         },
         optimizeDeps: {
             entries: [
-                "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
+                "tests/storybook/**/*.stories.{ts,tsx}",
                 "packages/design-system/src/**/*.{ts,vue}",
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],

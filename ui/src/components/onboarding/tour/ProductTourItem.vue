@@ -1,14 +1,15 @@
 <template>
-    <div v-if="visible" class="product-tour-entry">
-        <RouterLink :to="tourRoute" class="product-tour-item">
-            <span class="product-tour-play">
-                <Play :size="18" />
-            </span>
-            <span class="product-tour-label">
-                {{ $t("onboarding.tour.menu") }}
-            </span>
+    <div v-if="visible" class="tour">
+        <RouterLink :to="tourRoute" custom v-slot="{href, navigate}">
+            <KsSideBarItem
+                class="link"
+                :title="$t('onboarding.tour.menu')"
+                :icon="Play"
+                :href="href"
+                @click="navigate"
+            />
         </RouterLink>
-        <span class="product-tour-dismiss">
+        <span class="dismiss">
             <KsIconButton :tooltip="$t('onboarding.tour.actions.dismiss')" placement="top" @click="dismiss">
                 <Close />
             </KsIconButton>
@@ -17,64 +18,42 @@
 </template>
 
 <script setup lang="ts">
+    import {RouterLink} from "vue-router"
     import Play from "vue-material-design-icons/Play.vue"
     import Close from "vue-material-design-icons/Close.vue"
-
     import {useProductTourMenuEntry} from "./useProductTourEntry"
 
     const {visible, tourRoute, dismiss} = useProductTourMenuEntry()
 </script>
 
 <style scoped lang="scss">
-    .product-tour-entry {
+    .tour {
         position: relative;
 
-        &:hover .product-tour-dismiss {
+        &:hover .dismiss,
+        &:focus-within .dismiss {
             opacity: 1;
         }
-    }
 
-    .product-tour-dismiss {
-        position: absolute;
-        top: var(--ks-spacing-1);
-        right: var(--ks-spacing-1);
-        opacity: 0;
-        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
-    }
+        .link {
+            margin: 0;
+            --ks-sidebar-item-title-color: currentColor;
+            border: var(--ks-border-width-thin) solid color-mix(in srgb, var(--ks-btn-primary-bg-default) 55%, transparent);
+            background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 14%, transparent);
 
-    .product-tour-item {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        border: var(--ks-border-width-thin) solid color-mix(in srgb, var(--ks-btn-primary-bg-default) 55%, transparent);
-        border-radius: var(--ks-radius-base);
-        background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 14%, transparent);
-        color: var(--ks-text-primary);
-        text-decoration: none;
-        transition: background var(--ks-duration-fast) var(--ks-ease-standard),
-            border-color var(--ks-duration-fast) var(--ks-ease-standard);
-
-        &:hover {
-            border-color: var(--ks-btn-primary-bg-default);
-            background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 24%, transparent);
+            &:hover {
+                border-color: var(--ks-btn-primary-bg-default);
+                background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 24%, transparent);
+            }
         }
-    }
 
-    .product-tour-play {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: var(--ks-spacing-6);
-        height: var(--ks-spacing-6);
-        flex-shrink: 0;
-        border-radius: var(--ks-radius-sm);
-        background: var(--ks-btn-primary-bg-default);
-        color: var(--ks-btn-primary-text);
-    }
-
-    .product-tour-label {
-        font-size: var(--ks-font-size-md);
-        font-weight: var(--ks-font-weight-semibold);
+        .dismiss {
+            position: absolute;
+            top: 50%;
+            right: var(--ks-spacing-1);
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
+        }
     }
 </style>

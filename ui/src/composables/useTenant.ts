@@ -31,7 +31,15 @@ export function setupTenantRouter(router: Router, app: App): void {
         if (to.path !== "/" && !to.params.tenant) {
             // Use current tenant from route context, fallback to "main"
             const currentTenant = from.params?.tenant || "main"
-            return {path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash, replace: true}
+            // No `replace` here: vue-router merges whatever this guard returns
+            // over the outer navigation's own options, so setting it explicitly
+            // - even to `false` - would override a caller's `router.replace()`
+            // and silently turn it into a `push`. Leaving it out lets
+            // vue-router's own first-navigation handling (which already forces
+            // a replace when there is no real previous page to preserve) do the
+            // right thing, while every later navigation keeps whatever
+            // push/replace semantics its caller intended.
+            return {path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash}
         }
         return true
     })

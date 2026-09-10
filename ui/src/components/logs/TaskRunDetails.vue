@@ -100,7 +100,7 @@
                                         :aria-expanded="isGroupExpanded(currentTaskRunIndex, item)"
                                         @click="toggleGroup(currentTaskRunIndex, item)"
                                     >
-                                        <KsIcon class="log-group-chevron" :class="{collapsed: !isGroupExpanded(currentTaskRunIndex, item)}" size="s">
+                                        <KsIcon class="log-group-chevron" :class="{collapsed: !isGroupExpanded(currentTaskRunIndex, item)}">
                                             <ChevronDown />
                                         </KsIcon>
                                         <span class="log-group-count">×{{ item.members.length }}</span>

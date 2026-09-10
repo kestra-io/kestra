@@ -1,12 +1,24 @@
 import {describe, test, expect, vi} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
-import {ElDrawer} from "element-plus"
+import {ElDrawer, ElMessageBox} from "element-plus"
 import KestraDesignSystem from "../../../src/index"
 import KsDrawer from "../../../src/components/Feedback/KsDrawer.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsDrawer", () => {
+    test("dirty asks for confirmation before an accidental close", () => {
+        const confirm = vi.spyOn(ElMessageBox, "confirm").mockReturnValue(new Promise(() => {}))
+        const wrapper = mount(KsDrawer, {props: {modelValue: true, dirty: true}, global: globalConfig})
+        const done = vi.fn()
+
+        wrapper.findComponent(ElDrawer).props("beforeClose")(done)
+
+        expect(confirm).toHaveBeenCalledTimes(1)
+        expect(done).not.toHaveBeenCalled()
+        confirm.mockRestore()
+    })
+
     test("renders when visible", () => {
         const wrapper = mount(KsDrawer, {
             props: {modelValue: true},
@@ -31,7 +43,9 @@ describe("KsDrawer", () => {
             props: {modelValue: true, beforeClose},
             global: globalConfig,
         })
-        expect(wrapper.findComponent(ElDrawer).props("beforeClose")).toBe(beforeClose)
+        const done = vi.fn()
+        wrapper.findComponent(ElDrawer).props("beforeClose")(done)
+        expect(beforeClose).toHaveBeenCalledWith(done)
     })
 
     test("reflects full-screen state in the toggle icon when resizable", async () => {

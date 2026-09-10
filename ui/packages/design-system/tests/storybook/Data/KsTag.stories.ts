@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, waitFor, within} from "storybook/test"
 import {ref} from "vue"
 import KsTag from "../../../src/components/Data/KsTag/KsTag.vue"
 
@@ -12,6 +13,7 @@ const meta: Meta<typeof KsTag> = {
         effect: {control: "select", options: ["dark", "light", "plain"]},
         closable: {control: "boolean"},
         round: {control: "boolean"},
+        truncate: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsTag is the Kestra design-system abstraction over `ElTag` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
@@ -195,4 +197,25 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+}
+
+/** Without `truncate` a long label pushes the tag past its container instead of clipping. */
+export const Truncated: Story = {
+    render: () => ({
+        components: {KsTag},
+        template: `
+            <div style="padding:24px;width:180px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+                <ks-tag label="a-very-long-tag-label-that-cannot-fit" truncate />
+                <ks-tag label="short" truncate />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+        const long = await waitFor(() => canvas.getByText("a-very-long-tag-label-that-cannot-fit"))
+
+        // The label is clipped rather than laid out at its full width.
+        expect(long.scrollWidth).toBeGreaterThan(long.clientWidth)
+        expect(canvas.getByText("short").scrollWidth).toBe(canvas.getByText("short").clientWidth)
+    },
 }

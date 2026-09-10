@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin nie jest zainstalowany dla tego typu Triggera, więc powiadomienie nie zostanie wysłane."
       },
       "trigger": {
-        "case_sub": "Funkcja tylko w Enterprise Edition",
-        "case_title": "Status sprawy",
         "execution_sub": "Reaguje na zmiany statusu Flow",
         "execution_title": "Status egzekucji",
         "other_sub": "Dowolny dostępny plugin Triggera",
@@ -113,6 +111,10 @@
       }
     },
     "toggle menu": "Przełącz menu",
+    "favourites": "Ulubione",
+    "to close": "aby zamknąć",
+    "tabs": "Karty",
+    "select": "Wybierz",
     "panel actions": "Akcje panelu",
     "playground actions": "Akcje w Playground",
     "bulk actions": "Akcje zbiorcze",
@@ -138,6 +140,7 @@
     "invalid duration": "Nieprawidłowy format czasu trwania. Użyj ISO 8601 (np. PT30M, P1D).",
     "update": "Aktualizuj",
     "confirmation": "Potwierdzenie",
+    "toast confirm": "Czy na pewno?",
     "common": {
       "back": "Wstecz",
       "openInNewTab": "Otwórz w nowej karcie"
@@ -224,6 +227,7 @@
       "invalid duration": "Nieprawidłowy format czasu trwania. Użyj ISO 8601 (np. PT30M, P1D).",
       "leave empty for infinite": "Pozostaw puste dla nieskończonego czasu trwania lub wpisz czas trwania w formacie ISO 8601 (np. „P1DT1H1M1S”)",
       "duration example": "Przykład: 'P1DT1H1M1S'",
+      "examples": "Przykłady:",
       "error": "Nieprawidłowy format czasu trwania, musi być zgodny z ISO 8601 (np. P1DT1H1M1S)",
       "custom": "Niestandardowy",
       "last5minutes": "Ostatnie 5 minut",
@@ -281,6 +285,7 @@
     "expiration date": "Data wygaśnięcia",
     "healthcheck date": "Data Healthcheck",
     "last execution status": "Status ostatniej egzekucji",
+    "jump to": "Przejdź do",
     "jump to...": "Przejdź do…",
     "contextBar": {
       "ai": "AI",
@@ -344,9 +349,31 @@
     "select a state": "Wybierz status",
     "are you sure change state": "Czy na pewno chcesz zmienić status?",
     "yes": "Tak",
+    "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
     "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
     "change state current state": "Aktualny status:",
+    "change state hint": {
+      "WARNING": [
+        "Flow zostanie oznaczony jako WARNING.",
+        "Następne taski zostaną wykonane.",
+        "Taski błędów zostaną wykonane."
+      ],
+      "FAILED": [
+        "Flow zostanie oznaczony jako FAILED.",
+        "Żadne inne task nie będą wykonane.",
+        "Task błędów będą wykonane."
+      ],
+      "SUCCESS": [
+        "Flow zostanie uruchomiony ponownie, ponieważ ten task zakończył się sukcesem.",
+        "Wszystkie zablokowane taski zostaną wykonane.",
+        "Flow będzie w stanie SUCCESS, jeśli wszystkie uruchomienia tasków zakończą się sukcesem."
+      ],
+      "RUNNING": [
+        "Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.",
+        "Wszystkie zablokowane taski zostaną wykonane."
+      ]
+    },
     "replay execution title": "Replay egzekucji",
     "restart execution title": "Uruchom ponownie egzekucję",
     "replay execution description": "Spowoduje to utworzenie nowej egzekucji na podstawie wybranej egzekucji.",
@@ -414,7 +441,8 @@
       "zoom-reset": "Zresetuj powiększenie",
       "zoom-fit": "Dopasuj",
       "invalid": "Błąd grafu",
-      "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów."
+      "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
+      "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie."
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",
@@ -456,6 +484,7 @@
       "big_file_download_only": "Ten plik ma rozmiar {size}. Jest zbyt duży, aby otworzyć go w edytorze — pobierz go zamiast tego.",
       "load_anyway": "Załaduj mimo to",
       "load_error": "Nie udało się załadować podglądu pliku. Może to być problem tymczasowy lub problem z uprawnieniami.",
+      "image_alt": "Podgląd output obrazu",
       "retry": "Ponów próbę",
       "html_asset_warning": "Ten podgląd renderuje HTML w izolowanej ramce. Lokalne zasoby, takie jak obrazy i arkusze stylów, do których odwołują się ścieżki względne, nie zostaną załadowane.",
       "html_preview_title": "Podgląd pliku HTML"
@@ -476,6 +505,8 @@
     "docsPage": {
       "notFound": "Ta strona dokumentacji nie istnieje. Mogła zostać przeniesiona lub jej nazwa mogła się zmienić.",
       "loadError": "Nie udało się załadować tej strony dokumentacji. Spróbuj ponownie.",
+      "close_menu": "Zamknij menu",
+      "open_menu": "Otwórz menu",
       "backToDocs": "Powrót do Docs"
     },
     "documentation": {
@@ -515,6 +546,10 @@
       }
     },
     "use": "Użyj",
+    "plugin_card": {
+      "tasks": "Task | Taski",
+      "blueprints": "blueprint | blueprinty"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Instalacja pluginu nie powiodła się",
@@ -528,8 +563,10 @@
       "names": "Plugins",
       "release": "Informacje o wydaniu",
       "beta": "Beta",
+      "beta_notice": "Ten plugin jest obecnie w wersji beta. Choć uznaje się go za bezpieczny w użyciu, pamiętaj, że jego API może się zmienić w przyszłych wydaniach w sposób niezgodny z wcześniejszymi wersjami lub plugin może przestać być wspierany.",
       "copy_type": "Kopiuj typ",
       "deprecated": "Przestarzałe",
+      "documentation_sections": "Sekcje dokumentacji",
       "dynamic": "dynamiczny",
       "filter_all": "Wszystkie",
       "filter_properties": "Filtruj właściwości…",
@@ -571,6 +608,8 @@
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
+      "possible_values": "Możliwe wartości",
+      "sub_type": "Podtyp",
       "required": "Wymagane"
     },
     "last execution date": "Data ostatniej egzekucji",
@@ -791,6 +830,7 @@
     "execution labels": "Etykiety egzekucji",
     "show more labels": "Pokaż {count} więcej etykiet",
     "wrong labels": "Pusty Key lub Value nie jest dozwolony w etykietach",
+    "invalid label key": "Nieprawidłowy key etykiety. Prawidłowy key musi zaczynać się małą literą i zawierać tylko małe litery, cyfry, myślniki (-), podkreślenia (_) lub kropki (.)",
     "feeds": {
       "heading": "Wszystko o Kestra.",
       "subheading": "Najnowsze aktualizacje, przewodniki i historie"
@@ -844,6 +884,7 @@
     "enable": "Włącz",
     "enabled": "Włączone",
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> Flowów?",
+    "delete flow error": "Nie udało się usunąć flow {id}",
     "flows deleted": "Usunięto <code>{count}</code> Flowów",
     "flow disable": "Czy na pewno chcesz wyłączyć <code>{flowCount}</code> Flowów?",
     "flow enable": "Czy na pewno chcesz włączyć <code>{flowCount}</code> Flowów?",
@@ -883,6 +924,7 @@
     "metric": "Metryka",
     "aggregation": "Agregacja",
     "metric choice": "Brak dostępnych metryk dla tego Flow",
+    "metric filter no match": "Brak metryk pasujących do „{term}”",
     "of": "z",
     "title": "Tytuł",
     "api": "API",
@@ -981,9 +1023,11 @@
         "file_already_exists": "Plik o tej nazwie już istnieje",
         "file_conflicts_with_folder": "Folder o tej nazwie już istnieje",
         "file_error": "Wystąpił błąd podczas tworzenia pliku",
+        "file_success": "Plik \"{name}\" został utworzony.",
         "folder": "Utwórz folder",
         "folder_already_exists": "Folder o tej nazwie już istnieje",
         "folder_conflicts_with_file": "Plik o tej nazwie już istnieje",
+        "folder_success": "Folder \"{name}\" został utworzony.",
         "folder_error": "Wystąpił błąd podczas tworzenia folderu"
       },
       "rename": {
@@ -997,8 +1041,10 @@
       "delete": {
         "label": "Usuń",
         "file": "Usuń plik",
+        "file_error": "Nie udało się usunąć pliku: {name}",
         "folder": "Usuń folder",
         "files": "Usuń wybrane pliki ({count})",
+        "bulk_success": "Wybrane pliki zostały pomyślnie usunięte.",
         "folders": "Usuń wybrane foldery ({count})"
       },
       "move": {
@@ -1602,6 +1648,7 @@
     "webhook link copied": "Link webhooka skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
+    "scheduleDateInPast": "Data harmonogramu musi być w przyszłości",
     "warning": "Ostrzeżenie",
     "trigger_check_warning": "Zmienne Triggera nie zadziałają przy ręcznym uruchomieniu Flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład zamiast `trigger.date` użyj `trigger.date ?? execution.startDate`.",
     "docs": "Dokumentacja",
@@ -1651,6 +1698,7 @@
     "last error was": "Ostatni błąd to",
     "active": "Aktywny",
     "flows imported": "Zaimportowano Flowy",
+    "flows not imported": "Flowy niezaimportowane",
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "chart preview": "Podgląd wykresu",
@@ -1696,7 +1744,8 @@
           "workerSelector": "Worker Selector",
           "checks": "Kontrole",
           "updated": "Zaktualizowano",
-          "quotas": "Limity"
+          "quotas": "Limity",
+          "policyRefs": "Odwołania do polityk"
         }
       },
       "select": {
@@ -1932,6 +1981,9 @@
         "label": "Edytuj Dashboard",
         "chart": "Edytuj ten wykres"
       },
+      "creation": {
+        "label": "Utwórz Dashboard"
+      },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
@@ -1942,6 +1994,7 @@
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"
       },
+      "show_all_statuses": "Pokaż wszystkie statusy",
       "quick_filters": {
         "all": "Wszystkie",
         "running": "Uruchomione",
@@ -2161,7 +2214,6 @@
     "submit": "Wyślij",
     "accept": "Zaakceptuj",
     "reject": "Odrzuć",
-    "draft_available": "Szkic zmiany jest dostępny w edytorze",
     "last modified": "Ostatnia modyfikacja",
     "run task in playground": "Uruchom Task w Playground",
     "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",
@@ -2613,8 +2665,6 @@
       "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
     },
     "blocks": "Bloki",
-    "flow_description": "Opis Flow",
-    "flow_no_description": "Brak opisu. Dodaj opis do YAML swojego Flow, aby udokumentować, co robi.",
     "split_horizontal": "Podziel w poziomie",
     "split_vertical": "Podziel pionowo",
     "pwa": {

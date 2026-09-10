@@ -53,18 +53,21 @@
                     <div class="trigger-config">
                         <ExecutionPanel
                             v-if="recipe.triggerType === 'execution'"
-                            :recipe="recipe"
+                            v-model:watchNamespace="recipe.watchNamespace"
+                            v-model:includeSub="recipe.includeSub"
+                            :states="recipe.states"
                             :namespaceOptions="namespaceOptions"
                             :namespacesLoading="namespacesLoading"
                             :toggleState="toggleState"
                         />
                         <SchedulePanel
                             v-else-if="recipe.triggerType === 'schedule'"
-                            :recipe="recipe"
+                            v-model:cron="recipe.cron"
+                            v-model:timezone="recipe.timezone"
                         />
                         <WebhookPanel
                             v-else-if="recipe.triggerType === 'webhook'"
-                            :recipe="recipe"
+                            v-model:webhookKey="recipe.webhookKey"
                             :systemNamespace="systemNamespace"
                             :flowId="flowId"
                         />
@@ -81,7 +84,11 @@
                     <span class="wizard-sub">{{ $t("recipe.then.subtitle") }}</span>
 
                     <NotifyGrid
-                        :recipe="recipe"
+                        v-model:slackChannel="recipe.slackChannel"
+                        v-model:teamsWebhook="recipe.teamsWebhook"
+                        v-model:emailTo="recipe.emailTo"
+                        :notify="recipe.notify"
+                        :triggerType="recipe.triggerType"
                         :channelAvailability="channelAvailability"
                         :toggleNotify="toggleNotify"
                     />
@@ -172,7 +179,6 @@
 
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue"
-    import FolderMultipleOutline from "vue-material-design-icons/FolderMultipleOutline.vue"
     import Webhook from "vue-material-design-icons/Webhook.vue"
     import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue"
 
@@ -267,14 +273,6 @@
             title: t("recipe.trigger.schedule_title"),
             sub: t("recipe.trigger.schedule_sub"),
             disabled: false,
-        },
-        {
-            key: "case",
-            type: null,
-            icon: FolderMultipleOutline,
-            title: t("recipe.trigger.case_title"),
-            sub: t("recipe.trigger.case_sub"),
-            disabled: true,
         },
         {
             key: "webhook",

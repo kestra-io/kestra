@@ -1,24 +1,30 @@
 <template>
     <div class="timeline-toolbar">
+        <KsButton
+            ref="rangePillRef"
+            class="range-pill"
+            :class="{'is-active': rangePickerVisible}"
+            :icon="CalendarRange"
+            size="small"
+            :aria-label="$t('executionsTimeline.toolbar.rangePicker')"
+        >
+            {{ readout }}
+        </KsButton>
+
+        <!-- The range-pill button is also the popover's own reactive trigger (its class and
+             label change on every zoom/pan), so it can't be nested inside KsPopover's #reference
+             slot without a second, independent Trigger fighting the same DOM node for the merge
+             (the ElOnlyChild/ElPopperTrigger composition bug fixed for TimelineBar.vue's hover
+             tooltip). Point the popover at it via virtualRef/virtualTriggering instead. -->
         <KsPopover
             v-model:visible="rangePickerVisible"
             trigger="click"
             placement="bottom-start"
             :width="320"
             :showArrow="false"
+            :virtualRef="rangePillRef"
+            virtualTriggering
         >
-            <template #reference>
-                <KsButton
-                    class="range-pill"
-                    :class="{'is-active': rangePickerVisible}"
-                    :icon="CalendarRange"
-                    size="small"
-                    :aria-label="$t('executionsTimeline.toolbar.rangePicker')"
-                >
-                    {{ readout }}
-                </KsButton>
-            </template>
-
             <div class="range-picker">
                 <KsRadioGroup v-model="selectedMode" class="range-picker-mode">
                     <KsRadioButton value="REL">
@@ -84,7 +90,7 @@
     import Crosshairs from "vue-material-design-icons/Crosshairs.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
-    import {dateUtils, durationUtils} from "@kestra-io/design-system"
+    import {dateUtils, durationUtils, KsButton} from "@kestra-io/design-system"
     import TimeSelect from "../date-select/TimeSelect.vue"
     import DateRange from "../../layout/DateRange.vue"
 
@@ -107,6 +113,7 @@
     const {t} = useI18n()
 
     const rangePickerVisible = ref(false)
+    const rangePillRef = ref<InstanceType<typeof KsButton> | null>(null)
     // Mirrors DateFilter.vue's own Relative/Absolute toggle: initialized once from the current range,
     // then left to the user so switching tabs doesn't fight their choice on every prop change.
     const selectedMode = ref<"REL" | "ABS">(props.activePreset !== undefined ? "REL" : "ABS")

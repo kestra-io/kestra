@@ -34,6 +34,21 @@ function execution(state: string, taskRunList: ReturnType<typeof taskRun>[]): Ex
 const meta: Meta<typeof FailureDebugPanel> = {
     title: "Components/Executions/Gantt/FailureDebugPanel",
     component: FailureDebugPanel,
+    // The reopen trigger is placed by the caller (Gantt.vue puts it next to "Copy All Logs")
+    // rather than rendered by the panel itself, so the story has to be the caller here too.
+    render: (args) => ({
+        components: {FailureDebugPanel},
+        setup: () => ({args}),
+        template: `
+            <FailureDebugPanel v-bind="args">
+                <template #default="{shouldRender, isOpen, reopen, setReopenRef}">
+                    <span v-if="shouldRender && !isOpen" :ref="setReopenRef">
+                        <button type="button" @click="reopen">Debug this failure</button>
+                    </span>
+                </template>
+            </FailureDebugPanel>
+        `,
+    }),
     parameters: {
         docs: {
             description: {

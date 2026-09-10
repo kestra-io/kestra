@@ -110,7 +110,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                 if (body !== null && typeof body === "object" && !Array.isArray(body) && Object.keys(body as Record<string, unknown>).length === 0) return ""
                 return JSON.stringify(body, (_key, value) => (typeof value === "bigint" ? value.toString() : value))
             },
-            querySerializer(query: Record<string, any>) {
+            querySerializer(query: Record<string, unknown>) {
                 const queryParameters = new URLSearchParams()
 
                 const isObjectRecord = (input: object): boolean => {
@@ -119,11 +119,11 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                 }
 
                 const snapshotQueryValue = (
-                    input: any,
-                    seen = new WeakMap<object, any>(),
+                    input: unknown,
+                    seen = new WeakMap<object, unknown>(),
                     active = new WeakSet<object>(),
                     snapshotCustomObject = false,
-                ): any => {
+                ): unknown => {
                     if (input == null || typeof input !== "object") return input
 
                     const prototype = Object.getPrototypeOf(input)
@@ -173,7 +173,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     }
                 }
 
-                const serializeQueryFilterArray = (filters: any[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
+                const serializeQueryFilterArray = (filters: unknown[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
                     if (filters.length === 0) return undefined
                     const parameters: Array<[string, string]> = []
                     for (let index = 0; index < filters.length; index++) {
@@ -185,10 +185,10 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     return parameters
                 }
 
-                const serializeQueryFilter = (filter: any, prefix: string): Array<[string, string]> | undefined => {
+                const serializeQueryFilter = (filter: unknown, prefix: string): Array<[string, string]> | undefined => {
                     if (filter == null || typeof filter !== "object") return undefined
 
-                    const {field, operation, value, logical, children} = filter
+                    const {field, operation, value, logical, children} = filter as Record<string, unknown>
                     if (logical === "and" || logical === "or") {
                         if (field !== undefined || operation !== undefined || value !== undefined || !Array.isArray(children)) return undefined
                         return serializeQueryFilterArray(children, `${prefix}[${logical}]`, true)
@@ -233,7 +233,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         throw new TypeError("Invalid QueryFilter array")
                     }
                     let serializedFilters: Array<[string, string]> | undefined
-                    let fallbackParam = param
+                    let fallbackParam: unknown = param
                     if (key === "filters" && Array.isArray(param)) {
                         fallbackParam = snapshotQueryValue(param, new WeakMap(), new WeakSet(), true)
                         try {
@@ -242,7 +242,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                             throw new TypeError("Invalid QueryFilter array")
                         }
                         try {
-                            serializedFilters = serializeQueryFilterArray(fallbackParam)
+                            serializedFilters = serializeQueryFilterArray(fallbackParam as unknown[])
                         } catch {
                             serializedFilters = undefined
                         }
@@ -250,10 +250,10 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
                     if (serializedFilters) {
                         for (const [filterKey, filterValue] of serializedFilters) queryParameters.append(filterKey, filterValue)
-                    } else if (key === "filters" && Array.isArray(param) && fallbackParam.length > 0) {
+                    } else if (key === "filters" && Array.isArray(param) && Array.isArray(fallbackParam) && fallbackParam.length > 0) {
                         throw new TypeError("Invalid QueryFilter array")
-                    } else if (fallbackParam instanceof Array) {
-                        fallbackParam.forEach((value: any) => {
+                    } else if (Array.isArray(fallbackParam)) {
+                        fallbackParam.forEach((value: unknown) => {
                             const ser = serializeQueryValue(value)
                             if (ser !== undefined) {
                                 queryParameters.append(key, ser)

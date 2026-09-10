@@ -5,21 +5,25 @@
 const YAML_MEDIA_TYPE = "application/x-yaml"
 const JSON_MEDIA_TYPE = "application/json"
 
-function isPlainString(schema: any): boolean {
-    return !!schema && schema.type === "string" && schema.format !== "binary"
+function isPlainString(schema: unknown): boolean {
+    const record = asRecord(schema)
+    return record?.type === "string" && record.format !== "binary"
 }
 
-export function fixYamlSourceRequestBodyContentType(method: string, path: string, operation: any): void {
-    const requestBody = operation?.requestBody
-    const content = requestBody?.content
+export function fixYamlSourceRequestBodyContentType(method: string, path: string, operation: Operation): void {
+    const requestBody = "requestBody" in operation ? asRecord(operation.requestBody) : undefined
+    if (!requestBody || "$ref" in requestBody) return
+    const content = asRecord(requestBody.content)
     if (!content || typeof content !== "object") return
 
-    if (!isPlainString(content[YAML_MEDIA_TYPE]?.schema)) return
-    if (!isPlainString(content[JSON_MEDIA_TYPE]?.schema)) return
+    const yamlContent = asRecord(content[YAML_MEDIA_TYPE])
+    const jsonContent = asRecord(content[JSON_MEDIA_TYPE])
+    if (!isPlainString(yamlContent?.schema)) return
+    if (!isPlainString(jsonContent?.schema)) return
 
     delete content[JSON_MEDIA_TYPE]
 
-    const reordered: Record<string, unknown> = {[YAML_MEDIA_TYPE]: content[YAML_MEDIA_TYPE]}
+    const reordered: SchemaRecord = {[YAML_MEDIA_TYPE]: yamlContent}
     for (const [mediaType, value] of Object.entries(content)) {
         if (mediaType !== YAML_MEDIA_TYPE) reordered[mediaType] = value
     }
@@ -40,18 +44,20 @@ export function fixYamlSourceRequestBodyContentType(method: string, path: string
  *
  * Use as a `parser.patch.operations` hook (signature `(method, path, operation)`).
  */
-export function normalizeQueryFilterParams(method: string, path: string, operation: any): void {
-    const parameters = operation?.parameters
+export function normalizeQueryFilterParams(method: string, path: string, operation: Operation): void {
+    const parameters = "parameters" in operation ? operation.parameters : undefined
     if (!Array.isArray(parameters)) return
 
     for (const param of parameters) {
-        if (!param || typeof param !== "object" || param.in !== "query") continue
-        const schema = param.schema
+        const parameter = asRecord(param)
+        if (!parameter || parameter.in !== "query") continue
+        const schema = asRecord(parameter.schema)
         if (!schema || schema.type !== "array") continue
-        if (typeof schema.items?.$ref !== "string" || !schema.items.$ref.endsWith("/QueryFilter")) continue
+        const items = asRecord(schema.items)
+        if (typeof items?.$ref !== "string" || !items.$ref.endsWith("/QueryFilter")) continue
 
-        if (param.required === true && !schema.nullable) {
-            delete param.required
+        if (parameter.required === true && !schema.nullable) {
+            delete parameter.required
             schema.nullable = true
         }
     }
@@ -65,9 +71,10 @@ export function normalizeQueryFilterParams(method: string, path: string, operati
  *
  * Use as a `parser.patch.schemas` hook keyed by `QueryFilter` (signature `(schema)`).
  */
-export function widenQueryFilterValue(schema: any): void {
-    if (schema?.properties?.value) {
-        schema.properties.value = {}
+export function widenQueryFilterValue(schema: Schema): void {
+    const properties = asRecord(schema.properties)
+    if (properties?.value) {
+        properties.value = {}
     }
 }
 
@@ -82,21 +89,33 @@ export function widenQueryFilterValue(schema: any): void {
  * Use as a `parser.patch.schemas` hook keyed by `Flow` / `AbstractFlow` / `FlowWithSource`
  * (signature `(schema)`).
  */
-export function replaceFlowLabels(schema: any): void {
-    if (!schema || typeof schema !== "object") return
+export function replaceFlowLabels(schema: Schema): void {
+    const schemaRecord = asRecord(schema)
+    if (!schemaRecord) return
 
-    const labelsAsArray = () => ({type: "array", items: {$ref: "#/components/schemas/Label"}})
+    const labelsAsArray = (): SchemaRecord => ({type: "array", items: {$ref: "#/components/schemas/Label"}})
 
-    if (schema.properties?.labels) {
-        schema.properties.labels = labelsAsArray()
+    const properties = asRecord(schemaRecord.properties)
+    if (properties?.labels) {
+        properties.labels = labelsAsArray()
     }
     for (const composition of ["allOf", "anyOf", "oneOf"] as const) {
-        if (Array.isArray(schema[composition])) {
-            for (const part of schema[composition]) {
-                if (part?.properties?.labels) {
-                    part.properties.labels = labelsAsArray()
-                }
+        const parts = schemaRecord[composition]
+        if (!Array.isArray(parts)) continue
+        for (const part of parts) {
+            const partProperties = asRecord(asRecord(part)?.properties)
+            if (partProperties?.labels) {
+                partProperties.labels = labelsAsArray()
             }
         }
     }
+}
+import type {OpenApiOperationObject, OpenApiSchemaObject} from "@hey-api/openapi-ts"
+
+type Operation = OpenApiOperationObject.V2_0_X | OpenApiOperationObject.V3_0_X | OpenApiOperationObject.V3_1_X
+type Schema = OpenApiSchemaObject.V2_0_X | OpenApiSchemaObject.V3_0_X | OpenApiSchemaObject.V3_1_X
+type SchemaRecord = Record<string, unknown>
+
+function asRecord(value: unknown): SchemaRecord | undefined {
+    return value !== null && typeof value === "object" ? value as SchemaRecord : undefined
 }

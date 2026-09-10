@@ -1,7 +1,11 @@
 import {createHash} from "node:crypto"
 import {readFileSync} from "node:fs"
-import {$, type TypeTsDsl} from "@hey-api/openapi-ts"
+import {$, type IR, type TypeTsDsl} from "@hey-api/openapi-ts"
 import type {KestraSdkPlugin} from "./types"
+
+type OperationSymbol = NonNullable<ReturnType<KestraSdkPlugin["Instance"]["querySymbol"]>>
+type DslCallArgument = Parameters<ReturnType<typeof $>["call"]>[0]
+type DslTypeQueryArgument = Parameters<typeof $.type.query>[0]
 
 /**
  * Detects if the operation has a single body parameter whose camelCase name
@@ -15,9 +19,9 @@ import type {KestraSdkPlugin} from "./types"
  * Returns { paramName, typeSymbol } if simplification should be applied, null otherwise.
  */
 function detectBodySimplification(
-    operation: any,
-    querySymbol: (filter: Record<string, unknown>) => any,
-): { paramName: string; typeSymbol: any } | null {
+    operation: IR.OperationObject,
+    querySymbol: KestraSdkPlugin["Instance"]["querySymbol"],
+): { paramName: string; typeSymbol: OperationSymbol } | null {
     const bodySchema = operation.body?.schema
     if (!bodySchema?.$ref) return null
 
@@ -38,12 +42,12 @@ function detectBodySimplification(
     return {paramName, typeSymbol}
 }
 
-function computeHasRequiredParams(operation: any, excludeTenant = false): boolean {
+function computeHasRequiredParams(operation: IR.OperationObject, excludeTenant = false): boolean {
     return (
         Object.values(operation.parameters?.path || {}).some(
-            (p: any) => p.required && !(excludeTenant && p.name === "tenant"),
+            (p) => p.required && !(excludeTenant && p.name === "tenant"),
         ) ||
-        Object.values(operation.parameters?.query || {}).some((p: any) => p.required) ||
+        Object.values(operation.parameters?.query || {}).some((p) => p.required) ||
         (operation.body?.required === true)
     )
 }
@@ -153,7 +157,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
     plugin.node($.const(getDataOrThrowSymbol).export().assign(getDataOrThrowNode))
 
     // avoid having to unwrap the outputs
-    const unwrapCallStatementsData = (callNode: any) => [
+    const unwrapCallStatementsData = (callNode: DslCallArgument) => [
         $.return($(getDataOrThrowSymbol).call(callNode)),
     ]
 
@@ -237,21 +241,21 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
             const hasTenant = pathParams && "tenant" in pathParams
 
             // Check if we should simplify the body parameter
-            const bodySimplification = detectBodySimplification(operation, (filter) => plugin.querySymbol(filter as any))
+            const bodySimplification = detectBodySimplification(operation, plugin.querySymbol.bind(plugin))
 
             const isMultipart = operation.body?.mediaType === "multipart/form-data"
 
             // SSE operations return ServerSentEventsResult (not a data-bearing response),
             // so getDataOrThrow does not apply — pass these through unchanged.
             const isSSE = Object.values(operation.responses || {}).some(
-                (resp: any) => resp?.mediaType === "text/event-stream",
+                (resp) => resp?.mediaType === "text/event-stream",
             )
 
             // For application/yaml responses, the fetch client's auto-detection maps
             // application/* Content-Type to 'blob'. We override with parseAs:'text' and
             // inject the correct Accept header into every generated wrapper call.
             const isYamlResponse = Object.values(operation.responses || {}).some(
-                (resp: any) => resp?.mediaType === "application/yaml",
+                (resp) => resp?.mediaType === "application/yaml",
             )
 
             // Some endpoints (e.g. exportPluginDefaults) declare application/octet-stream
@@ -259,7 +263,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
             // The schema type "string" (without format: binary) signals that the payload is
             // text. Force parseAs:'text' so the fetch client returns a string instead of a Blob.
             const isOctetStreamTextResponse = Object.values(operation.responses || {}).some(
-                (resp: any) =>
+                (resp) =>
                     resp?.mediaType === "application/octet-stream" &&
                     resp?.schema?.type === "string" &&
                     resp?.schema?.format !== "binary",
@@ -283,13 +287,13 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                         .prop("parseAs", $.literal("text"))
                     : $("options")
 
-            const operationOptionsType = (sym: any, idx: 0 | 1 = 1) =>
+            const operationOptionsType = (sym: DslTypeQueryArgument, idx: 0 | 1 = 1) =>
                 $.type("Omit").generics(
                     $.type("Parameters").generic($.type.query(sym)).idx(idx),
                     $.type.literal("throwOnError"),
                 )
 
-            const returnStatements = (callNode: any) =>
+            const returnStatements = (callNode: DslCallArgument) =>
                 isSSE ? [$.return(callNode)] : unwrapCallStatementsData(callNode)
 
             if (!hasTenant && !bodySimplification && !isMultipart) {

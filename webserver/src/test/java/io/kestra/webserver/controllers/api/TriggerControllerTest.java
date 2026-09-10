@@ -774,7 +774,7 @@ class TriggerControllerTest {
         flowService.create(GenericFlow.of(flow));
         TriggerState trigger = createTriggerFromFlow(flow, false);
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(trigger).isPresent());
 
         ZonedDateTime start = ZonedDateTime.parse("2026-06-10T00:00:00Z");
 
@@ -805,7 +805,7 @@ class TriggerControllerTest {
                 );
         }
 
-        assertThat(jdbcTriggerRepository.findById(trigger).orElseThrow().getBackfill()).isNull();
+        assertThat(jdbcTriggerRepository.findByIdWithoutAcl(trigger).orElseThrow().getBackfill()).isNull();
     }
 
     @Test

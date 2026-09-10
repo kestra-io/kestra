@@ -22,6 +22,9 @@ const MIN_RANGE_MS = durationUtils.duration("PT5M") * 1000
 const MAX_RANGE_MS = durationUtils.duration("PT8760H") * 1000
 const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
 const END_QUERY_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
+// startDate/endDate and timeRange are mutually exclusive execution filters on the backend
+// (a request carrying both is rejected with a 422), so writing one must always drop the other.
+const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 
 /**
  * Owns the Executions timeline's visible [start, end) window and keeps it in sync with the
@@ -53,9 +56,10 @@ export function useTimelineRange() {
 
     function setRange(startMs: number, endMs: number) {
         const clampedSpan = Math.min(Math.max(endMs - startMs, MIN_RANGE_MS), MAX_RANGE_MS)
+        const {[TIME_RANGE_QUERY_KEY]: _timeRange, ...rest} = route.query
         router.push({
             query: {
-                ...route.query,
+                ...rest,
                 [START_QUERY_KEY]: new Date(endMs - clampedSpan).toISOString(),
                 [END_QUERY_KEY]: new Date(endMs).toISOString(),
                 page: undefined,

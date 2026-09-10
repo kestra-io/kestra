@@ -2666,7 +2666,9 @@
         "panBack": "पीछे खिसकाएं",
         "panForward": "आगे खिसकाएं",
         "zoomIn": "ज़ूम इन करें",
-        "zoomOut": "ज़ूम आउट करें"
+        "zoomOut": "ज़ूम आउट करें",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "समय सीमा बदलें"
       },
       "row": {
         "openOwnPage": "यह पेज खोलें",

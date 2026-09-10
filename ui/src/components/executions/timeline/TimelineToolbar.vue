@@ -1,22 +1,48 @@
 <template>
     <div class="timeline-toolbar">
-        <KsSelect
-            class="range-select"
-            :modelValue="activePreset"
-            :placeholder="$t('datepicker.custom')"
-            @change="(value: string) => emit('apply-preset', value)"
+        <KsPopover
+            v-model:visible="rangePickerVisible"
+            trigger="click"
+            placement="bottom-start"
+            :width="320"
+            :showArrow="false"
         >
-            <KsOption v-for="preset in presets" :key="preset.value" :value="preset.value" :label="$t(preset.labelKey)" />
-        </KsSelect>
+            <template #reference>
+                <KsButton
+                    class="range-pill"
+                    :class="{'is-active': rangePickerVisible}"
+                    :icon="CalendarRange"
+                    size="small"
+                    :aria-label="$t('executionsTimeline.toolbar.rangePicker')"
+                >
+                    {{ readout }}
+                </KsButton>
+            </template>
 
-        <KsDatePicker
-            class="range-picker"
-            :modelValue="[new Date(rangeStartMs), new Date(rangeEndMs)]"
-            type="datetimerange"
-            :startPlaceholder="$t('start date')"
-            :endPlaceholder="$t('end date')"
-            @update:modelValue="onCustomRange"
-        />
+            <div class="range-picker">
+                <KsRadioGroup v-model="selectedMode" class="range-picker-mode">
+                    <KsRadioButton value="REL">
+                        {{ $t("relative") }}
+                    </KsRadioButton>
+                    <KsRadioButton value="ABS">
+                        {{ $t("absolute") }}
+                    </KsRadioButton>
+                </KsRadioGroup>
+
+                <TimeSelect
+                    v-if="selectedMode === 'REL'"
+                    allowCustom
+                    :timeRange="activePreset"
+                    @update:modelValue="onRelativeChange"
+                />
+                <DateRange
+                    v-else
+                    :startDate="new Date(rangeStartMs).toISOString()"
+                    :endDate="new Date(rangeEndMs).toISOString()"
+                    @update:modelValue="onAbsoluteChange"
+                />
+            </div>
+        </KsPopover>
 
         <div class="zoom-controls">
             <KsIconButton :tooltip="$t('executionsTimeline.toolbar.panBack')" placement="top" @click="emit('pan', -0.5)">
@@ -48,6 +74,9 @@
 </template>
 
 <script setup lang="ts">
+    import {computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import CalendarRange from "vue-material-design-icons/CalendarRange.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import MagnifyPlusOutline from "vue-material-design-icons/MagnifyPlusOutline.vue"
@@ -55,9 +84,11 @@
     import Crosshairs from "vue-material-design-icons/Crosshairs.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
-    import {TIMELINE_RANGE_PRESETS} from "../../../composables/useTimelineRange"
+    import {dateUtils, durationUtils} from "@kestra-io/design-system"
+    import TimeSelect from "../date-select/TimeSelect.vue"
+    import DateRange from "../../layout/DateRange.vue"
 
-    defineProps<{
+    const props = defineProps<{
         rangeStartMs: number;
         rangeEndMs: number;
         activePreset?: string;
@@ -73,11 +104,26 @@
         "custom-range": [range: {startMs: number; endMs: number}];
     }>()
 
-    const presets = TIMELINE_RANGE_PRESETS
+    const {t} = useI18n()
 
-    function onCustomRange(value: [Date, Date] | null) {
-        if (!value?.[0] || !value?.[1]) return
-        emit("custom-range", {startMs: value[0].getTime(), endMs: value[1].getTime()})
+    const rangePickerVisible = ref(false)
+    // Mirrors DateFilter.vue's own Relative/Absolute toggle: initialized once from the current range,
+    // then left to the user so switching tabs doesn't fight their choice on every prop change.
+    const selectedMode = ref<"REL" | "ABS">(props.activePreset !== undefined ? "REL" : "ABS")
+
+    const readout = computed(() => t("executionsTimeline.toolbar.range", {
+        start: dateUtils.dateFilter(new Date(props.rangeStartMs).toISOString(), "lll"),
+        end: dateUtils.dateFilter(new Date(props.rangeEndMs).toISOString(), "lll"),
+        duration: durationUtils.humanDuration((props.rangeEndMs - props.rangeStartMs) / 1000),
+    }))
+
+    function onRelativeChange({timeRange}: {timeRange?: string}) {
+        if (timeRange) emit("apply-preset", timeRange)
+    }
+
+    function onAbsoluteChange({startDate, endDate}: {startDate?: string; endDate?: string}) {
+        if (!startDate || !endDate) return
+        emit("custom-range", {startMs: Date.parse(startDate), endMs: Date.parse(endDate)})
     }
 </script>
 
@@ -92,12 +138,20 @@
     background: var(--ks-bg-surface);
 }
 
-.range-select {
-    width: 10rem;
+.range-pill.is-active {
+    color: var(--ks-text-primary);
+    background: var(--ks-btn-secondary-bg-active);
+    border-color: var(--ks-btn-secondary-border-active);
 }
 
 .range-picker {
-    width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-3);
+}
+
+.range-picker-mode {
+    align-self: flex-start;
 }
 
 .zoom-controls {

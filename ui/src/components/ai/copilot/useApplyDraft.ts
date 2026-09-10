@@ -156,6 +156,9 @@ export function useApplyDraft() {
             showCancelButton: true,
             confirmButtonText: t("ai.copilot.draft.apply"),
             cancelButtonText: t("cancel"),
+            // The default message box tops out at ~420px — too narrow for the diff editor below the
+            // confirm text. Match KsDialog's "large" variant width rather than inventing a new size.
+            customStyle: {maxWidth: "min(750px, 90vw)"},
         }).then(() => true).catch(() => false)
     }
 

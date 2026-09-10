@@ -91,14 +91,14 @@ describe("ProposedActionCard", () => {
     })
 
     describe("diff", () => {
-        const diff = (w: ReturnType<typeof mountCard>) => w.find("[data-test=\"copilot-proposed-diff\"]")
+        const editor = (w: ReturnType<typeof mountCard>) => w.findComponent({name: "KsEditor"})
 
         it("shows no diff for a plan card", () => {
-            expect(diff(mountCard(planAction)).exists()).toBe(false)
+            expect(editor(mountCard(planAction)).exists()).toBe(false)
         })
 
         it("shows no diff when the action has no recognized source and no single long argument", () => {
-            expect(diff(mountCard(mutateAction)).exists()).toBe(false) // only a short `id` arg
+            expect(editor(mountCard(mutateAction)).exists()).toBe(false) // only a short `id` arg
         })
 
         it("shows a diff as a pure addition when the action carries a `body` argument and no current source", () => {
@@ -106,9 +106,9 @@ describe("ProposedActionCard", () => {
                 confirmationId: "c9", tool: "create-flow", family: "MUTATE", summary: "Create flow",
                 arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team"},
             })
-            expect(diff(w).exists()).toBe(true)
-            expect(diff(w).text()).toContain("id: my-flow")
-            expect(diff(w).text()).toContain("namespace: company.team")
+            expect(editor(w).exists()).toBe(true)
+            expect(editor(w).props("original")).toBe("")
+            expect(editor(w).props("modelValue")).toBe("id: my-flow\nnamespace: company.team")
         })
 
         it("diffs the source argument against currentFlowSource when provided", () => {
@@ -119,7 +119,8 @@ describe("ProposedActionCard", () => {
                 },
                 {currentFlowSource: "id: my-flow\nnamespace: company.team"},
             )
-            expect(diff(w).text()).toContain("description: new")
+            expect(editor(w).props("original")).toBe("id: my-flow\nnamespace: company.team")
+            expect(editor(w).props("modelValue")).toContain("description: new")
         })
 
         it("falls back to the sole overlong argument when no recognized source key is present", () => {
@@ -127,18 +128,7 @@ describe("ProposedActionCard", () => {
                 confirmationId: "c11", tool: "mystery-tool", family: "MUTATE", summary: "Do a thing",
                 arguments: {namespace: "company.team", payload: "x".repeat(200)},
             })
-            expect(diff(w).exists()).toBe(true)
-        })
-
-        it("shows the no-changes state when the proposed source matches the current flow source", () => {
-            const w = mountCard(
-                {
-                    confirmationId: "c13", tool: "update-flow", family: "MUTATE", summary: "Update flow",
-                    arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team"},
-                },
-                {currentFlowSource: "id: my-flow\nnamespace: company.team"},
-            )
-            expect(diff(w).text()).toContain("No changes")
+            expect(editor(w).exists()).toBe(true)
         })
 
         it("excludes the source/body argument from the identifying args list", () => {

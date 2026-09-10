@@ -730,14 +730,18 @@
                 const alternativeQuery = getSeparatorVariant(query.value)
 
                 if (alternativeQuery) {
-                    const alternativeResponse = await FlowsAPI.searchFlowsBySourceCode({...searchFilters.value,
-                        page: 1,
-                        size: 200,
-                        q: alternativeQuery,
-                        namespace: namespaceFilter.value,
-                    })
-                    if (alternativeResponse.results.length > 0) {
-                        suggestedQuery.value = alternativeQuery
+                    try {
+                        const alternativeResponse = await FlowsAPI.searchFlowsBySourceCode({...searchFilters.value,
+                            page: 1,
+                            size: 200,
+                            q: alternativeQuery,
+                            namespace: namespaceFilter.value,
+                        })
+                        if (alternativeResponse.results.length > 0) {
+                            suggestedQuery.value = alternativeQuery
+                        }
+                    } catch {
+                        // Ignore failures from the optional suggestion lookup.
                     }
                 }
             }

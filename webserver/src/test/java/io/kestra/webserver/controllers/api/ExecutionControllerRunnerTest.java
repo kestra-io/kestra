@@ -329,6 +329,46 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    void executingAFlowDeletedWhileItsHeadWasADraftIsRejected() {
+        // A flow that was published then edited into a draft, then deleted: the tombstone must
+        // shadow the published revision beneath it, or the published revision resurfaces as
+        // executable without a revision even though the flow was deleted.
+        String flowId = IdUtils.create();
+        String publishedSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TESTS_FLOW_NS);
+        String draftSource = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: wip
+            """.formatted(flowId, TESTS_FLOW_NS);
+
+        FlowWithSource published = flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, publishedSource));
+        FlowWithSource draft = flowRepositoryInterface.update(GenericFlow.fromYaml(MAIN_TENANT, draftSource), published);
+        flowRepositoryInterface.delete(draft);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/" + flowId, null),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("the published revision beneath the deleted draft head must not resurface as executable")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.

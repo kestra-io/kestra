@@ -114,7 +114,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     public Optional<ExecutorContext> handle(ExecutionEvent message) {
         EvaluationType evaluationType = killSwitchService.evaluate(message);
         if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.executionId());
+            var execution = executionStateStore.findByIdWithoutAcl(message.executionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
                 killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
                 return Optional.empty();

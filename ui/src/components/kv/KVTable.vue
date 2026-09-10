@@ -158,7 +158,7 @@
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
-        :beforeClose="beforeKvClose"
+        :dirty="isKvDirty"
     >
         <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
             <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required data-test="kv-namespace">
@@ -306,7 +306,6 @@
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {date as formatDate} from "../../utils/filters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
     import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave} from "./kvValue"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
@@ -324,7 +323,7 @@
     import {useKvFilter} from "../filter/configurations"
     import moment from "moment-timezone"
 
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
@@ -440,8 +439,7 @@
     const ttlTouched = ref(false)
 
     const kvBaseline = ref("")
-    const {guardedClose: guardKvClose} = useDiscardGuard(() => JSON.stringify(kv.value) !== kvBaseline.value)
-    const beforeKvClose = (done: () => void) => guardKvClose(() => done())
+    const isKvDirty = computed(() => JSON.stringify(kv.value) !== kvBaseline.value)
 
     const {t} = useI18n()
 

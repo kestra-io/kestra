@@ -1648,6 +1648,7 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
+    "scheduleDateInPast": "Das geplante Datum muss in der Zukunft liegen",
     "warning": "Warnung",
     "trigger_check_warning": "Trigger-Variablen funktionieren nicht bei einer manuell gestarteten Execution. Füge den Coalesce-Operator `??` hinzu, um das Problem zu lösen. Verwende zum Beispiel statt `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -1980,6 +1981,9 @@
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
       },
+      "creation": {
+        "label": "Dashboard erstellen"
+      },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
@@ -2210,7 +2214,6 @@
     "submit": "Absenden",
     "accept": "Akzeptieren",
     "reject": "Ablehnen",
-    "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
     "last modified": "Zuletzt geändert",
     "run task in playground": "Task im Playground ausführen",
     "defaultsToNamespaceFile": "Standardmäßig die Namespace-Datei <code>{name}</code>",

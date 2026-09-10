@@ -1648,6 +1648,7 @@
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
+    "scheduleDateInPast": "Дата расписания должна быть в будущем",
     "warning": "Предупреждение",
     "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "docs": "Документы",
@@ -1980,6 +1981,9 @@
         "label": "Редактировать Dashboard",
         "chart": "Редактировать этот график"
       },
+      "creation": {
+        "label": "Создать Dashboard"
+      },
       "no_description": "Нет описания",
       "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "others": "Другие",
@@ -2210,7 +2214,6 @@
     "submit": "Отправить",
     "accept": "Принять",
     "reject": "Отклонить",
-    "draft_available": "Черновик изменений доступен в редакторе",
     "last modified": "Последнее изменение",
     "run task in playground": "Запустить task в playground",
     "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",

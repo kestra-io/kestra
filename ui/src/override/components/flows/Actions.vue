@@ -225,8 +225,9 @@
     }
 
     const restoreFlow = () => {
+        if (!flow.value?.source) return
         flowStore.createFlow({
-            flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
+            flow: YAML_UTILS.deleteMetadata(flow.value.source, "deleted"),
             restore: true,
         }).then(() => {
             unsavedChangesStore.unsavedChange = false

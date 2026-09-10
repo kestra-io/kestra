@@ -112,10 +112,4 @@
     .secrets-divider {
         border-top: 1px solid var(--ks-border-default);
     }
-
-    .ee-tag-wrap {
-        :deep(.enterprise-tag) {
-            margin: 0 0 0.5rem 0;
-        }
-    }
 </style>

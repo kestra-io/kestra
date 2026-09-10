@@ -2,7 +2,7 @@ import {ref, Ref, provide, watch} from "vue"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
-import {TopologyClickParams} from "../no-code/utils/types"
+import {BlockType, TopologyClickParams} from "../no-code/utils/types"
 import {useFlowStore} from "../../stores/flow"
 import {usePluginsStore} from "../../stores/plugins"
 import {NOCODE_PREFIX, useNoCodePanels} from "./useNoCodePanels"
@@ -10,6 +10,60 @@ import {Panel} from "../../utils/multiPanelTypes"
 
 
 const TOPOLOGY_PREFIX = "topology"
+
+type ResolvedTaskPath =
+    | {ok: true; path: string; refPath: number; fieldName: string | undefined; blockSchemaPath: string}
+    | {ok: false; reason: "no-path" | "no-ref-index"}
+
+function resolveTaskPath(
+    source: string,
+    pluginsStore: ReturnType<typeof usePluginsStore>,
+    section: BlockType,
+    id: string,
+): ResolvedTaskPath {
+    const path = YAML_UTILS.getPathFromSectionAndId({source, section, id})
+    if (!path) {
+        return {ok: false, reason: "no-path"}
+    }
+
+    const parsedPath = YAML_UTILS.parsePath(path)
+    const refPath = parsedPath.findLast(p => typeof p === "number")
+    const fieldNameAny = parsedPath[parsedPath.length - 1]
+    const fieldName = typeof fieldNameAny === "string" ? fieldNameAny : undefined
+
+    if (refPath === undefined) {
+        return {ok: false, reason: "no-ref-index"}
+    }
+
+    const blockSchemaPath = [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/")
+
+    return {ok: true, path, refPath, fieldName, blockSchemaPath}
+}
+
+// Reused by callers outside the topology-click flow (e.g. a query-param deep link) that need to
+// jump straight to a task's no-code edit tab without going through a graph click.
+export function resolveEditTaskTarget(
+    source: string,
+    pluginsStore: ReturnType<typeof usePluginsStore>,
+    section: BlockType,
+    id: string,
+): {parentPath: string; blockSchemaPath: string; refPath: number | undefined} | undefined {
+    const resolved = resolveTaskPath(source, pluginsStore, section, id)
+    if (!resolved.ok) {
+        return undefined
+    }
+
+    const {path, refPath, fieldName, blockSchemaPath} = resolved
+
+    if (fieldName === undefined) {
+        // editing a task directly in an array: we need the parent path and the refPath
+        const parentPath = path.slice(0, - (refPath.toString().length + 2)) // remove the [refPath] part
+        return {parentPath, blockSchemaPath, refPath}
+    }
+
+    // editing a task as a subfield (like a dag): the path is self-sufficient
+    return {parentPath: path, blockSchemaPath, refPath: undefined}
+}
 
 export function useTopologyPanels(
     panels: Ref<Panel[]>,
@@ -74,30 +128,16 @@ export function useTopologyPanels(
             newPanelIndex = topologyIndexes.panelIndex + 1
         }
 
-        const path = YAML_UTILS.getPathFromSectionAndId({
-            source: flowStore.flowYaml ?? "",
-            section: params.section,
-            id: params.id,
-        })
+        const resolved = resolveTaskPath(flowStore.flowYaml ?? "", pluginsStore, params.section, params.id)
 
-        if (!path) {
+        if (!resolved.ok) {
+            if (resolved.reason === "no-ref-index") {
+                console.warn("No refPath found in topology click params", value)
+            }
             return
         }
 
-        const parsedPath = YAML_UTILS.parsePath(path)
-        const refPath = parsedPath.findLast(p => typeof p === "number")
-        const fieldNameAny = parsedPath[parsedPath.length - 1]
-        let fieldName: string | undefined = undefined
-        if(typeof fieldNameAny === "string") {
-            fieldName = fieldNameAny
-        }
-
-        if (refPath === undefined) {
-            console.warn("No refPath found in topology click params", value)
-            return
-        }
-
-        const blockSchemaPath = [pluginsStore.flowSchema?.$ref, "properties", params.section, "items"].join("/")
+        const {path, refPath, fieldName, blockSchemaPath} = resolved
 
         if (action === "create"){
             const refLength = (refPath.toString().length + 2)

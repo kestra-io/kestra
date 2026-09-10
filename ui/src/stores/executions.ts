@@ -290,6 +290,17 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    // Same hazard as loadExecution above, for a caller that already has a fresher
+    // execution in hand (e.g. SetLabels.vue's save response) rather than needing to
+    // fetch one: without cancelling it first, a throttled SSE update already queued
+    // from before this write - carrying whatever the backend had already pushed,
+    // possibly still missing what this write just applied - would land on top of it
+    // once its 500ms window elapses, silently reverting a save the user just made.
+    const applyLocalExecutionUpdate = (data: Execution) => {
+        throttledExecutionUpdate.cancel()
+        execution.value = data
+    }
+
     function toExecutionSearchParams(options: Record<string, any>) {
         const {sort, page, size, onlyTotal: _onlyTotal, commit: _commit, ...filterKeys} = options
         return {
@@ -889,6 +900,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkPauseExecution,
         queryPauseExecution,
         loadExecution,
+        applyLocalExecutionUpdate,
         findExecutions,
         findDistinctFieldValues,
         validateExecution,

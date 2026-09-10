@@ -23,7 +23,17 @@ interface Config {
     edition?: string
 }
 
-function statsGlobalData(config: Config, uid: string): any {
+interface StatsGlobalData {
+    from: string
+    iid?: string
+    uid: string
+    app: {
+        version?: string
+        type?: string
+    }
+}
+
+function statsGlobalData(config: Config, uid: string): StatsGlobalData {
     return {
         from: "APP",
         iid: config.uuid,
@@ -38,8 +48,9 @@ function statsGlobalData(config: Config, uid: string): any {
 const SURVEY_HOOKS_FLAG = "__kestra_posthog_survey_hooks_installed"
 
 function installSurveyHooksOnce() {
-    if ((window as any)[SURVEY_HOOKS_FLAG]) return;
-    (window as any)[SURVEY_HOOKS_FLAG] = true
+    const surveyWindow = window as Window & Partial<Record<typeof SURVEY_HOOKS_FLAG, boolean>>
+    if (surveyWindow[SURVEY_HOOKS_FLAG]) return
+    surveyWindow[SURVEY_HOOKS_FLAG] = true
 
     let surveyVisible = false
     window.addEventListener("PHSurveyShown", () => {
@@ -66,7 +77,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
 
         // PostHog can already be initialized (e.g. user logs out then logs back in without a full page refresh).
         // In that case we don't need to init again.
-        if ((posthog as any)?.__loaded) {
+        if (posthog.__loaded) {
             installSurveyHooksOnce()
             return
         }
@@ -98,7 +109,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
 
 export function trackSetupEvent(
     eventName: string,
-    additionalData: Record<string, any>,
+    additionalData: Record<string, unknown>,
     userFormData: UserFormData,
 ): void {
     const miscStore = useMiscStore()

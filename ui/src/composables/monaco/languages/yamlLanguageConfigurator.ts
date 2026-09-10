@@ -176,7 +176,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     if (typeof r.insertText === "string") {
                         r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
                     } else if (typeof r.insertText === "object" && r.insertText !== null) {
-                        const textObj = r.insertText as any
+                        const textObj = r.insertText as unknown as {value?: unknown}
                         if (typeof textObj.value === "string") {
                             textObj.value = textObj.value.replaceAll("\\\\\"", "\"")
                         }
@@ -475,7 +475,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         autoCompletionProviders.push(
             monaco.languages.registerInlineCompletionsProvider("yaml", {
-                provideInlineCompletions: async (model: any, position: any) => {
+                provideInlineCompletions: async (model: IModel, position: IPosition) => {
                     // Only suggest inline required properties in flow/testsuite editors.
                     const isFlowModel =
                         model.uri.path.includes("flow-") ||
@@ -564,6 +564,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                 ),
                                 command: {
                                     id: "moveCursor",
+                                    title: "Move cursor",
                                     arguments: [
                                         {
                                             lineNumber: position.lineNumber,
@@ -580,9 +581,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 },
                 handlePartialAccept() {
                 },
-                freeInlineCompletions() {
+                disposeInlineCompletions() {
                 },
-            } as any),
+            }),
         )
 
         registerPebbleAutocompletion(

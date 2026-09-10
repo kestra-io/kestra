@@ -236,7 +236,10 @@ function registerPebbleLanguage(language: string) {
     }
 
     // Get the tokenizer from the root language
-    const rootLanguageDefinition: any = monaco.languages.getLanguages().find(l => l.id === rootLanguage)
+    const rootLanguageDefinition = monaco.languages.getLanguages().find(l => l.id === rootLanguage) as
+        (monaco.languages.ILanguageExtensionPoint & {
+            loader?: () => Promise<{language: monaco.languages.IMonarchLanguage}>
+        }) | undefined
     // Load the parent language to ensure its tokenizer is available
     if (rootLanguageDefinition?.loader) {
         rootLanguageDefinition.loader().then((loaded: {language: monaco.languages.IMonarchLanguage}) => {

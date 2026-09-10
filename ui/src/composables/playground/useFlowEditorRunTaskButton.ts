@@ -102,10 +102,10 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             return
         }
 
-        const hv = highlightedLines.value as Record<string, any> | undefined
+        const hv = highlightedLines.value
 
         // in case identical setting change nothing
-        if(hv && !Object.keys(hv).some((key) => hv[key] !== (res as Record<string, any>)[key])) {
+        if(hv && !Object.keys(hv).some((key) => hv[key as keyof typeof hv] !== res[key as keyof typeof res])) {
             return
         }
 

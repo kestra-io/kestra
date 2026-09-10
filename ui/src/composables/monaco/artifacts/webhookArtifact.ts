@@ -5,7 +5,7 @@ export const webhookArtifactProvider: EditorArtifactProvider = {
     type: WEBHOOK_TRIGGER_TYPE,
     provide(block, context) {
         const key = block.value?.key
-        if (block.path !== "triggers" || !key || !context.namespace || !context.id) {
+        if (block.path !== "triggers" || typeof key !== "string" || !context.namespace || !context.id) {
             return []
         }
 

@@ -6,9 +6,9 @@ export abstract class EntityIterator<T> {
     private page = 0
     private alreadyFetched: T[] = []
     private buffered: T[] = []
-    readonly options: any
+    readonly options: Record<string, unknown>
 
-    protected constructor(fetchSize: number, options?: any) {
+    protected constructor(fetchSize: number, options?: Record<string, unknown>) {
         if (fetchSize <= 0) {
             throw new Error("fetchSize must be greater than 0")
         }

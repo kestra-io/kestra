@@ -692,8 +692,7 @@ public class ExecutionController {
         String path,
         MultipartBody parts,
         HttpRequest<?> request) {
-        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
-        return webhookMultipart(maybeFlow, key, path, parts, request);
+        return webhookMultipart(findFlowForWebhook(namespace, id), key, path, parts, request);
     }
 
     protected Mono<HttpResponse<?>> webhookMultipart(
@@ -702,8 +701,7 @@ public class ExecutionController {
         String path,
         MultipartBody parts,
         HttpRequest<?> request) {
-        Flow flow = executableFlow(maybeFlow);
-        findWebhook(flow, key);
+        Flow flow = resolveWebhook(maybeFlow, key).flow();
 
         // Minted before the parts are read, so that they are stored under the execution that will carry them.
         String executionId = IdUtils.create();
@@ -733,8 +731,19 @@ public class ExecutionController {
         String key,
         String path,
         HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        return webhook(findFlowForWebhook(namespace, id), key, path, request);
+    }
+
+    /**
+     * The response the caller sees never says whether the flow was absent (GHSA-6wcq-4vx6-rx53); this is
+     * where that distinction is still recorded, for whoever operates the instance.
+     */
+    private Optional<Flow> findFlowForWebhook(String namespace, String id) {
         Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
-        return webhook(maybeFlow, key, path, request);
+        if (maybeFlow.isEmpty()) {
+            log.debug("Rejected a webhook call: no flow '{}.{}' found.", namespace, id);
+        }
+        return maybeFlow;
     }
 
     protected Mono<HttpResponse<?>> webhook(
@@ -742,9 +751,10 @@ public class ExecutionController {
         String key,
         String path,
         HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
-        Flow flow = executableFlow(maybeFlow);
+        ResolvedWebhook resolved = resolveWebhook(maybeFlow, key);
+        Flow flow = resolved.flow();
         // Processed here too: how the body is read is the trigger's fetchType, which governance can change
-        AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
+        AbstractWebhookTrigger webhook = processedForRuntime(flow, resolved.trigger());
 
         // Minted before the body is read, so that a stored body lives under the execution that will carry it.
         String executionId = IdUtils.create();
@@ -781,10 +791,11 @@ public class ExecutionController {
         io.kestra.core.http.HttpRequest request,
         String executionId,
         URI storedBodyUri) throws IllegalVariableEvaluationException {
-        Flow flow = executableFlow(maybeFlow);
+        ResolvedWebhook resolved = resolveWebhook(maybeFlow, key);
+        Flow flow = resolved.flow();
         // Matched on the raw flow so an unknown key stays a 404, then evaluated as the executor would
         // run it: the trigger is part of the flow, so its configuration is the processed one.
-        final AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
+        final AbstractWebhookTrigger webhook = processedForRuntime(flow, resolved.trigger());
         this.onWebhookMatched(flow, webhook);
 
         if (webhook.isDisabled()) {
@@ -836,24 +847,40 @@ public class ExecutionController {
     }
 
     /**
-     * @return the flow a webhook call targets
-     * @throws HttpStatusException if the flow does not exist
+     * The flow and webhook trigger a call resolves to.
+     */
+    private record ResolvedWebhook(Flow flow, AbstractWebhookTrigger trigger) {
+    }
+
+    /**
+     * Resolve the webhook a call targets. Every failure a caller can reach without knowing the key answers with the same 404,
+     * so that the response discloses nothing about the flow to this endpoint, which is anonymous by design (GHSA-6wcq-4vx6-rx53).
+     * Whether the flow can actually be executed (disabled, invalid) is only checked once the key has matched.
+     *
+     * @throws HttpStatusException if the flow does not exist or no webhook trigger matches the key
      * @throws ConflictException if the flow cannot be executed
      */
-    private static Flow executableFlow(Optional<Flow> maybeFlow) {
-        if (maybeFlow.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
-        }
+    private ResolvedWebhook resolveWebhook(Optional<Flow> maybeFlow, String key) {
+        Flow flow = maybeFlow.orElseThrow(ExecutionController::webhookNotFound);
+        AbstractWebhookTrigger trigger = findWebhook(flow, key);
+        ensureExecutable(flow);
+        return new ResolvedWebhook(flow, trigger);
+    }
 
-        var flow = maybeFlow.get();
+    /**
+     * @throws ConflictException if the flow cannot be executed
+     */
+    private static void ensureExecutable(Flow flow) {
         if (flow.isDisabled()) {
             throw new ConflictException("Cannot execute flow: flow is disabled.");
         }
         if (flow instanceof FlowWithException fwe) {
             throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
         }
+    }
 
-        return flow;
+    private static HttpStatusException webhookNotFound() {
+        return new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
     }
 
     /**
@@ -890,13 +917,16 @@ public class ExecutionController {
                     // compare via AuthUtils.constantTimeEquals to prevent timing attacks
                     return AuthUtils.constantTimeEquals(webhookKey, key);
                 } catch (IllegalVariableEvaluationException e) {
-                    // be conservative, don't crash but filter the webhook
-                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
+                    // be conservative, don't crash but filter the webhook.
+                    log.warn("Unable to render the key of webhook trigger '{}' on flow '{}.{}', the webhook will be ignored.", w.getId(), flow.getNamespace(), flow.getId(), e);
                     return false;
                 }
             })
             .findFirst()
-            .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found"));
+            .orElseThrow(() -> {
+                log.debug("Rejected a webhook call: no trigger on flow '{}.{}' matches the given key.", flow.getNamespace(), flow.getId());
+                return webhookNotFound();
+            });
     }
 
     @ExecuteOn(TaskExecutors.IO)

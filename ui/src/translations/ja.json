@@ -2215,7 +2215,6 @@
     "submit": "送信",
     "accept": "承認",
     "reject": "拒否",
-    "draft_available": "エディターでドラフト変更が利用可能です",
     "last modified": "最終更新日時",
     "run task in playground": "プレイグラウンドでタスクを実行",
     "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",

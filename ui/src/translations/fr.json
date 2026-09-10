@@ -2215,7 +2215,6 @@
     "submit": "Soumettre",
     "accept": "Accepter",
     "reject": "Rejeter",
-    "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
     "last modified": "Dernière modification",
     "run task in playground": "Exécuter la task dans le playground",
     "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",

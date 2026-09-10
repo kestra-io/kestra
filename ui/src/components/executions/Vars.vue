@@ -3,8 +3,8 @@
 
     <div v-else class="vars">
         <div class="vars-row vars-head">
-            <KsText size="sm">{{ $t(keyLabelTranslationKey) }}</KsText>
-            <KsText size="sm">{{ $t('value') }}</KsText>
+            <KsText size="small">{{ $t(keyLabelTranslationKey) }}</KsText>
+            <KsText size="small">{{ $t('value') }}</KsText>
         </div>
 
         <DynamicScroller

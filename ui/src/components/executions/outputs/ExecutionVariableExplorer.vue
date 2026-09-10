@@ -160,7 +160,14 @@
         return typeof value
     }
 
+    // The preview is a single clipped line, so only its head ever reaches the screen.
+    const PREVIEW_MAX_CHARS = 200
+
     function preview(value: unknown): string {
+        return previewText(value).slice(0, PREVIEW_MAX_CHARS)
+    }
+
+    function previewText(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return value
         if (Array.isArray(value)) {

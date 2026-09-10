@@ -35,17 +35,29 @@
                     :value="fileResult"
                     :execution="execution"
                 />
-                <KsEditor
-                    v-else
-                    v-bind="editorBindings"
-                    :readOnly="true"
-                    :inline="true"
-                    :navbar="false"
-                    :options="{showScroll: true, fullHeight: false, customHeight: 8}"
-                    :modelValue="result"
-                    :lang="resultLang"
-                    class="result"
-                />
+                <template v-else>
+                    <KsAlert
+                        v-if="isResultTruncated"
+                        type="warning"
+                        :closable="false"
+                        data-test="result-truncated"
+                        :title="$t('large_outputs.value_truncated', {size: resultSize, lines: Utils.DISPLAY_MAX_LINES})"
+                    >
+                        <KsButton size="small" @click="copyFullResult">
+                            {{ $t('copy') }}
+                        </KsButton>
+                    </KsAlert>
+                    <KsEditor
+                        v-bind="editorBindings"
+                        :readOnly="true"
+                        :inline="true"
+                        :navbar="false"
+                        :options="{showScroll: true, fullHeight: false, customHeight: 8}"
+                        :modelValue="displayResult"
+                        :lang="resultLang"
+                        class="result"
+                    />
+                </template>
             </div>
         </template>
     </div>
@@ -54,7 +66,7 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
 
-    import {KsEditor, KsButton, KsAlert} from "@kestra-io/design-system"
+    import {KsEditor, KsButton, KsAlert, copyToClipboard} from "@kestra-io/design-system"
     import {evalExpression} from "@kestra-io/kestra-sdk/executions"
 
     import {useEditorBindings} from "../../../composables/useEditorBindings"
@@ -86,6 +98,15 @@
     )
 
     const result = ref<string | undefined>(undefined)
+
+    // Evaluating an expression over a large output put the whole result in Monaco.
+    const displayResult = computed(() => Utils.capForDisplay(result.value ?? ""))
+
+    const isResultTruncated = computed(() => displayResult.value.length < (result.value?.length ?? 0))
+
+    const resultSize = computed(() => Utils.humanFileSize(result.value?.length ?? 0))
+
+    const copyFullResult = () => copyToClipboard(result.value ?? "")
     const resultLang = ref<"json" | "">("")
     const error = ref<string | undefined>(undefined)
 

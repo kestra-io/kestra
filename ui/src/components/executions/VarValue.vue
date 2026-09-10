@@ -56,15 +56,20 @@
     <span v-else-if="emptyContainer">
         <em>{{ emptyContainer }}</em>
     </span>
-    <div v-else-if="isComplexValue(value)">
+    <div v-else>
         <KsAlert
             v-if="isTruncated"
             type="warning"
             :closable="false"
             data-test="var-value-truncated"
-            :title="$t('large_outputs.value_truncated', {size: serializedSize, lines: Utils.DISPLAY_MAX_LINES})"
-        />
+            :title="$t('large_outputs.value_truncated', {size: fullTextSize, lines: Utils.DISPLAY_MAX_LINES})"
+        >
+            <KsButton size="small" @click="copyFullValue">
+                {{ $t('copy') }}
+            </KsButton>
+        </KsAlert>
         <KsEditor
+            v-if="isComplexValue(value)"
             v-bind="editorBindings"
             :readOnly="true"
             :inline="true"
@@ -74,14 +79,12 @@
                 customHeight: editorHeight,
             }"
             :navbar="false"
-            :modelValue="editorValue"
+            :modelValue="displayText"
             lang="json"
             class="complex-value-editor"
         />
+        <span v-else>{{ displayText }}</span>
     </div>
-    <span v-else>
-        {{ value }}
-    </span>
 </template>
 
 <script setup lang="ts">
@@ -90,7 +93,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
-    import {KsAlert, KsEditor} from "@kestra-io/design-system"
+    import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
@@ -185,15 +188,21 @@
         return undefined
     })
 
-    const serialized = computed(() => JSON.stringify(getDisplayValue(props.value), null, 2) ?? "")
+    // A plain string never reaches the editor, so both paths share one bounded text.
+    const fullText = computed(() => {
+        const displayed = getDisplayValue(props.value)
+        return typeof displayed === "string" ? displayed : JSON.stringify(displayed, null, 2) ?? ""
+    })
 
-    const editorValue = computed(() => Utils.capForDisplay(serialized.value))
+    const displayText = computed(() => Utils.capForDisplay(fullText.value))
 
-    const isTruncated = computed(() => editorValue.value.length < serialized.value.length)
+    const isTruncated = computed(() => displayText.value.length < fullText.value.length)
 
-    const serializedSize = computed(() => Utils.humanFileSize(serialized.value.length))
+    const fullTextSize = computed(() => Utils.humanFileSize(fullText.value.length))
 
-    const editorHeight = computed(() => Math.min(20, Math.max(5, editorValue.value.split("\n").length)))
+    const editorHeight = computed(() => Math.min(20, Math.max(5, displayText.value.split("\n").length)))
+
+    const copyFullValue = () => copyToClipboard(fullText.value)
 
     const itemUrl = (value: string): string => {
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`

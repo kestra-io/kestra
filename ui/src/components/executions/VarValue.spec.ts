@@ -16,9 +16,12 @@ vi.mock("../../composables/useEditorBindings", () => ({
 vi.mock("./FilePreviewDrawer.vue", () => ({
     default: defineComponent({name: "FilePreviewDrawer", template: "<div />"}),
 }))
+// vi.mock is hoisted above plain consts, so the spy has to be hoisted with it.
+const {copyToClipboard} = vi.hoisted(() => ({copyToClipboard: vi.fn()}))
+
 vi.mock("@kestra-io/design-system", () => ({
     fileUtils: {isFileUri: () => false},
-    copyToClipboard: vi.fn(),
+    copyToClipboard,
     KsEditor: defineComponent({
         name: "KsEditor",
         props: {modelValue: {type: String, default: ""}, options: {type: Object, default: () => ({})}},
@@ -27,8 +30,10 @@ vi.mock("@kestra-io/design-system", () => ({
     KsAlert: defineComponent({
         name: "KsAlert",
         props: {title: {type: String, default: ""}},
-        template: "<div data-test=\"var-value-truncated\">{{ title }}</div>",
+        template: "<div data-test=\"var-value-truncated\">{{ title }}<slot /></div>",
     }),
+    // No explicit emits: the parent's @click lands as a native listener, so one click fires once.
+
 }))
 
 const i18n = createI18n({
@@ -37,6 +42,7 @@ const i18n = createI18n({
     locale: "en",
     messages: {
         en: {
+            copy: "Copy",
             large_outputs: {
                 value_truncated: "Only the first {lines} lines of this {size} value are shown.",
             },
@@ -44,10 +50,16 @@ const i18n = createI18n({
     },
 })
 
+const KsButtonStub = defineComponent({
+    name: "KsButton",
+    // No explicit emits: the parent's @click lands as a native listener, so one click fires once.
+    template: "<button data-test=\"copy\"><slot /></button>",
+})
+
 function mountVarValue(value: unknown) {
     return mount(VarValue, {
         props: {value: value as string | object},
-        global: {plugins: [i18n]},
+        global: {plugins: [i18n], stubs: {KsButton: KsButtonStub}},
     })
 }
 
@@ -77,7 +89,7 @@ describe("VarValue", () => {
         const wrapper = mountVarValue(value)
 
         expect(editorContent(wrapper).length).toBeLessThanOrEqual(256 * 1024)
-        expect(wrapper.find("[data-test=var-value-truncated]").text()).toBe(
+        expect(wrapper.find("[data-test=var-value-truncated]").text()).toContain(
             "Only the first 200 lines of this 1.1 MiB value are shown.",
         )
     })
@@ -91,6 +103,27 @@ describe("VarValue", () => {
 
         expect(editorContent(wrapper).split("\n")).toHaveLength(200)
         expect(wrapper.find("[data-test=var-value-truncated]").exists()).toBe(true)
+    })
+
+    it("should cap a long plain string, which never reaches the editor", () => {
+        const value = "x".repeat(400 * 1024) + " not json"
+
+        const wrapper = mountVarValue(value)
+
+        expect(wrapper.find("[data-test=ks-editor]").exists()).toBe(false)
+        expect(wrapper.text()).not.toContain("not json")
+        expect(wrapper.find("[data-test=var-value-truncated]").exists()).toBe(true)
+    })
+
+    it("should copy the whole value, not the truncated one", async () => {
+        const value = "x".repeat(400 * 1024) + " not json"
+        copyToClipboard.mockClear()
+
+        const wrapper = mountVarValue(value)
+        await wrapper.find("[data-test=copy]").trigger("click")
+
+        expect(copyToClipboard).toHaveBeenCalledTimes(1)
+        expect(copyToClipboard.mock.calls[0][0]).toBe(value)
     })
 
     it("should serialize the value once per render", () => {

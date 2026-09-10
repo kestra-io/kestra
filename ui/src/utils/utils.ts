@@ -80,6 +80,9 @@ export function executionVars(data: Record<string, any>) {
 
 export const DISPLAY_MAX_CHARS = 256 * 1024
 export const DISPLAY_MAX_LINES = 200
+// Monaco costs per line, so one pathological line is as slow as a whole large document:
+// a 2.5 MiB string value pretty-prints to a single line and blocked for ~1 s under the other caps.
+export const DISPLAY_MAX_LINE_CHARS = 2000
 
 /**
  * Clip text to what a value viewer can render without wedging the main thread: a few MiB of
@@ -92,11 +95,21 @@ export function capForDisplay(text: string): string {
     for (let line = 0; line < DISPLAY_MAX_LINES; line++) {
         const next = capped.indexOf("\n", cut + 1)
         if (next === -1) {
-            return capped
+            return clipLines(capped)
         }
         cut = next
     }
-    return capped.slice(0, cut)
+    return clipLines(capped.slice(0, cut))
+}
+
+function clipLines(text: string): string {
+    if (text.length <= DISPLAY_MAX_LINE_CHARS) {
+        return text
+    }
+    return text
+        .split("\n")
+        .map(line => line.length > DISPLAY_MAX_LINE_CHARS ? line.slice(0, DISPLAY_MAX_LINE_CHARS) : line)
+        .join("\n")
 }
 
 /**

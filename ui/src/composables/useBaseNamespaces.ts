@@ -1,7 +1,7 @@
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
-import {useClient, type PagedResultsNamespace} from "@kestra-io/kestra-sdk"
+import {useClient, type KvControllerApiDeleteBulkRequest, type KvEntry, type NamespaceLight, type PagedResultsNamespace, type QueryFilter} from "@kestra-io/kestra-sdk"
 import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
@@ -11,6 +11,9 @@ import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 export {PagedResultsNamespace}
 
+type NamespaceSearchOptions = Omit<NonNullable<Parameters<typeof NamespaceAPI.searchNamespaces>[0]>, "sort"> & {commit?: boolean; sort?: string}
+type SetKeyValueOptions = NonNullable<Parameters<typeof KvAPI.setKeyValue>[1]>
+
 function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`
 }
@@ -19,10 +22,22 @@ const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
 export const safePath = (path: string) => encodeURIComponent(path).replace(/%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
 
+function statusOf(error: unknown): number | undefined {
+    if (typeof error !== "object" || error === null || !("status" in error)) return undefined
+    const status = error.status
+    return typeof status === "number" ? status : undefined
+}
+
+function errorMessage(error: unknown): string | undefined {
+    if (typeof error !== "object" || error === null || !("message" in error)) return undefined
+    const message = error.message
+    return typeof message === "string" ? message : undefined
+}
+
 export const useBaseNamespacesStore = () => {
-    const namespace = ref<any>(undefined)
-    const inheritedSecrets = ref<any>(undefined)
-    const inheritedKVs = ref<any>(undefined)
+    const namespace = ref<NamespaceLight>()
+    const inheritedSecrets = ref<Record<string, string[]>>()
+    const inheritedKVs = ref<KvEntry[]>()
     const inheritedKVModalVisible = ref(false)
     const addKvModalVisible = ref(false)
     const autocomplete = ref<string[]>()
@@ -36,7 +51,7 @@ export const useBaseNamespacesStore = () => {
         return response
     }
 
-    async function search(options: {commit?: boolean, sort?: string, [key: string]: any}): Promise<PagedResultsNamespace> {
+    async function search(options: NamespaceSearchOptions): Promise<PagedResultsNamespace> {
         const {commit: _commit, sort, ...rest} = options
 
         const data = await NamespaceAPI.searchNamespaces({...rest, sort: sort ? [sort] : undefined})
@@ -50,11 +65,11 @@ export const useBaseNamespacesStore = () => {
 
     async function load(id: string) {
         const current = ++latestLoad
-        let data: any
+        let data: NamespaceLight
         try{
             data = await NamespaceAPI.loadNamespace({id}, expectNotFound)
-        }catch (e: any) {
-            if (e.status === 404) {
+        }catch (e: unknown) {
+            if (statusOf(e) === 404) {
                 // A load the user has navigated away from must not report its absence for the
                 // namespace they are on, the same way a superseded search is dropped in
                 // `stores/logs.ts`.
@@ -72,7 +87,7 @@ export const useBaseNamespacesStore = () => {
         return namespace.value
     }
 
-    async function update(_: {route: any, payload: any}) {
+    async function update(_: {route: unknown; payload: unknown}) {
         // NOOP IN OSS
     }
 
@@ -82,7 +97,8 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kvsList(item: {id: string}) {
-        const data = await KvAPI.listAllKeys({filters: [{field: "namespace", operation: "EQUALS", value: item.id}] as any})
+        const filter: QueryFilter = {field: "namespace", operation: "EQUALS", value: item.id}
+        const data = await KvAPI.listAllKeys({filters: [filter]})
         return data?.results
     }
 
@@ -94,10 +110,10 @@ export const useBaseNamespacesStore = () => {
         inheritedKVs.value = await KvAPI.listKeysWithInheritence({namespace: id})
     }
 
-    async function createKv(payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl?: string}) {
+    async function createKv(payload: {namespace: string; key: string; value: string; contentType: string; description: string; ttl?: string}) {
         await KvAPI.setKeyValue(
             {namespace: payload.namespace, key: payload.key, body: payload.value},
-            {headers: {"Content-Type": payload.contentType, "description": payload.description, "ttl": payload.ttl}} as any,
+            {headers: {"Content-Type": payload.contentType, "description": payload.description, "ttl": payload.ttl}} as SetKeyValueOptions,
         )
     }
 
@@ -105,16 +121,16 @@ export const useBaseNamespacesStore = () => {
         await KvAPI.deleteKeyValue(payload)
     }
 
-    async function deleteKvs(payload: {namespace: string; request: any}) {
+    async function deleteKvs(payload: {namespace: string; request: KvControllerApiDeleteBulkRequest}) {
         await KvAPI.deleteKeyValues({namespace: payload.namespace, ...payload.request})
     }
 
-    async function loadInheritedSecrets({id, commit: shouldCommit}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {
+    async function loadInheritedSecrets({id, commit: shouldCommit}: {id: string; commit?: boolean}): Promise<Record<string, string[]>> {
         let data: Record<string, string[]>
         try {
             data = await NamespaceAPI.inheritedSecrets({namespace: id})
-        } catch (e: any) {
-            if (e.status === 404) {
+        } catch (e: unknown) {
+            if (statusOf(e) === 404) {
                 data = {[id]: []}
             } else {
                 throw e
@@ -126,12 +142,13 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    async function listSecrets({id}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
+    async function listSecrets({id}: {id: string; commit?: boolean}): Promise<Awaited<ReturnType<typeof SecretsAPI.listSecrets>>> {
         try {
-            const data = await SecretsAPI.listSecrets({filters: [{field: "namespace", operation: "EQUALS", value: id}] as any}) as any
+            const filter: QueryFilter = {field: "namespace", operation: "EQUALS", value: id}
+            const data = await SecretsAPI.listSecrets({filters: [filter]})
             return data
-        } catch (e: any) {
-            if (e.status === 404) return {total: 0, results: [], readOnly: false}
+        } catch (e: unknown) {
+            if (statusOf(e) === 404) return {total: 0, results: [], readOnly: false}
             throw e
         }
     }
@@ -143,11 +160,11 @@ export const useBaseNamespacesStore = () => {
         ]
     }
 
-    async function createSecrets(_: {namespace: string; secret: any}) {
+    async function createSecrets(_: {namespace: string; secret: unknown}) {
         // NOOP IN OSS
     }
 
-    async function patchSecret(_: {namespace: string; secret: any}) {
+    async function patchSecret(_: {namespace: string; secret: unknown}) {
         // NOOP IN OSS
     }
 
@@ -167,11 +184,9 @@ export const useBaseNamespacesStore = () => {
         try {
             const data = await FilesAPI.listNamespaceDirectoryFiles(payload)
             return (data ?? []) as unknown as T[]
-        } catch (e: any) {
-            if (e.status === 404) {
-                const notFoundError: any = new Error("Directory not found")
-                notFoundError.status = 404
-                throw notFoundError
+        } catch (e: unknown) {
+            if (statusOf(e) === 404) {
+                throw Object.assign(new Error("Directory not found"), {status: 404})
             }
             throw e
         }
@@ -192,8 +207,8 @@ export const useBaseNamespacesStore = () => {
 
         try {
             return await FilesAPI.fileRevisions(payload) as unknown as {revision: number}[]
-        } catch (e: any) {
-            console.error(e.message ?? "File not found")
+        } catch (e: unknown) {
+            console.error(errorMessage(e) ?? "File not found")
             return []
         }
     }
@@ -208,9 +223,9 @@ export const useBaseNamespacesStore = () => {
         try {
             const blob = await FilesAPI.fileContent(payload)
             return {content: await blob.text() ?? ""}
-        } catch (e: any) {
-            if (e.status === 404) {
-                return {notFound: true, error: e.message ?? "File not found"}
+        } catch (e: unknown) {
+            if (statusOf(e) === 404) {
+                return {notFound: true, error: errorMessage(e) ?? "File not found"}
             }
             throw e
         }

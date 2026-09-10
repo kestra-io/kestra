@@ -40,9 +40,6 @@
     "test:unit:watch": "vitest",
     "test:storybook": "vitest run --config vitest.config.ts --project 'storybook:*'",
     "generate:palette": "node scripts/generate-palette.mjs",
-    "unit:test": "npm run test:unit",
-    "types:test": "npm run check:types",
-    "storybook:test": "npm run test:storybook"
   },
   "peerDependencies": {
     "@vueuse/core": ">=11.0.0",

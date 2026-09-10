@@ -2655,6 +2655,44 @@
     },
     "iteration": "Iteração",
     "iteration_number": "Iteração {number}",
-    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?"
+    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} execução | {count} execuções",
+        "failed": "{count} com falha"
+      },
+      "toolbar": {
+        "panBack": "Voltar",
+        "panForward": "Avançar",
+        "zoomIn": "Aumentar zoom",
+        "zoomOut": "Diminuir zoom"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} execução | {count} execuções",
+        "failedCount": "{count} com falha"
+      },
+      "bucket": {
+        "hint": "Agregado: aumente o zoom para ver o detalhe de cada execução"
+      },
+      "popover": {
+        "openExecution": "Abrir execução",
+        "showOnlyFlow": "Mostrar somente este flow"
+      },
+      "empty": {
+        "description": "Não há execuções no período e filtros selecionados.",
+        "resetFilters": "Redefinir filtros",
+        "widenRange": "Ampliar para 7 dias"
+      },
+      "error": {
+        "title": "Não foi possível carregar a linha do tempo",
+        "description": "Ocorreu um erro ao carregar as execuções deste período."
+      }
+    },
+    "chart mode": {
+      "counts": "Contagens",
+      "timeline": "Linha do tempo"
+    }
   }
 }

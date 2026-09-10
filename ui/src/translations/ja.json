@@ -2655,6 +2655,44 @@
     },
     "iteration": "反復",
     "iteration_number": "反復 {number}",
-    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？"
+    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "すべて",
+        "total": "{count} 件の実行 | {count} 件の実行",
+        "failed": "{count} 件失敗"
+      },
+      "toolbar": {
+        "panBack": "後方へ移動",
+        "panForward": "前方へ移動",
+        "zoomIn": "ズームイン",
+        "zoomOut": "ズームアウト"
+      },
+      "row": {
+        "openOwnPage": "このページを開く",
+        "runsCount": "{count} 件の実行 | {count} 件の実行",
+        "failedCount": "{count} 件失敗"
+      },
+      "bucket": {
+        "hint": "集計済み: ズームインすると実行単位の詳細が表示されます"
+      },
+      "popover": {
+        "openExecution": "実行を開く",
+        "showOnlyFlow": "この flow のみ表示"
+      },
+      "empty": {
+        "description": "選択した期間とフィルターに一致する実行がありません。",
+        "resetFilters": "フィルターをリセット",
+        "widenRange": "7日間に広げる"
+      },
+      "error": {
+        "title": "タイムラインを読み込めませんでした",
+        "description": "この期間の実行の読み込み中にエラーが発生しました。"
+      }
+    },
+    "chart mode": {
+      "counts": "カウント",
+      "timeline": "タイムライン"
+    }
   }
 }

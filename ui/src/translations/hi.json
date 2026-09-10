@@ -2655,6 +2655,44 @@
     },
     "iteration": "पुनरावृत्ति",
     "iteration_number": "पुनरावृत्ति {number}",
-    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?"
+    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "सभी",
+        "total": "{count} execution | {count} executions",
+        "failed": "{count} विफल"
+      },
+      "toolbar": {
+        "panBack": "पीछे खिसकाएं",
+        "panForward": "आगे खिसकाएं",
+        "zoomIn": "ज़ूम इन करें",
+        "zoomOut": "ज़ूम आउट करें"
+      },
+      "row": {
+        "openOwnPage": "यह पेज खोलें",
+        "runsCount": "{count} execution | {count} executions",
+        "failedCount": "{count} विफल"
+      },
+      "bucket": {
+        "hint": "एकत्रित: execution-स्तर का विवरण देखने के लिए ज़ूम इन करें"
+      },
+      "popover": {
+        "openExecution": "execution खोलें",
+        "showOnlyFlow": "केवल यह flow दिखाएं"
+      },
+      "empty": {
+        "description": "चयनित सीमा और फ़िल्टर में कोई execution नहीं मिला।",
+        "resetFilters": "फ़िल्टर रीसेट करें",
+        "widenRange": "7 दिनों तक बढ़ाएं"
+      },
+      "error": {
+        "title": "टाइमलाइन लोड नहीं हो सकी",
+        "description": "इस सीमा के लिए execution लोड करते समय कुछ गड़बड़ हुई।"
+      }
+    },
+    "chart mode": {
+      "counts": "गणना",
+      "timeline": "टाइमलाइन"
+    }
   }
 }

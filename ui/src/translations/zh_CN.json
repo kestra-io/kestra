@@ -2655,6 +2655,44 @@
     },
     "iteration": "迭代",
     "iteration_number": "迭代 {number}",
-    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？"
+    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "全部",
+        "total": "{count} 次执行 | {count} 次执行",
+        "failed": "{count} 次失败"
+      },
+      "toolbar": {
+        "panBack": "向后平移",
+        "panForward": "向前平移",
+        "zoomIn": "放大",
+        "zoomOut": "缩小"
+      },
+      "row": {
+        "openOwnPage": "打开此页面",
+        "runsCount": "{count} 次执行 | {count} 次执行",
+        "failedCount": "{count} 次失败"
+      },
+      "bucket": {
+        "hint": "已聚合：放大后可查看每次执行的详情"
+      },
+      "popover": {
+        "openExecution": "打开执行",
+        "showOnlyFlow": "仅显示此 flow"
+      },
+      "empty": {
+        "description": "所选时间范围和过滤条件下没有执行记录。",
+        "resetFilters": "重置过滤条件",
+        "widenRange": "扩大到 7 天"
+      },
+      "error": {
+        "title": "无法加载时间线",
+        "description": "加载此时间范围的执行记录时出错。"
+      }
+    },
+    "chart mode": {
+      "counts": "计数",
+      "timeline": "时间线"
+    }
   }
 }

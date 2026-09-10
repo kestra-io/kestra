@@ -2655,6 +2655,44 @@
     },
     "iteration": "Iteración",
     "iteration_number": "Iteración {number}",
-    "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?"
+    "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} ejecución | {count} ejecuciones",
+        "failed": "{count} fallidas"
+      },
+      "toolbar": {
+        "panBack": "Desplazar hacia atrás",
+        "panForward": "Desplazar hacia adelante",
+        "zoomIn": "Acercar",
+        "zoomOut": "Alejar"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} ejecución | {count} ejecuciones",
+        "failedCount": "{count} fallidas"
+      },
+      "bucket": {
+        "hint": "Agregado: acerca el zoom para ver el detalle de cada ejecución"
+      },
+      "popover": {
+        "openExecution": "Abrir ejecución",
+        "showOnlyFlow": "Mostrar solo este flow"
+      },
+      "empty": {
+        "description": "No hay ejecuciones en el rango y los filtros seleccionados.",
+        "resetFilters": "Restablecer filtros",
+        "widenRange": "Ampliar a 7 días"
+      },
+      "error": {
+        "title": "No se pudo cargar la cronología",
+        "description": "Se produjo un error al cargar las ejecuciones de este rango."
+      }
+    },
+    "chart mode": {
+      "counts": "Recuentos",
+      "timeline": "Cronología"
+    }
   }
 }

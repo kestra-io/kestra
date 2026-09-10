@@ -41,6 +41,17 @@ function taskRun(id: string, taskId: string, state: string, startDate: string) {
 function mountPanel(execution: Record<string, unknown>) {
     return mount(FailureDebugPanel, {
         props: {execution: execution as unknown as Execution},
+        // The reopen trigger is now rendered by the caller (Gantt.vue places it next to "Copy
+        // All Logs"), so this recreates that same wrapper/selector shape via the scoped slot.
+        slots: {
+            default: `
+                <template #default="{shouldRender, isOpen, reopen, setReopenRef}">
+                    <span v-if="shouldRender && !isOpen" class="failure-debug-reopen" :ref="setReopenRef">
+                        <button type="button" @click="reopen">Debug this failure</button>
+                    </span>
+                </template>
+            `,
+        },
         global: {
             plugins: [i18n],
             stubs: {

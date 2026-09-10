@@ -12,6 +12,7 @@
         <FailureDebugPanel
             :execution="execution"
             :flow="executionsStore.flow"
+            v-slot="{shouldRender: debugShouldRender, isOpen: debugOpen, reopen: reopenDebugPanel, setReopenRef}"
         >
             <!-- No task runs to plot: hide the filter bar + card and show only the execution
                  status (mirrors the versioned-plugins empty screen). -->
@@ -57,6 +58,11 @@
                                         </span>
                                     </div>
                                     <div class="actions">
+                                        <span v-if="debugShouldRender && !debugOpen" :ref="setReopenRef">
+                                            <KsButton :icon="BugOutline" @click="reopenDebugPanel">
+                                                {{ $t("failureDebugPanel.reopen") }}
+                                            </KsButton>
+                                        </span>
                                         <KsButton class="copy-logs" :icon="ContentCopy" link @click="copyAllLogs">
                                             {{ $t("copy all logs") }}
                                         </KsButton>
@@ -194,6 +200,7 @@
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import BugOutline from "vue-material-design-icons/BugOutline.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Warning from "vue-material-design-icons/Alert.vue"

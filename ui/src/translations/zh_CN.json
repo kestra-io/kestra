@@ -1,10 +1,5 @@
 {
   "zh_CN": {
-    "loading": "加载中...",
-        "back": "返回",
-        "next": "下一步",
-        "done": "完成",
-        "review your inputs": "检查您的输入",
     "Add flow": "添加流程",
     "Default log level": "默认日志级别",
     "Default namespace": "默认命名空间",
@@ -77,6 +72,7 @@
     "automatic refresh": "自动刷新",
     "avg": "平均",
     "avg duration": "平均执行时间",
+    "back": "返回",
     "back_to_dashboard": "返回仪表板",
     "backfill": "回填",
     "backfill executions": "回填执行",
@@ -322,12 +318,12 @@
         "title": "通过IAM使用SSO、SCIM和RBAC管理用户"
       },
       "apps": {
-        "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
-        "title": "使用 Kestra 构建自定义应用程序",
         "blueprints": {
-          "title": "从应用 blueprint 开始。",
-          "message": "应用蓝图是针对常见用例（如表单、审批和数据提交）的预制应用程序。通过 Kestra 企业版，您可以将任何蓝图作为起点，并对其进行调整，以在您的工作流之上构建自定义 UI。"
-        }
+          "message": "应用蓝图是针对常见用例（如表单、审批和数据提交）的预制应用程序。通过 Kestra 企业版，您可以将任何蓝图作为起点，并对其进行调整，以在您的工作流之上构建自定义 UI。",
+          "title": "从应用 blueprint 开始。"
+        },
+        "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
+        "title": "使用 Kestra 构建自定义应用程序"
       },
       "assets": {
         "header": "资产元数据和可观测性",
@@ -426,6 +422,7 @@
     "disabled": "禁用",
     "disabled flow desc": "此流程已禁用，请启用以执行。",
     "disabled flow title": "此流程已禁用",
+    "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "display direct sub tasks count": "显示直接子任务数量",
     "display flow {id} executions": "显示流程 {id} 的执行",
     "display metric for specific task": "显示特定任务的指标",
@@ -437,11 +434,9 @@
       "github": "打开一个GitHub问题"
     },
     "documentationMenu": "文档菜单",
+    "done": "完成",
     "down trend": "减少",
     "download": "下载",
-    "file_preview": {
-        "big_file_download_only": "此文件大小为{size}。它太大，无法在编辑器中打开，请改为下载。"
-    },
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
     "draft_available": "编辑器中有可用的草稿更改",
@@ -581,7 +576,6 @@
     "execute backfill": "执行回填",
     "execute flow behaviour": "执行流程",
     "execute flow now ?": "是否要执行此流程？",
-    "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
@@ -655,6 +649,9 @@
     },
     "file preview truncated": "显示的内容已被截断",
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
+    "file_preview": {
+      "big_file_download_only": "此文件大小为{size}。它太大，无法在编辑器中打开，请改为下载。"
+    },
     "files": "文件",
     "filter": {
       "active key value pairs": "活动的Key/Value对",
@@ -1125,6 +1122,11 @@
     "label": "标签",
     "label filter placeholder": "标签为 '键:值'",
     "labels": "标签",
+    "large_outputs": {
+      "download_json": "Download JSON",
+      "load_more": "Load {count} more ({remaining} left)",
+      "value_too_large": "This value is {size}. It is too large to render here, download it instead."
+    },
     "last 48 hours": "最近48小时",
     "last X days count": "{days}天内的{count}",
     "last execution date": "最后执行日期",
@@ -1268,6 +1270,7 @@
     "neutral trend": "稳定",
     "new": "新建",
     "new version": "新版本 {version} 可用！",
+    "next": "下一步",
     "next evaluation date": "下次评估日期",
     "next evaluation date tooltip": "根据其间隔，下一次评估trigger的时间。如果条件不满足，可能与下一次执行日期不同。",
     "next execution date": "下次执行日期",
@@ -1374,14 +1377,14 @@
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
+      "all_columns_hidden": "所有列均已隐藏",
       "assets": "未找到资产",
       "executions": "未找到执行",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
       "secrets": "未找到Secrets",
       "templates": "未找到模板",
-      "triggers": "未找到Triggers",
-      "all_columns_hidden": "所有列均已隐藏"
+      "triggers": "未找到Triggers"
     },
     "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
@@ -1670,6 +1673,7 @@
     "resumed title": "恢复执行 <code>{id}</code>",
     "reuse original inputs": "重用原始input",
     "reuse_original_inputs": "重用原始input",
+    "review your inputs": "检查您的输入",
     "revision": "修订版",
     "revision deleted": "修订版 {revision} 已成功删除",
     "revisions": "修订版",

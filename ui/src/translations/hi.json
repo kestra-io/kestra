@@ -1,10 +1,5 @@
 {
   "hi": {
-    "loading": "लोड हो रहा है...",
-        "back": "वापस",
-        "next": "अगला",
-        "done": "पूर्ण",
-        "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "Add flow": "Flow जोड़ें",
     "Default log level": "पूर्व-निर्धारित log स्तर",
     "Default namespace": "पूर्व-निर्धारित namespace",
@@ -77,6 +72,7 @@
     "automatic refresh": "स्वचालित ताज़ा",
     "avg": "औसत",
     "avg duration": "औसत निष्पादन अवधि",
+    "back": "वापस",
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
     "backfill": "Backfill",
     "backfill executions": "Backfill निष्पादन",
@@ -322,12 +318,12 @@
         "title": "IAM के माध्यम से SSO, SCIM और RBAC के साथ उपयोगकर्ताओं का प्रबंधन करें।"
       },
       "apps": {
-        "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।",
-        "title": "Kestra के साथ कस्टम ऐप्स बनाएं",
         "blueprints": {
-          "title": "एक ऐप blueprint से शुरू करें।",
-          "message": "ऐप ब्लूप्रिंट सामान्य उपयोग के मामलों जैसे फ़ॉर्म, अनुमोदन और डेटा सबमिशन के लिए तैयार ऐप हैं। Kestra Enterprise Edition के साथ, आप किसी भी ब्लूप्रिंट को शुरुआती बिंदु के रूप में उपयोग कर सकते हैं और अपने वर्कफ़्लो के शीर्ष पर कस्टम UI बनाने के लिए इसे अनुकूलित कर सकते हैं।"
-        }
+          "message": "ऐप ब्लूप्रिंट सामान्य उपयोग के मामलों जैसे फ़ॉर्म, अनुमोदन और डेटा सबमिशन के लिए तैयार ऐप हैं। Kestra Enterprise Edition के साथ, आप किसी भी ब्लूप्रिंट को शुरुआती बिंदु के रूप में उपयोग कर सकते हैं और अपने वर्कफ़्लो के शीर्ष पर कस्टम UI बनाने के लिए इसे अनुकूलित कर सकते हैं।",
+          "title": "एक ऐप blueprint से शुरू करें।"
+        },
+        "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।",
+        "title": "Kestra के साथ कस्टम ऐप्स बनाएं"
       },
       "assets": {
         "header": "संपत्तियों का मेटाडेटा और अवलोकनीयता",
@@ -426,6 +422,7 @@
     "disabled": "अक्षम",
     "disabled flow desc": "यह flow अक्षम है, कृपया इसे निष्पादित करने के लिए सक्षम करें।",
     "disabled flow title": "यह flow अक्षम है",
+    "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "display direct sub tasks count": "प्रत्यक्ष उप-कार्य गणना प्रदर्शित करें",
     "display flow {id} executions": "Flow {id} निष्पादन प्रदर्शित करें",
     "display metric for specific task": "विशिष्ट task के लिए मेट्रिक प्रदर्शित करें",
@@ -437,11 +434,9 @@
       "github": "एक GitHub समस्या खोलें"
     },
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "done": "पूर्ण",
     "down trend": "घट रहा है",
     "download": "डाउनलोड करें",
-    "file_preview": {
-        "big_file_download_only": "यह फ़ाइल {size} है। यह एडिटर में खोलने के लिए बहुत बड़ी है, इसके बजाय इसे डाउनलोड करें।"
-    },
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
     "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
@@ -581,7 +576,6 @@
     "execute backfill": "Backfill निष्पादित करें",
     "execute flow behaviour": "Flow निष्पादित करें",
     "execute flow now ?": "क्या आप इस flow को निष्पादित करना चाहते हैं?",
-    "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
@@ -655,6 +649,9 @@
     },
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
     "fileTypeNotAllowed": "फ़ाइल प्रकार की अनुमति नहीं है। स्वीकृत प्रकार: {types}",
+    "file_preview": {
+      "big_file_download_only": "यह फ़ाइल {size} है। यह एडिटर में खोलने के लिए बहुत बड़ी है, इसके बजाय इसे डाउनलोड करें।"
+    },
     "files": "फ़ाइलें",
     "filter": {
       "active key value pairs": "सक्रिय Key/Value जोड़े",
@@ -1125,6 +1122,11 @@
     "label": "Label",
     "label filter placeholder": "'key:value' के रूप में लेबल करें",
     "labels": "labels",
+    "large_outputs": {
+      "download_json": "Download JSON",
+      "load_more": "Load {count} more ({remaining} left)",
+      "value_too_large": "This value is {size}. It is too large to render here, download it instead."
+    },
     "last 48 hours": "पिछले 48 घंटे",
     "last X days count": "{दिनों} दिनों में {गिनती}",
     "last execution date": "अंतिम निष्पादन तिथि",
@@ -1268,6 +1270,7 @@
     "neutral trend": "स्थिर",
     "new": "नया",
     "new version": "नया संस्करण {version} उपलब्ध है!",
+    "next": "अगला",
     "next evaluation date": "अगली मूल्यांकन तिथि",
     "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
     "next execution date": "अगली निष्पादन तिथि",
@@ -1374,14 +1377,14 @@
     "no_logs_data_description": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले। <br> कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
     "no_results": {
+      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
       "assets": "कोई Assets नहीं मिले",
       "executions": "कोई Executions नहीं मिला",
       "flows": "कोई Flows नहीं मिला",
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
       "secrets": "कोई Secrets नहीं मिले",
       "templates": "कोई टेम्पलेट नहीं मिला",
-      "triggers": "कोई Triggers नहीं मिले",
-      "all_columns_hidden": "सभी कॉलम छिपे हुए हैं"
+      "triggers": "कोई Triggers नहीं मिले"
     },
     "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
@@ -1670,6 +1673,7 @@
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
     "reuse original inputs": "मूल inputs का पुनः उपयोग करें",
     "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
+    "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "revision": "संशोधन",
     "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",
     "revisions": "पुनरीक्षण",

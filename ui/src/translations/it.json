@@ -1,10 +1,5 @@
 {
   "it": {
-    "loading": "Caricamento...",
-        "back": "Indietro",
-        "next": "Avanti",
-        "done": "Fatto",
-        "review your inputs": "Rivedi i tuoi input",
     "Add flow": "Aggiungi flow",
     "Default log level": "Livello di log predefinito",
     "Default namespace": "Namespace predefinito",
@@ -77,6 +72,7 @@
     "automatic refresh": "Aggiornamento automatico",
     "avg": "Media",
     "avg duration": "Durata media dell'esecuzione",
+    "back": "Indietro",
     "back_to_dashboard": "Torna alla dashboard",
     "backfill": "Backfill",
     "backfill executions": "Esecuzioni di backfill",
@@ -322,12 +318,12 @@
         "title": "Gestisci gli utenti tramite IAM con SSO, SCIM e RBAC"
       },
       "apps": {
-        "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione.",
-        "title": "Crea App personalizzate con Kestra",
         "blueprints": {
-          "title": "Inizia da un blueprint di app.",
-          "message": "I blueprint delle app sono app predefinite per casi d'uso comuni come moduli, approvazioni e invio di dati. Con Kestra Enterprise Edition, puoi usare qualsiasi blueprint come punto di partenza e adattarlo per creare UI personalizzate sui tuoi workflow."
-        }
+          "message": "I blueprint delle app sono app predefinite per casi d'uso comuni come moduli, approvazioni e invio di dati. Con Kestra Enterprise Edition, puoi usare qualsiasi blueprint come punto di partenza e adattarlo per creare UI personalizzate sui tuoi workflow.",
+          "title": "Inizia da un blueprint di app."
+        },
+        "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione.",
+        "title": "Crea App personalizzate con Kestra"
       },
       "assets": {
         "header": "Metadati e Osservabilità degli Asset",
@@ -426,6 +422,7 @@
     "disabled": "Disabilitato",
     "disabled flow desc": "Questo flow è disabilitato, per favore abilitalo per eseguirlo.",
     "disabled flow title": "Questo flow è disabilitato",
+    "discard execution confirmation": "Hai degli input non salvati. Sei sicuro di voler scartare questa esecuzione?",
     "display direct sub tasks count": "Visualizza conteggio subtasks diretti",
     "display flow {id} executions": "Visualizza esecuzioni del flow {id}",
     "display metric for specific task": "Visualizza metrica per un task specifico",
@@ -437,11 +434,9 @@
       "github": "Apri un problema su GitHub"
     },
     "documentationMenu": "Menu documentazione",
+    "done": "Fatto",
     "down trend": "In diminuzione",
     "download": "Scarica",
-    "file_preview": {
-        "big_file_download_only": "Questo file è {size}. È troppo grande per essere aperto nell'editor, scaricalo invece."
-    },
     "download logs": "Scarica logs",
     "download_logos": "Scarica il Pacchetto Logo",
     "draft_available": "Una bozza di modifica è disponibile nell'editor",
@@ -581,7 +576,6 @@
     "execute backfill": "Esegui backfill",
     "execute flow behaviour": "Esegui il flow",
     "execute flow now ?": "Vuoi eseguire questo flow?",
-    "discard execution confirmation": "Hai degli input non salvati. Sei sicuro di voler scartare questa esecuzione?",
     "execute the flow": "Esegui il flow <code>{id}</code>",
     "execution": "Esecuzione",
     "execution already finished": "Esecuzione <code>{executionId}</code> già terminata",
@@ -655,6 +649,9 @@
     },
     "file preview truncated": "Il contenuto visualizzato è stato troncato",
     "fileTypeNotAllowed": "Tipo di file non consentito. Tipi accettati: {types}",
+    "file_preview": {
+      "big_file_download_only": "Questo file è {size}. È troppo grande per essere aperto nell'editor, scaricalo invece."
+    },
     "files": "File",
     "filter": {
       "active key value pairs": "Coppie chiave/valore attive",
@@ -1125,6 +1122,11 @@
     "label": "Label",
     "label filter placeholder": "Etichetta come 'key:value'",
     "labels": "Etichette",
+    "large_outputs": {
+      "download_json": "Download JSON",
+      "load_more": "Load {count} more ({remaining} left)",
+      "value_too_large": "This value is {size}. It is too large to render here, download it instead."
+    },
     "last 48 hours": "ultime 48 ore",
     "last X days count": "{count} negli ultimi {days} giorni",
     "last execution date": "Data ultima esecuzione",
@@ -1268,6 +1270,7 @@
     "neutral trend": "Stabile",
     "new": "Nuovo",
     "new version": "Nuova versione {version} disponibile!",
+    "next": "Avanti",
     "next evaluation date": "Prossima data di valutazione",
     "next evaluation date tooltip": "Quando il trigger verrà valutato nuovamente, in base al suo intervallo. Non sempre coincide con la prossima data di esecuzione se le condizioni non sono soddisfatte.",
     "next execution date": "Data della prossima esecuzione",
@@ -1374,14 +1377,14 @@
     "no_logs_data_description": "Nessun log trovato per i filtri selezionati. <br> Prova a modificare i filtri, cambiare l'intervallo di tempo o verifica se il flow è stato eseguito di recente.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
     "no_results": {
+      "all_columns_hidden": "Tutte le colonne sono nascoste",
       "assets": "Nessun asset trovato",
       "executions": "Nessuna Esecuzione Trovata",
       "flows": "Nessun Flow Trovato",
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "templates": "Nessun Template Trovato",
-      "triggers": "Nessun Trigger Trovato",
-      "all_columns_hidden": "Tutte le colonne sono nascoste"
+      "triggers": "Nessun Trigger Trovato"
     },
     "no_results_found": "Nessun risultato trovato",
     "no_tasks_running": "Nessun task è ancora in esecuzione.",
@@ -1670,6 +1673,7 @@
     "resumed title": "Riprendi esecuzione <code>{id}</code>",
     "reuse original inputs": "Riutilizza gli input originali",
     "reuse_original_inputs": "Riutilizza gli input originali",
+    "review your inputs": "Rivedi i tuoi input",
     "revision": "Revisione",
     "revision deleted": "La revisione {revision} è stata eliminata con successo",
     "revisions": "Revisions",

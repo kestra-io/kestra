@@ -1,10 +1,5 @@
 {
   "ko": {
-    "loading": "로딩 중...",
-        "back": "뒤로",
-        "next": "다음",
-        "done": "완료",
-        "review your inputs": "입력 내용을 검토하세요",
     "Add flow": "Flow 추가",
     "Default log level": "기본 log 레벨",
     "Default namespace": "기본 namespace",
@@ -77,6 +72,7 @@
     "automatic refresh": "자동 새로 고침",
     "avg": "평균",
     "avg duration": "평균 실행 시간",
+    "back": "뒤로",
     "back_to_dashboard": "대시보드로 돌아가기",
     "backfill": "Backfill",
     "backfill executions": "backfill 실행",
@@ -322,12 +318,12 @@
         "title": "IAM을 통해 SSO, SCIM 및 RBAC로 사용자 관리"
       },
       "apps": {
-        "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다.",
-        "title": "Kestra로 맞춤형 앱 만들기",
         "blueprints": {
-          "title": "앱 blueprint에서 시작하기.",
-          "message": "앱 blueprint는 양식, 승인 및 데이터 제출과 같은 일반적인 사용 사례를 위한 기성 앱입니다. Kestra Enterprise Edition을 사용하면 모든 blueprint를 시작점으로 사용하여 워크플로우 위에 사용자 지정 UI를 구축하도록 조정할 수 있습니다."
-        }
+          "message": "앱 blueprint는 양식, 승인 및 데이터 제출과 같은 일반적인 사용 사례를 위한 기성 앱입니다. Kestra Enterprise Edition을 사용하면 모든 blueprint를 시작점으로 사용하여 워크플로우 위에 사용자 지정 UI를 구축하도록 조정할 수 있습니다.",
+          "title": "앱 blueprint에서 시작하기."
+        },
+        "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다.",
+        "title": "Kestra로 맞춤형 앱 만들기"
       },
       "assets": {
         "header": "자산 메타데이터 및 관측 가능성",
@@ -426,6 +422,7 @@
     "disabled": "비활성화됨",
     "disabled flow desc": "이 flow는 비활성화되어 있습니다. 실행하려면 활성화하세요.",
     "disabled flow title": "이 flow는 비활성화되었습니다.",
+    "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "display direct sub tasks count": "직접 subtask 수 표시",
     "display flow {id} executions": "Flow {id} 실행 표시",
     "display metric for specific task": "특정 task의 메트릭 표시",
@@ -437,11 +434,9 @@
       "github": "GitHub 이슈 열기"
     },
     "documentationMenu": "문서 메뉴",
+    "done": "완료",
     "down trend": "감소 중",
     "download": "다운로드",
-    "file_preview": {
-        "big_file_download_only": "이 파일의 크기는 {size}입니다. 에디터에서 열기에는 너무 크므로 대신 다운로드하세요."
-    },
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
     "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
@@ -581,7 +576,6 @@
     "execute backfill": "backfill 실행",
     "execute flow behaviour": "Flow 실행",
     "execute flow now ?": "이 flow를 실행하시겠습니까?",
-    "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "execute the flow": "Flow <code>{id}</code> 실행",
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
@@ -655,6 +649,9 @@
     },
     "file preview truncated": "표시된 내용이 잘렸습니다",
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
+    "file_preview": {
+      "big_file_download_only": "이 파일의 크기는 {size}입니다. 에디터에서 열기에는 너무 크므로 대신 다운로드하세요."
+    },
     "files": "파일",
     "filter": {
       "active key value pairs": "활성 Key/Value 쌍",
@@ -1125,6 +1122,11 @@
     "label": "Label",
     "label filter placeholder": "'key:value'로 라벨 지정",
     "labels": "라벨",
+    "large_outputs": {
+      "download_json": "Download JSON",
+      "load_more": "Load {count} more ({remaining} left)",
+      "value_too_large": "This value is {size}. It is too large to render here, download it instead."
+    },
     "last 48 hours": "지난 48시간",
     "last X days count": "지난 {days}일 동안 {count}",
     "last execution date": "마지막 실행 날짜",
@@ -1268,6 +1270,7 @@
     "neutral trend": "안정적",
     "new": "새로 만들기",
     "new version": "새 버전 {version} 사용 가능!",
+    "next": "다음",
     "next evaluation date": "다음 평가 날짜",
     "next evaluation date tooltip": "트리거가 다음으로 평가될 시점은 간격을 기준으로 합니다. 조건이 충족되지 않으면 다음 실행 날짜와 항상 같지 않을 수 있습니다.",
     "next execution date": "다음 실행 날짜",
@@ -1374,14 +1377,14 @@
     "no_logs_data_description": "선택한 필터에 대한 로그가 없습니다. <br> 필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
     "no_results": {
+      "all_columns_hidden": "모든 열이 숨겨짐",
       "assets": "자산을 찾을 수 없음",
       "executions": "실행을 찾을 수 없음",
       "flows": "flow를 찾을 수 없음",
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
       "secrets": "비밀 없음",
       "templates": "템플릿을 찾을 수 없음",
-      "triggers": "트리거를 찾을 수 없음",
-      "all_columns_hidden": "모든 열이 숨겨짐"
+      "triggers": "트리거를 찾을 수 없음"
     },
     "no_results_found": "결과를 찾을 수 없습니다",
     "no_tasks_running": "아직 실행 중인 task가 없습니다.",
@@ -1670,6 +1673,7 @@
     "resumed title": "실행 <code>{id}</code> 재개",
     "reuse original inputs": "원래 input 재사용",
     "reuse_original_inputs": "원래 input 재사용",
+    "review your inputs": "입력 내용을 검토하세요",
     "revision": "수정본",
     "revision deleted": "{revision} 리비전이 성공적으로 삭제되었습니다.",
     "revisions": "수정본들",

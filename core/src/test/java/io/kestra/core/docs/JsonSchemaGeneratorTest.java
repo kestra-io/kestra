@@ -16,6 +16,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.assets.External;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
@@ -76,6 +78,35 @@ class JsonSchemaGeneratorTest {
 
         generate = jsonSchemaGenerator.outputs(Task.class, cls);
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(1));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void outputAssetsAcceptExpressionsAndFreeFormTypes() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            // an asset type provided by a plugin keeps its constant, which is what the editor autocompletes
+            var external = properties(definitions.get(External.class.getName()));
+            assertThat(external.get("type").get("const"), is(External.class.getName()));
+            // the whole assets.outputs declaration is rendered at runtime, so an expression is as valid as a literal
+            for (String property : List.of("namespace", "id")) {
+                var branches = (List<Map<String, Object>>) external.get(property).get("anyOf");
+                assertThat(external.get(property), not(hasKey("pattern")));
+                assertThat(branches.stream().map(branch -> (String) branch.get("pattern")).toList(), hasItem(containsString("\\{\\{")));
+                assertThat(branches.size(), is(2));
+            }
+
+            // the custom asset is the free-form branch of assets.outputs, so its type stays an open string
+            var items = map(map(properties(definitions.get("io.kestra.core.models.assets.AssetsDeclaration")).get("outputs")).get("items"));
+            assertThat(items.toString(), containsString(Custom.class.getName()));
+            var customType = properties(definitions.get(Custom.class.getName())).get("type");
+            assertThat(customType.get("type"), is("string"));
+            assertThat(customType, not(hasKey("const")));
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -375,7 +406,8 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(30));
+        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
+        assertThat(definitions.size(), is(31));
     }
 
     @SuppressWarnings("unchecked")

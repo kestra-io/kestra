@@ -3,15 +3,12 @@ import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 type TaskLike = Record<string, unknown>;
 
 function isTaskLike(value: unknown): value is TaskLike {
-    if (typeof value !== "object" || value === null) {
-        return false
-    }
-    const task = value as TaskLike
     return (
-        typeof task.id === "string" &&
-        typeof task.type === "string" &&
-        task.type.includes(".") &&
-        !task.type.includes(".trigger.")
+        typeof value === "object" &&
+        value !== null &&
+        typeof (value as TaskLike).id === "string" &&
+        typeof (value as TaskLike).type === "string" &&
+        (value as TaskLike).type.includes(".")
     )
 }
 
@@ -138,9 +135,11 @@ export function findTaskLikeAtCursor({
 export function taskIdentityAtCursor({
     source,
     cursorIndex,
+    isTrigger,
 }: {
     source: string;
     cursorIndex: number;
+    isTrigger?: (type: string) => boolean;
 }): { type: string; version?: string } | undefined {
     if (!source.length) {
         return undefined
@@ -157,8 +156,13 @@ export function taskIdentityAtCursor({
             return undefined
         }
 
+        const type = task.type as string
+        if (isTrigger && isTrigger(type)) {
+            return undefined
+        }
+
         return {
-            type: task.type as string,
+            type,
             version:
                 typeof task.version === "string" ? task.version : undefined,
         }
@@ -171,6 +175,7 @@ export function taskIdentityAtCursor({
 export function taskTypeAtCursor(params: {
     source: string;
     cursorIndex: number;
+    isTrigger?: (type: string) => boolean;
 }): string | undefined {
     return taskIdentityAtCursor(params)?.type
 }

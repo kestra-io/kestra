@@ -3,6 +3,7 @@ import {
     taskIdentityAtCursor,
     taskTypeAtCursor,
     scopePropertySuggestionsToTaskType,
+    filterMissingRequiredTaskProperties,
 } from "../../../src/composables/monaco/languages/taskCompletionScoping"
 
 const FLOW = `id: myflow
@@ -94,7 +95,7 @@ tasks:
         })
     })
 
-    it("returns undefined for flow inputs since they are not plugin FQCNs", () => {
+    it("returns undefined for flow inputs/outputs since they are not plugin FQCNs", () => {
         const inputFlow = `id: myflow
 namespace: my.ns
 inputs:
@@ -107,21 +108,53 @@ inputs:
                 cursorIndex: inputFlow.length,
             }),
         ).toBeUndefined()
+
+        const outputFlow = `id: myflow
+namespace: my.ns
+outputs:
+  - id: myoutput
+    type: STRING
+    valu`
+        expect(
+            taskTypeAtCursor({
+                source: outputFlow,
+                cursorIndex: outputFlow.length,
+            }),
+        ).toBeUndefined()
     })
 
-    it("returns undefined for flow triggers since they are explicitly excluded", () => {
+    it("returns undefined for flow triggers when an isTrigger predicate identifies them", () => {
         const triggerFlow = `id: myflow
 namespace: my.ns
 triggers:
   - id: mytrigger
-    type: io.kestra.plugin.core.trigger.Schedule
+    type: io.kestra.plugin.aws.s3.Trigger
     cro`
         expect(
             taskTypeAtCursor({
                 source: triggerFlow,
                 cursorIndex: triggerFlow.length,
+                isTrigger: (type) => type === "io.kestra.plugin.aws.s3.Trigger",
             }),
         ).toBeUndefined()
+    })
+})
+
+describe("filterMissingRequiredTaskProperties", () => {
+    it("works for trigger bodies since they are still identified as task-like", () => {
+        const triggerFlow = `id: myflow
+namespace: my.ns
+triggers:
+  - id: mytrigger
+    type: io.kestra.plugin.aws.s3.Trigger
+    cro`
+        expect(
+            filterMissingRequiredTaskProperties({
+                source: triggerFlow,
+                cursorIndex: triggerFlow.length,
+                requiredProperties: ["id", "type", "bucket"],
+            }),
+        ).toEqual(["bucket"])
     })
 })
 

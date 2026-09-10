@@ -2215,7 +2215,6 @@
     "submit": "提交",
     "accept": "接受",
     "reject": "拒绝",
-    "draft_available": "编辑器中有可用的草稿更改",
     "last modified": "上次修改",
     "run task in playground": "在playground中运行task",
     "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",

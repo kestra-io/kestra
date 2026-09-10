@@ -2215,7 +2215,6 @@
     "submit": "प्रस्तुत करें",
     "accept": "स्वीकारें",
     "reject": "अस्वीकार करें",
-    "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
     "last modified": "अंतिम संशोधित",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
     "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",

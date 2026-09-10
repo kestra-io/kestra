@@ -6,6 +6,7 @@
             </h6>
             <KsButton
                 link
+                :aria-label="$t('filter.close')"
                 :icon="Close"
                 @click="$emit('close')"
                 size="small"
@@ -31,24 +32,24 @@
                     </small>
                 </div>
                 <div class="action-buttons">
-                    <KsTooltip :content="$t('filter.edit filter')" placement="top">
-                        <KsButton
-                            link
-                            size="small"
-                            class="edit-button"
-                            :icon="PencilOutline"
-                            @click.stop="$emit('edit', savedFilter)"
-                        />
-                    </KsTooltip>
-                    <KsTooltip :content="$t('filter.delete filter')" placement="top">
-                        <KsButton
-                            link
-                            size="small"
-                            class="delete-button"
-                            :icon="Delete"
-                            @click.stop="deleteFilter(savedFilter)"
-                        />
-                    </KsTooltip>
+                    <KsButton
+                        :tooltip="$t('filter.edit filter')"
+                        tooltipPlacement="top"
+                        link
+                        size="small"
+                        class="edit-button"
+                        :icon="PencilOutline"
+                        @click.stop="$emit('edit', savedFilter)"
+                    />
+                    <KsButton
+                        :tooltip="$t('filter.delete filter')"
+                        tooltipPlacement="top"
+                        link
+                        size="small"
+                        class="delete-button"
+                        :icon="Delete"
+                        @click.stop="deleteFilter(savedFilter)"
+                    />
                 </div>
             </div>
         </div>

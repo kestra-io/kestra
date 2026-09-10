@@ -442,14 +442,25 @@ export function groupValidationIssuesByTask(
         }
 
         const pathMatch = /^(.+\])(?:\.([A-Za-z0-9_]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (!pathMatch || !flow) continue
+        if (!pathMatch) continue
         const [, rawPath, field, message] = pathMatch
         const taskPath = rawPath.replace(/^_/, "")
+        const entry = field ? `${field}: ${message.trim()}` : message.trim()
+
+        // A task constraint violation comes back id-keyed (`tasks[publish].message`), so the last
+        // bracket already names the task; only a numeric path has to be resolved against the flow.
+        const lastBracket = /\[["']?([^"'\]]+)["']?\]$/.exec(taskPath)?.[1]
+        if (lastBracket && !/^\d+$/.test(lastBracket)) {
+            add(lastBracket, entry)
+            continue
+        }
+
+        if (!flow) continue
         const item = getAtPath(flow, taskPath)
         if (!item || typeof item !== "object") continue
         const id = displayTaskOf(item as Record<string, unknown>).id
         if (id == null) continue
-        add(String(id), field ? `${field}: ${message.trim()}` : message.trim())
+        add(String(id), entry)
     }
     return grouped
 }

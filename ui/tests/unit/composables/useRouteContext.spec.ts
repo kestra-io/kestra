@@ -40,7 +40,7 @@ describe("useRouteContext", () => {
         expect(document.title).toBe("io.kestra.plugin.core.log.Log | Kestra");
     });
 
-    test("should not accumulate whitespace across repeated title changes", async () => {
+    test("should keep a single separator across repeated title changes", async () => {
         const routeInfo = ref({title: "First"});
         wrapper = setup(routeInfo);
 
@@ -50,6 +50,19 @@ describe("useRouteContext", () => {
         await nextTick();
 
         expect(document.title).toBe("Third | Kestra");
+    });
+
+    test("should not double the pipe when the base title starts with '|'", () => {
+        document.title = "| Kestra";
+        wrapper = setup(ref({title: "Default Dashboard"}));
+
+        expect(document.title).toBe("Default Dashboard | Kestra");
+    });
+
+    test("should not print 'undefined' when the route title is missing", () => {
+        wrapper = setup(ref({title: undefined as unknown as string}));
+
+        expect(document.title).toBe("| Kestra");
     });
 
     test("should leave the document title untouched when embedded", () => {

@@ -351,11 +351,13 @@
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
+        embed?: boolean;
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
     }>(), {
         topbar: true,
+        embed: false,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
@@ -437,7 +439,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
-    useRouteContext(routeInfo, !props.topbar);
+    useRouteContext(routeInfo, props.embed);
 
     const dataTableRef = useTemplateRef<DataTableRef>("dataTable");
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");

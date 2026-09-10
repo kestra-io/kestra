@@ -40,7 +40,7 @@
     >
         <KsSplitter class="block-editor-split">
             <KsSplitterPanel min="18%">
-                <div class="block-editor-main">
+                <div class="block-editor-main" data-test="block-editor-scrollport">
                     <div
                         class="block-editor-canvas"
                         data-test="block-editor-canvas"
@@ -701,7 +701,13 @@
         deleteFocused: requestDeleteFocused,
         goToSection: (section) => {
             const list = sectionList(section)
-            focusCanvasCard(list.length ? String(list[0].id ?? 0) : sectionSentinelId(section))
+            // A palette jump crosses the whole canvas, unlike an arrow-key step
+            // between neighbours, so centre the destination — `nearest` would
+            // leave it flush against the edge of the viewport.
+            focusCanvasCard(
+                list.length ? String(list[0].id ?? 0) : sectionSentinelId(section),
+                {align: "center"},
+            )
         },
         saveFlow: saveFlowWithPendingEdits,
         taskEntries: picker.focusedContextEntries.value,
@@ -719,6 +725,8 @@
         height: 100%;
         overflow: hidden;
         background: var(--ks-bg-base);
+
+        --status-bar-height: 2.25rem;
     }
 
     .block-editor-split {
@@ -728,7 +736,9 @@
     .block-editor-main {
         height: 100%;
         overflow-y: auto;
-        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(2.25rem + var(--ks-spacing-6));
+        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(var(--status-bar-height) + var(--ks-spacing-6));
+        /* The status bar is painted over this scroll container, so scrollIntoView has to stop short of it. */
+        scroll-padding-bottom: calc(var(--status-bar-height) + var(--ks-spacing-6));
     }
 
     .block-editor-inline-edit {

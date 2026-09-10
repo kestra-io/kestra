@@ -45,15 +45,8 @@
             </div>
 
             <div v-if="focusedTaskRun" class="failure-debug-panel__actions">
-                <div class="failure-debug-panel__actions-row">
-                    <Restart
-                        component="KsButton"
-                        isReplay
-                        tooltipPosition="bottom"
-                        :execution="execution"
-                        :taskRun="focusedTaskRun"
-                        :attemptIndex="focusedAttemptIndex"
-                    />
+                <p class="failure-debug-panel__restart-caption">{{ $t("failureDebugPanel.restart.caption") }}</p>
+                <div class="failure-debug-panel__actions-buttons">
                     <div class="failure-debug-panel__actions-secondary">
                         <KsButton v-if="canUseCopilot" :icon="AiIcon" link @click="askCopilot">
                             {{ $t("failureDebugPanel.copilot.ask") }}
@@ -65,8 +58,15 @@
                             {{ $t("failureDebugPanel.copyError") }}
                         </KsButton>
                     </div>
+                    <Restart
+                        component="KsButton"
+                        isReplay
+                        tooltipPosition="bottom"
+                        :execution="execution"
+                        :taskRun="focusedTaskRun"
+                        :attemptIndex="focusedAttemptIndex"
+                    />
                 </div>
-                <p class="failure-debug-panel__restart-caption">{{ $t("failureDebugPanel.restart.caption") }}</p>
             </div>
 
             <KsCard shadow="never" class="failure-debug-panel__timeline">
@@ -475,18 +475,22 @@
         }
     }
 
+    // Same left/right split used throughout the app (Banner.vue's title vs actions, TopNavBar's
+    // title vs NavBarActions, this panel's own header vs close button): info on the left, the
+    // action(s) it belongs to on the right — never the other way around.
     .failure-debug-panel__actions {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-1);
-    }
-
-    .failure-debug-panel__actions-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: var(--ks-spacing-3);
+    }
+
+    .failure-debug-panel__actions-buttons {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
     }
 
     // The three utility actions share one visual language (link-style KsButton, icon + label)

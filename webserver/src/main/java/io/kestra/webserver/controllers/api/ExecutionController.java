@@ -1738,6 +1738,67 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/interrupt", produces = MediaType.TEXT_JSON)
+    @Operation(tags = { "Executions" }, summary = "Interrupt a running task run")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the task run cannot be interrupted")
+    @ApiResponse(responseCode = "404", description = "if the execution or the task run is not found")
+    public HttpResponse<Execution> interruptTaskRun(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @RequestBody(description = "the taskRun id and the state to apply to it") @Valid @Body StateRequest stateRequest) throws QueueException {
+        if (State.Type.FAILED != stateRequest.state() && State.Type.CANCELLED != stateRequest.state()) {
+            throw new IllegalArgumentException(
+                "Cannot interrupt task run: only the FAILED and CANCELLED states are supported, but '%s' was requested.".formatted(stateRequest.state())
+            );
+        }
+
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        if (execution.getState().isTerminated()) {
+            throw new ConflictException("Cannot interrupt task run: execution '%s' is already terminated.".formatted(executionId));
+        }
+
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(stateRequest.taskRunId())
+            .orElseThrow(() -> new NoSuchElementException(
+                "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
+            ));
+
+        if (State.Type.RUNNING != taskRun.getState().getCurrent()) {
+            throw new ConflictException(
+                "Cannot interrupt task run '%s': the task run is not running, its current state is %s.".formatted(taskRun.getId(), taskRun.getState().getCurrent())
+            );
+        }
+
+        // Emitted in the EXECUTED state so it goes straight to the Workers: unlike a whole-execution kill, interrupting
+        // a task run needs no Executor-side bookkeeping, the resulting task run result drives the execution forward.
+        killQueue.emit(
+            ExecutionKilledTaskRuns
+                .builder()
+                .state(ExecutionKilled.State.EXECUTED)
+                .tenantId(tenantService.resolveTenant())
+                .executionId(execution.getId())
+                .taskRunIds(interruptedTaskRunIds(execution, taskRun))
+                .taskRunState(stateRequest.state())
+                .build()
+        );
+
+        return HttpResponse.ok(execution);
+    }
+
+    /**
+     * The task run to interrupt, plus every one of its descendants that has not terminated yet.
+     * Interrupting a flowable task run alone would leave the tasks it spawned running on the Workers.
+     */
+    private static List<String> interruptedTaskRunIds(Execution execution, TaskRun taskRun) {
+        return Stream.concat(
+                Stream.of(taskRun),
+                execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
+            )
+            .map(TaskRun::getId)
+            .toList();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })

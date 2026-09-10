@@ -207,10 +207,7 @@
       "title": "Отладка сбоя",
       "subtitle": "Фокус на {taskId}",
       "announce": "Неудачных task: {count}. Доступна отладка сбоя, фокус на {taskId}.",
-      "reopen": {
-        "description": "Неудачных task: {count}.",
-        "cta": "Отладить этот сбой"
-      },
+      "reopen": "Отладить этот сбой",
       "copyError": "Копировать ошибку",
       "switcher": {
         "label": "Сбои в этом выполнении"

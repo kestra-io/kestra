@@ -207,10 +207,7 @@
       "title": "Debugowanie błędu",
       "subtitle": "Skupiono na {taskId}",
       "announce": "Liczba nieudanych tasków: {count}. Dostępne debugowanie błędu, skupiono na {taskId}.",
-      "reopen": {
-        "description": "Liczba nieudanych tasków: {count}.",
-        "cta": "Debuguj ten błąd"
-      },
+      "reopen": "Debuguj ten błąd",
       "copyError": "Kopiuj błąd",
       "switcher": {
         "label": "Błędy w tym wykonaniu"

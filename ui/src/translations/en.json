@@ -207,10 +207,7 @@
       "title": "Failure debug",
       "subtitle": "Focused on {taskId}",
       "announce": "{count} task(s) failed. Failure debug available, focused on {taskId}.",
-      "reopen": {
-        "description": "{count} task(s) failed.",
-        "cta": "Debug this failure"
-      },
+      "reopen": "Debug this failure",
       "copyError": "Copy error",
       "switcher": {
         "label": "Failures in this execution"
@@ -344,19 +341,19 @@
     "steps": "Steps",
     "state": "State",
     "state_history": {
-        "title": "State history",
-        "open": "State history",
-        "aria_open": "Show the state history",
-        "aria_open_for": "Show the state history for {subject}",
-        "started_at": "Started {time}",
-        "failed_at": "Failed at {time}",
-        "skipped_at": "Skipped at {time}",
-        "created_at": "Created {time}",
-        "did_not_run": "This task did not run",
-        "waiting_to_start": "Waiting to start",
-        "attempt_n": "Attempt {index}",
-        "attempt_count": "{count} attempts",
-        "copy": "Copy state history"
+      "title": "State history",
+      "open": "State history",
+      "aria_open": "Show the state history",
+      "aria_open_for": "Show the state history for {subject}",
+      "started_at": "Started {time}",
+      "failed_at": "Failed at {time}",
+      "skipped_at": "Skipped at {time}",
+      "created_at": "Created {time}",
+      "did_not_run": "This task did not run",
+      "waiting_to_start": "Waiting to start",
+      "attempt_n": "Attempt {index}",
+      "attempt_count": "{count} attempts",
+      "copy": "Copy state history"
     },
     "search": "Search",
     "source search": "Source search",

@@ -207,10 +207,7 @@
       "title": "विफलता डिबग",
       "subtitle": "{taskId} पर केंद्रित",
       "announce": "{count} task विफल हुए। विफलता डिबग उपलब्ध है, {taskId} पर केंद्रित।",
-      "reopen": {
-        "description": "{count} task विफल हुए।",
-        "cta": "इस विफलता को डिबग करें"
-      },
+      "reopen": "इस विफलता को डिबग करें",
       "copyError": "त्रुटि कॉपी करें",
       "switcher": {
         "label": "इस निष्पादन में विफलताएं"

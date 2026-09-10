@@ -207,10 +207,7 @@
       "title": "Debug dei fallimenti",
       "subtitle": "Concentrato su {taskId}",
       "announce": "{count} task falliti. Debug dei fallimenti disponibile, concentrato su {taskId}.",
-      "reopen": {
-        "description": "{count} task falliti.",
-        "cta": "Esegui il debug di questo fallimento"
-      },
+      "reopen": "Esegui il debug di questo fallimento",
       "copyError": "Copia errore",
       "switcher": {
         "label": "Fallimenti in questa esecuzione"

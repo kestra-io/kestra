@@ -207,10 +207,7 @@
       "title": "失败调试",
       "subtitle": "聚焦于 {taskId}",
       "announce": "{count} 个 task 失败。可进行失败调试，聚焦于 {taskId}。",
-      "reopen": {
-        "description": "{count} 个 task 失败。",
-        "cta": "调试此失败"
-      },
+      "reopen": "调试此失败",
       "copyError": "复制错误",
       "switcher": {
         "label": "此次执行中的失败"

@@ -114,14 +114,9 @@
         </section>
 
         <div v-if="shouldRender && !isOpen" ref="reopenWrapperRef" class="failure-debug-reopen">
-            <KsAlert type="error" :closable="false">
-                <div class="failure-debug-reopen__content">
-                    <span>{{ $t("failureDebugPanel.reopen.description", {count: failedTaskRuns.length}) }}</span>
-                    <KsButton :icon="BugOutline" @click="reopen">
-                        {{ $t("failureDebugPanel.reopen.cta") }}
-                    </KsButton>
-                </div>
-            </KsAlert>
+            <KsButton :icon="BugOutline" @click="reopen">
+                {{ $t("failureDebugPanel.reopen") }}
+            </KsButton>
         </div>
 
         <div role="status" aria-live="polite" class="visually-hidden">
@@ -542,21 +537,14 @@
         font-size: var(--ks-font-size-xs);
     }
 
-    // An alert rather than a plain button: the entry point is the only signal a failure happened
-    // at all while the panel is closed, so it earns the same error-tinted weight the panel itself
-    // uses once open, instead of reading as just another neutral action in the toolbar.
+    // A plain button, not an alert: an alert here duplicated the Gantt stage's own "Failed"
+    // status pill sitting in the row directly below it — two separate red "this failed" signals
+    // stacked at the top of the page. The stage already carries that signal; this only needs to
+    // be the action.
     .failure-debug-reopen {
         position: relative;
         z-index: 5;
         margin-bottom: var(--ks-spacing-4);
-    }
-
-    .failure-debug-reopen__content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: var(--ks-spacing-3);
     }
 
     .visually-hidden {

@@ -207,10 +207,7 @@
       "title": "失敗のデバッグ",
       "subtitle": "{taskId} にフォーカス",
       "announce": "{count} 件の task が失敗しました。失敗のデバッグが利用可能です。{taskId} にフォーカスしています。",
-      "reopen": {
-        "description": "{count} 件の task が失敗しました。",
-        "cta": "この失敗をデバッグ"
-      },
+      "reopen": "この失敗をデバッグ",
       "copyError": "エラーをコピー",
       "switcher": {
         "label": "この実行内の失敗"

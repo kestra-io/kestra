@@ -32,14 +32,32 @@
     <span v-else-if="value === null">
         <em>null</em>
     </span>
+    <div v-else-if="isTooLarge">
+        <el-alert
+            type="warning"
+            :closable="false"
+            showIcon
+        >
+            {{ $t('large_outputs.value_too_large', {size: valueSize}) }}
+        </el-alert>
+        <el-button
+            type="primary"
+            size="small"
+            class="mt-2"
+            :icon="Download"
+            @click="downloadJson"
+        >
+            {{ $t('large_outputs.download_json') }}
+        </el-button>
+    </div>
     <div v-else-if="isComplexValue(value)">
         <Editor
             :readOnly="true"
             :input="true"
             :fullHeight="false"
-            :customHeight="Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length))"
+            :customHeight="editorHeight"
             :navbar="false"
-            :modelValue="JSON.stringify(getDisplayValue(value), null, 2)"
+            :modelValue="renderedText"
             lang="json"
             class="complex-value-editor"
         />
@@ -50,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, onMounted} from "vue";
+    import {computed, ref, watch, onMounted} from "vue";
     import Download from "vue-material-design-icons/Download.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import FilePreview from "./FilePreview.vue";
@@ -58,6 +76,7 @@
     import {apiUrl} from "override/utils/route";
     import {useAxios} from "../../utils/axios";
     import Utils from "../../utils/utils";
+    import {downloadJson as download, isTooLargeToRender} from "./largeValues";
 
     interface Execution {
         id: string;
@@ -137,6 +156,20 @@
 
         return value;
     };
+
+    // Any value over the budget is offered as a download rather than rendered, whether it is an
+    // object, a JSON string or a long plain one. Monaco and a 1 MB text node both wedge the tab.
+    const renderedText = computed(() => isComplexValue(props.value)
+        ? JSON.stringify(getDisplayValue(props.value), null, 2) ?? ""
+        : String(props.value ?? ""));
+
+    const isTooLarge = computed(() => isTooLargeToRender(renderedText.value));
+
+    const valueSize = computed(() => Utils.humanFileSize(renderedText.value.length));
+
+    const editorHeight = computed(() => Math.min(20, Math.max(5, renderedText.value.split("\n").length)));
+
+    const downloadJson = () => download(renderedText.value, `output-${props.execution?.id || "value"}.json`);
 
     const itemUrl = (value: string): string => {
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;

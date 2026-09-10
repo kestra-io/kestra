@@ -21,6 +21,16 @@
                                 <span>{{ data.label }}</span>
                             </div>
 
+                            <div v-else-if="data.loadMore" class="load-more">
+                                <el-button
+                                    text
+                                    size="small"
+                                    @click.stop="loadMore(data.path, $event)"
+                                >
+                                    {{ data.label }}
+                                </el-button>
+                            </div>
+
                             <div
                                 v-else
                                 @click="expandedValue = data.path"
@@ -101,17 +111,38 @@
                                         {{ $t("eval.title") }}
                                     </el-button>
 
-                                    <Editor
-                                        v-if="debugExpression"
-                                        :readOnly="true"
-                                        :input="true"
-                                        :fullHeight="false"
-                                        :customHeight="20"
-                                        :navbar="false"
-                                        :modelValue="debugExpression"
-                                        :lang="isJSON ? 'json' : ''"
-                                        class="mt-3"
-                                    />
+                                    <template v-if="debugExpression">
+                                        <template v-if="debugTooLarge">
+                                            <el-alert
+                                                type="warning"
+                                                :closable="false"
+                                                showIcon
+                                                class="mt-3"
+                                            >
+                                                {{ $t('large_outputs.value_too_large', {size: debugSize}) }}
+                                            </el-alert>
+                                            <el-button
+                                                type="primary"
+                                                size="small"
+                                                class="mt-2 align-self-start"
+                                                :icon="Download"
+                                                @click="downloadDebug"
+                                            >
+                                                {{ $t('large_outputs.download_json') }}
+                                            </el-button>
+                                        </template>
+                                        <Editor
+                                            v-else
+                                            :readOnly="true"
+                                            :input="true"
+                                            :fullHeight="false"
+                                            :customHeight="20"
+                                            :navbar="false"
+                                            :modelValue="debugExpression"
+                                            :lang="isJSON ? 'json' : ''"
+                                            class="mt-3"
+                                        />
+                                    </template>
                                 </div>
                             </el-collapse-item>
                         </el-collapse>
@@ -154,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted, watch} from "vue";
+    import {ref, computed, shallowRef, nextTick, onMounted, watch} from "vue";
     import {ElTree} from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -169,9 +200,13 @@
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import Editor from "../../inputs/Editor.vue";
     import VarValue from "../VarValue.vue";
+    import {buildChildren, limitFor, PAGE_SIZE} from "./transformOutputs";
+    import {downloadJson, isTooLargeToRender} from "../largeValues";
+    import Utils from "../../../utils/utils";
     import SubFlowLink from "../../flows/SubFlowLink.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
+    import Download from "vue-material-design-icons/Download.vue";
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
 
@@ -205,6 +240,17 @@
 
         return `{{ outputs${formatPath(path)} }}`;
     });
+
+    // Evaluating an expression that resolves to a whole task's outputs returned megabytes of
+    // JSON straight into the editor, which is the freeze this screen was fixed for.
+    const debugTooLarge = computed(() => isTooLargeToRender(debugExpression.value));
+
+    const debugSize = computed(() => Utils.humanFileSize(debugExpression.value.length));
+
+    const downloadDebug = () => downloadJson(
+        debugExpression.value,
+        `debug-${executionsStore?.execution?.id || "expression"}.json`,
+    );
 
     const debugError = ref("");
     const debugStackTrace = ref("");
@@ -290,6 +336,12 @@
             return {label: data.value, regular};
         } else if (data?.children?.length) {
             const message = (length: number) => ({label: `${length} items`, regular});
+
+            // children is paged, so it undercounts; total is the real number of keys.
+            if (data.total !== undefined) {
+                return message(data.total);
+            }
+
             const length = data.children.length;
 
             return data.children[0].isFirstPass
@@ -355,6 +407,9 @@
 
     interface TransformedTask {
         label: string;
+        disabled?: boolean;
+        total?: number;
+        loadMore?: boolean;
         heading?: boolean;
         component?: any;
         isFirstPass?: boolean;
@@ -363,30 +418,47 @@
         path?: string;
     }
 
-    const transform = (o: any, isFirstPass: boolean, path = "") => {
-        const result: TransformedTask[] = Object.keys(o).map((key) => {
-            const value = o[key];
-            const isObject = typeof value === "object" && value !== null;
+    // How many pages of each level have been revealed, keyed by the level's path.
+    const childLimits = ref<Record<string, number>>({});
 
-            const currentPath = `${path}["${key}"]`;
+    const loadMore = async (path: string, event: MouseEvent) => {
+        const wrap = (event.currentTarget as HTMLElement).closest<HTMLElement>(".el-cascader-menu__wrap");
+        const panel = wrap?.closest(".el-cascader-panel");
+        const column = wrap && panel
+            ? [...panel.querySelectorAll(".el-cascader-menu__wrap")].indexOf(wrap)
+            : -1;
+        const scrollTop = wrap?.scrollTop ?? 0;
 
-            // If the value is an array with exactly one element, use that element as the value
-            if (Array.isArray(value) && value.length === 1) {
-                return {
-                    label: key,
-                    value: value[0],
-                    children: [],
-                    path: currentPath,
-                };
+        childLimits.value = {
+            ...childLimits.value,
+            [path]: limitFor(childLimits.value, path) + PAGE_SIZE,
+        };
+
+        if (!panel || column < 0) {
+            return;
+        }
+
+        // The panel rebuilds the column and scrolls its active node into view, so the reader's
+        // position has to be put back after that has run, not just after the re-render.
+        const restore = () => {
+            const target = panel.querySelectorAll<HTMLElement>(".el-cascader-menu__wrap")[column];
+            if (target) {
+                target.scrollTop = scrollTop;
             }
+        };
 
-            return {
-                label: key,
-                value: isObject && !Array.isArray(value) ? key : value,
-                children: isObject ? transform(value, false, currentPath) : [],
-                path: currentPath,
-            };
-        });
+        await nextTick();
+        restore();
+        requestAnimationFrame(restore);
+    };
+
+    const transform = (o: any, isFirstPass: boolean, path = "") => {
+        const result: TransformedTask[] = buildChildren(
+            o,
+            path,
+            childLimits.value,
+            (remaining) => t("large_outputs.load_more", {count: Math.min(remaining, PAGE_SIZE), remaining}),
+        );
 
         if (isFirstPass) {
             const OUTPUTS: TransformedTask = {
@@ -493,6 +565,13 @@
        so it can scroll independently instead of forcing page height */
     min-height: 0;
     height: 100%;
+}
+
+.load-more {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    pointer-events: auto;
 }
 
 :deep(.el-cascader-panel) {

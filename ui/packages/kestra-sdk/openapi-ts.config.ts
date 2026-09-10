@@ -1,4 +1,4 @@
-import type {UserConfig} from "@hey-api/openapi-ts"
+import type {UserConfig, OpenApiOperationObject} from "@hey-api/openapi-ts"
 import * as path from "path"
 import {fileURLToPath} from "url"
 import {defineConfigKestraHeyOptionalTenant, fixYamlSourceRequestBodyContentType, normalizeQueryFilterParams, widenQueryFilterValue, replaceFlowLabels} from "@kestra-io/hey-api-plugin"
@@ -35,7 +35,7 @@ export default {
     input: specPath,
     parser: {
         patch: {
-            operations: (method: string, path: string, operation: any) => {
+            operations: (method: string, path: string, operation: OpenApiOperationObject.V2_0_X | OpenApiOperationObject.V3_0_X | OpenApiOperationObject.V3_1_X) => {
                 // hey-api prefers the application/json variant when resolving a request body; force
                 // application/x-yaml for YAML-source bodies (client-sdk issue #340).
                 fixYamlSourceRequestBodyContentType(method, path, operation)

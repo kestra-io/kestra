@@ -4,7 +4,7 @@ import {shared} from "../fixtures/shared"
 /** What `GET /namespaces/{namespace}/kv/{key}` answers, once the stored ION has been parsed. */
 export type KvDetail = {
     type: string;
-    value: any;
+    value: unknown;
 }
 
 export class KvApi extends BaseApi {

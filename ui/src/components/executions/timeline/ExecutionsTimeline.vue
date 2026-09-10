@@ -273,25 +273,33 @@
         router.push({query: cleared})
     }
 
+    interface FetchedExecution {
+        id: string;
+        namespace: string;
+        flowId: string;
+        state?: {current: string; startDate?: string; endDate?: string};
+    }
+
     async function fetchExecutions() {
         loading.value = true
         error.value = undefined
         try {
-            const response = await executionsStore.findExecutions(loadQuery({
+            const response: unknown = await executionsStore.findExecutions(loadQuery({
                 size: MAX_FETCHED_EXECUTIONS,
                 page: 1,
                 sort: "state.startDate:desc",
                 commit: false,
             }))
-            rawExecutions.value = (response.results ?? [])
-                .filter((execution: {state?: {startDate?: string}}) => execution.state?.startDate)
-                .map((execution: {id: string; namespace: string; flowId: string; state: {current: string; startDate: string; endDate?: string}}) => ({
+            const results = ((response as {results?: unknown[]})?.results ?? []) as FetchedExecution[]
+            rawExecutions.value = results
+                .filter((execution) => Boolean(execution.state?.startDate))
+                .map((execution) => ({
                     id: execution.id,
                     namespace: execution.namespace,
                     flowId: execution.flowId,
-                    state: execution.state.current,
-                    startMs: new Date(execution.state.startDate).getTime(),
-                    endMs: execution.state.endDate ? new Date(execution.state.endDate).getTime() : Date.now(),
+                    state: execution.state!.current,
+                    startMs: new Date(execution.state!.startDate!).getTime(),
+                    endMs: execution.state!.endDate ? new Date(execution.state!.endDate!).getTime() : Date.now(),
                 }))
         } catch {
             error.value = t("executionsTimeline.error.description")

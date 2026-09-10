@@ -114,11 +114,39 @@ public class App implements Callable<Integer> {
         List<CommandLine> parsedCommands = parseResult.asCommandLineList();
         CommandLine leafCmd = parsedCommands.getLast();
 
+        // When a subcommand fails to parse (e.g. missing required positional parameters),
+        // continueOnParsingErrors detaches the subcommand chain from the parse result, so
+        // getLast() returns the root command and the config file is never loaded. On EE builds
+        // startup then fails with a misleading NoSuchBeanException (no TenantRepository) instead
+        // of a proper "Missing required parameters" message. Recover the intended leaf by walking
+        // the subcommand names so the configuration is still resolved for the right command.
+        if (!(leafCmd.getCommandSpec().userObject() instanceof AbstractCommand)
+                && !parseResult.errors().isEmpty()) {
+            leafCmd = resolveSubcommandByName(cls, args);
+        }
+
         // continueOnParsingErrors silently drops unrecognized options at the root level,
         // including --config/-c when it appears before the subcommand name. Recover it here.
         recoverConfigOption(args, leafCmd);
 
         return leafCmd;
+    }
+
+    /**
+     * Resolves the deepest subcommand whose name appears in {@code args}, ignoring options and
+     * positional parameters. Used to recover the target command when {@code parseArgs} aborts the
+     * subcommand chain due to a parsing error (e.g. missing required parameters), so the
+     * configuration file can still be loaded for the right command.
+     */
+    private static CommandLine resolveSubcommandByName(Class<?> cls, String[] args) {
+        CommandLine current = new CommandLine(cls, CommandLine.defaultFactory());
+        for (String arg : args) {
+            CommandLine sub = current.getSubcommands().get(arg);
+            if (sub != null) {
+                current = sub;
+            }
+        }
+        return current;
     }
 
     /**
@@ -181,13 +209,17 @@ public class App implements Callable<Integer> {
             }
 
             // custom server configuration
-            commandLine
-                .getParseResult()
-                .matchedArgs()
-                .stream()
-                .filter(argSpec -> ((Field) argSpec.userObject()).getName().equals("serverPort"))
-                .findFirst()
-                .ifPresent(argSpec -> properties.put("micronaut.server.port", argSpec.getValue()));
+            // getParseResult() is null when the leaf was recovered via resolveSubcommandByName()
+            // (the command was never parsed because of a parsing error), so guard against it.
+            CommandLine.ParseResult leafParseResult = commandLine.getParseResult();
+            if (leafParseResult != null) {
+                leafParseResult
+                    .matchedArgs()
+                    .stream()
+                    .filter(argSpec -> ((Field) argSpec.userObject()).getName().equals("serverPort"))
+                    .findFirst()
+                    .ifPresent(argSpec -> properties.put("micronaut.server.port", argSpec.getValue()));
+            }
 
             builder.properties(properties);
         }

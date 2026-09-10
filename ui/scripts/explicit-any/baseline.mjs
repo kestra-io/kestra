@@ -1,11 +1,12 @@
 import {execFileSync} from "node:child_process"
-import {readFileSync, writeFileSync} from "node:fs"
+import {readdirSync, readFileSync, writeFileSync} from "node:fs"
 import {createRequire} from "node:module"
-import {dirname, join} from "node:path"
+import {dirname, join, relative} from "node:path"
 import {fileURLToPath} from "node:url"
 
 const RULE = "typescript/no-explicit-any"
 const CODE = "typescript(no-explicit-any)"
+const TEMPLATE_ANY = /\bas\s+any\b|:\s*any\b|\bany\[\]|<\s*any\s*>|,\s*any\s*>/g
 
 /** Counts of the rule per file, keyed by a `/`-separated path relative to cwd, in code-point order so the file is stable across machines. */
 export function countByFile(diagnostics) {
@@ -15,6 +16,36 @@ export function countByFile(diagnostics) {
         const file = filename.replaceAll("\\", "/")
         counts[file] = (counts[file] ?? 0) + 1
     }
+    return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+}
+
+/** Every expression a template evaluates: interpolations, directive values and dynamic argument names. */
+export function templateExpressions(ast) {
+    const found = []
+    const walk = (node) => {
+        if (node.type === 5) found.push(node.content.loc.source)
+        for (const prop of node.props ?? []) {
+            if (prop.type !== 7) continue
+            if (prop.exp) found.push(prop.exp.loc.source)
+            if (prop.arg?.isStatic === false) found.push(prop.arg.loc.source)
+        }
+        for (const child of node.children ?? []) walk(child)
+    }
+    walk(ast)
+    return found
+}
+
+/** Explicit `any` in the template of a single-file component, which oxlint does not see because it only lints `<script>`. */
+export function countTemplateAny(source, parse) {
+    const ast = parse(source, {ignoreEmpty: false}).descriptor.template?.ast
+    if (!ast) return 0
+    return templateExpressions(ast).reduce((sum, code) => sum + (code.match(TEMPLATE_ANY)?.length ?? 0), 0)
+}
+
+/** Script and template counts added up per file, in the same code-point order. */
+export function merge(script, template) {
+    const counts = {...script}
+    for (const [file, n] of Object.entries(template)) counts[file] = (counts[file] ?? 0) + n
     return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
 }
 
@@ -55,6 +86,31 @@ function lint(paths) {
     }
 }
 
+function vueFiles(paths) {
+    const found = []
+    const walk = (dir) => {
+        for (const entry of readdirSync(dir, {withFileTypes: true})) {
+            if (entry.name === "node_modules" || entry.name === "dist") continue
+            const path = join(dir, entry.name)
+            if (entry.isDirectory()) walk(path)
+            else if (entry.name.endsWith(".vue")) found.push(path)
+        }
+    }
+    for (const path of paths) walk(join(process.cwd(), path))
+    return found
+}
+
+function templateCounts(paths) {
+    const require = createRequire(join(process.cwd(), "package.json"))
+    const {parse} = require("@vue/compiler-sfc")
+    const counts = {}
+    for (const path of vueFiles(paths)) {
+        const n = countTemplateAny(readFileSync(path, "utf8"), parse)
+        if (n) counts[relative(process.cwd(), path).replaceAll("\\", "/")] = n
+    }
+    return counts
+}
+
 function annotate(file, message) {
     if (process.env.GITHUB_ACTIONS === "true") console.log(`::error file=${file}::${message}`)
 }
@@ -64,7 +120,7 @@ function main() {
     const lock = process.argv.includes("--lock")
     const paths = process.argv.slice(2).filter((arg) => !arg.startsWith("--"))
     const baselinePath = join(process.cwd(), "scripts", "explicit-any", "baseline.json")
-    const current = countByFile(lint(paths))
+    const current = merge(countByFile(lint(paths)), templateCounts(paths))
     const total = Object.values(current).reduce((sum, n) => sum + n, 0)
     const summary = `${total} explicit any in ${Object.keys(current).length} files`
 

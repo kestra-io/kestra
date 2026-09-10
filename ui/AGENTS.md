@@ -232,7 +232,7 @@ Rules:
 
 ### Types
 
-**Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`.
+**Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
 
 Where the type comes from, in this order:
 
@@ -245,7 +245,7 @@ For a value whose shape really is not known yet, `unknown` with a narrowing chec
 
 **A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. For an `any` that truly cannot be avoided, record it with `npm run check:ts-any -- --write` and commit the changed baseline, so the decision shows up in the diff and gets reviewed instead of slipping through.
 
-**The check.** `npm run check:ts-any` counts the explicit `any` per file and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
+**The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
 
 - ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above. When that is genuinely impossible, say why in the PR and run `npm run check:ts-any -- --write` to record the new number.
 - `1 file(s) improved` with `src/utils/filters.ts: 3 -> 2`. Your change removed one, which is the point, and the baseline has to come down with it. Run `npm run check:ts-any -- --write` and commit the changed `baseline.json` alongside your code.

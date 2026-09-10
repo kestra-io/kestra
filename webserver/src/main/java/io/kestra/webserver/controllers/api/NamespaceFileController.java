@@ -236,7 +236,10 @@ public class NamespaceFileController {
     }
 
     private List<NamespaceFile> putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws Exception {
-        String filePath = path.getPath();
+        // Normalize before the _flows special-case and the forbidden-path guard so paths like
+        // /./_flows/... or ///_flows/... cannot bypass either check (see #19370).
+        URI normalizedPath = normalizeFileUri(path);
+        String filePath = normalizedPath.getPath();
         if (filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
             if (filePath.split("/").length != 3) {
                 throw new IllegalArgumentException("Invalid flow file path: " + filePath);
@@ -247,7 +250,7 @@ public class NamespaceFileController {
             this.importFlow(tenantId, flowSource);
             return Collections.emptyList();
         }
-        forbiddenPathsGuard(path);
+        forbiddenPathsGuard(normalizedPath);
 
         // Reject over-long names before writing: otherwise the filesystem raises ENAMETOOLONG, which
         // surfaces as a 500 leaking the absolute internal-storage path. The limit is per path component
@@ -260,7 +263,7 @@ public class NamespaceFileController {
         }
 
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
-        return namespaceStorage.putFile(Path.of(path.getPath()), inputStream);
+        return namespaceStorage.putFile(Path.of(filePath), inputStream);
     }
 
     protected void importFlow(String tenantId, String source) throws FlowProcessingException {
@@ -370,6 +373,18 @@ public class NamespaceFileController {
         return new URI(null, null, path, null);
     }
 
+    /**
+     * Collapses {@code .} / duplicate slashes (and rejects {@code ..}) so path guards see the same
+     * canonical form that storage uses after {@link NamespaceFile#normalize(Path)}.
+     */
+    private static URI normalizeFileUri(URI path) throws URISyntaxException {
+        if (path == null || path.getPath() == null) {
+            return path;
+        }
+        String normalized = NamespaceFile.toLogicalPath(NamespaceFile.normalize(Path.of(path.getPath())));
+        return toFileUri(normalized);
+    }
+
     private void forbiddenPathsGuard(URI path) {
         if (path == null) {
             return;
@@ -379,8 +394,11 @@ public class NamespaceFileController {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The path '%s' is not a valid hierarchical path.".formatted(path));
         }
 
-        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
-            throw new IllegalArgumentException("Forbidden path: " + path.getPath());
+        // Match against the normalized path: raw "/./_flows/..." would otherwise miss the regex
+        // while Path.normalize() later maps it onto the reserved "/_flows/..." tree (#19370).
+        String normalizedPath = NamespaceFile.toLogicalPath(NamespaceFile.normalize(Path.of(path.getPath())));
+        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(normalizedPath).matches())) {
+            throw new IllegalArgumentException("Forbidden path: " + normalizedPath);
         }
     }
 

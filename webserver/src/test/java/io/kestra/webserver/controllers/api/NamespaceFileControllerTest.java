@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -568,6 +569,67 @@ class NamespaceFileControllerTest {
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/_flows/test&to=/foo", null)));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=/_flows/test", null)));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/test.txt", null)));
+
+        // #19370: raw-path bypasses that normalize onto /_flows must also be forbidden
+        assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/./_flows/test.yml")));
+        assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=///_flows/test.yml")));
+        assertForbiddenErrorThrown(
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/./_flows/test.yml"), TestFileAttributes.class)
+        );
+        assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/./_flows"), TestFileAttributes[].class));
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/./_flows/test.txt", null)));
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/./_flows/test&to=/foo", null)));
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=///_flows/test", null)));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/task-flow.yaml" })
+    void createFileContent_AddFlowViaNormalizedFlowsPath() throws IOException {
+        // /./_flows/... must hit the flow-import special-case after normalization, not land as a reserved-folder file
+        String namespace = TestsUtils.randomNamespace();
+        String flowSource = flowRepository.findByIdWithSource(TENANT_ID, "io.kestra.tests", "task-flow").get().getSource();
+        File temp = File.createTempFile("task-flow", ".yml");
+        Files.write(temp.toPath(), flowSource.getBytes());
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "task-flow.yml", temp)
+            .build();
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/./_flows/task-flow.yml", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+
+        assertThat(flowRepository.findByIdWithSource(TENANT_ID, namespace, "task-flow").get().getSource())
+            .isEqualTo(flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + namespace));
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/_flows/task-flow.yml")))).isFalse();
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/./_flows/task-flow.yml")))).isFalse();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/task-flow.yaml" })
+    void createFileContent_ExtractZipWithDotFlowsEntryImportsFlow() throws IOException {
+        // Zip entries named ./_flows/... must not bypass the reserved-folder handling (#19370)
+        String namespace = TestsUtils.randomNamespace();
+        String flowSource = flowRepository.findByIdWithSource(TENANT_ID, "io.kestra.tests", "task-flow").get().getSource();
+
+        File tempZip = File.createTempFile("flows-bypass", ".zip");
+        try (ZipOutputStream archive = new ZipOutputStream(Files.newOutputStream(tempZip.toPath()))) {
+            archive.putNextEntry(new ZipEntry("./_flows/task-flow.yml"));
+            archive.write(flowSource.getBytes());
+            archive.closeEntry();
+        }
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "flows-bypass.zip", tempZip)
+            .build();
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/flows-bypass.zip", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+
+        assertThat(flowRepository.findByIdWithSource(TENANT_ID, namespace, "task-flow").get().getSource())
+            .isEqualTo(flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + namespace));
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/_flows/task-flow.yml")))).isFalse();
     }
 
     @Test

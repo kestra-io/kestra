@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -1569,6 +1570,55 @@ class FlowServiceTest {
             // The flow has at least one violation - we don't pin the exact message so this stays
             // robust against bean-validation message wording changes.
             assertThat(violations.get().getConstraintViolations()).isNotEmpty();
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldRejectExecutingADeletedFlowRevisionWhenRevisionIsExplicit() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+        FlowWithSource deleted = flowService.delete(created);
+
+        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
+            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision())
+        ))
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Requested Flow is not found.");
+    }
+
+    @Test
+    void shouldAllowExecutingADraftRevisionWhenRevisionIsExplicit() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            Flow executable = flowService.getFlowIfExecutableOrThrow(
+                saved.getTenantId(), saved.getNamespace(), saved.getId(), Optional.of(saved.getRevision())
+            );
+
+            assertThat(executable.isDraft()).isTrue();
         } finally {
             flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
                 .ifPresent(f -> flowRepository.delete(f));

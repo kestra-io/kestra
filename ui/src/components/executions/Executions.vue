@@ -75,17 +75,34 @@
                     }"
                     :prefix="'executions'"
                     :tableOptions="{
-                        chart: {shown: !hideChart, value: showChart, callback: onShowChartChange},
+                        chart: {shown: false},
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                     :defaultDuration="chartDefaultDuration"
-                />
+                >
+                    <template #extra v-if="!hideChart">
+                        <KsSegmented
+                            :modelValue="chartMode"
+                            :options="chartModeOptions"
+                            size="small"
+                            @change="(value) => onChartModeChange(value as ChartMode)"
+                        />
+                    </template>
+                </KSFilter>
             </template>
 
-            <template v-if="showStatChart()" #top>
+            <template v-if="showStatChart('counts')" #top>
                 <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts :baseFilters="lockedFilters" showDefault class="stat-charts" />
+            </template>
+
+            <template v-else-if="showStatChart('timeline')" #top>
+                <ExecutionsTimeline
+                    :namespace="namespace"
+                    :flowId="flowId"
+                    :statuses="statuses"
+                />
             </template>
 
             <template #bulk-actions>
@@ -466,6 +483,8 @@
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
     import Download from "vue-material-design-icons/Download.vue"
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
+    import Counter from "vue-material-design-icons/Counter.vue"
 
     import {KsId} from "@kestra-io/design-system"
     import {State} from "@kestra-io/design-system"
@@ -478,6 +497,7 @@
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
     import type {Chart} from "../dashboard/types"
+    import ExecutionsTimeline from "./timeline/ExecutionsTimeline.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NavBarActionsDropdown from "../../components/layout/NavBarActionsDropdown.vue"
     import NavBarAction from "../../components/layout/NavBarAction.vue"
@@ -485,7 +505,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
+    import {filterValidLabels, FILTER_FIELD_PATTERN} from "./utils"
     import {
         FALLBACK_TIME_RANGE,
         queryHasAbsoluteDateFilter,
@@ -493,6 +513,7 @@
         readTimeRangeFromQuery,
         widenEmptyTimeRange,
     } from "./timeRangeWiden"
+    import {useExecutionsQueryScope} from "../../composables/useExecutionsQueryScope"
     import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
@@ -594,7 +615,14 @@
     const changeStatusDialogVisible = ref(false)
     const actionOptions = ref<Record<string, unknown>>({})
     const dblClickRouteName = ref("executions/update")
-    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false")
+
+    type ChartMode = "counts" | "timeline"
+    const storedChartMode = localStorage.getItem(storageKeys.SHOW_CHART)
+    const chartMode = ref<ChartMode>(storedChartMode === "timeline" ? "timeline" : "counts")
+    const chartModeOptions = computed(() => [
+        {label: t("chart mode.counts"), value: "counts", icon: Counter},
+        {label: t("chart mode.timeline"), value: "timeline", icon: ChartLineVariant},
+    ])
 
     const optionalColumns = ref([
         {
@@ -928,13 +956,13 @@
         }
     }
 
-    const onShowChartChange = (value: boolean) => {
-        showChart.value = value
-        localStorage.setItem(storageKeys.SHOW_CHART, value.toString())
+    const onChartModeChange = (value: ChartMode) => {
+        chartMode.value = value
+        localStorage.setItem(storageKeys.SHOW_CHART, value)
     }
 
-    const showStatChart = () => {
-        return !props.hideChart && isDisplayedTop.value && showChart.value
+    const showStatChart = (mode: ChartMode) => {
+        return !props.hideChart && isDisplayedTop.value && chartMode.value === mode
     }
 
     const refresh = () => {
@@ -942,49 +970,17 @@
         dataTable.value?.reload()
     }
 
-    const supportedFilterFields = computed<Set<string>>(() => {
-        const configuration = (props.namespace === undefined || props.flowId === undefined)
-            ? executionFilter.value
-            : flowExecutionFilter.value
-        const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
-            entry.key === "timeRange" ? ["timeRange", "startDate", "endDate"] : [entry.key],
-        )
-        if (configuration.searchPlaceholder) {
-            fields.push("q")
-        }
-        return new Set(fields)
-    })
-
-    const dropUnsupportedFilters = (query: Record<string, unknown>): Record<string, unknown> =>
-        keepSupportedFilters(query, supportedFilterFields.value)
-
-    const loadQuery = (base?: Record<string, unknown>) => {
-        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
-        let queryFilter: Record<string, unknown> = dropUnsupportedFilters(restQuery)
-
-        if (props.namespace) {
-            queryFilter["filters[namespace][PREFIX]"] = props.namespace
-        }
-
-        if (props.flowId) {
-            queryFilter["filters[flowId][EQUALS]"] = props.flowId
-        }
-
-        Object.entries(props.labels ?? {}).forEach(([key, value]) => {
-            queryFilter[`filters[labels][EQUALS][${key}]`] = value
-        })
-
-        if (props.childFilter) {
-            queryFilter["filters[childFilter][EQUALS]"] = props.childFilter
-        }
-
-        const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state
-        if (!hasStateFilters && props.statuses?.length > 0) {
-            queryFilter["filters[state][IN]"] = props.statuses.join(",")
-        }
-
-        return deepMerge(base, queryFilter)
-    }
+    const activeFilterConfiguration = computed(() =>
+        (props.namespace === undefined || props.flowId === undefined) ? executionFilter.value : flowExecutionFilter.value,
+    )
+    const executionsQueryScope = computed(() => ({
+        namespace: props.namespace,
+        flowId: props.flowId,
+        statuses: props.statuses,
+        labels: props.labels,
+        childFilter: props.childFilter,
+    }))
+    const {dropUnsupportedFilters, loadQuery} = useExecutionsQueryScope(activeFilterConfiguration, executionsQueryScope)
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {
         toast.confirm(

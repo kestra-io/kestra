@@ -114,9 +114,14 @@
         </section>
 
         <div v-if="shouldRender && !isOpen" ref="reopenWrapperRef" class="failure-debug-reopen">
-            <KsButton :icon="BugOutline" @click="reopen">
-                {{ $t("failureDebugPanel.reopen", {count: failedTaskRuns.length}) }}
-            </KsButton>
+            <KsAlert type="error" :closable="false">
+                <div class="failure-debug-reopen__content">
+                    <span>{{ $t("failureDebugPanel.reopen.description", {count: failedTaskRuns.length}) }}</span>
+                    <KsButton :icon="BugOutline" @click="reopen">
+                        {{ $t("failureDebugPanel.reopen.cta") }}
+                    </KsButton>
+                </div>
+            </KsAlert>
         </div>
 
         <div role="status" aria-live="polite" class="visually-hidden">
@@ -485,12 +490,21 @@
     }
 
     // The three utility actions share one visual language (link-style KsButton, icon + label)
-    // rather than mixing a labelled button with a bare icon button — same weight, same shape.
+    // rather than mixing a labelled button with a bare icon button — same weight, same shape —
+    // and sit inside one bordered group so they read as one toolbar rather than three buttons
+    // that happen to be next to each other.
     .failure-debug-panel__actions-secondary {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
         gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-1);
+        // --ks-bg-surface resolves to the same white as the panel's own --ks-bg-elevated in light
+        // theme, so the group would have no visible fill against its own container — --ks-bg-active
+        // is the token KsSegmented itself falls back to for exactly this reason.
+        background: var(--ks-bg-active);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
     }
 
     .failure-debug-panel__restart-caption {
@@ -524,10 +538,21 @@
         font-size: var(--ks-font-size-xs);
     }
 
+    // An alert rather than a plain button: the entry point is the only signal a failure happened
+    // at all while the panel is closed, so it earns the same error-tinted weight the panel itself
+    // uses once open, instead of reading as just another neutral action in the toolbar.
     .failure-debug-reopen {
         position: relative;
         z-index: 5;
         margin-bottom: var(--ks-spacing-4);
+    }
+
+    .failure-debug-reopen__content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-3);
     }
 
     .visually-hidden {

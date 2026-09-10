@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "Przełącz menu",
+    "favourites": "Ulubione",
+    "to close": "aby zamknąć",
+    "tabs": "Karty",
+    "select": "Wybierz",
     "panel actions": "Akcje panelu",
     "playground actions": "Akcje w Playground",
     "bulk actions": "Akcje zbiorcze",
@@ -223,6 +227,7 @@
       "invalid duration": "Nieprawidłowy format czasu trwania. Użyj ISO 8601 (np. PT30M, P1D).",
       "leave empty for infinite": "Pozostaw puste dla nieskończonego czasu trwania lub wpisz czas trwania w formacie ISO 8601 (np. „P1DT1H1M1S”)",
       "duration example": "Przykład: 'P1DT1H1M1S'",
+      "examples": "Przykłady:",
       "error": "Nieprawidłowy format czasu trwania, musi być zgodny z ISO 8601 (np. P1DT1H1M1S)",
       "custom": "Niestandardowy",
       "last5minutes": "Ostatnie 5 minut",
@@ -280,6 +285,7 @@
     "expiration date": "Data wygaśnięcia",
     "healthcheck date": "Data Healthcheck",
     "last execution status": "Status ostatniej egzekucji",
+    "jump to": "Przejdź do",
     "jump to...": "Przejdź do…",
     "contextBar": {
       "ai": "AI",
@@ -478,6 +484,7 @@
       "big_file_download_only": "Ten plik ma rozmiar {size}. Jest zbyt duży, aby otworzyć go w edytorze — pobierz go zamiast tego.",
       "load_anyway": "Załaduj mimo to",
       "load_error": "Nie udało się załadować podglądu pliku. Może to być problem tymczasowy lub problem z uprawnieniami.",
+      "image_alt": "Podgląd output obrazu",
       "retry": "Ponów próbę",
       "html_asset_warning": "Ten podgląd renderuje HTML w izolowanej ramce. Lokalne zasoby, takie jak obrazy i arkusze stylów, do których odwołują się ścieżki względne, nie zostaną załadowane.",
       "html_preview_title": "Podgląd pliku HTML"
@@ -498,6 +505,8 @@
     "docsPage": {
       "notFound": "Ta strona dokumentacji nie istnieje. Mogła zostać przeniesiona lub jej nazwa mogła się zmienić.",
       "loadError": "Nie udało się załadować tej strony dokumentacji. Spróbuj ponownie.",
+      "close_menu": "Zamknij menu",
+      "open_menu": "Otwórz menu",
       "backToDocs": "Powrót do Docs"
     },
     "documentation": {
@@ -554,8 +563,10 @@
       "names": "Plugins",
       "release": "Informacje o wydaniu",
       "beta": "Beta",
+      "beta_notice": "Ten plugin jest obecnie w wersji beta. Choć uznaje się go za bezpieczny w użyciu, pamiętaj, że jego API może się zmienić w przyszłych wydaniach w sposób niezgodny z wcześniejszymi wersjami lub plugin może przestać być wspierany.",
       "copy_type": "Kopiuj typ",
       "deprecated": "Przestarzałe",
+      "documentation_sections": "Sekcje dokumentacji",
       "dynamic": "dynamiczny",
       "filter_all": "Wszystkie",
       "filter_properties": "Filtruj właściwości…",
@@ -597,6 +608,8 @@
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
+      "possible_values": "Możliwe wartości",
+      "sub_type": "Podtyp",
       "required": "Wymagane"
     },
     "last execution date": "Data ostatniej egzekucji",
@@ -871,6 +884,7 @@
     "enable": "Włącz",
     "enabled": "Włączone",
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> Flowów?",
+    "delete flow error": "Nie udało się usunąć flow {id}",
     "flows deleted": "Usunięto <code>{count}</code> Flowów",
     "flow disable": "Czy na pewno chcesz wyłączyć <code>{flowCount}</code> Flowów?",
     "flow enable": "Czy na pewno chcesz włączyć <code>{flowCount}</code> Flowów?",
@@ -1009,9 +1023,11 @@
         "file_already_exists": "Plik o tej nazwie już istnieje",
         "file_conflicts_with_folder": "Folder o tej nazwie już istnieje",
         "file_error": "Wystąpił błąd podczas tworzenia pliku",
+        "file_success": "Plik \"{name}\" został utworzony.",
         "folder": "Utwórz folder",
         "folder_already_exists": "Folder o tej nazwie już istnieje",
         "folder_conflicts_with_file": "Plik o tej nazwie już istnieje",
+        "folder_success": "Folder \"{name}\" został utworzony.",
         "folder_error": "Wystąpił błąd podczas tworzenia folderu"
       },
       "rename": {
@@ -1025,8 +1041,10 @@
       "delete": {
         "label": "Usuń",
         "file": "Usuń plik",
+        "file_error": "Nie udało się usunąć pliku: {name}",
         "folder": "Usuń folder",
         "files": "Usuń wybrane pliki ({count})",
+        "bulk_success": "Wybrane pliki zostały pomyślnie usunięte.",
         "folders": "Usuń wybrane foldery ({count})"
       },
       "move": {
@@ -1636,6 +1654,7 @@
     "webhook link copied": "Link webhooka skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
+    "scheduleDateInPast": "Data harmonogramu musi być w przyszłości",
     "warning": "Ostrzeżenie",
     "trigger_check_warning": "Zmienne Triggera nie zadziałają przy ręcznym uruchomieniu Flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład zamiast `trigger.date` użyj `trigger.date ?? execution.startDate`.",
     "docs": "Dokumentacja",
@@ -1968,6 +1987,9 @@
         "label": "Edytuj Dashboard",
         "chart": "Edytuj ten wykres"
       },
+      "creation": {
+        "label": "Utwórz Dashboard"
+      },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
@@ -1978,6 +2000,7 @@
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"
       },
+      "show_all_statuses": "Pokaż wszystkie statusy",
       "quick_filters": {
         "all": "Wszystkie",
         "running": "Uruchomione",
@@ -2197,7 +2220,6 @@
     "submit": "Wyślij",
     "accept": "Zaakceptuj",
     "reject": "Odrzuć",
-    "draft_available": "Szkic zmiany jest dostępny w edytorze",
     "last modified": "Ostatnia modyfikacja",
     "run task in playground": "Uruchom Task w Playground",
     "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",
@@ -2649,8 +2671,6 @@
       "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
     },
     "blocks": "Bloki",
-    "flow_description": "Opis Flow",
-    "flow_no_description": "Brak opisu. Dodaj opis do YAML swojego Flow, aby udokumentować, co robi.",
     "split_horizontal": "Podziel w poziomie",
     "split_vertical": "Podziel pionowo",
     "pwa": {

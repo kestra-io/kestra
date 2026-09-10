@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "切换菜单",
+    "favourites": "收藏",
+    "to close": "关闭",
+    "tabs": "标签页",
+    "select": "请选择",
     "panel actions": "面板操作",
     "playground actions": "游乐场操作",
     "bulk actions": "批量操作",
@@ -223,6 +227,7 @@
       "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如：PT30M, P1D)。",
       "leave empty for infinite": "留空表示无限期，或输入 ISO 8601 持续时间（例如，“P1DT1H1M1S”）",
       "duration example": "例如：'P1DT1H1M1S'",
+      "examples": "示例：",
       "error": "无效的持续时间格式，必须是 ISO 8601 持续时间（例如，P1DT1H1M1S）",
       "custom": "自定义",
       "last5minutes": "最近5分钟",
@@ -280,6 +285,7 @@
     "expiration date": "过期日期",
     "healthcheck date": "HealthCheck 日期",
     "last execution status": "上次执行状态",
+    "jump to": "跳转到",
     "jump to...": "跳转到...",
     "contextBar": {
       "ai": "人工智能",
@@ -478,6 +484,7 @@
       "big_file_download_only": "此文件大小为{size}。它太大，无法在编辑器中打开，请改为下载。",
       "load_anyway": "仍然加载",
       "load_error": "无法加载文件预览。这可能是临时问题或权限问题。",
+      "image_alt": "图片 output 预览",
       "retry": "重试",
       "html_asset_warning": "此预览在沙盒化的框架中渲染 HTML。通过相对路径引用的本地资源（如图片和样式表）将不会加载。",
       "html_preview_title": "HTML 文件预览"
@@ -498,6 +505,8 @@
     "docsPage": {
       "notFound": "该文档页面不存在，可能已被移动或重命名。",
       "loadError": "无法加载该文档页面，请重试。",
+      "close_menu": "关闭菜单",
+      "open_menu": "打开菜单",
       "backToDocs": "返回 Docs"
     },
     "documentation": {
@@ -554,8 +563,10 @@
       "names": "插件",
       "release": "发行说明",
       "beta": "测试版",
+      "beta_notice": "该插件目前处于测试版阶段。虽然可以安全使用，但请注意，其 API 可能会在未来版本中发生与早期版本不兼容的变化，或者不再受支持。",
       "copy_type": "复制类型",
       "deprecated": "已弃用",
+      "documentation_sections": "文档章节",
       "dynamic": "动态",
       "filter_all": "全部",
       "filter_properties": "筛选属性…",
@@ -597,6 +608,8 @@
       "nav_overview": "概览",
       "nav_properties": "属性",
       "non_dynamic": "非动态",
+      "possible_values": "可选值",
+      "sub_type": "子类型",
       "required": "必填"
     },
     "last execution date": "最后执行日期",
@@ -871,6 +884,7 @@
     "enable": "启用",
     "enabled": "已启用",
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
+    "delete flow error": "无法删除 flow {id}",
     "flows deleted": "<code>{count}</code> 个流程已删除",
     "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",
     "flow enable": "确定要启用 <code>{flowCount}</code> 个流程吗？",
@@ -1009,9 +1023,11 @@
         "file_already_exists": "已存在同名文件",
         "file_conflicts_with_folder": "已存在同名文件夹",
         "file_error": "创建文件时发生错误",
+        "file_success": "文件 \"{name}\" 创建成功。",
         "folder": "创建文件夹",
         "folder_already_exists": "已存在同名文件夹",
         "folder_conflicts_with_file": "已存在同名文件",
+        "folder_success": "文件夹 \"{name}\" 创建成功。",
         "folder_error": "创建文件夹时发生错误"
       },
       "rename": {
@@ -1025,8 +1041,10 @@
       "delete": {
         "label": "删除",
         "file": "删除文件",
+        "file_error": "无法删除文件：{name}",
         "folder": "删除文件夹",
         "files": "删除 {count} 个已选择的文件",
+        "bulk_success": "所选文件已成功删除。",
         "folders": "删除 {count} 个已选文件夹"
       },
       "move": {
@@ -1636,6 +1654,7 @@
     "webhook link copied": "Webhook链接已复制。",
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
+    "scheduleDateInPast": "计划日期必须在未来",
     "warning": "警告",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "docs": "文档",
@@ -1968,6 +1987,9 @@
         "label": "编辑仪表板",
         "chart": "编辑此图表"
       },
+      "creation": {
+        "label": "创建 Dashboard"
+      },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
@@ -1978,6 +2000,7 @@
         "csv": "导出为 CSV",
         "ion": "导出到 ION"
       },
+      "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
         "running": "运行中",
@@ -2197,7 +2220,6 @@
     "submit": "提交",
     "accept": "接受",
     "reject": "拒绝",
-    "draft_available": "编辑器中有可用的草稿更改",
     "last modified": "上次修改",
     "run task in playground": "在playground中运行task",
     "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
@@ -2649,8 +2671,6 @@
       "open_mode_hint": "任务默认在模态框中打开。您可以在{settings}中将选项卡设为默认。"
     },
     "blocks": "区块",
-    "flow_description": "flow 描述",
-    "flow_no_description": "无描述。请在您的 flow YAML 中添加描述，以记录其功能。",
     "split_horizontal": "水平拆分",
     "split_vertical": "垂直拆分",
     "pwa": {

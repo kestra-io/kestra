@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "Basculer le menu",
+    "favourites": "Favoris",
+    "to close": "pour fermer",
+    "tabs": "Onglets",
+    "select": "Sélectionner",
     "panel actions": "Actions du panneau",
     "playground actions": "Actions du Playground",
     "bulk actions": "Actions en masse",
@@ -223,6 +227,7 @@
       "invalid duration": "Format de durée invalide. Veuillez utiliser ISO 8601 (par ex., PT30M, P1D).",
       "leave empty for infinite": "Laisser vide pour une durée infinie ou saisir une durée ISO 8601 (par exemple, 'P1DT1H1M1S')",
       "duration example": "Exemple: 'P1DT1H1M1S'",
+      "examples": "Exemples :",
       "error": "Format de durée invalide, doit être une durée ISO 8601 (par exemple, P1DT1H1M1S)",
       "custom": "Personnalisé",
       "last5minutes": "5 dernières minutes",
@@ -280,6 +285,7 @@
     "expiration date": "Date d'expiration",
     "healthcheck date": "Date du HealthCheck",
     "last execution status": "Statut de la dernière exécution",
+    "jump to": "Aller à",
     "jump to...": "Aller à...",
     "contextBar": {
       "ai": "IA",
@@ -478,6 +484,7 @@
       "big_file_download_only": "Ce fichier fait {size}. Il est trop volumineux pour être ouvert dans l'éditeur, téléchargez-le à la place.",
       "load_anyway": "Charger quand même",
       "load_error": "Échec du chargement de l'aperçu du fichier. Il peut s'agir d'un problème temporaire ou d'un problème d'autorisations.",
+      "image_alt": "Aperçu de l'output image",
       "retry": "Réessayer",
       "html_asset_warning": "Cet aperçu affiche le HTML dans un cadre isolé. Les ressources locales telles que les images et les feuilles de style référencées par des chemins relatifs ne se chargeront pas.",
       "html_preview_title": "Aperçu du fichier HTML"
@@ -498,6 +505,8 @@
     "docsPage": {
       "notFound": "Cette page de documentation n'existe pas. Elle a peut-être été déplacée ou renommée.",
       "loadError": "Impossible de charger cette page de documentation. Veuillez réessayer.",
+      "close_menu": "Fermer le menu",
+      "open_menu": "Ouvrir le menu",
       "backToDocs": "Retour aux Docs"
     },
     "documentation": {
@@ -554,8 +563,10 @@
       "names": "Plugins",
       "release": "Notes de version",
       "beta": "Bêta",
+      "beta_notice": "Ce plugin est actuellement en bêta. Bien qu'il soit considéré comme sûr, sachez que son API pourrait changer dans de futures versions de manière incompatible avec les versions précédentes, ou qu'il pourrait ne plus être pris en charge.",
       "copy_type": "Copier le type",
       "deprecated": "Obsolète",
+      "documentation_sections": "Sections de la documentation",
       "dynamic": "dynamique",
       "filter_all": "Tout",
       "filter_properties": "Filtrer les propriétés…",
@@ -597,6 +608,8 @@
       "nav_overview": "Vue d'ensemble",
       "nav_properties": "Propriétés",
       "non_dynamic": "non dynamique",
+      "possible_values": "Valeurs possibles",
+      "sub_type": "Sous-type",
       "required": "Obligatoire"
     },
     "last execution date": "Dernière exécution",
@@ -871,6 +884,7 @@
     "enable": "Activer",
     "enabled": "Activé",
     "flow delete": "Êtes vous sûr de vouloir supprimer <code>{flowCount}</code> flow(s)?",
+    "delete flow error": "Impossible de supprimer le flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) supprimé(s)",
     "flow disable": "Êtes vous sûr de vouloir désactiver <code>{flowCount}</code> flow(s)?",
     "flow enable": "Êtes vous sûr de vouloir activer <code>{flowCount}</code> flow(s)?",
@@ -1009,9 +1023,11 @@
         "file_already_exists": "Un fichier avec ce nom existe déjà",
         "file_conflicts_with_folder": "Un dossier avec ce nom existe déjà",
         "file_error": "Une erreur s'est produite lors de la création du fichier",
+        "file_success": "Fichier \"{name}\" créé avec succès.",
         "folder": "Créer un dossier",
         "folder_already_exists": "Un dossier avec ce nom existe déjà",
         "folder_conflicts_with_file": "Un fichier avec ce nom existe déjà",
+        "folder_success": "Dossier \"{name}\" créé avec succès.",
         "folder_error": "Une erreur s'est produite lors de la création du dossier"
       },
       "rename": {
@@ -1025,8 +1041,10 @@
       "delete": {
         "label": "Supprimer",
         "file": "Supprimer le fichier",
+        "file_error": "Impossible de supprimer le fichier : {name}",
         "folder": "Supprimer le dossier",
         "files": "Supprimer {count} fichiers sélectionnés",
+        "bulk_success": "Fichiers sélectionnés supprimés avec succès.",
         "folders": "Supprimer {count} dossiers sélectionnés"
       },
       "move": {
@@ -1636,6 +1654,7 @@
     "webhook link copied": "Lien du webhook copié.",
     "copy url": "Copier l'URL",
     "scheduleDate": "Date de planification",
+    "scheduleDateInPast": "La date de planification doit être future",
     "warning": "Avertissement",
     "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",
     "docs": "Documentation",
@@ -1968,6 +1987,9 @@
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
       },
+      "creation": {
+        "label": "Créer un Dashboard"
+      },
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",
@@ -1978,6 +2000,7 @@
         "csv": "Exporter vers CSV",
         "ion": "Exporter vers ION"
       },
+      "show_all_statuses": "Afficher tous les états",
       "quick_filters": {
         "all": "Tout",
         "running": "En cours",
@@ -2197,7 +2220,6 @@
     "submit": "Soumettre",
     "accept": "Accepter",
     "reject": "Rejeter",
-    "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
     "last modified": "Dernière modification",
     "run task in playground": "Exécuter la task dans le playground",
     "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",
@@ -2649,8 +2671,6 @@
       "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
     },
     "blocks": "Blocs",
-    "flow_description": "Description du flow",
-    "flow_no_description": "Aucune description. Ajoutez une description à votre YAML de flow pour documenter ce qu'il fait.",
     "split_horizontal": "Diviser horizontalement",
     "split_vertical": "Diviser verticalement",
     "pwa": {

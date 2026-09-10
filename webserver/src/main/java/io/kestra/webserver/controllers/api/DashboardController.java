@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -42,9 +43,11 @@ import io.kestra.webserver.utils.TimeLineSearch;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -284,7 +287,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Dashboards" }, summary = "Export a dashboard chart data")
-    public HttpResponse<byte[]> exportDashboardChart(
+    public HttpResponse<StreamedFile> exportDashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
         @Parameter(description = "The export format") @QueryValue(defaultValue = "CSV") ExportFormat format,
@@ -302,7 +305,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "charts/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Dashboards" }, summary = "Export a chart data")
-    public HttpResponse<byte[]> exportChart(
+    public HttpResponse<StreamedFile> exportChart(
         @Parameter(description = "The export format") @QueryValue(defaultValue = "CSV") ExportFormat format,
         @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest) throws IOException {
         var fetchChartDataQuery = buildChartPreviewDataQuery(previewRequest);
@@ -318,7 +321,7 @@ public class DashboardController {
         }
     }
 
-    private HttpResponse<byte[]> export(List<Map<String, Object>> rows, String filename, ExportFormat format) throws IOException {
+    private HttpResponse<StreamedFile> export(List<Map<String, Object>> rows, String filename, ExportFormat format) throws IOException {
         var byteArrayOutputStream = new ByteArrayOutputStream();
 
         if (format == ExportFormat.ION) {
@@ -328,8 +331,11 @@ public class DashboardController {
             CSVUtils.toCSV(outputStreamWriter, rows);
         }
 
+        byte[] content = byteArrayOutputStream.toByteArray();
         var fullFilename = "%s.%s".formatted(filename, format.name().toLowerCase());
-        return HttpResponse.ok(byteArrayOutputStream.toByteArray()).header("Content-Disposition", "attachment; filename=\"%s\"".formatted(fullFilename));
+        StreamedFile streamedFile = new StreamedFile(new ByteArrayInputStream(content), MediaType.APPLICATION_OCTET_STREAM_TYPE, System.currentTimeMillis(), content.length)
+            .attach(fullFilename);
+        return HttpResponse.ok(streamedFile).header(HttpHeaders.CACHE_CONTROL, "no-cache");
     }
 
     public record PreviewRequest(

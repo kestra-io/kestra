@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "메뉴 전환",
+    "favourites": "즐겨찾기",
+    "to close": "닫기",
+    "tabs": "탭",
+    "select": "선택",
     "panel actions": "패널 작업",
     "playground actions": "플레이그라운드 작업",
     "bulk actions": "일괄 작업",
@@ -223,6 +227,7 @@
       "invalid duration": "잘못된 지속 시간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해 주세요.",
       "leave empty for infinite": "무한 지속 시간을 위해 비워두거나 ISO 8601 지속 시간(예: 'P1DT1H1M1S')을 입력하세요.",
       "duration example": "예: 'P1DT1H1M1S'",
+      "examples": "예:",
       "error": "잘못된 기간 형식입니다. ISO 8601 기간 형식(예: P1DT1H1M1S)이어야 합니다.",
       "custom": "사용자 정의",
       "last5minutes": "지난 5분",
@@ -280,6 +285,7 @@
     "expiration date": "만료 날짜",
     "healthcheck date": "HealthCheck 날짜",
     "last execution status": "마지막 실행 상태",
+    "jump to": "이동",
     "jump to...": "이동...",
     "contextBar": {
       "ai": "AI",
@@ -478,6 +484,7 @@
       "big_file_download_only": "이 파일의 크기는 {size}입니다. 에디터에서 열기에는 너무 크므로 대신 다운로드하세요.",
       "load_anyway": "그래도 로드하기",
       "load_error": "파일 미리보기를 로드하지 못했습니다. 일시적인 문제이거나 권한 문제일 수 있습니다.",
+      "image_alt": "이미지 output 미리보기",
       "retry": "다시 시도",
       "html_asset_warning": "이 미리보기는 HTML을 샌드박스 프레임에서 렌더링합니다. 상대 경로로 참조된 이미지 및 스타일시트와 같은 로컬 자산은 로드되지 않습니다.",
       "html_preview_title": "HTML 파일 미리보기"
@@ -498,6 +505,8 @@
     "docsPage": {
       "notFound": "이 문서 페이지가 존재하지 않습니다. 이동되었거나 이름이 변경되었을 수 있습니다.",
       "loadError": "이 문서 페이지를 불러올 수 없습니다. 다시 시도해 주세요.",
+      "close_menu": "메뉴 닫기",
+      "open_menu": "메뉴 열기",
       "backToDocs": "Docs로 돌아가기"
     },
     "documentation": {
@@ -554,8 +563,10 @@
       "names": "플러그인들",
       "release": "릴리스 노트",
       "beta": "베타",
+      "beta_notice": "이 플러그인은 현재 베타 버전입니다. 사용하기에 안전한 것으로 간주되지만, 향후 릴리스에서 API가 이전 버전과 호환되지 않게 변경되거나 지원이 중단될 수 있습니다.",
       "copy_type": "유형 복사",
       "deprecated": "사용 중단",
+      "documentation_sections": "문서 섹션",
       "dynamic": "동적",
       "filter_all": "전체",
       "filter_properties": "속성 필터링…",
@@ -597,6 +608,8 @@
       "nav_overview": "개요",
       "nav_properties": "속성",
       "non_dynamic": "비동적",
+      "possible_values": "가능한 값",
+      "sub_type": "하위 유형",
       "required": "필수"
     },
     "last execution date": "마지막 실행 날짜",
@@ -871,6 +884,7 @@
     "enable": "활성화",
     "enabled": "활성화됨",
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
+    "delete flow error": "flow {id}을(를) 삭제하지 못했습니다",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",
     "flow enable": "<code>{flowCount}</code> 개의 flow를 활성화하시겠습니까?",
@@ -1009,9 +1023,11 @@
         "file_already_exists": "이 이름의 파일이 이미 존재합니다",
         "file_conflicts_with_folder": "이 이름의 폴더가 이미 존재합니다",
         "file_error": "파일 생성 중 오류 발생",
+        "file_success": "파일 \"{name}\"을(를) 생성했습니다.",
         "folder": "폴더 생성",
         "folder_already_exists": "이 이름의 폴더가 이미 존재합니다",
         "folder_conflicts_with_file": "이 이름의 파일이 이미 존재합니다",
+        "folder_success": "폴더 \"{name}\"을(를) 생성했습니다.",
         "folder_error": "폴더 생성 중 오류가 발생했습니다"
       },
       "rename": {
@@ -1025,8 +1041,10 @@
       "delete": {
         "label": "삭제",
         "file": "파일 삭제",
+        "file_error": "파일을 삭제하지 못했습니다: {name}",
         "folder": "폴더 삭제",
         "files": "{count}개의 선택된 파일 삭제",
+        "bulk_success": "선택한 파일이 성공적으로 삭제되었습니다.",
         "folders": "{count}개의 선택된 폴더 삭제"
       },
       "move": {
@@ -1636,6 +1654,7 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
+    "scheduleDateInPast": "예약 날짜는 미래여야 합니다.",
     "warning": "경고",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "docs": "문서",
@@ -1968,6 +1987,9 @@
         "label": "대시보드 편집",
         "chart": "이 차트 편집"
       },
+      "creation": {
+        "label": "대시보드 생성"
+      },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "others": "기타",
@@ -1978,6 +2000,7 @@
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"
       },
+      "show_all_statuses": "모든 상태 표시",
       "quick_filters": {
         "all": "전체",
         "running": "실행 중",
@@ -2197,7 +2220,6 @@
     "submit": "제출",
     "accept": "수락",
     "reject": "거부",
-    "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
     "last modified": "마지막 수정",
     "run task in playground": "플레이그라운드에서 task 실행",
     "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
@@ -2649,8 +2671,6 @@
       "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
-    "flow_description": "flow 설명",
-    "flow_no_description": "설명이 없습니다. flow YAML에 설명을 추가하여 flow의 기능을 문서화하세요.",
     "split_horizontal": "수평으로 분할",
     "split_vertical": "세로로 분할",
     "pwa": {

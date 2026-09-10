@@ -25,13 +25,13 @@ vi.mock("../../../../src/stores/executions", async (importOriginal) => {
     return {
         ...original,
         useExecutionsStore: () => ({
-            validateExecution: vi.fn().mockResolvedValue({data: {checks: [], inputs: [{
+            validateExecution: vi.fn().mockResolvedValue({checks: [], inputs: [{
                 enabled: true,
                 input: {id: "region", type: "STRING", required: false},
                 errors: [],
                 value: null,
                 isDefault: true,
-            }]}}),
+            }]}),
         }),
     }
 })

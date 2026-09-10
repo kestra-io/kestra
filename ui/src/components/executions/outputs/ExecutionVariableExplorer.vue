@@ -64,7 +64,6 @@
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
-                                :previewFormatter="treePreviewFormatter"
                                 defaultExpanded
                                 @select="onSelectPath"
                             />
@@ -157,18 +156,6 @@
             return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
-    }
-
-    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
-        if (context.kind === "array") {
-            return context.count === 1
-                ? t("variable_explorer.one_item")
-                : t("variable_explorer.n_items", {count: context.count})
-        }
-
-        return context.count === 1
-            ? t("variable_explorer.one_key")
-            : t("variable_explorer.n_keys", {count: context.count})
     }
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {

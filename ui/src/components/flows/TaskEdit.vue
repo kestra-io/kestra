@@ -10,7 +10,7 @@
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
-            :beforeClose="beforeClose"
+            :dirty="isDirty"
             :size="size"
         >
             <template #header>
@@ -171,7 +171,6 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
 
     interface Props {
@@ -231,8 +230,7 @@
     const taskYaml = ref("")
     const taskBaseline = ref("")
     const isModalOpen = ref(false)
-    const {guardedClose} = useDiscardGuard(() => taskYaml.value !== taskBaseline.value)
-    const beforeClose = (done: () => void) => guardedClose(() => done())
+    const isDirty = computed(() => taskYaml.value !== taskBaseline.value)
     const activeTabs = ref(props.readOnly ? "source" : "form")
     const inputsCollapsed = defineModel<boolean>("inputsCollapsed", {default: false})
     const outputCollapsed = defineModel<boolean>("outputCollapsed", {default: true})

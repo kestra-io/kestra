@@ -1,15 +1,8 @@
 package io.kestra.webserver.errors;
 
-import java.util.List;
-import java.util.Objects;
-
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.IdUtils;
-
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.*;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.opentelemetry.api.trace.Span;
@@ -17,6 +10,9 @@ import io.opentelemetry.api.trace.SpanContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Builds every {@link ProblemDetail} the API emits, and the only place the rules that make them safe live:
@@ -30,13 +26,21 @@ public class ProblemFactory {
      * The {@code detail} of every server error. Fixed rather than derived from the exception, so an internal
      * message can never reach the caller; the real message goes to the log under the same {@code traceId}.
      */
-    static final String SERVER_ERROR_DETAIL = "An unexpected error occurred. Quote the traceId when contacting support.";
+    private final String serverErrorDetail;
+
+    private static final String OSS_SERVER_ERROR_DETAIL = "An unexpected error occurred. Contact your administrator to review the logs associated to the trace ID.";
+    private static final String EE_SERVER_ERROR_DETAIL = "An unexpected error occurred. Please quote the trace ID along with attaching the server log when contacting support.";
 
     private final ProblemMapperRegistry registry;
 
     @Inject
-    public ProblemFactory(final ProblemMapperRegistry registry) {
+    public ProblemFactory(final ProblemMapperRegistry registry, final EditionProvider editionProvider) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
+        if (EditionProvider.Edition.OSS.equals(editionProvider.get())) {
+            this.serverErrorDetail = OSS_SERVER_ERROR_DETAIL;
+        } else {
+            this.serverErrorDetail = EE_SERVER_ERROR_DETAIL;
+        }
     }
 
     /** Reports a throwable, resolving its type through the registry. */
@@ -118,7 +122,7 @@ public class ProblemFactory {
                 detail == null ? "" : detail,
                 throwable
             );
-            return new ProblemDetail(type.uri(), type.title(), status, SERVER_ERROR_DETAIL, instance, List.of(), traceId);
+            return new ProblemDetail(type.uri(), type.title(), status, serverErrorDetail, instance, List.of(), traceId);
         }
 
         if (log.isDebugEnabled()) {

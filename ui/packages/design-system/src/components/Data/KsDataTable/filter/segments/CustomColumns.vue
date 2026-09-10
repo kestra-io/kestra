@@ -5,7 +5,7 @@
                 <h6>{{ $t("filter.customize columns") }}</h6>
                 <small>{{ $t("filter.drag to reorder columns") }}</small>
             </div>
-            <KsButton link :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
+            <KsButton link :aria-label="$t('filter.close')" :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
         </div>
 
         <div class="list">
@@ -64,6 +64,7 @@
 <style lang="scss" scoped>
 .customize-columns-panel {
     height: fit-content;
+    max-height: 500px;
     display: flex;
     flex-direction: column;
     border-radius: 0.5rem;

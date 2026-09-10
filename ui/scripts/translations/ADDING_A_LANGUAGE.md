@@ -104,11 +104,7 @@ Commit the locale files and the fingerprints files **together** - one without th
 
 If a handful of keys fail on every retry with `PROHIBITED_CONTENT`, that is a Gemini safety block, not a flake - reword the English source, never hand-write the translation.
 
-### 3.7 One out-of-pipeline file (known gap)
-
-`ui/src/components/plugins/PluginCard.locale.ts` holds all languages inline but sits in `ui/src`, outside the phase-2 glob (`packages/design-system/**/*.locale.ts`), so the generator will NOT add the new language to it. Its keys fall back to English if missed. Either extend the glob in `ui/scripts/translations/generate.ts` to cover it (preferred, one-line change) or accept the English fallback for its two short strings. Worth fixing in the same PR.
-
-### 3.8 Verify
+### 3.7 Verify
 
 ```bash
 cd ui
@@ -162,7 +158,7 @@ Manual smoke test on an EE-only surface (IAM, Tenants, Apps) to confirm the merg
   - OSS: `feat(core): add Turkish as a supported UI language`
   - EE: `feat(core): add Turkish as a supported UI language`
 - **Merge OSS first.** EE CI checks out OSS `develop` (or passes `--oss-root`), and the EE wrapper imports `kestra/src/translations/tr.json` from the sibling checkout - until the OSS PR is merged, EE CI cannot resolve the new locale and both the build and the translation gate fail.
-- The PR gate (`check-translations.mjs`) runs on both PRs before `npm ci`; the full `translations:check` runs locally and on the auto-translate workflow.
+- The gate (`check-translations.mjs`) runs on both PRs before `npm ci`, and again on the pushes that merge them; `npm run translations:check` runs the gate and then the compiler-backed comparer, locally and at the end of the auto-translate workflow.
 - After both merge, the scheduled auto-translate bot (every 3h on weekdays, both repos) keeps the new language filled as English keys evolve - no ongoing manual work.
 - No backport: a new language is a feature and ships from `develop` only.
 
@@ -175,7 +171,6 @@ OSS:
 - [ ] `i18n.ts`: plural rule, only if the language needs one
 - [ ] `generateTranslations.ts`: per-language rule block (form of address, reserved-term inflection, entity glossary) written and reviewed before generating
 - [ ] `translations:generate` run; locale JSON + `fingerprints.json` + design-system `*.locale.ts` + `fingerprints-design-system.json` committed together
-- [ ] `PluginCard.locale.ts` gap handled
 - [ ] `translations:check` + `check:types` green
 - [ ] Manual smoke test (language switch, dates, pagination, empty states)
 

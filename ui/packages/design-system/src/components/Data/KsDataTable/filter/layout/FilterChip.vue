@@ -30,6 +30,7 @@
             link
             size="small"
             class="close"
+            :aria-label="$t('filter.remove_filter')"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
         />
@@ -59,7 +60,7 @@
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 

@@ -277,7 +277,7 @@
             v-model="isBackfillOpen"
             destroyOnClose
             :appendToBody="true"
-            :beforeClose="beforeBackfillClose"
+            :dirty="isBackfillDirty"
             scrollable
             large
         >
@@ -287,21 +287,21 @@
             <KsForm :model="backfill" labelPosition="top">
                 <div class="pickers">
                     <div class="small-picker">
-                        <KsFormItem label="Start">
+                        <KsFormItem :label="$t('start date')">
                             <KsDatePicker
                                 v-model="backfill.start"
                                 type="datetime"
-                                placeholder="Start"
+                                :placeholder="$t('start date')"
                                 :disabledDate="disabledStartDate"
                             />
                         </KsFormItem>
                     </div>
                     <div class="small-picker">
-                        <KsFormItem label="End">
+                        <KsFormItem :label="$t('end date')">
                             <KsDatePicker
                                 v-model="backfill.end"
                                 type="datetime"
-                                placeholder="End"
+                                :placeholder="$t('end date')"
                                 :disabledDate="disabledEndDate"
                             />
                         </KsFormItem>
@@ -357,8 +357,7 @@
     import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
-    import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
-    import {useDiscardGuard} from "../../../composables/useDiscardGuard"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -424,13 +423,12 @@
     // kept out of `backfill` so it never leaks into the submitted payload (cleanBackfill spreads backfill)
     const backfillInputsNoDefault = ref<Record<string, unknown>>({})
 
-    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+    const isBackfillDirty = computed(() => !!(
         backfill.value.start ||
         backfill.value.end ||
         Object.keys(backfillInputsNoDefault.value).length > 0 ||
         backfill.value.labels?.some((label: any) => label.key || label.value)
     ))
-    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
 
     const optionalColumns = computed<ColumnConfig[]>(() => [
         {

@@ -130,6 +130,64 @@ describe("DrillDownDrawer", () => {
         expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({page: 2, size: 25}))
     })
 
+    test("mode: table — opening a new target reloads instead of keeping the previous rows", async () => {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce({results: [{id: "from-first-target"}], total: 1})
+            .mockResolvedValueOnce({results: [{id: "from-second-target"}], total: 1})
+        registerDrillDownPreview("test/drawer-retarget/list", {
+            mode: "table",
+            columns: [{prop: "id", label: "Id"}],
+            fetch: fetchMock,
+            rowDetail: vi.fn(),
+        })
+
+        const wrapper = mountDrawer()
+        const store = useDrillDownStore()
+        store.open({name: "test/drawer-retarget/list", query: {"filters[state][IN]": "SUCCESS"}, timeFiltered: false})
+        await flushPromises()
+
+        expect(wrapper.findComponent(KsDataTable).props("data")).toEqual([{id: "from-first-target"}])
+
+        // The drawer stays mounted between drill-downs, so nothing but the target changes here.
+        store.open({name: "test/drawer-retarget/list", query: {"filters[state][IN]": "FAILED"}, timeFiltered: false})
+        await flushPromises()
+
+        expect(fetchMock).toHaveBeenLastCalledWith(expect.objectContaining({"filters[state][IN]": "FAILED"}))
+        expect(wrapper.findComponent(KsDataTable).props("data")).toEqual([{id: "from-second-target"}])
+        expect(fetchMock).toHaveBeenCalledTimes(2)
+    })
+
+    test("mode: table — a superseded fetch landing last does not overwrite the current target's rows", async () => {
+        let resolveStale!: (value: unknown) => void
+        const stale = new Promise((resolve) => {
+            resolveStale = resolve
+        })
+        const fetchMock = vi.fn()
+            .mockReturnValueOnce(stale)
+            .mockResolvedValueOnce({results: [{id: "current"}], total: 1})
+        registerDrillDownPreview("test/drawer-race/list", {
+            mode: "table",
+            columns: [{prop: "id", label: "Id"}],
+            fetch: fetchMock,
+            rowDetail: vi.fn(),
+        })
+
+        const wrapper = mountDrawer()
+        const store = useDrillDownStore()
+        store.open({name: "test/drawer-race/list", query: {"filters[state][IN]": "SUCCESS"}, timeFiltered: false})
+        await flushPromises()
+
+        store.open({name: "test/drawer-race/list", query: {"filters[state][IN]": "FAILED"}, timeFiltered: false})
+        await flushPromises()
+
+        resolveStale({results: [{id: "stale"}], total: 99})
+        await flushPromises()
+
+        const dataTable = wrapper.findComponent(KsDataTable)
+        expect(dataTable.props("data")).toEqual([{id: "current"}])
+        expect(dataTable.props("total")).toBe(1)
+    })
+
     test("mode: logs — renders LogsWrapper with the encoded filters (no size/page)", async () => {
         registerDrillDownPreview("test/drawer-logs/list", {mode: "logs"})
 

@@ -26,7 +26,7 @@
                     </span>
                 </div>
             </template>
-            <span class="ellipsis" tabindex="0" aria-label="Show all statuses">⋯</span>
+            <span class="ellipsis" tabindex="0" :aria-label="$t('dashboards.show_all_statuses')">⋯</span>
         </KsTooltip>
 
         <span

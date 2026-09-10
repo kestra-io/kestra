@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "Fehler-Debugging",
       "subtitle": "Fokussiert auf {taskId}",
-      "announce": "{count} task(s) fehlgeschlagen. Debug-Panel geöffnet, fokussiert auf {taskId}.",
-      "reopen": "Fehler-Debugging erneut öffnen ({count})",
+      "announce": "{count} task(s) fehlgeschlagen. Fehler-Debugging verfügbar, fokussiert auf {taskId}.",
+      "reopen": "Diesen Fehler debuggen ({count})",
       "copyError": "Fehler kopieren",
       "switcher": {
         "label": "Fehler in dieser Ausführung"

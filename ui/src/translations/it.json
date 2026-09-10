@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "Debug dei fallimenti",
       "subtitle": "Concentrato su {taskId}",
-      "announce": "{count} task falliti. Pannello di debug aperto, concentrato su {taskId}.",
-      "reopen": "Riapri debug dei fallimenti ({count})",
+      "announce": "{count} task falliti. Debug dei fallimenti disponibile, concentrato su {taskId}.",
+      "reopen": "Esegui il debug di questo fallimento ({count})",
       "copyError": "Copia errore",
       "switcher": {
         "label": "Fallimenti in questa esecuzione"

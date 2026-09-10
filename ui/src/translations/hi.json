@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "विफलता डिबग",
       "subtitle": "{taskId} पर केंद्रित",
-      "announce": "{count} task विफल हुए। डिबग पैनल खुला, {taskId} पर केंद्रित।",
-      "reopen": "विफलता डिबग फिर से खोलें ({count})",
+      "announce": "{count} task विफल हुए। विफलता डिबग उपलब्ध है, {taskId} पर केंद्रित।",
+      "reopen": "इस विफलता को डिबग करें ({count})",
       "copyError": "त्रुटि कॉपी करें",
       "switcher": {
         "label": "इस निष्पादन में विफलताएं"

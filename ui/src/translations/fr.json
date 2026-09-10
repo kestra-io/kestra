@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "Débogage de l'échec",
       "subtitle": "Focalisé sur {taskId}",
-      "announce": "{count} task(s) en échec. Panneau de débogage ouvert, focalisé sur {taskId}.",
-      "reopen": "Rouvrir le débogage de l'échec ({count})",
+      "announce": "{count} task(s) en échec. Débogage de l'échec disponible, focalisé sur {taskId}.",
+      "reopen": "Déboguer cet échec ({count})",
       "copyError": "Copier l'erreur",
       "switcher": {
         "label": "Échecs dans cette exécution"

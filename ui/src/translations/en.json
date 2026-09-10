@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "Failure debug",
       "subtitle": "Focused on {taskId}",
-      "announce": "{count} task(s) failed. Debug panel opened, focused on {taskId}.",
-      "reopen": "Reopen failure debug ({count})",
+      "announce": "{count} task(s) failed. Failure debug available, focused on {taskId}.",
+      "reopen": "Debug this failure ({count})",
       "copyError": "Copy error",
       "switcher": {
         "label": "Failures in this execution"

@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "Debugowanie błędu",
       "subtitle": "Skupiono na {taskId}",
-      "announce": "Liczba nieudanych tasków: {count}. Otwarto panel debugowania, skupiono na {taskId}.",
-      "reopen": "Otwórz ponownie debugowanie błędu ({count})",
+      "announce": "Liczba nieudanych tasków: {count}. Dostępne debugowanie błędu, skupiono na {taskId}.",
+      "reopen": "Debuguj ten błąd ({count})",
       "copyError": "Kopiuj błąd",
       "switcher": {
         "label": "Błędy w tym wykonaniu"

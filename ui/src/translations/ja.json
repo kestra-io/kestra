@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "失敗のデバッグ",
       "subtitle": "{taskId} にフォーカス",
-      "announce": "{count} 件の task が失敗しました。デバッグパネルを開き、{taskId} にフォーカスしました。",
-      "reopen": "失敗のデバッグを再度開く ({count})",
+      "announce": "{count} 件の task が失敗しました。失敗のデバッグが利用可能です。{taskId} にフォーカスしています。",
+      "reopen": "この失敗をデバッグ ({count})",
       "copyError": "エラーをコピー",
       "switcher": {
         "label": "この実行内の失敗"

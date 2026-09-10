@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "Depuración de fallos",
       "subtitle": "Centrado en {taskId}",
-      "announce": "{count} task(s) fallidos. Panel de depuración abierto, centrado en {taskId}.",
-      "reopen": "Reabrir depuración de fallos ({count})",
+      "announce": "{count} task(s) fallidos. Depuración de fallos disponible, centrado en {taskId}.",
+      "reopen": "Depurar este fallo ({count})",
       "copyError": "Copiar error",
       "switcher": {
         "label": "Fallos en esta ejecución"

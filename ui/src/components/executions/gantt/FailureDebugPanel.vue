@@ -169,7 +169,9 @@
     const reopenWrapperRef = ref<HTMLElement>()
     const miniTimelineRef = ref<InstanceType<typeof FailureMiniTimeline>>()
 
-    const isOpen = ref(true)
+    // Starts closed: a failed execution is common enough that hijacking the Gantt view on every
+    // visit would be disruptive. The reopen affordance below doubles as the initial entry point.
+    const isOpen = ref(false)
     const hasAnnounced = ref(false)
     const announcement = ref("")
     const timeRange = ref<TimeRange | undefined>(undefined)
@@ -214,11 +216,14 @@
     // still resolves through the redirect but logs a discarded-param warning on every render.
     // `editTask` deep-links straight to the failing task's no-code edit tab (see
     // MultiPanelFlowEditorView's onMounted handling), rather than just opening the flow at large.
+    // Sourced from `props.execution` rather than `route.params`: the panel already receives the
+    // execution's own namespace/flowId as props, so there is no need to depend on this component
+    // always being mounted under a route that happens to carry those same values as URL params.
     const editFlowRoute = computed(() => ({
         name: "flows/update/edit",
         params: {
-            namespace: route.params.namespace as string,
-            id: route.params.flowId as string,
+            namespace: props.execution.namespace,
+            id: props.execution.flowId,
             tenant: route.params.tenant as string,
         },
         query: focusedTaskRun.value ? {editTask: focusedTaskRun.value.taskId} : undefined,
@@ -282,18 +287,16 @@
         {immediate: true},
     )
 
-    watch(
-        isOpen,
-        async (open) => {
-            await nextTick()
-            if (open) {
-                panelHeadingRef.value?.focus()
-            } else {
-                (reopenWrapperRef.value?.querySelector("button") as HTMLElement | null)?.focus()
-            }
-        },
-        {immediate: true},
-    )
+    // No `immediate: true`: focus should only move in response to the user actually opening or
+    // closing the panel, never just because the component mounted with the panel closed.
+    watch(isOpen, async (open) => {
+        await nextTick()
+        if (open) {
+            panelHeadingRef.value?.focus()
+        } else {
+            (reopenWrapperRef.value?.querySelector("button") as HTMLElement | null)?.focus()
+        }
+    })
 
     function focusFailure(id: string) {
         if (id === focusedId.value) return

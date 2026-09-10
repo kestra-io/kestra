@@ -206,8 +206,8 @@
     "failureDebugPanel": {
       "title": "Отладка сбоя",
       "subtitle": "Фокус на {taskId}",
-      "announce": "Неудачных task: {count}. Панель отладки открыта, фокус на {taskId}.",
-      "reopen": "Снова открыть отладку сбоя ({count})",
+      "announce": "Неудачных task: {count}. Доступна отладка сбоя, фокус на {taskId}.",
+      "reopen": "Отладить этот сбой ({count})",
       "copyError": "Копировать ошибку",
       "switcher": {
         "label": "Сбои в этом выполнении"

@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
@@ -172,6 +172,14 @@
     const authStore = useAuthStore()
 
     const selectedTaskRunIndex = ref(0)
+    watch(() => props.taskRuns, (newRuns) => {
+        if (!newRuns || newRuns.length === 0) {
+            selectedTaskRunIndex.value = 0
+        } else if (selectedTaskRunIndex.value >= newRuns.length) {
+            selectedTaskRunIndex.value = newRuns.length - 1
+        }
+    }, {deep: true})
+    
     const currentTaskRun = computed(() => {
         if (props.taskRuns && props.taskRuns.length > 0) {
             return props.taskRuns[selectedTaskRunIndex.value] || props.taskRun

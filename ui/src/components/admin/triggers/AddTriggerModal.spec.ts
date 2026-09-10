@@ -89,7 +89,7 @@ describe("AddTriggerModal", () => {
         const wrapper = mountModal()
         await flushPromises()
 
-        const vm = wrapper.vm as any
+        const vm = wrapper.vm as unknown as {formModel: {namespace: string; flowId: string; triggerId: string}}
         vm.formModel.namespace = "company.team"
         vm.formModel.flowId = "example"
         vm.formModel.triggerId = "schedule"

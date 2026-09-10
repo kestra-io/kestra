@@ -2,7 +2,7 @@
     <ul>
         <li>
             <KsButton
-                :type="(props.type || 'primary') as any"
+                :type="props.type || 'primary'"
                 :icon="props.icon ?? Plus"
                 @click="emits('click')"
                 :tag="to ? 'router-link' : 'button'"
@@ -18,6 +18,7 @@
 
 <script setup lang="ts">
     import type {Component} from "vue"
+    import type {RouteLocationRaw} from "vue-router"
 
     import Plus from "vue-material-design-icons/Plus.vue"
 
@@ -25,8 +26,8 @@
     const props = defineProps<{
         label: string;
         icon?: Component;
-        type?: string;
-        to?: Record<string, any>;
+        type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | "";
+        to?: RouteLocationRaw;
         loading?: boolean;
         disabled?: boolean;
     }>()

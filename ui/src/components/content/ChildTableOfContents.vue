@@ -1,10 +1,10 @@
 <!-- eslint-disable vue/component-api-style -- render-function component; setup() returning h() cannot be expressed with <script setup> -->
 <script lang="ts">
-    import {h, defineComponent} from "vue"
+    import {h, defineComponent, type VNode} from "vue"
     import {useDocStore} from "../../stores/doc"
     import {RouterLink, useRoute} from "vue-router"
 
-    interface DataItem {children: any[], path: string}
+    interface DataItem {children: DataItem[], path: string}
 
 
     export default defineComponent({
@@ -38,7 +38,7 @@
 
             currentPage = currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage
 
-            let childrenWithMetadata = await docStore.children(currentPage) as Record<string, any>
+            let childrenWithMetadata = await docStore.children(currentPage) as Record<string, DataItem>
             childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata).map(([url, metadata]) => [url, {...metadata, path: url}]))
             Object.entries(childrenWithMetadata)
                 .forEach(([url, metadata]) => {
@@ -52,11 +52,11 @@
 
             const dir = Object.entries(childrenWithMetadata)[0]?.[1]?.children
 
-            const renderLinks = (data: DataItem[], level: number) => {
+            const renderLinks = (data: DataItem[], level: number): VNode => {
                 return h(
                     "ul",
                     level ? {"data-level": level} : null,
-                    (data || []).map((link):any => {
+                    (data || []).map((link) => {
                         if (link.children &&
                             (props.max === undefined || props.max <= level) &&
                             (link.children.length > 1 || link.children.length === 1 && link.children[0].path !== link.path)
@@ -71,7 +71,7 @@
 
             const defaultNode = (data: DataItem[]) => renderLinks(data, 0)
 
-            return () => ctx.slots?.default ? ctx.slots.default({dir, ...ctx.attrs}) : defaultNode(dir)
+            return () => ctx.slots?.default ? ctx.slots.default({dir, ...ctx.attrs}) : defaultNode(dir ?? [])
         },
     })
 </script>

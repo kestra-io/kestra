@@ -5,6 +5,7 @@
     "type": "module",
     "packageManager": "npm@11.16.0",
     "engines": {
+        "node": ">=24",
         "npm": ">=11.7.0"
     },
     "workspaces": [
@@ -25,6 +26,7 @@
         "precheck:types": "node scripts/ensure-sdk.mjs",
         "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsc --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
         "test:lint": "oxlint src packages tests && eslint",
+        "check:ts-any": "node scripts/explicit-any/baseline.mjs src packages tests",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
         "test:unit:shuffle": "vitest run --project=unit --sequence.shuffle.files",

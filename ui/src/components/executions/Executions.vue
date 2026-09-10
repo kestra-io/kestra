@@ -243,10 +243,8 @@
                     </template>
                     <template v-else-if="col.prop === 'taskRunList.taskId'">
                         <code class="code-text">
-                            {{ scope.row?.taskRunList?.slice(-1)[0]?.taskId }}
-                            {{
-                                scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length > 1 ? `(${scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length})` : ""
-                            }}
+                            {{ scope.row?.lastTaskRun?.taskId }}
+                            {{ scope.row?.lastTaskRun?.attempts > 1 ? `(${scope.row.lastTaskRun.attempts})` : "" }}
                         </code>
                     </template>
                     <template v-else-if="col.prop === 'trigger'">
@@ -596,6 +594,7 @@
         },
         {
             label: t("task id"),
+            // Reads `lastTaskRun`; the prop is kept as-is because it is the key persisted in the user's column preferences.
             prop: "taskRunList.taskId",
             default: false,
             description: t("filter.table_column.executions.task-id"),

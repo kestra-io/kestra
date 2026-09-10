@@ -28,9 +28,15 @@ export function isIon(value: unknown): boolean {
 }
 
 export function flatten(object: Record<string, any>) {
-    return Object.assign({}, ...function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any>[] {
+    const result: Record<string, any> = {}
+
+    // Accumulate into one object: the previous `concat(...keys.map())` and
+    // `Object.assign({}, ...leaves)` spread one argument per key, which threw RangeError
+    // above ~100k leaves and left the outputs table unrenderable (kestra-io/kestra#19316).
+    function _flatten(child: Record<string, any> | null, path: string[]): void {
         if (child === null) {
-            return [{[path.join(".")]: null}]
+            result[path.join(".")] = null
+            return
         }
 
         const keys = Object.keys(child)
@@ -38,15 +44,21 @@ export function flatten(object: Record<string, any>) {
         // An empty container has no leaves, so recursing dropped the key entirely. The `path`
         // guard keeps a top-level `{}` flattening to `{}` rather than gaining a blank key.
         if (path.length > 0 && keys.length === 0) {
-            return [{[path.join(".")]: child}]
+            result[path.join(".")] = child
+            return
         }
 
-        return ([] as Record<string, any>[]).concat(...keys
-            .map(key => typeof child[key] === "object" ?
-                _flatten(child[key], path.concat([key])) :
-                [{[path.concat([key]).join(".")]: child[key]}],
-            ))
-    }(object))
+        for (const key of keys) {
+            if (typeof child[key] === "object") {
+                _flatten(child[key], path.concat([key]))
+            } else {
+                result[path.concat([key]).join(".")] = child[key]
+            }
+        }
+    }
+
+    _flatten(object, [])
+    return result
 }
 
 export function executionVars(data: Record<string, any>) {

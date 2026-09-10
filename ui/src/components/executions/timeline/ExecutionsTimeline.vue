@@ -28,7 +28,7 @@
                 <template #template>
                     <div class="timeline-skeleton">
                         <div v-for="i in 5" :key="i" class="skel-row">
-                            <KsSkeleton :rows="1" animated style="width: 11.25rem" />
+                            <KsSkeleton :rows="1" animated style="width: var(--timeline-row-label-width)" />
                             <KsSkeleton :rows="1" animated style="flex: 1" />
                         </div>
                     </div>
@@ -51,6 +51,13 @@
                 </KsEmpty>
 
                 <template v-else>
+                    <div class="timeline-axis">
+                        <span v-for="tick in axisTicks" :key="tick.key" class="timeline-axis-tick">{{ tick.label }}</span>
+                        <span v-if="nowPercent !== undefined" class="timeline-axis-now" :style="{left: `${nowPercent}%`}">
+                            {{ $t("now") }}
+                        </span>
+                    </div>
+
                     <TimelineRow
                         v-for="row in rows"
                         :key="row.key"
@@ -84,7 +91,8 @@
     import {computed, onMounted, onUnmounted, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import type {FilterConfiguration, KsBreadcrumbItem} from "@kestra-io/design-system"
+    import {dateUtils, type FilterConfiguration, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import type {ApiLightExecution, PagedResultsApiLightExecution} from "@kestra-io/kestra-sdk"
 
     import TimelineToolbar from "./TimelineToolbar.vue"
     import TimelineRow from "./TimelineRow.vue"
@@ -93,12 +101,16 @@
     import {useExecutionsQueryScope} from "../../../composables/useExecutionsQueryScope"
     import {useTimelineRange} from "../../../composables/useTimelineRange"
     import {useExecutionFilter, useFlowExecutionFilter} from "../../filter/configurations"
-    import {groupByNamespace, countByState, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {groupByNamespace, countByState, buildAxisTicks, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     // Shared with the state filter chip in the filter bar (KsFilter's "state" key uses the same
     // IN/NOT_IN comparators), so a legend toggle also filters the table below.
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
+    const AXIS_TICK_COUNT = 6
+    // Must match the --timeline-row-label-width custom property set below: the ResizeObserver works
+    // off raw pixels, the CSS var off rem, and there is no build step to derive one from the other.
+    const ROW_LABEL_WIDTH_PX = 180
 
     const props = withDefaults(defineProps<{
         namespace?: string;
@@ -207,11 +219,47 @@
         }))
     })
 
+    // Mirrors the [data-state="..."] selectors in TimelineBar.vue's CSS.
+    const STATE_CHART_COLOR_VARS: Record<string, string> = {
+        SUCCESS: "var(--ks-chart-success)",
+        FAILED: "var(--ks-chart-failed)",
+        WARNING: "var(--ks-chart-warning)",
+        PAUSED: "var(--ks-chart-paused)",
+        CANCELLED: "var(--ks-chart-cancelled)",
+        SKIPPED: "var(--ks-chart-skipped)",
+        CREATED: "var(--ks-chart-created)",
+        RESTARTED: "var(--ks-chart-restarted)",
+        RETRIED: "var(--ks-chart-retried)",
+        RETRYING: "var(--ks-chart-retrying)",
+        QUEUED: "var(--ks-chart-queued)",
+        RUNNING: "var(--ks-chart-running)",
+        KILLING: "var(--ks-chart-killing)",
+        KILLED: "var(--ks-chart-killed)",
+    }
+
     const legendItems = computed(() =>
         countByState(scopedExecutions.value).map(({state, count}) => ({
             label: state,
-            color: `var(--ks-chart-${state.toLowerCase()})`,
+            color: STATE_CHART_COLOR_VARS[state] ?? `var(--ks-chart-${state.toLowerCase()})`,
             count,
+        })),
+    )
+
+    // Within a minute of "now": close enough that the last axis tick already reads "Now", so the
+    // floating marker below would just duplicate it.
+    const isPinnedToNow = computed(() => Date.now() - rangeEndMs.value < 60_000)
+
+    const nowPercent = computed(() => {
+        const now = Date.now()
+        const span = rangeEndMs.value - rangeStartMs.value
+        if (isPinnedToNow.value || span <= 0 || now < rangeStartMs.value || now > rangeEndMs.value) return undefined
+        return ((now - rangeStartMs.value) / span) * 100
+    })
+
+    const axisTicks = computed(() =>
+        buildAxisTicks(rangeStartMs.value, rangeEndMs.value, AXIS_TICK_COUNT, Date.now()).map((tick, i) => ({
+            key: `${i}-${tick.ms}`,
+            label: tick.isNow ? t("now") : dateUtils.dateFilter(new Date(tick.ms).toISOString(), "LT"),
         })),
     )
 
@@ -285,33 +333,28 @@
         router.push({query: cleared})
     }
 
-    interface FetchedExecution {
-        id: string;
-        namespace: string;
-        flowId: string;
-        state?: {current: string; startDate?: string; endDate?: string};
-    }
-
     async function fetchExecutions() {
         loading.value = true
         error.value = undefined
         try {
-            const response: unknown = await executionsStore.findExecutions(loadQuery({
+            // Search executions returns the light DTO (ApiLightExecution), not the full Execution;
+            // the store's findExecutions is declared Promise<any>, so this cast is what vue-tsc would
+            // otherwise infer on its own.
+            const response = await executionsStore.findExecutions(loadQuery({
                 size: MAX_FETCHED_EXECUTIONS,
                 page: 1,
                 sort: "state.startDate:desc",
                 commit: false,
-            }))
-            const results = ((response as {results?: unknown[]})?.results ?? []) as FetchedExecution[]
-            rawExecutions.value = results
-                .filter((execution) => Boolean(execution.state?.startDate))
+            })) as PagedResultsApiLightExecution
+            rawExecutions.value = (response.results ?? [])
+                .filter((execution): execution is ApiLightExecution & {state: {startDate: string}} => Boolean(execution.state?.startDate))
                 .map((execution) => ({
                     id: execution.id,
                     namespace: execution.namespace,
                     flowId: execution.flowId,
-                    state: execution.state!.current,
-                    startMs: new Date(execution.state!.startDate!).getTime(),
-                    endMs: execution.state!.endDate ? new Date(execution.state!.endDate!).getTime() : Date.now(),
+                    state: execution.state.current,
+                    startMs: new Date(execution.state.startDate).getTime(),
+                    endMs: execution.state.endDate ? new Date(execution.state.endDate).getTime() : Date.now(),
                 }))
         } catch {
             error.value = t("executionsTimeline.error.description")
@@ -336,7 +379,7 @@
         if (bodyRef.value && typeof ResizeObserver !== "undefined") {
             resizeObserver = new ResizeObserver(entries => {
                 const entry = entries[0]
-                if (entry) availableWidthPx.value = Math.max(entry.contentRect.width - 180, 100)
+                if (entry) availableWidthPx.value = Math.max(entry.contentRect.width - ROW_LABEL_WIDTH_PX, 100)
             })
             resizeObserver.observe(bodyRef.value)
         }
@@ -349,6 +392,8 @@
 
 <style scoped lang="scss">
 .executions-timeline {
+    --timeline-row-label-width: 11.25rem;
+
     display: flex;
     flex-direction: column;
     border: 1px solid var(--ks-border-default);
@@ -357,6 +402,13 @@
     box-shadow: 0 var(--ks-spacing-1) var(--ks-spacing-2) 0 var(--ks-shadow-element);
     overflow: hidden;
     margin-bottom: var(--ks-spacing-4);
+}
+
+.executions-timeline.expanded {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 0;
 }
 
 .timeline-breadcrumb-bar {
@@ -379,8 +431,47 @@
     overflow-y: auto;
 }
 
+// A viewport-relative height rather than an exact `calc(100vh - Npx)`: this component is embedded
+// with different chrome above it (top-level executions list vs. a flow/namespace page), so no single
+// pixel offset is correct everywhere. This reliably pushes the table below the fold in all of them.
 .executions-timeline.expanded .timeline-body {
     max-height: none;
+    min-height: 70vh;
+}
+
+.timeline-axis {
+    position: relative;
+    display: flex;
+    margin-left: var(--timeline-row-label-width);
+    padding-bottom: var(--ks-spacing-2);
+    margin-bottom: var(--ks-spacing-2);
+    border-bottom: 1px dashed var(--ks-border-default);
+}
+
+.timeline-axis-tick {
+    flex: 1;
+    font-size: var(--ks-font-size-2xs);
+    color: var(--ks-text-muted);
+    text-align: left;
+
+    &:last-child {
+        flex: 0;
+        text-align: right;
+        white-space: nowrap;
+    }
+}
+
+.timeline-axis-now {
+    position: absolute;
+    bottom: 100%;
+    transform: translateX(-50%);
+    font-size: var(--ks-font-size-2xs);
+    font-weight: 700;
+    color: var(--ks-bg-surface);
+    background: var(--ks-text-primary);
+    border-radius: var(--ks-radius-xs);
+    padding: 0 var(--ks-spacing-1);
+    white-space: nowrap;
 }
 
 .timeline-skeleton {

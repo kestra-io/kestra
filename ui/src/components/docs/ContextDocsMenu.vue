@@ -45,6 +45,7 @@
     import {ref, computed, watch} from "vue"
     import {useDocStore} from "../../stores/doc"
     import {buildDocsSections, buildDocsToc} from "./docsUtils"
+    import type {DocsResourceStructure} from "./docsUtils"
 
     import Menu from "vue-material-design-icons/Menu.vue"
 
@@ -55,7 +56,7 @@
 
     const menuOpen = ref(false)
 
-    const rawStructure = ref<Record<string, any> | undefined>()
+    const rawStructure = ref<DocsResourceStructure | undefined>()
     const currentDocPath = computed(() => docStore.docPath)
 
     const normalizePath = (path: string) => {

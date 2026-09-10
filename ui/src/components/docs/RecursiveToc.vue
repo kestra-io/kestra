@@ -48,7 +48,7 @@
     })
 
     defineSlots<{
-        default: (child: TocChild & {class?: string}) => any
+        default: (child: TocChild & {class?: string}) => unknown
     }>()
 
 

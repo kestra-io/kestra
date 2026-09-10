@@ -35,6 +35,7 @@
     import {useDocStore} from "../../stores/doc"
     import RecursiveToc from "./RecursiveToc.vue"
     import {buildDocsSections, buildDocsToc} from "./docsUtils"
+    import type {DocsResourceStructure} from "./docsUtils"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
     import Magnify from "vue-material-design-icons/Magnify.vue"
 
@@ -45,7 +46,7 @@
 
     const docStore = useDocStore()
 
-    const rawStructure = ref<Record<string, any> | undefined>(undefined)
+    const rawStructure = ref<DocsResourceStructure | undefined>(undefined)
     const query = ref<string>("")
 
     const sectionsWithChildren = computed(() => buildDocsSections(buildDocsToc(rawStructure.value)))

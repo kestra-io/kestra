@@ -27,6 +27,7 @@
 <script setup lang="ts">
     import {computed, ref, onMounted} from "vue"
     import {useDocStore} from "../../stores/doc"
+    import type {DocsResourceMetadata, DocsResourceStructure} from "./docsUtils"
 
     import ContextDocsLink from "./ContextDocsLink.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
@@ -49,13 +50,13 @@
         }
     })
 
-    const resourcesWithMetadata = ref<Record<string, any>>({})
+    const resourcesWithMetadata = ref<DocsResourceStructure>({})
     onMounted(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value)
     })
 
     const navigation = computed(() => {
-        let parentMetadata: Record<string, any> = {}
+        let parentMetadata: Partial<DocsResourceMetadata> = {}
         if (props.pageUrl) {
             parentMetadata = {...resourcesWithMetadata.value[currentPage.value]}
             delete parentMetadata.description

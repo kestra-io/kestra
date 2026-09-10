@@ -49,7 +49,17 @@ export interface DocsTocItem {
     children?: DocsTocItem[];
 }
 
-export function buildDocsToc(rawStructure: Record<string, any> | undefined): DocsTocItem[] | undefined {
+export interface DocsResourceMetadata {
+    title: string;
+    description?: string;
+    sidebarTitle?: string;
+    hideSidebar?: boolean;
+    [key: string]: unknown;
+}
+
+export type DocsResourceStructure = Record<string, DocsResourceMetadata>
+
+export function buildDocsToc(rawStructure: DocsResourceStructure | undefined): DocsTocItem[] | undefined {
     if (rawStructure === undefined) {
         return undefined
     }

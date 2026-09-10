@@ -23,6 +23,7 @@ import {
 } from "./taskPickerCatalog"
 import {isRootSectionPath, parentPathFromLaneSentinel, sectionFromParentPath, sectionFromSentinel} from "./blockSections"
 import {computePickerPosition, type AnchorRect} from "./taskPickerPosition"
+import {trackAuthoringAction, type AuthoringSurface} from "../../../utils/tabTracking"
 
 export type PickerTab = "suggested" | "apps" | "recent"
 
@@ -45,6 +46,8 @@ export interface TaskPickerDeps {
     laneDisplayLabel: (parentPath: string) => string
     flowYaml: Ref<string>
     applyYaml: (yaml: string) => void
+    /** Which editor surface this picker instance belongs to, for authoring analytics. */
+    surface: AuthoringSurface
 }
 
 export function useTaskPicker(deps: TaskPickerDeps) {
@@ -309,6 +312,7 @@ export function useTaskPicker(deps: TaskPickerDeps) {
                 : undefined
             deps.applyYaml(addBlock(deps.flowYaml.value, section, block, lastId))
         }
+        trackAuthoringAction("task_added", deps.surface, {task_type: fqcn, position: taskPickerPosition.value})
         deps.focusCanvasCard(String(block.id))
         taskPickerVisible.value = false
     }

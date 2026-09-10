@@ -1,6 +1,6 @@
 import {describe, it, expect} from "vitest"
 
-import {isRootSectionPath, isTaskListPath, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
+import {isRootSectionPath, isTaskListPath, resolveTaskInsertionTarget, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
 
 describe("blockSections", () => {
     describe("isTaskListPath", () => {
@@ -86,6 +86,69 @@ describe("blockSections", () => {
             expect(sectionFromParentPath("tasks[0].finally")).toBe("finally")
             expect(sectionFromParentPath("triggers")).toBe("triggers")
             expect(sectionFromParentPath("tasks[0].then")).toBe("tasks")
+        })
+    })
+
+    describe("resolveTaskInsertionTarget", () => {
+        const FLOW = `id: topology-insert
+namespace: company.team
+tasks:
+  - id: first
+    type: io.kestra.plugin.core.log.Log
+    message: first
+  - id: parent
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: child
+        type: io.kestra.plugin.core.log.Log
+        message: child
+    errors:
+      - id: err1
+        type: io.kestra.plugin.core.log.Log
+        message: err1
+  - id: last
+    type: io.kestra.plugin.core.log.Log
+    message: last
+`
+
+        it("resolves the first task in the root list", () => {
+            // Given / When
+            const target = resolveTaskInsertionTarget(FLOW, "tasks", "first")
+
+            // Then
+            expect(target).toEqual({parentPath: "tasks", refIndex: 0})
+        })
+
+        it("resolves the last task in the root list", () => {
+            // Given / When
+            const target = resolveTaskInsertionTarget(FLOW, "tasks", "last")
+
+            // Then
+            expect(target).toEqual({parentPath: "tasks", refIndex: 2})
+        })
+
+        it("resolves a task nested inside a flowable", () => {
+            // Given / When
+            const target = resolveTaskInsertionTarget(FLOW, "tasks", "child")
+
+            // Then
+            expect(target).toEqual({parentPath: "tasks[1].tasks", refIndex: 0})
+        })
+
+        it("resolves a task nested inside an errors lane", () => {
+            // Given / When
+            const target = resolveTaskInsertionTarget(FLOW, "tasks", "err1")
+
+            // Then
+            expect(target).toEqual({parentPath: "tasks[1].errors", refIndex: 0})
+        })
+
+        it("returns undefined when the task id can't be found", () => {
+            // Given / When
+            const target = resolveTaskInsertionTarget(FLOW, "tasks", "does-not-exist")
+
+            // Then
+            expect(target).toBeUndefined()
         })
     })
 })

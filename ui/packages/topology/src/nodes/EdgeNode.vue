@@ -17,12 +17,40 @@
             {{ data.value }}
         </div>
     </EdgeLabelRenderer>
+
+    <EdgeLabelRenderer v-if="path?.length && addTarget">
+        <KsTooltip :content="$t('topology-graph.add-task')">
+            <button
+                type="button"
+                class="edge-add-button"
+                :class="{'edge-add-button--visible': hovered}"
+                :style="{transform: `translate(${addButtonX}px, ${addButtonY}px) translate(-50%, -50%)`}"
+                :aria-label="$t('topology-graph.add-task')"
+                data-test="topology-edge-add-task"
+                @click.stop="emit('add-task', addTarget)"
+                @mouseenter="hovered = true"
+                @mouseleave="hovered = false"
+            >
+                <Plus :size="12" />
+            </button>
+        </KsTooltip>
+    </EdgeLabelRenderer>
+
+    <path
+        v-if="path?.length && addTarget"
+        class="edge-hit-area"
+        :d="path[0]"
+        @mouseenter="hovered = true"
+        @mouseleave="hovered = false"
+    />
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
+    import {KsTooltip} from "@kestra-io/design-system"
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     const props = defineProps({
         id: {type: String, default: undefined},
@@ -35,6 +63,16 @@
         sourcePosition: {type: String, default: undefined},
         targetPosition: {type: String, default: undefined},
     })
+
+    const emit = defineEmits<{
+        (event: "add-task", data: [string, "before" | "after"]): void
+    }>()
+
+    const hovered = ref(false)
+
+    // The graph already computed where a `+` on this edge should insert and relative to which
+    // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
+    const addTarget = computed<[string, "before" | "after"] | undefined>(() => props.data?.haveAdd)
 
     const classes = computed(() => {
         return props.data
@@ -65,6 +103,9 @@
         if (props.targetPosition === "bottom") return ty + CASE_LABEL_GAP
         return ty
     })
+
+    const addButtonX = computed(() => path.value?.[1] ?? 0)
+    const addButtonY = computed(() => path.value?.[2] ?? 0)
 
     const labelAnchor = computed(() => {
         switch (props.targetPosition) {
@@ -100,5 +141,40 @@
         max-width: 10rem;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .edge-hit-area {
+        fill: none;
+        stroke: transparent;
+        stroke-width: 20;
+        cursor: pointer;
+    }
+
+    .edge-add-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.125rem;
+        height: 1.125rem;
+        padding: 0;
+        background: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: 50%;
+        color: var(--ks-icon-default);
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s, border-color 0.12s, color 0.12s;
+    }
+
+    .edge-add-button--visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .edge-add-button:hover,
+    .edge-add-button:focus-visible {
+        border-color: var(--ks-border-focus);
+        color: var(--ks-text-link);
     }
 </style>

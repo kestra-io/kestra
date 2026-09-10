@@ -50,7 +50,7 @@ describe("textDiff", () => {
 
     describe("summarizeDiff", () => {
         it("counts added and removed lines only", () => {
-            const entries = diffLines("a\nb\nc", "a\nx\nc\nd")
+            const entries = diffLines("a\nb\nc", "a\nx\nc\nz")
             expect(summarizeDiff(entries)).toEqual({added: 2, removed: 1})
         })
 
@@ -61,7 +61,7 @@ describe("textDiff", () => {
 
     describe("collapseContext", () => {
         it("keeps a short unchanged run untouched", () => {
-            const entries = diffLines("a\nb\nc\nd", "a\nx\nc\nd")
+            const entries = diffLines("a\nb\nc\nz", "a\nx\nc\nz")
             expect(collapseContext(entries, 3)).toEqual(entries)
         })
 

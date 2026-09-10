@@ -165,6 +165,9 @@
                         name: "executions",
                         component: FlowExecutions,
                         title: this.$t("executions"),
+                        props: {
+                            embed: true,
+                        },
                     });
                 }
 

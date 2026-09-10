@@ -18,8 +18,8 @@ export default {
             if(!this.embed) {
                 let baseTitle;
 
-                if (document.title.lastIndexOf("|") > 0) {
-                    baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1);
+                if (document.title.lastIndexOf("|") >= 0) {
+                    baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1).trim();
                 } else {
                     baseTitle = document.title;
                 }

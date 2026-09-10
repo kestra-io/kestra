@@ -1,4 +1,4 @@
-import {computed, ref} from "vue"
+import {computed, h, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox} from "@kestra-io/design-system"
@@ -10,6 +10,7 @@ import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
+import DiffView from "./DiffView.vue"
 import type {ArtefactDraftEvent} from "./types"
 
 /**
@@ -82,7 +83,12 @@ export function useApplyDraft() {
             return
         }
 
-        const confirmed = await confirmApply(t("ai.copilot.draft.applyConfirm", {namespace, id}), t("ai.copilot.draft.applyTitle"))
+        // Resolved once per apply (not merely rendering a draft card, so a store dependency here is
+        // fine) — reused for the diff preview below and, on success, for the in-place refresh.
+        const flowStore = useFlowStore()
+        const onThisFlow = isViewingFlow(namespace, id)
+
+        const confirmed = await confirmApplyFlow(namespace, id, draft.yaml, onThisFlow, flowStore)
         if (!confirmed) return
 
         applying.value = true
@@ -105,13 +111,7 @@ export function useApplyDraft() {
             // the store (source buffer + graph) in place and stay on the current tab, instead of
             // bouncing to the flow overview and forcing a hard refresh to see the change. Otherwise
             // open the flow so the result is visible.
-            const onThisFlow = route.name === "flows/update"
-                && String(route.params.namespace) === namespace
-                && String(route.params.id) === id
             if (onThisFlow) {
-                // Resolve the store lazily (only when we actually refresh an open flow) so merely
-                // rendering a draft card doesn't require Pinia to be set up.
-                const flowStore = useFlowStore()
                 const data = await flowStore.loadFlow({namespace, id})
                 if (data?.source) await flowStore.loadGraph({flow: data})
             } else {
@@ -121,6 +121,50 @@ export function useApplyDraft() {
             await alertError(e, t("ai.copilot.draft.applyError"), t("ai.copilot.draft.applyTitle"))
         } finally {
             applying.value = false
+        }
+    }
+
+    /** True when the given flow is the one currently open in the editor. */
+    function isViewingFlow(namespace: string, id: string): boolean {
+        return route.name === "flows/update"
+            && String(route.params.namespace) === namespace
+            && String(route.params.id) === id
+    }
+
+    /**
+     * Confirm applying a flow draft, showing a diff against the flow's current content instead of the
+     * plain confirm text alone. The "before" side is the live editor buffer when the flow is open
+     * (reflecting any unsaved edits), otherwise a fetch of the persisted source — empty (rendering the
+     * draft as a pure addition) when the flow doesn't exist yet or the fetch fails, so the preview never
+     * blocks the apply itself.
+     */
+    async function confirmApplyFlow(
+        namespace: string,
+        id: string,
+        yaml: string,
+        onThisFlow: boolean,
+        flowStore: ReturnType<typeof useFlowStore>,
+    ): Promise<boolean> {
+        const before = onThisFlow ? (flowStore.flowYaml || "") : await persistedFlowSource(namespace, id, flowStore)
+        return KsMessageBox({
+            type: "warning",
+            title: t("ai.copilot.draft.applyTitle"),
+            message: () => h("div", null, [
+                h("p", null, t("ai.copilot.draft.applyConfirm", {namespace, id})),
+                h(DiffView, {oldValue: before, newValue: yaml}),
+            ]),
+            showCancelButton: true,
+            confirmButtonText: t("ai.copilot.draft.apply"),
+            cancelButtonText: t("cancel"),
+        }).then(() => true).catch(() => false)
+    }
+
+    async function persistedFlowSource(namespace: string, id: string, flowStore: ReturnType<typeof useFlowStore>): Promise<string> {
+        try {
+            const data = await flowStore.loadFlow({namespace, id, store: false})
+            return data?.source ?? ""
+        } catch {
+            return ""
         }
     }
 

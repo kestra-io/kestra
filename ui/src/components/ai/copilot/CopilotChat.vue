@@ -93,6 +93,7 @@
                         v-if="pendingConfirmation"
                         :action="pendingConfirmation"
                         :disabled="streaming"
+                        :currentFlowSource="pendingConfirmationFlowSource"
                         @approve="confirm('APPROVE', undefined, selectedProvider)"
                         @reject="onReject"
                     />
@@ -222,6 +223,19 @@
     const editorFlowSource = computed<string | undefined>(() => {
         if (routeInFocus.value?.kind !== "FLOW" || dismissedParts.value.has("flowId")) return undefined
         return flowStore.flowYaml || undefined
+    })
+
+    // The "before" side of the pending proposal's diff: only when it's a flow-mutating action whose own
+    // namespace/id arguments match the flow currently focused, so a diff is never shown against the
+    // wrong flow's content. `id` is accepted alongside `flowId` since tool argument naming isn't fixed.
+    const pendingConfirmationFlowSource = computed<string | undefined>(() => {
+        const scope = routeInFocus.value
+        const args = pendingConfirmation.value?.arguments
+        if (!args || scope?.kind !== "FLOW" || !scope.namespace || !scope.flowId) return undefined
+        const namespace = typeof args.namespace === "string" ? args.namespace : undefined
+        const flowId = typeof args.flowId === "string" ? args.flowId : typeof args.id === "string" ? args.id : undefined
+        if (namespace !== scope.namespace || flowId !== scope.flowId) return undefined
+        return editorFlowSource.value
     })
 
     /** Dismiss a single context pill and note its removal in the transcript. */

@@ -4,7 +4,12 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.Plugin;
+import io.kestra.core.plugins.PluginClassAndMetadata;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.serializers.JacksonMapper;
 
 import jakarta.inject.Inject;
 
@@ -22,6 +27,12 @@ class GetPluginSchemaToolTest {
     @Inject
     private GetPluginSchemaTool tool;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
+    @Inject
+    private JsonSchemaGenerator jsonSchemaGenerator;
+
     @Test
     void shouldExposeReadOnlyMetadata() {
         assertThat(tool.family()).isEqualTo(AgentToolFamily.READ);
@@ -29,13 +40,31 @@ class GetPluginSchemaToolTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnSchemaWhenPluginTypeExists() {
         // When
         GetPluginSchemaTool.Result result = tool.getPluginSchema(PLUGIN_TYPE);
 
-        // Then — the generated schema is returned, wrapped with its plugin type
+        // Then — the plugin's own properties are returned, wrapped with its plugin type
         assertThat(result.pluginType()).isEqualTo(PLUGIN_TYPE);
-        assertThat(result.schema()).isNotEmpty();
+        assertThat(result.title()).isNotBlank();
+        assertThat(result.description()).isNotBlank();
+        assertThat(result.examples()).isNotEmpty();
+        assertThat(result.examples()).allSatisfy(example -> assertThat(example.code()).isNotBlank());
+
+        assertThat((java.util.Map<String, Object>) result.properties().get("properties"))
+            .containsOnlyKeys("message", "level");
+        assertThat((java.util.List<String>) result.properties().get("required")).containsExactly("message");
+    }
+
+    @Test
+    void shouldOmitDocumentationOnlyKeysFromProperties() {
+        // When
+        GetPluginSchemaTool.Result result = tool.getPluginSchema(PLUGIN_TYPE);
+
+        // Then — the doc-renderer keys are exposed as dedicated fields, not duplicated in the schema
+        assertThat(result.properties())
+            .doesNotContainKeys("$schema", "$examples", "$metrics", "$deprecated", "$beta", "title", "description");
     }
 
     @Test

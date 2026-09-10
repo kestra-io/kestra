@@ -320,17 +320,27 @@ function getParentNode(
         )
     }
 
-    const newParentKey = lastSegmentKey(parentPathWithoutKey)
     const newParentSeq = new YAMLSeq<unknown>()
-    getParentNode(yamlDoc, parentPathWithoutKey)
-        .items.push(new Pair(new Scalar(newParentKey), newParentSeq))
+    attachSequence(
+        getParentNode(yamlDoc, parentPathWithoutKey),
+        lastSegmentKey(parentPathWithoutKey),
+        newParentSeq,
+    )
     return newParentSeq
 }
 
-function createPairNode(parentKey: string, newPropNode: Node): Pair<Scalar<string>, YAMLSeq<unknown>> {
-    const newPairNodeValue = new YAMLSeq()
-    newPairNodeValue.add(newPropNode)
-    return new Pair(new Scalar(parentKey), newPairNodeValue)
+// a key written with no value (`tasks:`) parses to a pair holding null, so
+// pushing a new pair for it would leave the document carrying the key twice
+function attachSequence(container: ParentCollection, key: string, seq: YAMLSeq<unknown>) {
+    const existing = isMap(container)
+        ? container.items.find((item) => scalarKey(item) === key)
+        : undefined
+
+    if (existing) {
+        existing.value = seq
+    } else {
+        container.items.push(new Pair(new Scalar(key), seq))
+    }
 }
 
 export function insertBlockWithPath({
@@ -357,8 +367,9 @@ export function insertBlockWithPath({
     const parentNode = yamlDoc.getIn(parsedPath)
 
     if (!parentNode) {
-        const newPairNode = createPairNode(lastSegmentKey(parentPath), newPropNode)
-        getParentNode(yamlDoc, parentPath).items.push(newPairNode)
+        const seq = new YAMLSeq<unknown>()
+        seq.add(newPropNode)
+        attachSequence(getParentNode(yamlDoc, parentPath), lastSegmentKey(parentPath), seq)
         return yamlDoc.toString(TOSTRING_OPTIONS)
     }
 

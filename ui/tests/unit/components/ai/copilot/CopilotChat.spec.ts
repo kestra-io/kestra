@@ -26,6 +26,9 @@ const state = {
     noteContext: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
+// DiffView (rendered behind a pending MUTATE confirmation) binds useEditorBindings, which pulls in
+// three Pinia stores — stub it out, matching VarValue.spec.ts / FlowFileEditorTab.spec.ts.
+vi.mock("../../../../../src/composables/useEditorBindings", () => ({useEditorBindings: () => ({})}))
 // CopilotChat derives the page scope from the current route — mock a mutable route so tests control it.
 let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
 vi.mock("vue-router", () => ({useRoute: () => routeStub}))

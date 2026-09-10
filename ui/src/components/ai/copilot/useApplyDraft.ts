@@ -1,7 +1,7 @@
 import {computed, h, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
-import {KsMessageBox} from "@kestra-io/design-system"
+import {KsMessageBox, KsText} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {asProblem, isProblemType, ProblemTypes, useClient} from "@kestra-io/kestra-sdk"
 import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
@@ -150,7 +150,7 @@ export function useApplyDraft() {
             type: "warning",
             title: t("ai.copilot.draft.applyTitle"),
             message: () => h("div", null, [
-                h("p", null, t("ai.copilot.draft.applyConfirm", {namespace, id})),
+                h(KsText, {tag: "p"}, () => t("ai.copilot.draft.applyConfirm", {namespace, id})),
                 h(DiffView, {oldValue: before, newValue: yaml}),
             ]),
             showCancelButton: true,

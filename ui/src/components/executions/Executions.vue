@@ -90,6 +90,8 @@
                     :namespace="namespace"
                     :flowId="flowId"
                     :statuses="statuses"
+                    v-model:drillNamespace="timelineDrillNamespace"
+                    v-model:drillFlowId="timelineDrillFlowId"
                 />
             </template>
 
@@ -692,6 +694,9 @@
     const ready = ref(false)
     const dataTable = useTemplateRef<any>("dataTable")
 
+    const timelineDrillNamespace = ref<string | undefined>(undefined)
+    const timelineDrillFlowId = ref<string | undefined>(undefined)
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
         lastRefreshDate.value = new Date()
@@ -733,6 +738,10 @@
     }
 
     watch(filterQueryKey, () => {
+        dataTable.value?.resetAndReload()
+    })
+
+    watch([timelineDrillNamespace, timelineDrillFlowId], () => {
         dataTable.value?.resetAndReload()
     })
 
@@ -828,6 +837,10 @@
     const onChartModeChange = (value: ChartMode) => {
         chartMode.value = value
         localStorage.setItem(storageKeys.SHOW_CHART, value)
+        if (value !== "timeline") {
+            timelineDrillNamespace.value = undefined
+            timelineDrillFlowId.value = undefined
+        }
     }
 
     const refresh = () => {
@@ -839,8 +852,8 @@
         (props.namespace === undefined || props.flowId === undefined) ? executionFilter.value : flowExecutionFilter.value,
     )
     const executionsQueryScope = computed(() => ({
-        namespace: props.namespace,
-        flowId: props.flowId,
+        namespace: props.namespace ?? timelineDrillNamespace.value,
+        flowId: props.flowId ?? timelineDrillFlowId.value,
         statuses: props.statuses,
     }))
     const {dropUnsupportedFilters, loadQuery} = useExecutionsQueryScope(activeFilterConfiguration, executionsQueryScope)

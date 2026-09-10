@@ -96,6 +96,9 @@
     import {groupByNamespace, countByState, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
+    // Shared with the state filter chip in the filter bar (KsFilter's "state" key uses the same
+    // IN/NOT_IN comparators), so a legend toggle also filters the table below.
+    const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
 
     const props = withDefaults(defineProps<{
         namespace?: string;
@@ -115,8 +118,8 @@
     const executionFilter = useExecutionFilter()
     const flowExecutionFilter = useFlowExecutionFilter()
 
-    const drillNamespace = ref<string | undefined>(undefined)
-    const drillFlowId = ref<string | undefined>(undefined)
+    const drillNamespace = defineModel<string | undefined>("drillNamespace", {default: undefined})
+    const drillFlowId = defineModel<string | undefined>("drillFlowId", {default: undefined})
 
     const effectiveNamespace = computed(() => props.namespace ?? drillNamespace.value)
     const effectiveFlowId = computed(() => props.flowId ?? drillFlowId.value)
@@ -142,9 +145,14 @@
     const loading = ref(false)
     const error = ref<string | undefined>(undefined)
     const rawExecutions = ref<TimelineExecution[]>([])
-    const dimmedStates = ref(new Set<string>())
     const bodyRef = ref<HTMLElement | null>(null)
     const availableWidthPx = ref(600)
+
+    const dimmedStates = computed<Set<string>>(() => {
+        const raw = route.query[STATE_EXCLUDE_KEY]
+        const value = Array.isArray(raw) ? raw[0] : raw
+        return new Set((value ?? "").split(",").filter(Boolean))
+    })
 
     const showBreadcrumb = computed(() => props.flowId === undefined)
 
@@ -264,7 +272,11 @@
         const next = new Set(dimmedStates.value)
         if (next.has(state)) next.delete(state)
         else next.add(state)
-        dimmedStates.value = next
+
+        const {[STATE_EXCLUDE_KEY]: _current, ...rest} = route.query
+        router.push({
+            query: next.size > 0 ? {...rest, [STATE_EXCLUDE_KEY]: [...next].join(",")} : rest,
+        })
     }
 
     function resetFilters() {

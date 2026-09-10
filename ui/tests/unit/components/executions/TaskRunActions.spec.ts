@@ -107,8 +107,8 @@ describe("TaskRunActions", () => {
 
         // Select the last iteration (index 2)
         await select.vm.$emit("update:modelValue", 2)
-        expect(wrapper.vm.selectedTaskRunIndex).toBe(2)
-        expect(wrapper.vm.currentTaskRun.id).toBe("run-3")
+        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(2)
+        expect((wrapper.vm as unknown as {currentTaskRun: {id: string}}).currentTaskRun.id).toBe("run-3")
 
         // Shrink taskRuns to 2 items
         await wrapper.setProps({
@@ -119,8 +119,8 @@ describe("TaskRunActions", () => {
         })
 
         // It should clamp to index 1 (the new max)
-        expect(wrapper.vm.selectedTaskRunIndex).toBe(1)
-        expect(wrapper.vm.currentTaskRun.id).toBe("run-2")
+        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(1)
+        expect((wrapper.vm as unknown as {currentTaskRun: {id: string}}).currentTaskRun.id).toBe("run-2")
     })
 
     it("should display iteration selector only for multi-iteration tasks", async () => {
@@ -256,11 +256,11 @@ describe("TaskRunActions", () => {
         
         // Select index 2
         await select.vm.$emit("update:modelValue", 2)
-        expect(wrapper.vm.selectedTaskRunIndex).toBe(2)
+        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(2)
 
         // Empty the array
         await wrapper.setProps({taskRuns: []})
-        expect(wrapper.vm.selectedTaskRunIndex).toBe(0)
+        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(0)
     })
 
     it("should use the selected taskRun when fixing an error with AI", async () => {
@@ -317,7 +317,7 @@ describe("TaskRunActions", () => {
 
         // Trigger fixErrorWithAi
         // We know it's a method on the component
-        await (wrapper.vm as any).fixErrorWithAi()
+        await (wrapper.vm as unknown as { fixErrorWithAi: () => Promise<void> }).fixErrorWithAi()
 
         // Assert loadLogs used the new selected taskRun id
         expect(mockLoadLogs).toHaveBeenCalledWith(expect.objectContaining({

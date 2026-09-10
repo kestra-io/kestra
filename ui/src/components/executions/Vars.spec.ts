@@ -17,17 +17,25 @@ vi.mock("./VarValue.vue", () => ({
 vi.mock("../flows/SubFlowLink.vue", () => ({
     default: defineComponent({name: "SubFlowLink", template: "<span />"}),
 }))
-
-const KsDataTableStub = defineComponent({
-    name: "KsDataTable",
-    props: {
-        data: {type: Array, default: () => []},
-        total: {type: Number, default: 0},
-        pageSize: {type: Number, default: 0},
-    },
-    template: "<div data-test=\"table\" :data-total=\"total\" :data-page-size=\"pageSize\">"
-        + "<span v-for=\"row in data\" :key=\"row.key\" data-test=\"row\">{{ row.key }}</span></div>",
-})
+vi.mock("vue-virtual-scroller/dist/vue-virtual-scroller.css", () => ({}))
+vi.mock("vue-virtual-scroller", () => ({
+    // Renders only what it is told to prerender, the way the real scroller windows its rows.
+    DynamicScroller: defineComponent({
+        name: "DynamicScroller",
+        props: {
+            items: {type: Array, default: () => []},
+            prerender: {type: Number, default: 0},
+            keyField: {type: String, default: "id"},
+        },
+        template: "<div data-test=\"scroller\" :data-item-count=\"items.length\" :data-key-field=\"keyField\">"
+            + "<template v-for=\"(item, index) in items.slice(0, prerender)\" :key=\"item[keyField]\">"
+            + "<slot :item=\"item\" :index=\"index\" :active=\"true\" /></template></div>",
+    }),
+    DynamicScrollerItem: defineComponent({
+        name: "DynamicScrollerItem",
+        template: "<div data-test=\"row\"><slot /></div>",
+    }),
+}))
 
 const i18n = createI18n({
     legacy: false,
@@ -45,24 +53,18 @@ function mountVars(count: number) {
         props: {data},
         global: {
             plugins: [i18n],
-            stubs: {KsDataTable: KsDataTableStub, KsTableColumn: true, KsDateAgo: true},
+            stubs: {KsNoData: true, KsText: true, KsDateAgo: true},
         },
     })
 }
 
 describe("Vars", () => {
-    it("should hand the table one page of rows instead of every output value", () => {
+    it("should give every output value to the scroller while building only the visible rows", () => {
         const wrapper = mountVars(15000)
-        const table = wrapper.find("[data-test=table]")
+        const scroller = wrapper.find("[data-test=scroller]")
 
-        expect(wrapper.findAll("[data-test=row]")).toHaveLength(100)
-        expect(table.attributes("data-total")).toBe("15000")
-        expect(table.attributes("data-page-size")).toBe("100")
-    })
-
-    it("should hand the table every row when they fit on one page", () => {
-        const wrapper = mountVars(12)
-
-        expect(wrapper.findAll("[data-test=row]")).toHaveLength(12)
+        expect(scroller.attributes("data-item-count")).toBe("15000")
+        expect(scroller.attributes("data-key-field")).toBe("key")
+        expect(wrapper.findAll("[data-test=row]")).toHaveLength(20)
     })
 })

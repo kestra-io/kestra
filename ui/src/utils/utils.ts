@@ -78,6 +78,27 @@ export function executionVars(data: Record<string, any>) {
     })
 }
 
+export const EDITOR_MAX_CHARS = 256 * 1024
+export const EDITOR_MAX_LINES = 200
+
+/**
+ * Clip text to what Monaco can mount without wedging the main thread: a few MiB of output
+ * values blocked it for seconds (kestra-io/kestra#19316). Compare lengths to detect a clip.
+ */
+export function capForEditor(text: string): string {
+    const capped = text.slice(0, EDITOR_MAX_CHARS)
+
+    let cut = -1
+    for (let line = 0; line < EDITOR_MAX_LINES; line++) {
+        const next = capped.indexOf("\n", cut + 1)
+        if (next === -1) {
+            return capped
+        }
+        cut = next
+    }
+    return capped.slice(0, cut)
+}
+
 /**
  * Format bytes as human-readable text.
  *

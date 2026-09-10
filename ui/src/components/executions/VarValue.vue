@@ -62,7 +62,7 @@
             type="warning"
             :closable="false"
             data-test="var-value-truncated"
-            :title="$t('large_outputs.value_truncated', {size: serializedSize, lines: MAX_EDITOR_LINES})"
+            :title="$t('large_outputs.value_truncated', {size: serializedSize, lines: Utils.EDITOR_MAX_LINES})"
         />
         <KsEditor
             v-bind="editorBindings"
@@ -185,26 +185,9 @@
         return undefined
     })
 
-    // A 4 MiB output value wedges the main thread for seconds inside Monaco's model, so the
-    // editor gets a bounded slice and the alert says what the real size is (kestra-io/kestra#19316).
-    const MAX_EDITOR_CHARS = 256 * 1024
-    const MAX_EDITOR_LINES = 200
-
     const serialized = computed(() => JSON.stringify(getDisplayValue(props.value), null, 2) ?? "")
 
-    const editorValue = computed(() => {
-        const capped = serialized.value.slice(0, MAX_EDITOR_CHARS)
-
-        let cut = -1
-        for (let line = 0; line < MAX_EDITOR_LINES; line++) {
-            const next = capped.indexOf("\n", cut + 1)
-            if (next === -1) {
-                return capped
-            }
-            cut = next
-        }
-        return capped.slice(0, cut)
-    })
+    const editorValue = computed(() => Utils.capForEditor(serialized.value))
 
     const isTruncated = computed(() => editorValue.value.length < serialized.value.length)
 

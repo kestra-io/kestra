@@ -41,15 +41,23 @@
                                 />
                             </template>
 
-                            <KsEditor
-                                v-else-if="isRawEditor"
-                                v-bind="editorBindings"
-                                :readOnly="true"
-                                :inline="true"
-                                :navbar="false"
-                                :modelValue="rawValue"
-                                lang="json"
-                            />
+                            <template v-else-if="isRawEditor">
+                                <KsAlert
+                                    v-if="isRawTruncated"
+                                    type="warning"
+                                    :closable="false"
+                                    data-test="raw-value-truncated"
+                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize, lines: Utils.EDITOR_MAX_LINES})"
+                                />
+                                <KsEditor
+                                    v-bind="editorBindings"
+                                    :readOnly="true"
+                                    :inline="true"
+                                    :navbar="false"
+                                    :modelValue="cappedRawValue"
+                                    lang="json"
+                                />
+                            </template>
 
                             <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
                                 <FilePreview
@@ -101,6 +109,7 @@
         KsSplitterPanel,
         KsSegmented,
         KsIconButton,
+        KsAlert,
         KsEditor,
         KsJsonTree,
         copyToClipboard,
@@ -393,6 +402,13 @@
             ? selectedValue.value
             : JSON.stringify(selectedValue.value, null, 2),
     )
+
+    // Only the editor is clipped: copyValue still hands over the whole value.
+    const cappedRawValue = computed(() => Utils.capForEditor(rawValue.value))
+
+    const isRawTruncated = computed(() => cappedRawValue.value.length < rawValue.value.length)
+
+    const rawValueSize = computed(() => Utils.humanFileSize(rawValue.value.length))
 
     async function selectItem(item: ExplorerItem) {
         if (item.taskRunId) {

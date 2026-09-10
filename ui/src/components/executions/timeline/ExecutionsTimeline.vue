@@ -153,7 +153,7 @@
 
     const {rangeStartMs, rangeEndMs, activePreset, setRange, applyPreset, zoom, pan, goToNow} = useTimelineRange()
 
-    const expanded = ref(false)
+    const expanded = defineModel<boolean>("expanded", {default: false})
     const loading = ref(false)
     const error = ref<string | undefined>(undefined)
     const rawExecutions = ref<TimelineExecution[]>([])
@@ -433,7 +433,9 @@
 
 // A viewport-relative height rather than an exact `calc(100vh - Npx)`: this component is embedded
 // with different chrome above it (top-level executions list vs. a flow/namespace page), so no single
-// pixel offset is correct everywhere. This reliably pushes the table below the fold in all of them.
+// pixel offset is correct everywhere. The parent page drops its fitHeight/internal-scroll layout while
+// expanded (see Executions.vue's `fitHeightResolved`), so growing this beyond its own scroll region
+// grows the page itself rather than squeezing the table below it out of its flex space.
 .executions-timeline.expanded .timeline-body {
     max-height: none;
     min-height: 70vh;

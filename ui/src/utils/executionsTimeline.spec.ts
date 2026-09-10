@@ -89,16 +89,35 @@ describe("assignLanes", () => {
 })
 
 describe("shouldBucketRow", () => {
-    it("should not bucket when every execution can get at least the minimum bar width", () => {
-        expect(shouldBucketRow(10, 100)).toBe(false)
+    it("should not bucket when executions land in separate slots", () => {
+        const executions = [
+            execution({id: "1", startMs: 0}),
+            execution({id: "2", startMs: 50}),
+        ]
+
+        expect(shouldBucketRow(executions, 0, 100, 100)).toBe(false)
     })
 
-    it("should bucket once the average width per execution drops below the minimum", () => {
-        expect(shouldBucketRow(100, 100)).toBe(true)
+    it("should bucket once two executions land in the same slot", () => {
+        const executions = Array.from({length: 100}, (_, i) => execution({id: String(i), startMs: i}))
+
+        expect(shouldBucketRow(executions, 0, 100, 100)).toBe(true)
     })
 
     it("should not bucket an empty row", () => {
-        expect(shouldBucketRow(0, 100)).toBe(false)
+        expect(shouldBucketRow([], 0, 100, 100)).toBe(false)
+    })
+
+    it("should bucket a tight cluster zoomed out to a much wider range", () => {
+        // 15 executions inside a 1-hour window, viewed across a 32-day range: each bar's true
+        // (pre-floor) width is a tiny fraction of a pixel, so the row must bucket even though it has
+        // far fewer executions than the available width in pixels would otherwise allow.
+        const oneHourMs = 60 * 60 * 1000
+        const thirtyTwoDaysMs = 32 * 24 * 60 * 60 * 1000
+        const executions = Array.from({length: 15}, (_, i) =>
+            execution({id: String(i), startMs: i * (oneHourMs / 15), endMs: i * (oneHourMs / 15) + 1000}))
+
+        expect(shouldBucketRow(executions, 0, thirtyTwoDaysMs, 600)).toBe(true)
     })
 })
 

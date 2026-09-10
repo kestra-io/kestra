@@ -113,14 +113,49 @@ export function assignLanes(executions: TimelineExecution[]): TimelineExecutionW
 export const MIN_DISCRETE_BAR_WIDTH_PX = 3
 
 /**
- * A row switches from individual bars to aggregated density buckets once the available pixel width
- * can no longer give each execution at least {@link MIN_DISCRETE_BAR_WIDTH_PX} of its own room.
- * Evaluated per row/lane rather than globally, so a busy namespace can bucket while a quiet one in
- * the same view still renders discrete bars.
+ * Number of {@link MIN_DISCRETE_BAR_WIDTH_PX}-wide slots the available width can resolve, and how
+ * many milliseconds of the range each slot covers. Shared by {@link shouldBucketRow} and
+ * {@link bucketize} so both agree on what "the same slot" means.
  */
-export function shouldBucketRow(executionCount: number, availableWidthPx: number): boolean {
-    if (executionCount <= 0 || availableWidthPx <= 0) return false
-    return availableWidthPx / executionCount < MIN_DISCRETE_BAR_WIDTH_PX
+function slotResolution(rangeSpanMs: number, availableWidthPx: number): {slotCount: number; slotSpanMs: number} {
+    const slotCount = Math.max(1, Math.floor(availableWidthPx / MIN_DISCRETE_BAR_WIDTH_PX))
+    return {slotCount, slotSpanMs: rangeSpanMs / slotCount}
+}
+
+function slotIndexFor(startMs: number, rangeStartMs: number, rangeEndMs: number, slotCount: number, slotSpanMs: number): number {
+    const anchor = Math.min(Math.max(startMs, rangeStartMs), rangeEndMs - 1)
+    return Math.min(slotCount - 1, Math.floor((anchor - rangeStartMs) / slotSpanMs))
+}
+
+/**
+ * A row switches from individual bars to aggregated density buckets as soon as two executions would
+ * land in the same {@link MIN_DISCRETE_BAR_WIDTH_PX}-wide slot of the visible range — i.e. as soon as
+ * they can no longer be told apart as discrete bars at the current zoom. This is evaluated against the
+ * executions' real positions on the time axis (not the per-bar rendered width, which is floored to a
+ * minimum for visibility), so a tight cluster zoomed out to a much wider range buckets correctly even
+ * when the row has far fewer executions than the available width in pixels. Evaluated per row/lane
+ * rather than globally, so a busy namespace can bucket while a quiet one in the same view still
+ * renders discrete bars.
+ */
+export function shouldBucketRow(
+    executions: TimelineExecution[],
+    rangeStartMs: number,
+    rangeEndMs: number,
+    availableWidthPx: number,
+): boolean {
+    const span = rangeEndMs - rangeStartMs
+    if (executions.length <= 0 || availableWidthPx <= 0 || span <= 0) return false
+
+    const {slotCount, slotSpanMs} = slotResolution(span, availableWidthPx)
+    const occupiedSlots = new Set<number>()
+
+    for (const execution of executions) {
+        const slot = slotIndexFor(execution.startMs, rangeStartMs, rangeEndMs, slotCount, slotSpanMs)
+        if (occupiedSlots.has(slot)) return true
+        occupiedSlots.add(slot)
+    }
+
+    return false
 }
 
 /**
@@ -137,8 +172,7 @@ export function bucketize(
     const span = rangeEndMs - rangeStartMs
     if (span <= 0 || availableWidthPx <= 0) return []
 
-    const bucketCount = Math.max(1, Math.floor(availableWidthPx / MIN_DISCRETE_BAR_WIDTH_PX))
-    const bucketSpanMs = span / bucketCount
+    const {slotCount: bucketCount, slotSpanMs: bucketSpanMs} = slotResolution(span, availableWidthPx)
     const buckets: StateBucket[] = Array.from({length: bucketCount}, (_, i) => ({
         startMs: rangeStartMs + i * bucketSpanMs,
         endMs: rangeStartMs + (i + 1) * bucketSpanMs,
@@ -148,8 +182,7 @@ export function bucketize(
     }))
 
     for (const execution of executions) {
-        const anchor = Math.min(Math.max(execution.startMs, rangeStartMs), rangeEndMs - 1)
-        const index = Math.min(bucketCount - 1, Math.floor((anchor - rangeStartMs) / bucketSpanMs))
+        const index = slotIndexFor(execution.startMs, rangeStartMs, rangeEndMs, bucketCount, bucketSpanMs)
         const bucket = buckets[index]
         bucket.total += 1
         bucket.byState[execution.state] = (bucket.byState[execution.state] ?? 0) + 1

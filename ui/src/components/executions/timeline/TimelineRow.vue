@@ -90,13 +90,16 @@
 
     const laneCount = computed(() => laned.value.reduce((max, e) => Math.max(max, e.lane + 1), 1))
 
-    const isBucketedByLane = computed<boolean[]>(() => {
-        const perLaneCount = new Array(laneCount.value).fill(0)
-        for (const execution of laned.value) {
-            perLaneCount[execution.lane] += 1
-        }
-        return perLaneCount.map(count => shouldBucketRow(count, props.availableWidthPx))
-    })
+    const isBucketedByLane = computed<boolean[]>(() =>
+        Array.from({length: laneCount.value}, (_, lane) =>
+            shouldBucketRow(
+                laned.value.filter(e => e.lane === lane),
+                props.rangeStartMs,
+                props.rangeEndMs,
+                props.availableWidthPx,
+            ),
+        ),
+    )
 
     const bars = computed<RenderedBar[]>(() => {
         const result: RenderedBar[] = []

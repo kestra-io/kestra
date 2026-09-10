@@ -347,6 +347,7 @@
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
+    import useRouteContext from "../../composables/useRouteContext";
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -435,6 +436,8 @@
     const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.namespace);
 
     const routeInfo = computed(() => ({title: t("flows")}));
+
+    useRouteContext(routeInfo, !props.topbar);
 
     const dataTableRef = useTemplateRef<DataTableRef>("dataTable");
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");

@@ -202,6 +202,40 @@
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "Ta egzekucja zakończyła się bez uruchomienia żadnego Taska.\nSprawdź jej przegląd i logi, aby poznać przyczynę.",
     "gantt_no_tasks_match_filters": "Spróbuj dostosować filtry wyszukiwania, statusu lub poziomu logów.",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Wszystkie",
+        "total": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failed": "{count} nieudanych"
+      },
+      "toolbar": {
+        "panBack": "Przewiń wstecz",
+        "panForward": "Przewiń do przodu",
+        "zoomIn": "Przybliż",
+        "zoomOut": "Oddal"
+      },
+      "row": {
+        "openOwnPage": "Otwórz tę stronę",
+        "runsCount": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failedCount": "{count} nieudanych"
+      },
+      "bucket": {
+        "hint": "Zagregowane: przybliż, aby zobaczyć szczegóły wykonania"
+      },
+      "popover": {
+        "openExecution": "Otwórz wykonanie",
+        "showOnlyFlow": "Pokaż tylko ten flow"
+      },
+      "empty": {
+        "description": "Brak wykonań w wybranym zakresie i filtrach.",
+        "resetFilters": "Zresetuj filtry",
+        "widenRange": "Rozszerz do 7 dni"
+      },
+      "error": {
+        "title": "Nie udało się załadować osi czasu",
+        "description": "Wystąpił błąd podczas ładowania wykonań dla tego zakresu."
+      }
+    },
     "gantt_no_tasks_match_filters_title": "Żaden Task nie pasuje do wybranych filtrów.",
     "logs": "Logs",
     "no_logs_data_description": "Dostosuj filtry, zmień zakres czasu lub sprawdź, czy Flow był ostatnio uruchamiany.",
@@ -1702,6 +1736,10 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "chart preview": "Podgląd wykresu",
+    "chart mode": {
+      "counts": "Liczniki",
+      "timeline": "Oś czasu"
+    },
     "no_code": {
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",

@@ -203,6 +203,40 @@
     "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
     "gantt_no_tasks_match_filters": "Try adjusting the search, state, or log-level filters.",
     "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "All",
+        "total": "{count} run | {count} runs",
+        "failed": "{count} failed"
+      },
+      "toolbar": {
+        "panBack": "Pan back",
+        "panForward": "Pan forward",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out"
+      },
+      "row": {
+        "openOwnPage": "Open this page",
+        "runsCount": "{count} run | {count} runs",
+        "failedCount": "{count} failed"
+      },
+      "bucket": {
+        "hint": "Aggregated: zoom in for execution-level detail"
+      },
+      "popover": {
+        "openExecution": "Open execution",
+        "showOnlyFlow": "Show only this flow"
+      },
+      "empty": {
+        "description": "No executions in the selected range and filters.",
+        "resetFilters": "Reset filters",
+        "widenRange": "Widen to 7 days"
+      },
+      "error": {
+        "title": "Couldn't load the timeline",
+        "description": "Something went wrong while loading executions for this range."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
     "no_logs_data_title": "No logs found for the selected filters.",
@@ -1702,6 +1736,10 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "chart preview": "Chart preview",
+    "chart mode": {
+      "counts": "Counts",
+      "timeline": "Timeline"
+    },
     "no_code": {
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",

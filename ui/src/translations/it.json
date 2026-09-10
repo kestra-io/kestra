@@ -202,6 +202,40 @@
     "gantt": "Gantt",
     "gantt_no_tasks_executed": "Questa esecuzione è terminata senza eseguire alcun task. Controlla la sua panoramica e i log per il motivo.",
     "gantt_no_tasks_match_filters": "Prova a modificare i filtri di ricerca, stato o livello di log.",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Tutti",
+        "total": "{count} esecuzione | {count} esecuzioni",
+        "failed": "{count} non riuscite"
+      },
+      "toolbar": {
+        "panBack": "Scorri indietro",
+        "panForward": "Scorri avanti",
+        "zoomIn": "Zoom avanti",
+        "zoomOut": "Zoom indietro"
+      },
+      "row": {
+        "openOwnPage": "Apri questa pagina",
+        "runsCount": "{count} esecuzione | {count} esecuzioni",
+        "failedCount": "{count} non riuscite"
+      },
+      "bucket": {
+        "hint": "Aggregato: esegui lo zoom per il dettaglio a livello di esecuzione"
+      },
+      "popover": {
+        "openExecution": "Apri esecuzione",
+        "showOnlyFlow": "Mostra solo questo flow"
+      },
+      "empty": {
+        "description": "Nessuna esecuzione nell'intervallo e nei filtri selezionati.",
+        "resetFilters": "Reimposta filtri",
+        "widenRange": "Estendi a 7 giorni"
+      },
+      "error": {
+        "title": "Impossibile caricare la timeline",
+        "description": "Si è verificato un errore durante il caricamento delle esecuzioni per questo intervallo."
+      }
+    },
     "gantt_no_tasks_match_filters_title": "Nessun task corrisponde ai filtri selezionati.",
     "logs": "Logs",
     "no_logs_data_description": "Prova a modificare i filtri, cambiare l'intervallo di tempo o verifica se il flow è stato eseguito di recente.",
@@ -1702,6 +1736,10 @@
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
     "chart preview": "Anteprima grafico",
+    "chart mode": {
+      "counts": "Conteggi",
+      "timeline": "Timeline"
+    },
     "no_code": {
       "toggle_pebble": "Attiva/disattiva editor Pebble",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",

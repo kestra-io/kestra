@@ -212,6 +212,8 @@
 
     // The editor is its own child route now, so target it directly: passing `tab` to the parent
     // still resolves through the redirect but logs a discarded-param warning on every render.
+    // `editTask` deep-links straight to the failing task's no-code edit tab (see
+    // MultiPanelFlowEditorView's onMounted handling), rather than just opening the flow at large.
     const editFlowRoute = computed(() => ({
         name: "flows/update/edit",
         params: {
@@ -219,6 +221,7 @@
             id: route.params.flowId as string,
             tenant: route.params.tenant as string,
         },
+        query: focusedTaskRun.value ? {editTask: focusedTaskRun.value.taskId} : undefined,
     }))
 
     const structuralNodes = computed<StructuralNode[]>(() => {

@@ -18,10 +18,10 @@ export interface AxiosLikeConfig {
     responseType?: "json" | "text" | "blob"
     timeout?: number
     validateStatus?: (status: number) => boolean
-    [key: string]: any
+    [key: string]: unknown
 }
 
-export interface AxiosLikeResponse<T = any> {
+export interface AxiosLikeResponse<T = unknown> {
     data: T
     status: number
     headers: Record<string, string>
@@ -37,16 +37,16 @@ export interface StreamConfig {
 /** Minimal shape of the @hey-api/client-fetch client this facade reads. */
 interface InterceptedFetchClient {
     interceptors: {
-        request: { fns: Array<((request: Request, options: any) => Request | Promise<Request>) | null> }
-        response: { fns: Array<((response: Response, request: Request, options: any) => Response | Promise<Response>) | null> }
+        request: { fns: Array<((request: Request, options: ResolvedRequestOptions) => Request | Promise<Request>) | null> }
+        response: { fns: Array<((response: Response, request: Request, options: ResolvedRequestOptions) => Response | Promise<Response>) | null> }
         // `response` is undefined for a network-level failure (offline, CORS block, abort), which
         // never produces a Response — see the network-error catch below.
-        error: { fns: Array<((error: unknown, response: Response | undefined, request: Request, options: any) => unknown) | null> }
+        error: { fns: Array<((error: unknown, response: Response | undefined, request: Request, options: ResolvedRequestOptions) => unknown) | null> }
     }
 }
 
 interface FormDataBodySerializer {
-    bodySerializer: (...args: any[]) => any
+    bodySerializer: (body: unknown) => unknown
 }
 
 
@@ -73,20 +73,20 @@ export interface ClientFacade {
 
 export interface AxiosLikeClient {
     defaults: { headers: { common: Record<string, string> } }
-    get: <T = any>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    post: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    put: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    delete: <T = any>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    patch: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    get: <T = unknown>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    post: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    put: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    delete: <T = unknown>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    patch: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
     /**
      * POSTs `data` and resolves with the RAW `Response`, body unconsumed, so callers can read it
      * incrementally — e.g. POST-based SSE streams, which `EventSource` cannot issue. Runs the same
-     * shared request/response interceptors as the axios-like methods (CSRF header, progress, any
+     * shared request/response interceptors as the axios-like methods (CSRF header, progress, all
      * EE additions), so streaming endpoints never need to reimplement that cross-cutting logic.
      * Unlike the axios-like methods, a non-2xx response is RETURNED, not thrown, and error
      * interceptors are NOT run: streaming callers own their error UX (no global toasts/redirects).
      */
-    stream: (url: string, data?: any, config?: StreamConfig) => Promise<Response>
+    stream: (url: string, data?: unknown, config?: StreamConfig) => Promise<Response>
 }
 
 export function createClientFacade(
@@ -99,7 +99,7 @@ export function createClientFacade(
     async function axiosLikeRequest<T>(
         method: string,
         url: string,
-        data?: any,
+        data?: unknown,
         config: AxiosLikeConfig = {},
     ): Promise<AxiosLikeResponse<T>> {
         const fullUrl = withQuery(url, config.params)
@@ -196,7 +196,7 @@ export function createClientFacade(
     }
 
     /** See {@link AxiosLikeClient.stream} — raw-Response variant of axiosLikeRequest for streaming endpoints. */
-    async function streamRequest(url: string, data?: any, config: StreamConfig = {}): Promise<Response> {
+    async function streamRequest(url: string, data?: unknown, config: StreamConfig = {}): Promise<Response> {
         const headers = new Headers({...commonHeaders, ...(config.headers ?? {})})
         let body: BodyInit | undefined
         if (data !== undefined) {
@@ -225,11 +225,11 @@ export function createClientFacade(
 
     const axiosLikeClient: AxiosLikeClient = {
         defaults: {headers: {common: commonHeaders}},
-        get: <T = any>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("GET", url, undefined, config),
-        post: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("POST", url, data, config),
-        put: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PUT", url, data, config),
-        delete: <T = any>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("DELETE", url, config?.data, config),
-        patch: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PATCH", url, data, config),
+        get: <T = unknown>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("GET", url, undefined, config),
+        post: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => axiosLikeRequest<T>("POST", url, data, config),
+        put: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PUT", url, data, config),
+        delete: <T = unknown>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("DELETE", url, config?.data, config),
+        patch: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PATCH", url, data, config),
         stream: streamRequest,
     }
 
@@ -237,7 +237,8 @@ export function createClientFacade(
     function setMockClient(mockClient: Partial<AxiosLikeClient> = {}) {
         for (const method of ["get", "post", "put", "delete", "patch", "stream"] as const) {
             if (mockClient[method]) {
-                (axiosLikeClient as any)[method] = mockClient[method] as any
+                const mutableClient = axiosLikeClient as unknown as Record<string, unknown>
+                mutableClient[method] = mockClient[method]
             }
         }
     }

@@ -69,7 +69,6 @@
   "packages/hey-api-plugin/src/runtime.ts": 12,
   "packages/hey-api-plugin/src/types.d.ts": 1,
   "packages/kestra-sdk/openapi-ts.config.ts": 1,
-  "packages/kestra-sdk/src/client-facade.ts": 28,
   "packages/topology/src/Topology.vue": 13,
   "packages/topology/src/injectionKeys.ts": 1,
   "packages/topology/src/nodes/BasicNode.vue": 3,

@@ -223,7 +223,6 @@
   "src/components/plugins/PluginList.vue": 14,
   "src/components/plugins/PluginSelect.vue": 5,
   "src/components/plugins/PluginUnified.vue": 7,
-  "src/components/secrets/SecretsTable.vue": 14,
   "src/composables/entityIterator.ts": 2,
   "src/composables/monaco/artifacts/editorArtifacts.ts": 1,
   "src/composables/monaco/languages/pebbleLanguageConfigurator.ts": 1,

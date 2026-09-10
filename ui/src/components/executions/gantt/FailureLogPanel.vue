@@ -97,8 +97,11 @@
     .failure-log-panel__lines {
         display: flex;
         flex-direction: column;
+        max-height: 24rem;
+        overflow-y: auto;
 
         .line {
+            flex-shrink: 0;
             padding: var(--ks-spacing-1) 0;
             border-top: 1px solid var(--ks-border-default);
 

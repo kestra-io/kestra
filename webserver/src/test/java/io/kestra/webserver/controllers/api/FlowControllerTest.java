@@ -1462,6 +1462,49 @@ class FlowControllerTest {
     }
 
     @Test
+    void deleteFlowsByIdsShouldDeleteAllGivenFlows() {
+        postFlow("byIdsA", "io.kestra.unittest.deletebyids", "a");
+        postFlow("byIdsB", "io.kestra.unittest.deletebyids", "b");
+
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.unittest.deletebyids", "byIdsA"),
+            new IdWithNamespace("io.kestra.unittest.deletebyids", "byIdsB")
+        );
+
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(DELETE("/api/v1/main/flows/delete/by-ids", ids), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount()).isEqualTo(2);
+
+        assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.unittest.deletebyids/byIdsA")));
+        assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.unittest.deletebyids/byIdsB")));
+    }
+
+    @Test
+    void deleteFlowsByIdsShouldNotDeleteAnyFlowWhenOneIdIsMissing() {
+        postFlow("keepMe", "io.kestra.unittest.deletebyidspartial", "a");
+
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.unittest.deletebyidspartial", "keepMe"),
+            new IdWithNamespace("io.kestra.unittest.deletebyidspartial", "doesNotExist")
+        );
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(DELETE("/api/v1/main/flows/delete/by-ids", ids), BulkResponse.class));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
+
+        // The valid flow must survive: the endpoint validates every id up front and mutates
+        // nothing when any id in the batch does not exist.
+        String flow = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.unittest.deletebyidspartial/keepMe"), String.class);
+        assertThat(flow).isNotNull();
+    }
+
+    @Test
     void validateFlows() throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/validateMultipleValidFlows.yaml");
         String flow = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());

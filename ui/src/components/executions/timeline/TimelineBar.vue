@@ -37,7 +37,7 @@
                 </div>
                 <div class="popover-row">
                     <span class="k">{{ $t("state") }}</span>
-                    <span class="v">{{ execution.state }}</span>
+                    <KsExecutionStatus class="v" :status="execution.state" size="small" />
                 </div>
                 <div class="popover-row">
                     <span class="k">{{ $t("start date") }}</span>
@@ -89,7 +89,7 @@
         <div
             class="timeline-bar timeline-bucket"
             :class="{dimmed}"
-            :data-state="bucket.dominantState"
+            :data-bucket-state="bucket.dominantState"
             :style="bucketStyle"
         />
     </KsTooltip>
@@ -107,6 +107,10 @@
         leftPercent: number;
         widthPercent: number;
         dimmed: boolean;
+        // How full this bucket is relative to the busiest bucket in the same lane, in [0, 1]. Only
+        // meaningful when `bucket` is set — blends the tint so a light bucket reads lighter than a
+        // packed one, on top of the flat tint that already sets it apart from a real execution bar.
+        intensity?: number;
     }>()
 
     const emit = defineEmits<{
@@ -123,7 +127,15 @@
         width: `${Math.max(props.widthPercent, 0.3)}%`,
     }))
 
-    const bucketStyle = barStyle
+    const bucketStyle = computed(() => {
+        if (!props.bucket) return barStyle.value
+        const tint = `var(--ks-chart-${props.bucket.dominantState.toLowerCase()})`
+        const mixPercent = 30 + Math.round((props.intensity ?? 1) * 70)
+        return {
+            ...barStyle.value,
+            background: `color-mix(in srgb, ${tint} ${mixPercent}%, var(--ks-bg-hover))`,
+        }
+    })
 
     const formattedStart = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.startMs).toISOString()) : "")
     const formattedEnd = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.endMs).toISOString()) : "")
@@ -177,7 +189,12 @@
     }
 }
 
+// Fuller-height, squarer than a real execution bar so a glance tells "aggregated" from "one run"
+// without needing the tooltip.
 .timeline-bucket {
+    top: 0.125rem;
+    bottom: 0.125rem;
+    border-radius: 0.125rem;
     cursor: default;
 }
 

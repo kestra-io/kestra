@@ -182,3 +182,24 @@ export function countByState(executions: TimelineExecution[]): StateCount[] {
         .map(([state, count]) => ({state, count}))
         .sort((a, b) => b.count - a.count)
 }
+
+export interface AxisTick {
+    ms: number;
+    isNow: boolean;
+}
+
+/**
+ * Evenly spaced tick timestamps across [rangeStartMs, rangeEndMs], `tickCount + 1` points including
+ * both ends. The last tick is flagged {@link AxisTick.isNow} instead of carrying a timestamp label
+ * once the range's end is pinned to "now" (within a minute), so the caller can render "Now" there.
+ */
+export function buildAxisTicks(rangeStartMs: number, rangeEndMs: number, tickCount: number, nowMs: number): AxisTick[] {
+    const span = rangeEndMs - rangeStartMs
+    if (span <= 0) return []
+
+    const isPinnedToNow = nowMs - rangeEndMs < 60_000
+    return Array.from({length: tickCount + 1}, (_, i) => ({
+        ms: rangeStartMs + (span * i) / tickCount,
+        isNow: i === tickCount && isPinnedToNow,
+    }))
+}

@@ -93,7 +93,6 @@
   "src/components/SurveyDialog.vue": 1,
   "src/components/admin/triggers/AddTriggerModal.spec.ts": 1,
   "src/components/admin/triggers/AddTriggerModal.vue": 5,
-  "src/components/ai/copilot/CopilotComposer.vue": 5,
   "src/components/basicauth/BasicAuthLogin.vue": 2,
   "src/components/basicauth/BasicAuthSetup.vue": 7,
   "src/components/content/BigChildCards.vue": 1,

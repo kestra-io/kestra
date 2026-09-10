@@ -210,7 +210,7 @@
     // Transcript captured before this dictation started, so interim results append cleanly.
     const baseDraft = ref("")
     const draftBeforeListening = ref("")
-    let recognition: any = null
+    let recognition: SpeechRecognition | null = null
 
     // Waveform visualizer.
     const wavesContainer = ref<HTMLElement | null>(null)
@@ -237,7 +237,7 @@
             volumeBuffer.value = Array(barCount).fill(0)
 
             stream = await navigator.mediaDevices.getUserMedia({audio: true})
-            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            audioContext = new (window.AudioContext || window.webkitAudioContext)()
             analyser = audioContext.createAnalyser()
             analyser.fftSize = 256
             analyser.smoothingTimeConstant = 0.3
@@ -330,13 +330,13 @@
     })
 
     onMounted(() => {
-        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
         if (!SR) return
         speechSupported.value = true
         recognition = new SR()
         recognition.continuous = true
         recognition.interimResults = true
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
             let interim = ""
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const result = event.results[i]

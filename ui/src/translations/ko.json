@@ -203,6 +203,41 @@
     "gantt_no_tasks_executed": "이 실행은 어떤 task도 실행하지 않고 종료되었습니다.  \n개요와 logs를 확인하여 이유를 알아보세요.",
     "gantt_no_tasks_match_filters": "검색, 상태 또는 log-level 필터를 조정해 보세요.",
     "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
+    "failureDebugPanel": {
+      "title": "실패 디버그",
+      "subtitle": "{taskId}에 포커스됨",
+      "announce": "{count}개의 task가 실패했습니다. 디버그 패널이 열리고 {taskId}에 포커스되었습니다.",
+      "reopen": "실패 디버그 다시 열기 ({count})",
+      "copyError": "오류 복사",
+      "switcher": {
+        "label": "이 실행의 실패"
+      },
+      "restart": {
+        "caption": "이 task부터 실행을 재시작합니다. 이전 task는 다시 실행되지 않으며 해당 outputs는 재사용됩니다."
+      },
+      "copilot": {
+        "ask": "Copilot에 질문"
+      },
+      "miniTimeline": {
+        "title": "발생 위치",
+        "dragHint": "드래그하여 시간 범위를 선택하고 아래 logs를 필터링합니다. Escape 키를 누르면 선택이 해제됩니다."
+      },
+      "structuralImpact": {
+        "title": "구조적 영향",
+        "relation": {
+          "focused": "실패한 task",
+          "parent": "상위 task",
+          "sibling": "형제 task",
+          "child": "하위 task"
+        }
+      },
+      "logs": {
+        "title": "기록된 내용",
+        "empty": "이 task에 대해 아직 기록된 log가 없습니다.",
+        "emptyFiltered": "선택한 시간 범위에 log가 없습니다. Escape 키를 누르면 선택이 해제됩니다.",
+        "error": "logs를 불러오지 못했습니다. Logs 탭에서 다시 시도하세요."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",

@@ -203,6 +203,41 @@
     "gantt_no_tasks_executed": "Esta execução terminou sem executar nenhuma task.  \nVerifique sua visão geral e logs para encontrar o motivo.",
     "gantt_no_tasks_match_filters": "Tente ajustar os filtros de busca, estado ou nível de log.",
     "gantt_no_tasks_match_filters_title": "Nenhuma task corresponde aos filtros selecionados.",
+    "failureDebugPanel": {
+      "title": "Depuração de falha",
+      "subtitle": "Focado em {taskId}",
+      "announce": "{count} task(s) falharam. Painel de depuração aberto, focado em {taskId}.",
+      "reopen": "Reabrir depuração de falha ({count})",
+      "copyError": "Copiar erro",
+      "switcher": {
+        "label": "Falhas nesta execução"
+      },
+      "restart": {
+        "caption": "Reinicia a execução a partir deste task. Os tasks anteriores não são reexecutados e seus outputs são reutilizados."
+      },
+      "copilot": {
+        "ask": "Perguntar ao Copilot"
+      },
+      "miniTimeline": {
+        "title": "Onde aconteceu",
+        "dragHint": "Arraste para selecionar um intervalo de tempo e filtrar os logs abaixo. Pressione Escape para limpar."
+      },
+      "structuralImpact": {
+        "title": "Impacto estrutural",
+        "relation": {
+          "focused": "Task com falha",
+          "parent": "Task pai",
+          "sibling": "Task irmão",
+          "child": "Task filho"
+        }
+      },
+      "logs": {
+        "title": "O que foi registrado",
+        "empty": "Ainda não há logs registrados para este task.",
+        "emptyFiltered": "Nenhum log no intervalo de tempo selecionado. Pressione Escape para limpar a seleção.",
+        "error": "Não foi possível carregar os logs. Tente novamente na aba Logs."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Por favor, tente ajustar seus filtros, alterar o intervalo de tempo ou verifique se o flow foi executado recentemente.",
     "no_logs_data_title": "Nenhum log encontrado para os filtros selecionados.",

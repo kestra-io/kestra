@@ -203,6 +203,41 @@
     "gantt_no_tasks_executed": "このExecutionは、タスクを実行せずに終了しました。  \n理由を確認するには、概要とLogsをチェックしてください。",
     "gantt_no_tasks_match_filters": "検索、状態、またはログレベルのフィルターを調整してみてください。",
     "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
+    "failureDebugPanel": {
+      "title": "失敗のデバッグ",
+      "subtitle": "{taskId} にフォーカス",
+      "announce": "{count} 件の task が失敗しました。デバッグパネルを開き、{taskId} にフォーカスしました。",
+      "reopen": "失敗のデバッグを再度開く ({count})",
+      "copyError": "エラーをコピー",
+      "switcher": {
+        "label": "この実行内の失敗"
+      },
+      "restart": {
+        "caption": "この task から実行を再開します。それより前の task は再実行されず、その outputs は再利用されます。"
+      },
+      "copilot": {
+        "ask": "Copilot に質問"
+      },
+      "miniTimeline": {
+        "title": "発生した場所",
+        "dragHint": "ドラッグして時間範囲を選択し、下の logs を絞り込みます。Escape キーで選択を解除します。"
+      },
+      "structuralImpact": {
+        "title": "構造的な影響",
+        "relation": {
+          "focused": "失敗した task",
+          "parent": "親 task",
+          "sibling": "兄弟 task",
+          "child": "子 task"
+        }
+      },
+      "logs": {
+        "title": "記録された内容",
+        "empty": "この task にはまだ log が記録されていません。",
+        "emptyFiltered": "選択した時間範囲に log がありません。Escape キーで選択を解除します。",
+        "error": "logs を読み込めませんでした。Logs タブから再試行してください。"
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",

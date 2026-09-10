@@ -203,6 +203,41 @@
     "gantt_no_tasks_executed": "Diese Execution endete, ohne dass ein Task ausgeführt wurde.\nDen Grund findest du in der Übersicht und in den Logs.",
     "gantt_no_tasks_match_filters": "Passe die Filter für Suche, Status oder Log-Level an.",
     "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
+    "failureDebugPanel": {
+      "title": "Fehler-Debugging",
+      "subtitle": "Fokussiert auf {taskId}",
+      "announce": "{count} task(s) fehlgeschlagen. Debug-Panel geöffnet, fokussiert auf {taskId}.",
+      "reopen": "Fehler-Debugging erneut öffnen ({count})",
+      "copyError": "Fehler kopieren",
+      "switcher": {
+        "label": "Fehler in dieser Ausführung"
+      },
+      "restart": {
+        "caption": "Startet die Ausführung ab diesem task neu. Vorgelagerte tasks werden nicht erneut ausgeführt, ihre outputs werden wiederverwendet."
+      },
+      "copilot": {
+        "ask": "Copilot fragen"
+      },
+      "miniTimeline": {
+        "title": "Wo es passiert ist",
+        "dragHint": "Ziehen, um einen Zeitraum auszuwählen und die logs unten zu filtern. Escape drücken, um die Auswahl zu löschen."
+      },
+      "structuralImpact": {
+        "title": "Strukturelle Auswirkung",
+        "relation": {
+          "focused": "Fehlgeschlagener task",
+          "parent": "Übergeordneter task",
+          "sibling": "Paralleler task",
+          "child": "Untergeordneter task"
+        }
+      },
+      "logs": {
+        "title": "Was protokolliert wurde",
+        "empty": "Für diesen task wurden noch keine logs aufgezeichnet.",
+        "emptyFiltered": "Keine logs im ausgewählten Zeitraum. Escape drücken, um die Auswahl zu löschen.",
+        "error": "Logs konnten nicht geladen werden. Versuchen Sie es erneut über den Logs-Tab."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
     "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",

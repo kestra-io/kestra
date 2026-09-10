@@ -203,6 +203,41 @@
     "gantt_no_tasks_executed": "Cette exécution s'est terminée sans exécuter de tâche.  \nConsultez son aperçu et ses logs pour en connaître la raison.",
     "gantt_no_tasks_match_filters": "Essayez d'ajuster les filtres de recherche, d'état ou de niveau de log.",
     "gantt_no_tasks_match_filters_title": "Aucune tâche ne correspond aux filtres sélectionnés.",
+    "failureDebugPanel": {
+      "title": "Débogage de l'échec",
+      "subtitle": "Focalisé sur {taskId}",
+      "announce": "{count} task(s) en échec. Panneau de débogage ouvert, focalisé sur {taskId}.",
+      "reopen": "Rouvrir le débogage de l'échec ({count})",
+      "copyError": "Copier l'erreur",
+      "switcher": {
+        "label": "Échecs dans cette exécution"
+      },
+      "restart": {
+        "caption": "Redémarre l'exécution à partir de ce task. Les tasks en amont ne sont pas réexécutés et leurs outputs sont réutilisés."
+      },
+      "copilot": {
+        "ask": "Demander à Copilot"
+      },
+      "miniTimeline": {
+        "title": "Où cela s'est produit",
+        "dragHint": "Faites glisser pour sélectionner une plage horaire et filtrer les logs ci-dessous. Appuyez sur Échap pour effacer."
+      },
+      "structuralImpact": {
+        "title": "Impact structurel",
+        "relation": {
+          "focused": "Task en échec",
+          "parent": "Task parent",
+          "sibling": "Task voisin",
+          "child": "Task enfant"
+        }
+      },
+      "logs": {
+        "title": "Ce qui a été journalisé",
+        "empty": "Aucun log enregistré pour ce task pour l'instant.",
+        "emptyFiltered": "Aucun log dans la plage horaire sélectionnée. Appuyez sur Échap pour effacer la sélection.",
+        "error": "Impossible de charger les logs. Réessayez depuis l'onglet Logs."
+      }
+    },
     "logs": "Fichiers journaux",
     "no_logs_data_description": "Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
     "no_logs_data_title": "Aucun log trouvé pour les filtres sélectionnés.",

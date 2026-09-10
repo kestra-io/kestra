@@ -203,6 +203,41 @@
     "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
     "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
     "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
+    "failureDebugPanel": {
+      "title": "失败调试",
+      "subtitle": "聚焦于 {taskId}",
+      "announce": "{count} 个 task 失败。调试面板已打开，聚焦于 {taskId}。",
+      "reopen": "重新打开失败调试 ({count})",
+      "copyError": "复制错误",
+      "switcher": {
+        "label": "此次执行中的失败"
+      },
+      "restart": {
+        "caption": "从此 task 重新开始执行。之前的 task 不会重新运行，其 outputs 将被重复使用。"
+      },
+      "copilot": {
+        "ask": "询问 Copilot"
+      },
+      "miniTimeline": {
+        "title": "发生的位置",
+        "dragHint": "拖动以选择时间范围并筛选下方的 logs。按 Escape 清除选择。"
+      },
+      "structuralImpact": {
+        "title": "结构性影响",
+        "relation": {
+          "focused": "失败的 task",
+          "parent": "父 task",
+          "sibling": "同级 task",
+          "child": "子 task"
+        }
+      },
+      "logs": {
+        "title": "记录的内容",
+        "empty": "此 task 尚未记录任何 log。",
+        "emptyFiltered": "所选时间范围内没有 log。按 Escape 清除选择。",
+        "error": "无法加载 logs。请从日志标签页重试。"
+      }
+    },
     "logs": "日志",
     "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_logs_data_title": "未找到所选过滤器的日志。",

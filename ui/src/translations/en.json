@@ -203,6 +203,41 @@
     "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
     "gantt_no_tasks_match_filters": "Try adjusting the search, state, or log-level filters.",
     "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
+    "failureDebugPanel": {
+      "title": "Failure debug",
+      "subtitle": "Focused on {taskId}",
+      "announce": "{count} task(s) failed. Debug panel opened, focused on {taskId}.",
+      "reopen": "Reopen failure debug ({count})",
+      "copyError": "Copy error",
+      "switcher": {
+        "label": "Failures in this execution"
+      },
+      "restart": {
+        "caption": "Restarts the execution from this task. Upstream tasks are not re-run and their outputs are reused."
+      },
+      "copilot": {
+        "ask": "Ask Copilot"
+      },
+      "miniTimeline": {
+        "title": "Where it happened",
+        "dragHint": "Drag to select a time range and filter the logs below. Press Escape to clear."
+      },
+      "structuralImpact": {
+        "title": "Structural impact",
+        "relation": {
+          "focused": "Failed task",
+          "parent": "Parent task",
+          "sibling": "Sibling task",
+          "child": "Child task"
+        }
+      },
+      "logs": {
+        "title": "What it logged",
+        "empty": "No logs recorded for this task yet.",
+        "emptyFiltered": "No logs in the selected time range. Press Escape to clear the selection.",
+        "error": "Logs could not be loaded. Try again from the Logs tab."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
     "no_logs_data_title": "No logs found for the selected filters.",

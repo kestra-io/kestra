@@ -62,7 +62,7 @@
             type="warning"
             :closable="false"
             data-test="var-value-truncated"
-            :title="$t('large_outputs.value_truncated', {size: serializedSize, lines: Utils.EDITOR_MAX_LINES})"
+            :title="$t('large_outputs.value_truncated', {size: serializedSize, lines: Utils.DISPLAY_MAX_LINES})"
         />
         <KsEditor
             v-bind="editorBindings"
@@ -187,7 +187,7 @@
 
     const serialized = computed(() => JSON.stringify(getDisplayValue(props.value), null, 2) ?? "")
 
-    const editorValue = computed(() => Utils.capForEditor(serialized.value))
+    const editorValue = computed(() => Utils.capForDisplay(serialized.value))
 
     const isTruncated = computed(() => editorValue.value.length < serialized.value.length)
 

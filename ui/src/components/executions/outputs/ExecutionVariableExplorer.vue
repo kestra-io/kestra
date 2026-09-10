@@ -47,7 +47,7 @@
                                     type="warning"
                                     :closable="false"
                                     data-test="raw-value-truncated"
-                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize, lines: Utils.EDITOR_MAX_LINES})"
+                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize, lines: Utils.DISPLAY_MAX_LINES})"
                                 />
                                 <KsEditor
                                     v-bind="editorBindings"
@@ -76,9 +76,18 @@
                                 @select="onSelectPath"
                             />
 
-                            <div v-else class="viewer__scalar">
-                                <code>{{ rawValue }}</code>
-                            </div>
+                            <template v-else>
+                                <KsAlert
+                                    v-if="isRawTruncated"
+                                    type="warning"
+                                    :closable="false"
+                                    data-test="raw-value-truncated"
+                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize, lines: Utils.DISPLAY_MAX_LINES})"
+                                />
+                                <div class="viewer__scalar">
+                                    <code>{{ cappedRawValue }}</code>
+                                </div>
+                            </template>
                         </div>
                     </KsSplitterPanel>
                 </KsSplitter>
@@ -403,8 +412,8 @@
             : JSON.stringify(selectedValue.value, null, 2),
     )
 
-    // Only the editor is clipped: copyValue still hands over the whole value.
-    const cappedRawValue = computed(() => Utils.capForEditor(rawValue.value))
+    // Only what is rendered is clipped: copyValue still hands over the whole value.
+    const cappedRawValue = computed(() => Utils.capForDisplay(rawValue.value))
 
     const isRawTruncated = computed(() => cappedRawValue.value.length < rawValue.value.length)
 

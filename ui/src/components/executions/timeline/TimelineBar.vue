@@ -1,69 +1,82 @@
 <template>
-    <KsPopover
-        v-if="execution"
-        v-model:visible="popoverVisible"
-        trigger="click"
-        placement="top"
-        :width="280"
-        :showArrow="true"
-    >
-        <template #reference>
-            <KsTooltip placement="top" :rawContent="true">
-                <template #content>
-                    <div class="timeline-bar-tooltip">
-                        <strong>{{ execution.flowId }}</strong>
-                        <span>{{ execution.namespace }}</span>
-                        <span>{{ execution.state }}</span>
-                        <span>{{ formattedStart }} &rarr; {{ formattedEnd }}</span>
-                        <span>{{ $t("id") }}: {{ execution.id }}</span>
-                    </div>
-                </template>
-                <div
+    <template v-if="execution">
+        <KsPopover
+            v-model:visible="popoverVisible"
+            trigger="click"
+            placement="top"
+            :width="280"
+            :showArrow="true"
+        >
+            <template #reference>
+                <button
+                    ref="barRef"
+                    type="button"
                     class="timeline-bar"
                     :class="{dimmed}"
                     :data-state="execution.state"
                     :style="barStyle"
-                    role="button"
-                    tabindex="0"
                     :aria-label="`${execution.flowId} — ${execution.state}`"
+                    @mouseenter="tooltipVisible = true"
+                    @mouseleave="tooltipVisible = false"
+                    @focus="tooltipVisible = true"
+                    @blur="tooltipVisible = false"
                 />
-            </KsTooltip>
-        </template>
+            </template>
 
-        <div class="timeline-bar-popover">
-            <div class="popover-id">
-                <KsId :value="execution.id" :shrink="true" />
+            <div class="timeline-bar-popover">
+                <div class="popover-id">
+                    <KsId :value="execution.id" :shrink="true" />
+                </div>
+                <div class="popover-row">
+                    <span class="k">{{ $t("namespace") }}</span>
+                    <span class="v">{{ execution.namespace }}</span>
+                </div>
+                <div class="popover-row">
+                    <span class="k">{{ $t("flow") }}</span>
+                    <span class="v">{{ execution.flowId }}</span>
+                </div>
+                <div class="popover-row">
+                    <span class="k">{{ $t("state") }}</span>
+                    <span class="v">{{ execution.state }}</span>
+                </div>
+                <div class="popover-row">
+                    <span class="k">{{ $t("start date") }}</span>
+                    <span class="v">{{ formattedStart }}</span>
+                </div>
+                <div class="popover-row">
+                    <span class="k">{{ $t("end date") }}</span>
+                    <span class="v">{{ formattedEnd }}</span>
+                </div>
+                <div class="popover-actions">
+                    <KsButton type="primary" @click="openExecution">
+                        {{ $t("executionsTimeline.popover.openExecution") }}
+                    </KsButton>
+                    <KsButton @click="showOnlyThisFlow">
+                        {{ $t("executionsTimeline.popover.showOnlyFlow") }}
+                    </KsButton>
+                </div>
             </div>
-            <div class="popover-row">
-                <span class="k">{{ $t("namespace") }}</span>
-                <span class="v">{{ execution.namespace }}</span>
-            </div>
-            <div class="popover-row">
-                <span class="k">{{ $t("flow") }}</span>
-                <span class="v">{{ execution.flowId }}</span>
-            </div>
-            <div class="popover-row">
-                <span class="k">{{ $t("state") }}</span>
-                <span class="v">{{ execution.state }}</span>
-            </div>
-            <div class="popover-row">
-                <span class="k">{{ $t("start date") }}</span>
-                <span class="v">{{ formattedStart }}</span>
-            </div>
-            <div class="popover-row">
-                <span class="k">{{ $t("end date") }}</span>
-                <span class="v">{{ formattedEnd }}</span>
-            </div>
-            <div class="popover-actions">
-                <KsButton type="primary" @click="openExecution">
-                    {{ $t("executionsTimeline.popover.openExecution") }}
-                </KsButton>
-                <KsButton @click="showOnlyThisFlow">
-                    {{ $t("executionsTimeline.popover.showOnlyFlow") }}
-                </KsButton>
-            </div>
-        </div>
-    </KsPopover>
+        </KsPopover>
+
+        <KsTooltip
+            trigger="manual"
+            placement="top"
+            :rawContent="true"
+            :visible="tooltipVisible && !popoverVisible"
+            :virtualRef="barRef"
+            virtualTriggering
+        >
+            <template #content>
+                <div class="timeline-bar-tooltip">
+                    <strong>{{ execution.flowId }}</strong>
+                    <span>{{ execution.namespace }}</span>
+                    <span>{{ execution.state }}</span>
+                    <span>{{ formattedStart }} &rarr; {{ formattedEnd }}</span>
+                    <span>{{ $t("id") }}: {{ execution.id }}</span>
+                </div>
+            </template>
+        </KsTooltip>
+    </template>
 
     <KsTooltip v-else-if="bucket" placement="top" :rawContent="true">
         <template #content>
@@ -102,6 +115,8 @@
 
     const router = useRouter()
     const popoverVisible = ref(false)
+    const tooltipVisible = ref(false)
+    const barRef = ref<HTMLButtonElement | null>(null)
 
     const barStyle = computed(() => ({
         left: `${props.leftPercent}%`,
@@ -116,6 +131,7 @@
     function openExecution() {
         if (!props.execution) return
         popoverVisible.value = false
+        tooltipVisible.value = false
         router.push({
             name: "executions/update",
             params: {
@@ -129,6 +145,7 @@
     function showOnlyThisFlow() {
         if (!props.execution) return
         popoverVisible.value = false
+        tooltipVisible.value = false
         emit("show-only-flow", {namespace: props.execution.namespace, flowId: props.execution.flowId})
     }
 </script>
@@ -139,7 +156,11 @@
     top: 0.3rem;
     bottom: 0.3rem;
     min-width: 0.1875rem;
+    margin: 0;
+    padding: 0;
+    border: none;
     border-radius: var(--ks-radius-xs);
+    font: inherit;
     cursor: pointer;
     outline: 2px solid transparent;
     outline-offset: 1px;

@@ -1,8 +1,9 @@
 import {describe, test, expect, beforeEach, afterEach, vi} from "vitest"
 import {ref} from "vue"
-import {mount, flushPromises} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginCatalog from "../../../../src/components/plugins/PluginCatalog.vue"
 import "../../../../src/utils/global"
@@ -94,18 +95,10 @@ vi.mock("../../../../src/stores/pluginsEnrichment", () => ({
     usePluginsEnrichmentStore: () => ({fetchEnrichment: vi.fn(), getEnrichment: () => undefined}),
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {en: {}},
-})
-
 async function mountCatalog() {
-    const wrapper = mount(PluginCatalog, {
+    const wrapper = i18nMount(PluginCatalog, {
         global: {
-            plugins: [i18n, KestraDesignSystem],
+            plugins: [KestraDesignSystem],
             stubs: {TopNavBar: true, TaskIcon: true},
         },
     })

@@ -1,8 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {createPinia, setActivePinia} from "pinia"
 import BasicAuthLogin from "../../../src/components/basicauth/BasicAuthLogin.vue"
+import {i18nMount} from "../i18nMount"
 
 const {route} = vi.hoisted(() => ({
     route: {query: {} as Record<string, string>, params: {} as Record<string, string>},
@@ -18,11 +17,9 @@ const messages = {
     setup: {login_title: "Login", login: "Login", troubleshooting: "Troubleshooting"},
 }
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: messages}, missingWarn: false, fallbackWarn: false})
-
 function mountLogin() {
     setActivePinia(createPinia())
-    return mount(BasicAuthLogin, {global: {plugins: [i18n]}})
+    return i18nMount(BasicAuthLogin, {messages})
 }
 
 beforeEach(() => {

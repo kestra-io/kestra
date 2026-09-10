@@ -1,10 +1,8 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import SaveFilters from "../../../../src/components/Data/KsDataTable/filter/segments/SaveFilters.vue"
 import type {AppliedFilter, FilterGroup, SavedFilter} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
 import {Comparators} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
+import {i18nMount} from "../../i18nMount"
 
 const makeApplied = (overrides: Partial<AppliedFilter> = {}): AppliedFilter => ({
     id: "f1",
@@ -27,7 +25,6 @@ const makeSaved = (overrides: Partial<SavedFilter> = {}): SavedFilter => ({
 })
 
 const globalConfig = {
-    plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
     stubs: {
         KsDialog: {
             template: "<div class=\"ks-dialog-stub\"><slot /><slot name=\"footer\" /></div>",
@@ -42,7 +39,7 @@ describe("SaveFilters", () => {
     test("in create mode the conditions summary renders without hint", async () => {
         // Given
         const applied = [makeApplied()]
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [],
                 appliedFilters: applied,
@@ -63,7 +60,7 @@ describe("SaveFilters", () => {
         // Given
         const editing = makeSaved()
         const applied = [makeApplied({id: "f2", key: "flowId", keyLabel: "Flow ID", value: "myFlow", valueLabel: "myFlow"})]
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [editing],
                 editingFilter: editing,
@@ -81,7 +78,7 @@ describe("SaveFilters", () => {
     test("in edit mode saving emits edit with id, name and description", async () => {
         // Given
         const editing = makeSaved({id: "saved_42", name: "Original"})
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [editing],
                 editingFilter: editing,
@@ -113,7 +110,7 @@ describe("SaveFilters", () => {
             makeApplied({id: "fa", key: "namespace", keyLabel: "Namespace", value: "io.kestra", valueLabel: "io.kestra"}),
             makeApplied({id: "fb", key: "flowId", keyLabel: "Flow ID", value: "myFlow", valueLabel: "myFlow"}),
         ]
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [editing],
                 editingFilter: editing,
@@ -133,7 +130,7 @@ describe("SaveFilters", () => {
         // Given: groups holds one plain leaf — the common, non-nested case
         const applied = [makeApplied()]
         const groups: FilterGroup[] = [{id: "g1", kind: "leaf", filters: applied}]
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [],
                 appliedFilters: applied,
@@ -165,7 +162,7 @@ describe("SaveFilters", () => {
                 {id: "leaf2", kind: "leaf", filters: [flowFilter]},
             ],
         }]
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [],
                 appliedFilters: [namespaceFilter, flowFilter],
@@ -194,7 +191,7 @@ describe("SaveFilters", () => {
             {id: "leaf1", kind: "leaf", filters: [namespaceFilter]},
             {id: "leaf2", kind: "leaf", filters: [flowFilter]},
         ]
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [],
                 appliedFilters: [namespaceFilter, flowFilter],
@@ -221,7 +218,7 @@ describe("SaveFilters", () => {
             {id: "leaf1", kind: "leaf", filters: applied},
             {id: "leaf2", kind: "leaf", filters: []},
         ]
-        const wrapper = mount(SaveFilters, {
+        const wrapper = i18nMount(SaveFilters, {
             props: {
                 savedFilters: [],
                 appliedFilters: applied,

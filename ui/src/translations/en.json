@@ -213,7 +213,9 @@
         "panBack": "Pan back",
         "panForward": "Pan forward",
         "zoomIn": "Zoom in",
-        "zoomOut": "Zoom out"
+        "zoomOut": "Zoom out",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Change time range"
       },
       "row": {
         "openOwnPage": "Open this page",

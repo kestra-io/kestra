@@ -213,7 +213,9 @@
         "panBack": "뒤로 이동",
         "panForward": "앞으로 이동",
         "zoomIn": "확대",
-        "zoomOut": "축소"
+        "zoomOut": "축소",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "시간 범위 변경"
       },
       "row": {
         "openOwnPage": "이 페이지 열기",

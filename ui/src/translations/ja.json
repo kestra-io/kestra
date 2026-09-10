@@ -213,7 +213,9 @@
         "panBack": "後方へ移動",
         "panForward": "前方へ移動",
         "zoomIn": "ズームイン",
-        "zoomOut": "ズームアウト"
+        "zoomOut": "ズームアウト",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "時間範囲を変更"
       },
       "row": {
         "openOwnPage": "このページを開く",

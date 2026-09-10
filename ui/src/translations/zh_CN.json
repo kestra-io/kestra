@@ -213,7 +213,9 @@
         "panBack": "向后平移",
         "panForward": "向前平移",
         "zoomIn": "放大",
-        "zoomOut": "缩小"
+        "zoomOut": "缩小",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "更改时间范围"
       },
       "row": {
         "openOwnPage": "打开此页面",

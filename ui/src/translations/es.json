@@ -213,7 +213,9 @@
         "panBack": "Desplazar hacia atrás",
         "panForward": "Desplazar hacia adelante",
         "zoomIn": "Acercar",
-        "zoomOut": "Alejar"
+        "zoomOut": "Alejar",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Cambiar rango de tiempo"
       },
       "row": {
         "openOwnPage": "Abrir esta página",

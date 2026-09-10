@@ -213,7 +213,9 @@
         "panBack": "Zurück schwenken",
         "panForward": "Vorwärts schwenken",
         "zoomIn": "Vergrößern",
-        "zoomOut": "Verkleinern"
+        "zoomOut": "Verkleinern",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Zeitraum ändern"
       },
       "row": {
         "openOwnPage": "Diese Seite öffnen",

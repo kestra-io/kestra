@@ -213,7 +213,9 @@
         "panBack": "Reculer",
         "panForward": "Avancer",
         "zoomIn": "Zoomer",
-        "zoomOut": "Dézoomer"
+        "zoomOut": "Dézoomer",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Modifier la plage horaire"
       },
       "row": {
         "openOwnPage": "Ouvrir cette page",

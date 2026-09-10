@@ -213,7 +213,9 @@
         "panBack": "Voltar",
         "panForward": "Avançar",
         "zoomIn": "Aumentar zoom",
-        "zoomOut": "Diminuir zoom"
+        "zoomOut": "Diminuir zoom",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Alterar intervalo de tempo"
       },
       "row": {
         "openOwnPage": "Abrir esta página",

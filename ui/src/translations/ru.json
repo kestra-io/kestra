@@ -213,7 +213,9 @@
         "panBack": "Прокрутить назад",
         "panForward": "Прокрутить вперёд",
         "zoomIn": "Увеличить",
-        "zoomOut": "Уменьшить"
+        "zoomOut": "Уменьшить",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Изменить диапазон времени"
       },
       "row": {
         "openOwnPage": "Открыть эту страницу",

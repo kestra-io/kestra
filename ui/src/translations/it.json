@@ -213,7 +213,9 @@
         "panBack": "Scorri indietro",
         "panForward": "Scorri avanti",
         "zoomIn": "Zoom avanti",
-        "zoomOut": "Zoom indietro"
+        "zoomOut": "Zoom indietro",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Cambia intervallo di tempo"
       },
       "row": {
         "openOwnPage": "Apri questa pagina",

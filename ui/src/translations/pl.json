@@ -213,7 +213,9 @@
         "panBack": "Przewiń wstecz",
         "panForward": "Przewiń do przodu",
         "zoomIn": "Przybliż",
-        "zoomOut": "Oddal"
+        "zoomOut": "Oddal",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Zmień zakres czasu"
       },
       "row": {
         "openOwnPage": "Otwórz tę stronę",

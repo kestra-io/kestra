@@ -26,4 +26,20 @@ describe("KsPopover", () => {
         })
         expect(wrapper).toBeTruthy()
     })
+
+    test("closes on Escape when visibility is externally controlled", async () => {
+        const wrapper = mount(KsPopover, {
+            props: {trigger: "click", visible: true},
+            slots: {
+                default: "<p>Popover content</p>",
+                reference: "<button>Click me</button>",
+            },
+            global: globalConfig,
+        })
+
+        document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape"}))
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.emitted("update:visible")?.[0]).toEqual([false])
+    })
 })

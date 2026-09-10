@@ -16,6 +16,10 @@ vi.mock("override/stores/auth", () => ({
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({promptCopilot: () => undefined}),
 }))
+vi.mock("vue-router", () => ({
+    useRoute: () => ({params: {namespace: "company.analytics", flowId: "daily_sales_sync", tenant: "main"}, query: {}}),
+    useRouter: () => ({push: vi.fn()}),
+}))
 
 import FailureDebugPanel from "./FailureDebugPanel.vue"
 import en from "../../../translations/en.json"
@@ -110,7 +114,7 @@ describe("FailureDebugPanel", () => {
         expect(wrapper.find("[role=\"tablist\"]").exists()).toBe(false)
     })
 
-    it("should move focus to the panel heading on open", async () => {
+    it("should start closed, with the reopen affordance as the only entry point", async () => {
         const wrapper = mountPanel({
             id: "exec-1",
             state: {current: "FAILED"},
@@ -119,6 +123,23 @@ describe("FailureDebugPanel", () => {
 
         await flushPromises()
 
+        expect(wrapper.get(".failure-debug-panel").isVisible()).toBe(false)
+        expect(wrapper.get(".failure-debug-reopen button").isVisible()).toBe(true)
+        expect(document.activeElement).not.toBe(wrapper.get("h3").element)
+    })
+
+    it("should move focus to the panel heading when opened", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "task-1", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+        await flushPromises()
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.get(".failure-debug-panel").isVisible()).toBe(true)
         expect(document.activeElement).toBe(wrapper.get("h3").element)
     })
 
@@ -128,6 +149,8 @@ describe("FailureDebugPanel", () => {
             state: {current: "FAILED"},
             taskRunList: [taskRun("tr-1", "task-1", "FAILED", "2024-01-01T00:00:00Z")],
         })
+        await flushPromises()
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
         await flushPromises()
 
         await wrapper.get(".failure-debug-panel").trigger("keydown", {key: "Escape"})
@@ -144,6 +167,8 @@ describe("FailureDebugPanel", () => {
             taskRunList: [taskRun("tr-1", "task-1", "FAILED", "2024-01-01T00:00:00Z")],
         })
         await flushPromises()
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
         await wrapper.get(".failure-debug-panel").trigger("keydown", {key: "Escape"})
         await flushPromises()
 
@@ -154,7 +179,7 @@ describe("FailureDebugPanel", () => {
         expect(document.activeElement).toBe(wrapper.get("h3").element)
     })
 
-    it("should announce the panel only once, on the initial auto-open", async () => {
+    it("should announce the failure as soon as it's detected, regardless of open state", async () => {
         const wrapper = mountPanel({
             id: "exec-1",
             state: {current: "FAILED"},
@@ -164,10 +189,11 @@ describe("FailureDebugPanel", () => {
 
         const announcerBefore = wrapper.get("[role=\"status\"]").text()
         expect(announcerBefore).not.toBe("")
+        expect(wrapper.get(".failure-debug-panel").isVisible()).toBe(false)
 
-        await wrapper.get(".failure-debug-panel").trigger("keydown", {key: "Escape"})
-        await flushPromises()
         await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+        await wrapper.get(".failure-debug-panel").trigger("keydown", {key: "Escape"})
         await flushPromises()
 
         expect(wrapper.get("[role=\"status\"]").text()).toBe(announcerBefore)

@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, waitFor, within} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
+import {vueRouter} from "storybook-vue3-router"
 import {mockStoryApiRoutes} from "../../../../../.storybook/apiMock"
 import FailureDebugPanel from "../../../../../src/components/executions/gantt/FailureDebugPanel.vue"
 import type {Execution} from "../../../../../src/stores/executions"
@@ -36,7 +37,7 @@ const meta: Meta<typeof FailureDebugPanel> = {
     parameters: {
         docs: {
             description: {
-                component: "Focused debug panel opened over the Gantt view for a FAILED/KILLED execution: a scoped timeline, structural impact, and the relevant logs for the failing task.",
+                component: "On-demand debug panel over the Gantt view for a FAILED/KILLED execution: a scoped timeline, structural impact, and the relevant logs for the failing task, opened from a reopen affordance rather than automatically.",
             },
         },
     },
@@ -46,6 +47,21 @@ const meta: Meta<typeof FailureDebugPanel> = {
 }
 export default meta
 type Story = StoryObj<typeof FailureDebugPanel>
+
+// The panel reads route.params for its Edit flow shortcut (namespace/flowId) and resolves the
+// "flows/update/edit" route via useLink/router-link — both need an active matched route, not
+// just the route registered. Must be a per-story decorator (not meta-level) to actually take
+// precedence over the global preview router, and a fresh call per story rather than a shared
+// decorator reference.
+function editFlowRouterDecorator() {
+    return vueRouter(
+        [
+            {path: "/executions/:namespace/:flowId/:id/:tab?", name: "executions/update", component: {template: "<div/>"}},
+            {path: "/flows/edit/:namespace/:id/:tab?", name: "flows/update/edit", component: {template: "<div/>"}},
+        ],
+        {initialRoute: "/executions/company.team/orders-pipeline/exec-failed"},
+    )
+}
 
 /** A successful execution has nothing to debug: the panel renders nothing. */
 export const NoFailure: Story = {
@@ -61,6 +77,7 @@ export const NoFailure: Story = {
 }
 
 export const SingleFailure: Story = {
+    decorators: [editFlowRouterDecorator()],
     args: {
         execution: execution("FAILED", [
             taskRun("tr-1", "extract", "SUCCESS", "2025-01-01T00:00:00Z"),
@@ -69,6 +86,9 @@ export const SingleFailure: Story = {
     },
     async play({canvasElement}) {
         const canvas = within(canvasElement)
+        // Starts closed; the reopen affordance is the only entry point (no auto-open takeover).
+        await waitFor(() => expect(canvas.getByRole("button", {name: /Debug this failure/})).toBeVisible())
+        await userEvent.click(canvas.getByRole("button", {name: /Debug this failure/}))
         await waitFor(() => expect(canvas.getByRole("region")).toBeVisible())
         await expect(canvas.queryByRole("tablist")).toBeNull()
         await expect(canvasElement.querySelector(".failure-debug-panel__subtitle")?.textContent).toContain("transform")
@@ -76,6 +96,7 @@ export const SingleFailure: Story = {
 }
 
 export const MultipleFailures: Story = {
+    decorators: [editFlowRouterDecorator()],
     args: {
         execution: execution("KILLED", [
             taskRun("tr-1", "extract", "SUCCESS", "2025-01-01T00:00:00Z"),
@@ -85,6 +106,8 @@ export const MultipleFailures: Story = {
     },
     async play({canvasElement}) {
         const canvas = within(canvasElement)
+        await waitFor(() => expect(canvas.getByRole("button", {name: /Debug this failure/})).toBeVisible())
+        await userEvent.click(canvas.getByRole("button", {name: /Debug this failure/}))
         await waitFor(() => expect(canvas.getByRole("tablist")).toBeVisible())
         // "load" failed at :05s, before "transform" at :10s — it is auto-focused first.
         await expect(canvasElement.querySelector(".failure-debug-panel__subtitle")?.textContent).toContain("load")

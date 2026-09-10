@@ -1,6 +1,6 @@
 import {parse} from "@vue/compiler-sfc"
 import {describe, expect, it} from "vitest"
-import {compare, countByFile, countTemplateAny, merge} from "./baseline.mjs"
+import {compare, countByFile, countTemplateAny, decide, merge} from "./baseline.mjs"
 
 const anyAt = (filename) => ({code: "typescript(no-explicit-any)", filename})
 const inTemplate = (template) => countTemplateAny(template, parse)
@@ -26,15 +26,13 @@ describe("countTemplateAny", () => {
     it("counts every spelling in interpolations and directive values", () => {
         expect(inTemplate("<template>{{ (row as any).id }}</template>")).toBe(1)
         expect(inTemplate("<template><Foo @click='(e: any) => go(e)' :list='items as any[]' /></template>")).toBe(2)
-        expect(inTemplate("<template><Foo :x='v as Record<string, any>' /></template>")).toBe(1)
+        expect(inTemplate("<template><Foo :x='v as Map<any, Map<any, any>>' /></template>")).toBe(3)
     })
 
-    it("leaves prose and static attributes alone", () => {
+    it("reads code, not the text around it", () => {
         expect(inTemplate("<template><div title='pick any row'>delete any tag</div></template>")).toBe(0)
-        expect(inTemplate("<template><div :title='$t(`remove any tag`)' /></template>")).toBe(0)
-    })
-
-    it("ignores the script block, which oxlint already counts", () => {
+        expect(inTemplate("<template>{{ t('accepts: any value') }}</template>")).toBe(0)
+        expect(inTemplate("<template>{{ `an ${row.kind as any} thing` }}</template>")).toBe(1)
         expect(inTemplate("<script setup lang='ts'>const a: any = 1</script><template><div /></template>")).toBe(0)
     })
 })
@@ -49,10 +47,6 @@ describe("merge", () => {
 
 describe("compare", () => {
     const baseline = {"src/a.ts": 2, "src/gone.ts": 1}
-
-    it("is quiet when nothing moved", () => {
-        expect(compare(baseline, {...baseline})).toEqual({added: [], removed: []})
-    })
 
     it("reports a file that gained one, including a file new to the baseline", () => {
         const {added, removed} = compare(baseline, {"src/a.ts": 3, "src/gone.ts": 1, "src/new.ts": 1})
@@ -70,5 +64,43 @@ describe("compare", () => {
             {file: "src/a.ts", was: 2, now: 1},
             {file: "src/gone.ts", was: 1, now: 0},
         ])
+    })
+
+    it("follows a rename git reports, whether the file kept its count or improved, but not one that gained an any", () => {
+        const renames = {"src/New.vue": "src/Old.vue"}
+        expect(compare({"src/Old.vue": 2}, {"src/New.vue": 2}, renames)).toMatchObject({added: [], removed: [], moved: [{file: "src/New.vue", from: "src/Old.vue", was: 2, now: 2}]})
+        expect(compare({"src/Old.vue": 2}, {"src/New.vue": 1}, renames).moved).toEqual([{file: "src/New.vue", from: "src/Old.vue", was: 2, now: 1}])
+        expect(compare({"src/Old.vue": 2}, {"src/New.vue": 3}, renames).added).toEqual([{file: "src/New.vue", was: 0, now: 3}])
+    })
+
+    it("does not pair a deleted file with an unrelated new one just because the counts match", () => {
+        const {added, removed, moved} = compare({"src/Old.vue": 2}, {"src/BrandNew.vue": 2})
+        expect(moved).toEqual([])
+        expect(added).toEqual([{file: "src/BrandNew.vue", was: 0, now: 2}])
+        expect(removed).toEqual([{file: "src/Old.vue", was: 2, now: 0}])
+    })
+})
+
+describe("decide", () => {
+    const added = [{file: "src/a.ts", was: 0, now: 1}]
+    const removed = [{file: "src/b.ts", was: 2, now: 1}]
+
+    it("refuses a new any until both --write and --accept-new-any are given", () => {
+        expect(decide({added, removed: [], write: false, acceptNewAny: false}).action).toBe("fail")
+        expect(decide({added, removed: [], write: true, acceptNewAny: false})).toMatchObject({action: "fail", reason: "added"})
+        expect(decide({added, removed: [], write: false, acceptNewAny: true}).action).toBe("fail")
+        expect(decide({added, removed: [], write: true, acceptNewAny: true})).toMatchObject({action: "write", raised: true})
+    })
+
+    it("asks for --write when the baseline is stale, and updates once it is given", () => {
+        const moved = [{file: "src/new.vue", from: "src/old.vue", was: 2, now: 2}]
+        expect(decide({added: [], removed, write: false, acceptNewAny: false})).toMatchObject({action: "fail", reason: "stale"})
+        expect(decide({added: [], removed, write: true, acceptNewAny: false})).toMatchObject({action: "write", raised: false})
+        expect(decide({added: [], removed: [], moved, write: false, acceptNewAny: false})).toMatchObject({action: "fail", reason: "stale"})
+        expect(decide({added: [], removed: [], moved, write: true, acceptNewAny: false})).toMatchObject({action: "write", raised: false})
+    })
+
+    it("does nothing when the counts match", () => {
+        expect(decide({added: [], removed: [], write: true, acceptNewAny: false}).action).toBe("ok")
     })
 })

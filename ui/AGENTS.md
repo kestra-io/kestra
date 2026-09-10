@@ -243,12 +243,19 @@ Where the type comes from, in this order:
 
 For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
 
-**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. For an `any` that truly cannot be avoided, record it with `npm run check:ts-any -- --write` and commit the changed baseline, so the decision shows up in the diff and gets reviewed instead of slipping through.
+**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. An `any` that truly cannot be avoided is a conversation with a maintainer, not a number you change on your own.
+
+**MANDATORY — never raise the baseline to make the check pass.** A bigger number hides the new `any` from every later run, which is the one thing the baseline exists to prevent, and it will be treated as a bug in review. Specifically, and this applies to coding agents as much as to people:
+
+- Do not hand-edit `scripts/explicit-any/baseline.json`. The only writes to it come from the check itself.
+- Do not run `--accept-new-any`. A maintainer who has already agreed to a raise records it with `npm run check:ts-any -- --write --accept-new-any`; it is never a way to get a green check.
+- A red `check:ts-any` is fixed by typing the value, not by making the check agree with the code.
+- When you cannot type it, stop. Leave the check red, say in the PR which value defeated you and why, and let a maintainer decide. An unfinished PR is fine; a silently raised baseline is not.
 
 **The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
 
-- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above. When that is genuinely impossible, say why in the PR and run `npm run check:ts-any -- --write` to record the new number.
-- `1 file(s) improved` with `src/utils/filters.ts: 3 -> 2`. Your change removed one, which is the point, and the baseline has to come down with it. Run `npm run check:ts-any -- --write` and commit the changed `baseline.json` alongside your code.
+- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
+- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change.
 
 Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
 
@@ -268,7 +275,7 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
 
-`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead. It also fails when a file loses one, because the baseline has to come down with the code. With the repo's git hooks installed (`.github/.hooks/setup_hooks.sh`) the pre-commit hook does that for you through `check:ts-any -- --lock`, which only ever lowers numbers; without hooks, run `npm run check:ts-any -- --write` and commit the smaller numbers.
+`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
 Then read your own diff for the design-system violations that no linter catches:
 

@@ -201,7 +201,7 @@
                     <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="rowKey(tag)">
                         <KsInput class="tag-key" required v-model="tag.key" :placeholder="$t('key')" />
                         <KsInput class="tag-value" required v-model="tag.value" :placeholder="$t('value')" />
-                        <KsButton :icon="Delete" @click="removeSecretTag(index)" />
+                        <KsButton :aria-label="$t('delete')" :icon="Delete" @click="removeSecretTag(index)" />
                     </div>
                 </KsFormItem>
             </KsForm>

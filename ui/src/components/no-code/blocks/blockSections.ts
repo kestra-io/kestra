@@ -68,6 +68,33 @@ export function sectionFromParentPath(parentPath: string): BlockSection {
     return "tasks"
 }
 
+/**
+ * Resolves an existing task's id to where a sibling would be inserted next to it: the array
+ * holding it and its index there. Handles a task wrapped in a lane item (e.g. a Dag's `{task: ...}`)
+ * by resolving to the wrapper's position in its array, since a sibling is inserted next to the
+ * wrapper, not inside it.
+ */
+export function resolveTaskInsertionTarget(
+    source: string,
+    section: BlockSection,
+    taskId: string,
+): {parentPath: string; refIndex: number} | undefined {
+    const path = flowYamlUtils.getPathFromSectionAndId({source, section, id: taskId})
+    if (!path) return undefined
+
+    const parsedPath = flowYamlUtils.parsePath(path)
+    const refIndex = parsedPath.findLast((p): p is number => typeof p === "number")
+    if (refIndex === undefined) return undefined
+
+    const fieldNameAny = parsedPath[parsedPath.length - 1]
+    const fieldName = typeof fieldNameAny === "string" ? fieldNameAny : undefined
+
+    const refLength = refIndex.toString().length + 2 + (fieldName ? fieldName.length + 1 : 0)
+    const parentPath = path.slice(0, -refLength)
+
+    return {parentPath, refIndex}
+}
+
 export function findNestedPath(items: Record<string, unknown>[], id: string, prefix: string): string | undefined {
     for (let index = 0; index < items.length; index++) {
         const item = items[index]

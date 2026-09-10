@@ -40,6 +40,27 @@
                     <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
+            <KsTooltip v-if="validationIssues.length" :persistent="false">
+                <template #content>
+                    <div class="task-validation-tooltip">
+                        <div class="task-validation-tooltip-head">
+                            <AlertCircle :size="14" />
+                            <span>{{ $t("error detected") }}</span>
+                        </div>
+                        <ul class="task-validation-tooltip-list">
+                            <li v-for="issue in validationIssues" :key="issue">{{ issue }}</li>
+                        </ul>
+                    </div>
+                </template>
+                <span
+                    class="task-validation-badge"
+                    data-test="topology-task-validation-badge"
+                    :aria-label="$t('flow_editor_stats.errors.label', {count: validationIssues.length})"
+                >
+                    <AlertCircle :size="14" />
+                    <span v-if="validationIssues.length > 1" class="task-validation-badge-count">{{ validationIssues.length }}</span>
+                </span>
+            </KsTooltip>
         </template>
         <template #title-actions>
             <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
@@ -66,8 +87,10 @@
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
+        VALIDATION_ISSUES_INJECTION_KEY,
     } from "../injectionKeys"
 
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import LocationExit from "vue-material-design-icons/LocationExit.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
@@ -191,8 +214,13 @@
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const validationIssues = computed<string[]>(() =>
+        validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
+    )
 
     const runnerType = computed(() => props.data.node?.task?.taskRunner?.type)
 
@@ -511,5 +539,51 @@ button.playground-button {
 .details-slide-leave-to {
     max-height: 0;
     opacity: 0;
+}
+
+.task-validation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    padding: 0 var(--ks-spacing-1);
+    height: 1.125rem;
+    border-radius: var(--ks-radius-sm);
+    background: var(--ks-bg-error);
+    color: var(--ks-text-error);
+    cursor: help;
+}
+
+.task-validation-badge-count {
+    font-size: var(--ks-font-size-xs);
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.task-validation-tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+    max-width: 22rem;
+}
+
+.task-validation-tooltip-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    color: var(--ks-text-error);
+    font-weight: 600;
+    font-size: var(--ks-font-size-sm);
+}
+
+.task-validation-tooltip-list {
+    margin: 0;
+    padding-left: var(--ks-spacing-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-1);
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
+    font-family: var(--ks-font-family-mono);
 }
 </style>

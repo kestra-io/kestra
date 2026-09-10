@@ -135,7 +135,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(exception.getMessage()).contains("Not Found: Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -149,7 +149,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(exception.getMessage()).contains("Not Found: Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -163,7 +163,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(exception.getMessage()).contains("Not Found: Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -173,7 +173,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(exception.getMessage()).contains("Not Found: Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -187,7 +187,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+        assertThat(exception.getMessage()).contains("Not Found: Webhook not found");
     }
 
     @Test

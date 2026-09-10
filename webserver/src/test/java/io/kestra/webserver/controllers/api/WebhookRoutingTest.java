@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -150,61 +152,69 @@ public class WebhookRoutingTest {
         assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
     }
 
+    /**
+     * A caller without the correct key must not be able to tell a wrong key on a real flow apart from a
+     * flow, namespace or trigger that does not exist at all: the webhook route is anonymous by design, so
+     * any distinguishable response is an enumeration oracle (GHSA-6wcq-4vx6-rx53).
+     */
     @Test
-    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
-    void webhookInvalidKey() {
-        // Test that wrong key returns 404
-        HttpClientResponseException exception = assertThrows(
+    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml", "flows/valids/webhook-flow-disabled.yaml" })
+    void webhookWithoutTheCorrectKeyIsIndistinguishableFromANonExistentWebhook() {
+        HttpClientResponseException wrongKeyOnExistingFlow = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-routing-test/wrongkey",
-                    "{\"test\": \"data\"}"
-                ),
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-routing-test/wrongkey", "{\"test\": \"data\"}"),
+                String.class
+            )
+        );
+        assertThat((Object) wrongKeyOnExistingFlow.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(wrongKeyOnExistingFlow.getMessage()).contains("Webhook not found");
+
+        HttpClientResponseException nonExistentFlow = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/nonexistent-flow/testkey", "{\"test\": \"data\"}"),
+                String.class
+            )
+        );
+        HttpClientResponseException nonExistentNamespace = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/main/executions/webhook/invalid.namespace/webhook-routing-test/testkey", "{\"test\": \"data\"}"),
+                String.class
+            )
+        );
+        HttpClientResponseException wrongKeyOnDisabledFlow = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-flow-disabled/wrongkey", "{\"test\": \"data\"}"),
                 String.class
             )
         );
 
-        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getMessage()).contains("Webhook not found");
+        for (HttpClientResponseException other : List.of(nonExistentFlow, nonExistentNamespace, wrongKeyOnDisabledFlow)) {
+            assertThat((Object) other.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+            assertThat(other.getMessage()).isEqualTo(wrongKeyOnExistingFlow.getMessage());
+        }
     }
 
+    /**
+     * The reorder that closes the oracle above must not weaken the disabled-flow check for a caller who
+     * does know the key: it is only deferred past the key match, not removed.
+     */
     @Test
-    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
-    void webhookInvalidFlow() {
-        // Test that wrong flow returns 404
+    @LoadFlows(value = { "flows/valids/webhook-flow-disabled.yaml" })
+    void webhookWithTheCorrectKeyOnADisabledFlowStillReturnsConflict() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/nonexistent-flow/testkey",
-                    "{\"test\": \"data\"}"
-                ),
+                POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-flow-disabled/webhook-flow-disabled-key", "{\"test\": \"data\"}"),
                 String.class
             )
         );
 
-        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getMessage()).contains("Flow not found");
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/webhook-routing-test.yaml" })
-    void webhookInvalidNamespace() {
-        // Test that wrong namespace returns 404
-        HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(
-                POST(
-                    "/api/v1/main/executions/webhook/invalid.namespace/webhook-routing-test/testkey",
-                    "{\"test\": \"data\"}"
-                ),
-                String.class
-            )
-        );
-
-        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getMessage()).contains("Flow not found");
+        assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(exception.getMessage()).contains("Cannot execute a disabled flow");
     }
 
     @Test

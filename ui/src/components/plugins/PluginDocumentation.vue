@@ -68,7 +68,7 @@
                     class="plugin-schema"
                     :darkMode="isDarkTheme"
                     :schema="currentPlugin?.schema"
-                    :pluginType="currentPlugin?.cls"
+                    :pluginType="currentPlugin?.cls ?? ''"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
                     noUrlChange
                     compact
@@ -281,6 +281,7 @@
     import {getTheme, copy} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
+    import type {PluginComponent} from "../../stores/plugins"
     import {useI18n} from "vue-i18n"
     import GitHub from "vue-material-design-icons/Github.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -301,7 +302,7 @@
         overrideIntro?: string | null;
         absolute?: boolean;
         fetchPluginDocumentation?: boolean;
-        plugin?: any;
+        plugin?: PluginComponent | null;
     }>(), {
         overrideIntro: null,
         absolute: false,
@@ -331,12 +332,12 @@
     })
 
     const pluginName = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
-        return parts[parts.length - 1]
+        const parts = currentPlugin.value?.cls?.split(".") ?? []
+        return parts.at(-1) ?? ""
     })
 
     const packagePath = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
+        const parts = currentPlugin.value?.cls?.split(".") ?? []
         return parts.slice(0, -1).join(".")
     })
 

@@ -63,6 +63,7 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {KsTag} from "@kestra-io/design-system"
     import TaskIcon, {type TaskIconData} from "./TaskIcon.vue"
+    import type {PluginIconMap} from "../../utils/pluginUtils"
 
     defineOptions({
         name: "PluginCard",
@@ -72,7 +73,7 @@
 
     const props = withDefaults(defineProps<{
         iconCls?: string
-        icons?: Record<string, any>
+        icons?: PluginIconMap
         loadIcon?: (cls: string) => Promise<TaskIconData | undefined>
         title: string
         description?: string | null

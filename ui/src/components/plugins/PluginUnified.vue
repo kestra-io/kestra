@@ -47,17 +47,12 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue"
-    import {isEntryAPluginElementPredicate, type PluginIconMap} from "../../utils/pluginUtils"
+    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../../utils/pluginUtils"
     import {KsMarkdown} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
     import RowLink from "../misc/RowLink.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {getShortName, formatPluginTitle} from "../../utils/global"
-
-    interface PluginElement {
-        cls: string;
-        deprecated: boolean;
-    }
 
     interface Props {
         group: string;
@@ -77,7 +72,7 @@
 
     const pluginsStore = usePluginsStore()
 
-    const plugin = ref<any>({})
+    const plugin = ref<Plugin>({name: "", title: "", group: ""})
     const groupedElements = ref<Record<string, Record<string, string[]>>>({})
     const elementsData = ref<Record<string, string[]>>({})
     const icons = ref<PluginIconMap>({})
@@ -102,7 +97,7 @@
         groupedElements.value = {}
         elementsData.value = {}
         const plugins = await pluginsStore.listWithSubgroup({includeDeprecated: false})
-        const matchingPlugin = plugins?.find((p: any) => p.group === props.group)
+        const matchingPlugin = plugins?.find(p => p.group === props.group)
         if (!matchingPlugin) return
         plugin.value = matchingPlugin
         if (isSubgroupView.value) {
@@ -112,7 +107,7 @@
         }
     }
 
-    const loadGroupData = async (matchingPlugin: any, plugins: any[]) => {
+    const loadGroupData = async (matchingPlugin: Plugin, plugins: Plugin[]) => {
         const groupParts = matchingPlugin.group.split(".")
         const subgroupTitleMap = plugins.reduce((map, p) => {
             if (p.group === props.group && p.subGroup && p.subGroup !== p.group) {
@@ -138,7 +133,7 @@
         if (Object.keys(result).length === 1) elementsData.value = Object.values(result)[0]
     }
 
-    const loadSubgroupData = async (matchingPlugin: any, plugins: any[]) => {
+    const loadSubgroupData = async (matchingPlugin: Plugin, plugins: Plugin[]) => {
         const subgroupPlugin = plugins.find(p =>
             p.group === props.group &&
             (p.subGroup === props.subgroup || p.subGroup?.endsWith(`.${props.subgroup}`)),
@@ -154,7 +149,7 @@
         elementsData.value = result
     }
 
-    const belongsToSubgroup = (cls: string, matchingPlugin: any): boolean => {
+    const belongsToSubgroup = (cls: string, matchingPlugin: Plugin): boolean => {
         if (!props.subgroup) return false
         const parts = cls.split(".")
         const groupParts = props.group.split(".")
@@ -169,7 +164,7 @@
     const openPlugin = (cls: string) => emit("navigateToElement", cls)
 
     const getSubGroupIcon = (subgroup: string) => {
-        const keys = [`${props.group}.${subgroup}`, subgroup, plugin.value?.subGroup].filter(Boolean)
+        const keys = [`${props.group}.${subgroup}`, subgroup, plugin.value?.subGroup].filter((key): key is string => Boolean(key))
         return keys.find(key => icons.value[key]) || props.group
     }
 

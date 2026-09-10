@@ -52,11 +52,23 @@
     } from "../no-code/injectionKeys"
     import {getValueAtJsonPath} from "../../utils/utils"
 
+    interface SchemaNode {
+        $ref?: string;
+        allOf?: SchemaNode[];
+        anyOf?: SchemaNode[];
+        const?: string;
+        enum?: string[];
+        properties?: Record<string, SchemaNode>;
+        title?: string;
+        type?: string;
+        $deprecated?: boolean | string;
+    }
+
     const pluginsStore = usePluginsStore()
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
-    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY)
+    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY)
 
     const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "")
     const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType)
@@ -65,7 +77,8 @@
         if (props.blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component")
         }
-        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath)
+        const schema = (fullSchema?.value ?? {definitions: {}, $ref: ""}) as unknown as Record<string, unknown>
+        return getValueAtJsonPath(schema, props.blockSchemaPath) as SchemaNode | undefined
     })
 
     onBeforeMount(() => {
@@ -75,10 +88,10 @@
         pluginsStore.fetchIcons()
     })
 
-    const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
+    const allRefs = computed(() => fieldDefinition.value?.anyOf?.map(item => {
         if (item.allOf) {
             // if the item is an allOf, we need to find the first item that has a $ref
-            const refItem = item.allOf.find((d: any) => d.$ref)
+            const refItem = item.allOf.find(d => d.$ref)
             if (refItem?.$ref) {
                 return removeRefPrefix(refItem.$ref)
             }
@@ -87,15 +100,16 @@
     }) || [])
 
     const taskModelsSets = computed(() => {
+        const definitions = rootDefinitions?.value as unknown as Record<string, SchemaNode> | undefined
         return allRefs.value.reduce((acc: Map<string, string>, item: string) => {
-            const def = rootDefinitions.value?.[item]
+            const def = definitions?.[item]
 
             if (!def || def.$deprecated) {
                 return acc
             }
 
             const consolidatedType = def.allOf
-                ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
+                ? def.allOf.find(d => d.properties?.type)?.properties?.type
                 : def.properties?.type
 
             if (consolidatedType?.const) {

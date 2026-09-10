@@ -15,6 +15,23 @@ const SAMPLE_DATA = [
     {id: "flow-003", namespace: "company.infra", status: "FAILED"},
 ]
 
+type DataTableVm = {
+    isLoading: boolean;
+    clearSelection: () => void;
+    setSelection: (selection: unknown[]) => void;
+    getSelectionRows: () => unknown[];
+    toggleAllSelection: () => void;
+    toggleRowExpansion: (row: unknown, expanded?: boolean) => void;
+    waitTableRender: () => Promise<void>;
+    onSizeChange: (size: number) => void | Promise<void>;
+    onPageChange: (page: number) => void | Promise<void>;
+    resetAndReload: () => void;
+}
+
+function exposedVm<T>(wrapper: {vm: unknown}): T {
+    return wrapper.vm as T
+}
+
 describe("KsDataTable", () => {
     test("renders table element", () => {
         const wrapper = mount(KsDataTable, {
@@ -107,7 +124,7 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        expect((wrapper.vm as any).isLoading).toBeDefined()
+        expect(exposedVm<DataTableVm>(wrapper).isLoading).toBeDefined()
     })
 
     test("exposes clearSelection method", () => {
@@ -115,7 +132,7 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).clearSelection).toBe("function")
+        expect(typeof exposedVm<DataTableVm>(wrapper).clearSelection).toBe("function")
     })
 
     test("exposes setSelection method", () => {
@@ -123,7 +140,7 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).setSelection).toBe("function")
+        expect(typeof exposedVm<DataTableVm>(wrapper).setSelection).toBe("function")
     })
 
     test("exposes getSelectionRows method", () => {
@@ -131,7 +148,7 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).getSelectionRows).toBe("function")
+        expect(typeof exposedVm<DataTableVm>(wrapper).getSelectionRows).toBe("function")
     })
 
     test("exposes toggleAllSelection method", () => {
@@ -139,7 +156,7 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).toggleAllSelection).toBe("function")
+        expect(typeof exposedVm<DataTableVm>(wrapper).toggleAllSelection).toBe("function")
     })
 
     test("exposes toggleRowExpansion method", () => {
@@ -147,7 +164,7 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).toggleRowExpansion).toBe("function")
+        expect(typeof exposedVm<DataTableVm>(wrapper).toggleRowExpansion).toBe("function")
     })
 
     test("exposes waitTableRender method", () => {
@@ -155,7 +172,7 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).waitTableRender).toBe("function")
+        expect(typeof exposedVm<DataTableVm>(wrapper).waitTableRender).toBe("function")
     })
 
     test("emits page-changed on page change", async () => {
@@ -164,7 +181,7 @@ describe("KsDataTable", () => {
             global: globalConfig,
         })
         // Trigger size change to emit page-changed
-        await (wrapper.vm as any).onSizeChange(25)
+        await exposedVm<DataTableVm>(wrapper).onSizeChange(25)
         expect(wrapper.emitted("page-changed")).toBeTruthy()
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 1, size: 25}])
     })
@@ -174,7 +191,7 @@ describe("KsDataTable", () => {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
             global: globalConfig,
         })
-        await (wrapper.vm as any).onPageChange(3)
+        await exposedVm<DataTableVm>(wrapper).onPageChange(3)
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 3, size: 10}])
     })
 
@@ -210,11 +227,11 @@ describe("KsDataTable", () => {
             `,
             setup: () => ({
                 data: SAMPLE_DATA,
-                rowSelectable: (row: any) => row.status !== "RUNNING",
+                rowSelectable: (row: typeof SAMPLE_DATA[number]) => row.status !== "RUNNING",
             }),
         }, {global: globalConfig})
         const table = wrapper.findComponent(KsDataTable)
-        ;(table.vm as any).setSelection([SAMPLE_DATA[0]])
+        exposedVm<DataTableVm>(table).setSelection([SAMPLE_DATA[0]])
         await wrapper.vm.$nextTick()
         const bulk = wrapper.findComponent(KsBulkSelect)
         expect(bulk.exists()).toBe(true)
@@ -226,9 +243,9 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0, loading: false},
             global: globalConfig,
         })
-        expect((wrapper.vm as any).isLoading).toBe(false)
+        expect(exposedVm<DataTableVm>(wrapper).isLoading).toBe(false)
         await wrapper.setProps({loading: true})
-        expect((wrapper.vm as any).isLoading).toBe(true)
+        expect(exposedVm<DataTableVm>(wrapper).isLoading).toBe(true)
     })
 
     test("can set isLoading directly from outside", () => {
@@ -236,8 +253,8 @@ describe("KsDataTable", () => {
             props: {data: [], total: 0},
             global: globalConfig,
         })
-        ;(wrapper.vm as any).isLoading = true
-        expect((wrapper.vm as any).isLoading).toBe(true)
+        exposedVm<DataTableVm>(wrapper).isLoading = true
+        expect(exposedVm<DataTableVm>(wrapper).isLoading).toBe(true)
     })
 
     test("emits update:currentPage on page change (v-model contract)", async () => {
@@ -245,7 +262,7 @@ describe("KsDataTable", () => {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 1},
             global: globalConfig,
         })
-        await (wrapper.vm as any).onPageChange(4)
+        await exposedVm<DataTableVm>(wrapper).onPageChange(4)
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([4])
     })
 
@@ -254,7 +271,7 @@ describe("KsDataTable", () => {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 3},
             global: globalConfig,
         })
-        await (wrapper.vm as any).onSizeChange(50)
+        await exposedVm<DataTableVm>(wrapper).onSizeChange(50)
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([1])
         expect(wrapper.emitted("update:pageSize")?.[0]).toEqual([50])
     })
@@ -267,7 +284,7 @@ describe("KsDataTable", () => {
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(1)
-        ;(wrapper.vm as any).resetAndReload()
+        exposedVm<DataTableVm>(wrapper).resetAndReload()
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([1])
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 1, size: 25}])
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
@@ -282,7 +299,7 @@ describe("KsDataTable", () => {
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(1)
-        ;(wrapper.vm as any).resetAndReload()
+        exposedVm<DataTableVm>(wrapper).resetAndReload()
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(2)
         expect(wrapper.emitted("update:currentPage")).toBeFalsy()
@@ -306,7 +323,7 @@ describe("KsDataTable", () => {
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCallCount).toBe(1)
 
-        await (wrapper.vm as any).onPageChange(3)
+        await exposedVm<DataTableVm>(wrapper).onPageChange(3)
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
         expect(loadCallCount).toBe(1)
@@ -336,7 +353,7 @@ describe("KsDataTable", () => {
     const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
     const lastLoad = (loads: Load[]): Load => loads[loads.length - 1]
 
-    const mountWithSpy = (props: Record<string, any>): Load[] => {
+    const mountWithSpy = (props: Record<string, unknown>): Load[] => {
         const loads: Load[] = []
         mount(KsDataTable, {
             props: {
@@ -427,7 +444,7 @@ describe("KsDataTable", () => {
         expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
     })
 
-    const mountWithSortSpy = (props: Record<string, any>) => {
+    const mountWithSortSpy = (props: Record<string, unknown>) => {
         const loads: Load[] = []
         const wrapper = mount(KsDataTable, {
             props: {

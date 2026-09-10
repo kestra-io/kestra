@@ -54,7 +54,6 @@
   "packages/design-system/tests/storybook/Basic/KsScrollbar.stories.ts": 1,
   "packages/design-system/tests/storybook/Data/KsDateAgo.stories.ts": 1,
   "packages/design-system/tests/storybook/Data/KsTable.stories.ts": 1,
-  "packages/design-system/tests/units/Data/KsDataTable.test.ts": 22,
   "packages/design-system/tests/units/Data/KsDateAgo.test.ts": 1,
   "packages/design-system/tests/units/Data/KsFilter/ConditionRow.test.ts": 1,
   "packages/design-system/tests/units/Data/KsFilter/FilterKVPairs.test.ts": 2,

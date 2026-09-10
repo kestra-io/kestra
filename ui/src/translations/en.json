@@ -207,7 +207,10 @@
       "title": "Failure debug",
       "subtitle": "Focused on {taskId}",
       "announce": "{count} task(s) failed. Failure debug available, focused on {taskId}.",
-      "reopen": "Debug this failure ({count})",
+      "reopen": {
+        "description": "{count} task(s) failed.",
+        "cta": "Debug this failure"
+      },
       "copyError": "Copy error",
       "switcher": {
         "label": "Failures in this execution"

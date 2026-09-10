@@ -207,7 +207,10 @@
       "title": "Débogage de l'échec",
       "subtitle": "Focalisé sur {taskId}",
       "announce": "{count} task(s) en échec. Débogage de l'échec disponible, focalisé sur {taskId}.",
-      "reopen": "Déboguer cet échec ({count})",
+      "reopen": {
+        "description": "{count} task(s) en échec.",
+        "cta": "Déboguer cet échec"
+      },
       "copyError": "Copier l'erreur",
       "switcher": {
         "label": "Échecs dans cette exécution"

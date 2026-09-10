@@ -207,7 +207,10 @@
       "title": "Depuración de fallos",
       "subtitle": "Centrado en {taskId}",
       "announce": "{count} task(s) fallidos. Depuración de fallos disponible, centrado en {taskId}.",
-      "reopen": "Depurar este fallo ({count})",
+      "reopen": {
+        "description": "{count} task(s) fallidos.",
+        "cta": "Depurar este fallo"
+      },
       "copyError": "Copiar error",
       "switcher": {
         "label": "Fallos en esta ejecución"

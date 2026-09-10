@@ -207,7 +207,10 @@
       "title": "Fehler-Debugging",
       "subtitle": "Fokussiert auf {taskId}",
       "announce": "{count} task(s) fehlgeschlagen. Fehler-Debugging verfügbar, fokussiert auf {taskId}.",
-      "reopen": "Diesen Fehler debuggen ({count})",
+      "reopen": {
+        "description": "{count} task(s) fehlgeschlagen.",
+        "cta": "Diesen Fehler debuggen"
+      },
       "copyError": "Fehler kopieren",
       "switcher": {
         "label": "Fehler in dieser Ausführung"

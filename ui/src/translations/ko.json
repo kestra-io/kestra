@@ -207,7 +207,10 @@
       "title": "실패 디버그",
       "subtitle": "{taskId}에 포커스됨",
       "announce": "{count}개의 task가 실패했습니다. 실패 디버그를 사용할 수 있습니다. {taskId}에 포커스됨.",
-      "reopen": "이 실패 디버그하기 ({count})",
+      "reopen": {
+        "description": "{count}개의 task가 실패했습니다.",
+        "cta": "이 실패 디버그하기"
+      },
       "copyError": "오류 복사",
       "switcher": {
         "label": "이 실행의 실패"

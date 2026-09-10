@@ -57,6 +57,13 @@
         <em>{{ emptyContainer }}</em>
     </span>
     <div v-else-if="isComplexValue(value)">
+        <KsAlert
+            v-if="isTruncated"
+            type="warning"
+            :closable="false"
+            data-test="var-value-truncated"
+            :title="$t('large_outputs.value_truncated', {size: serializedSize, lines: MAX_EDITOR_LINES})"
+        />
         <KsEditor
             v-bind="editorBindings"
             :readOnly="true"
@@ -64,10 +71,10 @@
             :options="{
                 showScroll: true,
                 fullHeight: false,
-                customHeight: Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length)),
+                customHeight: editorHeight,
             }"
             :navbar="false"
-            :modelValue="JSON.stringify(getDisplayValue(value), null, 2)"
+            :modelValue="editorValue"
             lang="json"
             class="complex-value-editor"
         />
@@ -83,7 +90,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
-    import {KsEditor} from "@kestra-io/design-system"
+    import {KsAlert, KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
@@ -177,6 +184,33 @@
 
         return undefined
     })
+
+    // A 4 MiB output value wedges the main thread for seconds inside Monaco's model, so the
+    // editor gets a bounded slice and the alert says what the real size is (kestra-io/kestra#19316).
+    const MAX_EDITOR_CHARS = 256 * 1024
+    const MAX_EDITOR_LINES = 200
+
+    const serialized = computed(() => JSON.stringify(getDisplayValue(props.value), null, 2) ?? "")
+
+    const editorValue = computed(() => {
+        const capped = serialized.value.slice(0, MAX_EDITOR_CHARS)
+
+        let cut = -1
+        for (let line = 0; line < MAX_EDITOR_LINES; line++) {
+            const next = capped.indexOf("\n", cut + 1)
+            if (next === -1) {
+                return capped
+            }
+            cut = next
+        }
+        return capped.slice(0, cut)
+    })
+
+    const isTruncated = computed(() => editorValue.value.length < serialized.value.length)
+
+    const serializedSize = computed(() => Utils.humanFileSize(serialized.value.length))
+
+    const editorHeight = computed(() => Math.min(20, Math.max(5, editorValue.value.split("\n").length)))
 
     const itemUrl = (value: string): string => {
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`

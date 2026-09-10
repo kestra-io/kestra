@@ -119,7 +119,7 @@
 
 <script setup lang="ts">
     import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
@@ -153,7 +153,7 @@
     import type {LevelFilterValue} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
-    import {useLogsStore} from "../../stores/logs"
+    import {useLogsStore, type Log} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
@@ -168,7 +168,7 @@
         logLevel?: string;
         embed?: boolean;
         showFilters?: boolean;
-        filters?: Record<string, any>;
+        filters?: Record<string, unknown>;
         reloadLogs?: number;
         namespace?: string | null;
         restoreurl?: boolean;
@@ -275,7 +275,7 @@
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
 
-    const loadQuery = (base: any) => {
+    const loadQuery = (base: Record<string, unknown>) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
 
@@ -350,7 +350,7 @@
             page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls,
             level: _l, startDate: _sd, endDate: _ed, ...routeFilters
         } = route.query
-        const params: Record<string, any> = props.filters ? {...props.filters} : {...routeFilters}
+        const params: Record<string, unknown> = props.filters ? {...props.filters} : {...routeFilters}
 
         if (isFlowEdit.value) {
             params["filters[namespace][EQUALS]"] = routeNamespace.value
@@ -420,7 +420,7 @@
     }
 
     const selectLevel = (level: string) => {
-        const query: Record<string, any> = {...route.query}
+        const query: LocationQueryRaw = {...route.query}
         Object.keys(query)
             .filter((key) => key.startsWith("filters[level]"))
             .forEach((key) => delete query[key])
@@ -436,7 +436,7 @@
 
     const copyAllLogs = () => {
         const text = (logsStore.logs ?? [])
-            .map((l: any) => `${(l.level ?? "").padEnd(5)} ${l.timestamp} ${(l.message ?? "").replace(/\s+$/, "")}`)
+            .map((l: Log) => `${(l.level ?? "").padEnd(5)} ${l.timestamp} ${(l.message ?? "").replace(/\s+$/, "")}`)
             .join("\n")
         Utils.copy(text)
         toast.success(t("logs_copied"))

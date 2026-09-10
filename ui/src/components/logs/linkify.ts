@@ -1,5 +1,5 @@
 // inspired from https://kerkour.com/vuejs-3-router-links-dynamic-vhtml
-import type {Router} from "vue-router"
+import type {RouteLocationRaw, Router} from "vue-router"
 
 /**
  * Converts [[link execution="..." flowId="..." namespace="..."]] patterns
@@ -21,7 +21,7 @@ export function processLinkTags(message: string): string {
     })
 }
 
-function gotoRoute(event: MouseEvent, route: any, router: Router) {
+function gotoRoute(event: MouseEvent, route: RouteLocationRaw, router: Router) {
   const {altKey, ctrlKey, metaKey, shiftKey, button} = event
   // ignore with control keys
   if (metaKey || altKey || ctrlKey || shiftKey) {

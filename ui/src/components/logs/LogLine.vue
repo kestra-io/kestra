@@ -57,7 +57,7 @@
     import {LevelKey, parseStructured} from "../../utils/logs"
     import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault, DENSITY_PADDING} from "../../composables/useLogDisplay"
     import {Log} from "../../stores/logs"
-    import {useRouter} from "vue-router"
+    import {useRouter, type RouteLocationRaw} from "vue-router"
     import * as Filters from "../../utils/filters"
 
 
@@ -102,7 +102,7 @@
     })
 
     const metaWithValue = computed(() => {
-        const result: any[] = []
+        const result: {key: keyof Log; value: Log[keyof Log]; router?: RouteLocationRaw}[] = []
         const excludes:(keyof Log)[] = [
             "message",
             "timestamp",
@@ -117,7 +117,7 @@
         for (const keyString in props.log) {
             const key = keyString as keyof Log
             if (props.log[key] && !excludes.includes(key)) {
-                let meta: any = {key, value: props.log[key]}
+                const meta: {key: keyof Log; value: Log[keyof Log]; router?: RouteLocationRaw} = {key, value: props.log[key]}
                 if (key === "executionId") {
                     meta["router"] = {
                         name: "executions/update",

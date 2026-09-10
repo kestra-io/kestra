@@ -10,13 +10,15 @@ export const FILTERABLE_LOG_FIELDS = {
 export const isFilterableLogField = (field: string): boolean =>
     Object.prototype.hasOwnProperty.call(FILTERABLE_LOG_FIELDS, field)
 
+import type {LocationQueryRaw} from "vue-router"
+
 export const buildValueFilterQuery = (
-    currentQuery: Record<string, any>,
+    currentQuery: LocationQueryRaw,
     field: string,
     value: string,
     negate: boolean,
     pageKey = "page",
-): Record<string, any> | null => {
+): LocationQueryRaw | null => {
     const comparators = FILTERABLE_LOG_FIELDS[field as keyof typeof FILTERABLE_LOG_FIELDS]
     if (!comparators) return null
 

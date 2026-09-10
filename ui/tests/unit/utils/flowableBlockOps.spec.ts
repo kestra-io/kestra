@@ -1347,6 +1347,26 @@ afterExecution:
             it("ignores a path-addressed constraint when no flow is provided", () => {
                 expect(groupValidationIssuesByTask(["errors[0].message: must not be null"]).size).toBe(0)
             })
+
+            // `POST /flows/validate` addresses a task constraint by id, not by index — this is the
+            // shape the topology's per-node badge actually receives.
+            it("resolves the id-keyed path the validate endpoint returns", () => {
+                const grouped = groupValidationIssuesByTask(
+                    ["Validation error: tasks[publish].message: must not be null\n"],
+                    flow,
+                )
+                expect(grouped.get("publish")).toEqual(["message: must not be null"])
+            })
+
+            it("resolves an id-keyed path in a non-tasks section", () => {
+                const grouped = groupValidationIssuesByTask(["errors[on_error].message: must not be null"], flow)
+                expect(grouped.get("on_error")).toEqual(["message: must not be null"])
+            })
+
+            it("resolves an id-keyed path without needing the flow, since the id is in the path", () => {
+                const grouped = groupValidationIssuesByTask(["tasks[publish].message: must not be null"])
+                expect(grouped.get("publish")).toEqual(["message: must not be null"])
+            })
         })
     })
 

@@ -55,6 +55,8 @@
                 <span
                     class="task-validation-badge"
                     data-test="topology-task-validation-badge"
+                    role="img"
+                    tabindex="0"
                     :aria-label="$t('flow_editor_stats.errors.label', {count: validationIssues.length})"
                 >
                     <AlertCircle :size="14" />

@@ -9,7 +9,6 @@
             :source="flowYaml"
             :isAllowedEdit="isAllowedEdit"
             :expandedSubflows="expandedSubflows"
-            @on-edit="onEdit"
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"
         />
@@ -68,25 +67,6 @@
         } finally {
             isLoading.value = false
         }
-    }
-
-    const onEdit = async (source: string, currentIsFlow = false) => {
-        flowStore.flowYaml = source
-        const result = await flowStore.onEdit({
-            source,
-            editorViewType: "YAML",
-            topologyVisible: true,
-        })
-
-        if (currentIsFlow && source) {
-            await flowStore.loadGraphFromSource({
-                flow: source,
-            }).catch((error) => {
-                console.error("Error loading graph:", error)
-            })
-        }
-
-        return result
     }
 </script>
 

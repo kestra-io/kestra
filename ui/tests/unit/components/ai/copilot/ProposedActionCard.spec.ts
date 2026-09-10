@@ -1,5 +1,8 @@
-import {describe, it, expect} from "vitest"
+import {describe, it, expect, vi} from "vitest"
 import {mount} from "@vue/test-utils"
+// DiffView (rendered for a MUTATE action carrying a source argument) binds useEditorBindings, which
+// pulls in three Pinia stores — stub it out, matching VarValue.spec.ts / FlowFileEditorTab.spec.ts.
+vi.mock("../../../../../src/composables/useEditorBindings", () => ({useEditorBindings: () => ({})}))
 import ProposedActionCard from "../../../../../src/components/ai/copilot/ProposedActionCard.vue"
 import {mountGlobal} from "./_helpers"
 import type {ProposedActionEvent} from "../../../../../src/components/ai/copilot/types"

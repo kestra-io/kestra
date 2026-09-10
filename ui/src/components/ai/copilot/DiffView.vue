@@ -2,6 +2,7 @@
     <KsEditor
         class="diff-view"
         data-test="copilot-diff"
+        v-bind="editorBindings"
         :options="{diffSideBySide: false}"
         :modelValue="newValue"
         :original="oldValue"
@@ -12,6 +13,7 @@
 
 <script setup lang="ts">
     import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     defineProps<{
         /** The current content ("before"). Empty when there's nothing to diff against (e.g. a brand-new
@@ -19,12 +21,14 @@
         oldValue: string
         newValue: string
     }>()
+
+    const editorBindings = useEditorBindings()
 </script>
 
 <style scoped>
-    /* KsEditor's own stylesheet sets `.ks-editor { height: 100% }` at the same specificity as a bare
-       `.diff-view` class would, and wins the cascade tie outside a full-height layout (e.g. inside a
-       KsMessageBox, which sizes to its content) — target both classes together to win outright. */
+    /* KsEditor's own `.ks-editor { height: 100% }` rule is less specific than the scoped `.diff-view`
+       selector below (Vue adds a `[data-v-...]` attribute to it), so it would otherwise be overridden —
+       target both classes together so this rule wins instead. */
     .ks-editor.diff-view {
         height: 20rem;
     }

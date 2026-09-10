@@ -59,8 +59,6 @@ const messages = {
         "recipe.trigger.execution_sub": "Reacts to flow state changes",
         "recipe.trigger.schedule_title": "Schedule",
         "recipe.trigger.schedule_sub": "Runs on a time schedule",
-        "recipe.trigger.case_title": "Case status",
-        "recipe.trigger.case_sub": "EE only feature",
         "recipe.trigger.webhook_title": "Webhook",
         "recipe.trigger.webhook_sub": "Triggered by an HTTP request",
         "recipe.trigger.other_title": "Other trigger",
@@ -186,10 +184,10 @@ describe("FlowRecipe", () => {
         expect(alert.exists()).toBe(true)
     })
 
-    test("trigger cards use unique keys (no duplicate key for case vs other)", () => {
+    test("trigger cards use unique keys", () => {
         const wrapper = mount(FlowRecipe, globalConfig)
         const cards = wrapper.findAll("[data-test='recipe-trigger-types'] button[role='radio']")
-        expect(cards.length).toBe(5)
+        expect(cards.length).toBe(4)
     })
 
     test("renders a real icon for every trigger-type card and channel", async () => {
@@ -207,7 +205,7 @@ describe("FlowRecipe", () => {
         await new Promise(r => setTimeout(r, 0))
 
         // Trigger step: one icon per trigger-type tile
-        expect(wrapper.findAll(".trigger-card-icon svg").length).toBe(5)
+        expect(wrapper.findAll(".trigger-card-icon svg").length).toBe(4)
 
         // Notify step: one icon per channel tile
         await next(wrapper)

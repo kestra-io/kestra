@@ -1286,16 +1286,20 @@ public class ExecutionController {
                     seq.write(record);
                 }
             }
+            // `private`, not `public`: this file is tenant-scoped, so a shared cache must not replay
+            // it to a different requester, even though the content itself never changes.
             return HttpResponse.ok(
                 new StreamedFile(new ByteArrayInputStream(baos.toByteArray()), new MediaType("application/x-ndjson"))
                     .attach(downloadFilename)
-            );
+            ).header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
         }
 
+        // `private`, not `public`: this file is tenant-scoped, so a shared cache must not replay it
+        // to a different requester, even though the content itself never changes.
         return HttpResponse.ok(
             new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
                 .attach(FilenameUtils.getName(path.toString()))
-        );
+        ).header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
     }
 
     private URI nsFileToInternalStorageURI(URI path, Execution execution) throws IOException {
@@ -1350,7 +1354,7 @@ public class ExecutionController {
 
         if (!(execution.getState().canBeRestarted())) {
             throw new ConflictException(
-                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated or paused."
+                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated."
             );
         }
 
@@ -1378,7 +1382,7 @@ public class ExecutionController {
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
-                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
+                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated to be restarted, " +
                             "current state is '" + execution.get().getState().getCurrent() + "' !", ProblemTypes.CONFLICT)
                 );
             } else if (execution.isEmpty()) {

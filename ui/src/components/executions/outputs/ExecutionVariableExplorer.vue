@@ -64,7 +64,6 @@
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
-                                :previewFormatter="treePreviewFormatter"
                                 defaultExpanded
                                 @select="onSelectPath"
                             />
@@ -83,6 +82,7 @@
                     <ExpressionDebugger
                         :execution="execution"
                         :expression="expression"
+                        :fileUri="debuggedFileUri"
                     />
                 </div>
             </KsSplitterPanel>
@@ -156,18 +156,6 @@
             return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
-    }
-
-    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
-        if (context.kind === "array") {
-            return context.count === 1
-                ? t("variable_explorer.one_item")
-                : t("variable_explorer.n_items", {count: context.count})
-        }
-
-        return context.count === 1
-            ? t("variable_explorer.one_key")
-            : t("variable_explorer.n_keys", {count: context.count})
     }
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
@@ -435,6 +423,25 @@
         }else {
             expression.value = `{{ ${baseExpressionPath} }}`
         }
+    }
+
+    /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
+    const debuggedFileUri = computed(() => {
+        if (fileSelectedOutput.value) return fileSelectedOutput.value
+        const files = collectFileUris(previewedValue.value)
+        return files.length === 1 ? files[0] : undefined
+    })
+
+    function collectFileUris(value: unknown, found: string[] = []) {
+        if (typeof value === "string") {
+            if (Utils.isFile(value)) found.push(value)
+        } else if (value !== null && typeof value === "object") {
+            for (const child of Object.values(value)) {
+                collectFileUris(child, found)
+                if (found.length > 1) break
+            }
+        }
+        return found
     }
 
     function onSelectPath(path: string, value: unknown) {

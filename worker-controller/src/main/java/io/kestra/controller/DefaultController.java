@@ -16,6 +16,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.grpc.InternalCallServerInterceptor;
 import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.AbstractService;
@@ -148,6 +149,7 @@ public class DefaultController extends AbstractService implements Controller {
     protected ServerBuilder<?> buildServer(int port) {
         ServerCredentials credentials = createServerCredentials();
         ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, credentials)
+            .intercept(new InternalCallServerInterceptor())
             .addService(healthStatusManager.getHealthService());
 
         if (grpcConfiguration.reflectionEnabled()) {

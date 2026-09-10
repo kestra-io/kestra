@@ -15,7 +15,7 @@
                 </div>
                 <div v-if="examples && examples.length > 0" class="examples-container">
                     <h6 class="examples-heading">
-                        Examples
+                        {{ $t("plugins.nav_examples") }}
                     </h6>
                     <div v-for="(example, idx) in examples" :key="idx" class="example-item">
                         <slot name="example" :example="example" />
@@ -84,14 +84,8 @@
                                 class="compact-prop-desc"
                             >
                                 <slot
-                                    v-if="property.title"
                                     name="markdown"
-                                    :content="sanitizeForMarkdown(property.title)"
-                                />
-                                <slot
-                                    v-if="property.description"
-                                    name="markdown"
-                                    :content="sanitizeForMarkdown(property.description)"
+                                    :content="propertyDoc(property)"
                                 />
                             </div>
                         </div>
@@ -113,12 +107,12 @@
                             <template #additionalButtonText>
                                 <KsIcon
                                     v-if="showDynamic && !isDynamic(property)"
-                                    tooltip="Non-dynamic"
+                                    :tooltip="$t('plugins.non_dynamic')"
                                     class="property-flag property-flag--info"
                                 >
                                     <Snowflake />
                                 </KsIcon>
-                                <KsTooltip v-if="property['$required']" content="Required">
+                                <KsTooltip v-if="property['$required']" :content="$t('plugins.required')">
                                     <span class="property-flag property-flag--required"> *</span>
                                 </KsTooltip>
                             </template>
@@ -127,14 +121,14 @@
                                     <span class="property-flags">
                                         <KsIcon
                                             v-if="property['$beta']"
-                                            tooltip="Beta"
+                                            :tooltip="$t('plugins.beta')"
                                             class="property-flag property-flag--warning"
                                         >
                                             <AlphaBBox />
                                         </KsIcon>
                                         <KsIcon
                                             v-if="property['$deprecated']"
-                                            tooltip="Deprecated"
+                                            :tooltip="$t('plugins.deprecated')"
                                             class="property-flag property-flag--warning"
                                         >
                                             <Alert />
@@ -239,6 +233,20 @@
     watch(autoExpanded, (expanded) => {
         if (expanded) emit("expand")
     })
+
+    // The title says what a property is, the description carries the caveat, so the
+    // compact view renders both - matching PropertyDetail. Joined into a single slot
+    // call rather than one per field: every consumer wraps the `markdown` slot in its
+    // own element (SchemaToHtml adds `div.markdown` around each render), so two calls
+    // put the paragraphs in separate containers where neither `p + p` nor an
+    // `.ks-markdown + .ks-markdown` sibling rule can reach them, and the two lines
+    // collapse together. One render keeps them siblings, so `p + p` spaces them.
+    function propertyDoc(property: JSONProperty): string {
+        return [property.title, property.description]
+            .filter((text): text is string => Boolean(text))
+            .map(sanitizeForMarkdown)
+            .join("\n\n")
+    }
 
     function isPropertyVisible(key: string, property: JSONProperty): boolean {
         if (!props.showFilter) return true
@@ -521,10 +529,6 @@
         }
 
         :deep(p + p) {
-            margin-top: var(--ks-spacing-2);
-        }
-
-        :deep(.ks-markdown + .ks-markdown) {
             margin-top: var(--ks-spacing-2);
         }
 

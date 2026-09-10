@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: plugin not installed for this trigger type, no notification will be sent."
       },
       "trigger": {
-        "case_sub": "EE only feature",
-        "case_title": "Case status",
         "execution_sub": "Reacts to flow state changes",
         "execution_title": "Execution state",
         "other_sub": "Any available trigger plugin",
@@ -113,6 +111,10 @@
       }
     },
     "toggle menu": "Toggle menu",
+    "favourites": "Favourites",
+    "to close": "to close",
+    "tabs": "Tabs",
+    "select": "Select",
     "panel actions": "Panel actions",
     "playground actions": "Playground actions",
     "bulk actions": "Bulk actions",
@@ -138,6 +140,7 @@
     "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
     "update": "Update",
     "confirmation": "Confirmation",
+    "toast confirm": "Are you sure?",
     "common": {
       "back": "Back",
       "openInNewTab": "Open in new tab"
@@ -224,6 +227,7 @@
       "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S')",
       "duration example": "Example: 'P1DT1H1M1S'",
+      "examples": "Examples:",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
       "custom": "Custom",
       "last5minutes": "Last 5 minutes",
@@ -281,6 +285,7 @@
     "expiration date": "Expiration date",
     "healthcheck date": "HealthCheck Date",
     "last execution status": "Last execution status",
+    "jump to": "Jump to",
     "jump to...": "Jump to...",
     "contextBar": {
       "ai": "AI",
@@ -344,9 +349,31 @@
     "select a state": "Select a state",
     "are you sure change state": "Are you sure you want to change the state?",
     "yes": "Yes",
+    "no": "No",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
     "change state current state": "Current status is:",
+    "change state hint": {
+      "WARNING": [
+        "The flow will be marked as WARNING.",
+        "The next tasks will be executed.",
+        "The error tasks will be executed."
+      ],
+      "FAILED": [
+        "The flow will be marked as FAILED.",
+        "No other task will be executed.",
+        "The error tasks will be executed."
+      ],
+      "SUCCESS": [
+        "The flow will restart as this task was successful.",
+        "All the blocked tasks will be executed.",
+        "The flow will be in a SUCCESS state if all task runs are successful."
+      ],
+      "RUNNING": [
+        "The flow will restart and will execute all next tasks.",
+        "All blocked tasks will be executed."
+      ]
+    },
     "replay execution title": "Replay execution",
     "restart execution title": "Restart execution",
     "replay execution description": "This will create a new execution based on the selected execution.",
@@ -414,7 +441,8 @@
       "zoom-reset": "Reset zoom",
       "zoom-fit": "Fit",
       "invalid": "Graph error",
-      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors."
+      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
+      "load_error": "Could not load the topology graph. Please try again."
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -456,6 +484,7 @@
       "big_file_download_only": "This file is {size}. It is too large to open in the editor, download it instead.",
       "load_anyway": "Load anyway",
       "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
+      "image_alt": "Image output preview",
       "retry": "Retry",
       "html_asset_warning": "This preview renders the HTML in a sandboxed frame. Local assets such as images and stylesheets referenced by relative paths will not load.",
       "html_preview_title": "HTML file preview"
@@ -476,6 +505,8 @@
     "docsPage": {
       "notFound": "This documentation page does not exist. It may have been moved or renamed.",
       "loadError": "Could not load this documentation page. Please try again.",
+      "close_menu": "Close menu",
+      "open_menu": "Open menu",
       "backToDocs": "Back to docs"
     },
     "documentation": {
@@ -515,6 +546,10 @@
       }
     },
     "use": "Use",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Plugin installation failed",
@@ -528,8 +563,10 @@
       "names": "Plugins",
       "release": "Release notes",
       "beta": "Beta",
+      "beta_notice": "This plugin is currently in beta. While it is considered safe for use, please be aware that its API could change in ways that are not compatible with earlier versions in future releases, or it might become unsupported.",
       "copy_type": "Copy type",
       "deprecated": "Deprecated",
+      "documentation_sections": "Documentation sections",
       "dynamic": "dynamic",
       "filter_all": "All",
       "filter_properties": "Filter properties…",
@@ -571,6 +608,8 @@
       "nav_overview": "Overview",
       "nav_properties": "Properties",
       "non_dynamic": "non-dynamic",
+      "possible_values": "Possible Values",
+      "sub_type": "SubType",
       "required": "Required"
     },
     "last execution date": "Last execution date",
@@ -791,6 +830,7 @@
     "execution labels": "Execution labels",
     "show more labels": "Show {count} more labels",
     "wrong labels": "Empty key or value is not allowed in labels",
+    "invalid label key": "Invalid label key. A valid key must start with a lowercase letter and contain only lowercase letters, numbers, hyphens (-), underscores (_) or periods (.)",
     "feeds": {
       "heading": "All things Kestra.",
       "subheading": "The latest updates, guides and stories"
@@ -844,6 +884,7 @@
     "enable": "Enable",
     "enabled": "Enabled",
     "flow delete": "Are you sure you want to delete <code>{flowCount}</code> flow(s)?",
+    "delete flow error": "Failed to delete flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deleted",
     "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?",
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
@@ -883,6 +924,7 @@
     "metric": "Metric",
     "aggregation": "Aggregation",
     "metric choice": "No metrics available for this flow",
+    "metric filter no match": "No metric matches \"{term}\"",
     "of": "of",
     "title": "Title",
     "api": "API",
@@ -981,9 +1023,11 @@
         "file_already_exists": "A file with this name already exists",
         "file_conflicts_with_folder": "A folder with this name already exists",
         "file_error": "Error occurred while creating the file",
+        "file_success": "File \"{name}\" created successfully.",
         "folder": "Create folder",
         "folder_already_exists": "A folder with this name already exists",
         "folder_conflicts_with_file": "A file with this name already exists",
+        "folder_success": "Folder \"{name}\" created successfully.",
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
@@ -997,8 +1041,10 @@
       "delete": {
         "label": "Delete",
         "file": "Delete file",
+        "file_error": "Failed to delete file: {name}",
         "folder": "Delete folder",
         "files": "Delete {count} selected files",
+        "bulk_success": "Selected files deleted successfully.",
         "folders": "Delete {count} selected folders"
       },
       "move": {
@@ -1602,6 +1648,7 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
+    "scheduleDateInPast": "Schedule date must be in the future",
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -1651,6 +1698,7 @@
     "last error was": "Last error was",
     "active": "Active",
     "flows imported": "Flows imported",
+    "flows not imported": "Flows not imported",
     "custom value": "Custom value",
     "chart": "Chart",
     "chart preview": "Chart preview",
@@ -1696,7 +1744,8 @@
           "workerSelector": "Worker Selector",
           "checks": "Checks",
           "updated": "Updated",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Policy References"
         }
       },
       "select": {
@@ -1932,6 +1981,9 @@
         "label": "Edit Dashboard",
         "chart": "Edit this chart"
       },
+      "creation": {
+        "label": "Create Dashboard"
+      },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
@@ -1942,6 +1994,7 @@
         "csv": "Export to CSV",
         "ion": "Export to ION"
       },
+      "show_all_statuses": "Show all statuses",
       "quick_filters": {
         "all": "All",
         "running": "Running",
@@ -2161,7 +2214,6 @@
     "submit": "Submit",
     "accept": "Accept",
     "reject": "Reject",
-    "draft_available": "Draft change is available in the editor",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
@@ -2613,8 +2665,6 @@
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
-    "flow_description": "Flow Description",
-    "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {

@@ -67,6 +67,9 @@ export default {
             "no options found": "No options found",
             "show default": "Show Default",
             "operator": "Filter operator",
+            "close": "Close",
+            "remove_filter": "Remove filter",
+            "add_filter_for": "Add filter for {label}",
             "is_between": "Is Between",
             "timerange": {
                 "predefined": "Predefined",
@@ -378,6 +381,7 @@ export default {
                 "kv_filters": "Key-Value Filters",
                 "secret_filters": "Secret Filters",
                 "blueprint_filters": "Blueprint Filters",
+                "mcp_tools_filters": "MCP Tools Filters",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Search MCP tools",
@@ -462,6 +466,9 @@ export default {
             "no options found": "Keine Optionen gefunden",
             "show default": "Standard anzeigen",
             "operator": "Filter-Operator",
+            "close": "Schließen",
+            "remove_filter": "Filter entfernen",
+            "add_filter_for": "Filter für {label} hinzufügen",
             "is_between": "Liegt zwischen",
             "timerange": {
                 "predefined": "Vordefiniert",
@@ -773,6 +780,7 @@ export default {
                 "kv_filters": "KV-Filter",
                 "secret_filters": "Secret-Filter",
                 "blueprint_filters": "Blueprint-Filter",
+                "mcp_tools_filters": "MCP Tools-Filter",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP-Tools durchsuchen",
@@ -857,6 +865,9 @@ export default {
             "no options found": "No se encontraron opciones",
             "show default": "Mostrar predeterminado",
             "operator": "Operador de filtro",
+            "close": "Cerrar",
+            "remove_filter": "Eliminar filtro",
+            "add_filter_for": "Añadir filtro para {label}",
             "is_between": "Está entre",
             "timerange": {
                 "predefined": "Predefinido",
@@ -1168,6 +1179,7 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Secretos",
                 "blueprint_filters": "Filtros de Blueprint",
+                "mcp_tools_filters": "Filtros de Herramientas MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Buscar herramientas MCP",
@@ -1252,6 +1264,9 @@ export default {
             "no options found": "Aucune option trouvée",
             "show default": "Afficher par défaut",
             "operator": "Opérateur de filtre",
+            "close": "Fermer",
+            "remove_filter": "Retirer le filtre",
+            "add_filter_for": "Ajouter un filtre pour {label}",
             "is_between": "Est entre",
             "timerange": {
                 "predefined": "Prédéfini",
@@ -1563,6 +1578,7 @@ export default {
                 "kv_filters": "Filtres Key-Value",
                 "secret_filters": "Filtres de Secret",
                 "blueprint_filters": "Filtres de Blueprint",
+                "mcp_tools_filters": "Filtres des outils MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Rechercher des outils MCP",
@@ -1647,6 +1663,9 @@ export default {
             "no options found": "कोई विकल्प नहीं मिला",
             "show default": "डिफ़ॉल्ट दिखाएं",
             "operator": "फ़िल्टर ऑपरेटर",
+            "close": "बंद करें",
+            "remove_filter": "फ़िल्टर हटाएं",
+            "add_filter_for": "{label} के लिए फ़िल्टर जोड़ें",
             "is_between": "के बीच है",
             "timerange": {
                 "predefined": "पूर्वनिर्धारित",
@@ -1958,6 +1977,7 @@ export default {
                 "kv_filters": "कुंजी-मूल्य फ़िल्टर",
                 "secret_filters": "गुप्त फ़िल्टर",
                 "blueprint_filters": "ब्लूप्रिंट फ़िल्टर",
+                "mcp_tools_filters": "MCP Tools फ़िल्टर",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP टूल खोजें",
@@ -2042,6 +2062,9 @@ export default {
             "no options found": "Nessuna opzione trovata",
             "show default": "Mostra Predefinito",
             "operator": "Operatore di filtro",
+            "close": "Chiudi",
+            "remove_filter": "Rimuovi filtro",
+            "add_filter_for": "Aggiungi filtro per {label}",
             "is_between": "È compreso tra",
             "timerange": {
                 "predefined": "Predefinito",
@@ -2353,6 +2376,7 @@ export default {
                 "kv_filters": "Filtri Key-Value",
                 "secret_filters": "Filtri Segreti",
                 "blueprint_filters": "Filtri Blueprint",
+                "mcp_tools_filters": "Filtri Strumenti MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Cerca strumenti MCP",
@@ -2437,6 +2461,9 @@ export default {
             "no options found": "オプションが見つかりません",
             "show default": "デフォルトを表示",
             "operator": "フィルター演算子",
+            "close": "閉じる",
+            "remove_filter": "フィルターを削除",
+            "add_filter_for": "{label} のフィルターを追加",
             "is_between": "範囲内",
             "timerange": {
                 "predefined": "定義済み",
@@ -2748,6 +2775,7 @@ export default {
                 "kv_filters": "キー-バリュー フィルター",
                 "secret_filters": "シークレットフィルター",
                 "blueprint_filters": "ブループリントフィルター",
+                "mcp_tools_filters": "MCP Toolsフィルター",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCPツールを検索",
@@ -2832,6 +2860,9 @@ export default {
             "no options found": "옵션을 찾을 수 없습니다.",
             "show default": "기본값 표시",
             "operator": "필터 연산자",
+            "close": "닫기",
+            "remove_filter": "필터 제거",
+            "add_filter_for": "{label} 필터 추가",
             "is_between": "사이",
             "timerange": {
                 "predefined": "사전 정의됨",
@@ -3143,6 +3174,7 @@ export default {
                 "kv_filters": "키-값 필터",
                 "secret_filters": "비밀 필터",
                 "blueprint_filters": "블루프린트 필터",
+                "mcp_tools_filters": "MCP 도구 필터",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP 도구 검색",
@@ -3227,6 +3259,9 @@ export default {
             "no options found": "Nie znaleziono opcji",
             "show default": "Pokaż domyślne",
             "operator": "Operator filtrowania",
+            "close": "Zamknij",
+            "remove_filter": "Usuń filtr",
+            "add_filter_for": "Dodaj filtr dla {label}",
             "is_between": "Pomiędzy",
             "timerange": {
                 "predefined": "Zdefiniowane z góry",
@@ -3538,6 +3573,7 @@ export default {
                 "kv_filters": "Filtry KV",
                 "secret_filters": "Filtry sekretów",
                 "blueprint_filters": "Filtry Blueprint",
+                "mcp_tools_filters": "Filtry narzędzi MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Wyszukaj narzędzia MCP",
@@ -3622,6 +3658,9 @@ export default {
             "no options found": "Nenhuma opção encontrada",
             "show default": "Mostrar Padrão",
             "operator": "Operador de filtro",
+            "close": "Fechar",
+            "remove_filter": "Remover filtro",
+            "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
             "timerange": {
                 "predefined": "Predefinido",
@@ -3933,6 +3972,7 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Segredo",
                 "blueprint_filters": "Filtros de Blueprint",
+                "mcp_tools_filters": "Filtros de Ferramentas MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
@@ -4017,6 +4057,9 @@ export default {
             "no options found": "Nenhuma opção encontrada",
             "show default": "Mostrar Padrão",
             "operator": "Operador de filtro",
+            "close": "Fechar",
+            "remove_filter": "Remover filtro",
+            "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
             "timerange": {
                 "predefined": "Predefinido",
@@ -4328,6 +4371,7 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Segredo",
                 "blueprint_filters": "Filtros de Blueprint",
+                "mcp_tools_filters": "Filtros de Ferramentas MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
@@ -4412,6 +4456,9 @@ export default {
             "no options found": "Опции не найдены",
             "show default": "Показать по умолчанию",
             "operator": "Оператор фильтра",
+            "close": "Закрыть",
+            "remove_filter": "Удалить фильтр",
+            "add_filter_for": "Добавить фильтр для {label}",
             "is_between": "Между",
             "timerange": {
                 "predefined": "Предопределено",
@@ -4723,6 +4770,7 @@ export default {
                 "kv_filters": "Фильтры Key-Value",
                 "secret_filters": "Фильтры секретов",
                 "blueprint_filters": "Фильтры Blueprint",
+                "mcp_tools_filters": "Фильтры MCP Tools",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Поиск инструментов MCP",
@@ -4807,6 +4855,9 @@ export default {
             "no options found": "未找到选项",
             "show default": "显示默认",
             "operator": "过滤运算符",
+            "close": "关闭",
+            "remove_filter": "移除过滤器",
+            "add_filter_for": "为 {label} 添加过滤器",
             "is_between": "介于",
             "timerange": {
                 "predefined": "预定义",
@@ -5118,6 +5169,7 @@ export default {
                 "kv_filters": "键值过滤器",
                 "secret_filters": "秘密过滤器",
                 "blueprint_filters": "蓝图过滤器",
+                "mcp_tools_filters": "MCP 工具过滤器",
             },
             "search_placeholders": {
                 "search_mcp_tools": "搜索 MCP 工具",

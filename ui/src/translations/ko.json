@@ -74,8 +74,6 @@
         "unavailable_channels_warning": "{channels}: 이 trigger 유형에 대한 플러그인이 설치되지 않아 알림이 전송되지 않습니다."
       },
       "trigger": {
-        "case_sub": "EE 전용 기능",
-        "case_title": "케이스 상태",
         "execution_sub": "flow 상태 변경에 반응합니다.",
         "execution_title": "실행 상태",
         "other_sub": "사용 가능한 모든 trigger 플러그인",
@@ -113,6 +111,10 @@
       }
     },
     "toggle menu": "메뉴 전환",
+    "favourites": "즐겨찾기",
+    "to close": "닫기",
+    "tabs": "탭",
+    "select": "선택",
     "panel actions": "패널 작업",
     "playground actions": "플레이그라운드 작업",
     "bulk actions": "일괄 작업",
@@ -138,6 +140,7 @@
     "invalid duration": "유효하지 않은 기간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해주세요.",
     "update": "업데이트",
     "confirmation": "확인",
+    "toast confirm": "확실합니까?",
     "common": {
       "back": "뒤로",
       "openInNewTab": "새 탭에서 열기"
@@ -224,6 +227,7 @@
       "invalid duration": "잘못된 지속 시간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해 주세요.",
       "leave empty for infinite": "무한 지속 시간을 위해 비워두거나 ISO 8601 지속 시간(예: 'P1DT1H1M1S')을 입력하세요.",
       "duration example": "예: 'P1DT1H1M1S'",
+      "examples": "예:",
       "error": "잘못된 기간 형식입니다. ISO 8601 기간 형식(예: P1DT1H1M1S)이어야 합니다.",
       "custom": "사용자 정의",
       "last5minutes": "지난 5분",
@@ -281,6 +285,7 @@
     "expiration date": "만료 날짜",
     "healthcheck date": "HealthCheck 날짜",
     "last execution status": "마지막 실행 상태",
+    "jump to": "이동",
     "jump to...": "이동...",
     "contextBar": {
       "ai": "AI",
@@ -344,9 +349,31 @@
     "select a state": "상태 선택",
     "are you sure change state": "상태를 변경하시겠습니까?",
     "yes": "네",
+    "no": "아니요",
     "change state done": "작업 상태가 업데이트되었습니다",
     "change state confirm": "실행 <code>{id}</code>의 <code>{task}</code> task에 대한 task 실행 상태를 변경하시겠습니까?<br/>그러면 다음 task부터 실행이 다시 시작되고, 상위 실행이 있는 경우 상위 실행도 다시 시작됩니다.",
     "change state current state": "현재 상태는:",
+    "change state hint": {
+      "WARNING": [
+        "Flow가 WARNING으로 표시됩니다.",
+        "다음 tasks가 실행됩니다.",
+        "오류 tasks가 실행됩니다."
+      ],
+      "FAILED": [
+        "Flow가 FAILED로 표시됩니다.",
+        "다른 task는 실행되지 않습니다.",
+        "오류 task가 실행됩니다."
+      ],
+      "SUCCESS": [
+        "이 task가 성공했기 때문에 flow가 재시작됩니다.",
+        "모든 차단된 task가 실행됩니다.",
+        "모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다."
+      ],
+      "RUNNING": [
+        "flow가 재시작되고 모든 다음 task가 실행됩니다.",
+        "모든 차단된 task가 실행됩니다."
+      ]
+    },
     "replay execution title": "실행 다시 실행",
     "restart execution title": "실행 재시작",
     "replay execution description": "선택한 실행을 기반으로 새 실행을 생성합니다.",
@@ -414,7 +441,8 @@
       "zoom-reset": "확대/축소 재설정",
       "zoom-fit": "맞춤",
       "invalid": "그래프 오류",
-      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요."
+      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
+      "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요."
     },
     "show task logs": "Task Logs 보기",
     "show task condition": "작업 상태 표시",
@@ -456,6 +484,7 @@
       "big_file_download_only": "이 파일의 크기는 {size}입니다. 에디터에서 열기에는 너무 크므로 대신 다운로드하세요.",
       "load_anyway": "그래도 로드하기",
       "load_error": "파일 미리보기를 로드하지 못했습니다. 일시적인 문제이거나 권한 문제일 수 있습니다.",
+      "image_alt": "이미지 output 미리보기",
       "retry": "다시 시도",
       "html_asset_warning": "이 미리보기는 HTML을 샌드박스 프레임에서 렌더링합니다. 상대 경로로 참조된 이미지 및 스타일시트와 같은 로컬 자산은 로드되지 않습니다.",
       "html_preview_title": "HTML 파일 미리보기"
@@ -476,6 +505,8 @@
     "docsPage": {
       "notFound": "이 문서 페이지가 존재하지 않습니다. 이동되었거나 이름이 변경되었을 수 있습니다.",
       "loadError": "이 문서 페이지를 불러올 수 없습니다. 다시 시도해 주세요.",
+      "close_menu": "메뉴 닫기",
+      "open_menu": "메뉴 열기",
       "backToDocs": "Docs로 돌아가기"
     },
     "documentation": {
@@ -515,6 +546,10 @@
       }
     },
     "use": "사용",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "블루프린트 | 블루프린트"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "플러그인 설치에 실패했습니다",
@@ -528,8 +563,10 @@
       "names": "플러그인들",
       "release": "릴리스 노트",
       "beta": "베타",
+      "beta_notice": "이 플러그인은 현재 베타 버전입니다. 사용하기에 안전한 것으로 간주되지만, 향후 릴리스에서 API가 이전 버전과 호환되지 않게 변경되거나 지원이 중단될 수 있습니다.",
       "copy_type": "유형 복사",
       "deprecated": "사용 중단",
+      "documentation_sections": "문서 섹션",
       "dynamic": "동적",
       "filter_all": "전체",
       "filter_properties": "속성 필터링…",
@@ -571,6 +608,8 @@
       "nav_overview": "개요",
       "nav_properties": "속성",
       "non_dynamic": "비동적",
+      "possible_values": "가능한 값",
+      "sub_type": "하위 유형",
       "required": "필수"
     },
     "last execution date": "마지막 실행 날짜",
@@ -791,6 +830,7 @@
     "execution labels": "실행 라벨",
     "show more labels": "라벨 {count}개 더 보기",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
+    "invalid label key": "잘못된 라벨 key입니다. 올바른 key는 소문자로 시작해야 하며 소문자, 숫자, 하이픈(-), 밑줄(_) 또는 마침표(.)만 포함할 수 있습니다.",
     "feeds": {
       "heading": "Kestra의 모든 것.",
       "subheading": "최신 업데이트, 가이드 및 스토리"
@@ -844,6 +884,7 @@
     "enable": "활성화",
     "enabled": "활성화됨",
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
+    "delete flow error": "flow {id}을(를) 삭제하지 못했습니다",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",
     "flow enable": "<code>{flowCount}</code> 개의 flow를 활성화하시겠습니까?",
@@ -883,6 +924,7 @@
     "metric": "메트릭",
     "aggregation": "집계",
     "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
+    "metric filter no match": "\"{term}\"과 일치하는 메트릭이 없습니다.",
     "of": "의",
     "title": "제목",
     "api": "API",
@@ -981,9 +1023,11 @@
         "file_already_exists": "이 이름의 파일이 이미 존재합니다",
         "file_conflicts_with_folder": "이 이름의 폴더가 이미 존재합니다",
         "file_error": "파일 생성 중 오류 발생",
+        "file_success": "파일 \"{name}\"을(를) 생성했습니다.",
         "folder": "폴더 생성",
         "folder_already_exists": "이 이름의 폴더가 이미 존재합니다",
         "folder_conflicts_with_file": "이 이름의 파일이 이미 존재합니다",
+        "folder_success": "폴더 \"{name}\"을(를) 생성했습니다.",
         "folder_error": "폴더 생성 중 오류가 발생했습니다"
       },
       "rename": {
@@ -997,8 +1041,10 @@
       "delete": {
         "label": "삭제",
         "file": "파일 삭제",
+        "file_error": "파일을 삭제하지 못했습니다: {name}",
         "folder": "폴더 삭제",
         "files": "{count}개의 선택된 파일 삭제",
+        "bulk_success": "선택한 파일이 성공적으로 삭제되었습니다.",
         "folders": "{count}개의 선택된 폴더 삭제"
       },
       "move": {
@@ -1602,6 +1648,7 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
+    "scheduleDateInPast": "예약 날짜는 미래여야 합니다.",
     "warning": "경고",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "docs": "문서",
@@ -1651,6 +1698,7 @@
     "last error was": "마지막 오류는",
     "active": "활성화됨",
     "flows imported": "Flow가 가져왔습니다.",
+    "flows not imported": "가져오지 않은 Flow",
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "chart preview": "차트 미리보기",
@@ -1696,7 +1744,8 @@
           "workerSelector": "워커 선택기",
           "checks": "점검",
           "updated": "업데이트됨",
-          "quotas": "할당량"
+          "quotas": "할당량",
+          "policyRefs": "정책 참조"
         }
       },
       "select": {
@@ -1932,6 +1981,9 @@
         "label": "대시보드 편집",
         "chart": "이 차트 편집"
       },
+      "creation": {
+        "label": "대시보드 생성"
+      },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "others": "기타",
@@ -1942,6 +1994,7 @@
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"
       },
+      "show_all_statuses": "모든 상태 표시",
       "quick_filters": {
         "all": "전체",
         "running": "실행 중",
@@ -2161,7 +2214,6 @@
     "submit": "제출",
     "accept": "수락",
     "reject": "거부",
-    "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
     "last modified": "마지막 수정",
     "run task in playground": "플레이그라운드에서 task 실행",
     "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
@@ -2613,8 +2665,6 @@
       "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
-    "flow_description": "flow 설명",
-    "flow_no_description": "설명이 없습니다. flow YAML에 설명을 추가하여 flow의 기능을 문서화하세요.",
     "split_horizontal": "수평으로 분할",
     "split_vertical": "세로로 분할",
     "pwa": {

@@ -18,7 +18,7 @@
                             </template>
                             <template v-if="!query" #suffix>
                                 <span class="d-none d-sm-block">
-                                    <kbd>ESC</kbd> to close
+                                    <kbd>ESC</kbd> {{ $t("to close") }}
                                 </span>
                             </template>
                         </KsSearch>
@@ -54,14 +54,14 @@
                                                 v-if="index === activeIndex"
                                                 class="result-hint d-none d-sm-flex align-items-center"
                                             >
-                                                <span>Jump to</span>
+                                                <span>{{ $t("jump to") }}</span>
                                             </span>
                                         </component>
                                     </li>
                                 </ul>
                             </KsScrollbar>
                             <div v-else class="empty">
-                                {{ $t("no results") }}
+                                {{ $t("no_results_found") }}
                             </div>
                         </div>
                     </div>

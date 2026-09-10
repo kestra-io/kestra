@@ -25,11 +25,26 @@
 // non-Latin-script locale is still carrying the untouched English text - the
 // shape a failed generator run leaves behind, which every other check passes.
 //
+// Both scopes also compare every English message with the fingerprint its
+// translations were generated from: an edited English value whose twelve
+// translations were not regenerated is reported as stale. The design-system
+// locale files always had this; the JSON locales relied on the generator
+// running at PR time, which a fork PR never gets.
+//
+// Both scopes also read the source code: every literal key passed to `t()`,
+// `$t()` or `<i18n-t keypath>` has to exist in some `en.json` the app loads
+// (OSS + design system for OSS code, plus EE's own for EE code). The locale
+// files agreeing with each other says nothing about a key that is missing from
+// all of them, and such a key renders as its raw id - see usageRules.mjs. A
+// key completed at runtime (`t("crud.type." + type)`) is checked down to its
+// namespace, which has to exist for the same reason.
+//
 // --report <path> writes a JSON summary ({missing: {lang: [keys]},
 // duplicates: [keys], placeholders: {lang: [problems]},
-// untranslated: {lang: [keys]}}) for build-comment.mjs to turn into a PR
-// comment. Always written, even on a passing run, so the comment builder can
-// tell "no report" (check didn't run) apart from "report, but empty".
+// untranslated: {lang: [keys]}, undefinedKeys: [{file, line, key}]}) for
+// build-comment.mjs to turn into a PR comment. Always written, even on a
+// passing run, so the comment builder can tell "no report" (check didn't run)
+// apart from "report, but empty".
 //
 // Usage: node ui/scripts/translations/check-translations.mjs [--scope oss|ee] [--ee-root <path>] [--report <path>]
 //
@@ -40,28 +55,25 @@
 import fs from "node:fs"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
-import {flattenStrings, leafKeys, placeholderProblems, shadowedOssKeys, untranslatedKeys} from "./translationRules.mjs"
-import {staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
+import {allKeys, flattenStrings, leafKeys, placeholderProblems, shadowedOssKeys, untranslatedKeys} from "./translationRules.mjs"
+import {evalLocaleModule, staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
+import {isScannedSourceFile, translationKeyUsages, translationNamespaceUsages, undefinedKeyUsages, undefinedNamespaceUsages} from "./usageRules.mjs"
+import {staleKeys} from "./fingerprintRules.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 // ui/scripts/translations -> the OSS repo root
 const ossRoot = path.resolve(here, "../../..")
 const ossTranslationsDir = path.resolve(ossRoot, "ui/src/translations")
+const designSystemLocaleFiles = fs.globSync(path.join(ossRoot, "ui/packages/design-system/**/*.locale.ts"))
 
 function argValue(flag) {
     const index = process.argv.indexOf(flag)
     return index !== -1 ? process.argv[index + 1] : undefined
 }
 
-function resolveEeTranslationsDir() {
-    const eeRoot = argValue("--ee-root")
-    if (eeRoot) return path.resolve(eeRoot, "ui-ee/src/translations/ee_translations")
-
-    // No explicit root: assume the standard side-by-side checkout, EE beside OSS.
-    return path.join(path.dirname(ossRoot), "kestra-ee", "ui-ee/src/translations/ee_translations")
-}
-
-const eeTranslationsDir = resolveEeTranslationsDir()
+// No explicit root: assume the standard side-by-side checkout, EE beside OSS.
+const eeRoot = path.resolve(argValue("--ee-root") ?? path.join(path.dirname(ossRoot), "kestra-ee"))
+const eeTranslationsDir = path.join(eeRoot, "ui-ee/src/translations/ee_translations")
 const scope = argValue("--scope") ?? "all"
 const reportPath = argValue("--report")
 
@@ -121,8 +133,9 @@ function checkUntranslated(result, label, dir, fixPath) {
     }
 }
 
-function annotate(level, message) {
-    console.log(`::${level}::${message}`)
+function annotate(level, message, location) {
+    const target = location ? ` file=${location.file},line=${location.line}` : ""
+    console.log(`::${level}${target}::${message}`)
 }
 
 function readLanguage(dir, lang) {
@@ -130,12 +143,71 @@ function readLanguage(dir, lang) {
     return fs.existsSync(file) ? unwrapLanguage(readJson(file), lang) : {}
 }
 
+/**
+ * Adds `result.stale` for every key whose English text no longer matches the fingerprint its
+ * translations were generated from - a new key, or an edited value that was not regenerated.
+ * Key paths are the generator's `a|b|c` form, as they appear in the fingerprints file.
+ */
+function checkStaleJson(result, label, dir, fingerprintsFile, fixHint) {
+    if (!fs.existsSync(fingerprintsFile)) return
+
+    const stale = staleKeys(readLanguage(dir, "en"), readJson(fingerprintsFile))
+    if (stale.length === 0) return
+
+    result.stale.push(...stale)
+    annotate("error", `[${label}] ${stale.length} key(s) have no up-to-date translation, either new or with an English source that changed after they were translated: ${stale.join(", ")} - ${fixHint}`)
+}
+
+/** Every key path, namespaces included, of OSS's `en.json` plus the design-system `en` blocks. */
+function ossDefinedKeys() {
+    const keys = new Set(allKeys(readLanguage(ossTranslationsDir, "en")))
+    for (const localeFile of designSystemLocaleFiles) {
+        const data = evalLocaleModule(fs.readFileSync(localeFile, "utf-8"))
+        for (const key of allKeys(data.en ?? {})) keys.add(key)
+    }
+    return keys
+}
+
+/**
+ * Adds `result.undefinedKeys` for every literal translation key the source under `sourceRoots`
+ * uses that none of `definedKeys` contains. Paths are reported relative to `repoRoot` so the
+ * annotation lands on the right line of the right file in the PR.
+ */
+function checkUsedKeys(result, label, repoRoot, sourceRoots, definedKeys) {
+    const usagesByFile = {}
+    const namespacesByFile = {}
+    for (const sourceRoot of sourceRoots) {
+        if (!fs.existsSync(sourceRoot)) continue
+        for (const file of fs.globSync(path.join(sourceRoot, "**/*"))) {
+            if (!isScannedSourceFile(file) || !fs.statSync(file).isFile()) continue
+            const source = fs.readFileSync(file, "utf-8")
+            const relativeFile = path.relative(repoRoot, file)
+            const usages = translationKeyUsages(source)
+            if (usages.length > 0) usagesByFile[relativeFile] = usages
+            const namespaces = translationNamespaceUsages(source)
+            if (namespaces.length > 0) namespacesByFile[relativeFile] = namespaces
+        }
+    }
+
+    const findings = undefinedKeyUsages(usagesByFile, definedKeys)
+    result.undefinedKeys.push(...findings)
+    for (const {file, line, key} of findings) {
+        annotate("error", `[${label}] Translation key "${key}" is used in ${file}:${line} but defined in no en.json, so it renders as its raw id - add it to en.json (or reuse an existing key) and run \`npm run translations:generate\``, {file, line})
+    }
+
+    const namespaceFindings = undefinedNamespaceUsages(namespacesByFile, definedKeys)
+    result.undefinedKeys.push(...namespaceFindings.map(({file, line, namespace}) => ({file, line, key: `${namespace}.*`})))
+    for (const {file, line, namespace} of namespaceFindings) {
+        annotate("error", `[${label}] Translation keys under "${namespace}." are built at runtime in ${file}:${line}, but no en.json defines that namespace, so every one of them renders as its raw id - restore the namespace in en.json and run \`npm run translations:generate\``, {file, line})
+    }
+}
+
 // --- Design-system `*.locale.ts` files ------------------------------------
 // These carry their own `en` block and are generated by the same pipeline, but nothing ever
 // checked them for drift: a reworded KsEmpty or KsDurationPicker string could sit un-propagated
 // indefinitely. OSS-only — EE has no design-system locale files.
 function checkDesignSystem(result) {
-    const localeFiles = fs.globSync(path.join(ossRoot, "ui/packages/design-system/**/*.locale.ts"))
+    const localeFiles = designSystemLocaleFiles
     if (localeFiles.length === 0) return
 
     for (const {file, lang, key} of untranslatedLocaleEntries(localeFiles)) {
@@ -149,7 +221,7 @@ function checkDesignSystem(result) {
     const stale = staleLocaleEntries(localeFiles, fingerprintsFile)
     if (stale.length === 0) return
 
-    result.stale = stale.map(({file, key}) => `${file}: ${key}`)
+    result.stale.push(...stale.map(({file, key}) => `${file}: ${key}`))
     for (const {file, key} of stale) {
         annotate("error", `[OSS] Design-system string "${key}" in ${file} has no up-to-date translation - it is either new, or its English source changed after it was translated. Run \`npm run translations:generate\` in ui/`)
     }
@@ -158,7 +230,7 @@ function checkDesignSystem(result) {
 // --- OSS scope: OSS languages must match OSS's own en.json ----------------
 // A failure here is an OSS-repo issue - fix it in kestra-io/kestra, not here.
 function checkOss() {
-    const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}}
+    const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}, undefinedKeys: []}
 
     if (!fs.existsSync(ossTranslationsDir)) {
         annotate("warning", `OSS translations directory not found at ${ossTranslationsDir} - skipping OSS check.`)
@@ -168,6 +240,8 @@ function checkOss() {
     checkPlaceholders(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
     checkUntranslated(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
     checkDesignSystem(result)
+    checkStaleJson(result, "OSS", ossTranslationsDir, path.join(here, "fingerprints.json"), "run `npm run translations:generate` in kestra-io/kestra's ui/ and commit the result")
+    checkUsedKeys(result, "OSS", ossRoot, ["ui/src", "ui/packages/design-system/src", "ui/packages/topology/src"].map(dir => path.join(ossRoot, dir)), ossDefinedKeys())
 
     const ossEn = readLanguage(ossTranslationsDir, "en")
     const ossEnKeys = leafKeys(ossEn)
@@ -200,11 +274,17 @@ function shadowMessage(key, ossKey, kind) {
 }
 
 function checkEe() {
-    const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}}
+    const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}, undefinedKeys: []}
     checkPlaceholders(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
     checkUntranslated(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
+    checkStaleJson(result, "EE", eeTranslationsDir, path.join(eeRoot, "ui-ee/scripts/translations/fingerprints.json"), "run `npm run translations:generate` in ui-ee/ and commit the result")
     const eeEn = readLanguage(eeTranslationsDir, "en")
     const eeEnKeys = leafKeys(eeEn)
+
+    // EE code reaches OSS and design-system keys too: its locale files are merged over OSS's.
+    const definedKeys = ossDefinedKeys()
+    for (const key of allKeys(eeEn)) definedKeys.add(key)
+    checkUsedKeys(result, "EE", eeRoot, [path.join(eeRoot, "ui-ee/src")], definedKeys)
 
     for (const lang of listLanguages(eeTranslationsDir)) {
         const langKeys = new Set(leafKeys(readLanguage(eeTranslationsDir, lang)))
@@ -238,29 +318,24 @@ function hasIssues(result) {
         || Object.keys(result.placeholders).length > 0
         || result.stale.length > 0
         || Object.keys(result.untranslated).length > 0
+        || result.undefinedKeys.length > 0
 }
 
-const report = {scope, missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}}
+const report = {scope, missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}, undefinedKeys: []}
 let hasFailure = false
 
-if (scope === "oss" || scope === "all") {
-    const result = checkOss()
+function mergeIntoReport(result) {
     hasFailure = hasFailure || hasIssues(result)
     Object.assign(report.missing, result.missing)
     Object.assign(report.placeholders, result.placeholders)
     report.duplicates.push(...result.duplicates)
     report.stale.push(...result.stale)
     Object.assign(report.untranslated, result.untranslated)
+    report.undefinedKeys.push(...result.undefinedKeys)
 }
-if (scope === "ee" || scope === "all") {
-    const result = checkEe()
-    hasFailure = hasFailure || hasIssues(result)
-    Object.assign(report.missing, result.missing)
-    Object.assign(report.placeholders, result.placeholders)
-    report.duplicates.push(...result.duplicates)
-    report.stale.push(...result.stale)
-    Object.assign(report.untranslated, result.untranslated)
-}
+
+if (scope === "oss" || scope === "all") mergeIntoReport(checkOss())
+if (scope === "ee" || scope === "all") mergeIntoReport(checkEe())
 
 if (reportPath) {
     fs.mkdirSync(path.dirname(path.resolve(reportPath)), {recursive: true})

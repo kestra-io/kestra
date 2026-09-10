@@ -40,6 +40,12 @@ function describeNode(node: Element): string {
     return `${node.tagName.toLowerCase()}${id}${cls}`
 }
 
+// vitest.config.js keeps Node's own web storage out of the way so jsdom can install these;
+// tolerate them being absent anyway, so a future storage global costs one check rather than
+// every spec in the suite.
+const storageKeys = (storage: Storage | undefined) =>
+    storage ? Object.keys(storage).sort().join(",") : ""
+
 const snapshot = () => ({
     globals: new Map(WATCHED_GLOBALS.map((key) => [key, (globalThis as any)[key]])),
     title: document.title,
@@ -47,8 +53,8 @@ const snapshot = () => ({
     teleported: teleportedCount(),
     bodyClass: document.body.className,
     fakeTimers: vi.isFakeTimers(),
-    localStorageKeys: Object.keys(localStorage).sort().join(","),
-    sessionStorageKeys: Object.keys(sessionStorage).sort().join(","),
+    localStorageKeys: storageKeys(globalThis.localStorage),
+    sessionStorageKeys: storageKeys(globalThis.sessionStorage),
 })
 
 const before = snapshot()

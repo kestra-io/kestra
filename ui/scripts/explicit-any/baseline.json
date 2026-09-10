@@ -255,7 +255,6 @@
   "src/stores/dashboard.ts": 16,
   "src/stores/doc.ts": 4,
   "src/stores/layout.ts": 2,
-  "src/stores/logs.ts": 6,
   "src/stores/playground.ts": 3,
   "src/stores/plugins.ts": 5,
   "src/stores/routeTabs.ts": 1,

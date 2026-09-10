@@ -36,6 +36,7 @@ import io.kestra.worker.senders.WorkerIOSender;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.core.ConditionTimeoutException;
 
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
@@ -330,25 +331,37 @@ public abstract class AbstractWorker extends AbstractService {
             }
         );
 
-        Await.await()
-            .pollInterval(Duration.ofSeconds(1))
-            .ignoreExceptions()
-            .until(() ->
-            {
-                ServiceState serviceState = shutdownState.get();
-                if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
-                    log.info("All worker jobs are terminated");
-                    return true;
-                }
+        try {
+            Await.await()
+                // Awaitility caps at 10s by default, and honouring the grace period is the whole point here.
+                .atMost(timeout)
+                .pollInterval(Duration.ofSeconds(1))
+                .ignoreExceptions()
+                .until(() ->
+                {
+                    ServiceState serviceState = shutdownState.get();
+                    if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
+                        log.info("All worker jobs are terminated");
+                        return true;
+                    }
 
-                long runningJobs = this.workerJobExecutor.getRunningJobCount();
-                if (runningJobs == 0) {
-                    log.info("All worker threads are terminated");
-                } else {
-                    log.warn("Waiting for all worker job to terminate (remaining: {}).", runningJobs);
-                }
-                return false;
-            });
+                    long runningJobs = this.workerJobExecutor.getRunningJobCount();
+                    if (runningJobs == 0) {
+                        log.info("All worker threads are terminated");
+                    } else {
+                        log.warn("Waiting for all worker job to terminate (remaining: {}).", runningJobs);
+                    }
+                    return false;
+                });
+        } catch (ConditionTimeoutException e) {
+            // Returning instead of propagating keeps doStop() on its normal path, which still has the
+            // Worker IO senders to flush.
+            log.warn(
+                "Grace period of {} elapsed with {} job(s) still running, forcing termination.",
+                timeout, this.workerJobExecutor.getRunningJobCount()
+            );
+            return false;
+        }
 
         return shutdownState.get() == TERMINATED_GRACEFULLY;
     }

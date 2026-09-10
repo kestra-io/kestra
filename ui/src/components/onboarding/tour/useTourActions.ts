@@ -52,7 +52,7 @@ export function useTourActions() {
     const tourFlowExists = async (id: string = TOUR_FLOW_ID) => {
         try {
             const flows = await FlowsAPI.listFlowsByNamespace({namespace: TOUR_NAMESPACE})
-            return (flows ?? []).some((flow: any) => flow?.id === id)
+            return (flows ?? []).some((flow) => flow?.id === id)
         } catch {
             return false
         }
@@ -292,9 +292,7 @@ export function useTourActions() {
         }
 
         const execution = await executionsStore.loadExecution({id: executionId})
-        const failedTaskRun = (execution?.taskRunList ?? []).find(
-            (taskRun: any) => taskRun?.state?.current === "FAILED",
-        )
+        const failedTaskRun = (execution?.taskRunList ?? []).find((taskRun) => taskRun?.state?.current === "FAILED")
         const revision = await latestRevision()
 
         const replayed = await executionsStore.replayExecution({

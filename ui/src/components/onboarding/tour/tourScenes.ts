@@ -24,7 +24,7 @@ export class TourSceneError extends Error {
     }
 }
 
-const expectState = (execution: any, expected: string, key: string) => {
+const expectState = (execution: {state?: {current?: string}} | undefined, expected: string, key: string) => {
     const state = execution?.state?.current
     if (state !== expected) {
         throw new TourSceneError(key, {state: state ?? "unknown"})

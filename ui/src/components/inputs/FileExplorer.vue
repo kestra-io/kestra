@@ -98,13 +98,11 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            :allowDrop="
-                (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
-            "
+            :allowDrop="allowDrop"
             :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
-            :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
+            :props="treeProps"
             class="mt-3"
             :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
@@ -120,7 +118,7 @@
             </template>
             <template #default="{data, node}">
                 <KsDropdown
-                    :ref="(el: any) => dropdowns[data.id as string] = el"
+                    :ref="el => setDropdownRef(data.id, el)"
                     @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
                     class="w-100"
@@ -458,6 +456,30 @@
         parent: ElTreeNode;
     }
 
+    interface FlatTreeNode {
+        path: string;
+        fileName: string;
+        id: string;
+    }
+
+    interface TreeRef {
+        setCurrentKey: (key: string | null) => void;
+        getCurrentKey: () => string | null;
+        getNode: (key: string | ElTreeNode | undefined) => TreeRefNode | undefined;
+        remove: (key: string) => void;
+        append: (data: TreeNode, parent?: string | ElTreeNode) => void;
+    }
+
+    interface TreeRefNode extends ElTreeNode {
+        loaded?: boolean;
+        expand: () => void;
+    }
+
+    interface DropdownRef {
+        handleClose: () => void;
+        handleOpen: () => void;
+    }
+
     interface Dialog{
         visible: boolean;
         type: "file" | "folder";
@@ -474,18 +496,18 @@
     const isRenaming = ref(false)
     const sidebar = ref<HTMLElement>()
     const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
-    const tree = ref<any>()
+    const tree = ref<TreeRef>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
-    const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({})
+    const dropdowns = ref<Record<string, DropdownRef>>({})
     const revisionsHistory = ref<{ visible: boolean, path: string, revisions: Revision[] }>({visible: false, path: "", revisions: []})
-    const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}})
+    const confirmation = ref<{ visible: boolean; nodes?: TreeNode[] }>({visible: false})
     const nodeBeforeDrag = ref<{
         parent: string;
         path: string;
     }>()
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0})
-    const selectedNodes = ref<any[]>([])
+    const selectedNodes = ref<string[]>([])
     const selectionMode = computed(() => selectedNodes.value.length > 1)
     const lastClickedIndex = ref<number | null>(null)
     const bulkDragSiblings = ref<{ path: string; fileName: string }[]>()
@@ -510,6 +532,12 @@
         authStore.user?.isAllowed(resource.NAMESPACE, action.MANAGE_FILES, namespaceId.value) ?? false,
     )
 
+    function allowDrop(_draggingNode: ElTreeNode, dropNode: ElTreeNode, dropType: string) {
+        return !dropNode.data.leaf || dropType !== "inner"
+    }
+
+    const treeProps = {class: nodeClass, isLeaf: "leaf"}
+
     const multiSelected = computed(() => selectedNodes.value.length > 1)
 
     const confirmationLabels = computed(() => {
@@ -526,15 +554,15 @@
         return labels
     })
 
-    function nodeClass(data: any) {
+    function nodeClass(data: TreeNode) {
         if (selectedNodes.value.includes(data.id)) {
             return "node selected-tree-node"
         }
         return "node"
     }
 
-    function flattenTree(itemsArr: TreeNode[], parentPath = ""): any[] {
-        const result: any[] = []
+    function flattenTree(itemsArr: TreeNode[], parentPath = ""): FlatTreeNode[] {
+        const result: FlatTreeNode[] = []
         for (const item of itemsArr) {
             const fullPath = `${parentPath}${item.fileName}`
             result.push({path: fullPath, fileName: item.fileName, id: item.id})
@@ -545,7 +573,7 @@
         return result.filter(i => i.path)
     }
 
-    function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
+    function handleNodeClick(data: TreeNode, node: ElTreeNode, event: MouseEvent | null = null) {
         const path = filesStore.getPath(node.data.id) ?? ""
         const flatList = flatTree.value
         const currentIndex = flatList.findIndex(item => item.path === path)
@@ -601,10 +629,12 @@
         syncTreeCurrentKey()
 
         if (data.leaf) {
+            const extension = data.fileName.split(".").pop()
+            if (!extension) return
             openTab?.({
                 name: data.fileName,
                 path,
-                extension: data.fileName.split(".").pop(),
+                extension,
                 flow: false,
                 dirty: false,
             })
@@ -718,7 +748,7 @@
         }]
     }
 
-    async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+    async function removeSelectedFiles(_data?: TreeNode, node?: ElTreeNode) {
         // Guards the keyboard-delete path, which bypasses the disabled context-menu item
         if (!canManageFiles.value) return
         if (selectedFiles.value.length <= 1 && node) {
@@ -727,7 +757,7 @@
         const nodes = selectedFiles.value.map((filePath) => {
             return filesStore.findNodeByPath(filePath)
         })
-        confirmRemove(nodes)
+        confirmRemove(nodes.filter((foundNode): foundNode is TreeNode => foundNode !== null))
     }
 
     function chooseSearchResults(item: string) {
@@ -761,6 +791,19 @@
         }
     }
 
+    function setDropdownRef(id: string, dropdown: unknown) {
+        if (isDropdownRef(dropdown)) {
+            dropdowns.value[id] = dropdown
+        } else {
+            delete dropdowns.value[id]
+        }
+    }
+
+    function isDropdownRef(value: unknown): value is DropdownRef {
+        return typeof value === "object" && value !== null &&
+            "handleClose" in value && "handleOpen" in value
+    }
+
     async function dialogHandler() {
         if (!canManageFiles.value) return
         if (dialog.value.type === "file") {
@@ -770,16 +813,16 @@
         }
     }
 
-    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: any) {
+    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: ElTreeNode) {
         if (isShown) {
             let folder
             if (node?.data?.leaf === false) {
                 folder = filesStore.getPath(node.data.id)
             } else {
-                const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
-                const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
+                const treeRef = tree.value
+                const selectedKey = treeRef?.getCurrentKey()
+                const selectedNode = selectedKey ? treeRef?.getNode(selectedKey) : undefined
                 if (selectedNode?.data?.leaf === false) {
-                    node = selectedNode.data.id
                     folder = filesStore.getPath(selectedNode.data.id)
                 }
             }
@@ -837,7 +880,8 @@
             isRenaming.value = false
         }
 
-        tree.value.getNode(node).data.fileName = newName
+        const treeNode = tree.value?.getNode(node)
+        if (treeNode) treeNode.data.fileName = newName
         renameDialog.value = {...RENAME_DEFAULTS}
 
         // Tabs are keyed by path, so a renamed file left one pointing at a path that no longer
@@ -884,11 +928,13 @@
             .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
-    async function nodeMoved(draggedNode: any) {
+    async function nodeMoved(draggedNode: FileExplorerNode) {
+        const treeRef = tree.value
+        if (!treeRef) return
         // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
         if (!canManageFiles.value) {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            treeRef.remove(draggedNode.data.id)
+            treeRef.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             return
         }
         const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
@@ -900,8 +946,8 @@
                 new: newPath,
             })
         } catch {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            treeRef.remove(draggedNode.data.id)
+            treeRef.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             bulkDragSiblings.value = undefined
             return
         }
@@ -934,8 +980,8 @@
         return toast.success(t("namespace files.move.bulk_success"))
     }
 
-    const creation_name = ref<any>()
-    const renaming_name = ref<any>()
+    const creation_name = ref<{ $el?: HTMLElement }>()
+    const renaming_name = ref<{ $el?: HTMLElement }>()
 
     function focusCreationInput() {
         creation_name.value?.$el?.querySelector("input")?.focus()
@@ -1000,7 +1046,7 @@
         }
     }
 
-    function confirmRemove(nodes: any[]) {
+    function confirmRemove(nodes: TreeNode[]) {
         confirmation.value = {
             visible: true,
             nodes: Array.isArray(nodes) ? nodes : [nodes],
@@ -1016,7 +1062,7 @@
                     namespace: props.currentNS ?? route.params.namespace as string,
                     path,
                 })
-                tree.value.remove(node.id)
+                tree.value?.remove(node.id)
                 closeTab?.({
                     path,
                 })

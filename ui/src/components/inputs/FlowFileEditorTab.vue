@@ -249,7 +249,7 @@
     const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
-    const timeout = ref<any>(null)
+    const timeout = ref<ReturnType<typeof setTimeout>>()
 
     const editorContent = computed(() => source.value)
 

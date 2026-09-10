@@ -47,7 +47,6 @@
             <div v-if="focusedTaskRun" class="failure-debug-panel__actions">
                 <Restart
                     component="KsButton"
-                    type="primary"
                     isReplay
                     tooltipPosition="bottom"
                     :execution="execution"

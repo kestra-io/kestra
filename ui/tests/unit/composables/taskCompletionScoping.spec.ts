@@ -114,7 +114,7 @@ namespace: my.ns
 outputs:
   - id: myoutput
     type: STRING
-    valu`
+    value`
         expect(
             taskTypeAtCursor({
                 source: outputFlow,

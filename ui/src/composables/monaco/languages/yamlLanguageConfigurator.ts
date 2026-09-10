@@ -353,10 +353,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 const task = taskIdentityAtCursor({
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
-                    isTrigger: (type) =>
-                        pluginsStore
-                            .findPluginByCls(type)
-                            ?.triggers?.some((t) => t.cls === type) ?? false,
+                    isTrigger: (type) => {
+                        const plugin = pluginsStore.findPluginByCls(type)
+                        const triggers = plugin?.triggers as {cls: string}[] | undefined
+                        return triggers?.some((t) => t.cls === type) ?? false
+                    },
                 })
                 // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
                 // task shape but carry types like `STRING`, which would 404 on every keystroke.

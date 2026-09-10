@@ -8,7 +8,7 @@ function isTaskLike(value: unknown): value is TaskLike {
         value !== null &&
         typeof (value as TaskLike).id === "string" &&
         typeof (value as TaskLike).type === "string" &&
-        (value as TaskLike).type.includes(".")
+        ((value as TaskLike).type as string).includes(".")
     )
 }
 

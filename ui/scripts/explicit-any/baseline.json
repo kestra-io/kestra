@@ -16,7 +16,6 @@
   "packages/design-system/src/components/Data/KsDataTable/filter/utils/helpers.ts": 3,
   "packages/design-system/src/components/Data/KsDataTable/filter/utils/logLevelQuery.ts": 1,
   "packages/design-system/src/components/Data/KsDataTable/filter/utils/timeRangeQuery.ts": 1,
-  "packages/design-system/src/components/Data/KsMarkdown/KsMarkdown.vue": 23,
   "packages/design-system/src/components/Data/KsMarkdown/shikiHighlighter.ts": 1,
   "packages/design-system/src/components/Data/KsPageHeader.vue": 1,
   "packages/design-system/src/components/Data/KsTable/KsTable.vue": 15,

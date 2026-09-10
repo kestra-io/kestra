@@ -63,13 +63,13 @@
     function extractText(nodes: RootContent[]): string {
         return nodes.map((node): string => {
             // Leaf nodes carry their text in `value` (text, inlineCode, html, …)
-            if ("value" in node && !("children" in node)) return (node as any).value as string
-            if ("children" in node) return extractText((node as any).children as RootContent[])
+            if ("value" in node && typeof node.value === "string") return node.value
+            if ("children" in node && Array.isArray(node.children)) return extractText(node.children as RootContent[])
             return ""
         }).join("")
     }
 
-    function renderNodes(nodes: any[]): (VNode | string)[] {
+    function renderNodes(nodes: RootContent[]): (VNode | string)[] {
         const result: (VNode | string)[] = []
         for (const node of nodes) {
             const vnode = renderNode(node)
@@ -193,11 +193,11 @@
         const slots = innerHtml.trim()
             ? {default: () => [h("span", {innerHTML: props.xssProtection ? htmlEscape(innerHtml) : innerHtml})]}
             : undefined
-        return h(component as any, attrs, slots)
+        return h(component, attrs, slots)
     }
 
-    function renderNode(node: any): VNode | string | null {
-        switch (node.type as string) {
+    function renderNode(node: RootContent): VNode | string | null {
+        switch (node.type) {
         case "text":
             return node.value as string
 
@@ -263,7 +263,7 @@
             return h(node.ordered ? "ol" : "ul", {class: "ks-markdown__list"}, renderNodes(node.children))
 
         case "listItem": {
-            const children = (node.children as any[]).flatMap((child: any): (VNode | string)[] => {
+            const children = node.children.flatMap((child): (VNode | string)[] => {
                 if (child.type === "paragraph") return renderNodes(child.children)
                 const vnode = renderNode(child)
                 return vnode !== null ? [vnode] : []
@@ -273,17 +273,14 @@
 
         case "table": {
             const align = node.align as (string | null)[] | null
-            const [headerRow, ...bodyRows] = node.children as any[]
+            const [headerRow, ...bodyRows] = node.children
+            if (!headerRow) return null
 
             // Column labels extracted from the header row
-            const headers = (headerRow.children as any[]).map((cell: any) =>
-                extractText(cell.children as RootContent[]),
-            )
+            const headers = headerRow.children.map(cell => extractText(cell.children))
 
             // Pre-render all cell content: cellGrid[rowIdx][colIdx] = VNodes
-            const cellGrid = (bodyRows as any[]).map((row: any) =>
-                (row.children as any[]).map((cell: any) => renderNodes(cell.children)),
-            )
+            const cellGrid = bodyRows.map(row => row.children.map(cell => renderNodes(cell.children)))
 
             const data = cellGrid.map((_, i) => ({_idx: i}))
 
@@ -293,21 +290,21 @@
                     label,
                     // align is not in KsTableColumn's defineProps but is forwarded via $attrs
                     ...(cellAlign ? {align: cellAlign} : {}),
-                } as any, {
+                }, {
                     // oxlint-disable-next-line no-underscore-dangle
                     default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
                 })
             })
 
             return h("div", {class: "ks-markdown__table-wrapper"}, [
-                h(KsTable, {data} as any, {default: () => columns}),
+                h(KsTable, {data}, {default: () => columns}),
             ])
         }
 
         case "link": {
             const url = sanitizeUrl(node.url)
             if (props.components?.a) {
-                return h(props.components.a as any, {
+                return h(props.components.a, {
                     href: url,
                     title: node.title ?? undefined,
                     class: "ks-markdown__link",
@@ -327,7 +324,7 @@
         case "image": {
             const src = sanitizeUrl(node.url)
             if (props.components?.img) {
-                return h(props.components.img as any, {
+                return h(props.components.img, {
                     src,
                     alt: (node.alt ?? "") as string,
                 })
@@ -392,7 +389,7 @@
 
         default:
             if ("children" in node && Array.isArray(node.children)) {
-                return h("div", renderNodes(node.children as any[]))
+                return h("div", renderNodes(node.children))
             }
 
             return null
@@ -401,22 +398,22 @@
 
     // Depends on both `ast` and `codeHighlights` — re-evaluates when either changes.
     const markdownContent = computed<FunctionalComponent>(() => {
-        const children = renderNodes(ast.value.children as any[])
+        const children = renderNodes(ast.value.children)
         return () => children
     })
 
     async function highlightAllCodeBlocks(root: Root) {
         const blocks: {lang: string; value: string}[] = []
 
-        function collect(nodes: any[]) {
+        function collect(nodes: RootContent[]) {
             for (const node of nodes) {
                 if (node.type === "code" && node.lang !== "mermaid") {
                     blocks.push({lang: node.lang ?? "", value: node.value as string})
                 }
-                if (Array.isArray(node.children)) collect(node.children as any[])
+                if ("children" in node && Array.isArray(node.children)) collect(node.children as RootContent[])
             }
         }
-        collect(root.children as any[])
+        collect(root.children)
         if (!blocks.length) return
 
         const hl = await getShiki()

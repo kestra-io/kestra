@@ -50,7 +50,7 @@
                     :placeholder="$t('ai.copilot.emptyHelper')"
                     :rows="3"
                     @submit="onSubmit"
-                    @stop="cancel"
+                    @stop="onStop"
                 />
                 <div class="copilot-suggestions">
                     <KsButton
@@ -131,7 +131,7 @@
                     :disabled="!canSend"
                     :streaming="streaming"
                     @submit="onSubmit"
-                    @stop="cancel"
+                    @stop="onStop"
                 />
             </div>
         </template>
@@ -400,6 +400,11 @@
         await confirm("REJECT", undefined, selectedProvider.value)
         await nextTick()
         footerComposer.value?.focus()
+    }
+
+    function onStop(): void {
+        cancel()
+        nextTick(() => footerComposer.value?.focus())
     }
 
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens

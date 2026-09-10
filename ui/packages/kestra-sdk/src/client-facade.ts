@@ -223,8 +223,8 @@ export function createClientFacade(
             response = await fetch(request)
         } catch (networkError) {
             // Same catch as axiosLikeRequest: abort / offline / CORS never produces a Response,
-            // so without this the NProgress "requestsCompleted" bump never runs and the loading
-            // indicator stays stuck.
+            // so error interceptors still run (parity with GET/POST). stream() itself is opted
+            // out of NProgress, so this is not what settles the loading indicator.
             let finalError: unknown = networkError
             for (const fn of client.interceptors.error.fns) {
                 if (fn) finalError = await fn(finalError, undefined, request, interceptorOptions)

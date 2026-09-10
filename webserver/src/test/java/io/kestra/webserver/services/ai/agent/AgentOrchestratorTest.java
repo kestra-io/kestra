@@ -623,6 +623,26 @@ class AgentOrchestratorTest {
     }
 
     @Test
+    void shouldNotDispatchRemainingToolsWhenClientDisconnects() {
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from("", List.of(
+            toolCall("c1", "read-execution-logs", "exec-1"),
+            toolCall("c2", "read-execution", "exec-1")
+        )));
+        CollectingSink sink = new CollectingSink();
+        sink.cancelOnFirstEmit();
+
+        orchestrator.runTurn(new AgentTurnContext(thread, "read them", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        assertThat(sink.names().stream().filter(AgentEvents.TOOL_CALL::equals).count()).isEqualTo(1L);
+        assertThat(sink.names()).doesNotContain(AgentEvents.DONE);
+        assertThat(sink.error).isNull();
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
+            .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
+    }
+
+    @Test
     void shouldFailTurnWhenModelCallTimesOut() {
         // Given — the provider accepts the call but never responds
         AgentThread thread = newThread(AgentMode.ASK);

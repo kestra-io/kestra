@@ -242,6 +242,10 @@ public class AgentOrchestrator {
             return;
         }
 
+        if (sink.isCancelled()) {
+            abortCancelled(ctx);
+            return;
+        }
         emitToolCall(sink, held, entry.kind(), entry.family());
         ToolCatalog.DispatchResult result;
         try {
@@ -324,6 +328,11 @@ public class AgentOrchestrator {
             Map<String, Object> heldArgs = null;
 
             for (ToolExecutionRequest req : ai.toolExecutionRequests()) {
+                if (sink.isCancelled()) {
+                    abortCancelled(ctx);
+                    return;
+                }
+
                 Map<String, Object> args = ChatMessageAdaptor.parseArguments(req.arguments());
 
                 if (!ctx.profile().allowedToolNames().contains(req.name())) {
@@ -352,6 +361,10 @@ public class AgentOrchestrator {
                 executeTool(ctx, req, entry, sink);
             }
 
+            if (sink.isCancelled()) {
+                abortCancelled(ctx);
+                return;
+            }
             if (heldAction != null) {
                 suspendForAction(ctx, heldAction, heldEntry, heldArgs, sink);
                 return;
@@ -360,6 +373,9 @@ public class AgentOrchestrator {
     }
 
     private void executeTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final ToolEntry entry, final TurnEventSink sink) {
+        if (sink.isCancelled()) {
+            return;
+        }
         log.info("Copilot thread {}: calling tool '{}' (kind={}, family={})", ctx.thread().uid(), req.name(), entry.kind(), entry.family());
         emitToolCall(sink, req, entry.kind(), entry.family());
         ToolCatalog.DispatchResult result;
@@ -456,12 +472,18 @@ public class AgentOrchestrator {
 
             @Override
             public void onPartialThinking(final PartialThinking thinking, final PartialThinkingContext context) {
-                abortIfCancelled(sink, handle, context.streamingHandle());
+                if (abortIfCancelled(sink, handle, context.streamingHandle())) {
+                    return;
+                }
+                onPartialThinking(thinking);
             }
 
             @Override
             public void onPartialToolCall(final PartialToolCall toolCall, final PartialToolCallContext context) {
-                abortIfCancelled(sink, handle, context.streamingHandle());
+                if (abortIfCancelled(sink, handle, context.streamingHandle())) {
+                    return;
+                }
+                onPartialToolCall(toolCall);
             }
 
             @Override
@@ -490,7 +512,8 @@ public class AgentOrchestrator {
                 long remainingNanos = deadlineNanos - System.nanoTime();
                 if (remainingNanos <= 0) {
                     future.cancel(true);
-                    throw new IllegalStateException("LLM streaming call timed out after " + modelCallTimeout);
+                    cancelProviderStream(handle.get());
+                    throw new IllegalStateException("LLM streaming call timed out after " + modelCallTimeout, new TimeoutException());
                 }
                 long waitMs = Math.min(TimeUnit.NANOSECONDS.toMillis(remainingNanos), MODEL_CANCEL_POLL_MS);
                 try {
@@ -504,6 +527,7 @@ public class AgentOrchestrator {
             return future.get();
         } catch (InterruptedException e) {
             future.cancel(true);
+            cancelProviderStream(handle.get());
             Thread.currentThread().interrupt();
             throw new IllegalStateException("LLM streaming call interrupted", e);
         } catch (ExecutionException e) {
@@ -520,11 +544,14 @@ public class AgentOrchestrator {
         if (!sink.isCancelled()) {
             return false;
         }
-        StreamingHandle captured = handle.get();
-        if (captured != null && !captured.isCancelled()) {
-            captured.cancel();
-        }
+        cancelProviderStream(handle.get());
         return true;
+    }
+
+    private static void cancelProviderStream(final StreamingHandle handle) {
+        if (handle != null && !handle.isCancelled()) {
+            handle.cancel();
+        }
     }
 
     private void finishTurn(final AgentLoopContext ctx) {

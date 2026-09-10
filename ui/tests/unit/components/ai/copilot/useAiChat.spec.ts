@@ -23,9 +23,7 @@ vi.mock("../../../../../src/components/ai/copilot/streamSse", async (importOrigi
             if (hangUntilAbort) {
                 await new Promise<never>((_, reject) => {
                     const fail = () => {
-                        const err = new Error("Aborted")
-                        err.name = "AbortError"
-                        reject(err)
+                        reject(new DOMException("Aborted", "AbortError"))
                     }
                     if (signal?.aborted) fail()
                     else signal?.addEventListener("abort", fail, {once: true})

@@ -446,7 +446,7 @@ export function useAiChat() {
     }
 
     function isAbortError(e: unknown): boolean {
-        return e instanceof Error && (e.name === "AbortError" || e.name === "CanceledError")
+        return (e as {name?: string})?.name === "AbortError"
     }
 
     return {

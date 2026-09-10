@@ -22,7 +22,6 @@
   "packages/design-system/src/components/Data/KsTable/KsTable.vue": 15,
   "packages/design-system/src/components/Data/KsTable/KsTableColumn.vue": 3,
   "packages/design-system/src/components/Data/KsTimeline/KsTimelineItem.vue": 1,
-  "packages/design-system/src/components/Data/KsTree.vue": 24,
   "packages/design-system/src/components/Form/KsAutocomplete.vue": 4,
   "packages/design-system/src/components/Form/KsCascaderPanel.vue": 5,
   "packages/design-system/src/components/Form/KsCheckbox/KsCheckbox.vue": 2,

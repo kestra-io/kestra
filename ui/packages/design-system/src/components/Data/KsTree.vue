@@ -1,7 +1,7 @@
 <template>
     <ElTree
         ref="treeRef"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @node-drag-start="(node, event) => emit('nodeDragStart', node, event)"
         @node-drop="(draggingNode, dropNode, dropType, event) => emit('nodeDrop', draggingNode, dropNode, dropType, event)"
         @node-click="(data, node, el, event) => emit('nodeClick', data, node, el, event)"
@@ -16,33 +16,45 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
-    import {ElTree} from "element-plus"
+    import {ref, type ComponentInternalInstance} from "vue"
+    import {
+        ElTree,
+        type AllowDropFunction,
+        type LoadFunction,
+        type NodeDropType,
+        type TreeData,
+        type TreeInstance,
+        type TreeKey,
+        type TreeNodeData,
+        type TreeOptionProps,
+    } from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        data?: any[]
+        data?: TreeData
         lazy?: boolean
-        load?: (node: any, resolve: (data: any[]) => void) => void
-        allowDrop?: (draggingNode: any, dropNode: any, type: string) => boolean
+        load?: LoadFunction
+        allowDrop?: AllowDropFunction
         draggable?: boolean
         nodeKey?: string
-        props?: {label?: string; children?: string; disabled?: string; isLeaf?: string}
+        props?: TreeOptionProps
         defaultExpandAll?: boolean
-        defaultExpandedKeys?: any[]
-        defaultCheckedKeys?: any[]
+        defaultExpandedKeys?: TreeKey[]
+        defaultCheckedKeys?: TreeKey[]
     }>()
 
+    type TreeNode = Parameters<AllowDropFunction>[0]
+
     const emit = defineEmits<{
-        nodeDragStart: [node: any, event: DragEvent]
-        nodeDrop: [draggingNode: any, dropNode: any, dropType: string, event: DragEvent]
-        nodeClick: [data: any, node: any, el: any, event: MouseEvent]
+        nodeDragStart: [node: TreeNode, event: DragEvent]
+        nodeDrop: [draggingNode: TreeNode, dropNode: TreeNode, dropType: NodeDropType, event: DragEvent]
+        nodeClick: [data: TreeNodeData, node: TreeNode, el: ComponentInternalInstance | null, event: MouseEvent]
     }>()
 
     defineSlots<{
-        default?: (scope: {node: any; data: any}) => unknown
+        default?: (scope: {node: TreeNode; data: TreeNodeData}) => unknown
         empty?(): unknown
     }>()
 
@@ -51,13 +63,16 @@
     const filteredProps = useFilteredProps(props)
 
     defineExpose({
-        getNode: (data: any) => treeRef.value?.getNode(data),
-        remove: (data: any) => treeRef.value?.remove(data),
-        append: (data: any, parent: any) => treeRef.value?.append(data, parent),
-        getCheckedNodes: (...args: any[]) => (treeRef.value?.getCheckedNodes as any)?.(...args),
-        setCheckedKeys: (...args: any[]) => (treeRef.value?.setCheckedKeys as any)?.(...args),
+        getNode: (data: TreeKey | TreeNodeData | TreeNode) => treeRef.value?.getNode(data),
+        remove: (data: TreeKey | TreeNodeData | TreeNode) => {
+            const node = typeof data === "string" || typeof data === "number" ? treeRef.value?.getNode(data) : data
+            if (node) treeRef.value?.remove(node)
+        },
+        append: (data: TreeNodeData, parent: TreeNodeData | TreeKey | TreeNode) => treeRef.value?.append(data, parent),
+        getCheckedNodes: (...args: Parameters<TreeInstance["getCheckedNodes"]>) => treeRef.value?.getCheckedNodes(...args),
+        setCheckedKeys: (...args: Parameters<TreeInstance["setCheckedKeys"]>) => treeRef.value?.setCheckedKeys(...args),
         getCurrentKey: () => treeRef.value?.getCurrentKey(),
-        setCurrentKey: (key: any) => treeRef.value?.setCurrentKey(key),
+        setCurrentKey: (key: TreeKey | null) => treeRef.value?.setCurrentKey(key),
     })
 </script>
 

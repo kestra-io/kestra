@@ -96,7 +96,7 @@
         <KsTree
             ref="tree"
             lazy
-            :load="filesStore.loadNodes"
+            :load="loadTreeNodes"
             :data="filesStore.fileTree"
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
@@ -107,7 +107,7 @@
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
             :class="{'is-drop-not-allow': isDropOutsideSidebar}"
-            @node-drag-start="onNodeDragStart"
+            @node-drag-start="onTreeNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
         >
@@ -128,14 +128,14 @@
                     <div
                         class="tree-node-hitbox"
                         @mousedown.stop
-                        @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data, node, e) }"
+                        @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data as unknown as TreeNode, node as unknown as ElTreeNode, e) }"
                     >
                         <div class="item-line">
                             <KsCheckbox
                                 v-if="selectionMode"
                                 class="me-2"
                                 :modelValue="selectedNodes.includes(data.id)"
-                                @change="checked => toggleCheckboxSelection(checked, node)"
+                                @change="checked => toggleCheckboxSelection(checked, node as unknown as ElTreeNode)"
                                 @mousedown.stop
                                 @click.stop
                             />
@@ -144,7 +144,7 @@
                                 :folder="!data.leaf"
                                 class="me-2"
                             />
-                            <span class="filename" @click="(e) => { if(selectionMode) onRowClickWrapper(data, node, e) }">{{ data.fileName }}</span>
+                            <span class="filename" @click="(e) => { if(selectionMode) onRowClickWrapper(data as unknown as TreeNode, node as unknown as ElTreeNode, e) }">{{ data.fileName }}</span>
                         </div>
                     </div>
                     <template #dropdown>
@@ -163,13 +163,13 @@
                             >
                                 {{ $t("namespace files.create.folder") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data as unknown as TreeNode)">
                                 {{ $t("namespace files.revisions.history") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
+                            <KsDropdownItem v-if="!multiSelected" @click="copyPath(data as unknown as TreeNode)">
                                 {{ $t("namespace files.path.copy") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(data)">
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(data as unknown as TreeNode)">
                                 {{ $t("namespace files.export_single") }}
                             </KsDropdownItem>
                             <KsDropdownItem
@@ -180,7 +180,7 @@
                                         true,
                                         !data.leaf ? 'folder' : 'file',
                                         data.fileName,
-                                        node,
+                                        node as unknown as ElTreeNode,
                                     )
                                 "
                             >
@@ -192,7 +192,7 @@
                                     )
                                 }}
                             </KsDropdownItem>
-                            <KsDropdownItem :disabled="!canManageFiles" @click="removeSelectedFiles(data, node)">
+                            <KsDropdownItem :disabled="!canManageFiles" @click="removeSelectedFiles(data, node as unknown as ElTreeNode)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -404,6 +404,9 @@
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
     import action from "../../models/action"
+    import type {AllowDropFunction, LoadFunction, TreeNodeData} from "element-plus"
+
+    type ElementTreeNode = Parameters<AllowDropFunction>[0]
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -525,6 +528,13 @@
         else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
         return labels
     })
+
+    const loadTreeNodes: LoadFunction = (node, resolve) => {
+        filesStore.loadNodes(
+            node.level === 0 ? {level: 0} : node as unknown as ElTreeNode,
+            children => resolve(children as unknown as TreeNodeData[]),
+        )
+    }
 
     function nodeClass(data: any) {
         if (selectedNodes.value.includes(data.id)) {
@@ -882,6 +892,10 @@
             .map(id => filesStore.getPath(id))
             .filter((path): path is string => !!path && !selectedPaths.some(p => p !== path && path.startsWith(`${p}/`)))
             .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
+    }
+
+    function onTreeNodeDragStart(node: ElementTreeNode, _event: DragEvent) {
+        onNodeDragStart(node as unknown as FileExplorerNode)
     }
 
     async function nodeMoved(draggedNode: any) {

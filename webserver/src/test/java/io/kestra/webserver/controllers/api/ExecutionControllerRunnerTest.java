@@ -40,6 +40,8 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
@@ -180,6 +182,66 @@ class ExecutionControllerRunnerTest {
     @BeforeEach
     public void initMock() {
         when(tenantService.resolveTenant()).thenReturn(MAIN_TENANT);
+    }
+
+    @Test
+    void executingADeletedFlowIsRejected() {
+        // Deletion appends a revision flagged deleted rather than a fixture (@LoadFlows cannot
+        // express "deleted"), so build and delete the flow directly through the repository. No
+        // revision parameter: this is the PoC shape from GHSA-52wv-cgfg-4j6x.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TESTS_FLOW_NS);
+
+        FlowWithSource created = flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+        flowRepositoryInterface.delete(created);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/" + flowId, null),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("executing a deleted flow without a revision is rejected as not found, same as a nonexistent flow")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void executingADeletedFlowRevisionIsRejected() {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TESTS_FLOW_NS);
+
+        FlowWithSource created = flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+        FlowWithSource deleted = flowRepositoryInterface.delete(created);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/" + flowId + "?revision=" + deleted.getRevision(),
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("explicitly targeting the deleted revision is rejected as not found, same as a nonexistent flow")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test

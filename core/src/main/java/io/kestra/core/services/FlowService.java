@@ -616,7 +616,8 @@ public class FlowService {
         }
 
         Optional<Flow> optional = flowRepository.get().findByIdWithoutAcl(tenant, namespace, id, revision);
-        if (optional.isEmpty()) {
+        // findByIdWithoutAcl is deleted-inclusive, so reject a resolved flow the same way as a nonexistent one.
+        if (optional.isEmpty() || optional.get().isDeleted()) {
             throw new NoSuchElementException("Requested Flow is not found.");
         }
 

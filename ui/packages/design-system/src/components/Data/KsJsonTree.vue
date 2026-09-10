@@ -15,7 +15,10 @@
             v-for="(row, index) in rows"
             :key="row.path"
             class="json-tree__row"
-            :class="{'json-tree__row--selected': row.path === selectedPath}"
+            :class="{
+                'json-tree__row--selected': row.path === selectedPath,
+                'json-tree__row--file': row.file,
+            }"
             :style="{'--depth': row.depth}"
             @click="$emit('select', row.path, row.value)"
         >
@@ -217,6 +220,10 @@
 
         &--selected {
             background-color: var(--ks-border-default);
+        }
+
+        &--file + &--file {
+            margin-top: var(--ks-spacing-2);
         }
     }
 

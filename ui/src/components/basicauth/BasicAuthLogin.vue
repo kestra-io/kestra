@@ -74,6 +74,14 @@
         password: string
     }
 
+    interface AuthError {
+        code?: string;
+        response?: {status?: number};
+    }
+
+    const authError = (error: unknown): AuthError =>
+        typeof error === "object" && error !== null ? error as AuthError : {}
+
     const router = useRouter()
     const route = useRoute()
     const {t} = useI18n()
@@ -124,10 +132,11 @@
         return response.data?.isBasicAuthInitialized
     }
 
-    const handleNetworkError = (error: any) => {
-        return error.code === "ERR_NETWORK" ||
-            error.code === "ECONNREFUSED" ||
-            (!error.response && error instanceof TypeError)
+    const handleNetworkError = (error: unknown) => {
+        const details = authError(error)
+        return details.code === "ERR_NETWORK" ||
+            details.code === "ECONNREFUSED" ||
+            (!details.response && error instanceof TypeError)
     }
 
     const loadAuthConfigErrors = async () => {
@@ -173,11 +182,12 @@
             } else {
                 router.push({name: "home", params: {tenant: route.params.tenant}})
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (handleNetworkError(error)) { router.push({name: "setup"}); return }
-            if (error?.response?.status === 401) {
+            const status = authError(error).response?.status
+            if (status === 401) {
                 await loadAuthConfigErrors()
-            } else if (error?.response?.status === 404) {
+            } else if (status === 404) {
                 router.push({name: "setup"})
             } else {
                 KsMessage.error(t("setup.validation.incorrect_creds"))

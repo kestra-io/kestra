@@ -491,6 +491,9 @@
     },
     "download": "Baixar",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Apenas as primeiras {lines} linhas deste valor de {size} são exibidas."
+    },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
       "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."

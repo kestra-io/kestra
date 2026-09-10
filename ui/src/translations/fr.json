@@ -491,6 +491,9 @@
     },
     "download": "Télécharger",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Seules les {lines} premières lignes de cette valeur de {size} sont affichées."
+    },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrence",
       "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."

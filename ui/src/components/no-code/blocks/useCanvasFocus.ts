@@ -2,6 +2,11 @@ import {nextTick, ref, type Ref} from "vue"
 import {ALL_SECTIONS, findNestedPath} from "./blockSections"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
 
+export interface FocusCanvasCardOptions {
+    /** Defaults to `nearest`, which keeps arrow-key stepping between neighbours steady. */
+    align?: ScrollLogicalPosition
+}
+
 export function useCanvasFocus(
     editorEl: Ref<HTMLElement | undefined>,
     sectionList: (section: BlockSection) => Record<string, unknown>[],
@@ -22,14 +27,14 @@ export function useCanvasFocus(
         return card.querySelector<HTMLElement>("[data-test='flowable-cluster-header']") ?? card
     }
 
-    function focusCanvasCard(id: string | undefined) {
+    function focusCanvasCard(id: string | undefined, options: FocusCanvasCardOptions = {}) {
         focusedId.value = id
         if (!id) return
         nextTick(() => {
             const card = focusedCard()
             if (!card) return
             cardFocusTarget(card).focus({preventScroll: true})
-            card.scrollIntoView({block: "nearest"})
+            card.scrollIntoView({block: options.align ?? "nearest"})
         })
     }
 

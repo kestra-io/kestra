@@ -298,6 +298,7 @@
         sectionDisplayLabel,
         sectionFromParentPath,
         resolveTaskInsertionTarget,
+        resolveTaskInsertionTargetInAnySection,
         isTaskListPath,
     } from "../no-code/blocks/blockSections"
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
@@ -786,7 +787,7 @@
 
     const onCreateNewTask = (event: [string, "before" | "after"]) => {
         const [taskId, position] = event
-        const target = resolveTaskInsertionTarget(flowSource.value ?? "", "tasks", taskId)
+        const target = resolveTaskInsertionTargetInAnySection(flowSource.value ?? "", taskId)
         if (!target) return
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex, undefined, position)
     }
@@ -866,11 +867,11 @@
             if (!id) return
             // The insert already landed, so the source has to be read live from the store —
             // props.source only catches up on the next render.
-            const target = resolveTaskInsertionTarget(flowStore.flowYaml ?? "", "tasks", id)
+            const target = resolveTaskInsertionTargetInAnySection(flowStore.flowYaml ?? "", id)
             if (!target) return
             pushModalTarget({
                 parentPath: target.parentPath,
-                blockSchemaPath: blockSchemaPathFor("tasks"),
+                blockSchemaPath: blockSchemaPathFor(target.section),
                 refPath: target.refIndex,
             })
         },
@@ -902,7 +903,7 @@
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
     const onAddFlowableError = (event: {task: Record<string, any>}) => {
-        const target = errorsLaneTarget(props.source ?? "", event.task.id)
+        const target = errorsLaneTarget(flowSource.value ?? "", event.task.id)
         if (!target) return
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }

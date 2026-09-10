@@ -66,6 +66,24 @@ interface KsGraphRef {
     getEchartsInstance(): unknown;
 }
 
+interface DependencyChartData {
+    count(): number;
+    getName(index: number): string | number;
+    getItemLayout(index: number): unknown;
+}
+
+interface DependencyChart {
+    setOption(option: object, notMerge?: boolean): void;
+    dispatchAction(action: {type: string; seriesIndex?: number; name?: string}): void;
+    getOption?(): {series?: {zoom?: number; center?: [number, number]}[]};
+    getZr?(): {ksDependenciesBound?: boolean; on(event: "click", handler: (event: {target?: unknown}) => void): void};
+    getModel?(): {getSeriesByIndex(index: number): {getData(): DependencyChartData} | undefined} | undefined;
+    getWidth(): number;
+    getHeight(): number;
+    on(event: "graphRoam", handler: () => void): void;
+    on(event: "dblclick", handler: (event: {dataType?: string; data?: {id?: string}}) => void): void;
+}
+
 function buildEdgeCounts(elements: Element[]): Map<string, number> {
     const counts = new Map<string, number>()
     edgesOf(elements).forEach((edge) => {
@@ -105,8 +123,8 @@ export function useDependencies(
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined)
 
-    const getChart = (): Record<string, any> | null =>
-        graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+    const getChart = (): DependencyChart | null =>
+        graphRef.value?.getEchartsInstance?.() as DependencyChart | null
 
     // chartNodes/chartEdges are frozen after the initial render; applyStylesToChart() then updates
     // styles imperatively with layout:"none" so ECharts never re-runs the force simulation.
@@ -378,7 +396,7 @@ export function useDependencies(
             if (!zr || zr.ksDependenciesBound) return
             zr.ksDependenciesBound = true
             chart?.on?.("graphRoam", () => {
-                const series = (chart.getOption?.() as Record<string, any> | undefined)?.series?.[0]
+                const series = chart.getOption?.()?.series?.[0]
                 if (series?.zoom !== undefined) viewState.value = {zoom: series.zoom, center: series.center}
             })
             if (!dagView) return
@@ -390,7 +408,7 @@ export function useDependencies(
                     clearGroup()
                 }
             })
-            chart?.on?.("dblclick", (event: Record<string, any>) => {
+            chart?.on?.("dblclick", (event) => {
                 if (event?.dataType === "node") openedNodeID.value = event.data?.id as string
             })
         })
@@ -420,7 +438,7 @@ export function useDependencies(
         }
     }
 
-    const applyView = (chart: Record<string, any>): void => {
+    const applyView = (chart: DependencyChart): void => {
         chart.setOption({series: [{
             type: "graph",
             zoom: viewState.value.zoom,
@@ -490,7 +508,7 @@ export function useDependencies(
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
                 const nodes = data.nodes ?? []
                 elements.value = {
-                    data:  transformResponse(data as any, NAMESPACE),
+                    data:  transformResponse(data as Parameters<typeof transformResponse>[0], NAMESPACE),
                     count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
             } else {
@@ -527,7 +545,13 @@ export function useDependencies(
     const sse = ref()
 
     /** Applies a live execution-state update to its node, replacing the element so Vue picks up the change. */
-    const applyExecutionUpdate = (message: Record<string, any>): void => {
+    const applyExecutionUpdate = (message: {
+        tenantId: string;
+        namespace: string;
+        flowId: string;
+        executionId: string;
+        state: {current: string};
+    }): void => {
         const nodeId = `${message.tenantId}_${message.namespace}_${message.flowId}`
         const idx = elements.value.data.findIndex(
             (el): el is {data: Node} => el.data.type === NODE && el.data.id === nodeId,

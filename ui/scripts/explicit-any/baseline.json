@@ -110,7 +110,6 @@
   "src/components/dashboard/sections/quickFilters.ts": 1,
   "src/components/dashboard/sections/table/columns/Link.vue": 3,
   "src/components/dashboard/types.ts": 1,
-  "src/components/dependencies/composables/useDependencies.ts": 7,
   "src/components/docs/ContextChildCard.vue": 2,
   "src/components/docs/ContextDocs.vue": 3,
   "src/components/docs/ContextDocsMenu.vue": 1,

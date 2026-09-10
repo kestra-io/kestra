@@ -5,7 +5,7 @@
                 <h6>{{ $t("filter.customize columns") }}</h6>
                 <small>{{ $t("filter.drag to reorder columns") }}</small>
             </div>
-            <KsButton link :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
+            <KsButton link :aria-label="$t('filter.close')" :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
         </div>
 
         <div class="list">

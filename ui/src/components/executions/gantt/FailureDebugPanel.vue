@@ -65,22 +65,26 @@
                 </KsIconButton>
             </div>
 
-            <div class="failure-debug-panel__grid">
-                <section class="failure-debug-panel__section">
+            <KsCard shadow="never" class="failure-debug-panel__timeline">
+                <template #header>
                     <h4>{{ $t("failureDebugPanel.miniTimeline.title") }}</h4>
-                    <p class="failure-debug-panel__hint">{{ $t("failureDebugPanel.miniTimeline.dragHint") }}</p>
-                    <FailureMiniTimeline
-                        v-if="focusedId"
-                        ref="miniTimelineRef"
-                        :nodes="structuralNodes"
-                        :focusedId="focusedId"
-                        @focus-task="focusFailureFromNeighbor"
-                        @select-range="onSelectRange"
-                    />
-                </section>
+                </template>
+                <p class="failure-debug-panel__hint">{{ $t("failureDebugPanel.miniTimeline.dragHint") }}</p>
+                <FailureMiniTimeline
+                    v-if="focusedId"
+                    ref="miniTimelineRef"
+                    :nodes="structuralNodes"
+                    :focusedId="focusedId"
+                    @focus-task="focusFailureFromNeighbor"
+                    @select-range="onSelectRange"
+                />
+            </KsCard>
 
-                <section class="failure-debug-panel__section">
-                    <h4>{{ $t("failureDebugPanel.structuralImpact.title") }}</h4>
+            <div class="failure-debug-panel__grid">
+                <KsCard shadow="never">
+                    <template #header>
+                        <h4>{{ $t("failureDebugPanel.structuralImpact.title") }}</h4>
+                    </template>
                     <FailureStructuralImpact
                         v-if="focusedId"
                         :nodes="structuralNodes"
@@ -88,10 +92,12 @@
                         :flow="flow"
                         @focus="focusFailureFromNeighbor"
                     />
-                </section>
+                </KsCard>
 
-                <section class="failure-debug-panel__section">
-                    <h4>{{ $t("failureDebugPanel.logs.title") }}</h4>
+                <KsCard shadow="never">
+                    <template #header>
+                        <h4>{{ $t("failureDebugPanel.logs.title") }}</h4>
+                    </template>
                     <FailureLogPanel
                         v-if="focusedTaskRun"
                         :executionId="execution.id"
@@ -99,7 +105,7 @@
                         :taskRunId="focusedTaskRun.id"
                         :timeRange="timeRange"
                     />
-                </section>
+                </KsCard>
             </div>
         </section>
 
@@ -404,6 +410,11 @@
             margin: 0;
         }
 
+        h4 {
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-primary);
+        }
+
         h3:focus-visible, h3:focus {
             outline: none;
         }
@@ -467,26 +478,23 @@
         font-size: var(--ks-font-size-xs);
     }
 
+    // The mini-timeline gets its own full-width row rather than sharing a 3-column grid with the
+    // taller structural-impact/logs cards: it never grows to fill a stretched grid row (its own
+    // content doesn't expand), which used to leave a block of dead space under a couple of short
+    // bars. Full width also gives long task ids more room on the label side of the track.
+    .failure-debug-panel__timeline {
+        :deep(.kel-card__body) {
+            display: flex;
+            flex-direction: column;
+            gap: var(--ks-spacing-2);
+        }
+    }
+
     .failure-debug-panel__grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
         gap: var(--ks-spacing-4);
-    }
-
-    .failure-debug-panel__section {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-        min-width: 0;
-        padding: var(--ks-spacing-3);
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-
-        h4 {
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-primary);
-        }
+        align-items: start;
     }
 
     .failure-debug-panel__hint {

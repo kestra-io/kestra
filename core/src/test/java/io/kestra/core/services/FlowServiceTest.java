@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -22,6 +23,7 @@ import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -360,6 +362,35 @@ class FlowServiceTest {
         assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isTrue();
         flowService.delete(saved);
         assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isFalse();
+    }
+
+    @Test
+    void shouldRejectExecutingADeletedFlow() {
+        // findByIdWithoutAcl's last-revision lookup is deleted-inclusive, and getFlowIfExecutableOrThrow
+        // has no separate non-deleted path here (unlike develop), so this is the PoC shape from
+        // GHSA-52wv-cgfg-4j6x: no revision parameter needed.
+        FlowWithSource flow = create("deletedExecutionTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
+        FlowWithSource deleted = flowService.delete(saved);
+
+        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
+            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.empty()
+        ))
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Requested Flow is not found.");
+    }
+
+    @Test
+    void shouldRejectExecutingADeletedFlowRevisionWhenRevisionIsExplicit() {
+        FlowWithSource flow = create("deletedExecutionExplicitRevisionTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
+        FlowWithSource deleted = flowService.delete(saved);
+
+        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
+            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision())
+        ))
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Requested Flow is not found.");
     }
 
     @Test

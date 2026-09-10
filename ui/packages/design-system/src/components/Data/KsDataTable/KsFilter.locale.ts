@@ -378,6 +378,7 @@ export default {
                 "kv_filters": "Key-Value Filters",
                 "secret_filters": "Secret Filters",
                 "blueprint_filters": "Blueprint Filters",
+                "mcp_tools_filters": "MCP Tools Filters",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Search MCP tools",
@@ -773,6 +774,7 @@ export default {
                 "kv_filters": "KV-Filter",
                 "secret_filters": "Secret-Filter",
                 "blueprint_filters": "Blueprint-Filter",
+                "mcp_tools_filters": "MCP Tools-Filter",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP-Tools durchsuchen",
@@ -1168,6 +1170,7 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Secretos",
                 "blueprint_filters": "Filtros de Blueprint",
+                "mcp_tools_filters": "Filtros de Herramientas MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Buscar herramientas MCP",
@@ -1563,6 +1566,7 @@ export default {
                 "kv_filters": "Filtres Key-Value",
                 "secret_filters": "Filtres de Secret",
                 "blueprint_filters": "Filtres de Blueprint",
+                "mcp_tools_filters": "Filtres des outils MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Rechercher des outils MCP",
@@ -1958,6 +1962,7 @@ export default {
                 "kv_filters": "कुंजी-मूल्य फ़िल्टर",
                 "secret_filters": "गुप्त फ़िल्टर",
                 "blueprint_filters": "ब्लूप्रिंट फ़िल्टर",
+                "mcp_tools_filters": "MCP Tools फ़िल्टर",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP टूल खोजें",
@@ -2353,6 +2358,7 @@ export default {
                 "kv_filters": "Filtri Key-Value",
                 "secret_filters": "Filtri Segreti",
                 "blueprint_filters": "Filtri Blueprint",
+                "mcp_tools_filters": "Filtri Strumenti MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Cerca strumenti MCP",
@@ -2748,6 +2754,7 @@ export default {
                 "kv_filters": "キー-バリュー フィルター",
                 "secret_filters": "シークレットフィルター",
                 "blueprint_filters": "ブループリントフィルター",
+                "mcp_tools_filters": "MCP Toolsフィルター",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCPツールを検索",
@@ -3143,6 +3150,7 @@ export default {
                 "kv_filters": "키-값 필터",
                 "secret_filters": "비밀 필터",
                 "blueprint_filters": "블루프린트 필터",
+                "mcp_tools_filters": "MCP 도구 필터",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP 도구 검색",
@@ -3538,6 +3546,7 @@ export default {
                 "kv_filters": "Filtry KV",
                 "secret_filters": "Filtry sekretów",
                 "blueprint_filters": "Filtry Blueprint",
+                "mcp_tools_filters": "Filtry narzędzi MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Wyszukaj narzędzia MCP",
@@ -3933,6 +3942,7 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Segredo",
                 "blueprint_filters": "Filtros de Blueprint",
+                "mcp_tools_filters": "Filtros de Ferramentas MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
@@ -4328,6 +4338,7 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Segredo",
                 "blueprint_filters": "Filtros de Blueprint",
+                "mcp_tools_filters": "Filtros de Ferramentas MCP",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
@@ -4723,6 +4734,7 @@ export default {
                 "kv_filters": "Фильтры Key-Value",
                 "secret_filters": "Фильтры секретов",
                 "blueprint_filters": "Фильтры Blueprint",
+                "mcp_tools_filters": "Фильтры MCP Tools",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Поиск инструментов MCP",
@@ -5118,6 +5130,7 @@ export default {
                 "kv_filters": "键值过滤器",
                 "secret_filters": "秘密过滤器",
                 "blueprint_filters": "蓝图过滤器",
+                "mcp_tools_filters": "MCP 工具过滤器",
             },
             "search_placeholders": {
                 "search_mcp_tools": "搜索 MCP 工具",

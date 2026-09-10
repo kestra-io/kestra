@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.docs.JsonSchemaCache;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -172,7 +171,7 @@ public class PluginInstallJobRegistry {
                 // an instance that briefly needed a burst of installs.
                 int poolSize = concurrency > 0
                     ? concurrency
-                    : Math.max(8, 4 * KestraContext.getContext().getAllocatedCpuCores());
+                    : Math.max(8, 4 * executorsUtils.getAllocatedCpuCores());
                 installExecutor = executorsUtils.maxCachedThreadPool(poolSize, "plugin-install");
             }
         }

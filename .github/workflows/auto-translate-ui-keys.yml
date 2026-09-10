@@ -13,6 +13,10 @@ on:
           - "true"
         default: "false"
         required: false
+      branch:
+        description: "Run for this branch only (default: every branch in the list)"
+        type: string
+        required: false
 
 # Scheduled runs fire every three hours and each one opens its own timestamped branch. Without a
 # concurrency group two overlapping runs generate the same change and open two PRs for it, leaving
@@ -22,14 +26,43 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # A schedule always fires from the default branch, so this one workflow file drives every branch
+  # in the list below: each gets its own checkout, its own generator run and its own bot PR. Adding a
+  # release branch is a one-line change here, once that branch has the translation toolset (the
+  # fingerprints and the shared scripts). A manual run can be narrowed to one branch.
+  plan:
+    name: Branches
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.list.outputs.branches }}
+    steps:
+      - id: list
+        shell: bash
+        env:
+          ONLY: ${{ inputs.branch }}
+        run: |
+          if [ -n "$ONLY" ]; then
+            echo "branches=$(printf '%s' "$ONLY" | jq -R -c '[.]')" >> "$GITHUB_OUTPUT"
+          else
+            echo 'branches=["develop","releases/v2.0.x"]' >> "$GITHUB_OUTPUT"
+          fi
+
   translations:
-    name: Translations
+    name: Translations (${{ matrix.branch }})
+    needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      # One branch at a time: the generator calls Gemini per key, and a run is short anyway.
+      max-parallel: 1
+      matrix:
+        branch: ${{ fromJSON(needs.plan.outputs.branches) }}
     steps:
         - uses: actions/checkout@v7
           name: Checkout
           with:
+            ref: ${{ matrix.branch }}
             fetch-depth: 0
 
         - name: Set up Node
@@ -42,7 +75,7 @@ jobs:
           working-directory: ui
 
         - name: Generate translations
-          run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ github.event.inputs.retranslate_modified_keys }}
+          run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ inputs.retranslate_modified_keys }}
           env:
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
@@ -55,7 +88,7 @@ jobs:
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            BRANCH_NAME="chore/update-translations-$(date +%s)"
+            BRANCH_NAME="chore/update-translations-$(echo "${{ matrix.branch }}" | tr "/" "-")-$(date +%s)"
             git checkout -b $BRANCH_NAME
             # The fingerprints record what each translation was generated from; committing the
             # languages without them would leave every regenerated key looking stale forever, so the
@@ -81,7 +114,7 @@ jobs:
             SINCE=$(git log -1 --format=%H -- $FINGERPRINTS)
             git log --format='- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))' "${SINCE:-HEAD}..HEAD" -- ui/src/translations/en.json ':(glob)ui/packages/design-system/**/*.locale.ts' > "$RUNNER_TEMP/sources"
             {
-              echo "This PR was created automatically by a GitHub Action."
+              echo "This PR was created automatically by a GitHub Action for the \`${{ matrix.branch }}\` branch."
               echo
               echo "### Translated keys"
               head -100 "$RUNNER_TEMP/keys"
@@ -101,7 +134,7 @@ jobs:
             } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
             git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
-            PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base ${{ github.ref_name }} --head $BRANCH_NAME)
+            PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base "${{ matrix.branch }}" --head $BRANCH_NAME)
             if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               gh pr edit "$PR_URL" --add-reviewer "${{ github.actor }}" || echo "Could not request a review from ${{ github.actor }} on $PR_URL"
             fi

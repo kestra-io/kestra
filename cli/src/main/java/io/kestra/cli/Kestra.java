@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
 import io.kestra.cli.commands.migrations.AbstractMigrationCommand;
@@ -21,6 +22,7 @@ import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.schema.ConfigurationSchemaCommand;
 import io.kestra.cli.schema.PluginsSchemaCommand;
 import io.kestra.cli.services.EnvironmentProvider;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
@@ -53,7 +55,36 @@ import picocli.CommandLine.Command;
         MigrationCommand.class
     }
 )
-public class Kestra implements Callable<Integer> {
+public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
+
+    /**
+     * Package the context flavours filter out, matched on the bean definition name: resolving the
+     * bean type instead would load every class on the classpath.
+     */
+    private static final String MICRONAUT_JDBC_PACKAGE = "io.micronaut.configuration.jdbc.";
+
+    private static final String SERVER_TYPE_PROPERTY = "kestra.server-type";
+
+    /**
+     * A Kestra bean that exists only for a declared {@code kestra.server-type}: a server facet, a
+     * liveness service, a repository, the migration trigger.
+     *
+     * <p>
+     * The requirement is the signal rather than the scope, because such a bean is equally eager as
+     * a plain {@code @Singleton} carrying an {@code @EventListener} for {@code StartupEvent}, which
+     * Micronaut resolves while the context starts — {@code McpServerChangeNotifier} is one. Reading
+     * the {@code @Requires} values keeps this metadata-only, loading no class the definition does
+     * not already hold.
+     */
+    private static boolean requiresServerType(BeanDefinitionReference<?> reference) {
+        return reference.getBeanDefinitionName().startsWith("io.kestra")
+            && reference.getAnnotationMetadata()
+                .getAnnotationValuesByType(Requires.class)
+                .stream()
+                .anyMatch(requires -> requires.stringValue("property")
+                    .filter(SERVER_TYPE_PROPERTY::equals)
+                    .isPresent());
+    }
 
     public static void main(String[] args) {
         System.exit(runCli(args));
@@ -186,7 +217,12 @@ public class Kestra implements Callable<Integer> {
             ? commandProperties(cls, commandLine)
             : Map.of();
 
-        return contextBuilder(cls, properties)
+        // A parse failure leaves the leaf unresolved, so picocli reports the root while going on to
+        // instantiate the command the arguments named. Choosing a flavour from the root would then
+        // build the wrong one — see contextBuilder.
+        boolean parsedCleanly = commandLine.getParseResult().errors().isEmpty();
+
+        return contextBuilder(cls, properties, parsedCleanly)
             .mainClass(mainClass)
             .environments(environments)
             .properties(properties)
@@ -227,7 +263,8 @@ public class Kestra implements Callable<Integer> {
     /**
      * Select the {@link ApplicationContext} flavour a command runs in.
      */
-    private static ApplicationContextBuilder contextBuilder(Class<?> cls, Map<String, Object> properties) {
+    private static ApplicationContextBuilder contextBuilder(Class<?> cls, Map<String, Object> properties,
+        boolean parsedCleanly) {
         // Pure migration commands run in a minimal context that never registers the other
         // Kestra @Context beans (repositories, server services, the migration startup trigger),
         // so nothing touches the database before the migration is applied explicitly.
@@ -238,6 +275,14 @@ public class Kestra implements Callable<Integer> {
         // A worker runs in a context without any datasource at all.
         if (isWorkerServerType(properties)) {
             return new WorkerApplicationContextBuilder();
+        }
+
+        // Commands that own no repository run without a datasource, so they work — and stay out of
+        // the schema — whatever the instance is configured with. Only when the arguments parsed:
+        // otherwise this class is the root standing in for a command that did not resolve, and that
+        // command may well own a repository.
+        if (parsedCleanly && NoDatabaseCommandInterface.class.isAssignableFrom(cls)) {
+            return new NoDatabaseApplicationContextBuilder();
         }
 
         return ApplicationContext.builder();
@@ -325,12 +370,6 @@ public class Kestra implements Callable<Integer> {
      */
     private static final class WorkerApplicationContext extends DefaultApplicationContext {
 
-        /**
-         * Package holding {@code DatasourceConfiguration} and the {@code @Context} factory that
-         * turns it into a pool. Matching on the definition name keeps this free of class loading.
-         */
-        private static final String MICRONAUT_JDBC_PACKAGE = "io.micronaut.configuration.jdbc.";
-
         WorkerApplicationContext(ApplicationContextConfiguration configuration) {
             super(configuration);
         }
@@ -339,6 +378,50 @@ public class Kestra implements Callable<Integer> {
         protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
             return super.resolveBeanDefinitionReferences().stream()
                 .filter(reference -> !reference.getBeanDefinitionName().startsWith(MICRONAUT_JDBC_PACKAGE))
+                .toList();
+        }
+    }
+
+    /**
+     * Builder that produces a {@link NoDatabaseApplicationContext}, see
+     * {@link MigrationApplicationContextBuilder} for the wiring it inherits.
+     */
+    private static final class NoDatabaseApplicationContextBuilder extends DefaultApplicationContextBuilder {
+        @Override
+        protected ApplicationContext newApplicationContext() {
+            return new NoDatabaseApplicationContext(this);
+        }
+    }
+
+    /**
+     * {@link ApplicationContext} for a {@link NoDatabaseCommandInterface} command: it drops
+     * Micronaut's JDBC datasource beans and every Kestra bean that requires a server type, so a
+     * command that owns no repository neither connects to the configured database nor starts a
+     * service that would.
+     *
+     * <p>
+     * Both are needed. The datasource beans are dropped for the reason given on
+     * {@link WorkerApplicationContext}. The server beans are dropped because a configuration shared
+     * across server types commonly declares {@code kestra.server-type}, and everything gated on it
+     * then registers for a command that is not a server — the liveness coordinator, the MCP change
+     * notifier, the migration trigger — and fails on the datasource that is no longer there.
+     *
+     * <p>
+     * Narrower than {@link MigrationApplicationContext}, which drops every conditional Kestra
+     * {@code @Context} bean: these commands parse flows and read plugins, so they need the rest of
+     * the DI infrastructure to stay.
+     */
+    private static final class NoDatabaseApplicationContext extends DefaultApplicationContext {
+
+        NoDatabaseApplicationContext(ApplicationContextConfiguration configuration) {
+            super(configuration);
+        }
+
+        @Override
+        protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
+            return super.resolveBeanDefinitionReferences().stream()
+                .filter(reference -> !reference.getBeanDefinitionName().startsWith(MICRONAUT_JDBC_PACKAGE))
+                .filter(reference -> !requiresServerType(reference))
                 .toList();
         }
     }
@@ -357,6 +440,8 @@ public class Kestra implements Callable<Integer> {
      * {@code DataSource} are lazy {@code @Singleton}s, pulled on demand by the command.
      */
     private static final class MigrationApplicationContext extends DefaultApplicationContext {
+
+        private static final String KESTRA_CONTEXT_INITIALIZER = KestraContext.Initializer.class.getName();
 
         MigrationApplicationContext(ApplicationContextConfiguration configuration) {
             super(configuration);
@@ -383,6 +468,10 @@ public class Kestra implements Callable<Integer> {
         private static boolean isConditionalKestraStartupBean(BeanDefinitionReference<?> reference) {
             return reference.isContextScope()
                 && reference.getBeanDefinitionName().startsWith("io.kestra")
+                // Exempt: DI infrastructure other beans hard-depend on, rather than a runtime
+                // service. Dropping it left nothing able to take a KestraContext as a constructor
+                // parameter, which broke the whole CLI on EE — kestra-io/kestra-ee#10703.
+                && !KESTRA_CONTEXT_INITIALIZER.equals(reference.getName())
                 && reference.getAnnotationMetadata().hasStereotype(Requires.class);
         }
     }

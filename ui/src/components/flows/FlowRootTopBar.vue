@@ -7,7 +7,7 @@
             <Lock v-else-if="!isAllowedToEdit" class="me-2 gray-700" />
             <span :class="{'body-color': isDeleted}">
                 {{ routeInfo.title }}
-                <Badge v-if="routeInfo.beta" label="Beta" />
+                <Badge v-if="routeInfo.beta" :label="$t('plugins.beta')" />
                 <Badge v-if="isDraft" :label="$t('draft')" />
             </span>
         </template>

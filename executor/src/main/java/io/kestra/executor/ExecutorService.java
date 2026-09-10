@@ -905,7 +905,7 @@ public class ExecutorService {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
-        if (config == OnChildFailureInterface.OnChildFailure.CONTINUE || config == OnChildFailureInterface.OnChildFailure.UNKNOWN) {
+        if (config == OnChildFailureInterface.OnChildFailure.CONTINUE) {
             return;
         }
 

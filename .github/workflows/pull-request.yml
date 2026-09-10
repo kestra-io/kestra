@@ -205,11 +205,15 @@ jobs:
   # English value being edited without the other twelve languages following, which is how
   # kestra-io/kestra#10656 accumulated a year of drift.
   #
+  # Runs on any UI change, not only on translation files: a `t("new.key")` added to a component
+  # without the key is exactly what the used-key rule exists to catch, and that PR touches no
+  # locale file.
+  #
   # Runs for forks too, where nothing was generated above, which is exactly when it matters most.
   translations:
     name: 'Translations - Key parity, placeholders and drift'
     needs: [file-changes, translations-generate]
-    if: "always() && needs.file-changes.outputs.translations == 'true'"
+    if: "always() && (needs.file-changes.outputs.translations == 'true' || needs.file-changes.outputs.ui == 'true')"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

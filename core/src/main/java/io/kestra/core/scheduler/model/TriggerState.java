@@ -231,7 +231,9 @@ public final class TriggerState implements TriggerId {
             backfill = backfill
                 .toBuilder()
                 .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now(clock))
-                .currentDate(backfill.getCurrentDate() != null ? backfill.getCurrentDate() : backfill.getStart())
+                // Exclusive nextExecution(start) skips a cron tick that falls on start.
+                // Seed just before start so the first evaluation is at-or-after start.
+                .currentDate(backfill.getCurrentDate() != null ? backfill.getCurrentDate() : backfill.getStart().minusNanos(1))
                 // captured once, on backfill creation: pausing re-enters this method while
                 // nextEvaluationDate points inside the backfill window.
                 .previousNextExecutionDate(backfill.getPreviousNextExecutionDate() != null ? backfill.getPreviousNextExecutionDate() : toZonedDateTime(nextEvaluationDate))

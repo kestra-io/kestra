@@ -62,6 +62,28 @@ export interface KestraHttpError extends Error {
 }
 
 /**
+ * Whether this failure raises the global error toast, so a caller that reports failures itself can
+ * skip the ones already on screen. A 400 or a 401 is left to the caller, as is a failure with no
+ * response body, and so is anything the request opted out of.
+ */
+export function isReportedCentrally(error: KestraHttpError): boolean {
+    if (error.config?.showMessageOnError === false) return false
+    if (error.status === 404) return error.config?.ignoreNotFound !== true
+    return error.status !== 401 && error.status !== 400 && Boolean(error.response?.data)
+}
+
+/**
+ * Per-request options the interceptors above read. Declared here rather than derived from the
+ * SDK's own option type, which is bound to one edition's generated client.
+ */
+export interface KestraRequestOptions {
+    /** `false` silences the error toast, leaving the caller to report the failure. */
+    showMessageOnError?: boolean
+    /** Marks a 404 as an expected outcome the caller handles itself. */
+    ignoreNotFound?: boolean
+}
+
+/**
  * Rebuilds an axios-like `data` object from an Error the SDK flattened a non-problem body onto. Only
  * reached for responses from outside the API surface.
  */
@@ -77,10 +99,10 @@ function legacyData(error: KestraHttpError): Record<string, unknown> {
 
 export interface KestraHttpOptions {
     router?: Router
-    coreStore?: {message: unknown; error: unknown}
+    coreStore?: {message: unknown}
     beforeLogout?: () => void
     isLoggedIn?: () => boolean
-    onError?: (type: "message" | "error", error: unknown) => void
+    onError?: (error: unknown) => void
     onUnauthorized?: (navigateToLogin: () => void, error: KestraHttpError) => Promise<boolean> | boolean | void
 }
 
@@ -93,21 +115,17 @@ export function setupKestraHttp(
         coreStore,
         beforeLogout,
         isLoggedIn = () => false,
-        onError = (type: "message" | "error", error: unknown) => {
+        onError = (error: unknown) => {
             if (!coreStore) return
             const kestraError = error as KestraHttpError
-            if (type === "message") {
-                coreStore.message = {
-                    variant: "error",
-                    problem: kestraError.problem,
-                    status: kestraError.response?.status,
-                    request: {
-                        method: kestraError.response?.config.method ?? "GET",
-                        url: kestraError.response?.config.url ?? "unknown url",
-                    },
-                }
-            } else {
-                coreStore.error = kestraError.response?.status
+            coreStore.message = {
+                variant: "error",
+                problem: kestraError.problem,
+                status: kestraError.response?.status,
+                request: {
+                    method: kestraError.response?.config.method ?? "GET",
+                    url: kestraError.response?.config.url ?? "unknown url",
+                },
             }
         },
         onUnauthorized = (navigate: () => void) => {
@@ -127,17 +145,15 @@ export function setupKestraHttp(
     }
 
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
-        const status = error.status
-        if (status === 404) {
-            /** Callers expecting a 404 can pass `showMessageOnError: false`
-             * to handle it locally instead of the global not-found page.
-            */
-            if (error.config?.ignoreNotFound !== true && error.config?.showMessageOnError !== false) {
-                onError("error", error)
-            }
-        } else if (status !== 401 && status !== 400 && error.response?.data && error.config?.showMessageOnError !== false) {
-            onError("message", error)
+        if (!isReportedCentrally(error)) return error
+
+        if (error.status === 404) {
+            // A 404 is reported where it happened rather than by swapping the page for the
+            // not-found screen: that hid which request failed and left no way back.
+            console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
         }
+        onError(error)
+
         return error
     }
 

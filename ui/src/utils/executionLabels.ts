@@ -3,9 +3,20 @@ const SYSTEM_FROM_KEY = `${SYSTEM_PREFIX}from`
 const ALLOWED_USER_SYSTEM_LABEL_KEYS = new Set([`${SYSTEM_PREFIX}correlationId`])
 const SYSTEM_FROM_UI_LABEL = `${SYSTEM_FROM_KEY}:ui`
 
+/** Mirrors the key constraint on io.kestra.core.models.Label. */
+const LABEL_KEY_PATTERN = /^\p{Ll}[\p{L}0-9._-]*$/u
+
 export interface ExecutionLabelInput {
     key: string | null
     value: string | null
+}
+
+export function isValidLabelKey(key: string): boolean {
+    return LABEL_KEY_PATTERN.test(key)
+}
+
+export function hasInvalidLabelKeys(labels: ExecutionLabelInput[]): boolean {
+    return labels.some(label => label.key && !isValidLabelKey(label.key))
 }
 
 /**

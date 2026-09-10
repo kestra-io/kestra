@@ -113,7 +113,7 @@
         >
             <template #empty>
                 <div class="m-4 empty">
-                    <img alt="Empty icon" :src="FileExplorerEmpty">
+                    <img alt="" :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
                 </div>
@@ -1023,11 +1023,11 @@
                 })
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error)
-                toast.error(`Failed to delete file: ${node.fileName}`)
+                toast.error(t("namespace files.delete.file_error", {name: node.fileName}))
             }
         }))
         confirmation.value = {visible: false, nodes: []}
-        toast.success("Selected files deleted successfully.")
+        toast.success(t("namespace files.delete.bulk_success"))
     }
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {

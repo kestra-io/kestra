@@ -26,10 +26,11 @@ export const sse = (events: [string, unknown][]) =>
 /**
  * Reports whether an AI provider is configured, patching only that flag on the real `/configs`.
  *
- * The copilot renders its "unavailable" state up front when the instance has no provider
- * (kestra-io/kestra#18322), and the e2e backend has none - so a spec that stubs the turn itself
- * has to say `true` here to get the chat surface at all. Stubbing it both ways also keeps the
- * specs independent of whatever the instance under test happens to be configured with.
+ * With no provider, the copilot turns the first send attempt straight into its "unavailable" state
+ * instead of running the turn (kestra-io/kestra#18322, kestra-io/kestra-ee#10739) - and the e2e
+ * backend has none, so a spec that stubs the turn itself has to say `true` here for the stub to be
+ * reached at all. Stubbing it both ways also keeps the specs independent of whatever the instance
+ * under test happens to be configured with.
  */
 export async function stubAiProviderConfigured(page: Page, configured: boolean) {
     // The real configs are read once, up front, rather than with `route.fetch()` inside the handler:

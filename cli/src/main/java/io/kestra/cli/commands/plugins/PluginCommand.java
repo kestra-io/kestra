@@ -2,6 +2,7 @@ package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
@@ -18,7 +19,7 @@ import picocli.CommandLine.Command;
         PluginSearchCommand.class
     }
 )
-public class PluginCommand extends AbstractCommand {
+public class PluginCommand extends AbstractCommand implements NoDatabaseCommandInterface {
 
     @SneakyThrows
     @Override

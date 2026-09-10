@@ -264,21 +264,21 @@
         <KsForm :model="backfill" labelPosition="top">
             <div class="pickers">
                 <div class="small-picker">
-                    <KsFormItem label="Start">
+                    <KsFormItem :label="$t('start date')">
                         <KsDatePicker
                             v-model="backfill.start"
                             type="datetime"
-                            placeholder="Start"
+                            :placeholder="$t('start date')"
                             :disabledDate="(time: Date): boolean => new Date() < time || !!(backfill.end && time > backfill.end)"
                         />
                     </KsFormItem>
                 </div>
                 <div class="small-picker">
-                    <KsFormItem label="End">
+                    <KsFormItem :label="$t('end date')">
                         <KsDatePicker
                             v-model="backfill.end"
                             type="datetime"
-                            placeholder="End"
+                            :placeholder="$t('end date')"
                             :disabledDate="(time: Date): boolean => new Date() < time || !!(backfill.start && backfill.start > time)"
                         />
                     </KsFormItem>

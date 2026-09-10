@@ -186,7 +186,9 @@ const NEVER_TRANSLATED_WORDS = new Set([
     "outputs", "port", "ports", "worker", "workers", "backfill", "backfills", "healthcheck",
     "min", "max",
     // Terms of the same kind the model declines to translate in every locale, so an English value
-    // for them is a deliberate choice rather than a skipped translation.
+    // for them is a deliberate choice rather than a skipped translation. Execution and asset are
+    // Kestra entity nouns the German and Polish glossaries in the prompt already keep in English.
+    "execution", "executions", "asset", "assets", "vsphere",
     "secret", "secrets", "token", "tokens", "payload", "payloads", "context", "email", "webhook",
     "webhooks", "true", "false",
     // Brands, product and format names.
@@ -283,7 +285,7 @@ export function untranslatedKeys(lang, messages, englishMessages) {
         .filter(([key, message]) => {
             const english = englishMessages[key]
             return english !== undefined
-                && message === english
+                && message.trim() === english.trim()
                 && !ALLOWED_ENGLISH_KEYS.has(key)
                 && !isNotProse(english)
                 && translatableWords(english).length > 0

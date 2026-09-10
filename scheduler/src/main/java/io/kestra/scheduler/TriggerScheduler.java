@@ -22,6 +22,7 @@ import org.slf4j.event.Level;
 import com.google.common.base.Throwables;
 
 import io.kestra.core.exceptions.FlowBlockedException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
@@ -285,6 +286,8 @@ public class TriggerScheduler {
                 e.getMessage()
             );
             logBlockedByGovernance(flow, e);
+            return null;
+        } catch (FlowProcessingException e) {
             return null;
         }
     }

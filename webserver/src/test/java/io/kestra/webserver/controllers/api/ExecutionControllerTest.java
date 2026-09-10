@@ -125,7 +125,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -139,7 +139,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -153,7 +153,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -163,7 +163,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -177,7 +177,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
     }
 
     @Test
@@ -213,8 +213,8 @@ class ExecutionControllerTest {
             .as("a webhook on a draft-only flow is treated as non-existent (404) and must not fire an execution")
             .isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getMessage())
-            .as("the 404 message explains the flow was not found")
-            .contains("Flow not found");
+            .as("the 404 message must not distinguish a draft-only flow from a wrong webhook key (GHSA-6wcq-4vx6-rx53)")
+            .contains("Webhook not found");
     }
 
     @Test

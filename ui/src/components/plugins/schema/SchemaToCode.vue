@@ -6,7 +6,7 @@
         <KsTooltip
             v-if="isHoveringCode"
             :visible="copied"
-            content="Copied!"
+            :content="$t('copied')"
             placement="left"
             trigger="manual"
         >

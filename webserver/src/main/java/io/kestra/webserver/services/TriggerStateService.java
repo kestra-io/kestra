@@ -109,7 +109,7 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse unlockAllByIds(List<TriggerId> triggers) {
         List<TriggerId> lockedIds = triggers.stream()
-            .filter(id -> triggerRepository.findById(id).map(TriggerStateService::isUnlockable).orElse(false))
+            .filter(id -> triggerRepository.findByIdWithoutAcl(id).map(TriggerStateService::isUnlockable).orElse(false))
             .filter(this::isFlowBackedTrigger)
             .toList();
         return submitBatch(
@@ -373,12 +373,12 @@ public class TriggerStateService {
     }
 
     private TriggerState getTriggerState(TriggerId triggerId) throws NotFoundException {
-        return triggerRepository.findById(triggerId)
+        return triggerRepository.findByIdWithoutAcl(triggerId)
             .orElseThrow(() -> new NotFoundException("Trigger %s not found".formatted(triggerId)));
     }
 
     private TriggerState refresh(TriggerId triggerId, String action) {
-        return triggerRepository.findById(triggerId)
+        return triggerRepository.findByIdWithoutAcl(triggerId)
             .orElseThrow(() -> new NoSuchElementException("Trigger disappeared after " + action + ": " + triggerId));
     }
 
@@ -406,7 +406,7 @@ public class TriggerStateService {
 
     private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, java.util.function.BiConsumer<TriggerId, String> emit) {
         List<TriggerId> existing = triggers.stream()
-            .filter(id -> triggerRepository.findById(id).isPresent())
+            .filter(id -> triggerRepository.findByIdWithoutAcl(id).isPresent())
             .toList();
         return submitBatch(existing, emit);
     }

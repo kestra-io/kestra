@@ -246,6 +246,8 @@
       },
       "structuralImpact": {
         "title": "構造的な影響",
+        "viewDefinition": "task の定義を表示",
+        "hideDefinition": "task の定義を非表示",
         "relation": {
           "focused": "失敗した task",
           "parent": "親 task",

@@ -246,6 +246,8 @@
       },
       "structuralImpact": {
         "title": "구조적 영향",
+        "viewDefinition": "task 정의 보기",
+        "hideDefinition": "task 정의 숨기기",
         "relation": {
           "focused": "실패한 task",
           "parent": "상위 task",

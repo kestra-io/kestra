@@ -246,6 +246,8 @@
       },
       "structuralImpact": {
         "title": "Strukturelle Auswirkung",
+        "viewDefinition": "Task-Definition anzeigen",
+        "hideDefinition": "Task-Definition ausblenden",
         "relation": {
           "focused": "Fehlgeschlagener task",
           "parent": "Übergeordneter task",

@@ -246,6 +246,8 @@
       },
       "structuralImpact": {
         "title": "结构性影响",
+        "viewDefinition": "查看 task 定义",
+        "hideDefinition": "隐藏 task 定义",
         "relation": {
           "focused": "失败的 task",
           "parent": "父 task",

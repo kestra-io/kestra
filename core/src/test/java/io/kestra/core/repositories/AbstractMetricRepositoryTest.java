@@ -2,7 +2,9 @@ package io.kestra.core.repositories;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -190,6 +192,199 @@ public abstract class AbstractMetricRepositoryTest {
 
         var result = metricRepository.purge(List.of(Execution.builder().id("execution1").build(), Execution.builder().id("execution2").build()));
         assertThat(result).isEqualTo(4);
+    }
+
+    @Test
+    void shouldPurgeMetricsBeforeEndDate() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+        Instant recentTimestamp = Instant.now();
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec1")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric1")
+            .value(1.0)
+            .timestamp(oldTimestamp)
+            .build());
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec2")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric2")
+            .value(2.0)
+            .timestamp(recentTimestamp)
+            .build());
+
+        int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow1", null, ZonedDateTime.now().minusDays(5));
+        assertThat(deleted).isEqualTo(1);
+
+        List<MetricEntry> remaining = metricRepository.findByExecutionId(tenant, "exec2", Pageable.from(1, 10));
+        assertThat(remaining).hasSize(1);
+
+        List<MetricEntry> purged = metricRepository.findByExecutionId(tenant, "exec1", Pageable.from(1, 10));
+        assertThat(purged).isEmpty();
+    }
+
+    @Test
+    void shouldPurgeMetricsWithNamespacePrefix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant timestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("company.team")
+            .flowId("flow1")
+            .executionId("exec1")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric1")
+            .value(1.0)
+            .timestamp(timestamp)
+            .build());
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("company.team.sub")
+            .flowId("flow2")
+            .executionId("exec2")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric2")
+            .value(2.0)
+            .timestamp(timestamp)
+            .build());
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("other.team")
+            .flowId("flow3")
+            .executionId("exec3")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric3")
+            .value(3.0)
+            .timestamp(timestamp)
+            .build());
+
+        int deleted = metricRepository.purge(tenant, "company.team", null, null, ZonedDateTime.now());
+        assertThat(deleted).isEqualTo(2);
+
+        List<MetricEntry> other = metricRepository.findByExecutionId(tenant, "exec3", Pageable.from(1, 10));
+        assertThat(other).hasSize(1);
+    }
+
+    @Test
+    void shouldPurgeMetricsWithStartDateAndEndDate() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant t1 = Instant.now().minus(15, ChronoUnit.DAYS);
+        Instant t2 = Instant.now().minus(10, ChronoUnit.DAYS);
+        Instant t3 = Instant.now().minus(2, ChronoUnit.DAYS);
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec1")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m1")
+            .value(1.0)
+            .timestamp(t1)
+            .build());
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec2")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m2")
+            .value(2.0)
+            .timestamp(t2)
+            .build());
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec3")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m3")
+            .value(3.0)
+            .timestamp(t3)
+            .build());
+
+        int deleted = metricRepository.purge(tenant, "ns", "flow", ZonedDateTime.now().minusDays(12), ZonedDateTime.now().minusDays(5));
+        assertThat(deleted).isEqualTo(1);
+
+        assertThat(metricRepository.findByExecutionId(tenant, "exec1", Pageable.from(1, 10))).hasSize(1);
+        assertThat(metricRepository.findByExecutionId(tenant, "exec2", Pageable.from(1, 10))).isEmpty();
+        assertThat(metricRepository.findByExecutionId(tenant, "exec3", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
+    void shouldRespectTenantIsolationWhenPurgingMetrics() {
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant1)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec1")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m1")
+            .value(1.0)
+            .timestamp(oldTimestamp)
+            .build());
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant2)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec2")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m2")
+            .value(2.0)
+            .timestamp(oldTimestamp)
+            .build());
+
+        int deleted = metricRepository.purge(tenant1, null, null, null, ZonedDateTime.now());
+        assertThat(deleted).isEqualTo(1);
+
+        assertThat(metricRepository.findByExecutionId(tenant1, "exec1", Pageable.from(1, 10))).isEmpty();
+        assertThat(metricRepository.findByExecutionId(tenant2, "exec2", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
+    void shouldReturnZeroWhenNoMatchingMetricsToPurge() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        int deleted = metricRepository.purge(tenant, "non.existing.ns", null, null, ZonedDateTime.now());
+        assertThat(deleted).isEqualTo(0);
     }
 
     @Test

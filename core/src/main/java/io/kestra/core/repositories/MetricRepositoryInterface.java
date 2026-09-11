@@ -34,6 +34,14 @@ public interface MetricRepositoryInterface extends IndexingRepository<MetricEntr
 
     Integer purge(List<Execution> executions);
 
+    int purge(
+        @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        ZonedDateTime endDate
+    );
+
     Flux<MetricEntry> findAllAsync(@Nullable String tenantId);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {

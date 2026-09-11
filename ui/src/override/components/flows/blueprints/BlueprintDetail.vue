@@ -52,7 +52,7 @@
 
     import {useFlowStore} from "../../../../stores/flow"
     import {usePluginsStore} from "../../../../stores/plugins"
-    import {useBlueprintsStore} from "../../../../stores/blueprints"
+    import {useBlueprintsStore, type BlueprintType, type BlueprintKind, type BlueprintTag} from "../../../../stores/blueprints"
     import {useApiStore} from "../../../../stores/api"
 
     import {canCreate} from "override/composables/blueprintsPermissions"
@@ -111,7 +111,7 @@
     ])
 
     const editorRoute = computed(() => {
-        let additionalQuery: Record<string, any> = {}
+        let additionalQuery: Record<string, unknown> = {}
         if (props.kind === "flow") {
             additionalQuery.blueprintSource = props.combinedView ? props.blueprintType : route.params?.tab
         } else if (props.kind === "dashboard") {
@@ -155,19 +155,19 @@
     }
 
     const loadTags = async () => {
-        const data = await blueprintsStore.getBlueprintTags({
-            type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
-            kind: props.kind as any,
+        const data: BlueprintTag[] | undefined = await blueprintsStore.getBlueprintTags({
+            type: (props.combinedView ? props.blueprintType : route.params?.tab) as BlueprintType,
+            kind: props.kind as BlueprintKind,
         })
-        tags.value = Object.fromEntries(data?.map((tag: any) => [tag.id, tag]) ?? [])
+        tags.value = Object.fromEntries(data?.map(tag => [tag.id, tag]) ?? [])
     }
 
     onMounted(async () => {
         pluginsStore.fetchIcons()
 
         const blueprintData = await blueprintsStore.getBlueprint({
-            type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
-            kind: props.kind as any,
+            type: (props.combinedView ? props.blueprintType : route.params?.tab) as BlueprintType,
+            kind: props.kind as BlueprintKind,
             id: props.blueprintId,
         })
         blueprint.value = blueprintData
@@ -178,8 +178,8 @@
         if (props.kind === "flow") {
             flowGraph.value = blueprintTab === "community"
                 ? await blueprintsStore.getBlueprintGraph({
-                    type: blueprintTab as any,
-                    kind: props.kind as any,
+                    type: blueprintTab as BlueprintType,
+                    kind: props.kind as BlueprintKind,
                     id: props.blueprintId,
                 })
                 : await flowStore.getGraphFromSourceResponse({

@@ -37,7 +37,6 @@
             <KsTree
                 :data="[namespace]"
                 defaultExpandAll
-                :props="({class: 'tree'} as any)"
                 class="h-auto p-2 rounded-full"
             >
                 <template #default="{data}">
@@ -136,11 +135,11 @@
             return []
         }
 
-        const map = {} as Node[]
+        const map: Record<string, Node> = {}
 
         namespaces.value.forEach((item) => {
             const parts = item.id.split(".")
-            let currentLevel = map as any
+            let currentLevel: Record<string, Node> = map
 
             parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".")
@@ -153,17 +152,17 @@
                         description: isLeaf ? item.description : undefined,
                         children: [],
                     }
-                currentLevel = currentLevel[label].children
+                currentLevel = currentLevel[label].children as unknown as Record<string, Node>
             })
         })
 
-        const build = (nodes: Node[]): Node[] => {
+        const build = (nodes: Record<string, Node>): Node[] => {
             return Object.values(nodes).map((node) => {
                 const result: Node = {
                     id: node.id,
                     label: node.label,
                     description: node.description,
-                    children: node.children ? build(node.children) : undefined,
+                    children: node.children ? build(node.children as unknown as Record<string, Node>) : undefined,
                 }
                 return result
             })

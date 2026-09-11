@@ -87,12 +87,13 @@
             </KsSkeleton>
         </div>
 
-        <ChartLegend
-            v-if="legendItems.length > 0"
-            :items="legendItems"
-            :formatValue="(v: number) => String(v)"
-            @toggle="onLegendToggle"
-        />
+        <div v-if="legendItems.length > 0" class="timeline-legend">
+            <ChartLegend
+                :items="legendItems"
+                :formatValue="(v: number) => String(v)"
+                @toggle="onLegendToggle"
+            />
+        </div>
     </div>
 </template>
 
@@ -560,5 +561,9 @@
     justify-content: center;
     gap: var(--ks-spacing-2);
     margin-top: var(--ks-spacing-2);
+}
+
+.timeline-legend {
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
 }
 </style>

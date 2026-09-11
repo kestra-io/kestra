@@ -30,8 +30,10 @@ vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat:
 // three Pinia stores — stub it out, matching VarValue.spec.ts / FlowFileEditorTab.spec.ts.
 vi.mock("../../../../../src/composables/useEditorBindings", () => ({useEditorBindings: () => ({})}))
 // CopilotChat derives the page scope from the current route — mock a mutable route so tests control it.
+// `useRouter` is needed too: a rendered ARTEFACT_DRAFT message mounts the real `CopilotArtefactDraft.vue`,
+// which calls `useApplyDraft()`.
 let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
-vi.mock("vue-router", () => ({useRoute: () => routeStub}))
+vi.mock("vue-router", () => ({useRoute: () => routeStub, useRouter: () => ({push: vi.fn()})}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
 // CopilotChat reads a seeded prompt and the AI-availability flag from the misc store. Shared
@@ -47,8 +49,9 @@ const miscStore = reactive({
 })
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 // CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
-// create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419).
-const flowStore = reactive({flowYaml: ""})
+// create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419), and writes
+// `previewSource` back so the main editor mirrors a pending confirmation/draft's diff.
+const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined})
 vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
@@ -81,6 +84,7 @@ describe("CopilotChat", () => {
         miscStore.copilotNewThread = false
         miscStore.configs = {isAiApiKeyConfigured: true}
         flowStore.flowYaml = ""
+        flowStore.previewSource = undefined
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -308,6 +312,101 @@ describe("CopilotChat", () => {
         }
         const w = mountChat()
         expect(w.findComponent({name: "ProposedActionCard"}).props("currentFlowSource")).toBeUndefined()
+    })
+
+    // The main "Flow Code" editor mirrors the same diff live via `flowStore.previewSource`
+    // (kestra-io/kestra#19330), so it reads as an in-IDE diff rather than only a chat aside.
+    describe("editor diff preview (flowStore.previewSource)", () => {
+        const flowDraftMessage = (yaml: string) => ({id: "d1", role: "ASSISTANT", type: "ARTEFACT_DRAFT", draft: {draftId: "d1", kind: "FLOW", yaml, valid: true, constraints: null}})
+
+        it("mirrors the pending mutate confirmation's proposed source when it targets the open flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.pendingConfirmation.value = {
+                confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team\ndescription: x"},
+            }
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team")
+        })
+
+        it("mirrors a pending FLOW artefact draft's yaml when it targets the open flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: drafted")]
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: drafted")
+        })
+
+        it("does not mirror a draft targeting a different flow than the one open", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: other-flow\nnamespace: company.team")]
+            mountChat()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        it("supersedes an older matching draft with a newer one for the same flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [
+                flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: first"),
+                flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: second"),
+            ]
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: second")
+        })
+
+        it("keeps mirroring an earlier matching draft across an unrelated later draft for a different flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [
+                flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: mine"),
+                flowDraftMessage("id: other-flow\nnamespace: company.team"),
+            ]
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: mine")
+        })
+
+        it("clears once the pending mutate confirmation is approved", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.pendingConfirmation.value = {
+                confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\ndescription: x"},
+            }
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            state.pendingConfirmation.value = null // confirm() nulls it on APPROVE/REJECT
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+            void w
+        })
+
+        it("clears when a new turn is submitted, even before the draft is superseded", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "revise it")
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        it("clears when starting a new chat", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
+            expect(flowStore.previewSource).toBeUndefined()
+            expect(state.reset).toHaveBeenCalled()
+        })
+
+        it("clears on unmount", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            w.unmount()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
     })
 
     it("disables the composer when a turn cannot be sent", () => {

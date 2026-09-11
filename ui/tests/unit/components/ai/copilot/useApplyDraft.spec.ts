@@ -99,13 +99,14 @@ describe("useApplyDraft", () => {
         }))
     })
 
-    it("apply CREATES the flow, then navigates to it", async () => {
+    it("apply CREATES the flow as a draft revision, then navigates to it", async () => {
         messageBox.mockResolvedValueOnce(undefined) // user confirms
         await useApplyDraft().apply(draft())
         // The create opts out of the global error toast (2nd arg) so the create→update fallback and
-        // our own alert stay the only user-facing failure paths.
+        // our own alert stay the only user-facing failure paths. `draft: true` so a Copilot proposal
+        // is saved for review rather than going live unattended.
         expect(createFlow).toHaveBeenCalledWith(
-            expect.objectContaining({body: "id: my-flow\nnamespace: company.team"}),
+            expect.objectContaining({body: "id: my-flow\nnamespace: company.team", draft: true}),
             expect.objectContaining({showMessageOnError: false}),
         )
         expect(updateFlow).not.toHaveBeenCalled()
@@ -207,10 +208,30 @@ describe("useApplyDraft", () => {
         expect(loadFlow).toHaveBeenCalledWith({namespace: "company.team", id: "my-flow"})
     })
 
-    it("fetches the persisted flow source (store: false) as the diff's before-source when the flow isn't open", async () => {
+    it("fetches the persisted flow source (store: false) as the diff's before-source when the flow isn't open, ignoring a not-yet-created flow's 404", async () => {
         messageBox.mockResolvedValueOnce(undefined)
         await useApplyDraft().apply(draft())
-        expect(loadFlow).toHaveBeenCalledWith({namespace: "company.team", id: "my-flow", store: false})
+        expect(loadFlow).toHaveBeenCalledWith(
+            {namespace: "company.team", id: "my-flow", store: false},
+            expect.objectContaining({ignoreNotFound: true, showMessageOnError: false}),
+        )
+    })
+
+    // The confirm dialog itself fetches the "before" diff source (a round trip), so `applying` must be
+    // set before that fetch — not only around the eventual create/update — or a second click while the
+    // first confirm is still loading opens a second dialog.
+    it("marks applying while the confirm dialog's diff fetch is in flight, not only during the write", async () => {
+        let resolveConfirm: (() => void) | undefined
+        messageBox.mockReturnValueOnce(new Promise((resolve) => {
+            resolveConfirm = () => resolve(undefined)
+        }))
+        const {applying, apply} = useApplyDraft()
+        const applied = apply(draft())
+        await Promise.resolve()
+        expect(applying.value).toBe(true)
+        resolveConfirm?.()
+        await applied
+        expect(applying.value).toBe(false)
     })
 
     it("still shows the confirm (before-source falls back to empty) when the persisted-flow fetch fails", async () => {

@@ -42,8 +42,8 @@
     top: 0;
     left: 0;
     padding: .5rem 1rem;
-    background-color: hotpink;
-    color: black;
+    background-color: var(--ks-text-link);
+    color: var(--ks-bg-elevated);
     z-index: 2000;
     display: flex;
     gap: .5rem;
@@ -51,7 +51,7 @@
     border: none;
     border-bottom-right-radius: .5rem;
     &:hover {
-        background-color: pink;
+        background-color: var(--ks-btn-primary-bg-hover);
     }
 }
 </style>

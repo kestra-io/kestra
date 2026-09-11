@@ -1203,12 +1203,8 @@
             }
 
             :deep(.kel-input__inner) {
-                color: #eeae7e !important;
+                color: var(--ks-text-warning) !important;
                 font-size: var(--ks-font-size-sm) !important;
-
-                html.light & {
-                    color: #dd5f00 !important;
-                }
             }
         }
 

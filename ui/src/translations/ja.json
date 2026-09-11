@@ -215,7 +215,9 @@
         "zoomIn": "ズームイン",
         "zoomOut": "ズームアウト",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "時間範囲を変更"
+        "rangePicker": "時間範囲を変更",
+        "rangeSliderStart": "表示中の時間範囲の開始",
+        "rangeSliderEnd": "表示中の時間範囲の終了"
       },
       "row": {
         "openOwnPage": "このページを開く",

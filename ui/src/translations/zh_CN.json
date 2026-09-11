@@ -215,7 +215,9 @@
         "zoomIn": "放大",
         "zoomOut": "缩小",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "更改时间范围"
+        "rangePicker": "更改时间范围",
+        "rangeSliderStart": "可见时间范围的开始",
+        "rangeSliderEnd": "可见时间范围的结束"
       },
       "row": {
         "openOwnPage": "打开此页面",

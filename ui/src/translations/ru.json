@@ -215,7 +215,9 @@
         "zoomIn": "Увеличить",
         "zoomOut": "Уменьшить",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "Изменить диапазон времени"
+        "rangePicker": "Изменить диапазон времени",
+        "rangeSliderStart": "Начало видимого диапазона времени",
+        "rangeSliderEnd": "Конец видимого диапазона времени"
       },
       "row": {
         "openOwnPage": "Открыть эту страницу",

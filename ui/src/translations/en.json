@@ -215,7 +215,9 @@
         "zoomIn": "Zoom in",
         "zoomOut": "Zoom out",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "Change time range"
+        "rangePicker": "Change time range",
+        "rangeSliderStart": "Start of visible time range",
+        "rangeSliderEnd": "End of visible time range"
       },
       "row": {
         "openOwnPage": "Open this page",

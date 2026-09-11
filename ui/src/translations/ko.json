@@ -215,7 +215,9 @@
         "zoomIn": "확대",
         "zoomOut": "축소",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "시간 범위 변경"
+        "rangePicker": "시간 범위 변경",
+        "rangeSliderStart": "표시된 시간 범위의 시작",
+        "rangeSliderEnd": "표시된 시간 범위의 끝"
       },
       "row": {
         "openOwnPage": "이 페이지 열기",

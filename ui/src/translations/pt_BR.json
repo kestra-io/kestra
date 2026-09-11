@@ -215,7 +215,9 @@
         "zoomIn": "Aumentar zoom",
         "zoomOut": "Diminuir zoom",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "Alterar intervalo de tempo"
+        "rangePicker": "Alterar intervalo de tempo",
+        "rangeSliderStart": "Início do intervalo de tempo visível",
+        "rangeSliderEnd": "Fim do intervalo de tempo visível"
       },
       "row": {
         "openOwnPage": "Abrir esta página",

@@ -215,7 +215,9 @@
         "zoomIn": "ज़ूम इन करें",
         "zoomOut": "ज़ूम आउट करें",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "समय सीमा बदलें"
+        "rangePicker": "समय सीमा बदलें",
+        "rangeSliderStart": "दृश्यमान समय सीमा की शुरुआत",
+        "rangeSliderEnd": "दृश्यमान समय सीमा का अंत"
       },
       "row": {
         "openOwnPage": "यह पेज खोलें",

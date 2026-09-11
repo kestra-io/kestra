@@ -215,7 +215,9 @@
         "zoomIn": "Przybliż",
         "zoomOut": "Oddal",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "Zmień zakres czasu"
+        "rangePicker": "Zmień zakres czasu",
+        "rangeSliderStart": "Początek widocznego zakresu czasu",
+        "rangeSliderEnd": "Koniec widocznego zakresu czasu"
       },
       "row": {
         "openOwnPage": "Otwórz tę stronę",

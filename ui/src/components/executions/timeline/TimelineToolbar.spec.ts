@@ -11,7 +11,7 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     return {
         ...actual,
         dateUtils: {dateFilter: (iso: string) => iso},
-        durationUtils: {humanDuration: (seconds: number) => `${seconds}s`},
+        durationUtils: {...actual.durationUtils, humanDuration: (seconds: number) => `${seconds}s`},
     }
 })
 
@@ -32,7 +32,11 @@ const i18n = createI18n({
     legacy: false,
     globalInjection: true,
     locale: "en",
-    messages: {en: {executionsTimeline: {toolbar: {range: "{start} → {end} ({duration})"}}}},
+    messages: {en: {executionsTimeline: {toolbar: {
+        range: "{start} → {end} ({duration})",
+        rangeSliderStart: "Start of visible time range",
+        rangeSliderEnd: "End of visible time range",
+    }}}},
 })
 
 const passthroughStub = (name: string, slots: string[] = ["default"]) => defineComponent({
@@ -50,6 +54,12 @@ const stubs = {
     KsIconButton: defineComponent({name: "KsIconButton", template: "<button type=\"button\"><slot /></button>"}),
     KsRadioGroup: passthroughStub("KsRadioGroup"),
     KsRadioButton: passthroughStub("KsRadioButton"),
+    KsRangeSlider: defineComponent({
+        name: "KsRangeSlider",
+        props: ["modelValue", "min", "max", "minRange", "formatValue", "startLabel", "endLabel"],
+        emits: ["change"],
+        template: "<div data-test=\"range-slider\" />",
+    }),
 }
 
 function mountToolbar(props: {rangeStartMs: number; rangeEndMs: number; activePreset?: string; expanded?: boolean}) {
@@ -81,5 +91,13 @@ describe("TimelineToolbar", () => {
 
         expect(wrapper.find("[data-test=absolute-picker]").exists()).toBe(true)
         expect(wrapper.find("[data-test=relative-preset]").exists()).toBe(false)
+    })
+
+    it("should emit custom-range when the range slider reports a finished drag", async () => {
+        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000, activePreset: "PT1H"})
+
+        await wrapper.findComponent({name: "KsRangeSlider"}).vm.$emit("change", [1000, 2000])
+
+        expect(wrapper.emitted("custom-range")).toEqual([[{startMs: 1000, endMs: 2000}]])
     })
 })

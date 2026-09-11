@@ -131,6 +131,13 @@ public class InternalNamespace implements Namespace {
         final Path normalizedSource = NamespaceFile.normalize(source);
         final Path normalizedTarget = NamespaceFile.normalize(target);
 
+        if (!normalizedTarget.equals(normalizedSource) && normalizedTarget.startsWith(normalizedSource)) {
+            throw new ConflictException(
+                "Cannot move '%s' to '%s' in namespace '%s': choose a destination outside the source directory."
+                    .formatted(normalizedSource, normalizedTarget, namespace)
+            );
+        }
+
         if (exists(normalizedTarget)) {
             throw new IOException(
                 String.format(

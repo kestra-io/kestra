@@ -242,6 +242,36 @@ class InternalNamespaceTest {
     }
 
     @Test
+    void shouldRejectMoveWhenTargetIsSourceDescendant() throws Exception {
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+        final Path source = Path.of("/work");
+        final Path target = Path.of("/work/nested");
+
+        namespace.putFile(Path.of("/work/file.txt"), new ByteArrayInputStream("content".getBytes()));
+
+        assertThatThrownBy(() -> namespace.move(source, target))
+            .isInstanceOf(ConflictException.class)
+            .hasMessageContaining(source.toString())
+            .hasMessageContaining(target.toString());
+
+        assertThat(namespace.exists(source)).isTrue();
+        assertThat(namespace.exists(Path.of("/work/file.txt"))).isTrue();
+        try (InputStream is = namespace.getFileContent(Path.of("/work/file.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content");
+        }
+        assertThat(namespace.exists(target)).isFalse();
+        assertThat(namespace.exists(Path.of("/work/nested/file.txt"))).isFalse();
+
+        namespace.move(source, Path.of("/work2"));
+
+        assertThat(namespace.exists(Path.of("/work2/file.txt"))).isTrue();
+        try (InputStream is = namespace.getFileContent(Path.of("/work2/file.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content");
+        }
+    }
+
+    @Test
     void shouldRollbackMoveWhenCopyFails() throws Exception {
         // Given: folder1 with 2 files, folder2 with 2 files
         final String namespaceId = TestsUtils.randomNamespace();

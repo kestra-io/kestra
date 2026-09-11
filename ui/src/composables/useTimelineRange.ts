@@ -26,6 +26,24 @@ const END_QUERY_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
 // (a request carrying both is rejected with a 422), so writing one must always drop the other.
 const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 
+// How much wider than the current selection the range-slider's track represents, so the
+// selection always renders as a graspable handle instead of a sliver on a fixed year-long track.
+const SLIDER_DOMAIN_MULTIPLIER = 8
+const SLIDER_DOMAIN_FLOOR_MS = durationUtils.duration("P1D") * 1000
+const SLIDER_DOMAIN_CEILING_MS = durationUtils.duration("P120D") * 1000
+
+/**
+ * The slider's domain (its full track span), sized relative to the current selection so it stays
+ * visually substantial at any zoom level, and recentered on the selection's midpoint.
+ */
+export function computeSliderDomain(rangeStartMs: number, rangeEndMs: number): [number, number] {
+    const span = Math.max(rangeEndMs - rangeStartMs, MIN_RANGE_MS)
+    const boundedSpan = Math.min(Math.max(span * SLIDER_DOMAIN_MULTIPLIER, SLIDER_DOMAIN_FLOOR_MS), SLIDER_DOMAIN_CEILING_MS)
+    const domainSpan = Math.max(boundedSpan, span)
+    const center = (rangeStartMs + rangeEndMs) / 2
+    return [center - domainSpan / 2, center + domainSpan / 2]
+}
+
 /**
  * Owns the Executions timeline's visible [start, end) window and keeps it in sync with the
  * `startDate`/`endDate` execution filters, so the same window drives the timeline chart, the

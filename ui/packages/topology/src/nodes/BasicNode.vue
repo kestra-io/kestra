@@ -14,10 +14,11 @@
             <div class="node-content">
                 <slot name="badge" />
                 <div class="node-title">
-                    <div class="task-title" :title="hoverTooltip">
-                        <KsTooltip :content="hoverTooltip">
+                    <div class="task-title">
+                        <KsTooltip v-if="extraTooltip" :content="extraTooltip">
                             {{ displayTitle }}
                         </KsTooltip>
+                        <template v-else>{{ displayTitle }}</template>
                     </div>
                 </div>
                 <slot name="content" />
@@ -143,6 +144,12 @@
     })
 
     const displayTitle = computed(() => props.title ?? trimmedId.value)
+
+    // On a plain task the tooltip only repeated the label already on the card, in a second box on
+    // top of the native one; a subflow is the only node whose tooltip says something else.
+    const extraTooltip = computed(() =>
+        hoverTooltip.value === displayTitle.value ? undefined : hoverTooltip.value,
+    )
 </script>
 
 <style lang="scss" scoped>

@@ -105,9 +105,14 @@ export function compare(baseline, current, renames = {}) {
     for (const arrival of [...added]) {
         const from = renames[arrival.file]
         const departure = from && removed.find(({file, now}) => file === from && now === 0)
-        if (!departure || departure.was < arrival.now) continue
-        added.splice(added.indexOf(arrival), 1)
+        if (!departure) continue
         removed.splice(removed.indexOf(departure), 1)
+        // A move that also gains an `any` stays new `any`, reported against the count it arrived with.
+        if (departure.was < arrival.now) {
+            Object.assign(arrival, {was: departure.was, from: departure.file})
+            continue
+        }
+        added.splice(added.indexOf(arrival), 1)
         moved.push({file: arrival.file, was: departure.was, now: arrival.now, from: departure.file})
     }
     return {added, removed, moved}
@@ -195,21 +200,47 @@ function annotate(file, message) {
     if (process.env.GITHUB_ACTIONS === "true") console.log(`::error file=${file}::${message}`)
 }
 
-/** Renames git has staged, as new path -> old path, both relative to the working directory. */
-function stagedRenames() {
-    let status, prefix
-    try {
-        const git = (args) => execFileSync("git", args, {encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]})
-        prefix = git(["rev-parse", "--show-prefix"]).trim()
-        status = git(["status", "--porcelain=v1", "-M"])
-    } catch {
-        return {}
-    }
+/**
+ * Renames git knows about, as new path -> old path relative to `cwd`: the ones committed on this branch since it
+ * left `origin/develop`, then the staged ones, so a rename is followed whether or not a hook ran before the commit.
+ */
+export function knownRenames(cwd = process.cwd()) {
     const renames = {}
-    for (const entry of status.split("\n")) {
-        if (!entry.startsWith("R")) continue
-        const [from, to] = entry.slice(3).split(" -> ").map((path) => path.replace(/^"|"$/g, ""))
-        if (to?.startsWith(prefix) && from.startsWith(prefix)) renames[to.slice(prefix.length)] = from.slice(prefix.length)
+    // `-z` throughout: it separates fields with NUL and leaves paths unquoted, so a space or a non-ASCII
+    // character in a filename does not arrive C-escaped inside quotes.
+    const git = (args) => execFileSync("git", args, {cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]}).split("\0")
+    let prefix
+    try {
+        prefix = git(["rev-parse", "--show-prefix"])[0].trim()
+    } catch {
+        return renames
+    }
+    const record = (from, to) => {
+        if (to?.startsWith(prefix) && from?.startsWith(prefix)) renames[to.slice(prefix.length)] = from.slice(prefix.length)
+    }
+    // Both walkers step record by record rather than scanning for an `R`: a path is a field of its own here, and
+    // `README.md` would otherwise be read as a rename status.
+    try {
+        // `R<score>`, old path, new path. What this branch renamed in the commits it added to origin/develop.
+        const fields = git(["diff", "--name-status", "-M", "-z", "origin/develop...HEAD"])
+        for (let i = 0; fields[i]; ) {
+            const pair = fields[i].startsWith("R") || fields[i].startsWith("C")
+            if (pair) record(fields[i + 1], fields[i + 2])
+            i += pair ? 3 : 2
+        }
+    } catch {
+        // Nothing to compare with (a shallow clone, a fork without origin/develop): only staged renames are known.
+    }
+    try {
+        // `XY <new path>`, then the old path in a field of its own, the reverse of the `->` order.
+        const fields = git(["status", "--porcelain=v1", "-M", "-z"])
+        for (let i = 0; fields[i]; ) {
+            const pair = fields[i].startsWith("R") || fields[i].startsWith("C")
+            if (pair) record(fields[i + 1], fields[i].slice(3))
+            i += pair ? 2 : 1
+        }
+    } catch {
+        // A concurrent git holding the index lock, most often: a rename is then simply not followed.
     }
     return renames
 }
@@ -228,7 +259,7 @@ function main() {
         console.error(`Cannot read ${baselinePath}: ${error.message}`)
         process.exit(2)
     }
-    const {added, removed, moved} = compare(baseline, current, stagedRenames())
+    const {added, removed, moved} = compare(baseline, current, knownRenames())
     const line = ({file, was, now, from}) =>
         from ? `  ${file}: moved from ${from}, ${was === now ? `still ${now}` : `${was} -> ${now}`}` : `  ${file}: ${was} -> ${now}${now === 0 ? " (removed from the baseline)" : ""}`
     const {action, reason, files, raised} = decide({added, removed, moved, write, acceptNewAny})

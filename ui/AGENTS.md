@@ -255,7 +255,7 @@ For a value whose shape really is not known yet, `unknown` with a narrowing chec
 **The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
 
 - ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
-- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change.
+- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change. A rename is followed whether it is staged or already committed on your branch, so the count travels with the file either way.
 
 Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
 

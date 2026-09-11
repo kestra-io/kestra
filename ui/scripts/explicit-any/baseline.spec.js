@@ -1,6 +1,10 @@
+import {execFileSync} from "node:child_process"
+import {mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs"
+import {tmpdir} from "node:os"
+import {join} from "node:path"
 import {parse} from "@vue/compiler-sfc"
 import {describe, expect, it} from "vitest"
-import {compare, countByFile, countTemplateAny, decide, merge} from "./baseline.mjs"
+import {compare, countByFile, countTemplateAny, decide, knownRenames, merge} from "./baseline.mjs"
 
 const anyAt = (filename) => ({code: "typescript(no-explicit-any)", filename})
 const inTemplate = (template) => countTemplateAny(template, parse)
@@ -66,11 +70,15 @@ describe("compare", () => {
         ])
     })
 
-    it("follows a rename git reports, whether the file kept its count or improved, but not one that gained an any", () => {
+    it("follows a rename git reports, whether the file kept its count or improved, and counts one that gained an any from where it left", () => {
         const renames = {"src/New.vue": "src/Old.vue"}
         expect(compare({"src/Old.vue": 2}, {"src/New.vue": 2}, renames)).toMatchObject({added: [], removed: [], moved: [{file: "src/New.vue", from: "src/Old.vue", was: 2, now: 2}]})
         expect(compare({"src/Old.vue": 2}, {"src/New.vue": 1}, renames).moved).toEqual([{file: "src/New.vue", from: "src/Old.vue", was: 2, now: 1}])
-        expect(compare({"src/Old.vue": 2}, {"src/New.vue": 3}, renames).added).toEqual([{file: "src/New.vue", was: 0, now: 3}])
+        expect(compare({"src/Old.vue": 2}, {"src/New.vue": 3}, renames)).toEqual({
+            added: [{file: "src/New.vue", was: 2, now: 3, from: "src/Old.vue"}],
+            removed: [],
+            moved: [],
+        })
     })
 
     it("does not pair a deleted file with an unrelated new one just because the counts match", () => {
@@ -78,6 +86,34 @@ describe("compare", () => {
         expect(moved).toEqual([])
         expect(added).toEqual([{file: "src/BrandNew.vue", was: 0, now: 2}])
         expect(removed).toEqual([{file: "src/Old.vue", was: 2, now: 0}])
+    })
+})
+
+describe("knownRenames", () => {
+    const git = (cwd, ...args) =>
+        execFileSync("git", ["-c", "user.email=x@x", "-c", "user.name=x", "-c", "commit.gpgsign=false", ...args], {cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]})
+
+    it("follows a rename after it is committed, not only while it is staged, and a path a shell would quote", () => {
+        const repo = mkdtempSync(join(tmpdir(), "explicit-any-"))
+        try {
+            git(repo, "init", "-q", "-b", "develop")
+            mkdirSync(join(repo, "src"))
+            writeFileSync(join(repo, "src/Old.vue"), "<template>{{ x as any }}</template>\n")
+            // A path of its own that starts with the rename status letter, to catch a walker that scans for `R`.
+            writeFileSync(join(repo, "README.md"), "one\n")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "base")
+            git(repo, "update-ref", "refs/remotes/origin/develop", "HEAD")
+            git(repo, "switch", "-q", "-c", "feature")
+            writeFileSync(join(repo, "README.md"), "two\n")
+            git(repo, "mv", "src/Old.vue", "src/Ne w.vue")
+            expect(knownRenames(repo)).toEqual({"src/Ne w.vue": "src/Old.vue"})
+            git(repo, "add", "-A")
+            git(repo, "commit", "-q", "-m", "rename")
+            expect(knownRenames(repo)).toEqual({"src/Ne w.vue": "src/Old.vue"})
+        } finally {
+            rmSync(repo, {recursive: true, force: true})
+        }
     })
 })
 

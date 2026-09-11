@@ -5,37 +5,26 @@ import FailureResolvedConfig from "./FailureResolvedConfig.vue"
 import en from "../../../translations/en.json"
 
 const mocks = vi.hoisted(() => ({
-    flow: vi.fn(),
     renderExpressions: vi.fn(),
 }))
 
-vi.mock("@kestra-io/kestra-sdk/flows", () => ({
-    flow: mocks.flow,
-}))
 vi.mock("@kestra-io/kestra-sdk/expressions", () => ({
     renderExpressions: mocks.renderExpressions,
 }))
 
 const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en: en.en}})
 
-const FLOW_SOURCE = `id: daily_sales_sync
-namespace: company.analytics
-tasks:
-  - id: load_warehouse
-    type: io.kestra.plugin.jdbc.snowflake.Query
-    url: "{{ secret('SNOWFLAKE_URL') }}"
-    sql: SELECT 1
-`
+const RAW_BLOCK = "id: load_warehouse\ntype: io.kestra.plugin.jdbc.snowflake.Query\nurl: \"{{ secret('SNOWFLAKE_URL') }}\"\nsql: SELECT 1\n"
 
-function mountConfig() {
+function mountConfig(props: Partial<{rawBlock: string | undefined; flowLoading: boolean; flowError: boolean}> = {}) {
     return mount(FailureResolvedConfig, {
         props: {
-            namespace: "company.analytics",
-            flowId: "daily_sales_sync",
-            flowRevision: 3,
+            rawBlock: RAW_BLOCK,
+            flowLoading: false,
+            flowError: false,
             executionId: "exec-1",
             taskRunId: "tr-1",
-            taskId: "load_warehouse",
+            ...props,
         },
         global: {
             plugins: [i18n],
@@ -52,49 +41,45 @@ describe("FailureResolvedConfig", () => {
         vi.clearAllMocks()
     })
 
-    it("should fetch the flow at the execution's own revision, not the latest", async () => {
-        mocks.flow.mockResolvedValue({source: FLOW_SOURCE})
-        mocks.renderExpressions.mockResolvedValue({rendered: {}})
-
-        mountConfig()
-        await flushPromises()
-
-        expect(mocks.flow).toHaveBeenCalledWith(expect.objectContaining({
-            namespace: "company.analytics",
-            id: "daily_sales_sync",
-            revision: 3,
-            source: true,
-        }))
-    })
-
     it("should render the resolved task block once loaded", async () => {
-        mocks.flow.mockResolvedValue({source: FLOW_SOURCE})
-        mocks.renderExpressions.mockImplementation(({expressions}: {expressions: string[]}) => Promise.resolve({
-            rendered: {[expressions[0]]: "id: load_warehouse\ntype: io.kestra.plugin.jdbc.snowflake.Query\nurl: \"[secret: SNOWFLAKE_URL]\"\nsql: SELECT 1\n"},
-        }))
+        mocks.renderExpressions.mockResolvedValue({
+            rendered: {[RAW_BLOCK]: "id: load_warehouse\ntype: io.kestra.plugin.jdbc.snowflake.Query\nurl: \"[secret: SNOWFLAKE_URL]\"\nsql: SELECT 1\n"},
+        })
 
         const wrapper = mountConfig()
         await flushPromises()
 
         expect(mocks.renderExpressions).toHaveBeenCalledWith(expect.objectContaining({
+            expressions: [RAW_BLOCK],
             executionId: "exec-1",
             taskRunId: "tr-1",
         }))
         expect(wrapper.text()).toContain("[secret: SNOWFLAKE_URL]")
     })
 
-    it("should show an empty state when the task no longer exists in that flow revision", async () => {
-        mocks.flow.mockResolvedValue({source: "id: daily_sales_sync\nnamespace: company.analytics\ntasks: []\n"})
-
-        const wrapper = mountConfig()
+    it("should show an empty state when there is no task block to resolve", async () => {
+        const wrapper = mountConfig({rawBlock: undefined})
         await flushPromises()
 
         expect(mocks.renderExpressions).not.toHaveBeenCalled()
         expect(wrapper.text()).toContain("could not be found")
     })
 
+    it("should show a loading state while the shared flow fetch is still in flight", () => {
+        const wrapper = mountConfig({flowLoading: true, rawBlock: undefined})
+
+        expect(mocks.renderExpressions).not.toHaveBeenCalled()
+        expect(wrapper.find(".resolved-config__status").exists()).toBe(true)
+    })
+
+    it("should show an error state when the shared flow fetch failed", async () => {
+        const wrapper = mountConfig({flowError: true})
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("Could not resolve")
+    })
+
     it("should show an error state when the render call fails", async () => {
-        mocks.flow.mockResolvedValue({source: FLOW_SOURCE})
         mocks.renderExpressions.mockRejectedValue(new Error("network error"))
 
         const wrapper = mountConfig()

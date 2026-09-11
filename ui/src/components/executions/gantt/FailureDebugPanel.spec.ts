@@ -6,6 +6,9 @@ import type {Execution} from "../../../stores/executions"
 const store = vi.hoisted(() => ({
     executions: {} as Record<string, unknown>,
 }))
+const mocks = vi.hoisted(() => ({
+    flow: vi.fn(),
+}))
 
 vi.mock("../../../stores/executions", () => ({
     useExecutionsStore: () => store.executions,
@@ -19,6 +22,9 @@ vi.mock("override/stores/misc", () => ({
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "company.analytics", flowId: "daily_sales_sync", tenant: "main"}, query: {}}),
     useRouter: () => ({push: vi.fn()}),
+}))
+vi.mock("@kestra-io/kestra-sdk/flows", () => ({
+    flow: mocks.flow,
 }))
 
 import FailureDebugPanel from "./FailureDebugPanel.vue"
@@ -57,7 +63,20 @@ function mountPanel(execution: Record<string, unknown>) {
             plugins: [i18n],
             stubs: {
                 Restart: true,
-                FailureMiniTimeline: true,
+                // A plain `true` auto-stub doesn't replicate defineExpose, so
+                // `miniTimelineRef.value?.clearSelection()` (called on every switcher focus
+                // change) would throw — a manual stub with a real method avoids that while still
+                // matching findComponent(FailureMiniTimeline) and exposing its `nodes` prop.
+                FailureMiniTimeline: {
+                    name: "FailureMiniTimeline",
+                    props: ["nodes", "focusedId"],
+                    emits: ["focus-task", "select-range"],
+                    template: "<div />",
+                    methods: {clearSelection() {}},
+                },
+                FailureResolvedConfig: true,
+                FailureExecutionInputs: true,
+                FailureUpstreamOutputs: true,
                 FailureStructuralImpact: true,
                 FailureLogPanel: true,
                 KsExecutionStatus: true,
@@ -78,6 +97,7 @@ describe("FailureDebugPanel", () => {
 
     beforeEach(() => {
         store.executions = {loadLogs: vi.fn().mockResolvedValue([])}
+        mocks.flow.mockReset().mockResolvedValue({source: "id: x\nnamespace: y\ntasks: []\n"})
     })
 
     it("should not render when the execution has no failed task run", () => {
@@ -114,6 +134,27 @@ describe("FailureDebugPanel", () => {
         expect(wrapper.get(".failure-debug-panel__subtitle").text()).toContain("task-1")
         // The switcher only renders when more than one failure is present.
         expect(wrapper.find("[role=\"tablist\"]").exists()).toBe(true)
+    })
+
+    it("should fetch the flow once per execution, not again on every switcher focus change", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            flowRevision: 3,
+            taskRunList: [
+                taskRun("tr-1", "task-1", "FAILED", "2024-01-01T00:00:00Z"),
+                taskRun("tr-2", "task-2", "FAILED", "2024-01-01T00:00:10Z"),
+            ],
+        })
+        await flushPromises()
+
+        expect(mocks.flow).toHaveBeenCalledTimes(1)
+        expect(mocks.flow).toHaveBeenCalledWith(expect.objectContaining({revision: 3}))
+
+        await wrapper.get("[role=\"tab\"]:last-child").trigger("click")
+        await flushPromises()
+
+        expect(mocks.flow).toHaveBeenCalledTimes(1)
     })
 
     it("should order the mini-timeline chronologically, matching the Gantt view, instead of focused-first by proximity", () => {

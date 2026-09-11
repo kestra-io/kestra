@@ -62,6 +62,7 @@
                                         name: 'dashboards/update',
                                         params: {dashboard: props.dashboard?.id},
                                         query: {highlight: chart.id}}"
+                                    :aria-label="$t('dashboards.edition.chart')"
                                     :icon="Pencil"
                                     link
                                     class="ms-2"

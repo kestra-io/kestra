@@ -1982,6 +1982,9 @@
         "label": "Edytuj Dashboard",
         "chart": "Edytuj ten wykres"
       },
+      "creation": {
+        "label": "Utwórz Dashboard"
+      },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
@@ -2212,7 +2215,6 @@
     "submit": "Wyślij",
     "accept": "Zaakceptuj",
     "reject": "Odrzuć",
-    "draft_available": "Szkic zmiany jest dostępny w edytorze",
     "last modified": "Ostatnia modyfikacja",
     "run task in playground": "Uruchom Task w Playground",
     "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",

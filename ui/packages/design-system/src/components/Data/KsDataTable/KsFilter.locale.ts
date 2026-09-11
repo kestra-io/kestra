@@ -69,6 +69,9 @@ export default {
             "no options found": "No options found",
             "show default": "Show Default",
             "operator": "Filter operator",
+            "close": "Close",
+            "remove_filter": "Remove filter",
+            "add_filter_for": "Add filter for {label}",
             "is_between": "Is Between",
             "timerange": {
                 "predefined": "Predefined",
@@ -467,6 +470,9 @@ export default {
             "no options found": "Keine Optionen gefunden",
             "show default": "Standard anzeigen",
             "operator": "Filter-Operator",
+            "close": "Schließen",
+            "remove_filter": "Filter entfernen",
+            "add_filter_for": "Filter für {label} hinzufügen",
             "is_between": "Liegt zwischen",
             "timerange": {
                 "predefined": "Vordefiniert",
@@ -865,6 +871,9 @@ export default {
             "no options found": "No se encontraron opciones",
             "show default": "Mostrar predeterminado",
             "operator": "Operador de filtro",
+            "close": "Cerrar",
+            "remove_filter": "Eliminar filtro",
+            "add_filter_for": "Añadir filtro para {label}",
             "is_between": "Está entre",
             "timerange": {
                 "predefined": "Predefinido",
@@ -1263,6 +1272,9 @@ export default {
             "no options found": "Aucune option trouvée",
             "show default": "Afficher par défaut",
             "operator": "Opérateur de filtre",
+            "close": "Fermer",
+            "remove_filter": "Retirer le filtre",
+            "add_filter_for": "Ajouter un filtre pour {label}",
             "is_between": "Est entre",
             "timerange": {
                 "predefined": "Prédéfini",
@@ -1661,6 +1673,9 @@ export default {
             "no options found": "कोई विकल्प नहीं मिला",
             "show default": "डिफ़ॉल्ट दिखाएं",
             "operator": "फ़िल्टर ऑपरेटर",
+            "close": "बंद करें",
+            "remove_filter": "फ़िल्टर हटाएं",
+            "add_filter_for": "{label} के लिए फ़िल्टर जोड़ें",
             "is_between": "के बीच है",
             "timerange": {
                 "predefined": "पूर्वनिर्धारित",
@@ -2059,6 +2074,9 @@ export default {
             "no options found": "Nessuna opzione trovata",
             "show default": "Mostra Predefinito",
             "operator": "Operatore di filtro",
+            "close": "Chiudi",
+            "remove_filter": "Rimuovi filtro",
+            "add_filter_for": "Aggiungi filtro per {label}",
             "is_between": "È compreso tra",
             "timerange": {
                 "predefined": "Predefinito",
@@ -2457,6 +2475,9 @@ export default {
             "no options found": "オプションが見つかりません",
             "show default": "デフォルトを表示",
             "operator": "フィルター演算子",
+            "close": "閉じる",
+            "remove_filter": "フィルターを削除",
+            "add_filter_for": "{label} のフィルターを追加",
             "is_between": "範囲内",
             "timerange": {
                 "predefined": "定義済み",
@@ -2855,6 +2876,9 @@ export default {
             "no options found": "옵션을 찾을 수 없습니다.",
             "show default": "기본값 표시",
             "operator": "필터 연산자",
+            "close": "닫기",
+            "remove_filter": "필터 제거",
+            "add_filter_for": "{label} 필터 추가",
             "is_between": "사이",
             "timerange": {
                 "predefined": "사전 정의됨",
@@ -3253,6 +3277,9 @@ export default {
             "no options found": "Nie znaleziono opcji",
             "show default": "Pokaż domyślne",
             "operator": "Operator filtrowania",
+            "close": "Zamknij",
+            "remove_filter": "Usuń filtr",
+            "add_filter_for": "Dodaj filtr dla {label}",
             "is_between": "Pomiędzy",
             "timerange": {
                 "predefined": "Zdefiniowane z góry",
@@ -3651,6 +3678,9 @@ export default {
             "no options found": "Nenhuma opção encontrada",
             "show default": "Mostrar Padrão",
             "operator": "Operador de filtro",
+            "close": "Fechar",
+            "remove_filter": "Remover filtro",
+            "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
             "timerange": {
                 "predefined": "Predefinido",
@@ -4049,6 +4079,9 @@ export default {
             "no options found": "Nenhuma opção encontrada",
             "show default": "Mostrar Padrão",
             "operator": "Operador de filtro",
+            "close": "Fechar",
+            "remove_filter": "Remover filtro",
+            "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
             "timerange": {
                 "predefined": "Predefinido",
@@ -4447,6 +4480,9 @@ export default {
             "no options found": "Опции не найдены",
             "show default": "Показать по умолчанию",
             "operator": "Оператор фильтра",
+            "close": "Закрыть",
+            "remove_filter": "Удалить фильтр",
+            "add_filter_for": "Добавить фильтр для {label}",
             "is_between": "Между",
             "timerange": {
                 "predefined": "Предопределено",
@@ -4845,6 +4881,9 @@ export default {
             "no options found": "未找到选项",
             "show default": "显示默认",
             "operator": "过滤运算符",
+            "close": "关闭",
+            "remove_filter": "移除过滤器",
+            "add_filter_for": "为 {label} 添加过滤器",
             "is_between": "介于",
             "timerange": {
                 "predefined": "预定义",

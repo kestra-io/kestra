@@ -1982,6 +1982,9 @@
         "label": "Edit Dashboard",
         "chart": "Edit this chart"
       },
+      "creation": {
+        "label": "Create Dashboard"
+      },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
@@ -2212,7 +2215,6 @@
     "submit": "Submit",
     "accept": "Accept",
     "reject": "Reject",
-    "draft_available": "Draft change is available in the editor",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",

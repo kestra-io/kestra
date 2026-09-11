@@ -230,6 +230,28 @@ Rules:
 - Don't render giant tables without `KsDataTable`'s pagination/virtualization — server-side paging is the default for anything that can grow.
 - Watch out for `watch(..., { deep: true })` and `computed` with object identity — they often re-run more than you expect.
 
+### Types
+
+**Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`.
+
+Where the type comes from, in this order:
+
+1. **Data from the backend: `kestra-sdk`.** It is generated from our OpenAPI spec, so the type already exists and stays in step with the API. `import type {Execution} from "@kestra-io/kestra-sdk"`.
+2. **Data from a library** (vue-router, element-plus, monaco, echarts, the DOM): the library's own types. When a package ships none, add a `declare module` file next to `src/material-icons.d.ts` rather than reaching for `any`.
+3. **An interface the app already has.** Search for one before writing another.
+4. **A new interface**, only when none of the above fit.
+
+For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
+
+**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. For an `any` that truly cannot be avoided, record it with `npm run check:ts-any -- --write` and commit the changed baseline, so the decision shows up in the diff and gets reviewed instead of slipping through.
+
+**The check.** `npm run check:ts-any` counts the explicit `any` per file and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
+
+- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above. When that is genuinely impossible, say why in the PR and run `npm run check:ts-any -- --write` to record the new number.
+- `1 file(s) improved` with `src/utils/filters.ts: 3 -> 2`. Your change removed one, which is the point, and the baseline has to come down with it. Run `npm run check:ts-any -- --write` and commit the changed `baseline.json` alongside your code.
+
+Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
+
 ### Testing UI
 
 - Unit tests with **Vitest** + `@vue/test-utils`, colocated next to the component.
@@ -245,6 +267,8 @@ npm run check:types && npm run test:unit && npm run lint
 ```
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
+
+`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead. It also fails when a file loses one, because the baseline has to come down with the code. With the repo's git hooks installed (`.github/.hooks/setup_hooks.sh`) the pre-commit hook does that for you through `check:ts-any -- --lock`, which only ever lowers numbers; without hooks, run `npm run check:ts-any -- --write` and commit the smaller numbers.
 
 Then read your own diff for the design-system violations that no linter catches:
 

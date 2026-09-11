@@ -33,12 +33,12 @@
     "scripts": {
         "build": "tsdown",
         "dev": "tsdown --watch",
-        "typecheck": "vue-tsc --noEmit",
-        "test": "npm run unit:test",
-        "unit:test": "vitest run --config vitest.unit.config.ts",
-        "unit:watch": "vitest --config vitest.unit.config.ts",
-        "lint:fix": "eslint --fix",
-        "lint:test": "eslint",
+        "check:types": "vue-tsc --noEmit",
+        "test": "npm run test:unit",
+        "test:unit": "vitest run --config vitest.unit.config.ts",
+        "test:unit:watch": "vitest --config vitest.unit.config.ts",
+        "lint": "eslint --fix",
+        "test:lint": "eslint",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {

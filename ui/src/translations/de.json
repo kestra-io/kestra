@@ -1982,6 +1982,9 @@
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
       },
+      "creation": {
+        "label": "Dashboard erstellen"
+      },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
@@ -2212,7 +2215,6 @@
     "submit": "Absenden",
     "accept": "Akzeptieren",
     "reject": "Ablehnen",
-    "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
     "last modified": "Zuletzt geändert",
     "run task in playground": "Task im Playground ausführen",
     "defaultsToNamespaceFile": "Standardmäßig die Namespace-Datei <code>{name}</code>",

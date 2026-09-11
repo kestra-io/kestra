@@ -5,6 +5,7 @@ export interface ColumnConfig {
     label: string;
     prop: string;
     default: boolean;
+    minWidth?: number;
     description?: string;
     condition?: () => boolean;
     /** Moves this column into a collapsible section titled with this (translated) value, for open-ended sets such as one column per metadata key. */

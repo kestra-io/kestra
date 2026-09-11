@@ -1982,6 +1982,9 @@
         "label": "डैशबोर्ड संपादित करें",
         "chart": "इस चार्ट को संपादित करें"
       },
+      "creation": {
+        "label": "डैशबोर्ड बनाएँ"
+      },
       "no_description": "कोई विवरण नहीं",
       "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "others": "अन्य",
@@ -2212,7 +2215,6 @@
     "submit": "प्रस्तुत करें",
     "accept": "स्वीकारें",
     "reject": "अस्वीकार करें",
-    "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
     "last modified": "अंतिम संशोधित",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
     "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",

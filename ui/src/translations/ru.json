@@ -1982,6 +1982,9 @@
         "label": "Редактировать Dashboard",
         "chart": "Редактировать этот график"
       },
+      "creation": {
+        "label": "Создать Dashboard"
+      },
       "no_description": "Нет описания",
       "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "others": "Другие",
@@ -2212,7 +2215,6 @@
     "submit": "Отправить",
     "accept": "Принять",
     "reject": "Отклонить",
-    "draft_available": "Черновик изменений доступен в редакторе",
     "last modified": "Последнее изменение",
     "run task in playground": "Запустить task в playground",
     "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",

@@ -1982,6 +1982,9 @@
         "label": "Modifica Dashboard",
         "chart": "Modifica questo grafico"
       },
+      "creation": {
+        "label": "Crea Dashboard"
+      },
       "no_description": "Nessuna descrizione",
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "others": "Altri",
@@ -2212,7 +2215,6 @@
     "submit": "Invia",
     "accept": "Accetta",
     "reject": "Rifiuta",
-    "draft_available": "Una bozza di modifica è disponibile nell'editor",
     "last modified": "Ultima modifica",
     "run task in playground": "Esegui task nel playground",
     "defaultsToNamespaceFile": "Predefinito al file namespace: <code>{name}</code>",

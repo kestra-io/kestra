@@ -1982,6 +1982,9 @@
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
       },
+      "creation": {
+        "label": "Créer un Dashboard"
+      },
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",
@@ -2212,7 +2215,6 @@
     "submit": "Soumettre",
     "accept": "Accepter",
     "reject": "Rejeter",
-    "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
     "last modified": "Dernière modification",
     "run task in playground": "Exécuter la task dans le playground",
     "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",

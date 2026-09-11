@@ -1982,6 +1982,9 @@
         "label": "대시보드 편집",
         "chart": "이 차트 편집"
       },
+      "creation": {
+        "label": "대시보드 생성"
+      },
       "no_description": "설명 없음",
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "others": "기타",
@@ -2212,7 +2215,6 @@
     "submit": "제출",
     "accept": "수락",
     "reject": "거부",
-    "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
     "last modified": "마지막 수정",
     "run task in playground": "플레이그라운드에서 task 실행",
     "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",

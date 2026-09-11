@@ -1982,6 +1982,9 @@
         "label": "编辑仪表板",
         "chart": "编辑此图表"
       },
+      "creation": {
+        "label": "创建 Dashboard"
+      },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
@@ -2212,7 +2215,6 @@
     "submit": "提交",
     "accept": "接受",
     "reject": "拒绝",
-    "draft_available": "编辑器中有可用的草稿更改",
     "last modified": "上次修改",
     "run task in playground": "在playground中运行task",
     "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",

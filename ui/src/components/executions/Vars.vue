@@ -19,13 +19,12 @@
                 <DynamicScrollerItem
                     :item="item"
                     :active="active"
-                    :sizeDependencies="[item.value]"
                     :dataIndex="index"
                 >
                     <div class="vars-row">
                         <code class="vars-key">{{ item.key }}</code>
 
-                        <div>
+                        <div class="vars-value">
                             <KsDateAgo v-if="item.date" :inverted="true" :date="item.value" />
                             <template v-else-if="item.subflow">
                                 {{ item.value }}
@@ -89,6 +88,8 @@
 }
 
 .vars-row {
+    /* The surface KsTable used to paint, so the list reads the same inside a drawer or a modal. */
+    background: var(--ks-bg-overlay);
     display: grid;
     grid-template-columns: minmax(10rem, 15rem) 1fr;
     gap: var(--ks-spacing-4);
@@ -103,7 +104,12 @@
 }
 
 .vars-key {
-    color: var(--ks-text-primary);
+    overflow-wrap: anywhere;
+}
+
+.vars-value {
+    /* A truncated value is one unbroken 2000-character line, unreadable without a wrap. */
+    min-width: 0;
     overflow-wrap: anywhere;
 }
 </style>

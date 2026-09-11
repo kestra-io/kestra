@@ -2193,7 +2193,8 @@
           "title": {
             "flow": "Vorgeschlagener Flow",
             "dashboard": "Vorgeschlagenes Dashboard",
-            "app": "Vorgeschlagene App"
+            "app": "Vorgeschlagene App",
+            "test_suite": "Vorgeschlagener Unit-Test"
           },
           "valid": "Gültig",
           "invalid": "Änderungen erforderlich"

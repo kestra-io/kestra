@@ -21,7 +21,9 @@ describe("misc store — AI Copilot entry points", () => {
     it("promptCopilot seeds a prompt and opens the tab", () => {
         const store = useMiscStore()
         store.promptCopilot("Fix this error")
+        // Seeded by default: the user reviews the prompt and sends it.
         expect(store.copilotPrompt).toBe("Fix this error")
+        expect(store.copilotAutoSend).toBe(false)
         expect(store.contextInfoBarOpenTab).toBe("ai")
         expect(store.lastContextTab).toBe("ai")
     })
@@ -32,5 +34,14 @@ describe("misc store — AI Copilot entry points", () => {
         store.promptCopilot("Fix this error", {title: "Fix task extract", newThread: true})
         expect(store.copilotThreadTitle).toBe("Fix task extract")
         expect(store.copilotNewThread).toBe(false)
+    })
+
+    it("promptCopilot can hand over a prompt to send right away", () => {
+        // Single-purpose entry points ("Generate a unit test") start the turn on click, on their own.
+        const store = useMiscStore()
+        store.promptCopilot("Generate a unit test", {autoSend: true})
+        expect(store.copilotPrompt).toBe("Generate a unit test")
+        expect(store.copilotAutoSend).toBe(true)
+        expect(store.contextInfoBarOpenTab).toBe("ai")
     })
 })

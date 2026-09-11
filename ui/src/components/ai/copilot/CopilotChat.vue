@@ -241,7 +241,7 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
@@ -249,7 +249,7 @@
         } catch {
             // No provider list (e.g. AI unavailable) — the composer just omits the picker.
         }
-    })
+    })()
 
     // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
     // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
@@ -282,8 +282,7 @@
     /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
     const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=kestra_app&utm_medium=referral&utm_campaign=ai_copilot_unavailable&utm_content=learn_more#configuration"
 
-    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    onMounted(() => { restoreThread() })
+    const restored = restoreThread()
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -395,20 +394,45 @@
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
     // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
     // run on mount (drawer just opened) and via a watcher (already open / kept alive).
+    // An `autoSend` entry point ("Generate a unit test") sends the turn itself instead: the user
+    // already committed to it by picking the action, so the agent starts working on open. If a turn
+    // is in flight (`canSend` false) we fall back to seeding rather than dropping the prompt.
+    // A `newThread` entry point drops the restored conversation first, so its turn starts clean
+    // instead of inheriting an unrelated transcript.
     async function consumeSeededPrompt(): Promise<void> {
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
-        // EE seeds each fix as its own conversation: drop the active thread (still reachable from
-        // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
-        // where resetting would discard the only conversation for good.
-        if (miscStore.copilotNewThread) {
-            if (thread.value || messages.value.length > 0) reset()
-            nextThreadTitle.value = miscStore.copilotThreadTitle
-        }
-        composerText.value = seeded
+        const newThread = miscStore.copilotNewThread
+        const threadTitle = miscStore.copilotThreadTitle
+        const autoSend = miscStore.copilotAutoSend
         miscStore.copilotPrompt = null
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
+        miscStore.copilotAutoSend = false
+
+        // Settle the in-flight restore before acting on either flag: resetting ahead of it would be
+        // undone when it lands, and sending without it would fork a second thread.
+        if (newThread || autoSend) await restored
+
+        // EE seeds each fix as its own conversation: drop the active thread (still reachable from
+        // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
+        // where resetting would discard the only conversation for good.
+        if (newThread) {
+            if (thread.value || messages.value.length > 0) reset()
+            nextThreadTitle.value = threadTitle
+        }
+
+        if (autoSend) {
+            // The provider list has to be in hand before the turn goes out, or it is sent against
+            // the default provider rather than the one the picker restored.
+            await providersLoaded
+            if (canSend.value) {
+                onSubmit(seeded)
+                return
+            }
+        }
+
+        composerText.value = seeded
         await nextTick()
         ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
     }

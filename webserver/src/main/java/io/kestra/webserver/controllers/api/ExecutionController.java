@@ -993,13 +993,13 @@ public class ExecutionController {
             // reject the request as unprocessable with an explanation instead of a bare 404, so the
             // user knows to save a published revision before executing without a revision.
             if (revision.isEmpty()) {
-                Optional<Flow> latestAny = flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty());
-                if (latestAny.isPresent() && latestAny.get().isDraft()) {
-                    Flow draftFlow = latestAny.get();
-                    throw new IllegalArgumentException(
-                        "Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision."
-                    );
-                }
+                flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty())
+                    .filter(f -> !f.isDeleted() && f.isDraft())
+                    .ifPresent(draftFlow -> {
+                        throw new IllegalArgumentException(
+                            "Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision."
+                        );
+                    });
             }
             throw e;
         }

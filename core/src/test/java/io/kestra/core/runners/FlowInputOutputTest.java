@@ -323,6 +323,29 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldNotDuplicateValueInIntInputErrorMessage() {
+        // Given 
+        IntInput input = IntInput.builder()
+            .id("retry_count")
+            .type(Type.INT)
+            .required(true)
+            .build();
+
+        List<Input<?>> inputs = List.of(input);
+        Map<String, Object> data = Map.of("retry_count", "3.5");
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+
+        // Then 
+        String errorMessage = values.get(0).exceptions().iterator().next().getMessage();
+        Assertions.assertFalse(errorMessage.contains("For input string"));
+
+        int occurrences = errorMessage.split("3\\.5", -1).length - 1;
+        Assertions.assertTrue(occurrences <= 1, "value should not be duplicated in: " + errorMessage);
+    }
+
+    @Test
     void resolveInputsGivenDefaultExpressions() {
         // Given
         StringInput input1 = StringInput.builder()

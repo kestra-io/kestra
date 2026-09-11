@@ -1390,6 +1390,60 @@ class FlowControllerTest {
         assertThat(taskFlow.isDisabled()).isFalse();
     }
 
+    /**
+     * Disabling re-saves the flow, so a stored flow the current model no longer validates cannot be disabled —
+     * that must be reported as the validation failure it is, not as a 500. The flow here carries an unknown
+     * *task* property, which the lenient save path accepts and the strict re-validation rejects: the same
+     * shape as a 1.x flow whose trigger still carries the removed `conditions`, but reachable without going
+     * through the repository, since a trigger property is rejected on read too.
+     */
+    @Test
+    void disableFlowsByIdsShouldReportViolationsWhenTheStoredFlowNoLongerValidates() {
+        storeFlowThatNoLongerValidates("no-longer-valid-by-ids");
+
+        List<IdWithNamespace> ids = List.of(new IdWithNamespace("io.kestra.unittest.legacy", "no-longer-valid-by-ids"));
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(POST(FLOW_PATH + "/disable/by-ids", ids), BulkResponse.class)
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(exception.getMessage()).contains("removedInAFormerVersion");
+    }
+
+    @Test
+    void disableFlowsByQueryShouldReportViolationsWhenTheStoredFlowNoLongerValidates() {
+        storeFlowThatNoLongerValidates("no-longer-valid-by-query");
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(FLOW_PATH + "/disable/by-query?filters[namespace][PREFIX]=io.kestra.unittest.legacy", Map.of()),
+                BulkResponse.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(exception.getMessage()).contains("removedInAFormerVersion");
+    }
+
+    private void storeFlowThatNoLongerValidates(String id) {
+        jdbcFlowRepository.create(
+            GenericFlow.fromYaml(
+                MAIN_TENANT, """
+                    id: %s
+                    namespace: io.kestra.unittest.legacy
+                    tasks:
+                      - id: hello
+                        type: io.kestra.plugin.core.log.Log
+                        message: hello
+                        removedInAFormerVersion: true
+                    """.formatted(id)
+            )
+        );
+    }
+
     @Test
     void disableEnableFlowsByQuery() throws InterruptedException {
         Flow flow = generateFlow("toDisable", "io.kestra.unittest.disabled", "a");
@@ -1821,7 +1875,8 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        // triggers reject unknown properties themselves, with a message naming the trigger
+        assertThat(body.get(0).getConstraints()).contains("Unrecognized property \"unknownProp\" on trigger");
 
         resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerMissingProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());

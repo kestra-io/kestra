@@ -22,6 +22,22 @@ import static org.mockito.Mockito.when;
 class TriggerFlowParserTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TriggerFlowParserTest.class);
 
+    private static final String LEGACY_CONDITIONS_SOURCE = """
+        id: trigger-flow-parser
+        namespace: io.kestra.tests
+        tasks:
+          - id: log
+            type: io.kestra.plugin.core.log.Log
+            message: hello
+        triggers:
+          - id: schedule
+            type: io.kestra.plugin.core.trigger.Schedule
+            cron: "* * * * *"
+            conditions:
+              - type: io.kestra.plugin.core.condition.DayWeek
+                dayOfWeek: MONDAY
+        """;
+
     private final FlowWithSource flow = FlowWithSource.builder()
         .tenantId("main")
         .namespace("io.kestra.tests")
@@ -62,6 +78,28 @@ class TriggerFlowParserTest {
         assertThatThrownBy(() -> TriggerFlowParser.parseForTrigger(flowParsingService, stored, LOGGER))
             .isInstanceOf(FlowProcessingException.class)
             .hasMessage("Invalid type: io.kestra.plugin.core.flow.ForEach");
+    }
+
+    /**
+     * A 1.x flow whose Schedule still filters through the removed `conditions`: the repository could not
+     * deserialize it, so the scheduler gets a {@link FlowWithException} carrying only the source. Re-parsing it
+     * fails too, and with no trigger definitions to degrade to the caller is told why — the trigger must not be
+     * scheduled, since without its conditions it would fire on every occurrence.
+     */
+    @Test
+    void shouldThrowForAStoredFlowWhoseTriggerCarriesARemovedProperty() {
+        // Given the flow as the repository hands it over: unparsable, kept without its trigger definitions
+        FlowWithSource stored = FlowWithException.from(
+            flow.toBuilder().source(LEGACY_CONDITIONS_SOURCE).build(),
+            new FlowProcessingException("stored as unparsable")
+        );
+        assertThat(stored.getTriggers()).isNull();
+
+        // When / Then the real parsing service refuses it, so the scheduler skips the trigger
+        assertThatThrownBy(() -> TriggerFlowParser.parseForTrigger(new FlowParsingService(), stored, LOGGER))
+            .isInstanceOf(FlowProcessingException.class)
+            .hasMessageContaining("Unrecognized property \"conditions\" on trigger \"schedule\"")
+            .hasMessageContaining("replaced by \"when\"");
     }
 
     @Test

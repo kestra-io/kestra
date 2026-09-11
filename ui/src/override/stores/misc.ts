@@ -3,7 +3,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
 import {useApiStore} from "../../stores/api"
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
@@ -12,7 +12,7 @@ import type {SelectedTheme} from "../../utils/utils"
 
 export const useMiscStore = defineStore("misc", () => {
 
-    const configs = ref<Record<string, any>>()
+    const configs = ref<MiscControllerConfiguration>()
     const contextInfoBarOpenTab = ref("")
     // AI Copilot is the first / default context-dock tab.
     const lastContextTab = ref("ai")

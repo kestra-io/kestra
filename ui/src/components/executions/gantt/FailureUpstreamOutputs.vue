@@ -3,7 +3,7 @@
     <KsAlert v-else-if="error" type="error" :closable="false">
         {{ $t("failureDebugPanel.upstreamOutputs.error") }}
     </KsAlert>
-    <KsEmpty v-else-if="Object.keys(values).length === 0" :description="$t('failureDebugPanel.upstreamOutputs.empty')" />
+    <KsEmpty v-else-if="Object.keys(values).length === 0" :imageSize="80" :description="$t('failureDebugPanel.upstreamOutputs.empty')" />
     <Vars v-else :data="values" />
 </template>
 

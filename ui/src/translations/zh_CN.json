@@ -231,6 +231,9 @@
         "empty": "在此次执行所运行的流程版本中找不到该 task 的定义。",
         "error": "无法解析该 task 的配置。请从编辑流程重试。"
       },
+      "inputsOutputs": {
+        "title": "input 与 output"
+      },
       "executionInputs": {
         "title": "执行的 input",
         "empty": "此 flow 未声明任何 input。",

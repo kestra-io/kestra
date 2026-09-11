@@ -231,6 +231,9 @@
         "empty": "No se pudo encontrar la definición de esta task en la revisión del flujo con la que se ejecutó esta ejecución.",
         "error": "No se pudo resolver la configuración de esta task. Inténtalo de nuevo desde Editar flujo."
       },
+      "inputsOutputs": {
+        "title": "Inputs y outputs"
+      },
       "executionInputs": {
         "title": "Inputs de la ejecución",
         "empty": "Este flujo no declara inputs.",

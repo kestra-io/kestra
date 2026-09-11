@@ -231,6 +231,9 @@
         "empty": "A definição desta task não foi encontrada na revisão do flow em que esta execução foi executada.",
         "error": "Não foi possível resolver a configuração desta task. Tente novamente em Editar flow."
       },
+      "inputsOutputs": {
+        "title": "Inputs & Outputs"
+      },
       "executionInputs": {
         "title": "Inputs da execução",
         "empty": "Este flow não declara inputs.",

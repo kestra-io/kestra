@@ -231,6 +231,9 @@
         "empty": "この task の定義が、この実行が使用した flow リビジョンに見つかりませんでした。",
         "error": "この task の設定を解決できませんでした。Flowを編集から再試行してください。"
       },
+      "inputsOutputs": {
+        "title": "Input と output"
+      },
       "executionInputs": {
         "title": "実行の input",
         "empty": "この flow は input を宣言していません。",

@@ -565,6 +565,12 @@ export function generateGraph(
                 data: {
                     collaspsible: true,
                     color: clusterColor,
+                    // The triggers box is the only place a trigger can be added from the canvas:
+                    // triggers are not tasks, so no edge `+` ever targets them.
+                    canAddTrigger:
+                        clusterUid === CLUSTER_PREFIX + TRIGGERS_NODE_UID &&
+                        Boolean(isAllowedEdit) &&
+                        !isReadOnly,
                     taskNode: cluster.cluster.taskNode,
                     unused: cluster.cluster.taskNode
                         ? nodeByUid[cluster.cluster.taskNode.uid].unused

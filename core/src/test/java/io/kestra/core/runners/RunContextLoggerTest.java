@@ -320,7 +320,7 @@ class RunContextLoggerTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
         RunContextLogger runContextLogger = new RunContextLogger(
-            logEntryEmitter,
+            logQueue,
             LogEntry.of(execution),
             Level.TRACE,
             true

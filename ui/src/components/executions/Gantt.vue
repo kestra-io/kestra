@@ -59,7 +59,7 @@
                                     </div>
                                     <div class="actions">
                                         <span v-if="debugShouldRender && !debugOpen" :ref="setReopenRef">
-                                            <KsButton :icon="BugOutline" @click="reopenDebugPanel">
+                                            <KsButton :icon="MagnifyScan" @click="reopenDebugPanel">
                                                 {{ $t("failureDebugPanel.reopen") }}
                                             </KsButton>
                                         </span>
@@ -200,7 +200,7 @@
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import BugOutline from "vue-material-design-icons/BugOutline.vue"
+    import MagnifyScan from "vue-material-design-icons/MagnifyScan.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Warning from "vue-material-design-icons/Alert.vue"

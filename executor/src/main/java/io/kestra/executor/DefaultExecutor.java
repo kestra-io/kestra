@@ -609,6 +609,23 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         executor = executorService.handleFailedExecutionFromExecutor(executor, e);
                     }
 
+                    if (execution.getId().equals(executor.getExecution().getId())) {
+                        List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+                        List<String> newIds = executor.getExecution().getTaskRunList() != null
+                            ? executor.getExecution().getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+
+                        if (originalIds.size() != newIds.size() || !newIds.containsAll(originalIds)) {
+                            List<io.kestra.core.models.executions.TaskRun> pruned = execution.getTaskRunList().stream()
+                                .filter(tr -> !newIds.contains(tr.getId()))
+                                .toList();
+                            if (!pruned.isEmpty()) {
+                                taskOutputService.deleteByTaskRun(executor.getExecution(), pruned);
+                            }
+                        }
+                    }
+
                     return executor;
                 });
 

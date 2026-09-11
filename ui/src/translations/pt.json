@@ -2690,6 +2690,9 @@
       "error": {
         "title": "Não foi possível carregar a linha do tempo",
         "description": "Ocorreu um erro ao carregar as execuções deste período."
+      },
+      "truncated": {
+        "description": "A mostrar as últimas {shown} de {total} execuções — reduza o período ou os filtros para ver todas."
       }
     },
     "chart mode": {

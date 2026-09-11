@@ -38,7 +38,7 @@
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
             @expand-subflow="expandSubflow"
-            @run-task="playgroundStore.runUntilTask($event.task.id)"
+            @run-task="playgroundStore.runUntilTask($event.task.id, Boolean($event.runDownstreamTasks))"
         >
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">

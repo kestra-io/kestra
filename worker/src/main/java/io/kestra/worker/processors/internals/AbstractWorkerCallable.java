@@ -3,7 +3,11 @@ package io.kestra.worker.processors.internals;
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 
@@ -13,8 +17,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Exceptions;
 
-import dev.failsafe.Failsafe;
-import dev.failsafe.Timeout;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import lombok.Getter;
@@ -25,6 +27,12 @@ import static io.kestra.core.models.flows.State.Type.*;
 
 @SuppressWarnings("this-escape")
 public abstract class AbstractWorkerCallable implements Callable<State.Type> {
+    private static final ScheduledExecutorService TIMEOUT_SCHEDULER = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "worker-job-timeout");
+        thread.setDaemon(true);
+        return thread;
+    });
+
     /** The state to report once interrupted, or {@code null} if not interrupted (or interrupted without marking, e.g. on timeout). */
     volatile State.Type killedState = null;
 
@@ -143,15 +151,12 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
     }
 
     /**
-     * Runs {@code work} bounded by an interruptible {@code timeout} ({@code null} = unbounded).
+     * Runs {@code work} bounded by {@code timeout} ({@code null} = unbounded).
      * <p>
-     * On timeout the worker thread is interrupted to awake blocking calls (e.g. a stuck
-     * {@code KafkaConsumer.poll()}), the interrupt flag is then cleared so it does not leak to later
-     * operations, {@code onTimeout} is invoked (e.g. a metric increment), and the timeout is recorded
-     * via {@link #exceptionHandler} — returning {@code FAILED} (or {@code KILLED}). When {@code work}
-     * completes within the timeout this returns {@code null} and the caller maps its own success state.
-     * Failsafe wraps checked exceptions thrown by {@code work}; the cause is unwrapped and rethrown so
-     * callers handle it exactly as they would without a timeout.
+     * When the timeout fires, {@link #kill(State.Type)} is invoked immediately on a watchdog
+     * thread with a {@code null} state so the job reports {@code FAILED} rather than {@code KILLED}.
+     * Subclass {@code kill()} also runs plugin {@code kill()}; interrupt alone does not unblock
+     * some I/O (e.g. {@code KafkaConsumer.poll()}). Completing within the timeout returns {@code null}.
      *
      * @param onTimeout action to run when the timeout fires; may be {@code null}
      * @return the terminal state on timeout, or {@code null} if {@code work} completed in time
@@ -162,28 +167,36 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
             return null;
         }
 
-        Timeout<Object> failsafeTimeout = Timeout
-            .builder(timeout)
-            .withInterrupt() // use to awake blocking evaluations, e.g. a stuck KafkaConsumer.poll().
-            .build();
-        try {
-            Failsafe.with(failsafeTimeout).run(work::run);
-            return null;
-        } catch (dev.failsafe.TimeoutExceededException e) {
-            if (onTimeout != null) {
-                onTimeout.run();
+        AtomicBoolean timedOut = new AtomicBoolean(false);
+        ScheduledFuture<?> timeoutTask = TIMEOUT_SCHEDULER.schedule(() -> {
+            if (timedOut.compareAndSet(false, true)) {
+                try {
+                    if (onTimeout != null) {
+                        onTimeout.run();
+                    }
+                } finally {
+                    kill((State.Type) null);
+                }
             }
-            kill(null);
-            // Clear the interrupt flag set by Failsafe's withInterrupt() so it doesn't leak to the caller.
-            Thread.interrupted();
-            return this.exceptionHandler(new TimeoutExceededException(timeout));
-        } catch (dev.failsafe.FailsafeException e) {
-            // Failsafe wraps checked exceptions; unwrap so they are handled like a normal failure.
-            if (e.getCause() instanceof Exception cause) {
-                throw cause;
+        }, timeout.toNanos(), TimeUnit.NANOSECONDS);
+
+        try {
+            work.run();
+        } catch (Exception e) {
+            if (timedOut.get()) {
+                Thread.interrupted();
+                return this.exceptionHandler(new TimeoutExceededException(timeout));
             }
             throw e;
+        } finally {
+            timeoutTask.cancel(false);
         }
+
+        if (timedOut.get()) {
+            Thread.interrupted();
+            return this.exceptionHandler(new TimeoutExceededException(timeout));
+        }
+        return null;
     }
 
     public void interrupt() {

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.WorkerTrigger;
@@ -21,8 +23,13 @@ import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.tasks.test.SleepTrigger;
 
 import jakarta.inject.Inject;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 
 @KestraTest
 class WorkerTriggerCallableTest {
@@ -40,7 +47,7 @@ class WorkerTriggerCallableTest {
         WorkerTriggerCallable callable = callable(trigger, Duration.ofMillis(300));
 
         // When
-        State.Type state = callable.call();
+        State.Type state = assertTimeout(Duration.ofSeconds(5), callable::call);
 
         // Then: the evaluation is interrupted, marked failed, and carries a TimeoutExceededException
         // (the caller emits an error trigger result on this, which releases the scheduler lock).
@@ -48,6 +55,24 @@ class WorkerTriggerCallableTest {
         // and skip publishTriggerExecution, so any partial getEvaluate() value is irrelevant here.
         assertThat(state).isEqualTo(State.Type.FAILED);
         assertThat(callable.getException()).isInstanceOf(TimeoutExceededException.class);
+    }
+
+    @Test
+    void shouldKillAndFreeWorkerWhenEvaluationIgnoresInterrupt() {
+        // Given: an evaluation that swallows Thread.interrupt() — only plugin kill() unblocks it
+        HangUntilKilledTrigger trigger = HangUntilKilledTrigger.builder()
+            .id("hang")
+            .type(HangUntilKilledTrigger.class.getName())
+            .build();
+        WorkerTriggerCallable callable = callable(trigger, Duration.ofMillis(200));
+
+        // When: timeout must invoke kill() while eval is still blocked, unblocking the worker
+        State.Type state = assertTimeout(Duration.ofSeconds(5), callable::call);
+
+        // Then
+        assertThat(state).isEqualTo(State.Type.FAILED);
+        assertThat(callable.getException()).isInstanceOf(TimeoutExceededException.class);
+        assertThat(trigger.wasKilled()).isTrue();
     }
 
     @Test
@@ -84,5 +109,42 @@ class WorkerTriggerCallableTest {
         RunContext runContext = conditionContext.getRunContext();
 
         return new WorkerTriggerCallable(runContext, conditionContext, triggerContext, workerTrigger, (PollingTriggerInterface) trigger, timeout);
+    }
+
+    /**
+     * Polling trigger whose {@code eval()} ignores interrupt and only returns after {@link #kill()}.
+     */
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class HangUntilKilledTrigger extends AbstractTrigger implements PollingTriggerInterface {
+        @Builder.Default
+        private final AtomicBoolean killed = new AtomicBoolean(false);
+
+        @Override
+        public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            while (!killed.get()) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ignored) {
+                    // Swallow interrupt — only kill() unblocks this evaluation.
+                }
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public void kill() {
+            killed.set(true);
+        }
+
+        public boolean wasKilled() {
+            return killed.get();
+        }
+
+        @Override
+        public Duration getInterval() {
+            return Duration.ofSeconds(1);
+        }
     }
 }

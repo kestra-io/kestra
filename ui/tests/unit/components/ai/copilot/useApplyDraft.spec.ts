@@ -69,7 +69,8 @@ const problem = (detail: string) => ({
 const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
 const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
-import {useApplyDraft} from "../../../../../src/components/ai/copilot/useApplyDraft"
+import type {RouteLocationNormalizedLoaded} from "vue-router"
+import {useApplyDraft, isViewingFlow} from "../../../../../src/components/ai/copilot/useApplyDraft"
 
 const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: my-flow\nnamespace: company.team", valid: true, constraints: null, ...over})
 
@@ -192,6 +193,37 @@ describe("useApplyDraft", () => {
         expect(alert).toHaveBeenCalled()
         expect(messageBox).not.toHaveBeenCalled()
         expect(createFlow).not.toHaveBeenCalled()
+    })
+
+    // --- isViewingFlow (route-identity check reused by the editor's live diff preview) ---
+
+    describe("isViewingFlow", () => {
+        // `flows/update` migrated from a flat `:tab?` param to vue-router children (routeFamily.ts), so
+        // the real route name on the flow-editor page is nested, e.g. `flows/update/edit`, never the flat
+        // `flows/update` alone (kestra-io/kestra#19330 follow-up: this check never matched in the running
+        // app, silently disabling the live diff mirror on the page users actually land on).
+        const route = (name: string, namespace: string, id: string) =>
+            ({name, params: {namespace, id}}) as unknown as RouteLocationNormalizedLoaded
+
+        it("matches the default nested edit tab", () => {
+            expect(isViewingFlow(route("flows/update/edit", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("matches another nested tab", () => {
+            expect(isViewingFlow(route("flows/update/topology", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("matches the flat pre-migration route name", () => {
+            expect(isViewingFlow(route("flows/update", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("does not match a different route family", () => {
+            expect(isViewingFlow(route("flows/list", "company.team", "my-flow"), "company.team", "my-flow")).toBe(false)
+        })
+
+        it("does not match when the namespace or id differs", () => {
+            expect(isViewingFlow(route("flows/update/edit", "other.team", "my-flow"), "company.team", "my-flow")).toBe(false)
+        })
     })
 
     // --- diff preview (the confirm dialog's "before" side) ---

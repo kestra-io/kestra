@@ -330,6 +330,20 @@ describe("CopilotChat", () => {
             expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team")
         })
 
+        // The real flow-editor URL resolves to the nested `flows/update/edit` route (a flat
+        // `flows/update` never occurs in the running app) — regression test for the mirror silently
+        // never triggering there (kestra-io/kestra#19330 follow-up).
+        it("mirrors the proposed source on the nested /edit tab route actually used by the editor", () => {
+            routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.pendingConfirmation.value = {
+                confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team\ndescription: x"},
+            }
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team")
+        })
+
         it("mirrors a pending FLOW artefact draft's yaml when it targets the open flow", () => {
             routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
             state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: drafted")]

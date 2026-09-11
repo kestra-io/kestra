@@ -3,6 +3,7 @@ import {
     taskIdentityAtCursor,
     taskTypeAtCursor,
     scopePropertySuggestionsToTaskType,
+    filterMissingRequiredTaskProperties,
 } from "../../../src/composables/monaco/languages/taskCompletionScoping"
 
 const FLOW = `id: myflow
@@ -34,9 +35,9 @@ describe("taskTypeAtCursor", () => {
         "still resolves the type while the property key %j is half typed",
         (partialKey) => {
             const source = `${FLOW}    ${partialKey}`
-            expect(taskTypeAtCursor({source, cursorIndex: source.length})).toBe(
-                "io.kestra.plugin.core.log.Log",
-            )
+            expect(
+                taskTypeAtCursor({source, cursorIndex: source.length}),
+            ).toBe("io.kestra.plugin.core.log.Log")
         },
     )
 
@@ -51,9 +52,9 @@ tasks:
         type: io.kestra.plugin.core.log.Log
         message: hi
         retr`
-        expect(taskTypeAtCursor({source: nested, cursorIndex: nested.length})).toBe(
-            "io.kestra.plugin.core.log.Log",
-        )
+        expect(
+            taskTypeAtCursor({source: nested, cursorIndex: nested.length}),
+        ).toBe("io.kestra.plugin.core.log.Log")
     })
 
     it.each([
@@ -69,7 +70,12 @@ tasks:
     retry:
       type: constant
 ${tail}`
-        expect(taskTypeAtCursor({source: withRetry, cursorIndex: withRetry.length})).toBeUndefined()
+        expect(
+            taskTypeAtCursor({
+                source: withRetry,
+                cursorIndex: withRetry.length,
+            }),
+        ).toBeUndefined()
     })
 
     it("reports the task's pinned version alongside its type", () => {
@@ -81,11 +87,74 @@ tasks:
     version: 1.2.3
     message: hi
 `
-        const cursorIndex = pinned.indexOf("message: hi") + "message: hi".length
+        const cursorIndex =
+            pinned.indexOf("message: hi") + "message: hi".length
         expect(taskIdentityAtCursor({source: pinned, cursorIndex})).toEqual({
             type: "io.kestra.plugin.core.log.Log",
             version: "1.2.3",
         })
+    })
+
+    it("returns undefined for flow inputs/outputs since they are not plugin FQCNs", () => {
+        const inputFlow = `id: myflow
+namespace: my.ns
+inputs:
+  - id: myinput
+    type: STRING
+    defa`
+        expect(
+            taskTypeAtCursor({
+                source: inputFlow,
+                cursorIndex: inputFlow.length,
+            }),
+        ).toBeUndefined()
+
+        const outputFlow = `id: myflow
+namespace: my.ns
+outputs:
+  - id: myoutput
+    type: STRING
+    value`
+        expect(
+            taskTypeAtCursor({
+                source: outputFlow,
+                cursorIndex: outputFlow.length,
+            }),
+        ).toBeUndefined()
+    })
+
+    it("returns undefined for flow triggers when an isTrigger predicate identifies them", () => {
+        const triggerFlow = `id: myflow
+namespace: my.ns
+triggers:
+  - id: mytrigger
+    type: io.kestra.plugin.aws.s3.Trigger
+    cro`
+        expect(
+            taskTypeAtCursor({
+                source: triggerFlow,
+                cursorIndex: triggerFlow.length,
+                isTrigger: (type) => type === "io.kestra.plugin.aws.s3.Trigger",
+            }),
+        ).toBeUndefined()
+    })
+})
+
+describe("filterMissingRequiredTaskProperties", () => {
+    it("works for trigger bodies since they are still identified as task-like", () => {
+        const triggerFlow = `id: myflow
+namespace: my.ns
+triggers:
+  - id: mytrigger
+    type: io.kestra.plugin.aws.s3.Trigger
+    cro`
+        expect(
+            filterMissingRequiredTaskProperties({
+                source: triggerFlow,
+                cursorIndex: triggerFlow.length,
+                requiredProperties: ["id", "type", "bucket"],
+            }),
+        ).toEqual(["bucket"])
     })
 })
 
@@ -110,7 +179,9 @@ describe("scopePropertySuggestionsToTaskType", () => {
 
     it("leaves non-property suggestions untouched even when their label is not a valid key", () => {
         const result = scopePropertySuggestionsToTaskType({
-            suggestions: [{label: "io.kestra.plugin.core.log.Log", kind: VALUE}],
+            suggestions: [
+                {label: "io.kestra.plugin.core.log.Log", kind: VALUE},
+            ],
             validPropertyKeys: ["id", "type", "message"],
             propertyKind: PROPERTY,
         })

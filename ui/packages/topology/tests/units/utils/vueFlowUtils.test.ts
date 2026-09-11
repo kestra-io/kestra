@@ -402,4 +402,74 @@ describe("generateGraph node draggability", () => {
         // Without `nopan` a drag starting on a card pans the canvas instead.
         expect(child?.class).toContain("nopan")
     })
+
+    const triggersGraph = {
+        nodes: [
+            {
+                uid: "root.only_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "only_task", type: "io.kestra.plugin.core.log.Log"},
+            },
+            {
+                uid: "root.branch",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential"},
+            },
+        ],
+        edges: [],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.Triggers",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                },
+                nodes: [],
+                parents: [],
+            },
+            {
+                cluster: {
+                    uid: "cluster_root.branch",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.branch",
+                        task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential"},
+                    },
+                },
+                nodes: [],
+                parents: [],
+            },
+        ],
+    } as any
+
+    const clustersOf = (isReadOnly: boolean, isAllowedEdit: boolean) =>
+        (VueFlowUtils.generateGraph(
+            "vfid",
+            "flow",
+            "ns",
+            triggersGraph,
+            undefined,
+            [],
+            false,
+            {},
+            new Set(),
+            [],
+            isReadOnly,
+            isAllowedEdit,
+            false,
+        ) ?? []).filter((element: any) => element.type === "cluster") as any[]
+
+    test("offers the add-trigger button on the triggers box only, and only when editing", () => {
+        const editable = clustersOf(false, true)
+        const triggers = editable.find((c: any) => c.id === "cluster_root.Triggers")
+        const flowable = editable.find((c: any) => c.id === "cluster_root.branch")
+        expect(triggers?.data?.canAddTrigger).toBe(true)
+        expect(flowable?.data?.canAddTrigger).toBe(false)
+
+        // A trigger is still a change to the flow, so read-only and view-only must not offer it.
+        for (const [readOnly, allowedEdit] of [[true, true], [false, false]] as const) {
+            const guarded = clustersOf(readOnly, allowedEdit)
+            const box = guarded.find((c: any) => c.id === "cluster_root.Triggers")
+            expect(box?.data?.canAddTrigger, `readOnly=${readOnly} allowedEdit=${allowedEdit}`).toBe(false)
+        }
+    })
 })

@@ -18,6 +18,7 @@
             <ClusterNode
                 v-bind="clusterProps"
                 @collapse="collapseCluster($event, true)"
+                @addTrigger="emit(EVENTS.ADD_TRIGGER)"
             />
         </template>
 
@@ -347,6 +348,7 @@
             EVENTS.SHOW_DESCRIPTION,
             "on-add-flowable-error",
             EVENTS.ADD_TASK,
+            EVENTS.ADD_TRIGGER,
             "toggle-orientation",
             "loading",
             "expand-subflow",

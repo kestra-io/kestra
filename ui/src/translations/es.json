@@ -443,7 +443,8 @@
       "invalid": "Error de gráfico",
       "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores.",
       "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo.",
-      "add-task": "Añadir task"
+      "add-task": "Añadir task",
+      "add-trigger": "Añadir trigger"
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Mostrar condición de task",

@@ -231,6 +231,16 @@
         "empty": "在此次执行所运行的流程版本中找不到该 task 的定义。",
         "error": "无法解析该 task 的配置。请从编辑流程重试。"
       },
+      "executionInputs": {
+        "title": "执行的 input",
+        "empty": "此 flow 未声明任何 input。",
+        "error": "无法解析该执行的 input。"
+      },
+      "upstreamOutputs": {
+        "title": "引用的 output",
+        "empty": "该 task 的配置未引用任何其他 task 的 output。",
+        "error": "无法加载被引用 task 的 output。"
+      },
       "structuralImpact": {
         "title": "结构性影响",
         "relation": {

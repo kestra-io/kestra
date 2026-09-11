@@ -231,6 +231,16 @@
         "empty": "This task's definition could not be found in the flow revision this execution ran on.",
         "error": "Could not resolve this task's configuration. Try again from Edit flow."
       },
+      "executionInputs": {
+        "title": "Execution inputs",
+        "empty": "This flow declares no inputs.",
+        "error": "Could not resolve the execution's inputs."
+      },
+      "upstreamOutputs": {
+        "title": "Outputs consumed",
+        "empty": "This task's configuration does not reference any other task's outputs.",
+        "error": "Could not load the referenced tasks' outputs."
+      },
       "structuralImpact": {
         "title": "Structural impact",
         "relation": {

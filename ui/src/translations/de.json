@@ -231,6 +231,16 @@
         "empty": "Die Definition dieser task konnte in der Flow-Revision, mit der diese Ausführung lief, nicht gefunden werden.",
         "error": "Die Konfiguration dieser task konnte nicht aufgelöst werden. Versuchen Sie es erneut über Flow bearbeiten."
       },
+      "executionInputs": {
+        "title": "Inputs der Ausführung",
+        "empty": "Dieser flow deklariert keine inputs.",
+        "error": "Die inputs der Ausführung konnten nicht aufgelöst werden."
+      },
+      "upstreamOutputs": {
+        "title": "Verwendete outputs",
+        "empty": "Die Konfiguration dieser task verweist auf keine outputs einer anderen task.",
+        "error": "Die outputs der referenzierten tasks konnten nicht geladen werden."
+      },
       "structuralImpact": {
         "title": "Strukturelle Auswirkung",
         "relation": {

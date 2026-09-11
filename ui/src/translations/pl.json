@@ -231,6 +231,16 @@
         "empty": "Nie znaleziono definicji tego tasku w wersji flow, na której działało to wykonanie.",
         "error": "Nie udało się rozwiązać konfiguracji tego tasku. Spróbuj ponownie w Edytuj Flow."
       },
+      "executionInputs": {
+        "title": "Inputy wykonania",
+        "empty": "Ten flow nie deklaruje żadnych inputów.",
+        "error": "Nie udało się rozwiązać inputów wykonania."
+      },
+      "upstreamOutputs": {
+        "title": "Wykorzystane outputy",
+        "empty": "Konfiguracja tego tasku nie odwołuje się do outputów żadnego innego tasku.",
+        "error": "Nie udało się załadować outputów przywoływanych tasków."
+      },
       "structuralImpact": {
         "title": "Wpływ strukturalny",
         "relation": {

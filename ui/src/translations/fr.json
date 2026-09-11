@@ -231,6 +231,16 @@
         "empty": "La définition de cette task est introuvable dans la révision du flow sur laquelle cette exécution s'est basée.",
         "error": "Impossible de résoudre la configuration de cette task. Réessayez depuis Modifier le flow."
       },
+      "executionInputs": {
+        "title": "Inputs de l'exécution",
+        "empty": "Ce flow ne déclare aucun input.",
+        "error": "Impossible de résoudre les inputs de l'exécution."
+      },
+      "upstreamOutputs": {
+        "title": "Outputs consommés",
+        "empty": "La configuration de cette task ne référence les outputs d'aucune autre task.",
+        "error": "Impossible de charger les outputs des tasks référencées."
+      },
       "structuralImpact": {
         "title": "Impact structurel",
         "relation": {

@@ -231,6 +231,16 @@
         "empty": "इस task की परिभाषा उस Flow रिविज़न में नहीं मिली जिस पर यह निष्पादन चला था।",
         "error": "इस task का कॉन्फ़िगरेशन हल नहीं किया जा सका। Flow संपादित करें से पुनः प्रयास करें।"
       },
+      "executionInputs": {
+        "title": "निष्पादन के inputs",
+        "empty": "इस flow में कोई input घोषित नहीं है।",
+        "error": "निष्पादन के inputs हल नहीं किए जा सके।"
+      },
+      "upstreamOutputs": {
+        "title": "उपयोग किए गए outputs",
+        "empty": "इस task का कॉन्फ़िगरेशन किसी अन्य task के outputs का संदर्भ नहीं देता।",
+        "error": "संदर्भित tasks के outputs लोड नहीं किए जा सके।"
+      },
       "structuralImpact": {
         "title": "संरचनात्मक प्रभाव",
         "relation": {

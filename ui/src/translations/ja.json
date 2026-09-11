@@ -231,6 +231,16 @@
         "empty": "この task の定義が、この実行が使用した flow リビジョンに見つかりませんでした。",
         "error": "この task の設定を解決できませんでした。Flowを編集から再試行してください。"
       },
+      "executionInputs": {
+        "title": "実行の input",
+        "empty": "この flow は input を宣言していません。",
+        "error": "実行の input を解決できませんでした。"
+      },
+      "upstreamOutputs": {
+        "title": "参照している output",
+        "empty": "この task の設定は、他のどの task の output も参照していません。",
+        "error": "参照先の task の output を読み込めませんでした。"
+      },
       "structuralImpact": {
         "title": "構造的な影響",
         "relation": {

@@ -104,6 +104,8 @@
 
         <UndoToast :state="undoState" @undo="performUndo" />
 
+        <BlockShortcutsDialog v-model:open="shortcutsOpen" :groups="shortcutGroups" />
+
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
@@ -305,6 +307,8 @@
     } from "../no-code/blocks/blockSections"
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
     import {BLOCK_EDITOR_KEYMAP} from "../no-code/blocks/keymap"
+    import BlockShortcutsDialog from "../no-code/blocks/BlockShortcutsDialog.vue"
+    import {buildShortcutGroups} from "../no-code/blocks/shortcutHints"
     import {useBlockEditorKeyboard} from "../no-code/blocks/useBlockEditorKeyboard"
     import {useAuthoringSurface} from "../no-code/blocks/useAuthoringSurface"
     import {
@@ -916,11 +920,15 @@
 
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
+    const shortcutsOpen = ref(false)
+    const shortcutGroups = buildShortcutGroups()
+
     const focusedTaskId = ref<string | undefined>(undefined)
     const focusOrder = computed(() => buildTopologyFocusOrder(flowSource.value ?? ""))
 
     const isAuthoringOverlayOpen = () =>
-        taskPicker.taskPickerVisible.value
+        shortcutsOpen.value
+        || taskPicker.taskPickerVisible.value
         || Boolean(modalTarget.value)
         || isTaskModalOpen.value
         || isDrawerOpen.value
@@ -982,6 +990,15 @@
     }
 
     function dispatchTopologyShortcut(id: string, event: KeyboardEvent) {
+        // Reading the shortcut list changes nothing, so it stays available on a read-only flow.
+        if (id === "help") {
+            shortcutsOpen.value = !shortcutsOpen.value
+            return
+        }
+        if (shortcutsOpen.value && id === "clear") {
+            shortcutsOpen.value = false
+            return
+        }
         if (props.isReadOnly || !props.isAllowedEdit) return false
         // Checked here rather than through a watch: watching the order would re-parse the whole
         // flow on every keystroke in the code editor, which shares this source.

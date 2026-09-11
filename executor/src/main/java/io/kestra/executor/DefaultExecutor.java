@@ -43,6 +43,7 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
 import io.kestra.executor.configuration.ExecutorConfiguration;
@@ -77,6 +78,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
+    private final ExecutionTerminatedNotifier executionTerminatedNotifier;
 
     private final ExecutorService executorService;
     private final ExecutionService executionService;
@@ -145,6 +147,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
+        ExecutionTerminatedNotifier executionTerminatedNotifier,
         ExecutorService executorService,
         ExecutionService executionService,
         FlowTriggerService flowTriggerService,
@@ -182,6 +185,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.multipleConditionEventQueue = multipleConditionEventQueue;
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.executionStatisticQueue = executionStatisticQueue;
+        this.executionTerminatedNotifier = executionTerminatedNotifier;
         this.executorService = executorService;
         this.executionService = executionService;
         this.flowTriggerService = flowTriggerService;
@@ -546,6 +550,23 @@ public class DefaultExecutor extends AbstractService implements Executor {
                                 executor = executor.withExecution(markAsExecution, "pausedRestart");
                             } else {
                                 // if there is a taskRun it means we restart a paused task
+                                // The delay is only removed when it expires, so a Pause that was already resumed
+                                // (manually via the API, or by a kill) still has a pending delay. Resuming it a
+                                // second time would re-generate the Pause outputs without the onResume inputs and
+                                // wipe them, so we skip the delay unless the task run is still paused.
+                                // The task run is resolved the same way markAs() does below — it may live in a loop
+                                // sub-execution — so the guard cannot drop a delay and leave its task run paused forever.
+                                Optional<TaskRun> pausedTaskRun = executionService.findExecutionWithTaskRun(execution, executionDelay.getTaskRunId())
+                                    .map(ExecutionWithTaskRun::taskRun);
+                                if (pausedTaskRun.isEmpty() || pausedTaskRun.get().getState().getCurrent() != State.Type.PAUSED) {
+                                    log.debug(
+                                        "Skipping the expired pause delay of the task run '{}' of the execution '{}': it is no longer paused.",
+                                        executionDelay.getTaskRunId(),
+                                        execution.getId()
+                                    );
+                                    return null;
+                                }
+
                                 FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
                                 Execution markAsExecution = executionService.markAs(
                                     execution,
@@ -691,10 +712,15 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // purge the trigger: reset scheduler trigger at end
                 // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
-                if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
+                if (
+                    execution.getTrigger() != null &&
+                        (execution.getState().isFailed() || execution.getState().getCurrent().isKilled() || execution.getState().getCurrent().isCancelled()) &&
+                        ListUtils.isEmpty(execution.getTaskRunList())
+                ) {
                     sendTriggerExecutionTerminated(execution);
                     this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                     emitExecutionStatistic(execution);
+                    notifyExecutionTerminated(execution);
                 }
 
                 return;
@@ -809,6 +835,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
 
                 emitExecutionStatistic(execution);
+                notifyExecutionTerminated(execution);
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
                 this.executionEventQueue.emit(event);
@@ -838,6 +865,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         this.followExecutionEventQueue.emit(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
 
                         emitExecutionStatistic(failedExecution);
+                        notifyExecutionTerminated(failedExecution);
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
                     }
@@ -850,18 +878,27 @@ public class DefaultExecutor extends AbstractService implements Executor {
      * Asynchronously emits a raw execution-statistic row for the indexer to persist for every terminal NORMAL-kind execution.
      */
     private void emitExecutionStatistic(Execution execution) {
-        if (execution.getKind() == null || ExecutionKind.NORMAL == execution.getKind()) {
+        if (ExecutionKind.isNormal(execution)) {
             // An end date should always be set, but use the current date as a safety belt
             Instant bucket = execution.getState().getEndDate().orElse(Instant.now()).truncatedTo(ChronoUnit.MINUTES);
             this.executionStatisticQueue.emitAsync(new ExecutionStatistic(execution, bucket));
         }
     }
 
+    private void notifyExecutionTerminated(Execution execution) {
+        try {
+            this.executionTerminatedNotifier.executionTerminated(execution);
+        } catch (Exception e) {
+            log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+        }
+    }
+
     private void sendTriggerExecutionTerminated(Execution execution) {
         // The scheduler didn't manage states for the WebHook and the Flow trigger
-        if (!execution.getTrigger().getType().equals(Webhook.class.getName()) &&
-            !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
-            !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
+        if (
+            !execution.getTrigger().getType().equals(Webhook.class.getName()) &&
+                !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
+                !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
         ) {
             TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
             triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));

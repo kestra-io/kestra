@@ -8,6 +8,13 @@ import type {TaskIconProps} from "./taskIcon"
 
 const KESTRA_ICON_WRAPPER_CLASS = "kestra-icon-wrapper"
 const SASH_DRAG_DISTANCE = 80
+const PLUGIN_FQCN = /^[a-z][\w$]*(?:\.[\w$]+)+$/
+
+// Monaco suffixes the row aria-label with ", <kind>" (and ", docs: …" once resolved), so read the rendered label.
+function suggestionLabel(row: HTMLElement): string | undefined {
+    const rendered = row.querySelector(".monaco-icon-name-container")?.textContent?.trim()
+    return rendered || row.getAttribute("aria-label")?.split(",")[0].trim()
+}
 
 type CodeEditor = monaco.editor.ICodeEditor
 
@@ -37,13 +44,13 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
 
     function replaceRowsIcons(nodes: HTMLElement[]) {
         for (const node of uniqBy(nodes, n => n.id)) {
-            const completionValue = node?.getAttribute("aria-label")
+            const completionValue = suggestionLabel(node)
             if (!completionValue || node.getAttribute("data-index") === null) continue
 
             const vsCodeIcon = node.querySelector(".suggest-icon") as HTMLElement
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove()
 
-            if (completionValue.includes(".") && !completionValue.includes("{") && ctx.loadTaskIcon.value) {
+            if (PLUGIN_FQCN.test(completionValue) && ctx.loadTaskIcon.value) {
                 replaceRowIcon(vsCodeIcon, h(ctx.taskIcon, {
                     cls: completionValue,
                     onlyIcon: true,
@@ -89,10 +96,10 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
             })
 
             const addedRows = addedSuggestRows(mutations)
-            replaceRowsIcons(addedRows.filter(row => row.ariaLabel !== DATE_PICKER_SUGGESTION_LABEL))
+            replaceRowsIcons(addedRows.filter(row => suggestionLabel(row) !== DATE_PICKER_SUGGESTION_LABEL))
 
             addedRows.forEach(async row => {
-                if (!editor || row.ariaLabel !== DATE_PICKER_SUGGESTION_LABEL) return
+                if (!editor || suggestionLabel(row) !== DATE_PICKER_SUGGESTION_LABEL) return
                 ;(editor.getContribution("editor.contrib.suggestController") as unknown as {
                     cancelSuggestWidget: () => void
                 }).cancelSuggestWidget()

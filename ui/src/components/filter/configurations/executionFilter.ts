@@ -205,6 +205,17 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueType: "text",
                     searchable: true,
                 },
+                {
+                    key: "taskId",
+                    label: t("filter.taskId.label"),
+                    description: t("filter.taskId.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                    ],
+                    valueType: "text",
+                    searchable: true,
+                },
             ],
         }
     })

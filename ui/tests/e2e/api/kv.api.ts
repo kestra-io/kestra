@@ -16,6 +16,38 @@ export class KvApi extends BaseApi {
         return key
     }
 
+    async setKvViaApi(key: string, value: string, ttl?: string) {
+        const response = await this.request.put(`${this.apiUrl}/namespaces/${shared.namespace}/kv/${key}`, {
+            headers: {
+                "Content-Type": "text/plain",
+                "Authorization": KvApi.AUTH,
+                ...(ttl === undefined ? {} : {ttl}),
+            },
+            data: value,
+        })
+
+        if (response.status() !== 200) {
+            throw new Error(`Writing KV ${key} failed with HTTP ${response.status()}`)
+        }
+    }
+
+    async getExpirationDateViaApi(key: string): Promise<string | undefined> {
+        const response = await this.request.get(`${this.apiUrl}/kv?page=1&size=100&filters[namespace][EQUALS]=${shared.namespace}`, {
+            headers: {
+                "Accept": "application/json",
+                "Authorization": KvApi.AUTH,
+            },
+        })
+
+        if (response.status() !== 200) {
+            throw new Error(`Listing KVs failed with HTTP ${response.status()}`)
+        }
+
+        const {results} = await response.json()
+
+        return results.find((entry: {key: string}) => entry.key === key)?.expirationDate
+    }
+
     async getKvViaApi(key: string): Promise<KvDetail> {
         const response = await this.request.get(`${this.apiUrl}/namespaces/${shared.namespace}/kv/${key}`, {
             headers: {

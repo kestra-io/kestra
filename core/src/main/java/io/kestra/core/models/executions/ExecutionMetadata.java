@@ -29,9 +29,24 @@ public class ExecutionMetadata {
     @With
     List<String> concurrencyScopes;
 
+    /**
+     * The number of Subflow/Flow-trigger hops between this execution and the root execution that
+     * started the chain, incremented by one at each hop.
+     * Null for a root execution which is treated as depth 0.
+     */
+    @With
+    Integer executionDepth;
+
     public ExecutionMetadata nextAttempt() {
         return this.toBuilder()
             .attemptNumber(this.attemptNumber + 1)
             .build();
+    }
+
+    /**
+     * Returns {@link #executionDepth}, defaulting to 0 for a root execution or one predating this field.
+     */
+    public int executionDepthOrZero() {
+        return this.executionDepth == null ? 0 : this.executionDepth;
     }
 }

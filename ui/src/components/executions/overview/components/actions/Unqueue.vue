@@ -74,7 +74,7 @@
     })
 
     const enabled = computed(() => {
-        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
+        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.execution.namespace))) {
             return false
         }
 

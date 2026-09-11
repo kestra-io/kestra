@@ -92,6 +92,13 @@
                         <span class="meta-item__link">{{ execution.originalId }}</span>
                     </span>
                 </router-link>
+
+                <component
+                    :is="relation"
+                    v-for="(relation, index) in executionBannerRelations"
+                    :key="index"
+                    :execution
+                />
             </div>
 
             <div class="execution-banner__actions">
@@ -154,6 +161,7 @@
     import * as Utils from "../../../../utils/utils"
     import {useToast} from "../../../../utils/toast"
     import {createLink} from "../utils/links"
+    import {executionBannerRelations} from "override/components/executions/overview/OverviewExtensions"
 
     import ChangeExecutionStatus from "../../ChangeExecutionStatus.vue"
     import SetLabels from "../../SetLabels.vue"
@@ -265,7 +273,7 @@
         const prompt = errorLines
             ? `Fix the flow ${props.execution.flowId} as it generated the following error:\n${errorLines}`
             : `Fix the flow ${props.execution.flowId} as its execution failed.`
-        useMiscStore().promptCopilot(prompt)
+        useMiscStore().promptCopilot(prompt, {title: t("ai.copilot.fixThread.execution", {id: props.execution.flowId}), newThread: true})
     }
 </script>
 

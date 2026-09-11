@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {use} from "echarts/core"
 import {BarChart, LineChart} from "echarts/charts"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
-import {TooltipType} from "../../../src/components/Charts/ksChartUtils"
+import {TooltipType} from "../../../src/utils/chart"
 
 use([BarChart, LineChart])
 
@@ -16,6 +16,7 @@ const meta: Meta<typeof KsEchart> = {
         loading: {control: "boolean"},
         tooltipType: {control: "select", options: ["native", "external"]},
         renderer: {control: "select", options: ["canvas", "svg"]},
+        maxPixelRatio: {control: {type: "number", min: 1, max: 3, step: 0.5}},
         disableFeatures: {
             control: "multi-select",
             options: ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"],
@@ -113,6 +114,7 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
                             smooth: true,
                             areaStyle: {opacity: 0.2},
                             data: [12.4, 9.8, 14.2, 11.1, 8.7, 13.5, 10.3],
+                            tooltip: {valueFormatter: (value: unknown) => `${value}s`},
                         },
                     ],
                 },
@@ -125,7 +127,8 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
             description: {
                 story:
                     "Bar series (left y-axis for count) and an area-line series (right y-axis for duration). " +
-                    "Pass the full ECharts option directly to KsEchart when you need a mixed chart type.",
+                    "Pass the full ECharts option directly to KsEchart when you need a mixed chart type. " +
+                    "The external tooltip honors the standard per-series `tooltip.valueFormatter` option.",
             },
         },
     },
@@ -295,4 +298,38 @@ export const SvgRenderer: Story = {
         },
         template: "<div style=\"padding:24px;height:280px\"><ks-echart :options=\"options\" renderer=\"svg\" /></div>",
     }),
+}
+
+// ─── Capped pixel ratio ───────────────────────────────────────────────────────
+
+export const CappedPixelRatio: Story = {
+    render: () => ({
+        components: {KsEchart},
+        setup() {
+            const options = (name: string) => ({
+                xAxis: {type: "category", data: CATEGORIES, boundaryGap: false},
+                yAxis: {type: "value"},
+                tooltip: {trigger: "axis"},
+                series: [{name, type: "line", smooth: true, data: [820, 932, 901, 934, 1290, 1330, 1320]}],
+            })
+
+            return {full: options("Full resolution"), capped: options("Capped at 1.5")}
+        },
+        template: `
+            <div style="padding:24px;display:grid;gap:24px">
+                <div style="height:240px"><ks-echart :options="full" /></div>
+                <div style="height:240px"><ks-echart :options="capped" :maxPixelRatio="1.5" /></div>
+            </div>
+        `,
+    }),
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "The second chart caps its canvas pixel ratio at 1.5. Canvas memory grows with the square of the " +
+                    "pixel ratio, so a page holding many charts (a dashboard) pays a fraction of the memory for a " +
+                    "difference that is hard to see on flat fills and thin lines. Only visible on a high-DPI screen.",
+            },
+        },
+    },
 }

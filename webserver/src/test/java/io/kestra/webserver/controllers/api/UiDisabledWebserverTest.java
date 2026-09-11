@@ -57,6 +57,6 @@ class UiDisabledWebserverTest {
     void shouldNotRegisterUiBeansWhenUiIsDisabled() {
         // Then
         assertThat(applicationContext.containsBean(RedirectController.class)).isFalse();
-        assertThat(applicationContext.containsBean(StaticFilter.class)).isFalse();
+        assertThat(applicationContext.containsBean(UiController.class)).isFalse();
     }
 }

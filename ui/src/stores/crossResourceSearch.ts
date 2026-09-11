@@ -6,7 +6,7 @@ import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
 import * as NamespacesAPI from "@kestra-io/kestra-sdk/namespaces"
-import type {SourceSearchScope} from "@kestra-io/kestra-sdk"
+import {asProblem, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
 import {groupByNamespace, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
 import type {SourceSearchResult} from "../utils/sourceSearchDiff"
@@ -147,7 +147,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             flows.value = {status: "done", results: (response.results ?? []) as SourceSearchResult[], total: response.total}
         } catch (e: any) {
             if (!isCurrent(gen)) return
-            flows.value = {status: "failed", results: [], errorMessage: e?.response?.data?.message ?? e?.message}
+            flows.value = {status: "failed", results: [], errorMessage: asProblem(e)?.detail ?? e?.message}
         }
     }
 
@@ -168,7 +168,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             const paths = await FilesAPI.searchNamespaceFiles({namespace, q: query}) ?? []
             setNamespaceFileState({namespace, status: "done", paths}, gen)
         } catch (e: any) {
-            setNamespaceFileState({namespace, status: "failed", paths: [], errorMessage: e?.response?.data?.message ?? e?.message}, gen)
+            setNamespaceFileState({namespace, status: "failed", paths: [], errorMessage: asProblem(e)?.detail ?? e?.message}, gen)
         }
     }
 
@@ -190,7 +190,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) as unknown as string[] ?? [])
         } catch (e: any) {
             if (!isCurrent(gen)) return
-            files.value = {status: "failed", namespaces: [], errorMessage: e?.response?.data?.message ?? e?.message}
+            files.value = {status: "failed", namespaces: [], errorMessage: asProblem(e)?.detail ?? e?.message}
             return
         }
 
@@ -246,7 +246,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             }
         } catch (e: any) {
             if (!isCurrent(gen)) return
-            kv.value = {status: "failed", groups: [], errorMessage: e?.response?.data?.message ?? e?.message}
+            kv.value = {status: "failed", groups: [], errorMessage: asProblem(e)?.detail ?? e?.message}
         }
     }
 
@@ -271,7 +271,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             }
         } catch (e: any) {
             if (!isCurrent(gen)) return
-            secrets.value = {status: "failed", groups: [], errorMessage: e?.response?.data?.message ?? e?.message}
+            secrets.value = {status: "failed", groups: [], errorMessage: asProblem(e)?.detail ?? e?.message}
         }
     }
 

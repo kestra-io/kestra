@@ -179,11 +179,6 @@ class ConditionServiceTest {
             }
 
             @Override
-            public Boolean getResetOnSuccess() {
-                return null;
-            }
-
-            @Override
             public Map<String, Condition> getConditions() {
                 return null;
             }
@@ -228,11 +223,6 @@ class ConditionServiceTest {
 
             @Override
             public TimeWindow getTimeWindow() {
-                return null;
-            }
-
-            @Override
-            public Boolean getResetOnSuccess() {
                 return null;
             }
 

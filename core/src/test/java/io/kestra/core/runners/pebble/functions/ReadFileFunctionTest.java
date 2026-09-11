@@ -96,6 +96,19 @@ class ReadFileFunctionTest {
     }
 
     @Test
+    void readNamespaceFileRejectsNonIntegerRevision() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI nsFile = upsertNsFile(false, namespace, "Hello from version 1");
+
+        IllegalVariableEvaluationException exception = assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> variableRenderer.render("{{ read('" + nsFile.getPath() + "', revision='not-a-number') }}", getVariables(namespace))
+        );
+        assertThat(exception.getCause().getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(exception.getCause().getCause().getMessage()).isEqualTo("The 'read' function expects the 'revision' argument to be a valid integer.");
+    }
+
+    @Test
     void readNamespaceFileFromURI() throws IllegalVariableEvaluationException, IOException {
         String namespace = TestsUtils.randomNamespace();
         String filePath = "file.txt";

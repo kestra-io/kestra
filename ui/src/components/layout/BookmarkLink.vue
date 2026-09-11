@@ -14,9 +14,9 @@
             <router-link
                 class="bookmark-anchor"
                 :to="href"
-                :title="updatedTitle"
+                :title="title"
             >
-                <span class="bookmark-title">{{ updatedTitle }}</span>
+                <span class="bookmark-title">{{ title }}</span>
                 <div class="buttons">
                     <PencilOutline
                         @click.stop.prevent="startEditBookmark"
@@ -50,7 +50,7 @@
     const bookmarksStore = useBookmarksStore()
 
     const editing = ref(false)
-    const updatedTitle = ref(props.title)
+    const updatedTitle = ref("")
     const titleInput = ref<{ focus: () => void; select: () => void } | null>(null)
 
     function deleteBookmark() {
@@ -64,6 +64,9 @@
     }
 
     function startEditBookmark() {
+        // Seed the buffer here rather than at setup: the stored label can change under us when
+        // the page it points at is revisited in another language.
+        updatedTitle.value = props.title
         editing.value = true
         nextTick(() => {
             titleInput.value?.focus()

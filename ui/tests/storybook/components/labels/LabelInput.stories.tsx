@@ -34,6 +34,22 @@ WithValue.args = {
     value: "example-value",
   }],
 };
+WithValue.play = async ({canvasElement}) => {
+  await expect(canvasElement.querySelector("[data-test='label-key-error']")).toBeNull();
+};
+
+export const InvalidKey = Template.bind({});
+InvalidKey.args = {
+  labels: [{
+    key: "FOO",
+    value: "bar",
+  }],
+};
+InvalidKey.play = async ({canvasElement}) => {
+  const error = canvasElement.querySelector("[data-test='label-key-error']");
+  await expect(error).not.toBeNull();
+  await expect(error).toBeVisible();
+};
 
 export const WithExistingLabels = Template.bind({});
 WithExistingLabels.args = {

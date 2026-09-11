@@ -31,7 +31,7 @@
             :defaultSort="{prop: 'id', order: 'ascending'}"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
-            @row-dblclick="onRowDoubleClick"
+            @row-click="onRowClick"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
             :selectable="canCheck"
@@ -43,7 +43,7 @@
         >
             <template #top>
                 <KSFilter
-                    :configuration="flowFilter"
+                    :configuration="filterConfiguration ?? flowFilter"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -133,7 +133,7 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="scope.row.labels" @click.prevent.stop />
+                        <Labels :labels="scope.row.labels" :max="3" @click.prevent.stop />
                     </template>
                 </KsTableColumn>
 
@@ -212,14 +212,17 @@
                     className="row-graph"
                 >
                     <template #default="scope">
-                        <TimeSeries
-                            :chart="mappedChart(scope.row.id, scope.row.namespace)"
-                            :filters="chartFilters()"
-                            showDefault
-                            short
-                            :flow="scope.row.id"
-                            :namespace="scope.row.namespace"
-                        />
+                        <div :ref="(el) => observeChartBlock(el, chartKey(scope.row))" class="row-graph-cell">
+                            <TimeSeries
+                                v-if="activatedCharts.has(chartKey(scope.row))"
+                                :chart="mappedChart(scope.row.id, scope.row.namespace)"
+                                :filters="chartFilters()"
+                                showDefault
+                                short
+                                :flow="scope.row.id"
+                                :namespace="scope.row.namespace"
+                            />
+                        </div>
                     </template>
                 </KsTableColumn>
 
@@ -305,7 +308,7 @@
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
     import BreakableText from "../BreakableText"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useFlowFilter} from "../filter/configurations"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
@@ -330,9 +333,10 @@
 
     import FlowRun from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, type FilterConfiguration} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
+    import {useLazyChartBlocks} from "../dashboard/composables/useLazyChartBlocks"
     import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
@@ -347,11 +351,13 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
+
+    const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -360,6 +366,7 @@
         id?: string | null;
         defaultScopeFilter?: boolean,
         embed?: boolean;
+        filterConfiguration?: FilterConfiguration;
     }>(), {
         topbar: true,
         fitHeight: undefined,
@@ -367,6 +374,7 @@
         id: undefined,
         defaultScopeFilter: false,
         embed: false,
+        filterConfiguration: undefined,
     })
 
     const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
@@ -502,10 +510,20 @@
             })
     }
 
-    const onRowDoubleClick = (item: any) => router.push({
-        name: route.name?.toString().replace("/list", "/update"),
-        params: {...item, tenant: route.params.tenant},
-    })
+    const onRowClick = (item: any, column: any, event: Event) => {
+        if (column?.type === "selection") return
+
+        const click = event as MouseEvent
+        // a modifier-click is the browser's own open-in-a-new-tab gesture, which RouterLink deliberately
+        // lets through without preventDefault, so the current tab must stay where it is
+        if (click.metaKey || click.ctrlKey || click.shiftKey || click.altKey || click.button !== 0) return
+        if ((event.target as HTMLElement)?.closest(NON_NAVIGATING_TARGETS)) return
+
+        router.push({
+            name: route.name?.toString().replace("/list", "/update"),
+            params: {...item, tenant: route.params.tenant},
+        })
+    }
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
@@ -633,6 +651,12 @@
         if (row.row.draft) classes.push("draft")
         return classes.join(" ")
     }
+
+    // One chart per row means one preview request per row on arrival. Rows only load once their cell
+    // nears the viewport, and are never recycled: remounting would re-issue the request we are saving.
+    const {activatedCharts, observeChartBlock} = useLazyChartBlocks(() => false)
+
+    const chartKey = (row: {id: string; namespace: string}) => `${row.namespace}/${row.id}`
 
     function mappedChart(id: string, namespace: string) {
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION))

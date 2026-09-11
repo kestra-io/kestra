@@ -34,6 +34,14 @@ console.warn = (...args) => {
     originalConsoleWarn(...args)
 }
 
+// Node 26 defines a `localStorage` global that stays undefined unless --localstorage-file is
+// given, and it shadows the one jsdom installs, so every unit spec touching storage throws.
+// Disabling Node's own web storage lets jsdom provide it, as it does on the Node 24 in .nvmrc,
+// where the global does not exist and the flag is a no-op. Set here rather than in
+// poolOptions.execArgv, which vitest overrides with its own, and rather than in the npm script,
+// which would not survive someone running vitest directly.
+process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ""} --no-experimental-webstorage`.trim()
+
 // Vite writes logger warnings to process.stderr. Silence the
 // "Sourcemap for X points to a source file outside its package" noise
 // emitted when node_modules packages reference scss from sibling packages
@@ -74,7 +82,7 @@ export default defineConfig({
                 ],
                 test: {
                     name: "storybook",
-                    setupFiles: ["./.storybook/vitest.setup.js"],
+                    setupFiles: ["./.storybook/vitest.setup.ts"],
                     reporters: [
                         ["default"],
                         ["junit"],
@@ -118,7 +126,6 @@ export default defineConfig({
                 "**/*.d.ts",
                 "**/.storybook/**",
                 "storybook-static/**",
-                "stylelint.config.mjs",
             ],
         },
     },

@@ -1,5 +1,5 @@
 <template>
-    <div ref="containerRef" class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth?.value}">
+    <div ref="tokensRef" class="filter-tokens">
         <KsPopover
             v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
@@ -55,26 +55,39 @@
             />
         </div>
 
-        <KsButton
+        <div
             v-if="isComplex"
-            size="default"
-            class="rules-pill"
-            :disabled="filter.readOnly?.value"
-            @click="openAdvanced('.rules-pill')"
+            ref="pillWrapRef"
+            class="filter-chip-wrap"
+            :class="{
+                'ends-conditional-group': globalFilters.length > 0,
+                'shows-group-separator': globalFilters.length > 0 && isGroupSeparatorVisible,
+            }"
         >
-            <span class="rules-pill-content">
-                <KsIcon class="rules-pill-icon"><FilterVariant /></KsIcon>
-                <span class="rules-pill-label">{{ ruleLabel }}</span>
-                <KsIcon class="rules-pill-chevron"><ChevronDown /></KsIcon>
-            </span>
-            <span class="rules-pill-dot" />
-        </KsButton>
+            <KsButton
+                size="default"
+                class="rules-pill"
+                :disabled="filter.readOnly?.value"
+                @click="openAdvanced('.rules-pill')"
+            >
+                <span class="rules-pill-content">
+                    <KsIcon class="rules-pill-icon"><FilterVariant /></KsIcon>
+                    <span class="rules-pill-label">{{ ruleLabel }}</span>
+                    <KsIcon class="rules-pill-chevron"><ChevronDown /></KsIcon>
+                </span>
+                <span class="rules-pill-dot" />
+            </KsButton>
+        </div>
 
         <div
-            v-for="cf in conditionalFilters"
+            v-for="(cf, index) in conditionalFilters"
             v-else
             :key="cf.id"
             class="filter-chip-wrap"
+            :class="{
+                'ends-conditional-group': isLastConditional(index),
+                'shows-group-separator': isLastConditional(index) && isGroupSeparatorVisible,
+            }"
         >
             <FilterChip
                 :ref="(el: any) => setChipRef(cf.id, el)"
@@ -87,41 +100,33 @@
             />
         </div>
 
-        <template v-if="globalFilters.length || (unappliedGlobalKeys.length && !filter.readOnly?.value)">
-            <div
-                ref="globalFiltersRef"
-                class="global-filters"
-                :class="{'is-wrapped': globalWrapOffset > 0}"
-                :style="globalWrapOffset > 0 ? {transform: `translateX(-${globalWrapOffset}px)`} : undefined"
+        <div
+            v-for="gf in globalFilters"
+            :key="gf.id"
+            class="filter-chip-wrap"
+        >
+            <FilterChip
+                :ref="(el: any) => setChipRef(gf.id, el)"
+                :filter="gf"
+                :filterKey="keyConfigFor(gf)"
+                :class="{'read-only': filter.readOnly?.value}"
+                class="filter-chip"
+                @remove="filter.removeFilter"
+                @update="filter.updateFilter"
+            />
+        </div>
+
+        <template v-if="!filter.readOnly?.value">
+            <KsButton
+                v-for="key in unappliedGlobalKeys"
+                :key="`add-${key.key}`"
+                :icon="Plus"
+                size="default"
+                class="add-global-btn"
+                @click="addGlobalFilter(key)"
             >
-                <div
-                    v-for="gf in globalFilters"
-                    :key="gf.id"
-                    class="filter-chip-wrap"
-                >
-                    <FilterChip
-                        :ref="(el: any) => setChipRef(gf.id, el)"
-                        :filter="gf"
-                        :filterKey="keyConfigFor(gf)"
-                        :class="{'read-only': filter.readOnly?.value}"
-                        class="filter-chip"
-                        @remove="filter.removeFilter"
-                        @update="filter.updateFilter"
-                    />
-                </div>
-                <template v-if="!filter.readOnly?.value">
-                    <KsButton
-                        v-for="key in unappliedGlobalKeys"
-                        :key="`add-${key.key}`"
-                        :icon="Plus"
-                        size="default"
-                        class="add-global-btn"
-                        @click="addGlobalFilter(key)"
-                    >
-                        {{ key.label }}
-                    </KsButton>
-                </template>
-            </div>
+                {{ key.label }}
+            </KsButton>
         </template>
 
         <KsTooltip
@@ -145,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed, watch, onMounted, onBeforeUnmount} from "vue"
+    import {ref, inject, nextTick, computed, watch, onMounted, onUpdated, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import {useDebounceFn} from "@vueuse/core"
 
@@ -156,20 +161,21 @@
     import FilterChip from "./layout/FilterChip.vue"
 
     import {buildNewFilter} from "./utils/filterChipFactory"
+    import {SAME_ROW_TOLERANCE_PX} from "./utils/constants"
     import {type AppliedFilter, type FilterKeyConfig} from "./utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
     const {t} = useI18n({useScope: "global"})
+
+    const tokensRef = ref<HTMLElement | null>(null)
+    const pillWrapRef = ref<HTMLElement | null>(null)
+    const isGroupSeparatorVisible = ref(false)
 
     const isCustomizeFiltersVisible = ref(false)
     const isAdvancedOpen = ref(false)
     const advancedAnchor = ref(".customize-button")
     const chipRefs = ref<Record<string, any>>({})
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
-
-    const containerRef = ref<HTMLElement | null>(null)
-    const globalFiltersRef = ref<HTMLElement | null>(null)
-    const globalWrapOffset = ref(0)
 
     const openAdvanced = (anchor = ".customize-button") => {
         advancedAnchor.value = anchor
@@ -266,55 +272,74 @@
         filter.searchQuery.value = value
     }, 700)
 
-    const measureGlobalWrap = () => {
-        const container = containerRef.value
-        const globalFiltersEl = globalFiltersRef.value
-        if (!container || !globalFiltersEl) {
-            globalWrapOffset.value = 0
-            return
-        }
-        const containerRect = container.getBoundingClientRect()
-        const isWrappedBelowFirstRow = globalFiltersEl.getBoundingClientRect().top - containerRect.top > 6
-        if (!isWrappedBelowFirstRow) {
-            globalWrapOffset.value = 0
-            return
-        }
-        const barLeft = container.parentElement?.getBoundingClientRect().left ?? containerRect.left
-        globalWrapOffset.value = Math.max(0, Math.round(containerRect.left - barLeft))
+    const isLastConditional = (index: number) =>
+        globalFilters.value.length > 0 && index === conditionalFilters.value.length - 1
+
+    const chipElement = (id?: string): HTMLElement | undefined =>
+        id ? chipRefs.value[id]?.$el : undefined
+
+    const centreOf = (element: HTMLElement) => {
+        const box = element.getBoundingClientRect()
+        return (box.top + box.bottom) / 2
     }
 
-    let wrapObserver: ResizeObserver | undefined
-    onMounted(() => {
-        if (containerRef.value && typeof ResizeObserver !== "undefined") {
-            wrapObserver = new ResizeObserver(() => measureGlobalWrap())
-            wrapObserver.observe(containerRef.value)
+    const conditionalGroupEnd = (): HTMLElement | undefined =>
+        isComplex.value ? pillWrapRef.value ?? undefined : chipElement(conditionalFilters.value.at(-1)?.id)
+
+    const measureGroupSeparator = () => {
+        const before = conditionalGroupEnd()
+        const after = chipElement(globalFilters.value[0]?.id)
+        if (!before || !after) {
+            isGroupSeparatorVisible.value = false
+            return
         }
-        nextTick(measureGlobalWrap)
+        isGroupSeparatorVisible.value = Math.abs(centreOf(before) - centreOf(after)) <= SAME_ROW_TOLERANCE_PX
+    }
+
+    let separatorObserver: ResizeObserver | undefined
+
+    const observeSeparatorInputs = () => {
+        const bar = tokensRef.value?.parentElement
+        if (!separatorObserver || !bar) return
+        separatorObserver.disconnect()
+        separatorObserver.observe(bar)
+        bar.querySelectorAll(".filter-chip-wrap").forEach((wrap) => separatorObserver?.observe(wrap))
+    }
+
+    onMounted(() => {
+        if (typeof ResizeObserver !== "undefined") {
+            separatorObserver = new ResizeObserver(() => measureGroupSeparator())
+            observeSeparatorInputs()
+        }
+        nextTick(measureGroupSeparator)
     })
-    onBeforeUnmount(() => wrapObserver?.disconnect())
-    watch([globalFilters, conditionalFilters, isComplex], () => nextTick(measureGlobalWrap))
+    onBeforeUnmount(() => separatorObserver?.disconnect())
+    onUpdated(() => {
+        observeSeparatorInputs()
+        measureGroupSeparator()
+    })
 </script>
 
 <style lang="scss" scoped>
-.filter-container {
+.filter-tokens {
     --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: var(--ks-spacing-2);
-    flex: 1;
-    min-width: 7rem;
-
-    &.filter-grow {
-        flex-wrap: nowrap;
-        flex-grow: 1;
-    }
+    display: contents;
 }
 
 .filter-chip-wrap {
     flex-shrink: 0;
+}
+
+/* The border box is always present and only its colour toggles, so drawing the rule cannot
+   change the layout that decides whether to draw it. */
+.filter-chip-wrap.ends-conditional-group {
+    padding-right: var(--ks-spacing-2);
+    border-right: 1px solid transparent;
+}
+
+.filter-chip-wrap.ends-conditional-group.shows-group-separator {
+    border-right-color: var(--ks-border-default);
 }
 
 .filter-chip {
@@ -324,20 +349,6 @@
     &.read-only {
         pointer-events: none;
         opacity: 0.6;
-    }
-}
-
-.global-filters {
-    display: inline-flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--ks-spacing-2);
-    padding-left: var(--ks-spacing-2);
-    border-left: 1px solid var(--ks-border-default);
-    min-height: 1.75rem;
-
-    &.is-wrapped {
-        border-left-color: transparent;
     }
 }
 
@@ -418,6 +429,7 @@
 
 .refresh-btn {
     margin: 0 !important;
+    align-self: center;
     font-size: var(--ks-font-size-sm);
     color: var(--ks-text-secondary);
 

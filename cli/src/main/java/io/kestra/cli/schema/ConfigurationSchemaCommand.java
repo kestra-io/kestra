@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
 
@@ -16,7 +17,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true
 )
 @Slf4j
-public class ConfigurationSchemaCommand extends AbstractCommand {
+public class ConfigurationSchemaCommand extends AbstractCommand implements NoDatabaseCommandInterface {
 
     @CommandLine.Option(names = { "-o", "--output" }, description = "Output file path", defaultValue = "configuration-schema.json")
     private File output;

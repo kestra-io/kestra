@@ -22,7 +22,7 @@
                 </KsTag>
                 <KsTag v-else-if="type !== 'flows'" size="small" round>
                     <template #icon>
-                        <PencilOff />
+                        <PencilLockOutline />
                     </template>
                     {{ $t('source_search.tag_search_only') }}
                 </KsTag>
@@ -79,7 +79,7 @@
                                         {{ $t('source_search.replace_all_in_flow') }}
                                     </KsButton>
                                     <router-link
-                                        :to="{path: `/flows/edit/${group.namespace}/${group.id}/source`}"
+                                        :to="editorLinkTarget(group)"
                                         class="result-group-open-link"
                                         :aria-label="$t('source_search.open_flow')"
                                         :title="$t('source_search.open_flow')"
@@ -305,6 +305,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
+    import {useRoute} from "vue-router"
     import _escape from "lodash/escape"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
@@ -315,7 +316,7 @@
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import PencilOff from "vue-material-design-icons/PencilOff.vue"
+    import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import Refresh from "vue-material-design-icons/Refresh.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
@@ -362,6 +363,7 @@
     }>()
 
     const {t} = useI18n()
+    const route = useRoute()
 
     const SECRET_PATTERN = /secret\(\s*['"]([^'"]+)['"]\s*\)/
 
@@ -480,6 +482,13 @@
 
     function groupKey(group: SourceSearchResult) {
         return `flows:${group.namespace}.${group.id}`
+    }
+
+    function editorLinkTarget(group: SourceSearchResult) {
+        return {
+            name: "flows/update/edit",
+            params: {tenant: route.params.tenant, namespace: group.namespace, id: group.id},
+        }
     }
 
     function matchKey(group: SourceSearchResult, match: SourceMatch) {

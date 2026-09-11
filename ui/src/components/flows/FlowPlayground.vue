@@ -86,7 +86,7 @@
     import ExecutionMetric from "../executions/ExecutionMetric.vue"
     import PlaygroundLog from "./playground/PlaygroundLog.vue"
     import {usePlaygroundStore} from "../../stores/playground"
-    import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
+    import EmptyVisualPlayground from "../../assets/empty_visuals/playground.png"
     import {useExecutionsStore} from "../../stores/executions"
     import Kill from "../executions/overview/components/actions/Kill.vue"
 
@@ -190,7 +190,9 @@
     }
 
     .current-run {
+        display: flex;
         flex: 1;
+        flex-direction: column;
     }
 
 .extra-options{
@@ -273,6 +275,7 @@
     }
 
     .tab-content{
+        flex: 1;
         overflow: auto;
         padding: 1rem;
         background-color: var(--ks-bg-surface);
@@ -283,12 +286,24 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-6) var(--ks-spacing-4);
+        img {
+            width: 120px;
+            height: 120px;
+            margin-bottom: var(--ks-spacing-2);
+        }
         p {
+            margin: 0;
+            max-width: 26rem;
             text-align: center;
+            font-size: var(--ks-font-size-sm);
+            line-height: var(--ks-line-height-base);
             color: var(--ks-text-secondary);
-            img {
-                width: 200px;
-                margin-bottom: 1rem;
+            &:first-of-type {
+                font-size: var(--ks-font-size-base);
+                font-weight: var(--ks-font-weight-medium);
+                color: var(--ks-text-primary);
             }
         }
     }

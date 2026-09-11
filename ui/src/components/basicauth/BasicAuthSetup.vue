@@ -71,7 +71,7 @@
                                         type="password"
                                         showPassword
                                         v-model="confirmPassword"
-                                        placeholder="Re-enter your password"
+                                        :placeholder="$t('confirm password')"
                                     />
                                 </KsFormItem>
                                 <KsCheckItem :met="passwordsMatch">
@@ -91,7 +91,7 @@
                             <KsFormItem :label="$t('setup.survey.company_size')">
                                 <KsSelect
                                     v-model="surveyData.mainGoal"
-                                    placeholder="Select"
+                                    :placeholder="$t('select')"
                                     class="survey-select"
                                 >
                                     <KsOption

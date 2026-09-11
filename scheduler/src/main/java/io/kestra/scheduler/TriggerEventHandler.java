@@ -13,6 +13,7 @@ import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -51,6 +52,7 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -153,6 +155,14 @@ public class TriggerEventHandler {
     void onCreateBackfill(Clock clock, CreateBackfillTrigger event) {
         findTriggerState(event).ifPresent(state ->
         {
+            // A second backfill would capture the running backfill's cursor as the pre-backfill schedule
+            // date, so deleting it would rewind the trigger and replay every schedule from that cursor.
+            if (state.getBackfill() != null) {
+                throw new ConflictException(
+                    "A backfill is already running on trigger '%s'. Delete it before creating a new one.".formatted(event.uid())
+                );
+            }
+
             state = state
                 .lastEventId(clock, event.eventId())
                 .backfill(
@@ -322,7 +332,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
-        Optional<TriggerState> maybeState = triggerStateStore.findById(event.id());
+        Optional<TriggerState> maybeState = triggerStateStore.findByIdWithoutAcl(event.id());
         if (maybeState.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
             return;
@@ -427,7 +437,7 @@ public class TriggerEventHandler {
             // The trigger was deleted while its worker job was in flight: kill the instance
             // the worker just started. Only do so when the state is truly missing, not when
             // the event was de-duplicated.
-            if (triggerStateStore.findById(event.id()).isEmpty()) {
+            if (triggerStateStore.findByIdWithoutAcl(event.id()).isEmpty()) {
                 sendExecutionKilled(event.id());
             }
             return;
@@ -454,7 +464,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerWorkerLost(Clock clock, TriggerWorkerLost event) {
-        triggerStateStore.findById(event.id()).ifPresent(state ->
+        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
         {
             if (state.getWorkerId() != null && !state.getWorkerId().equals(event.workerUid())) {
                 // The trigger is already held by another worker.
@@ -532,7 +542,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
-        triggerStateStore.findById(event.id()).ifPresent(state ->
+        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
         {
             triggerStateStore.delete(event.id());
             maySendExecutionKilled(state);
@@ -602,7 +612,7 @@ public class TriggerEventHandler {
             return Pair.of(null, null);
         }
 
-        AbstractTrigger trigger = flow.getTriggers().stream()
+        AbstractTrigger trigger = ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(it -> it.getId().equals(event.id().getTriggerId()))
             .findFirst()
             .orElse(null);
@@ -625,7 +635,7 @@ public class TriggerEventHandler {
     }
 
     private Optional<TriggerState> findTriggerState(final TriggerEvent event) {
-        Optional<TriggerState> state = triggerStateStore.findById(event.id());
+        Optional<TriggerState> state = triggerStateStore.findByIdWithoutAcl(event.id());
         if (state.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
             return Optional.empty();

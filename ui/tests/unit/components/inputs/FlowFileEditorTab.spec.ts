@@ -1,5 +1,6 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
 
 vi.mock("../../../../src/stores/flow", async () => {
     const {reactive} = await import("vue")
@@ -43,8 +44,17 @@ vi.mock("../../../../src/stores/plugins", () => ({
 
 vi.mock("../../../../src/stores/doc", () => ({useDocStore: () => ({docId: ""})}))
 vi.mock("../../../../src/stores/productTour", () => ({useProductTourStore: () => ({isGuidedActive: false})}))
+vi.mock("../../../../src/stores/executions", () => ({
+    useExecutionsStore: () => ({triggerExecution: vi.fn(), execution: undefined}),
+}))
+vi.mock("../../../../src/stores/playground", () => ({
+    usePlaygroundStore: () => ({enabled: false}),
+}))
 vi.mock("override/stores/namespaces", () => ({
-    useNamespacesStore: () => ({readFile: vi.fn().mockResolvedValue({content: ""})}),
+    useNamespacesStore: () => ({
+        readFile: vi.fn().mockResolvedValue({content: ""}),
+        fileMetadata: vi.fn().mockResolvedValue({size: 0}),
+    }),
 }))
 vi.mock("override/stores/misc", () => ({useMiscStore: () => ({configs: {}, openCopilot: vi.fn()})}))
 
@@ -80,9 +90,17 @@ import FlowFileEditorTab from "../../../../src/components/inputs/FlowFileEditorT
 const BUFFER = "id: flow_1\nnamespace: company.team\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n"
 const MUTATED = `${BUFFER}labels:\n  managed-by: governance\n`
 
+const i18n = createI18n({
+    legacy: false,
+    globalInjection: true,
+    locale: "en",
+    messages: {en: {}},
+})
+
 function mountTab(flow = true) {
     return mount(FlowFileEditorTab, {
         props: {name: "Flow.yaml", extension: "yaml", path: "Flow.yaml", flow, dirty: false},
+        global: {plugins: [i18n]},
     })
 }
 

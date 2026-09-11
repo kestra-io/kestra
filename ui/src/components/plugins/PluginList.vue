@@ -4,7 +4,7 @@
             v-if="navigationStack.length > 0"
             class="back-btn"
             @click="goBack"
-            aria-label="Go back"
+            :aria-label="$t('back')"
             :icon="ChevronLeft"
         />
         <KsBreadcrumb :items="breadcrumbItems" :title="breadcrumbTitle" />
@@ -348,10 +348,6 @@
 
         :deep(.kel-input__inner) {
             font-size: var(--ks-font-size-sm);
-
-            &::placeholder {
-                color: var(--ks-text-dim) !important;
-            }
         }
     }
 

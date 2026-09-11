@@ -447,8 +447,15 @@ public class FlowableUtils {
                         }
                         return Either.right(resolvedValues);
                     } else {
-                        throw new IllegalVariableEvaluationException("Unknown value type: " + valuesNode.getNodeType());
+                        throw new IllegalVariableEvaluationException(
+                            "The `values` must be a list, a map, or an expression that renders to one, but got: '" + renderValue + "'."
+                        );
                     }
+                } catch (JsonProcessingException e) {
+                    throw new IllegalVariableEvaluationException(
+                        "The `values` must be a list, a map, or an expression that renders to one, but got: '" + renderValue + "'.",
+                        e
+                    );
                 } catch (IOException e) {
                     throw new IllegalVariableEvaluationException(e);
                 }

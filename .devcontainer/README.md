@@ -27,7 +27,7 @@ In the meantime, you can move onto the next step...
 
 - Java 25 (LTS versions).
 - Gradle (comes with wrapper `./gradlew`)
-- Docker (optional, for running Kestra in containers)
+- Docker (provided by the devcontainer itself, which runs its own daemon)
 
 ### Development:
 
@@ -76,8 +76,7 @@ kestra:
 
 datasources:
   postgres:
-    # It is important to note that you must use the "host.docker.internal" host when connecting to a docker container outside of your devcontainer as attempting to use localhost will only point back to this devcontainer.
-    url: jdbc:postgresql://host.docker.internal:5432/kestra
+    url: jdbc:postgresql://localhost:5432/kestra
     driverClassName: org.postgresql.Driver
     username: kestra
     password: k3str4

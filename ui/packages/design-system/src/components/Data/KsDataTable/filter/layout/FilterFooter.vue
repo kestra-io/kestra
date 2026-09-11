@@ -9,9 +9,13 @@
         </div>
 
         <div class="action-buttons">
-            <KsTooltip :content="$t('filter.reset_tooltip')" placement="top">
-                <KsButton size="small" :icon="Restore" @click="emits('reset')" />
-            </KsTooltip>
+            <KsButton
+                :tooltip="$t('filter.reset_tooltip')"
+                tooltipPlacement="top"
+                size="small"
+                :icon="Restore"
+                @click="emits('reset')"
+            />
         </div>
     </div>
 </template>

@@ -142,9 +142,11 @@
 
     import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
     import {displayTaskOf, taskEditPathFor} from "../../../utils/flowableBlockOps"
-    import {flowYamlUtils} from "@kestra-io/topology"
+    import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
     import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY} from "../injectionKeys"
 
+    // BranchLane imports this component statically, so this is the side of the mutual
+    // recursion that must stay lazy — static on both sides is a circular import.
     const BranchLane = defineAsyncComponent(() => import("./BranchLane.vue"))
 
     const {t} = useI18n()

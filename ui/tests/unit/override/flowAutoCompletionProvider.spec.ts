@@ -45,3 +45,25 @@ describe("FlowAutoCompletion inputs autocomplete with FORM groups", () => {
         expect(result).toEqual([])
     })
 })
+
+describe("FlowAutoCompletion loop item.* and parent.* nested fields", () => {
+    it("`item.` lists the loop iteration fields", async () => {
+        const result = await provider().nestedFieldAutoCompletion("", parsed, "item")
+        expect(result).toEqual(["value", "key", "index", "parent", "parents"])
+    })
+
+    it("`item.parent.` lists the enclosing loop's fields", async () => {
+        const result = await provider().nestedFieldAutoCompletion("", parsed, "item.parent")
+        expect(result).toEqual(["value", "key", "index"])
+    })
+
+    it("`parent.` lists the flowable ancestor's fields", async () => {
+        const result = await provider().nestedFieldAutoCompletion("", parsed, "parent")
+        expect(result).toEqual(["task", "taskrun"])
+    })
+
+    it("`parent.task.` and `parent.taskrun.` resolve to their leaf fields", async () => {
+        expect(await provider().nestedFieldAutoCompletion("", parsed, "parent.task")).toEqual(["id"])
+        expect(await provider().nestedFieldAutoCompletion("", parsed, "parent.taskrun")).toEqual(["value"])
+    })
+})

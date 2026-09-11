@@ -1,4 +1,4 @@
-import {test as base, type BrowserContext, type Page} from "@playwright/test"
+import {expect, test as base, type BrowserContext, type Page} from "@playwright/test"
 import path from "path"
 import {fileURLToPath} from "url"
 
@@ -10,6 +10,9 @@ export const STORAGE_STATE = path.resolve(__dirname, "../.auth/user.json")
 
 /** Mirrors `AUTH_FLAG_KEY` in `ui/src/utils/basicAuth.ts`. */
 export const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
+
+/** Mirrors `MISSING_KEY_MESSAGE` in `ui/src/translations/i18n.ts`. */
+export const MISSING_KEY_MESSAGE = "[i18n] Missing translation key"
 
 /** Mirrors `STORAGE_KEY` in `ui/src/stores/productTour.ts`. */
 export const PRODUCT_TOUR_STORAGE_KEY = "kestra.productTour.state"
@@ -26,7 +29,13 @@ type SharedContextFixtures = {
  *  test still gets its own tab (fresh DOM/JS heap, no leaked state). */
 export const test = base.extend<{page: Page}, SharedContextFixtures>({
     sharedContext: [async ({browser}, use) => {
-        const context = await browser.newContext({storageState: STORAGE_STATE})
+        // The production build registers a service worker (workbox `NetworkOnly` for `/api/*`,
+        // `clientsClaim: true`). It doesn't control the very first page, but claims every page
+        // after that — and once it does, `/api/*` fetches are handled inside the worker's own
+        // fetch listener, a layer `page.route()` doesn't see through. Any spec that stubs an API
+        // response and then does a second hard navigation would silently stop being stubbed.
+        // Blocking service workers for the test context sidesteps this entirely.
+        const context = await browser.newContext({storageState: STORAGE_STATE, serviceWorkers: "block"})
 
         // storageState skips sessionStorage, so the login-flag cookie alone
         // still bounces the SPA to /ui/login — re-seed the flag per document.
@@ -52,8 +61,18 @@ export const test = base.extend<{page: Page}, SharedContextFixtures>({
             dialog.accept().catch(() => {})
         })
 
+        // The app reports every translation key it could not resolve; a raw key on screen is a bug
+        // no locator would notice, so the test that rendered it fails here instead.
+        const missingTranslationKeys: string[] = []
+        page.on("console", (message) => {
+            if (message.type() === "error" && message.text().startsWith(MISSING_KEY_MESSAGE)) {
+                missingTranslationKeys.push(message.text())
+            }
+        })
+
         await use(page)
         await page.close()
+        expect(missingTranslationKeys, "translation keys rendered as their raw id").toEqual([])
     },
 })
 

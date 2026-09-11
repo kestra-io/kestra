@@ -3,6 +3,7 @@ package io.kestra.cli.commands.flows;
 import java.nio.file.Path;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.serializers.YamlParser;
@@ -17,7 +18,7 @@ import picocli.CommandLine;
     description = "Generate a DOT graph from a file"
 )
 @Slf4j
-public class FlowDotCommand extends AbstractCommand {
+public class FlowDotCommand extends AbstractCommand implements NoDatabaseCommandInterface {
 
     @CommandLine.Parameters(index = "0", description = "The flow file to display")
     private Path file;

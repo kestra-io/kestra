@@ -129,11 +129,6 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.kel-input__inner) {
-    &::placeholder {
-        color: var(--ks-text-inactive) !important;
-    }
-}
 :deep(.placeholder) {
     top: -7px !important;
 }

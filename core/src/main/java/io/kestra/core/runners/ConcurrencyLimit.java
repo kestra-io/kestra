@@ -4,6 +4,7 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.utils.IdUtils;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
@@ -23,6 +24,7 @@ public class ConcurrencyLimit implements HasUID {
     String flowId;
 
     @With
+    @PositiveOrZero
     Integer running;
 
     @Override

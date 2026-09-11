@@ -9,6 +9,14 @@ import lombok.SneakyThrows;
 public class TypedObjectWriter extends OutputWriter implements SpecializedWriter {
     private Object current;
 
+    public TypedObjectWriter() {
+        super();
+    }
+
+    public TypedObjectWriter(final long maxOutputSize) {
+        super(maxOutputSize);
+    }
+
     @Override
     public void writeSpecialized(int i) {
         concatSpecialized(i);
@@ -61,6 +69,7 @@ public class TypedObjectWriter extends OutputWriter implements SpecializedWriter
 
         if (isConcatenableScalar(current) && isConcatenableScalar(o)) {
             current = current.toString() + o;
+            checkOutputSize(((String) current).length());
             return;
         }
 

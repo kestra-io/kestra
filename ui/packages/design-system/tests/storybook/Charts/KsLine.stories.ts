@@ -3,7 +3,7 @@ import {ref} from "vue"
 import {expect} from "storybook/test"
 import KsLine from "../../../src/components/Charts/KsLine.vue"
 import KsBar from "../../../src/components/Charts/KsBar.vue"
-import {ChartFeature, TooltipType} from "../../../src/components/Charts/ksChartUtils"
+import {ChartFeature, TooltipType} from "../../../src/utils/chart"
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const ALL_FEATURES: ChartFeature[] = [ChartFeature.LEGEND, ChartFeature.AXIS, ChartFeature.AXIS_SPLITLINE, ChartFeature.TOOLTIP]

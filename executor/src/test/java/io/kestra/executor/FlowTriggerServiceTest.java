@@ -24,6 +24,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
@@ -54,13 +55,15 @@ class FlowTriggerServiceTest {
     private FlowService flowService;
     @Inject
     private ExecutionOutputService executionOutputService;
+    @Inject
+    private ExecutionDepthConfiguration executionDepthConfiguration;
     private FlowMetaStoreInterface flowMetaStore;
     private FlowTriggerService flowTriggerService;
 
     @BeforeEach
     void setUp() {
         flowMetaStore = mock(FlowMetaStoreInterface.class);
-        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService);
+        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService, executionDepthConfiguration);
     }
 
     @Test
@@ -389,6 +392,33 @@ class FlowTriggerServiceTest {
         // Then the triggered execution stays on the upstream correlation instead of starting a new one
         assertThat(resultingExecutionsToRun).hasSize(1);
         assertThat(resultingExecutionsToRun.getFirst().getLabels()).contains(new Label(Label.CORRELATION_ID, correlationId));
+    }
+
+    @Test
+    void shouldIncrementExecutionDepthOnExecutionsComputedFromFlowTriggers() {
+        // Given an upstream execution three hops into its chain
+        var upstream = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
+        upstream = upstream.withMetadata(upstream.getMetadata().withExecutionDepth(3));
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(upstream, flowWithFlowTrigger());
+
+        // Then the triggered execution is one hop further than its cause, not a fresh root
+        assertThat(resultingExecutionsToRun).hasSize(1);
+        assertThat(resultingExecutionsToRun.getFirst().getMetadata().getExecutionDepth()).isEqualTo(4);
+    }
+
+    @Test
+    void shouldDropFlowTriggerWhenExecutionChainExceedsMaxDepth() {
+        // Given an upstream execution already at the configured cap
+        var upstream = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS).withState(State.Type.SUCCESS);
+        upstream = upstream.withMetadata(upstream.getMetadata().withExecutionDepth(executionDepthConfiguration.maxDepth()));
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(upstream, flowWithFlowTrigger());
+
+        // Then the trigger is dropped rather than extending an unbounded chain
+        assertThat(resultingExecutionsToRun).isEmpty();
     }
 
     private static Flow flowWithFlowTrigger() {

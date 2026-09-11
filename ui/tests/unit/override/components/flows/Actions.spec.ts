@@ -7,7 +7,8 @@ import KestraDesignSystem from "@kestra-io/design-system"
 const publishDraft = vi.fn().mockResolvedValue("saved")
 
 const routeState = {tab: "edit"}
-const flowState = {deleted: false}
+const flowState = {deleted: false, exists: true, isCreating: false}
+const editorState = {isAllowedEdit: true}
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {tab: routeState.tab}, query: {}}),
@@ -20,8 +21,10 @@ vi.mock("override/stores/auth", () => ({
 
 vi.mock("../../../../../src/stores/flow", () => ({
     useFlowStore: () => ({
-        flow: {id: "f", namespace: "ns", draft: true, deleted: flowState.deleted, source: "id: f\nnamespace: ns\n"},
-        isCreating: false,
+        flow: flowState.exists
+            ? {id: "f", namespace: "ns", draft: true, deleted: flowState.deleted, source: "id: f\nnamespace: ns\n"}
+            : undefined,
+        isCreating: flowState.isCreating,
         createFlow: vi.fn(),
     }),
 }))
@@ -51,7 +54,9 @@ vi.mock("../../../../../src/components/flows/useFlowEditorActions", () => ({
         canSave: false,
         hasErrors: false,
         isReadOnly: false,
-        isAllowedEdit: true,
+        get isAllowedEdit() {
+            return editorState.isAllowedEdit
+        },
         // The real composable returns computed refs; `isDraft` is read from script (not just
         // auto-unwrapped in a template), so the mock has to be a ref for that read to work.
         isDraft: computed(() => true),
@@ -115,6 +120,9 @@ describe("Actions.vue — publish a draft flow", () => {
         vi.clearAllMocks()
         routeState.tab = "edit"
         flowState.deleted = false
+        flowState.exists = true
+        flowState.isCreating = false
+        editorState.isAllowedEdit = true
     })
 
     it("shows an enabled Publish action for an unchanged draft flow, and clicking it publishes", async () => {
@@ -135,6 +143,9 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
         vi.clearAllMocks()
         routeState.tab = "edit"
         flowState.deleted = false
+        flowState.exists = true
+        flowState.isCreating = false
+        editorState.isAllowedEdit = true
     })
 
     it("pairs the save-family control with Execute on the editor tab", () => {
@@ -156,6 +167,20 @@ describe("Actions.vue — the quick action pair is the same shape on every tab",
             expect(findExecute(wrapper).exists()).toBe(true)
         },
     )
+
+    it("offers no Edit flow on the create page, where there is no flow to edit yet", () => {
+        // Given — the create-flow landing: creation started, but no flow exists yet
+        routeState.tab = "edit"
+        flowState.exists = false
+        flowState.isCreating = true
+        editorState.isAllowedEdit = false
+
+        // When
+        const wrapper = mountActions()
+
+        // Then — Edit flow used to render here and navigate to an undefined flow
+        expect(findButtonByText(wrapper, "Edit flow")).toBeUndefined()
+    })
 
     it("promotes Restore to the primary slot on a deleted flow, and offers no Execute", () => {
         routeState.tab = "overview"

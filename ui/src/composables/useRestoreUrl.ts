@@ -1,6 +1,7 @@
 /**
- * Persists a page's URL query (filters, sort, pagination, etc.) to sessionStorage
- * so it can be restored when the user navigates back to that page with no query.
+ * Persists a page's URL query (filters, sort, etc.) to sessionStorage so it can be
+ * restored when the user navigates back to that page with no query. Pagination
+ * (page/size) is excluded (PY-1529) from restoration so returning lands on the default page.
  *
  * Auto-saves on every same-path query change and auto-restores on mount when the
  * URL has no query but a saved state exists. Exposes `loadInit` so consumers can
@@ -34,7 +35,7 @@ export function getRestoredQuery(route: RouteLocation) {
 
     for (const key in localStorageValue) {
         const value = localStorageValue[key]
-        if (query[key] || !value) continue
+        if (key === "page" || key === "size" || query[key] || !value) continue
         // empty array breaks the application
         if (Array.isArray(value) && value.length === 0) continue
         query[key] = value

@@ -9,7 +9,7 @@ const meta: Meta<typeof KsEntityLink> = {
         entity: {control: "select", options: ["namespace", "flow"]},
     },
     parameters: {
-        docs: {description: {component: "Clickable cross-entity reference (namespace or flow) used in table cells: a neutral tag with a leading entity icon, turning violet on hover so rest-state rows keep their visual hierarchy (kestra-ee#9432)."}},
+        docs: {description: {component: "Clickable cross-entity reference (namespace or flow) used in table cells: a neutral tag with a leading entity icon, turning violet on hover so rest-state rows keep their visual hierarchy (kestra-ee#9432). Narrow cells clip the value with an ellipsis, so hovering reveals it in full (kestra-ee#10157)."}},
     },
 }
 export default meta
@@ -54,6 +54,36 @@ export const Truncated: Story = {
             </div>
         `,
     }),
+}
+
+export const NoIcon: Story = {
+    render: () => ({
+        components: {KsEntityLink},
+        template: `
+            <div style="padding:24px;display:grid;gap:16px">
+                <span style="font-size:11px;text-transform:uppercase;color:var(--ks-text-dim)">Default</span>
+                <div style="width:8.5rem;border:1px dashed var(--ks-border-default)">
+                    <ks-entity-link
+                        entity="namespace"
+                        value="sanitychecks.plugins.plugin-ansible"
+                        to="/namespaces/edit/sanitychecks.plugins.plugin-ansible"
+                    />
+                </div>
+                <span style="font-size:11px;text-transform:uppercase;color:var(--ks-text-dim)">noIcon</span>
+                <div style="width:8.5rem;border:1px dashed var(--ks-border-default)">
+                    <ks-entity-link
+                        entity="namespace"
+                        value="sanitychecks.plugins.plugin-ansible"
+                        to="/namespaces/edit/sanitychecks.plugins.plugin-ansible"
+                        no-icon
+                    />
+                </div>
+            </div>
+        `,
+    }),
+    parameters: {
+        docs: {description: {story: "At the same width, dropping the icon gives the value the 16px icon plus the 4px gap back. For dense embedded tables such as the dashboard Executions panel, where the column is around 90px wide."}},
+    },
 }
 
 export const States: Story = {

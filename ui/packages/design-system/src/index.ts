@@ -1,6 +1,15 @@
 import {defineAsyncComponent} from "vue"
 import type {App, AsyncComponentLoader, Component} from "vue"
-import ElementPlus, {INSTALLED_KEY} from "element-plus"
+import {
+    INSTALLED_KEY,
+    provideGlobalConfig,
+    ElInfiniteScroll,
+    ElLoading,
+    ElMessage,
+    ElMessageBox,
+    ElNotification,
+    ElPopoverDirective,
+} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
 
@@ -11,11 +20,29 @@ const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
     Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
-import KsEchart from "./components/Charts/KsEchart.vue"
-import KsGraph from "./components/Charts/KsGraph.vue"
-import KsLine from "./components/Charts/KsLine.vue"
-import KsBar from "./components/Charts/KsBar.vue"
-import KsPie from "./components/Charts/KsPie.vue"
+// Async on purpose: every chart statically pulls ECharts, which the barrel would
+// otherwise put in the app's eager bundle on behalf of consumers that never
+// render a chart.
+import type KsEchartSfc from "./components/Charts/KsEchart.vue"
+import type KsGraphSfc from "./components/Charts/KsGraph.vue"
+import type KsLineSfc from "./components/Charts/KsLine.vue"
+import type KsBarSfc from "./components/Charts/KsBar.vue"
+import type KsPieSfc from "./components/Charts/KsPie.vue"
+const KsEchart = asyncComponent("KsEchart",
+    () => import("./components/Charts/KsEchart.vue"),
+) as unknown as typeof KsEchartSfc
+const KsGraph = asyncComponent("KsGraph",
+    () => import("./components/Charts/KsGraph.vue"),
+) as unknown as typeof KsGraphSfc
+const KsLine = asyncComponent("KsLine",
+    () => import("./components/Charts/KsLine.vue"),
+) as unknown as typeof KsLineSfc
+const KsBar = asyncComponent("KsBar",
+    () => import("./components/Charts/KsBar.vue"),
+) as unknown as typeof KsBarSfc
+const KsPie = asyncComponent("KsPie",
+    () => import("./components/Charts/KsPie.vue"),
+) as unknown as typeof KsPieSfc
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
@@ -69,6 +96,7 @@ import KsEmptyState from "./components/Data/KsEmptyState.vue"
 import KsEntityLink from "./components/Data/KsEntityLink/KsEntityLink.vue"
 export type {KsEntityLinkEntity} from "./components/Data/KsEntityLink/KsEntityLink.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
+import KsFileTag from "./components/Data/KsFileTag.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
@@ -149,6 +177,8 @@ export {cssVar} from "./utils/css"
 export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
+export {rowKey} from "./utils/rowKey"
+export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
@@ -159,8 +189,9 @@ export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
-export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
+export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
+export {useDiscardGuard} from "./composables/useDiscardGuard"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
@@ -175,6 +206,8 @@ export {
     emptyLeafGroup,
 } from "./components/Data/KsDataTable/filter/composables/useFilterGroups"
 export {useDismissedKeys} from "./components/Data/KsDataTable/filter/composables/useDismissedKeys"
+export {useTableColumns} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
+export type {ColumnConfig, UseTableColumnsOptions} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
     decodeSearchParams,
@@ -278,6 +311,7 @@ const components: Record<string, Component> = {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -388,6 +422,7 @@ export {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -455,7 +490,16 @@ export {
 const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
-            app.use(ElementPlus, {namespace: "kel"})
+            // Every Ks* component imports its own El* dependency directly, so global registration
+            // is unneeded and only defeats tree-shaking of the ~96 Element Plus components. The
+            // services below still need app.use(): it's what wires their _context to this app, so
+            // their detached render trees (e.g. an ElNotification's content) can still resolve
+            // globally-registered Ks* components like KsButton/KsMarkdown.
+            (app as any)[INSTALLED_KEY] = true
+            provideGlobalConfig({namespace: "kel"}, app, true)
+            for (const plugin of [ElInfiniteScroll, ElLoading, ElMessage, ElMessageBox, ElNotification, ElPopoverDirective]) {
+                app.use(plugin)
+            }
         }
         for (const [name, component] of Object.entries(components)) {
             app.component(name, component)
@@ -517,6 +561,7 @@ declare module "vue" {
         KsEmptyState: typeof KsEmptyState
         KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
+        KsFileTag: typeof KsFileTag
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm
         KsFormItem: typeof KsFormItem

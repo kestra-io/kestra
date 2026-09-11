@@ -2,11 +2,7 @@ package io.kestra.core.models.validations;
 
 import java.io.Serial;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.tasks.Task;
+import java.util.stream.Collectors;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -19,32 +15,18 @@ public class KestraConstraintViolationException extends ConstraintViolationExcep
         super(constraintViolations);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Paths are rendered through {@link ViolationPaths#toFriendlyPath(ConstraintViolation)}, the same
+     * function that produces the {@code path} member of a problem document's {@code errors} entries, so this
+     * message and that field always agree.
+     */
     @Override
     public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        for (ConstraintViolation<?> violation : getConstraintViolations()) {
-            String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
-            try {
-                if (violation.getLeafBean() instanceof Task task) {
-                    errorMessage = replaceId("tasks", violation.getPropertyPath().toString(), task.getId()) + ": " + violation.getMessage();
-                }
-                if (violation.getLeafBean() instanceof Input input) {
-                    errorMessage = replaceId("inputs", violation.getPropertyPath().toString(), input.getId()) + ": " + violation.getMessage();
-
-                }
-            } catch (Exception e) {
-                // In case we don't succeed at replacing the id, we just use the default message
-            }
-            message.append(errorMessage).append("\n");
-        }
-        return message.toString();
-    }
-
-    private String replaceId(String type, String errorMessage, String taskId) {
-        String regex = type + "\\[\\d+\\]";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(errorMessage);
-
-        return matcher.replaceAll(taskId);
+        return getConstraintViolations()
+            .stream()
+            .map(violation -> ViolationPaths.toFriendlyPath(violation) + ": " + violation.getMessage())
+            .collect(Collectors.joining("\n", "", "\n"));
     }
 }

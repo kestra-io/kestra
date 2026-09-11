@@ -1,6 +1,6 @@
 <template>
     <ListPreview v-if="type === 'LIST'" :value="content" />
-    <img v-else-if="type === 'IMAGE'" :src="imageContent" alt="Image output preview">
+    <img v-else-if="type === 'IMAGE'" :src="imageContent" :alt="$t('file_preview.image_alt')">
     <PdfPreview v-else-if="type === 'PDF'" :source="content" />
     <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="content" />
     <KsEditor
@@ -27,6 +27,7 @@
                         :autoClose="2000"
                     >
                         <KsButton
+                            :aria-label="$t('toggle_word_wrap')"
                             :icon="Wrap"
                             type="default"
                             @click="wordWrap = !wordWrap"
@@ -39,17 +40,19 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, defineAsyncComponent} from "vue"
     import Wrap from "vue-material-design-icons/Wrap.vue"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
     import {KsMarkdown, KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import ListPreview from "../ListPreview.vue"
-    import PdfPreview from "../PdfPreview.vue"
+
+    // Async so pdfjs-dist (~417 kB) is fetched only when an output actually is a PDF.
+    const PdfPreview = defineAsyncComponent(() => import("../PdfPreview.vue"))
 
     export interface Preview {
         truncated?: boolean;
-        type?: "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
+        type?: "TEXT" | "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
         content?: any;
         extension?: string;
     }

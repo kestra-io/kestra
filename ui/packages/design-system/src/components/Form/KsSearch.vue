@@ -79,12 +79,6 @@
 
         .kel-input__inner {
             font-size: var(--ks-font-size-sm);
-
-            &::placeholder {
-                font-size: var(--ks-font-size-xs);
-                font-weight: 400;
-                color: var(--ks-text-secondary);
-            }
         }
 
         .ks-search__icon {

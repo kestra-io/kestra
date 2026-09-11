@@ -9,6 +9,7 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.log.LogDataStoreInterfaceFactory;
 import io.kestra.core.repositories.log.LogsConfig;
@@ -20,6 +21,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
@@ -51,9 +53,15 @@ public class KestraBeansFactory {
     @Inject
     RepositoryConfiguration repositoryConfiguration;
 
+    // @Primary so unqualified injections (e.g. PluginAutoInstallService) resolve to this
+    // icon-less catalog rather than the webserver's @Named("withIcons") variant.
+    @Primary
     @Singleton
-    public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient, ExecutorsUtils executorsUtils) {
-        return new PluginCatalogService(httpClient, false, true, executorsUtils);
+    public PluginCatalogService pluginCatalogService(
+        @Client("api") HttpClient httpClient,
+        ExecutorsUtils executorsUtils,
+        PluginSchemaBundleService schemaBundleService) {
+        return new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
     }
 
     @Requires(missingBeans = PluginRegistry.class)
@@ -95,8 +103,21 @@ public class KestraBeansFactory {
     @Requires(property = "kestra.server-type", notEquals = "WORKER")
     @Singleton
     public LogDataStoreInterface logDataStore(final LogDataStoreInterfaceFactory logDataStoreInterfaceFactory) {
+        ensureLogDataStoreAllowed();
         String pluginId = getLogDataStorePluginId(logDataStoreInterfaceFactory);
         return logDataStoreInterfaceFactory.make(pluginId, logsConfig.getLogConfig(pluginId));
+    }
+
+    /**
+     * Guards the external log store, which is an Enterprise Edition feature; the Enterprise Edition
+     * overrides this to allow it, gated by its license instead.
+     */
+    protected void ensureLogDataStoreAllowed() {
+        logsConfig.type().ifPresent(type -> {
+            throw new IllegalArgumentException(
+                "Configuring an external log store ('%s=%s') requires Kestra Enterprise Edition.".formatted(KESTRA_LOGS_TYPE_CONFIG, type)
+            );
+        });
     }
 
     /**

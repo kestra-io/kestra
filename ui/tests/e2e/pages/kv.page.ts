@@ -90,6 +90,14 @@ export class KvPage extends BasePage {
         }
     }
 
+    expirationHint(): Locator {
+        return this.page.locator("[data-test='kv-expiration-hint']")
+    }
+
+    async readTtl(): Promise<string> {
+        return this.page.locator("[data-test='kv-ttl'] [data-test='custom-duration']").inputValue()
+    }
+
     async readType(): Promise<string> {
         return (await this.page.locator("[data-test='kv-type']").innerText()).trim()
     }

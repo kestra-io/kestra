@@ -38,7 +38,7 @@
                     <KsButton @click="onCancel">
                         {{ $t("cancel") }}
                     </KsButton>
-                    <KsButton type="primary" :loading="isSaving" @click="setLabels()">
+                    <KsButton type="primary" :loading="isSaving" :disabled="hasInvalidLabels" @click="setLabels()">
                         {{ $t("save") }}
                     </KsButton>
                 </div>
@@ -57,6 +57,7 @@
 
     import LabelInput from "../labels/LabelInput.vue"
     import {filterValidLabels} from "./utils"
+    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import action from "../../models/action"
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
@@ -92,6 +93,8 @@
     const executionLabels = ref<Label[]>([])
     const isSaving = ref(false)
 
+    const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
+
     const enabled = computed(() =>
         !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace) &&
         !State.isRunning(props.execution.state.current),
@@ -107,6 +110,11 @@
 
         if (filtered.error) {
             toast.error(t("wrong labels"), t("error"))
+            return
+        }
+
+        if (hasInvalidLabelKeys(filtered.labels)) {
+            toast.error(t("invalid label key"), t("error"))
             return
         }
 

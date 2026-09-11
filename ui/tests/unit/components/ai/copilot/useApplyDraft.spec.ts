@@ -29,16 +29,35 @@ vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     updateFlow: (...a: unknown[]) => updateFlow(...a),
 }))
 
-const createDashboard = vi.fn().mockResolvedValue({})
-const updateDashboard = vi.fn().mockResolvedValue({})
-vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
-    createDashboard: (...a: unknown[]) => createDashboard(...a),
-    updateDashboard: (...a: unknown[]) => updateDashboard(...a),
+const clientPost = vi.fn().mockResolvedValue({data: {}})
+const clientPut = vi.fn().mockResolvedValue({data: {}})
+vi.mock("@kestra-io/kestra-sdk", async (importOriginal) => ({
+    ...await importOriginal<typeof import("@kestra-io/kestra-sdk")>(),
+    useClient: () => ({get: vi.fn(), post: (...a: unknown[]) => clientPost(...a), put: (...a: unknown[]) => clientPut(...a), delete: vi.fn()}),
 }))
 
-// A create rejection shaped like the backend's "already exists" 422.
-const alreadyExists = {response: {status: 422, data: {message: "Flow id already exists: my-flow"}}}
-const dashboardExists = {response: {status: 422, data: {message: "Dashboard id already exists: my-dash"}}}
+vi.mock("override/utils/route", () => ({
+    apiUrl: () => "/api/v1/main",
+    apiUrlWithoutTenants: () => "/api/v1",
+    basePath: () => "/ui/main",
+    baseUrl: "/",
+}))
+
+// A create rejection carrying the entity-already-exists problem document. The fallback branches on the
+// problem type, so neither the status nor the wording of `detail` affects it.
+const problem = (detail: string) => ({
+    response: {
+        status: 409,
+        data: {
+            type: "https://kestra.io/docs/api-reference/problems/entity-already-exists",
+            title: "Entity already exists",
+            status: 409,
+            detail,
+        },
+    },
+})
+const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
+const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
 import {useApplyDraft} from "../../../../../src/components/ai/copilot/useApplyDraft"
 
@@ -53,8 +72,8 @@ describe("useApplyDraft", () => {
         alert.mockResolvedValue(undefined)
         createFlow.mockResolvedValue({})
         updateFlow.mockResolvedValue({})
-        createDashboard.mockResolvedValue({})
-        updateDashboard.mockResolvedValue({})
+        clientPost.mockResolvedValue({data: {}})
+        clientPut.mockResolvedValue({data: {}})
         loadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: company.team"})
         loadGraph.mockResolvedValue(undefined)
     })
@@ -102,7 +121,7 @@ describe("useApplyDraft", () => {
 
     it("apply UPDATES the flow when create reports it already exists", async () => {
         confirm.mockResolvedValueOnce(undefined)
-        createFlow.mockRejectedValueOnce(alreadyExists) // create → 422 already exists → fall back to update
+        createFlow.mockRejectedValueOnce(alreadyExists) // create → entity-already-exists → fall back to update
         await useApplyDraft().apply(draft())
         expect(updateFlow).toHaveBeenCalledWith(
             expect.objectContaining({namespace: "company.team", id: "my-flow", body: "id: my-flow\nnamespace: company.team"}),
@@ -111,23 +130,38 @@ describe("useApplyDraft", () => {
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "flows/update"}))
     })
 
-    it("falls back to update when the 'already exists' error is nested in the validation body", async () => {
-        // The real backend 422 puts the "already exists" text in the validation errors, not data.message.
+    it("does NOT fall back to update for a different problem that merely mentions existing", async () => {
+        // The old implementation regexed /already exists/i over the whole serialized body, so a validation
+        // failure whose text happened to contain the phrase would silently overwrite the user's flow.
         confirm.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce({
-            status: 422,
-            response: {status: 422, data: {message: "Validation failed", _embedded: {errors: [{message: "flow.id: Flow id already exists: my-flow"}]}}},
+            response: {
+                status: 422,
+                data: {
+                    type: "https://kestra.io/docs/api-reference/problems/validation-failed",
+                    title: "Validation failed",
+                    status: 422,
+                    detail: "A task referencing a flow that already exists is not allowed here.",
+                },
+            },
         })
         await useApplyDraft().apply(draft())
-        expect(updateFlow).toHaveBeenCalledWith(
-            expect.objectContaining({namespace: "company.team", id: "my-flow"}),
-            expect.objectContaining({showMessageOnError: false}),
-        )
+        expect(updateFlow).not.toHaveBeenCalled()
     })
 
     it("apply surfaces an error (no update) when create fails for another reason", async () => {
         confirm.mockResolvedValueOnce(undefined)
-        createFlow.mockRejectedValueOnce({response: {status: 422, data: {message: "invalid flow: bad task"}}})
+        createFlow.mockRejectedValueOnce({
+            response: {
+                status: 422,
+                data: {
+                    type: "https://kestra.io/docs/api-reference/problems/validation-failed",
+                    title: "Validation failed",
+                    status: 422,
+                    detail: "bad task",
+                },
+            },
+        })
         await useApplyDraft().apply(draft())
         expect(updateFlow).not.toHaveBeenCalled()
         expect(alert).toHaveBeenCalled()
@@ -164,22 +198,24 @@ describe("useApplyDraft", () => {
         parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
         await useApplyDraft().apply(dashboardDraft())
-        expect(createDashboard).toHaveBeenCalledWith(
-            expect.objectContaining({body: "id: my-dash\ntitle: My dash"}),
-            expect.objectContaining({showMessageOnError: false}),
+        expect(clientPost).toHaveBeenCalledWith(
+            "/api/v1/main/dashboards",
+            "id: my-dash\ntitle: My dash",
+            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
         )
-        expect(updateDashboard).not.toHaveBeenCalled()
+        expect(clientPut).not.toHaveBeenCalled()
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "dashboards/update", params: {dashboard: "my-dash", tenant: "main"}}))
     })
 
     it("apply UPDATES the dashboard when create reports it already exists", async () => {
         parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
-        createDashboard.mockRejectedValueOnce(dashboardExists)
+        clientPost.mockRejectedValueOnce(dashboardExists)
         await useApplyDraft().apply(dashboardDraft())
-        expect(updateDashboard).toHaveBeenCalledWith(
-            expect.objectContaining({id: "my-dash", body: "id: my-dash\ntitle: My dash"}),
-            expect.objectContaining({showMessageOnError: false}),
+        expect(clientPut).toHaveBeenCalledWith(
+            "/api/v1/main/dashboards/my-dash",
+            "id: my-dash\ntitle: My dash",
+            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
         )
     })
 
@@ -188,7 +224,7 @@ describe("useApplyDraft", () => {
         await useApplyDraft().apply(dashboardDraft({yaml: "title: nope"}))
         expect(alert).toHaveBeenCalled()
         expect(confirm).not.toHaveBeenCalled()
-        expect(createDashboard).not.toHaveBeenCalled()
+        expect(clientPost).not.toHaveBeenCalled()
     })
 
     // --- apps (EE-only) ---

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.webserver.utils.RequestUtils;
 
@@ -115,15 +116,30 @@ class QueryFilterFormatBinderTest {
     }
 
     @Test
-    void testGetQueryFiltersWithInvalidFilterPattern() {
+    void shouldRejectMalformedFilterKey() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(
             "filters[invalid]", List.of("test-value")
         );
+        // WHEN / THEN
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams)
+        );
+    }
+
+    @Test
+    void shouldRejectUnknownOperator() {
+        // GIVEN
+        Map<String, List<String>> queryParams = Map.of(
+            "filters[namespace][BOGUS_OP]", List.of("test-namespace")
+        );
         // WHEN
-        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
-        // THEN
-        assertEquals(0, filters.size(), "Invalid filters should be ignored");
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams)
+        );
+        // THEN — the offending token is named, and the internal enum class name is not leaked
+        assertTrue(ex.getMessage().contains("BOGUS_OP"), "Expected the offending token, got: " + ex.getMessage());
+        assertFalse(ex.getMessage().contains("io.kestra"), "Internal class name leaked: " + ex.getMessage());
     }
 
     @Test
@@ -233,8 +249,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — parser throws on the 4th descent; no SQL is generated
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
         );
         assertTrue(
             ex.getMessage().contains("depth"),
@@ -252,8 +268,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — width check throws; the OR node would have 21 children
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
         assertTrue(
             ex.getMessage().contains("width"),
@@ -274,8 +290,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — root produces 21 sibling leaves, exceeding the width cap
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
         assertTrue(
             ex.getMessage().contains("width"),

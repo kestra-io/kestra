@@ -7,10 +7,15 @@ import isEqual from "lodash/isEqual"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
 
-enum BranchType {
+export enum BranchType {
     ERROR = "ERROR",
     FINALLY = "FINALLY",
     AFTER_EXECUTION = "AFTER_EXECUTION",
+}
+
+/** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
+export interface GraphExecution {
+    id?: string;
 }
 
 interface MinimalNode {
@@ -19,11 +24,13 @@ interface MinimalNode {
     branchType?: BranchType;
     uid: string;
     type: string;
+    disabled?: boolean;
     task?: {
         id?: string;
         type: string;
         namespace: string;
         flowId: string;
+        disabled?: boolean;
     };
 }
 

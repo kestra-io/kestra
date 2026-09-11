@@ -32,6 +32,7 @@ import io.kestra.core.services.LabelService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.validations.TenantId;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -40,7 +41,6 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
@@ -64,7 +64,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     @NotNull
     @With
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @NotNull
@@ -1036,6 +1036,31 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return taskRunList.stream()
             .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()))
             .toList();
+    }
+
+    /**
+     * Find every descendant of this {@link TaskRun}, at any depth, in breadth-first order.
+     * Unlike {@link #findChildren(TaskRun)}, which returns only direct children, this walks the
+     * {@code parentTaskRunId} chain recursively.
+     */
+    public List<TaskRun> findAllChildren(TaskRun parentTaskRun) {
+        if (this.taskRunList == null) {
+            return Collections.emptyList();
+        }
+
+        Map<String, List<TaskRun>> childrenByParentId = this.taskRunList.stream()
+            .filter(taskRun -> taskRun.getParentTaskRunId() != null)
+            .collect(Collectors.groupingBy(TaskRun::getParentTaskRunId));
+
+        List<TaskRun> result = new ArrayList<>();
+        Deque<TaskRun> toVisit = new ArrayDeque<>(childrenByParentId.getOrDefault(parentTaskRun.getId(), Collections.emptyList()));
+        while (!toVisit.isEmpty()) {
+            TaskRun current = toVisit.poll();
+            result.add(current);
+            toVisit.addAll(childrenByParentId.getOrDefault(current.getId(), Collections.emptyList()));
+        }
+
+        return result;
     }
 
     public List<String> findParentsValues(TaskRun taskRun, boolean withCurrent) {

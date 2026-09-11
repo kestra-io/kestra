@@ -83,7 +83,7 @@ public class KestraFluxStreamableServerTransportProvider implements McpStreamabl
                 .doFirst(() -> logger.debug("Initiating graceful shutdown with {} active sessions", mcpSessionService.listMcpStreamableServerSession().size()))
                 .flatMap(McpStreamableServerSession::closeGracefully)
                 .then();
-        }).then().doOnSuccess(v ->
+        }).then().doFinally(_ ->
         {
             mcpSessionService.clear();
             this.keepAliveScheduler.shutdown();

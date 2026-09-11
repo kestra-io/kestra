@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -20,7 +21,9 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
+import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -37,6 +40,7 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.storage.Reverse;
 import io.kestra.plugin.core.trigger.Schedule;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -159,8 +163,64 @@ class JsonSchemaGeneratorTest {
             // the polymorphic anyOf/const subtype branches nor in the type/itemType enum arrays (REUSABLE_INPUTS was
             // leaking through the latter).
             assertThat(schema, not(containsString("REUSABLE_INPUTS")));
+            // the class name is not the type name, so it survives the string strip: the subtype's definitions and the
+            // anyOf branch reaching them by $ref have to go too, or a reusable-inputs input still validates, minus its
+            // discriminator
+            assertThat(schema, not(containsString("ReusableInputsInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void excludedInputTypesLeaveNoBranchOrDefinitionBehind() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+            var flow = definitions.get(Flow.class.getName());
+            var inputs = (Map<String, Object>) ((Map<String, Object>) flow.get("properties")).get("inputs");
+            var items = (Map<String, Object>) inputs.get("items");
+            var branches = (List<Map<String, Object>>) items.get("anyOf");
+
+            String excluded = ReusableInputsInput.class.getName();
+            assertThat(
+                "no anyOf branch may reach the excluded subtype",
+                branches.stream().map(branch -> String.valueOf(branch.get("$ref"))).toList(),
+                everyItem(not(containsString(excluded)))
+            );
+            assertThat(
+                "the excluded subtype's definitions, orphaned by the branch removal, must go with it",
+                definitions.keySet().stream().filter(key -> key.startsWith(excluded)).toList(), is(empty())
+            );
+            // a body definition shared with the surviving subtypes must stay
+            assertThat(definitions, hasKey(DependsOn.class.getName()));
+            assertThat(branches, hasSize(greaterThan(1)));
+        });
+    }
+
+    @Test
+    void excludedInputTypesAreStrippedForTheTargetedSchemaOnly() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator standard = applicationContext.getBean(JsonSchemaGenerator.class);
+            JsonSchemaGenerator excludingEmail = new JsonSchemaGenerator(applicationContext.getBean(PluginRegistry.class)) {
+                @Override
+                protected Set<String> excludedInputTypes(Class<?> cls) {
+                    return Flow.class.equals(cls) ? Set.of("EMAIL") : super.excludedInputTypes(cls);
+                }
+            };
+
+            // the default generator offers EMAIL, so its absence below is the override's doing and not a schema change
+            assertThat(standard.schemas(Flow.class).toString(), containsString("EMAIL"));
+            // the strip has to run before discriminator wrappers collapse: afterwards the subtype is a flat definition
+            // reached by $ref, with no branch left to remove, and EMAIL would survive here
+            assertThat(excludingEmail.schemas(Flow.class).toString(), not(containsString("EMAIL")));
+            // a class the override does not target keeps the default (empty) exclusion set
+            assertThat(excludingEmail.schemas(Dashboard.class).toString(), is(standard.schemas(Dashboard.class).toString()));
         });
     }
 
@@ -176,6 +236,34 @@ class JsonSchemaGeneratorTest {
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
             var task = definitions.get(Task.class.getName());
             Assertions.assertNotNull(task.get("anyOf"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void taskSchemaCollapsesSingleUseDiscriminatorWrapper() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            String base = "io.kestra.core.http.client.configurations.BasicAuthConfiguration";
+            assertThat(
+                "the plain definition, only ever used by its own wrapper, must be inlined away instead of kept as a separate entry",
+                definitions.containsKey(base + "-1"), is(false)
+            );
+
+            var wrapper = definitions.get(base + "-2");
+            assertThat("the wrapper must survive, carrying its own discriminator addition", wrapper, is(notNullValue()));
+            assertThat((List<String>) wrapper.get("required"), hasItem("type"));
+
+            var properties = (Map<String, Object>) wrapper.get("properties");
+            assertThat(
+                "the original class's own properties must not be lost in the merge",
+                properties.keySet(), hasItems("username", "password")
+            );
         });
     }
 
@@ -351,6 +439,14 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("description"), is("integerPropertyWithDefault description"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("$deprecated"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is("10000"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldDisplayReverseSeparatorDefaultAsEscapedNewline() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, Reverse.class);
+
+        assertThat(properties(generate).get("separator").get("default"), is("\\n"));
     }
 
     @SuppressWarnings("unchecked")

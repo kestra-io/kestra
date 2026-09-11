@@ -1,5 +1,5 @@
 import {computed, nextTick, ref, watch, type Ref} from "vue"
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {displayTaskOf, type BlockSection} from "../../../utils/flowableBlockOps"
 import {sectionFromParentPath} from "./blockSections"
 import {opensInModalByDefault} from "./taskEditMode"

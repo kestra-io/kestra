@@ -23,6 +23,7 @@ import lombok.SneakyThrows;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 
 @Requires(condition = H2Repository.H2Condition.class)
+@Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 

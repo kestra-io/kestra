@@ -2,14 +2,15 @@
     <KsDataTable
         ref="dataTable"
         :loadData="loadData"
-        :data="kvs"
-        :total="total"
+        :data="hasVisibleColumns ? kvs : []"
+        :total="hasVisibleColumns ? total : 0"
         :currentPage="urlPage"
         :pageSize="urlSize"
         :defaultSort="{prop: 'key', order: 'ascending'}"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
-        :no-data-text="$t('no_results.kv_pairs')"
+        :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
+        :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
@@ -99,11 +100,11 @@
             </KsTableColumn>
         </template>
 
-        <KsTableColumn columnKey="copy" className="row-action">
+        <KsTableColumn v-if="hasVisibleColumns" columnKey="copy" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="scope.row.key !== undefined"
-                    :tooltip="$t('copy_to_clipboard')"
+                    :tooltip="$t('copy_pebble_expression')"
                     placement="left"
                     @click="copyKey(scope.row.key)"
                 >
@@ -112,7 +113,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn v-if="!paneView" columnKey="view" className="row-action">
+        <KsTableColumn v-if="!paneView && hasVisibleColumns" columnKey="view" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="!canUpdate(scope.row) && canRead(scope.row)"
@@ -125,7 +126,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn v-if="!paneView" columnKey="update" className="row-action">
+        <KsTableColumn v-if="!paneView && hasVisibleColumns" columnKey="update" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="canUpdate(scope.row)"
@@ -139,7 +140,7 @@
             </template>
         </KsTableColumn>
 
-        <KsTableColumn v-if="!paneView" columnKey="delete" className="row-action">
+        <KsTableColumn v-if="!paneView && hasVisibleColumns" columnKey="delete" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="canDelete(scope.row)"
@@ -157,7 +158,7 @@
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
-        :beforeClose="beforeKvClose"
+        :dirty="isKvDirty"
     >
         <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
             <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required data-test="kv-namespace">
@@ -243,6 +244,9 @@
                     includeNever
                     @update:model-value="onTtlChange"
                 />
+                <span v-if="currentExpiration" class="expiration-hint" data-test="kv-expiration-hint">
+                    {{ $t("kv.expiration_hint", {date: currentExpiration}) }}
+                </span>
             </KsFormItem>
         </KsForm>
 
@@ -300,8 +304,8 @@
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
+    import {date as formatDate} from "../../utils/filters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
     import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave} from "./kvValue"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
@@ -319,7 +323,7 @@
     import {useKvFilter} from "../filter/configurations"
     import moment from "moment-timezone"
 
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
@@ -419,6 +423,7 @@
         ttl?: string;
         update?: boolean;
         description?: string;
+        expirationDate?: string;
     }
 
     const kv = ref<KvItem>({
@@ -431,9 +436,10 @@
         description: undefined,
     })
 
+    const ttlTouched = ref(false)
+
     const kvBaseline = ref("")
-    const {guardedClose: guardKvClose} = useDiscardGuard(() => JSON.stringify(kv.value) !== kvBaseline.value)
-    const beforeKvClose = (done: () => void) => guardKvClose(() => done())
+    const isKvDirty = computed(() => JSON.stringify(kv.value) !== kvBaseline.value)
 
     const {t} = useI18n()
 
@@ -492,6 +498,8 @@
         columns: optionalColumns.value,
         storageKey: storageKey,
     })
+
+    const hasVisibleColumns = computed(() => orderedVisibleColumns.value.length > 0)
 
     const selection = computed(() => dataTable.value?.selection ?? [])
     // queryBulkAction: reserved for future bulk action support
@@ -590,23 +598,33 @@
         kv.value.value = hydrateKvValueForForm(type, value, localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? undefined)
         kv.value.update = true
         kv.value.description = entry.description
-
-        if (entry.expirationDate) {
-            const expirationMoment = moment(entry.expirationDate)
-            const now = moment()
-
-            if (expirationMoment.isValid() && expirationMoment.isAfter(now)) {
-                const remainingMilliseconds = Math.round(expirationMoment.diff(now) / 1000) * 1000
-                kv.value.ttl = moment.duration(remainingMilliseconds).toISOString()
-            } else {
-                kv.value.ttl = undefined
-            }
-        } else {
-            kv.value.ttl = undefined
-        }
+        kv.value.expirationDate = entry.expirationDate
+        kv.value.ttl = entry.expirationDate ? remainingTtl(entry.expirationDate) : undefined
+        ttlTouched.value = false
 
         addKvDrawerVisible.value = true
     }
+
+    function remainingTtl(expirationDate: string): string | undefined {
+        const expiration = moment(expirationDate)
+        const now = moment()
+
+        if (!expiration.isValid() || !expiration.isAfter(now)) {
+            return undefined
+        }
+
+        return moment.duration(Math.round(expiration.diff(now) / 1000) * 1000).toISOString()
+    }
+
+    const currentExpiration = computed(() => {
+        if (!kv.value.update || !kv.value.expirationDate) {
+            return undefined
+        }
+
+        const expiration = moment(kv.value.expirationDate)
+
+        return expiration.isValid() && expiration.isAfter(moment()) ? formatDate(kv.value.expirationDate) : undefined
+    })
 
     const viewKvDrawerVisible = ref(false)
     const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({})
@@ -675,7 +693,12 @@
             const namespace = kv.value.namespace!
             const key = kv.value.key!
             const description = kv.value.description || ""
-            const ttl = kv.value.ttl
+            // An untouched TTL is recomputed from the stored expiration at save time, so that
+            // saving other fields keeps the expiration instead of shifting it by the drawer-open time.
+            const preservedTtl = kv.value.update && !ttlTouched.value && kv.value.expirationDate
+                ? remainingTtl(kv.value.expirationDate)
+                : undefined
+            const ttl = preservedTtl ?? kv.value.ttl
 
             const payload = {
                 namespace,
@@ -718,6 +741,9 @@
     }
 
     function onTtlChange(value: any) {
+        if (value.timeRange !== kv.value.ttl) {
+            ttlTouched.value = true
+        }
         kv.value.ttl = value.timeRange
     }
 
@@ -742,3 +768,12 @@
         updateVisibleColumns,
     })
 </script>
+
+<style lang="scss" scoped>
+    .expiration-hint {
+        display: block;
+        margin-top: var(--ks-spacing-1);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-secondary);
+    }
+</style>

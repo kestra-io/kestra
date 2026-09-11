@@ -18,46 +18,63 @@ public class JsonWriter extends OutputWriter implements SpecializedWriter {
     private final StringWriter stringWriter = new StringWriter();
     private boolean hasOutput = false;
 
+    public JsonWriter() {
+        super();
+    }
+
+    public JsonWriter(final long maxOutputSize) {
+        super(maxOutputSize);
+    }
+
+    /**
+     * Flags that output was produced and enforces the output-size limit against the current buffer.
+     * Called after every append so unbounded accumulation is stopped before it can exhaust the heap.
+     */
+    private void afterAppend() {
+        hasOutput = true;
+        checkOutputSize(stringWriter.getBuffer().length());
+    }
+
     @Override
     public void writeSpecialized(int i) {
-        hasOutput = true;
         stringWriter.getBuffer().append(i);
+        afterAppend();
     }
 
     @Override
     public void writeSpecialized(long l) {
-        hasOutput = true;
         stringWriter.getBuffer().append(l);
+        afterAppend();
     }
 
     @Override
     public void writeSpecialized(double d) {
-        hasOutput = true;
         stringWriter.getBuffer().append(d);
+        afterAppend();
     }
 
     @Override
     public void writeSpecialized(float f) {
-        hasOutput = true;
         stringWriter.getBuffer().append(f);
+        afterAppend();
     }
 
     @Override
     public void writeSpecialized(short s) {
-        hasOutput = true;
         stringWriter.getBuffer().append(s);
+        afterAppend();
     }
 
     @Override
     public void writeSpecialized(byte b) {
-        hasOutput = true;
         stringWriter.getBuffer().append(b);
+        afterAppend();
     }
 
     @Override
     public void writeSpecialized(char c) {
-        hasOutput = true;
         stringWriter.getBuffer().append(c);
+        afterAppend();
     }
 
     @Override
@@ -65,8 +82,8 @@ public class JsonWriter extends OutputWriter implements SpecializedWriter {
         if (s == null) {
             return;
         }
-        hasOutput = true;
         stringWriter.getBuffer().append(s);
+        afterAppend();
     }
 
     @SneakyThrows
@@ -88,10 +105,10 @@ public class JsonWriter extends OutputWriter implements SpecializedWriter {
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
-        if (len > 0) {
-            hasOutput = true;
-        }
         this.stringWriter.write(cbuf, off, len);
+        if (len > 0) {
+            afterAppend();
+        }
     }
 
     @Override

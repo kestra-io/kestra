@@ -1,7 +1,9 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -182,6 +184,52 @@ public abstract class AbstractMultipleConditionStateStoreTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         Pair<Flow, MultipleCondition> pair = mockFlow(tenant, Window.builder().deadline(LocalTime.now().minusSeconds(1)).build());
+
+        MultipleConditionWindow window = multipleConditionStateStore.create(pair.getKey(), pair.getRight(), Collections.emptyMap());
+        multipleConditionStateStore.save(window.with(ImmutableMap.of("a", true)));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
+        window = multipleConditionStateStore.create(pair.getKey(), pair.getRight(), Collections.emptyMap());
+
+        assertThat(window.getResults()).isEmpty();
+
+        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
+        assertThat(expired.size()).isEqualTo(1);
+    }
+
+    @Test
+    void dailyTimeDeadline_NonServerTimezone() throws Exception {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        ZoneId kolkata = ZoneId.of("Asia/Kolkata");
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(tenant, Window.builder().deadline(LocalTime.now(kolkata).plusSeconds(2)).timezone(kolkata.getId()).build());
+
+        MultipleConditionWindow window = multipleConditionStateStore.create(pair.getKey(), pair.getRight(), Collections.emptyMap());
+        // resolved in the configured zone, before the JDBC round-trip re-expresses it in the JVM's own zone
+        assertThat(window.getEnd().getZone()).isEqualTo(kolkata);
+        Instant expectedEnd = window.getEnd().toInstant();
+
+        multipleConditionStateStore.save(window.with(ImmutableMap.of("a", true)));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
+        window = multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId()).orElseThrow();
+
+        assertThat(window.getResults().get("a")).isTrue();
+        assertThat(window.getEnd().toInstant()).isEqualTo(expectedEnd);
+
+        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
+        assertThat(expired.size()).isZero();
+
+        Thread.sleep(2005);
+
+        expired = multipleConditionStateStore.expired(tenant);
+        assertThat(expired.size()).isEqualTo(1);
+    }
+
+    @Test
+    void dailyTimeDeadline_NonServerTimezone_Expired() throws Exception {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        ZoneId kolkata = ZoneId.of("Asia/Kolkata");
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(tenant, Window.builder().deadline(LocalTime.now(kolkata).minusSeconds(1)).timezone(kolkata.getId()).build());
 
         MultipleConditionWindow window = multipleConditionStateStore.create(pair.getKey(), pair.getRight(), Collections.emptyMap());
         multipleConditionStateStore.save(window.with(ImmutableMap.of("a", true)));

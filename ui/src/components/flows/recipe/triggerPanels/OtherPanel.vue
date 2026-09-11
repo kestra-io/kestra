@@ -24,7 +24,9 @@
 
         <KsEmpty
             v-else-if="filteredTriggers.length === 0"
-            :title="$t('recipe.other.no_results')"
+            :image="images.triggers"
+            :imageSize="120"
+            :description="$t('recipe.other.no_results')"
         />
 
         <div v-else class="trigger-list" role="radiogroup" :aria-label="$t('recipe.other.search_label')" data-test="recipe-trigger-list">
@@ -58,6 +60,7 @@
     import type {PluginIconMap} from "../../../../utils/pluginUtils"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
     import Check from "vue-material-design-icons/Check.vue"
+    import {images} from "../../../layout/empty/images"
 
     defineProps<{
         recipe: RecipeState

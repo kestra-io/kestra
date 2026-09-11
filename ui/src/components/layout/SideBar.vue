@@ -3,7 +3,7 @@
         <template #header>
             <KsIconButton
                 class="header-toggle"
-                aria-label="Toggle menu"
+                :aria-label="$t('toggle menu')"
                 @click="onCollapse(true)"
             >
                 <DockLeft />
@@ -11,6 +11,7 @@
             <div
                 ref="dragHandle"
                 class="menu-drag-handle"
+                :class="{'is-swiping': isSwiping}"
                 aria-hidden="true"
             />
         </template>
@@ -44,7 +45,7 @@
 
         <KsSideBarSection
             v-if="bookmarksStore.pages?.length"
-            title="Favourites"
+            :title="$t('favourites')"
             collapsible
             :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
             @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
@@ -165,7 +166,7 @@
 
     const DRAG_CLOSE_THRESHOLD = 60
     const dragHandle = ref<HTMLElement>()
-    const {direction} = usePointerSwipe(dragHandle, {
+    const {direction, isSwiping} = usePointerSwipe(dragHandle, {
         threshold: DRAG_CLOSE_THRESHOLD,
         disableTextSelect: true,
         onSwipeEnd: () => {
@@ -294,8 +295,16 @@
     bottom: 0;
     width: var(--ks-spacing-2);
     z-index: 1;
-    cursor: w-resize;
+    /* Drag-to-collapse, not drag-to-resize: the handle is wired to a swipe gesture and the
+       menu width is fixed, so a resize cursor promised something that never happened. */
+    cursor: grab;
     touch-action: pan-y;
+
+    /* Driven by the composable rather than :active, which depends on the UA keeping the state
+       on an 8px div through a pointer capture. */
+    &.is-swiping {
+        cursor: grabbing;
+    }
 }
 
 .menu-drag-handle::after {

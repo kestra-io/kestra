@@ -21,6 +21,7 @@ import io.kestra.core.utils.Await;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -28,6 +29,7 @@ import picocli.CommandLine.Option;
     name = "standalone",
     description = "Start the standalone all-in-one server"
 )
+@Slf4j
 public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -142,7 +144,7 @@ public class StandAloneCommand extends AbstractServerCommand {
                 fileWatcher.startListeningFromConfig();
             }
 
-            embeddedServer.ifPresent(server -> System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
+            embeddedServer.ifPresent(server -> log.info("✅ Kestra is ready! Open the UI at: {}", server.getURL()));
 
             Await.await().forever().until(() -> !this.applicationContext.isRunning());
         }

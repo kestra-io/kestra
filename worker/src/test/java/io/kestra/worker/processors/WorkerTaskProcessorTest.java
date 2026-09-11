@@ -10,7 +10,11 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.assets.External;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -42,6 +46,7 @@ import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -117,6 +122,53 @@ class WorkerTaskProcessorTest {
         assertThat(results)
             .as("an interrupted task's failure must be deferred for resubmission, not reported")
             .noneMatch(result -> result.getTaskRun().getState().isFailed());
+    }
+
+    @Test
+    void shouldKeepDeclaredInputsWhenOutputsCannotBeRendered() throws Exception {
+        // Given a task whose declared outputs cannot be rendered, while its declared inputs can
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // When the task runs
+        processor.process(unrenderableOutputsWorkerTask());
+
+        // Then the inputs are still emitted, and the unrendered outputs only show up in the state
+        List<WorkerTaskResult> results = drain(resultQueue);
+        TaskRun taskRun = results.getLast().getTaskRun();
+        assertThat(taskRun.getAssetEmits())
+            .as("a failing output must not discard the declared inputs")
+            .singleElement()
+            .satisfies(bundle ->
+            {
+                assertThat(bundle.getInputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
+                assertThat(bundle.getOutputs()).isEmpty();
+            });
+        assertThat(taskRun.getState().getCurrent())
+            .as("a partially emitted declaration is still an emission failure, escalated per assetFailureBehavior")
+            .isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldDefaultAssetNamespaceToTheFlowNamespaceWhenNotDeclared() throws Exception {
+        // Given a task declaring an input and an output that carry no namespace
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // When the task runs
+        processor.process(namespacelessAssetsWorkerTask());
+
+        // Then both inherit the namespace of the flow
+        List<WorkerTaskResult> results = drain(resultQueue);
+        TaskRun taskRun = results.getLast().getTaskRun();
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskRun.getAssetEmits())
+            .singleElement()
+            .satisfies(bundle ->
+            {
+                assertThat(bundle.getInputs()).extracting(AssetIdentifier::namespace).containsExactly("io.kestra.unit-test");
+                assertThat(bundle.getOutputs()).extracting(Asset::getNamespace).containsExactly("io.kestra.unit-test");
+            });
     }
 
     @Test
@@ -235,6 +287,123 @@ class WorkerTaskProcessorTest {
         assertThat(escalationLog.getMessage()).contains("SUCCESS").contains("WARNING").contains("WARN");
     }
 
+    // kestra-ee#10347: a declared asset with no id fails only its own task, outright rather than per
+    // assetFailureBehavior, since a malformed declaration cannot succeed on a retry or a later execution.
+    @Test
+    void shouldFailTaskWhenAssetOutputHasNoId() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetOutputMissingIdWorkerTask(AssetFailureBehavior.WARN));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetInputHasNoId() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetInputMissingIdWorkerTask(AssetFailureBehavior.WARN));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.inputs[0].id").contains("must not be blank");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetOutputHasNoIdEvenWhenBehaviorIsIgnore() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        // IGNORE would otherwise silently drop a soft asset-emission failure (see
+        // shouldKeepSuccessWhenAssetEmissionFailsAndBehaviorIsIgnore); a malformed declaration
+        // must not be swallowed the same way — this is the exact regression the issue reports.
+        processor.process(assetOutputMissingIdWorkerTask(AssetFailureBehavior.IGNORE));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldNotRewriteAKilledTaskWhenItsAssetDeclarationIsInvalid() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        // pre-kill so the callable reports KILLED; the asset block still runs on the way out
+        processor.kill();
+
+        processor.process(assetOutputMissingIdWorkerTask(AssetFailureBehavior.WARN));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+    }
+
+    // validate() re-checks the whole task bean, so an unrelated invalid field throws from the asset
+    // render too. That is not a malformed declaration and must keep going through assetFailureBehavior.
+    @Test
+    void shouldNotReportAnUnrelatedTaskViolationAsAnInvalidAssetDeclaration() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        processor.process(unrelatedViolationWithValidAssetsWorkerTask());
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    // The tests above populate Property.value eagerly, so the violation is visible to the first
+    // whole-bean validate. A flow's YAML leaves it null until rendered, so the violation only surfaces
+    // mid-attempt, after the task body succeeded — the path a user actually hits.
+    @Test
+    void shouldFailTaskWhenAssetDeclarationIsOnlyInvalidOnceRendered() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetInputMissingIdFromExpressionWorkerTask(AssetFailureBehavior.IGNORE));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.inputs[0].id").contains("must not be blank");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetOutputDeclarationIsOnlyInvalidOnceRendered() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetOutputMissingIdFromExpressionWorkerTask(AssetFailureBehavior.IGNORE));
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
+    }
+
     private WorkerTaskProcessor newProcessor(WorkerQueue<WorkerTaskResult> resultQueue) {
         return new WorkerTaskProcessor(
             "test-worker",
@@ -273,6 +442,41 @@ class WorkerTaskProcessorTest {
             .build();
     }
 
+    private WorkerTask unrenderableOutputsWorkerTask() {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, "io.kestra.unit-test", "declared-input", "MY_OWN_ASSET_TYPE"))),
+                    // rendered value is a plain string, not JSON, so binding it as List<Asset> fails
+                    Property.ofExpression("{{ 'not-json' }}"),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask namespacelessAssetsWorkerTask() {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, null, "declared-input", "MY_OWN_ASSET_TYPE"))),
+                    Property.ofValue(List.<Asset> of(External.builder().id("declared-output").build())),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
     private WorkerTask assetEmissionFailureWorkerTask(AssetFailureBehavior assetFailureBehavior) {
         return assetEmissionFailureWorkerTask(assetFailureBehavior, false, false);
     }
@@ -285,6 +489,92 @@ class WorkerTaskProcessorTest {
             .allowWarning(allowWarning)
             // rendered value is a plain string, not JSON, so binding it as List<AssetIdentifier> fails
             .assets(new AssetsDeclaration(Property.ofValue(false), Property.ofExpression("{{ 'not-json' }}"), Property.ofValue(List.of()), Property.ofValue(assetFailureBehavior)))
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetOutputMissingIdWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-output-missing-id-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(List.of(Custom.builder().namespace("io.kestra.tests").type("custom").build())),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetInputMissingIdFromExpressionWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-input-missing-id-expression-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofExpression("{{ '[{\"namespace\":\"io.kestra.tests\",\"type\":\"custom\"}]' }}"),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetOutputMissingIdFromExpressionWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-output-missing-id-expression-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofExpression("{{ '[{\"type\":\"io.kestra.core.models.assets.Custom\",\"namespace\":\"io.kestra.tests\"}]' }}"),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetInputMissingIdWorkerTask(AssetFailureBehavior assetFailureBehavior) {
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-input-missing-id-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of(new AssetIdentifier(null, "io.kestra.tests", null, "custom"))),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask unrelatedViolationWithValidAssetsWorkerTask() {
+        UnrelatedViolation task = UnrelatedViolation.builder()
+            .type(UnrelatedViolation.class.getName())
+            .id("unrelated-violation-task")
+            .count(Property.ofExpression("{{ 5 }}"))
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
             .build();
 
         return workerTaskFor(task);
@@ -347,9 +637,8 @@ class WorkerTaskProcessorTest {
     }
 
     /**
-     * A task that succeeds on its own but whose asset declaration fails to render, modeling a task
-     * emitting a malformed asset. Constructed and executed directly by the processor, so no plugin
-     * registration is needed.
+     * A task that succeeds on its own, so only its asset declaration decides the outcome. Constructed and
+     * executed directly by the processor, so no plugin registration is needed.
      */
     @SuperBuilder
     @Getter
@@ -359,6 +648,24 @@ class WorkerTaskProcessorTest {
         public VoidOutput run(RunContext runContext) {
             // null, not new VoidOutput(): the empty bean has no properties and Jackson's
             // FAIL_ON_EMPTY_BEANS would blow up when the processor serializes the output to a map
+            return null;
+        }
+    }
+
+    /**
+     * A task that succeeds but leaves an invalid value on an unrelated property, by rendering it without
+     * going through the validating {@code RunContextProperty}. The asset render's whole-bean validate
+     * then reports that violation, which is not a malformed asset declaration.
+     */
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class UnrelatedViolation extends Task implements RunnableTask<VoidOutput> {
+        private Property<@Min(10) Integer> count;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            Property.as(this.count, runContext, Integer.class);
             return null;
         }
     }

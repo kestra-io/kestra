@@ -22,8 +22,12 @@ jobs:
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
     with:
       java-version: 25
+      # Embed the plugin schema bundle in the jar, so the zip/tar and executable published
+      # to the GitHub release carry it just like the Docker images do.
+      embed-plugins-schema-bundle: true
 
   backend-tests:
     name: Backend tests
@@ -116,7 +120,7 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-export-trace@main
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

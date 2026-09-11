@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
@@ -538,5 +540,53 @@ class RunVariablesTest {
             }
             // Lists (e.g. parents) — record the path but don't recurse into list elements
         }
+    }
+
+    private static Map<String, Object> encryptedString() {
+        return new HashMap<>(Map.of("type", EncryptedString.TYPE, "value", "ciphertext"));
+    }
+
+    @Test
+    void shouldNotMutateExecutionInputsWhenBuildingVariables() {
+        // Given
+        Map<String, Object> nested = new HashMap<>(Map.of("key", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .inputs(new HashMap<>(Map.of("nested", nested)))
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(nested.get("key")).isEqualTo(encryptedString());
+    }
+
+    @Test
+    void shouldNotMutateExecutionTriggerVariablesWhenBuildingVariables() {
+        // Given
+        Map<String, Object> triggerVariables = new HashMap<>(Map.of("token", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .trigger(ExecutionTrigger.builder().id("trigger").type("io.kestra.trigger").variables(triggerVariables).build())
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(triggerVariables).doesNotContainKey("_context");
     }
 }

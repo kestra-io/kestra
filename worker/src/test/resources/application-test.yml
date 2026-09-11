@@ -88,3 +88,7 @@ datasources:
     username: sa
     password: ""
     driverClassName: org.h2.Driver
+
+logger:
+  levels:
+    "io.kestra.core.migration": WARN

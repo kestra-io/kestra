@@ -8,7 +8,7 @@
             @click="toggle(item.label)"
         >
             <span :style="swatchStyle(item.color)" />
-            {{ displayLabel(item.label) }} ({{ item.count }})
+            {{ displayLabel(item.label) }} ({{ formatCount(item.count) }})
         </span>
 
         <KsTooltip v-if="hidden.length" placement="top">
@@ -22,11 +22,11 @@
                     >
                         <span :style="swatchStyle(item.color)" />
                         <span style="flex:1;">{{ displayLabel(item.label) }}</span>
-                        <span>{{ item.count }}</span>
+                        <span>{{ formatCount(item.count) }}</span>
                     </span>
                 </div>
             </template>
-            <span class="ellipsis" tabindex="0" aria-label="Show all statuses">⋯</span>
+            <span class="ellipsis" tabindex="0" :aria-label="$t('dashboards.show_all_statuses')">⋯</span>
         </KsTooltip>
 
         <span
@@ -58,11 +58,13 @@
         durationLabel?: string;
         center?: boolean;
         chart?: {getEchartsInstance: () => EChartsType | null} | null;
+        formatValue?: (value: number) => string;
     }>(), {
         maxVisible: 5,
         durationLabel: undefined,
         center: false,
         chart: null,
+        formatValue: undefined,
     })
 
     const emit = defineEmits<{toggle: [name: string]}>()
@@ -90,6 +92,8 @@
         props.chart?.getEchartsInstance?.()?.dispatchAction({type: "legendToggleSelect", name})
         emit("toggle", name)
     }
+
+    const formatCount = (count: number) => props.formatValue?.(count) ?? String(count)
 
     const displayLabel = (label: string) =>
         label.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())

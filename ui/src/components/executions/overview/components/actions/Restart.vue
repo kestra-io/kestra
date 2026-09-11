@@ -192,6 +192,7 @@
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
+    import {EXECUTION_PARENT_ROUTE} from "../../../executionTabs"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {KsId} from "@kestra-io/design-system"
@@ -377,8 +378,9 @@
         toast.success(t(props.isReplay ? "replayed" : "restarted"))
 
         if (newExecution.id !== props.execution.id) {
+            // The parent route resolves the default tab; the full page load runs the redirect.
             window.location.href = router.resolve({
-                name: "executions/update/gantt",
+                name: EXECUTION_PARENT_ROUTE,
                 params: {
                     namespace: newExecution.namespace,
                     flowId: newExecution.flowId,

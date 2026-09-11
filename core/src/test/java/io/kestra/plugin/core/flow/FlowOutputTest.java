@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import java.util.List;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.InternalException;
@@ -13,12 +14,16 @@ import io.kestra.core.services.ExecutionOutputService;
 
 import jakarta.inject.Inject;
 
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class FlowOutputTest {
     @Inject
     private ExecutionOutputService executionOutputService;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     @ExecuteFlow(value = "flows/valids/flow-with-outputs.yml", tenantId = "shouldgetsuccessexecutionforflowwithoutputs")
@@ -56,5 +61,18 @@ class FlowOutputTest {
     @ExecuteFlow(value = "flows/valids/flow-with-outputs.yml", tenantId = "shouldnotstoreoutputsinsidetheexecution")
     void shouldNotStoreOutputsInsideTheExecution(Execution execution) {
         assertThat(execution.getOutputs()).isNull();
+    }
+
+    @Test
+    @ExecuteFlow(value = "flows/valids/flow-with-outputs-with-loop.yml", tenantId = "loopexecutionsshouldnotcomputeoutputs")
+    void loopExecutionsShouldNotComputeOutputs(Execution execution) throws InternalException {
+        assertThat(executionOutputService.getOutputs(execution)).hasSize(1);
+
+        // 2 loop sub-executions, one per iteration, all in SUCCESS without outputs
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
+        assertThat(subExecutions).hasSize(2);
+        assertThat(subExecutions).allMatch(e -> e.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(throwPredicate(e -> executionOutputService.getOutputs(e) == null));
+
     }
 }

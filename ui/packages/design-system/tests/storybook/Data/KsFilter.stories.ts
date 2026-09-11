@@ -1,7 +1,9 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {provide, ref, shallowReactive} from "vue"
 import {createMemoryHistory, createRouter, routeLocationKey, routerKey, START_LOCATION} from "vue-router"
+import {expect, waitFor} from "storybook/test"
 import KsFilter from "../../../src/components/Data/KsDataTable/KsFilter.vue"
+import {SAME_ROW_TOLERANCE_PX} from "../../../src/components/Data/KsDataTable/filter/utils/constants"
 
 const meta: Meta<typeof KsFilter> = {
     title: "Components/Data/KsFilter",
@@ -44,6 +46,21 @@ const SIMPLE_CONFIGURATION = {
             label: "Flow ID",
             valueType: "text",
             comparators: ["=", "*="],
+        },
+    ],
+}
+
+const GLOBAL_KEY_CONFIGURATION = {
+    ...SIMPLE_CONFIGURATION,
+    keys: [
+        ...SIMPLE_CONFIGURATION.keys,
+        {
+            key: "timeRange",
+            label: "Started",
+            valueType: "select",
+            comparators: ["="],
+            groupable: false,
+            valueProvider: () => Promise.resolve([{label: "Last 24 hours", value: "PT24H"}]),
         },
     ],
 }
@@ -383,6 +400,189 @@ export const WithTableOptions: Story = {
         template: `
             <div style="padding: 24px">
                 <KsFilter v-if="ready" :configuration="configuration" :tableOptions="tableOptions" />
+            </div>
+        `,
+    }),
+}
+
+const TRANSPARENT = "rgba(0, 0, 0, 0)"
+
+/** The element that carries the rule between the conditional and the global chips. */
+const groupSeparator = (canvasElement: HTMLElement) => {
+    const element = canvasElement.querySelector<HTMLElement>(".filter .ends-conditional-group")
+    if (!element) throw new Error("nothing carries the group separator yet")
+    return element
+}
+
+const chipCentres = (canvasElement: HTMLElement) =>
+    [...canvasElement.querySelectorAll<HTMLElement>(".filter .filter-chip-wrap")].map((wrap) => {
+        const box = wrap.getBoundingClientRect()
+        return (box.top + box.bottom) / 2
+    })
+
+/**
+ * A bar narrow enough that the chips wrap onto several rows, with a `groupable: false`
+ * key applied so a global chip is among them. Every wrapped row starts at the same left
+ * edge as the `{ }` toggle.
+ */
+export const WithWrappedRows: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[namespace][STARTS_WITH]": "company",
+                "filters[timeRange][EQUALS]": "PT24H",
+            })
+            return {ready, configuration: GLOBAL_KEY_CONFIGURATION}
+        },
+        template: `
+            <div style="padding: 24px; width: 620px">
+                <KsFilter v-if="ready" :configuration="configuration" />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const main = await waitFor(() => {
+            const element = canvasElement.querySelector<HTMLElement>(".filter .top > .main-filters")
+            if (!element) throw new Error("no .filter .top > .main-filters: the bar is no longer one wrapping group")
+            const chips = element.querySelectorAll(".filter-chip-wrap")
+            if (chips.length < 2) throw new Error(`expected 2 chips, rendered ${chips.length}`)
+            return element
+        })
+
+        // MainFilter's root is display: contents, so the items actually laid out are its children.
+        const boxes = [...main.children]
+            .flatMap((child) => getComputedStyle(child).display === "contents" ? [...child.children] : [child])
+            .map((element) => element.getBoundingClientRect())
+            .filter((box) => box.width > 0 && box.height > 0)
+
+        // Rows group by vertical centre rather than by top: the 18px reset link and the 32px
+        // chips beside it share a row without sharing a top.
+        const leftPerRow = new Map<number, number>()
+        for (const box of boxes) {
+            const centre = (box.top + box.bottom) / 2
+            const row = [...leftPerRow.keys()].find((key) => Math.abs(key - centre) <= 4) ?? centre
+            leftPerRow.set(row, Math.min(leftPerRow.get(row) ?? Infinity, Math.round(box.left)))
+        }
+
+        expect(leftPerRow.size).toBeGreaterThan(1)
+        expect([...new Set(leftPerRow.values())]).toHaveLength(1)
+
+        // The global chip is on its own row here, so the group rule must not be drawn.
+        const [conditional, global] = chipCentres(canvasElement)
+        expect(Math.abs(conditional - global)).toBeGreaterThan(SAME_ROW_TOLERANCE_PX)
+        await waitFor(() =>
+            expect(getComputedStyle(groupSeparator(canvasElement)).borderRightColor).toBe(TRANSPARENT),
+        )
+    },
+}
+
+/**
+ * The same filters on a bar wide enough to keep the conditional and the global chip on one row,
+ * which is the only case where the rule between the two groups is drawn.
+ */
+export const WithGlobalSeparator: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[namespace][STARTS_WITH]": "company",
+                "filters[timeRange][EQUALS]": "PT24H",
+            })
+            const buttons = {savedFilters: {shown: false}, tableOptions: {shown: false}}
+            const tableOptions = {columns: {shown: false}, refresh: {shown: false}}
+            return {ready, configuration: GLOBAL_KEY_CONFIGURATION, buttons, tableOptions}
+        },
+        template: `
+            <div style="padding: 24px; width: 1000px">
+                <KsFilter
+                    v-if="ready"
+                    :configuration="configuration"
+                    :buttons="buttons"
+                    :tableOptions="tableOptions"
+                />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        await waitFor(() => {
+            const centres = chipCentres(canvasElement)
+            if (centres.length < 2) throw new Error(`expected 2 chips, rendered ${centres.length}`)
+            expect(Math.abs(centres[0] - centres[1])).toBeLessThanOrEqual(SAME_ROW_TOLERANCE_PX)
+        })
+
+        await waitFor(() =>
+            expect(getComputedStyle(groupSeparator(canvasElement)).borderRightColor).not.toBe(TRANSPARENT),
+        )
+    },
+}
+
+/**
+ * Two applied filters fold the conditional chips into the rules pill, which is the common case on
+ * every list page since `timeRange` is a global key everywhere. The pill carries the group rule
+ * just as a chip would.
+ */
+export const WithFoldedRulesSeparator: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[namespace][STARTS_WITH]": "company",
+                "filters[state][IN]": "FAILED",
+                "filters[timeRange][EQUALS]": "PT24H",
+            })
+            const buttons = {savedFilters: {shown: false}, tableOptions: {shown: false}}
+            const tableOptions = {columns: {shown: false}, refresh: {shown: false}}
+            return {ready, configuration: GLOBAL_KEY_CONFIGURATION, buttons, tableOptions}
+        },
+        template: `
+            <div style="padding: 24px; width: 1000px">
+                <KsFilter
+                    v-if="ready"
+                    :configuration="configuration"
+                    :buttons="buttons"
+                    :tableOptions="tableOptions"
+                />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        await waitFor(() => {
+            if (!canvasElement.querySelector(".filter .rules-pill")) throw new Error("the pill has not folded yet")
+            const centres = chipCentres(canvasElement)
+            if (centres.length < 2) throw new Error(`expected the pill and one chip, found ${centres.length}`)
+            expect(Math.abs(centres[0] - centres[1])).toBeLessThanOrEqual(SAME_ROW_TOLERANCE_PX)
+        })
+
+        await waitFor(() =>
+            expect(getComputedStyle(groupSeparator(canvasElement)).borderRightColor).not.toBe(TRANSPARENT),
+        )
+    },
+}
+
+/**
+ * What `BlueprintsFilterBar` renders: `searchInputFullWidth` with a configuration that has
+ * no keys, so the search is the only control and stretches to fill the bar.
+ */
+export const WithFullWidthSearch: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter()
+            const configuration = {searchPlaceholder: "Search blueprints...", keys: []}
+            const buttons = {savedFilters: {shown: false}, tableOptions: {shown: false}}
+            const tableOptions = {chart: {shown: false}, columns: {shown: false}, refresh: {shown: false}}
+            return {ready, configuration, buttons, tableOptions}
+        },
+        template: `
+            <div style="padding: 24px; width: 620px">
+                <KsFilter
+                    v-if="ready"
+                    :configuration="configuration"
+                    :buttons="buttons"
+                    :tableOptions="tableOptions"
+                    searchInputFullWidth
+                />
             </div>
         `,
     }),

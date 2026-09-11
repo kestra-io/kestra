@@ -1,0 +1,22 @@
+id: flow-with-outputs-with-loop
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      - a
+      - b
+    tasks:
+      - id: inner
+        type: io.kestra.plugin.core.log.Log
+        message: "iteration {{ item.value }}"
+
+  - id: after_loop
+    type: io.kestra.plugin.core.debug.Return
+    format: done
+
+outputs:
+  - id: out
+    type: STRING
+    value: "{{ outputs.after_loop.value }}"

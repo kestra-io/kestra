@@ -97,6 +97,10 @@ public class Flow extends AbstractFlow implements HasUID {
     @PluginProperty
     List<String> policyRefs;
 
+    @Schema(
+        title = "Concurrency",
+        description = "Limits the number of concurrent executions of the flow."
+    )
     @Valid
     Concurrency concurrency;
 
@@ -304,6 +308,7 @@ public class Flow extends AbstractFlow implements HasUID {
         return this.toBuilder()
             .revision(this.revision + 1)
             .deleted(true)
+            .draft(false) // switch to false to avoid resurrecting the previous revision
             .build();
     }
 

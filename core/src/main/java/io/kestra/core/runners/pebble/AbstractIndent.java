@@ -8,6 +8,8 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public abstract class AbstractIndent {
+    private static final int MAX_AMOUNT = 10_000;
+
     public List<String> getArgumentNames() {
         return List.of("amount", "prefix");
     }
@@ -55,6 +57,9 @@ public abstract class AbstractIndent {
         if (!(amount >= 0)) {
             throw new PebbleException(null, String.format("The '%s' filter expects a positive integer >=0 as argument 'amount'.", indentType), lineNumber, self.getName());
         }
+        RenderLimits.ensureAtMost(
+            amount, MAX_AMOUNT, "The '" + indentType + "' filter's 'amount' argument cannot exceed %d, but %d was given."
+        );
 
         String prefix = prefix(args);
         String newLine = getLineSeparator(input.toString());

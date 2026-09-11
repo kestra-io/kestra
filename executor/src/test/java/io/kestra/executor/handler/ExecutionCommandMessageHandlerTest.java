@@ -159,26 +159,52 @@ class ExecutionCommandMessageHandlerTest {
     }
 
     @Test
-    void shouldPersistExecutionAndReturnEmptyWhenKillSwitchActive() {
+    void shouldReturnExecutorContextWhenKillSwitchIsKillForNewTriggeredExecution() {
         // Given
         var flow = mock(FlowWithSource.class);
         var processedFlow = ProcessedFlow.of(flow);
-        var execution = mock(Execution.class); // no state stubs needed — kill switch fires before getState()
+        var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
+        when(execution.getState().isTerminated()).thenReturn(true);
+        when(execution.getState().getCurrent()).thenReturn(State.Type.KILLED);
+        when(execution.withState(State.Type.KILLED)).thenReturn(execution);
+        when(execution.addLabel(any())).thenReturn(execution);
         when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(processedFlow));
         when(executionService.create(eq(createCommand), eq(processedFlow))).thenReturn(execution);
-        when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.IGNORE);
+        when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.KILL);
 
         // When
         Optional<ExecutorContext> result = handler.handle(createCommand);
 
-        // Then — execution was persisted but not processed further
-        assertThat(result).isEmpty();
+        // Then — reaches the executor as a terminal ExecutorContext instead of being dropped
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(execution);
         verify(executionStateStore).create(execution);
         verify(executionEventMessageHandler, never()).handle(any());
-        verify(asyncOperationService).emitProcessedIfAsync(createCommand, "tenant", "exec-1", Outcome.SUCCEEDED, null);
     }
 
-    // ---- Existing-execution kill switch pre-check tests ----
+    @Test
+    void shouldReturnExecutorContextWhenKillSwitchIsCancelForNewTriggeredExecution() {
+        // Given
+        var flow = mock(FlowWithSource.class);
+        var processedFlow = ProcessedFlow.of(flow);
+        var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
+        when(execution.getState().isTerminated()).thenReturn(true);
+        when(execution.getState().getCurrent()).thenReturn(State.Type.CANCELLED);
+        when(execution.withState(State.Type.CANCELLED)).thenReturn(execution);
+        when(execution.addLabel(any())).thenReturn(execution);
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(processedFlow));
+        when(executionService.create(eq(createCommand), eq(processedFlow))).thenReturn(execution);
+        when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.CANCEL);
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(createCommand);
+
+        // Then — reaches the executor as a terminal ExecutorContext instead of being dropped
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(execution);
+        verify(executionStateStore).create(execution);
+        verify(executionEventMessageHandler, never()).handle(any());
+    }
 
     @Test
     void shouldReturnEmptyAndLogWhenKillSwitchIsIgnoreForExistingExecution() {
@@ -187,7 +213,7 @@ class ExecutionCommandMessageHandlerTest {
         when(command.executionId()).thenReturn("exec-1");
         var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
         when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.IGNORE);
-        when(executionStateStore.findById("exec-1")).thenReturn(execution);
+        when(executionStateStore.findByIdWithoutAcl("exec-1")).thenReturn(execution);
 
         // When
         Optional<ExecutorContext> result = handler.handle(command);
@@ -205,7 +231,7 @@ class ExecutionCommandMessageHandlerTest {
         var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
         when(execution.getState().getCurrent()).thenReturn(State.Type.RUNNING);
         when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.KILL);
-        when(executionStateStore.findById("exec-1")).thenReturn(execution);
+        when(executionStateStore.findByIdWithoutAcl("exec-1")).thenReturn(execution);
 
         // When
         Optional<ExecutorContext> result = handler.handle(command);
@@ -223,7 +249,7 @@ class ExecutionCommandMessageHandlerTest {
         var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
         when(execution.getState().getCurrent()).thenReturn(State.Type.RUNNING);
         when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.CANCEL);
-        when(executionStateStore.findById("exec-1")).thenReturn(execution);
+        when(executionStateStore.findByIdWithoutAcl("exec-1")).thenReturn(execution);
 
         // When
         Optional<ExecutorContext> result = handler.handle(command);
@@ -241,7 +267,7 @@ class ExecutionCommandMessageHandlerTest {
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         var context = mock(ExecutorContext.class);
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -258,7 +284,7 @@ class ExecutionCommandMessageHandlerTest {
     @Test
     void replayShouldEmitFailedOutcomeWhenSourceExecutionNotFound() {
         // Given — source execution does not exist
-        when(executionStateStore.findById("source-exec-id")).thenReturn(null);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(null);
 
         // When — must not throw
         assertThatCode(() -> handler.handle(replayCommand)).doesNotThrowAnyException();
@@ -270,7 +296,7 @@ class ExecutionCommandMessageHandlerTest {
     @Test
     void replayShouldEmitFailedOutcomeWhenFlowNotFound() {
         // Given
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.empty());
 
         // When — must not throw
@@ -285,7 +311,7 @@ class ExecutionCommandMessageHandlerTest {
         // Given
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), any(), any(), any(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -299,11 +325,13 @@ class ExecutionCommandMessageHandlerTest {
     }
 
     @Test
-    void replayShouldPersistKilledExecutionAndReturnEmptyWhenKillSwitchIsKill() throws Exception {
+    void replayShouldReturnExecutorContextWhenKillSwitchIsKill() throws Exception {
         // Given
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(newExecution.getState().isTerminated()).thenReturn(true);
+        when(newExecution.getState().getCurrent()).thenReturn(State.Type.KILLED);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -314,8 +342,9 @@ class ExecutionCommandMessageHandlerTest {
         // When
         Optional<ExecutorContext> result = handler.handle(replayCommand);
 
-        // Then — persisted in KILLED state, no further processing
-        assertThat(result).isEmpty();
+        // Then — persisted in KILLED state and returned as a terminal ExecutorContext, not dropped
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(newExecution);
         verify(executionStateStore).create(newExecution);
         verify(executionEventMessageHandler, never()).handle(any());
         verify(asyncOperationService).emitProcessedIfAsync(replayCommand, "tenant", "new-exec-id", Outcome.SUCCEEDED, null);
@@ -326,7 +355,7 @@ class ExecutionCommandMessageHandlerTest {
         // Given
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -337,7 +366,7 @@ class ExecutionCommandMessageHandlerTest {
 
         // Then — persisted as-is, no further processing
         assertThat(result).isEmpty();
-        verify(executionStateStore).create(newExecution);
+        verify(executionStateStore).create(any());
         verify(executionEventMessageHandler, never()).handle(any());
         verify(asyncOperationService).emitProcessedIfAsync(replayCommand, "tenant", "new-exec-id", Outcome.SUCCEEDED, null);
     }
@@ -349,7 +378,7 @@ class ExecutionCommandMessageHandlerTest {
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         var context = mock(ExecutorContext.class);
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByIdForRuntime("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(ProcessedFlow.of(flow)));
         when(executionService.replay(any(), eq(flow), isNull(), eq(3), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);

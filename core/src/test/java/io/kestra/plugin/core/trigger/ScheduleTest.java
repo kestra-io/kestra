@@ -373,6 +373,30 @@ class ScheduleTest {
     }
 
     @Test
+    void neverMatchingWhenOnFrequentCronDoesNotHangTheEvaluation() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("* * * * * *")
+            .withSeconds(true)
+            .when("{{ false }}")
+            .build();
+
+        long start = System.nanoTime();
+        Optional<ZonedDateTime> next = trigger.findNextDateMatchingConditions(
+            trigger.executionTime(),
+            conditionContext(trigger),
+            ZonedDateTime.now()
+        );
+        long elapsed = Duration.ofNanos(System.nanoTime() - start).toSeconds();
+
+        assertThat(next).isEmpty();
+        assertThat(elapsed)
+            .as("the tick walk must be bounded by an iteration cap, not just a 10-year lookahead")
+            .isLessThan(10);
+    }
+
+    @Test
     void lateMaximumDelay() {
         Schedule trigger = Schedule.builder()
             .id("schedule").type(Schedule.class.getName())

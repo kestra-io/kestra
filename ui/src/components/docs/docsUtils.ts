@@ -42,6 +42,61 @@ export const DISABLED_PAGES = [
     "docs/terraform/resources",
 ]
 
+export interface DocsTocItem {
+    path: string;
+    title: string;
+    sidebarTitle?: string;
+    children?: DocsTocItem[];
+}
+
+export function buildDocsToc(rawStructure: Record<string, any> | undefined): DocsTocItem[] | undefined {
+    if (rawStructure === undefined) {
+        return undefined
+    }
+
+    const childrenWithMetadata = Object.entries(rawStructure)
+        .filter(([path]) => path.startsWith("docs/") && !path.endsWith(".png") && !path.endsWith(".svg"))
+        .reduce((acc: Record<string, DocsTocItem>, [url, metadata]) => {
+            if (!metadata || metadata.hideSidebar) {
+                return acc
+            }
+
+            const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "")
+            acc[cleanUrl] = {...metadata, path: cleanUrl}
+
+            return acc
+        }, {})
+
+    for (const url in childrenWithMetadata) {
+        const split = url.split("/")
+        const parent = childrenWithMetadata[split.slice(0, split.length - 1).join("/")]
+        if (parent !== undefined) {
+            parent.children = [...(parent.children ?? []), childrenWithMetadata[url]]
+        }
+    }
+
+    return Object.values(childrenWithMetadata)
+}
+
+/**
+ * Matches every {@link SECTIONS} entry against the top-level docs pages only, so a nested page
+ * sharing a title with a section entry cannot be listed twice.
+ */
+export function buildDocsSections(toc: DocsTocItem[] | undefined): {section: string, children: DocsTocItem[]}[] | undefined {
+    if (toc === undefined) {
+        return undefined
+    }
+
+    return Object.entries(SECTIONS).map(([section, childrenTitles]) => ({
+        section,
+        children: childrenTitles
+            .map(name => toc.find(({title, sidebarTitle, path}) =>
+                path.split("/").length === 2 && (sidebarTitle === name || title === name),
+            ))
+            .filter((item): item is DocsTocItem => !!item),
+    }))
+}
+
 export function removeMDXImports(content: string): string {
     // we want to only remove lines that are not in a code block
     // so we isolate code blocks first

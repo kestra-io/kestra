@@ -78,6 +78,9 @@ public abstract class Input<T> implements Data {
     )
     DependsOn dependsOn;
 
+    @Schema(
+        title = "Whether the input is required."
+    )
     @Builder.Default
     Boolean required = true;
 

@@ -62,6 +62,7 @@ tasks.withType(JavaCompile).configureEach {
         "-Amicronaut.openapi.expand.version=${project.version}"
     ]
 }
+
 tasks.register('generateOpenapiSpec') {
     dependsOn tasks.named('compileJava')
     def openapiSpecPath = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
@@ -80,7 +81,79 @@ tasks.named('jar', Jar) {
 }
 
 tasks.named('compileJava') {
-    outputs.file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
+    def spec = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
+    outputs.file(spec)
+
+    /*
+     * Attaches the RFC 9457 error contract to every operation in the generated spec, so a generated client
+     * gets a real error type instead of none.
+     *
+     * A post-processing pass because micronaut-openapi exposes no hook for it, and the alternative — a
+     * class-level @ApiResponse on every controller — would mean editing all of them. Hung off compileJava
+     * rather than given its own task because the spec sits in compileJava's own output directory, which other
+     * modules put on their compile classpath; a separate task writing there is an overlapping output that
+     * Gradle rejects. Idempotent, so an incremental rebuild is harmless.
+     *
+     * The Enterprise build carries a matching copy: snakeyaml is on a build script's own compile classpath but
+     * not on an `apply from:` script's, so sharing this would mean pinning it as a buildscript dependency.
+     */
+    doLast {
+        def specFile = spec.get().asFile
+        if (!specFile.exists()) {
+            return
+        }
+
+        def document = new org.yaml.snakeyaml.Yaml().load(specFile.newInputStream())
+
+        // A fresh map per response: snakeyaml collapses repeated object identities into YAML anchors, and an
+        // anchor-riddled spec confuses OpenAPI tooling and is unreadable in review.
+        def problemContent = {
+            ['application/problem+json': ['schema': ['$ref': '#/components/schemas/ProblemDetail']]]
+        }
+        // Statuses every endpoint can answer with but none declared. Without them a generated client has no
+        // error type at all for the most common failures.
+        def implied = ['401': 'Authentication required', '403': 'Access denied', '500': 'Internal server error']
+        // Paths governed by another specification must not be given a problem document. The Model Context
+        // Protocol transport (/mcp/{serverId}) speaks JSON-RPC 2.0, while /mcp/servers is the ordinary
+        // management API and stays in scope. Mirrors the runtime ProblemFormatExclusion beans.
+        def governedElsewhere = { String path ->
+            (path.contains('/mcp/') && !path.contains('/mcp/servers')) || path.contains('/scim/v2/')
+        }
+
+        int described = 0
+        int added = 0
+        int skipped = 0
+        document.paths?.each { path, operations ->
+            if (governedElsewhere(path)) {
+                skipped++
+                return
+            }
+            operations.each { method, operation ->
+                if (!(operation instanceof Map) || operation.responses == null) {
+                    return
+                }
+                operation.responses.each { code, response ->
+                    if (code ==~ /[45]\d\d/ && response instanceof Map && response.content == null) {
+                        response.content = problemContent()
+                        described++
+                    }
+                }
+                implied.each { code, description ->
+                    if (!operation.responses.containsKey(code)) {
+                        operation.responses[code] = ['description': description, 'content': problemContent()]
+                        added++
+                    }
+                }
+            }
+        }
+
+        def options = new org.yaml.snakeyaml.DumperOptions()
+        options.defaultFlowStyle = org.yaml.snakeyaml.DumperOptions.FlowStyle.BLOCK
+        options.splitLines = false
+        specFile.withWriter('UTF-8') { writer -> new org.yaml.snakeyaml.Yaml(options).dump(document, writer) }
+
+        println "OpenAPI: described ${described} error responses, added ${added} implied, skipped ${skipped} paths owned by another specification"
+    }
 }
 
 tasks.withType(Test).configureEach { Test t ->

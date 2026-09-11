@@ -7,29 +7,13 @@ import path from "path"
 
 // The repo doesn't set `testIdAttribute`, so `data-test` is matched by hand.
 const CREATE = "[data-test=\"flows-create\"]"
-const LANDING = "[data-test=\"new-flow-landing\"]"
 
-/**
- * `/flows/new` opens the creation funnel, so the editor is one step behind the blank-flow
- * form. Walked as a user would rather than bypassed with a query flag, so the specs keep
- * covering the real entry point into the editor.
- */
-const openEditorFromFunnel = async (page: Page, id: string, namespace: string) => {
+// Walked as a user would rather than bypassed with a query flag, so the specs keep
+// covering the real entry point into the editor.
+const openEditor = async (page: Page) => {
     await page.locator(CREATE).click()
     await page.waitForURL("**/flows/new")
-    await expect(page.locator(LANDING)).toBeVisible()
-
-    await page.locator("[data-test=\"blank-flow-id\"]").fill(id)
-
-    // The namespace select is filterable with `allowCreate`, so typing a namespace that
-    // does not exist yet and confirming it is what creates the option.
-    await page.locator("[data-test=\"blank-flow-namespace\"]").click()
-    await page.keyboard.type(namespace)
-    await page.keyboard.press("Enter")
-
-    await expect(page.locator("[data-test=\"blank-flow-open-editor\"]")).toBeEnabled()
-    await page.locator("[data-test=\"blank-flow-open-editor\"]").click()
-    await expect(page.locator(LANDING)).toBeHidden()
+    await expect(page.getByTestId("monaco-editor")).toBeVisible()
 }
 
 const __filename = fileURLToPath(import.meta.url)
@@ -60,7 +44,7 @@ test.describe("Flow Page", () => {
         await test.step("create the example Flow", async () => {
             await page.waitForURL("**/flows")
 
-            await openEditorFromFunnel(page, `flow_${testUUID}`.slice(0, 19), "company.team")
+            await openEditor(page)
 
             await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
@@ -89,7 +73,7 @@ test.describe("Flow Page", () => {
 
         await test.step("create a the flow by pasting the YAML", async () => {
             await expect(page.locator(CREATE)).toBeVisible()
-            await openEditorFromFunnel(page, flowId, "company.team")
+            await openEditor(page)
             // Must be awaited as an assertion: the `clear({force: true})` below skips
             // actionability checks, so it would happily fire into an unmounted editor.
             await expect(page.getByTestId("monaco-editor").getByText("Hello World")).toBeVisible()

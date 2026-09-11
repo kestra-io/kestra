@@ -685,7 +685,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].message).toBe("Updated message")
@@ -720,7 +720,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
@@ -736,7 +736,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             const thenLen = Array.isArray(parsed.tasks[1].then) ? parsed.tasks[1].then.length : 0
             expect(thenLen).toBe(0)
@@ -755,7 +755,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks.some((t: Record<string, unknown>) =>
@@ -774,7 +774,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks[1].then).toHaveLength(2)
             expect(String(parsed.tasks[1].then[1].id)).toMatch(/^nested_a_copy/)
@@ -807,7 +807,7 @@ describe("BlockEditor", () => {
             vm.picker.insertTask("io.kestra.plugin.core.log.Log")
             await wrapper.vm.$nextTick()
 
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks[1].then).toHaveLength(2)
         })
@@ -960,7 +960,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then — the order is reversed in the store YAML
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks[0].id).toBe("http_task")
             expect(parsed.tasks[1].id).toBe("log_task")
@@ -1073,7 +1073,7 @@ describe("BlockEditor", () => {
 
             // Then
             expect(confirmMock).toHaveBeenCalledTimes(1)
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
@@ -1090,7 +1090,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
@@ -1108,7 +1108,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
         })
@@ -1185,7 +1185,7 @@ describe("BlockEditor", () => {
             expect(vm.taskPickerVisible).toBe(true)
             vm.picker.insertTask("io.kestra.plugin.core.log.Log")
             await wrapper.vm.$nextTick()
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {errors?: unknown[]}[]; errors?: unknown[]}
             expect(parsed.tasks[1].errors).toHaveLength(1)
             expect(parsed.errors).toBeUndefined()
@@ -1329,7 +1329,7 @@ describe("BlockEditor", () => {
 
             // Then — no deletion
             expect(confirmMock).not.toHaveBeenCalled()
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(originalLength)
         })
@@ -1345,7 +1345,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].id).toBe("http_task")
@@ -1364,7 +1364,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks[0].id).toBe("http_task")
             expect(parsed.tasks[1].id).toBe("log_task")
@@ -1386,7 +1386,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks[0].id).toBe("http_task")
             expect(parsed.tasks[1].id).toBe("log_task")
@@ -1428,7 +1428,7 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then — then_a has moved twice and is now at index 2
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value)
             expect(parsed.tasks[0].then[0].id).toBe("then_b")
             expect(parsed.tasks[0].then[1].id).toBe("then_c")
@@ -1725,7 +1725,7 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[2].type).toBe("io.kestra.plugin.core.flow.If")
@@ -1937,7 +1937,7 @@ tasks:
             await flushPromises()
 
             // Then
-            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
             const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[1].type).toBe("io.kestra.plugin.core.flow.If")

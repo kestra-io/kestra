@@ -43,6 +43,19 @@
         max-width: calc(100vw - var(--ks-spacing-6));
         z-index: 1000;
         box-shadow: var(--ks-shadow-lg);
+
+        &:before {
+            content: "";
+            z-index: -1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--ks-bg-base);
+            border-radius: var(--ks-radius-lg);
+            opacity: 1;
+        }
     }
 
     .pwa-install-description {

@@ -469,6 +469,15 @@ public abstract class AbstractLogDataStoreTest {
         assertThat(results).extracting(LogEntry::getExecutionId).containsExactly("exec-normal-kind");
     }
 
+    @Test
+    void find_returnsNonNormalKindWhenExecutionIdFilter() {
+        // An EXECUTION_ID filter bypasses the NORMAL-kind default, same as an explicit KIND filter, so the
+        // logs of that execution are always returned regardless of its kind.
+        List<LogEntry> results = logDataStore.find(Pageable.UNPAGED, kindTenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "exec-playground-kind"))).getContent();
+
+        assertThat(results).extracting(LogEntry::getExecutionId).containsExactly("exec-playground-kind");
+    }
+
     static Stream<QueryFilter> unsupportedFilters() {
         return Stream.of(
             QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(),
@@ -498,6 +507,14 @@ public abstract class AbstractLogDataStoreTest {
         ).collectList().block();
 
         assertThat(results).extracting(LogEntry::getExecutionId).containsExactlyInAnyOrder("exec-alpha", "exec-beta");
+    }
+
+    @Test
+    void findAsync_returnsNonNormalKindWhenExecutionIdFilter() {
+        // Same NORMAL-kind-default exception as find(): an EXECUTION_ID filter always returns that execution's logs.
+        List<LogEntry> results = logDataStore.findAsync(kindTenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "exec-loop-kind"))).collectList().block();
+
+        assertThat(results).extracting(LogEntry::getExecutionId).containsExactly("exec-loop-kind");
     }
 
     @Test

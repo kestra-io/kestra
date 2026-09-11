@@ -1,7 +1,8 @@
-import type {RouteRecordRaw} from "vue-router"
+import type {RouteMeta, RouteRecordRaw} from "vue-router"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {resolveDefaultTab} from "../../utils/routeTabs"
+import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Flows detail page. */
 export const FLOW_PARENT_ROUTE = "flows/update"
@@ -122,6 +123,24 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
 ]
 
 /**
+ * Loads the flow the detail page is about into the store, so an unknown one renders the
+ * not-found screen and a known one is already there when the page mounts — `useFlowRoot`
+ * fetches only what the store does not already hold (EE reuses this for its own route record).
+ * `allowDeleted`: a deleted flow still has a page, so only an unknown one is missing.
+ */
+export const FLOW_ENTITY_META: RouteMeta = {
+    entity: async (to) => {
+        const {useFlowStore} = await import("../../stores/flow")
+        return useFlowStore().loadFlow({
+            namespace: String(to.params.namespace),
+            id: String(to.params.id),
+            revision: to.query.revision ? String(to.query.revision) : undefined,
+            allowDeleted: true,
+        }, ENTITY_REQUEST_OPTIONS)
+    },
+}
+
+/**
  * The Flows detail page's own route: parent + children, colocated with the tab
  * definitions above so this page owns its full routing structure end to end.
  */
@@ -129,6 +148,7 @@ export const FLOW_ROUTE: RouteRecordRaw = {
     name: FLOW_PARENT_ROUTE,
     path: "/:tenant?/flows/edit/:namespace/:id",
     component: () => import("./FlowRoot.vue"),
+    meta: FLOW_ENTITY_META,
     // Resolve legacy deep-links `{name: "flows/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {

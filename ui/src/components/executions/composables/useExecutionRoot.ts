@@ -53,6 +53,11 @@ export function useExecutionRoot() {
         return executionsStore.execution !== undefined
     })
 
+    // By the time either cleanup below runs, router navigation has already updated `route` to the
+    // destination: if the store holds the flow being navigated to (e.g. breadcrumb -> flow edit,
+    // #10722), clearing it here would erase data the destination page already loaded and rendered.
+    const flowMatchesTarget = () => flowStore.flow?.namespace === route.params.namespace && flowStore.flow?.id === route.params.id
+
     const follow = () => {
         previousExecutionId.value = route.params.id as string
         executionsStore.followExecution(route.params as any, t)
@@ -94,9 +99,11 @@ export function useExecutionRoot() {
 
         watch(route, () => {
             if (previousExecutionId.value !== route.params.id) {
-                executionsStore.logs = {total: 0, results: []}
-                flowStore.flow = undefined
-                flowStore.flowGraph = undefined
+                executionsStore.resetLogs()
+                if (!flowMatchesTarget()) {
+                    flowStore.flow = undefined
+                    flowStore.flowGraph = undefined
+                }
                 follow()
             }
         })
@@ -105,9 +112,11 @@ export function useExecutionRoot() {
             executionsStore.closeSSE()
             window.removeEventListener("popstate", follow)
             executionsStore.execution = undefined
-            executionsStore.logs = {total: 0, results: []}
-            flowStore.flow = undefined
-            flowStore.flowGraph = undefined
+            executionsStore.resetLogs()
+            if (!flowMatchesTarget()) {
+                flowStore.flow = undefined
+                flowStore.flowGraph = undefined
+            }
         })
     }
 

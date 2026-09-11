@@ -30,6 +30,10 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
+  local-files:
+    # relative to the Gradle test working directory (the module directory)
+    allowed-paths:
+      - build/resources/test
   jdbc:
     queues:
       min-poll-interval: 10ms
@@ -102,3 +106,7 @@ grpc:
     enabled: false
     health:
       enabled: false
+
+logger:
+  levels:
+    "io.kestra.core.migration": WARN

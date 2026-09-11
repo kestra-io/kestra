@@ -99,14 +99,12 @@ describe("SystemBlueprintsTab", () => {
         // Given / When — the guided steps must not be the only way out
         const wrapper = mount(SystemBlueprintsTab, globalConfig)
 
-        // Then — `blank` is param-driven, so FlowCreate opens the editor
-        // directly instead of bouncing the user back to the funnel
+        // Then — the link opens the flow editor on the system namespace
         const link = wrapper.findAllComponents(RouterLinkStub)
             .find(l => l.attributes("data-test") === "system-blank-flow-link")
         expect(link).toBeDefined()
         const to = link!.props("to") as {name: string; query: Record<string, string>}
         expect(to.name).toBe("flows/create")
-        expect(to.query.blank).toBe("true")
         expect(to.query.namespace).toBe("kestra.system")
     })
 })

@@ -3,6 +3,7 @@ import {mount} from "@vue/test-utils"
 import {createRouter, createMemoryHistory} from "vue-router"
 import KestraDesignSystem from "../../../../src/index"
 import KsEntityLink from "../../../../src/components/Data/KsEntityLink/KsEntityLink.vue"
+import KsTooltip from "../../../../src/components/Feedback/KsTooltip.vue"
 
 const router = createRouter({
     history: createMemoryHistory(),
@@ -33,16 +34,16 @@ describe("KsEntityLink", () => {
         expect(link.text()).toBe("company.team")
     })
 
-    test("sets the title attribute to the value", () => {
+    test("offers the full value in a tooltip, since narrow cells clip it", () => {
         const wrapper = mount(KsEntityLink, {
             props: {
                 entity: "flow",
-                value: "order_pipeline",
-                to: {name: "flows/update", params: {namespace: "company.team", id: "order_pipeline"}},
+                value: "seo-generate-draft-batch",
+                to: {name: "flows/update", params: {namespace: "company.team", id: "seo-generate-draft-batch"}},
             },
             global: globalConfig,
         })
-        expect(wrapper.find("a").attributes("title")).toBe("order_pipeline")
+        expect(wrapper.findComponent(KsTooltip).props("content")).toBe("seo-generate-draft-batch")
     })
 
     test("renders the namespace icon for the namespace entity", () => {
@@ -61,6 +62,20 @@ describe("KsEntityLink", () => {
         })
         expect(wrapper.find(".file-tree-outline-icon").exists()).toBe(true)
         expect(wrapper.find(".folder-open-outline-icon").exists()).toBe(false)
+    })
+
+    test("renders no icon when noIcon is set, keeping the value", () => {
+        const wrapper = mount(KsEntityLink, {
+            props: {
+                entity: "namespace",
+                value: "company.team",
+                to: "/namespaces/edit/company.team",
+                noIcon: true,
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.find(".material-design-icon").exists()).toBe(false)
+        expect(wrapper.find("a").text()).toBe("company.team")
     })
 
     test("the icon is decorative", () => {

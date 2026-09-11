@@ -1,4 +1,4 @@
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {defineComponent} from "vue"
 import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 

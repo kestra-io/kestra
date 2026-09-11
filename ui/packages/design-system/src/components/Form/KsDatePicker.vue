@@ -62,6 +62,11 @@
         color: var(--ks-text-inactive);
     }
 
+    .kel-date-picker,
+    .kel-date-range-picker {
+        --kel-datepicker-hover-text-color: var(--ks-text-link);
+    }
+
     .kel-date-range-picker {
         --kel-datepicker-border-color: var(--ks-border-default);
         --kel-datepicker-inner-border-color: var(--ks-border-default);

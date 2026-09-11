@@ -23,19 +23,21 @@ const FORMAT =
     TypeFormatFlags.NoTruncation |
     TypeFormatFlags.UseAliasDefinedOutsideCurrentScope
 
-// Single line `{ a: T; b: U; }` -> multi-line. Top-level only — our inferred
-// shapes are flat (primitives, SDK refs, arrays), so brace/angle/paren/bracket
-// depth tracking is enough.
-const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+// Splits `a: T; b: U` on its top-level `;`. The `>` of an arrow (`=>`) closes
+// nothing — without that exception a function-typed prop leaves the depth
+// counter negative and every member after it is swallowed into one line.
+export const splitTopLevelMembers = (raw: string): string[] => {
     const trimmed = raw.trim().replace(/^\{\s*/, "").replace(/;?\s*\}$/, "")
-    if (trimmed === "") return "{}"
+    if (trimmed === "") return []
 
     const members: string[] = []
     let depth = 0
     let current = ""
+    let previous = ""
     for (const ch of trimmed) {
         if (ch === "{" || ch === "<" || ch === "(" || ch === "[") depth++
-        else if (ch === "}" || ch === ">" || ch === ")" || ch === "]") depth--
+        else if (ch === "}" || ch === ")" || ch === "]" || (ch === ">" && previous !== "=")) depth--
+        previous = ch
         if (ch === ";" && depth === 0) {
             if (current.trim()) members.push(current.trim())
             current = ""
@@ -44,34 +46,21 @@ const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
         }
     }
     if (current.trim()) members.push(current.trim())
+    return members
+}
+
+// Single line `{ a: T; b: U; }` -> multi-line.
+const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+    const members = splitTopLevelMembers(raw)
+    if (members.length === 0) return "{}"
 
     const inner = members.map((m) => `${baseIndent}    ${m};`).join("\n")
     return `{\n${inner}\n${baseIndent}}`
 }
 
 // Splits a flat `{a:T; b:U; ...}` text into its top-level member names.
-const memberNames = (raw: string): string[] => {
-    const trimmed = raw.trim().replace(/^\{\s*/, "").replace(/;?\s*\}$/, "")
-    if (trimmed === "") return []
-    const names: string[] = []
-    let depth = 0
-    let current = ""
-    for (const ch of trimmed) {
-        if (ch === "{" || ch === "<" || ch === "(" || ch === "[") depth++
-        else if (ch === "}" || ch === ">" || ch === ")" || ch === "]") depth--
-        if (ch === ";" && depth === 0) {
-            const m = current.trim()
-            if (m) names.push(m.split(/[?:]/)[0].trim())
-            current = ""
-        } else {
-            current += ch
-        }
-    }
-    if (current.trim()) {
-        names.push(current.trim().split(/[?:]/)[0].trim())
-    }
-    return names
-}
+const memberNames = (raw: string): string[] =>
+    splitTopLevelMembers(raw).map((m) => m.split(/[?:]/)[0].trim())
 
 type SlotImport = {
     /** Local default-import name in src/index.ts, e.g. "topologyDetails". */

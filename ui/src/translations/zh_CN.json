@@ -2,47 +2,6 @@
   "zh_CN": {
     "loading": "加载中...",
     "more actions": "更多操作",
-    "new_flow_landing": {
-      "blank": {
-        "id_invalid": "只能使用字母、数字、点、破折号和下划线，并以字母或数字开头。",
-        "id_label": "flow id",
-        "id_placeholder": "我的 flow",
-        "namespace_invalid": "仅可使用小写字母、数字、点、破折号和下划线，并以小写字母或数字开头。",
-        "namespace_placeholder": "选择一个 namespace",
-        "namespaces_error": "无法加载 namespace。请手动输入一个 namespace。",
-        "open_editor": "打开编辑器",
-        "subtitle": "从 hello-world 模板开始，然后从头构建。",
-        "title": "空白 flow"
-      },
-      "blueprints": {
-        "subtitle": "从社区目录中选择一个现成的flow。",
-        "title": "浏览 blueprints"
-      },
-      "import": {
-        "back": "返回",
-        "error": {
-          "empty": "YAML 内容为空。",
-          "invalid_mapping": "无效的 flow YAML：预期为键值映射，而非列表或标量。",
-          "parse_error": "无法解析 YAML。",
-          "too_large": "文件过大。请粘贴 flow 定义，或上传小于 1 MB 的文件。"
-        },
-        "paste_label": "粘贴 YAML",
-        "read_error": "无法读取文件。",
-        "submit": "导入 flow",
-        "subtitle": "粘贴或上传现有 flow 定义。",
-        "title": "导入 YAML",
-        "upload_button": "上传 .yml / .yaml",
-        "upload_label": "或上传文件",
-        "upload_tip": "接受 .yml 和 .yaml 文件。"
-      },
-      "subtitle": "从空白画布开始，探索 blueprints，或导入现有 YAML。",
-      "system": {
-        "badge": "系统",
-        "subtitle": "为您的平台构建警报或自动化 flow。",
-        "title": "创建系统 flow"
-      },
-      "title": "创建新 flow"
-    },
     "recipe": {
       "create_flow": "创建 flow",
       "email": "电子邮件",
@@ -115,8 +74,6 @@
         "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
       },
       "trigger": {
-        "case_sub": "仅限企业版功能",
-        "case_title": "案例状态",
         "execution_sub": "对 flow 状态变化作出反应",
         "execution_title": "执行状态",
         "other_sub": "任何可用的 trigger 插件",
@@ -154,6 +111,10 @@
       }
     },
     "toggle menu": "切换菜单",
+    "favourites": "收藏",
+    "to close": "关闭",
+    "tabs": "标签页",
+    "select": "请选择",
     "panel actions": "面板操作",
     "playground actions": "游乐场操作",
     "bulk actions": "批量操作",
@@ -179,6 +140,7 @@
     "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如，PT30M, P1D)。",
     "update": "更新",
     "confirmation": "确认",
+    "toast confirm": "您确定吗？",
     "common": {
       "back": "返回",
       "openInNewTab": "在新标签页中打开"
@@ -223,10 +185,12 @@
     "add_new_item": "添加新项目",
     "copy": "复制",
     "copy_to_clipboard": "复制到剪贴板",
+    "copy_pebble_expression": "复制 pebble 表达式",
     "new": "新建",
     "edit": "编辑",
     "back": "返回",
     "next": "下一步",
+    "previous": "上一步",
     "done": "完成",
     "review your inputs": "检查您的输入",
     "edit flow": "编辑流程",
@@ -246,6 +210,7 @@
     "total_duration": "总持续时间",
     "running duration": "运行时间",
     "queued duration": "排队时间",
+    "paused duration": "暂停时长",
     "executionProgress": {
       "title": "执行进度",
       "estimatedRemaining": "预计剩余：{duration}",
@@ -262,6 +227,7 @@
       "invalid duration": "无效的持续时间格式。请使用 ISO 8601 (例如：PT30M, P1D)。",
       "leave empty for infinite": "留空表示无限期，或输入 ISO 8601 持续时间（例如，“P1DT1H1M1S”）",
       "duration example": "例如：'P1DT1H1M1S'",
+      "examples": "示例：",
       "error": "无效的持续时间格式，必须是 ISO 8601 持续时间（例如，P1DT1H1M1S）",
       "custom": "自定义",
       "last5minutes": "最近5分钟",
@@ -319,6 +285,7 @@
     "expiration date": "过期日期",
     "healthcheck date": "HealthCheck 日期",
     "last execution status": "上次执行状态",
+    "jump to": "跳转到",
     "jump to...": "跳转到...",
     "contextBar": {
       "ai": "人工智能",
@@ -338,6 +305,21 @@
     "to": "到",
     "steps": "步骤",
     "state": "状态",
+    "state_history": {
+      "title": "状态历史",
+      "open": "状态历史",
+      "aria_open": "显示状态历史",
+      "aria_open_for": "显示 {subject} 的状态历史",
+      "started_at": "于 {time} 开始",
+      "failed_at": "于 {time} 失败",
+      "skipped_at": "于 {time} 跳过",
+      "created_at": "于 {time} 创建",
+      "did_not_run": "此任务未运行",
+      "waiting_to_start": "等待开始",
+      "attempt_n": "尝试 {index}",
+      "attempt_count": "{count} 次尝试",
+      "copy": "复制状态历史"
+    },
     "search": "搜索",
     "source search": "源搜索",
     "selected": "已选择",
@@ -367,9 +349,31 @@
     "select a state": "选择状态",
     "are you sure change state": "您确定要更改状态吗？",
     "yes": "是",
+    "no": "否",
     "change state done": "任务状态已更新",
     "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
     "change state current state": "当前状态是：",
+    "change state hint": {
+      "WARNING": [
+        "流程将被标记为WARNING。",
+        "接下来的tasks将被执行。",
+        "错误的tasks将被执行。"
+      ],
+      "FAILED": [
+        "该flow将被标记为FAILED。",
+        "不会执行其他task。",
+        "将执行错误tasks。"
+      ],
+      "SUCCESS": [
+        "由于此任务成功，flow 将重新启动。",
+        "所有被阻止的任务将被执行。",
+        "如果所有任务运行都成功，flow 将处于 SUCCESS 状态。"
+      ],
+      "RUNNING": [
+        "flow将重新启动，并将执行所有后续task。",
+        "所有被阻止的task将被执行。"
+      ]
+    },
     "replay execution title": "重放执行",
     "restart execution title": "重新启动执行",
     "replay execution description": "这将基于所选的执行创建一个新的执行。",
@@ -407,7 +411,7 @@
     "unqueue done": "执行已出队列",
     "force run": "强制运行",
     "force run title": "强制运行执行 <code>{id}</code>。",
-    "force run confirm": "您确定要强制运行执行 <code>{id}</code> 吗？<br/><br/>警告：强制运行执行不保证成功，并可能创建重复的 task 运行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED 状态的 task 将移至 RUNNING 状态。</li><li>RUNNING 状态的 task 将重新提交。</li><li>QUEUED 状态的 task 将取消排队。</li><li>PAUSED 状态的 task 将恢复。</li></ul>",
+    "force run confirm": "您确定要强制运行执行 `{id}` 吗？\n\n警告：强制运行执行不保证成功，并可能创建重复的 Task 运行。\n\n将进行以下转换：\n\n- CREATED Task 将移至 RUNNING 状态。\n- RUNNING Task 将重新提交。\n- QUEUED Task 将取消排队。\n- PAUSED Task 将恢复。",
     "force run done": "强制执行",
     "metrics": "指标",
     "no metrics available": "此task运行没有记录任何指标。",
@@ -437,7 +441,8 @@
       "zoom-reset": "重置缩放",
       "zoom-fit": "适应屏幕",
       "invalid": "图形错误",
-      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。"
+      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
+      "load_error": "无法加载拓扑图。请重试。"
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -479,6 +484,7 @@
       "big_file_download_only": "此文件大小为{size}。它太大，无法在编辑器中打开，请改为下载。",
       "load_anyway": "仍然加载",
       "load_error": "无法加载文件预览。这可能是临时问题或权限问题。",
+      "image_alt": "图片 output 预览",
       "retry": "重试",
       "html_asset_warning": "此预览在沙盒化的框架中渲染 HTML。通过相对路径引用的本地资源（如图片和样式表）将不会加载。",
       "html_preview_title": "HTML 文件预览"
@@ -487,7 +493,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "并发限制",
-      "warning": "更改运行计数器可能会破坏并发性，因此执行可能会超出允许的限制。"
+      "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。"
     },
     "flowConcurrency": {
       "loadError": "无法加载此 flow 的并发限制。",
@@ -495,6 +501,13 @@
         "message": "此 flow 不再声明并发块，但限制记录仍在统计 {count} 个正在运行的执行。它不再影响新的执行，可从管理 → 并发限制中重置。",
         "title": "残留的并发限制"
       }
+    },
+    "docsPage": {
+      "notFound": "该文档页面不存在，可能已被移动或重命名。",
+      "loadError": "无法加载该文档页面，请重试。",
+      "close_menu": "关闭菜单",
+      "open_menu": "打开菜单",
+      "backToDocs": "返回 Docs"
     },
     "documentation": {
       "documentation": "文档"
@@ -533,12 +546,27 @@
       }
     },
     "use": "使用",
+    "plugin_card": {
+      "tasks": "task | tasks",
+      "blueprints": "blueprint | blueprints"
+    },
     "plugins": {
+      "autoInstall": {
+        "failed": "插件安装失败",
+        "failedHint": "flow 未保存。请修复问题或从 flow 中移除该插件，然后重新保存。",
+        "preparing": "正在准备插件安装...",
+        "progress": "{transferred} / {total}",
+        "succeeded": "插件安装成功 | 插件安装成功",
+        "timeout": "插件安装耗时超出预期。flow 未保存，请在安装完成后重新保存。",
+        "title": "正在安装 {count} 个插件 | 正在安装 {count} 个插件"
+      },
       "names": "插件",
       "release": "发行说明",
       "beta": "测试版",
+      "beta_notice": "该插件目前处于测试版阶段。虽然可以安全使用，但请注意，其 API 可能会在未来版本中发生与早期版本不兼容的变化，或者不再受支持。",
       "copy_type": "复制类型",
       "deprecated": "已弃用",
+      "documentation_sections": "文档章节",
       "dynamic": "动态",
       "filter_all": "全部",
       "filter_properties": "筛选属性…",
@@ -573,11 +601,15 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow文档",
+      "nav_definitions": "定义",
       "nav_examples": "示例",
+      "nav_metrics": "指标",
       "nav_outputs": "Outputs",
       "nav_overview": "概览",
       "nav_properties": "属性",
       "non_dynamic": "非动态",
+      "possible_values": "可选值",
+      "sub_type": "子类型",
       "required": "必填"
     },
     "last execution date": "最后执行日期",
@@ -610,6 +642,7 @@
     "triggers_add_filter_app": "应用程序",
     "triggers_add_empty_title": "未找到trigger",
     "triggers_add_ee_tooltip": "此trigger需要企业版。",
+    "ee_feature_tooltip": "此功能需要企业版。",
     "triggers_add_card_add": "添加",
     "triggers_add_modal_tab_form": "表单",
     "triggers_add_modal_tab_source": "来源",
@@ -654,6 +687,10 @@
     "open full page": "打开完整页面",
     "drill down preview": "预览",
     "errors": {
+      "400": {
+        "title": "错误请求",
+        "content": "服务器无法理解该请求。"
+      },
       "401": {
         "title": "未授权",
         "content": "你需要认证才能访问此页面。"
@@ -666,6 +703,114 @@
         "title": "页面未找到",
         "content": "请求的URL未在此服务器上找到。<br />这就是我们所知道的。",
         "flow or execution": "你正在寻找的流程或执行不存在。"
+      },
+      "409": {
+        "title": "冲突",
+        "content": "请求与资源的当前状态冲突。"
+      },
+      "422": {
+        "title": "无效实体",
+        "content": "提交的内容无法处理。"
+      },
+      "500": {
+        "title": "内部服务器错误",
+        "content": "我们这边出了点问题。请稍后再试。"
+      },
+      "503": {
+        "title": "服务不可用",
+        "content": "服务器暂时不可用。请稍后重试。"
+      },
+      "generic": {
+        "title": "出错了",
+        "content": "发生意外错误。请重试。"
+      },
+      "trace id": "追踪 ID",
+      "problems": {
+        "ai-request-failed": {
+          "title": "AI 请求失败"
+        },
+        "bad-request": {
+          "title": "错误请求"
+        },
+        "bulk-validation-failed": {
+          "title": "部分项目无法处理"
+        },
+        "conflict": {
+          "title": "冲突"
+        },
+        "entity-already-exists": {
+          "title": "实体已存在"
+        },
+        "forbidden": {
+          "title": "访问被拒绝"
+        },
+        "internal-error": {
+          "title": "内部服务器错误"
+        },
+        "invalid-argument": {
+          "title": "无效参数"
+        },
+        "invalid-entity": {
+          "title": "无效实体"
+        },
+        "invalid-format": {
+          "title": "无效值格式"
+        },
+        "invalid-json": {
+          "title": "无效 JSON"
+        },
+        "invalid-plugin-type": {
+          "title": "无效的 plugin 类型"
+        },
+        "invalid-query-filters": {
+          "title": "无效查询过滤器"
+        },
+        "invalid-query-parameter": {
+          "title": "无效查询参数"
+        },
+        "invalid-request-body": {
+          "title": "无效的请求正文"
+        },
+        "locked": {
+          "title": "资源已锁定"
+        },
+        "method-not-allowed": {
+          "title": "方法不允许"
+        },
+        "migration-required": {
+          "title": "需要迁移"
+        },
+        "not-acceptable": {
+          "title": "不可接受"
+        },
+        "not-found": {
+          "title": "未找到资源"
+        },
+        "payload-too-large": {
+          "title": "Payload 过大"
+        },
+        "resource-expired": {
+          "title": "资源已过期"
+        },
+        "service-unavailable": {
+          "title": "服务不可用",
+          "detail": "服务器暂时不可用。请稍后重试。"
+        },
+        "timeout": {
+          "title": "操作超时"
+        },
+        "too-many-requests": {
+          "title": "请求过多"
+        },
+        "unauthenticated": {
+          "title": "需要身份验证"
+        },
+        "unsupported-media-type": {
+          "title": "不支持的媒体类型"
+        },
+        "validation-failed": {
+          "title": "验证失败"
+        }
       }
     },
     "back_to_dashboard": "返回仪表板",
@@ -683,7 +828,9 @@
     "label": "标签",
     "labels": "标签",
     "execution labels": "执行标签",
+    "show more labels": "显示另外 {count} 个 label",
     "wrong labels": "标签中不允许空键或值",
+    "invalid label key": "标签 key 无效。有效的 key 必须以小写字母开头,且只能包含小写字母、数字、连字符 (-)、下划线 (_) 或句点 (.)",
     "feeds": {
       "heading": "所有关于Kestra的内容。",
       "subheading": "最新更新、指南和故事"
@@ -696,24 +843,24 @@
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk resume": "确定要恢复 <code>{executionCount}</code> 个执行吗？",
     "bulk pause": "您确定要暂停 <code>{executionCount}</code> 次执行吗？",
-    "bulk force run": "您确定要强制运行 <code>{executionCount}</code> 个执行吗？<br/><br/>警告：强制运行执行不保证成功，并可能创建重复的 task 执行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED 状态的 task 将移至 RUNNING 状态。</li><li>RUNNING 状态的 task 将重新提交。</li><li>QUEUED 状态的 task 将取消排队。</li><li>PAUSED 状态的 task 将恢复。</li></ul>",
+    "bulk force run": "您确定要强制运行 `{executionCount}` 个执行吗？\n\n警告：强制运行执行不保证成功，并可能创建重复的 Task 执行。\n\n将进行以下转换：\n\n- CREATED Task 将移至 RUNNING 状态。\n- RUNNING Task 将重新提交。\n- QUEUED Task 将取消排队。\n- PAUSED Task 将恢复。",
     "bulk restart": "确定要重新开始 <code>{executionCount}</code> 个执行吗？",
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
     "cancel": "取消",
-    "errorLogs": "错误日志",
+    "errorLogs": "错误 logs",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？"
     },
     "product_tour": "产品导览",
-    "executions replayed": "<code>{executionCount}</code> 个执行已重放",
+    "executions replayed": "<code>{executionCount}</code> 个 Execution 已重放",
     "executions state changed": "<code>{executionCount}</code> 次执行的状态已更改",
-    "executions resumed": "<code>{executionCount}</code> 个执行已恢复",
-    "executions paused": "<code>{executionCount}</code> 次执行已暂停",
-    "executions unqueue": "<code>{executionCount}</code> 次执行未排队",
-    "executions force run": "<code>{executionCount}</code> 次执行被强制运行",
-    "executions restarted": "<code>{executionCount}</code> 个执行已重新开始",
-    "executions killed": "<code>{executionCount}</code> 个执行已终止",
-    "executions deleted": "<code>{executionCount}</code> 个执行已删除",
+    "executions resumed": "<code>{executionCount}</code> 个 execution 已恢复",
+    "executions paused": "<code>{executionCount}</code> 个执行已暂停",
+    "executions unqueue": "<code>{executionCount}</code> 个未排队的 Execution",
+    "executions force run": "<code>{executionCount}</code> 次强制执行",
+    "executions restarted": "<code>{executionCount}</code> 个执行已重启",
+    "executions killed": "<code>{executionCount}</code> 个 execution 已终止",
+    "executions deleted": "已删除 <code>{executionCount}</code> 个 execution",
     "invalid bulk replay": "无法重放执行",
     "invalid bulk resume": "无法恢复执行",
     "invalid bulk pause": "无法暂停执行",
@@ -737,6 +884,7 @@
     "enable": "启用",
     "enabled": "已启用",
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
+    "delete flow error": "无法删除 flow {id}",
     "flows deleted": "<code>{count}</code> 个流程已删除",
     "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",
     "flow enable": "确定要启用 <code>{flowCount}</code> 个流程吗？",
@@ -776,6 +924,7 @@
     "metric": "指标",
     "aggregation": "聚合",
     "metric choice": "此flow没有可用的指标",
+    "metric filter no match": "没有指标匹配\"{term}\"",
     "of": "的",
     "title": "标题",
     "api": "API",
@@ -792,6 +941,11 @@
     "expand_by_default": "默认展开结构化 log",
     "similar lines": "相似行",
     "download_logs_description": "选择要导出的 log。过滤器默认为当前视图。",
+    "logs_download_truncated": "已导出最近 {downloaded} 行 log。另有 {skipped} 行符合筛选条件但未包含。",
+    "logs_download_capped": "已导出最近 {downloaded} 行 log，这是单次导出的上限。可能还有更多行符合筛选条件。",
+    "logs_download_partial": "该筛选条件无法继续翻页，导出在 {downloaded} 行 log 处停止。部分符合条件的行缺失。",
+    "logs_download_failed": "log 导出失败。未下载任何文件。",
+    "logs_download_empty": "没有 log 行符合筛选条件，因此未下载任何文件。",
     "display_settings": "显示设置",
     "density": "密度",
     "density_compact": "紧凑",
@@ -804,7 +958,7 @@
     "join_slack": "加入 Slack",
     "kestra": "Kestra",
     "error detected": "检测到错误。",
-    "warning detected": "检测到警告",
+    "warning detected": "检测到警告。",
     "informative notice": "注意事项",
     "open": "打开",
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
@@ -869,12 +1023,15 @@
         "file_already_exists": "已存在同名文件",
         "file_conflicts_with_folder": "已存在同名文件夹",
         "file_error": "创建文件时发生错误",
+        "file_success": "文件 \"{name}\" 创建成功。",
         "folder": "创建文件夹",
         "folder_already_exists": "已存在同名文件夹",
         "folder_conflicts_with_file": "已存在同名文件",
+        "folder_success": "文件夹 \"{name}\" 创建成功。",
         "folder_error": "创建文件夹时发生错误"
       },
       "rename": {
+        "error": "无法重命名为 \"{name}\"。可能已存在同名的文件或文件夹。",
         "label": "重命名",
         "file": "重命名文件",
         "folder": "重命名文件夹",
@@ -884,8 +1041,10 @@
       "delete": {
         "label": "删除",
         "file": "删除文件",
+        "file_error": "无法删除文件：{name}",
         "folder": "删除文件夹",
         "files": "删除 {count} 个已选择的文件",
+        "bulk_success": "所选文件已成功删除。",
         "folders": "删除 {count} 个已选文件夹"
       },
       "move": {
@@ -900,6 +1059,7 @@
       },
       "export": "导出命名空间文件",
       "export_single": "导出文件",
+      "export_error": "无法导出 \"{name}\"。无法解析其路径。",
       "dialog": {
         "name": {
           "file": "文件名（带扩展名）：",
@@ -1019,7 +1179,8 @@
             "triggers_default_tab": "默认 Trigger 标签页",
             "playground": "游乐场",
             "auto_refresh_interval": "自动刷新间隔",
-            "task_edit_default_mode": "默认 Task 编辑模式"
+            "task_edit_default_mode": "默认 Task 编辑模式",
+            "flow_template": "默认 flow 模板"
           },
           "descriptions": {
             "default_namespace": "用于在没有namespace的情况下创建新flow。",
@@ -1032,11 +1193,17 @@
             "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。",
             "auto_refresh_interval": "列表页面上自动数据刷新的秒数。",
             "playground": "在编辑器游乐场中单独运行任务。",
-            "task_edit_default_mode": "无代码编辑器中 task 的默认打开方式。"
+            "task_edit_default_mode": "无代码编辑器中 task 的默认打开方式。",
+            "flow_template": "当您创建新的 flow 时，YAML 会在编辑器中打开。id 和 namespace 可以省略，因为它们是为您生成的。当此处为空时，将使用为实例配置的模板。"
           },
           "task_edit_default_mode_options": {
             "modal": "模态框",
             "tab": "选项卡"
+          },
+          "flow_template_reset": "重置为默认值",
+          "flow_template_error": {
+            "invalid_mapping": "无效的 flow 模板：预期为键值映射，而非列表或标量。",
+            "parse_error": "无法解析 YAML。模板已保存，因此当您创建 flow 时，编辑器可能会显示相同的错误。"
           }
         },
         "theme": {
@@ -1113,7 +1280,7 @@
       "contact_sales": "联系我们的销售团队",
       "secrets": {
         "title": "升级您的Secrets管理",
-        "message": "企业版 (EE) 允许您直接在 UI 中添加、编辑或删除 secrets，无需重新启动实例。通过细粒度的 RBAC 权限按 namespace 组织 secrets，并从父 namespace 继承到子 namespace。EE 与 HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager 和 Elasticsearch 等 secrets 管理器集成。为每个 namespace、tenant 或实例设置专用后端，以隔离团队间的 secrets，或启用存储在外部 vaults 中的只读 secrets。Secrets 在静态和传输过程中保持加密。可选缓存可减少 API 调用，审计 trail 会记录所有访问。",
+        "message": "企业版允许您直接在 UI 中添加、编辑和删除 secrets，通过 RBAC 按 namespace 组织它们，并使用 HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager 或 Elasticsearch 作为后端。",
         "add_env": {
           "intro": "创建新 Secret",
           "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
@@ -1424,6 +1591,7 @@
       "key": "名称",
       "keyPlaceholder": "用于引用此密钥的名称，例如 MY_API_TOKEN",
       "name": "秘密值",
+      "valuePlaceholder": "输入秘密值",
       "description": "描述",
       "descriptionPlaceholder": "描述此 secret",
       "tags": "标签",
@@ -1440,7 +1608,8 @@
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
-      "inherited": "继承的KV对"
+      "inherited": "继承的KV对",
+      "expiration_hint": "当前过期时间为 {date}。保持此字段不变以保留此过期时间；选择持续时间将从现在开始重新计算，清除此字段将删除它。"
     },
     "expiration": "过期",
     "page": {
@@ -1479,6 +1648,7 @@
     "webhook link copied": "Webhook链接已复制。",
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
+    "scheduleDateInPast": "计划日期必须在未来",
     "warning": "警告",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "docs": "文档",
@@ -1528,6 +1698,7 @@
     "last error was": "上次错误是",
     "active": "活动",
     "flows imported": "Flow已导入",
+    "flows not imported": "未导入的Flows",
     "custom value": "自定义值",
     "chart": "图表",
     "chart preview": "图表预览",
@@ -1573,7 +1744,8 @@
           "workerSelector": "Worker 选择器",
           "checks": "检查",
           "updated": "已更新",
-          "quotas": "配额"
+          "quotas": "配额",
+          "policyRefs": "Policy 引用"
         }
       },
       "select": {
@@ -1780,7 +1952,8 @@
       "close_all_tabs": "关闭所有标签页",
       "close_all_panels": "关闭所有面板",
       "exit_fullscreen": "退出全屏",
-      "fullscreen": "全屏"
+      "fullscreen": "全屏",
+      "split_panel": "拆分面板"
     },
     "search_docs": "搜索",
     "no_results_found": "未找到结果",
@@ -1793,7 +1966,9 @@
       "triggers": "未找到Triggers",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
-      "secrets": "未找到Secrets"
+      "secrets": "未找到Secrets",
+      "all_columns_hidden": "所有列均已隐藏",
+      "all_columns_hidden_description": "在“自定义表格列”中至少重新开启一列，以再次查看数据。"
     },
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
@@ -1806,15 +1981,20 @@
         "label": "编辑仪表板",
         "chart": "编辑此图表"
       },
+      "creation": {
+        "label": "创建 Dashboard"
+      },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
       "viewAll": "查看全部",
       "export": "导出",
+      "exportEmpty": "此图表没有可导出的数据。",
       "exportTo": {
         "csv": "导出为 CSV",
         "ion": "导出到 ION"
       },
+      "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
         "running": "运行中",
@@ -1920,6 +2100,7 @@
           "test": "测试"
         },
         "contextRemoved": "已从上下文移除 {type} {id}。",
+        "modelChanged": "已切换到 {model}。",
         "toolResult": {
           "detail": "详情",
           "error": "{tool} 失败",
@@ -1960,8 +2141,8 @@
         },
         "unavailable": {
           "title": "AI Copilot 不可用",
-          "detail": "未配置 AI 提供商。请管理员设置，然后重试。",
-          "retry": "重试"
+          "detail": "未配置 AI 提供商。请联系管理员进行设置。",
+          "docs": "查看文档"
         },
         "thinkingWords": [
           "编排",
@@ -1990,6 +2171,12 @@
           "汇聚"
         ],
         "newChat": "新建聊天",
+        "fixThread": {
+          "flow": "修复 Flow {id}",
+          "task": "修复 task {id}",
+          "execution": "修复 {id} 的 Execution",
+          "generic": "修复 Flow 错误"
+        },
         "draft": {
           "openInEditor": "在编辑器中打开",
           "apply": "应用",
@@ -2027,7 +2214,6 @@
     "submit": "提交",
     "accept": "接受",
     "reject": "拒绝",
-    "draft_available": "编辑器中有可用的草稿更改",
     "last modified": "上次修改",
     "run task in playground": "在playground中运行task",
     "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
@@ -2038,6 +2224,31 @@
         "zoom_out": "缩小视图",
         "clear_selection": "清除选择",
         "fit_view": "适合屏幕"
+      },
+      "dag": {
+        "force": "树形图",
+        "layered": "DAG",
+        "system": "系统",
+        "last_update": "上次更新",
+        "status": {
+          "fresh": "新鲜",
+          "stale": "陈旧",
+          "failed": "失败",
+          "unknown": "未跟踪"
+        },
+        "summary": {
+          "fresh": "所有 {n} 个 Asset 都是最新的",
+          "issues": "{n} 过时",
+          "failed": "{n} 失败",
+          "last_run": "上次运行 {ago}",
+          "unknown": "{n} 未追踪"
+        },
+        "recent_runs": "最近运行",
+        "group_by": "分组依据",
+        "groups": "分组（{n}）",
+        "group_none": "无分组",
+        "group_dataset": "数据集",
+        "ungrouped": "未分组"
       },
       "search": {
         "placeholders": {
@@ -2100,7 +2311,7 @@
     },
     "mcp": {
       "your_servers": "您的服务器",
-      "servers_count": "{count} MCP 服务器",
+      "servers_count": "{count} 个 MCP Server",
       "managed_by_kestra": "由 Kestra 管理",
       "servers": "MCP 服务器",
       "client_setup": "客户端设置",
@@ -2234,7 +2445,7 @@
       "next_match": "下一个匹配项",
       "no_results_description": "尝试扩大 namespace 范围，将作用域切换回“所有来源”，或关闭“区分大小写”和“全字匹配”。",
       "no_results_hidden_type": "在未选择的 {type} 中找到 {count} 个匹配项。 | 在未选择的 {type} 中找到 {count} 个匹配项。",
-      "no_results_in_types": "在 {types} 中没有找到 “{query}” 的匹配项",
+      "no_results_in_types": "在 {types} 中没有找到 {query} 的匹配项",
       "no_results_title": "“{query}” 无匹配项",
       "open_flow": "打开 flow",
       "open_in_editor": "在编辑器中打开",
@@ -2413,6 +2624,7 @@
         "message": "保存前请修正错误。",
         "title": "无法保存 flow"
       },
+      "schema_default_tooltip": "字段未设置时使用的默认值",
       "search_task_placeholder": "搜索或描述一个 task…",
       "shortcuts": {
         "add_after": "在选中项后插入一个块",
@@ -2453,8 +2665,6 @@
       "open_mode_hint": "任务默认在模态框中打开。您可以在{settings}中将选项卡设为默认。"
     },
     "blocks": "区块",
-    "flow_description": "flow 描述",
-    "flow_no_description": "无描述。请在您的 flow YAML 中添加描述，以记录其功能。",
     "split_horizontal": "水平拆分",
     "split_vertical": "垂直拆分",
     "pwa": {

@@ -24,8 +24,10 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.AccessScope;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.repositories.NamespaceAccessControl;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
@@ -33,6 +35,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.services.JdbcFilterService;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -46,11 +49,27 @@ public abstract class AbstractJdbcRepository {
 
     protected static final int FETCH_SIZE = 100;
 
+    /**
+     * Operations valid on the {@link QueryFilter.Field#LABELS} field when its value is a plain
+     * string, i.e. {@code filters[labels][OP]=value} with no label key. Every other operation
+     * requires a keyed map value ({@code filters[labels][OP][key]=value}).
+     */
+    private static final Set<Op> SCALAR_LABEL_OPS = EnumSet.of(Op.CONTAINS, Op.NOT_CONTAINS, Op.IS_NULL, Op.IS_NOT_NULL);
+
     @Getter
     @Inject
     // Micronaut field-injects this for bean-managed repositories; log-store plugins (deserialized,
     // not bean-managed) set it in AbstractJdbcLogDataStore.initFrom — hence protected, not private.
     protected SystemFlowsConfiguration systemFlowsConfiguration;
+
+    @Inject
+    // Injected lazily as a provider: the EE bean depends on the
+    // role repository, which itself extends this base, so eager injection would be a circular dependency.
+    protected BeanProvider<NamespaceAccessControl> namespaceAccessControlProvider;
+
+    protected NamespaceAccessControl namespaceAccessControl() {
+        return namespaceAccessControlProvider != null ? namespaceAccessControlProvider.get() : NamespaceAccessControl.GLOBAL;
+    }
 
     protected Condition defaultFilter() {
         return DELETED_FIELD.eq(false);
@@ -80,6 +99,35 @@ public abstract class AbstractJdbcRepository {
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
         return deleted ? tenant.and(DELETED_FIELD.in(true, false)) : tenant.and(DELETED_FIELD.eq(false));
+    }
+
+    protected Condition aclCondition(Resource resource) {
+        return aclCondition(resource, "namespace");
+    }
+
+    /**
+     * The one namespace-ACL clause every JDBC repository ANDs onto its tenant filter, translating the
+     * backend-agnostic {@link AccessScope} from {@link NamespaceAccessControl} into jOOQ: {@code GLOBAL}
+     * imposes no restriction, {@code DENY_ALL} matches nothing, {@code NAMESPACES} matches a granted
+     * namespace or its dot-delimited subtree ({@code io.kestrax} is not inside {@code io.kestra}).
+     *
+     * @param namespaceColumn the column holding the namespace, which is not always named {@code namespace}.
+     */
+    protected Condition aclCondition(Resource resource, String namespaceColumn) {
+        AccessScope scope = namespaceAccessControl().namespaceScope(resource);
+        Field<String> column = field(namespaceColumn, String.class);
+        return switch (scope.kind()) {
+            case GLOBAL -> DSL.noCondition();
+            case DENY_ALL -> DSL.falseCondition();
+            case NAMESPACES -> {
+                List<Condition> ors = new ArrayList<>(scope.namespaces().size() * 2);
+                for (String namespace : scope.namespaces()) {
+                    ors.add(column.eq(namespace));
+                    ors.add(column.startsWith(namespace + "."));
+                }
+                yield DSL.or(ors);
+            }
+        };
     }
 
     protected Condition buildTenantCondition(String tenantId) {
@@ -351,8 +399,8 @@ public abstract class AbstractJdbcRepository {
             return getEnabledCondition(value, operation);
         }
 
-        if (field == QueryFilter.Field.SUPER_ADMIN) {
-            return getSuperAdminCondition(value, operation);
+        if (field == QueryFilter.Field.INSTANCE_OWNER) {
+            return getInstanceOwnerCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.STATUS) {
@@ -386,6 +434,13 @@ public abstract class AbstractJdbcRepository {
             if (value instanceof Map<?, ?> map) {
                 return findLabelCondition(Either.left(map), operation);
             } else if (value instanceof String string) {
+                if (!SCALAR_LABEL_OPS.contains(operation)) {
+                    throw new InvalidQueryFiltersException(
+                        "Operation %s on the labels field requires a label key, as in filters[labels][%s][<key>]=<value>. Operations supported without a key are %s.".formatted(
+                            operation, operation, SCALAR_LABEL_OPS
+                        )
+                    );
+                }
                 return findLabelCondition(Either.right(string), operation);
             } else {
                 throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");
@@ -556,8 +611,8 @@ public abstract class AbstractJdbcRepository {
         return defaultHandlers(QueryFilter.Field.ENABLED, value, operation);
     }
 
-    protected Condition getSuperAdminCondition(Object value, Op operation) {
-        throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
+    protected Condition getInstanceOwnerCondition(Object value, Op operation) {
+        throw new InvalidQueryFiltersException("getInstanceOwnerCondition must be overridden for JSONB-backed instanceOwner field");
     }
 
     protected Condition tagsCondition(Object value, QueryFilter.Op operation) {

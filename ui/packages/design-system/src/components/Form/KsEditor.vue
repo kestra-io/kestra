@@ -4,20 +4,18 @@
             <slot name="nav">
                 <div class="text-nowrap">
                     <KsButtonGroup>
-                        <KsTooltip :content="$t('Fold content lines')">
-                            <KsButton
-                                :icon="icon.UnfoldLessHorizontal"
-                                @click="autoFold(true)"
-                                size="small"
-                            />
-                        </KsTooltip>
-                        <KsTooltip :content="$t('Unfold content lines')">
-                            <KsButton
-                                :icon="icon.UnfoldMoreHorizontal"
-                                @click="unfoldAll"
-                                size="small"
-                            />
-                        </KsTooltip>
+                        <KsButton
+                            :tooltip="$t('Fold content lines')"
+                            :icon="icon.UnfoldLessHorizontal"
+                            @click="autoFold(true)"
+                            size="small"
+                        />
+                        <KsButton
+                            :tooltip="$t('Unfold content lines')"
+                            :icon="icon.UnfoldMoreHorizontal"
+                            @click="unfoldAll"
+                            size="small"
+                        />
                     </KsButtonGroup>
                     <slot name="extends-navbar" />
                 </div>
@@ -85,7 +83,6 @@
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
-    import KsTooltip from "../Feedback/KsTooltip.vue"
     import * as monaco from "monaco-editor/editor/editor.api"
     import {useKsEditor} from "../../composables/useKsEditor"
     import type {KsEditorExposes, KsEditorProps} from "../../utils/editorTypes"
@@ -247,7 +244,7 @@
                 padding-right: inherit;
                 cursor: text;
                 user-select: none;
-                color: var(--ks-text-inactive);
+                color: var(--ks-placeholder-color);
             }
 
             .editor-wrapper {
@@ -313,6 +310,8 @@
             --vscode-editor-background: var(--ks-bg-input);
             --vscode-breadcrumb-background: var(--ks-bg-input);
             --vscode-editorGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScrollGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScroll-background: var(--ks-bg-input);
         }
 
         .monaco-editor .margin {
@@ -377,7 +376,7 @@
                 }
             }
 
-            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+            .monaco-list-row[aria-label^="_DATE_PICKER_"] {
                 display: none;
             }
         }

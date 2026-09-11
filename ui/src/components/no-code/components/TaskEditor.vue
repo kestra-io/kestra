@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import TaskObject from "./tasks/TaskObject.vue"
     import TaskObjectField from "./tasks/TaskObjectField.vue"
     import PluginSelect from "../../plugins/PluginSelect.vue"

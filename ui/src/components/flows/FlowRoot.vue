@@ -9,6 +9,7 @@
             :tabs="tabs"
         />
     </template>
+    <div v-else class="full-space" v-ks-loading="true" />
 </template>
 
 <script setup lang="ts">
@@ -27,3 +28,9 @@
 
     setupLifecycle()
 </script>
+
+<style scoped lang="scss">
+    .full-space {
+        flex: 1 1 auto;
+    }
+</style>

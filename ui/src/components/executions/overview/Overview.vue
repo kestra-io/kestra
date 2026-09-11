@@ -9,7 +9,6 @@
                 :execution
             />
         </div>
-        <component :is="executionOverviewPanel" v-if="executionOverviewPanel" :execution="execution" />
         <Topology
             class="topology"
             :horizontalDefault="!verticalLayout"
@@ -41,7 +40,6 @@
     import ErrorAlert from "./components/main/ErrorAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
-    import {executionOverviewPanel} from "override/components/executions/overview/OverviewExtensions"
 
     const execution = computed(() => store.execution)
 
@@ -49,6 +47,9 @@
 
     onMounted(() => {
         if (!route.params.id) return
+        // The route guard loads the execution into the store before this page mounts
+        // (EXECUTION_ENTITY_META), and the SSE stream keeps it current from there.
+        if (execution.value?.id === route.params.id) return
         loadExecution(route.params.id as string)
     })
 

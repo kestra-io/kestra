@@ -36,7 +36,6 @@ public record WorkerTriggerData(
 
     // --- RunContext wire data ---
     @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS) Map<String, Object> variables,
-    List<String> secretInputs,
     @Nullable String traceParent,
 
     // --- Condition data ---
@@ -75,7 +74,6 @@ public record WorkerTriggerData(
             flow.getVariables(),
             flow.getLabels(),
             WorkerRunContextData.filterVariables(runContext, WORKER_RECONSTRUCTED_KEYS),
-            runContext.getSecretInputs(),
             runContext.getTraceParent(),
             conditionContext.getVariables()
         );

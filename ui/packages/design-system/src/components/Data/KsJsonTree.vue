@@ -1,6 +1,17 @@
 <template>
     <div class="json-tree">
         <div
+            v-if="rootLiteral !== undefined"
+            class="json-tree__row"
+            :style="{'--depth': 0}"
+            @click="$emit('select', basePath ?? '', value)"
+        >
+            <span class="json-tree__gutter">1</span>
+            <span class="json-tree__content">
+                <span class="json-tree__value" :class="`json-tree__value--${valueType(value)}`">{{ rootLiteral }}</span>
+            </span>
+        </div>
+        <div
             v-for="(row, index) in rows"
             :key="row.path"
             class="json-tree__row"
@@ -26,7 +37,8 @@
                 <span class="json-tree__key">"{{ row.label }}"</span>
                 <span class="json-tree__colon">:</span>
 
-                <span v-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
+                <KsFileTag v-if="row.file" :uri="row.file.uri" :name="row.file.name" />
+                <span v-else-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
                     {{ row.display }}
                 </span>
                 <span v-else-if="!row.isExpanded" class="json-tree__preview">
@@ -42,6 +54,8 @@
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import KsFileTag from "./KsFileTag.vue"
+    import {isFileUri} from "../../utils/file"
 
     const {t} = useI18n({useScope: "global"})
 
@@ -65,10 +79,12 @@
         display: string;
         isExpandable: boolean;
         isExpanded: boolean;
+        /** Set when the leaf is a storage URI, so the row shows a file symbol instead of the URI. */
+        file?: {uri: string; name?: string};
     }
 
     function isValidVariable(key: string): boolean {
-        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)
+        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
     }
 
     function formatStep(key: string): string {
@@ -91,6 +107,9 @@
     function leafDisplay(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return `"${value}"`
+        // `String({})` is `[object Object]` and `String([])` is empty.
+        if (Array.isArray(value)) return "[]"
+        if (typeof value === "object") return "{}"
         return String(value)
     }
 
@@ -133,7 +152,8 @@
     }
 
     function buildRows(value: unknown, path: string, depth: number, rows: TreeRow[]) {
-        const entries: [string, unknown][] = Array.isArray(value)
+        const isArray = Array.isArray(value)
+        const entries: [string, unknown][] = isArray
             ? value.map((item, index) => [String(index), item])
             : Object.entries(value as Record<string, unknown>)
 
@@ -151,6 +171,8 @@
                 display: expandable ? collapsedPreview(child) : leafDisplay(child),
                 isExpandable: expandable,
                 isExpanded: rowExpanded,
+                // An array index is no name, so those rows fall back to the URI's own segment.
+                file: isFileUri(child) ? {uri: child, name: isArray ? undefined : key} : undefined,
             })
 
             if (rowExpanded) {
@@ -168,6 +190,13 @@
         buildRows(value, props.basePath ?? "", 0, result)
         return result
     })
+
+    /** An empty root yields no rows, so the literal is rendered instead of nothing. */
+    const rootLiteral = computed<string | undefined>(() =>
+        !rows.value.length && props.value !== null && typeof props.value === "object"
+            ? leafDisplay(props.value)
+            : undefined,
+    )
 </script>
 
 <style scoped lang="scss">

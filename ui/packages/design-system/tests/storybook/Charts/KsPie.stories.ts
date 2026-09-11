@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect} from "storybook/test"
-import {KsPie} from "../../../src"
+import KsPie from "../../../src/components/Charts/KsPie.vue"
 
 const STATUS_DATA = [
     {name: "Success", value: 1204},

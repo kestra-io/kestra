@@ -74,7 +74,7 @@ class WorkerTriggerCallableTest {
             .trigger(trigger)
             .data(new WorkerTriggerData(
                 "tenant", "io.kestra.tests", "flow", ZonedDateTime.now(), null, null, null,
-                Collections.emptyMap(), Collections.emptyList(), null, Collections.emptyMap()
+                Collections.emptyMap(), null, Collections.emptyMap()
             ))
             .build();
 

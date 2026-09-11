@@ -1,0 +1,7 @@
+id: flow-trigger-reset-after-fire-flow-b
+namespace: io.kestra.tests.trigger.reset.after.fire
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parent: {{execution.id}}"

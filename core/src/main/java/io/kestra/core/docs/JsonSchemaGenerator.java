@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -97,7 +98,7 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new HashMap<>();
+    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
@@ -140,9 +141,17 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
+            // Strip edition-restricted input types before collapsing discriminator wrappers: the
+            // strip logic removes a whole allOf branch (the one carrying the `type` const), which
+            // only works while that branch is still a separate array entry. Collapsing first would
+            // inline it into a flat object, leaving no branch for the strip step to remove.
             Map<String, Object> schema = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
-            stripEditionRestrictedInputTypes(schema);
-            return schema;
+            stripEditionRestrictedInputTypes(schema, cls);
+
+            objectNode = MAPPER.convertValue(schema, ObjectNode.class);
+            collapseSingleUseDiscriminatorWrappers(objectNode);
+
+            return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -153,22 +162,40 @@ public class JsonSchemaGenerator {
      * such as {@code REUSABLE_INPUTS}) from the generated flow schema. The {@code Type} enum is carried in two places:
      * the {@code enum} arrays (the {@code type} discriminator and {@code ArrayInput.itemType}) AND the polymorphic
      * {@code anyOf}/{@code oneOf}/{@code allOf} discriminator branches ({@code {properties:{type:{const:...}}}}); both
-     * must be pruned. Open-source removes the {@code @EeOnly} types; the Enterprise override of
-     * {@code includeInputSubtype} keeps them all, so the excluded set is empty here (no-op).
+     * must be pruned, along with the subtype's own definitions — a branch reaching one by {@code $ref} keeps
+     * validating the excluded input, only without the {@code type} that identifies it. Open-source removes the
+     * {@code @EeOnly} types; the Enterprise override of {@code includeInputSubtype} keeps them all, so the excluded
+     * set is empty here (no-op).
      */
-    private void stripEditionRestrictedInputTypes(Object node) {
-        Set<String> excluded = Arrays.stream(io.kestra.core.models.flows.Type.values())
+    private void stripEditionRestrictedInputTypes(Map<String, Object> schema, Class<?> cls) {
+        Set<String> excluded = this.excludedInputTypes(cls);
+
+        if (excluded.isEmpty()) {
+            return;
+        }
+
+        // the subtype definitions have to be spotted first: the strip below removes the discriminator branch that
+        // tells them apart from an ordinary input definition
+        Set<String> excludedDefinitions = excludedSubtypeDefinitions(schema, excluded);
+
+        stripEditionRestrictedInputTypes(schema, excluded, excludedDefinitions);
+        removeExcludedDefinitions(schema, excludedDefinitions);
+    }
+
+    /**
+     * The input type names to strip from the schema generated for {@code cls}, by default the ones
+     * {@link #includeInputSubtype} rejects for this edition. Override to exclude a type for one schema only; it is
+     * applied before discriminator wrappers are collapsed, which a caller stripping the returned map cannot do.
+     */
+    protected Set<String> excludedInputTypes(Class<?> cls) {
+        return Arrays.stream(io.kestra.core.models.flows.Type.values())
             .filter(type -> !this.includeInputSubtype(type.cls()))
             .map(Enum::name)
             .collect(Collectors.toSet());
-
-        if (!excluded.isEmpty()) {
-            stripEditionRestrictedInputTypes(node, excluded);
-        }
     }
 
     @SuppressWarnings("unchecked")
-    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded) {
+    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded, Set<String> excludedDefinitions) {
         if (node instanceof Map<?, ?> rawMap) {
             Map<String, Object> map = (Map<String, Object>) rawMap;
 
@@ -177,13 +204,104 @@ public class JsonSchemaGenerator {
             }
             for (String key : List.of("anyOf", "oneOf", "allOf")) {
                 if (map.get(key) instanceof List<?> branches) {
-                    branches.removeIf(branch -> isExcludedDiscriminatorBranch(branch, excluded));
+                    branches.removeIf(
+                        branch -> isExcludedDiscriminatorBranch(branch, excluded)
+                            || referencesExcludedDefinition(branch, excludedDefinitions)
+                    );
                 }
             }
-            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded, excludedDefinitions));
         } else if (node instanceof List<?> list) {
-            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded, excludedDefinitions));
         }
+    }
+
+    /** The definitions of the excluded subtypes: the discriminator branch itself, or the wrapper carrying it. */
+    @SuppressWarnings("unchecked")
+    private static Set<String> excludedSubtypeDefinitions(Map<String, Object> schema, Set<String> excluded) {
+        if (!(schema.get("definitions") instanceof Map<?, ?> definitions)) {
+            return Set.of();
+        }
+
+        return ((Map<String, Object>) definitions).entrySet().stream()
+            .filter(entry -> isExcludedSubtypeDefinition(entry.getValue(), excluded))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isExcludedSubtypeDefinition(Object definition, Set<String> excluded) {
+        if (isExcludedDiscriminatorBranch(definition, excluded)) {
+            return true;
+        }
+        if (!(definition instanceof Map<?, ?> map)) {
+            return false;
+        }
+
+        for (String key : List.of("anyOf", "oneOf", "allOf")) {
+            if (
+                ((Map<String, Object>) map).get(key) instanceof List<?> branches
+                    && branches.stream().anyMatch(branch -> isExcludedDiscriminatorBranch(branch, excluded))
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Drops the excluded subtype definitions, then whatever only they referenced: a discriminator wrapper points at a
+     * plain body definition no other subtype uses, while shared ones (e.g. {@code DependsOn}) stay referenced.
+     */
+    @SuppressWarnings("unchecked")
+    private static void removeExcludedDefinitions(Map<String, Object> schema, Set<String> excludedDefinitions) {
+        if (excludedDefinitions.isEmpty() || !(schema.get("definitions") instanceof Map<?, ?> rawDefinitions)) {
+            return;
+        }
+
+        Map<String, Object> definitions = (Map<String, Object>) rawDefinitions;
+        Set<String> orphanCandidates = new HashSet<>();
+        excludedDefinitions.forEach(name -> collectRefs(definitions.remove(name), orphanCandidates));
+
+        boolean removedAny = true;
+        while (removedAny) {
+            removedAny = false;
+            Set<String> referenced = new HashSet<>();
+            collectRefs(schema, referenced);
+
+            for (String candidate : Set.copyOf(orphanCandidates)) {
+                if (!referenced.contains(candidate) && definitions.containsKey(candidate)) {
+                    orphanCandidates.remove(candidate);
+                    collectRefs(definitions.remove(candidate), orphanCandidates);
+                    removedAny = true;
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean referencesExcludedDefinition(Object node, Set<String> definitions) {
+        return node instanceof Map<?, ?> map
+            && ((Map<String, Object>) map).get("$ref") instanceof String ref
+            && definitions.contains(definitionName(ref));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void collectRefs(Object node, Set<String> refs) {
+        if (node instanceof Map<?, ?> rawMap) {
+            Map<String, Object> map = (Map<String, Object>) rawMap;
+
+            if (map.get("$ref") instanceof String ref) {
+                refs.add(definitionName(ref));
+            }
+            map.values().forEach(value -> collectRefs(value, refs));
+        } else if (node instanceof List<?> list) {
+            list.forEach(value -> collectRefs(value, refs));
+        }
+    }
+
+    private static String definitionName(String ref) {
+        return ref.substring(ref.lastIndexOf('/') + 1);
     }
 
     @SuppressWarnings("unchecked")
@@ -196,6 +314,98 @@ public class JsonSchemaGenerator {
             return excluded.contains(String.valueOf(((Map<String, Object>) type).get("const")));
         }
         return false;
+    }
+
+    /**
+     * For a polymorphic property, the generator emits two definitions per subtype: a plain
+     * {@code <Class>} object, and a {@code <Class>-2} wrapper ({@code allOf: [{$ref: <Class>-1}, {
+     * required: ["type"], ...}]}) carrying the discriminator {@code required} needed to use it as
+     * an {@code anyOf} branch. When the plain definition is referenced from nowhere else, keeping
+     * it separate only adds an indirection with no reuse benefit — inline it into its wrapper and
+     * drop it, cutting the schema's definition count without changing what it validates.
+     */
+    private void collapseSingleUseDiscriminatorWrappers(ObjectNode objectNode) {
+        if (!(objectNode.get("definitions") instanceof ObjectNode definitions)) {
+            return;
+        }
+
+        Map<String, Integer> refCounts = new HashMap<>();
+        countRefs(objectNode, refCounts);
+
+        List<String> baseKeysToRemove = new ArrayList<>();
+        definitions.properties().forEach(entry ->
+        {
+            String wrapperKey = entry.getKey();
+            if (
+                !(entry.getValue() instanceof ObjectNode wrapper)
+                    || !(wrapper.get("allOf") instanceof ArrayNode allOf) || allOf.size() != 2
+                    || !(allOf.get(0) instanceof ObjectNode firstBranch) || firstBranch.size() != 1
+                    || !(firstBranch.get("$ref") instanceof TextNode refNode)
+                    || !(allOf.get(1) instanceof ObjectNode extra)
+            ) {
+                return;
+            }
+
+            String ref = refNode.asText();
+            String baseKey = ref.substring(ref.lastIndexOf('/') + 1);
+            if (
+                baseKey.equals(wrapperKey)
+                    || !(definitions.get(baseKey) instanceof ObjectNode base)
+                    || refCounts.getOrDefault(ref, 0) != 1
+            ) {
+                return;
+            }
+
+            definitions.set(wrapperKey, mergeAllOfBranches(base, extra));
+            baseKeysToRemove.add(baseKey);
+        });
+
+        baseKeysToRemove.forEach(definitions::remove);
+    }
+
+    /** Merges {@code extra} onto a copy of {@code base}, unioning {@code properties}/{@code required} instead of overwriting them. */
+    private static ObjectNode mergeAllOfBranches(ObjectNode base, ObjectNode extra) {
+        ObjectNode merged = base.deepCopy();
+        extra.properties().forEach(entry ->
+        {
+            String key = entry.getKey();
+            JsonNode extraValue = entry.getValue();
+
+            if (key.equals("properties") && merged.get("properties") instanceof ObjectNode baseProps && extraValue instanceof ObjectNode extraProps) {
+                ObjectNode mergedProps = baseProps.deepCopy();
+                extraProps.properties().forEach(p -> mergedProps.set(p.getKey(), p.getValue()));
+                merged.set("properties", mergedProps);
+            } else if (key.equals("required") && merged.get("required") instanceof ArrayNode baseRequired && extraValue instanceof ArrayNode extraRequired) {
+                ArrayNode mergedRequired = baseRequired.deepCopy();
+                Set<String> existing = new HashSet<>();
+                mergedRequired.forEach(n -> existing.add(n.asText()));
+                extraRequired.forEach(n ->
+                {
+                    if (existing.add(n.asText())) {
+                        mergedRequired.add(n);
+                    }
+                });
+                merged.set("required", mergedRequired);
+            } else {
+                merged.set(key, extraValue);
+            }
+        });
+        return merged;
+    }
+
+    private static void countRefs(JsonNode node, Map<String, Integer> counts) {
+        if (node instanceof ObjectNode obj) {
+            obj.properties().forEach(entry ->
+            {
+                if (entry.getKey().equals("$ref") && entry.getValue() instanceof TextNode ref) {
+                    counts.merge(ref.asText(), 1, Integer::sum);
+                } else {
+                    countRefs(entry.getValue(), counts);
+                }
+            });
+        } else if (node instanceof ArrayNode arr) {
+            arr.forEach(child -> countRefs(child, counts));
+        }
     }
 
     private void removeRequiredOnPropsWithDefaults(ObjectNode objectNode) {
@@ -1066,11 +1276,7 @@ public class JsonSchemaGenerator {
             }
         }
 
-        if (!defaultInstances.containsKey(baseCls)) {
-            defaultInstances.put(baseCls, buildDefaultInstance(baseCls));
-        }
-
-        Object instance = defaultInstances.get(baseCls);
+        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
 
         return instance == null ? null : defaultValue(instance, baseCls, target.getName());
     }

@@ -1,15 +1,15 @@
 import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
-import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import {DATE_FILTER_KEY, MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
 /**
- * Decodes a raw `filters[...]` query-param value. Exported because callers translating the route
- * into a backend request payload decode the same values as {@link decodeSearchParams} does.
+ * Normalizes a `filters[...]` query-param value after vue-router (or
+ * {@link parseFiltersFromString}) has already decoded it.
  */
 export const decodeFilterValue = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
-        ? value.filter(v => v !== null).map(decodeURIComponent)
-        : decodeURIComponent(value)
+        ? value.filter((item): item is string => item !== null)
+        : value
 
 export function getComparator(comparatorKey: keyof typeof Comparators): Comparators {
     return Comparators[comparatorKey]
@@ -102,9 +102,12 @@ const buildParam = (
     value: string | (string | null)[],
     chain: PrefixSegment[],
 ): DecodedParam => {
+    const decodedValue = decodeFilterValue(value)
     const decoded = subKey
-        ? `${subKey}:${decodeFilterValue(value)}`
-        : decodeFilterValue(value)
+        ? Array.isArray(decodedValue)
+            ? decodedValue.map(item => `${subKey}:${item}`)
+            : `${subKey}:${decodedValue}`
+        : decodedValue
     return {
         field,
         value: decoded,
@@ -117,6 +120,7 @@ const buildParam = (
 type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
 
 type ComparatorKeyResolver = (comparator: Comparators) => string;
+type FilterQuery = Record<string, string | string[]>;
 
 export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: ComparatorKeyResolver) =>
     encodeFilterGroupsToQuery(
@@ -128,8 +132,8 @@ export const encodeFilterGroupsToQuery = (
     groups: FilterGroup[],
     getComparatorKey: ComparatorKeyResolver,
     topLogical: LogicalOperator = "OR",
-): Record<string, string> => {
-    const query: Record<string, string> = {}
+): FilterQuery => {
+    const query: FilterQuery = {}
     const onlyOneLeaf = groups.length === 1 && !isWrapperGroup(groups[0])
     const topOp = topLogical.toLowerCase()
 
@@ -152,7 +156,7 @@ export const encodeFilterGroupsToQuery = (
 }
 
 const writeFilter = (
-    query: Record<string, string>,
+    query: FilterQuery,
     prefix: string,
     filter: Filter,
     getComparatorKey: ComparatorKeyResolver,
@@ -182,10 +186,20 @@ const writeFilter = (
                 const {startDate, endDate} = value as {startDate: Date; endDate: Date}
                 query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
                 query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
-            } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
+            } else if (Array.isArray(value) && (key === "labels" || value.some(v => typeof v === "string" && v.includes(":")))) {
                 value.forEach((item: string) => {
-                    const [k, v] = item.split(":", 2)
-                    if (k && v) query[`${prefix}[${key}][${comparatorKey}][${k}]`] = v
+                    const separatorIndex = item.indexOf(":")
+                    if (separatorIndex <= 0) return
+                    const k = item.slice(0, separatorIndex)
+                    const v = item.slice(separatorIndex + 1)
+                    if (!k || !v) return
+                    const queryKey = `${prefix}[${key}][${comparatorKey}][${k}]`
+                    const existing = query[queryKey]
+                    if ((comparator === Comparators.IN || comparator === Comparators.NOT_IN) && existing !== undefined) {
+                        query[queryKey] = Array.isArray(existing) ? [...existing, v] : [existing, v]
+                    } else {
+                        query[queryKey] = v
+                    }
                 })
             } else {
                 query[`${prefix}[${key}][${comparatorKey}]`] = Array.isArray(value)
@@ -245,11 +259,25 @@ export const getUniqueFilters = <T extends { key: string; comparator?: any }>(fi
         ),
     )
 
+export const isFilterQueryKey = (key: string): boolean =>
+    key.startsWith("filters[") || key === DATE_FILTER_KEY
+
 export const clearFilterQueryParams = (query: Record<string, any>): void => {
     for (const key of Object.keys(query)) {
-        if (key.startsWith("filters[") || key === "dateFilter") delete query[key]
+        if (isFilterQueryKey(key)) delete query[key]
     }
 }
+
+/**
+ * Stable string over just the filter-carrying query entries, so a watcher fires when the filters
+ * change and not when `page`, `size` or `sort` do.
+ */
+export const filterQuerySignature = (query: LocationQuery | undefined): string =>
+    JSON.stringify(
+        Object.entries(query ?? {})
+            .filter(([key]) => isFilterQueryKey(key))
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+    )
 
 /**
  * Returns true if a `filters[...]` key has more `[and|or][N]` prefix segments than the chip UI

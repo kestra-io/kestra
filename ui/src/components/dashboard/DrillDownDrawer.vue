@@ -10,6 +10,7 @@
         </template>
         <template v-else-if="tablePreview && target">
             <KsDataTable
+                ref="dataTable"
                 :data="rows"
                 :total="total"
                 :loading="loading"
@@ -45,15 +46,18 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref} from "vue"
+    import {computed, defineAsyncComponent, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import get from "lodash/get"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import LogsWrapper from "../logs/LogsWrapper.vue"
     import {useDrillDownStore} from "../../stores/drillDown"
     import {getDrillDownPreview} from "./composables/drillDownPreview"
     import {buildFullQuery} from "./composables/chartDrillDown"
+
+    // Only rendered for the logs preview mode, and it reaches the dashboard chart
+    // stack: a static import would put it in the chunk App.vue loads on every page.
+    const LogsWrapper = defineAsyncComponent(() => import("../logs/LogsWrapper.vue"))
 
     const route = useRoute()
     const router = useRouter()
@@ -66,24 +70,31 @@
         return currentPreview?.mode === "table" ? currentPreview : undefined
     })
 
+    const dataTable = ref<{resetAndReload: () => void} | null>(null)
     const rows = ref<any[]>([])
     const total = ref(0)
     const loading = ref(false)
     const page = ref(1)
     const size = ref(25)
 
+    // Clicking through segments leaves fetches in flight whose responses can land out of order.
+    let sequence = 0
+
     const loadData = async ({page: loadPage, size: loadSize}: {page: number; size: number}) => {
         const currentTarget = target.value
         const currentPreview = preview.value
         if (!currentTarget || currentPreview?.mode !== "table") return
 
+        const current = ++sequence
         loading.value = true
         try {
             const response = await currentPreview.fetch(buildFullQuery(currentTarget, {page: loadPage, size: loadSize}))
+            if (current !== sequence) return
+
             rows.value = response.results
             total.value = response.total
         } finally {
-            loading.value = false
+            if (current === sequence) loading.value = false
         }
     }
 
@@ -91,6 +102,10 @@
         page.value = newPage
         size.value = newSize
     }
+
+    watch(target, (value) => {
+        if (value) dataTable.value?.resetAndReload()
+    })
 
     const onRowDblClick = (row: any) => {
         const currentPreview = preview.value

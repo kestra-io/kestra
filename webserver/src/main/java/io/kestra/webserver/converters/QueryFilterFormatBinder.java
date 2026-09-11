@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.webserver.configuration.QueryFilterConfiguration;
@@ -54,7 +55,9 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
             Matcher m = FILTER_PATTERN.matcher(key);
             if (!m.matches()) {
-                continue;
+                throw new InvalidQueryFiltersException(
+                    "Query filter '%s' is malformed. Expected filters[<field>][<operation>] or filters[<field>][<operation>][<key>].".formatted(key)
+                );
             }
 
             String prefixChain = m.group(1);
@@ -67,7 +70,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         }
         List<QueryFilter> filters = root.build(maxWidth);
         if (filters.size() > maxWidth) {
-            throw new IllegalArgumentException(
+            throw new InvalidQueryFiltersException(
                 "QueryFilter root width (" + filters.size() + ") exceeds maximum of " + maxWidth
             );
         }
@@ -83,7 +86,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         int depth = 0;
         while (pm.find()) {
             if (++depth > maxDepth) {
-                throw new IllegalArgumentException(
+                throw new InvalidQueryFiltersException(
                     "QueryFilter nesting depth exceeds maximum of " + maxDepth
                 );
             }
@@ -129,7 +132,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
     private static void checkWidth(int count, int maxWidth) {
         if (count > maxWidth) {
-            throw new IllegalArgumentException(
+            throw new InvalidQueryFiltersException(
                 "QueryFilter node width (" + count + ") exceeds maximum of " + maxWidth
             );
         }
@@ -153,8 +156,14 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         }
 
         void addLeaf(String fieldStr, String operationStr, String nestedKey, List<String> values) {
-            QueryFilter.Field field = QueryFilter.Field.fromString(fieldStr);
-            QueryFilter.Op op = QueryFilter.Op.valueOf(operationStr);
+            QueryFilter.Field field;
+            QueryFilter.Op op;
+            try {
+                field = QueryFilter.Field.fromString(fieldStr);
+                op = QueryFilter.Op.fromString(operationStr);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidQueryFiltersException(e.getMessage(), e);
+            }
 
             if (field == QueryFilter.Field.LABELS && nestedKey != null) {
                 labelsByOp.computeIfAbsent(op, k -> new HashMap<>()).put(nestedKey, values.getFirst());

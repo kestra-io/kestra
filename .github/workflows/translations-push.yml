@@ -1,0 +1,56 @@
+name: Translations - Push
+
+# The PR gate (`translations` job in pull-request.yml) only sees pull requests. A merge race between
+# two green PRs, a direct push or a cherry-pick that lands with a stale locale can still leave a
+# branch red, and nobody notices until the next unrelated PR against it fails the gate for its
+# author. This runs the same dependency-free check on every push to develop and the release
+# branches, so the branch itself reports the breakage.
+on:
+  push:
+    branches:
+      - develop
+      - 'releases/*'
+    paths:
+      # The used-key rule scans all of ui/src, so any UI change can introduce a key defined nowhere.
+      - 'ui/**'
+      - '.github/workflows/translations-push.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  translations:
+    name: 'Translations - Key parity, placeholders and drift'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        name: Checkout
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: 'ui/.nvmrc'
+
+      - name: Check translations
+        run: node ui/scripts/translations/check-translations.mjs --scope oss
+
+  # EE resolves most of its keys from this repository's en.json, so an OSS push that renames or
+  # deletes a key can break EE without any EE change. Once the gate above passed, tell kestra-ee
+  # which commit landed on which branch; its Translation Tests workflow checks the same-name EE
+  # branch against exactly this commit (https://github.com/kestra-io/kestra-ee/issues/10873).
+  notify-ee:
+    name: 'Translations - Notify EE'
+    needs: translations
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: kestra-io/actions/composite/repository-dispatch@main
+        with:
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          repository: kestra-io/kestra-ee
+          event-type: "oss-translations-updated"
+          client-payload: '{"branch": "${{ github.ref_name }}", "commit_sha": "${{ github.sha }}"}'

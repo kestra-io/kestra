@@ -8,6 +8,7 @@
         :tooltipType="tooltipType"
         :disableFeatures="disableFeatures"
         :renderer="renderer"
+        :maxPixelRatio="maxPixelRatio"
         type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
@@ -23,7 +24,7 @@
 
     import KsEchart from "./KsEchart.vue"
     import type {KsChartSeriesItem} from "./KsEchart.vue"
-    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     use([PieChart])
 
@@ -53,6 +54,8 @@
             disableFeatures?: ChartFeature[]
             /** ECharts renderer backend. */
             renderer?: ChartRenderer
+            /** Upper bound for the canvas pixel ratio; see KsEchart. */
+            maxPixelRatio?: number
         }>(),
         {
             data: null,
@@ -63,6 +66,7 @@
             disableFeatures: () => [],
             tooltipType: TooltipType.NATIVE,
             renderer: ChartRenderer.CANVAS,
+            maxPixelRatio: undefined,
         },
     )
 

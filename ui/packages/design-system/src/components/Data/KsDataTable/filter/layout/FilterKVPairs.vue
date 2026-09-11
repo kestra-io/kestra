@@ -8,16 +8,21 @@
                 {{ $t('none') }}
             </div>
             <div v-else class="pairs-container">
-                <KsTag
+                <KsTooltip
                     v-for="(pair, index) in detailPairs"
                     :key="index"
-                    closable
-                    effect="light"
-                    @close="removePair(index)"
-                    class="detail-tag"
+                    :content="`${pair.key}: ${pair.value}`"
+                    placement="bottom"
                 >
-                    <span class="detail-key">{{ pair.key }}:</span><span class="detail-value">{{ pair.value }}</span>
-                </KsTag>
+                    <KsTag
+                        closable
+                        effect="light"
+                        @close="removePair(index)"
+                        class="detail-tag"
+                    >
+                        <span class="detail-key">{{ pair.key }}:</span><span class="detail-value">{{ pair.value }}</span>
+                    </KsTag>
+                </KsTooltip>
             </div>
         </div>
 
@@ -54,9 +59,11 @@
 
 <script setup lang="ts">
     import {ref, watch} from "vue"
+    import {Comparators} from "../utils/filterTypes"
 
     const props = withDefaults(defineProps<{
         modelValue: string[];
+        comparator: Comparators;
     }>(), {
     })
 
@@ -82,9 +89,13 @@
         const key = newKey.value.trim(), value = newValue.value.trim()
         if (!key || !value) return
 
-        const existingIndex = detailPairs.value.findIndex(pair => pair.key === key)
+        const isMultiValueComparator = props.comparator === Comparators.IN || props.comparator === Comparators.NOT_IN
+        const existingIndex = detailPairs.value.findIndex(pair =>
+            pair.key === key && (!isMultiValueComparator || pair.value === value),
+        )
         if (existingIndex !== -1) {
             detailPairs.value[existingIndex].value = value
+            if (!isMultiValueComparator) detailPairs.value = detailPairs.value.filter((pair, index) => pair.key !== key || index === existingIndex)
         } else {
             detailPairs.value.push({key, value})
         }
@@ -101,6 +112,17 @@
     watch(() => props.modelValue, (val) => {
         detailPairs.value = val ? parseDetailPairs(val) : []
     }, {immediate: true})
+
+    watch(() => props.comparator, (comparator) => {
+        if (comparator === Comparators.IN || comparator === Comparators.NOT_IN) return
+
+        const pairsByKey = new Map<string, {key: string; value: string}>()
+        detailPairs.value.forEach(pair => pairsByKey.set(pair.key, pair))
+        if (pairsByKey.size === detailPairs.value.length) return
+
+        detailPairs.value = [...pairsByKey.values()]
+        emits("update:modelValue", serializeDetailPairs(detailPairs.value))
+    })
 </script>
 
 <style lang="scss" scoped>
@@ -194,9 +216,5 @@
 
 :deep(.kel-input__inner) {
     font-size: var(--ks-font-size-sm);
-
-    &::placeholder {
-        color: var(--ks-text-dim);
-    }
 }
 </style>

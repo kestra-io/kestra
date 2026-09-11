@@ -220,6 +220,62 @@ describe("KsMarkdown", () => {
         expect(link.attributes("target")).toBeUndefined()
     })
 
+    test("drops the href of a javascript: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](javascript:alert(document.domain))"},
+            global: globalConfig,
+        })
+        const link = wrapper.find("a.ks-markdown__link")
+        expect(link.exists()).toBe(true)
+        expect(link.text()).toBe("Click here")
+        expect(link.attributes("href")).toBeUndefined()
+    })
+
+    test("drops the href of an obfuscated javascript: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](<JaVa\tScRiPt:alert(1)>)"},
+            global: globalConfig,
+        })
+        const link = wrapper.find("a.ks-markdown__link")
+        expect(link.exists()).toBe(true)
+        expect(link.attributes("href")).toBeUndefined()
+    })
+
+    test("drops the href of a data: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBeUndefined()
+    })
+
+    test("keeps a mailto: link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Mail us](mailto:hello@kestra.io)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("mailto:hello@kestra.io")
+    })
+
+    test("keeps an anchor-only link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Section](#my-title)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("#my-title")
+    })
+
+    test("drops the src of a javascript: markdown image", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "![oops](javascript:alert(document.domain))"},
+            global: globalConfig,
+        })
+        const img = wrapper.find("img.ks-markdown__image")
+        expect(img.exists()).toBe(true)
+        expect(img.attributes("src")).toBeUndefined()
+        expect(img.attributes("alt")).toBe("oops")
+    })
+
     test("renders thematic break", () => {
         const wrapper = mount(KsMarkdown, {
             props: {content: "---"},

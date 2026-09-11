@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards"
     import {processFlowYaml} from "./composables/useDashboards"
@@ -157,6 +157,10 @@
             }
         }
 
+        // Unmount the charts before anything about the dashboard changes: a chart reads its dashboard id once, on
+        // setup, so one left mounted across the swap keeps requesting the previous dashboard's charts, now routed as
+        // the new dashboard's, and either 404s or shows data that belongs to the other dashboard.
+        charts.value = []
         isDashboardBundledWithUI.value = false
         if (id === "default") {
             // if requested dashboard is the default one, we first try to find if there is any configured in the DB by an admin
@@ -184,6 +188,7 @@
                 coreStore.message = {
                     variant: "error",
                     title: err,
+                    content: err,
                 }
                 await useDefaultDashboardBundledInUI()
             }

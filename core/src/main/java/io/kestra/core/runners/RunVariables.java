@@ -14,8 +14,10 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -69,7 +71,7 @@ public final class RunVariables {
         "flow.namespace",
         "flow.revision",
         "flow.tenantId",
-        // ForEach/EachParallel/EachSequential iteration context (item.*)
+        // Loop iteration context (item.*)
         "item",
         "item.index",
         "item.key",
@@ -297,8 +299,6 @@ public final class RunVariables {
 
         Builder withTaskRun(TaskRun taskRun);
 
-        Builder withDecryptVariables(boolean decryptVariables);
-
         Builder withVariables(Map<String, Object> variables);
 
         Builder withTrigger(AbstractTrigger trigger);
@@ -306,8 +306,6 @@ public final class RunVariables {
         Builder withEnvs(Map<String, ?> envs);
 
         Builder withGlobals(Map<?, ?> globals);
-
-        Builder withSecretInputs(List<String> secretInputs);
 
         Builder withKestraConfiguration(KestraConfiguration kestraConfiguration);
 
@@ -318,14 +316,6 @@ public final class RunVariables {
          * @return The immutable map of variables.
          */
         Map<String, Object> build(RunContextLogger logger, PropertyContext propertyContext);
-
-        /**
-         * Returns the plaintext values of any SECRET-typed flow output decrypted while building the
-         * variables map, so callers can carry them across the executor/worker boundary for log masking.
-         */
-        default List<String> secretOutputs() {
-            return List.of();
-        }
     }
 
     public record KestraConfiguration(String environment, String url) {
@@ -343,17 +333,14 @@ public final class RunVariables {
         protected Execution execution;
         protected TaskRun taskRun;
         protected AbstractTrigger trigger;
-        protected boolean decryptVariables = true;
         protected Map<String, Object> variables;
         protected Map<String, Object> inputs;
         protected Map<String, Object> outputs;
         protected Map<String, Object> executionOutputs;
         protected Map<String, ?> envs;
         protected Map<?, ?> globals;
-        private final Optional<String> secretKey;
-        private List<String> secretInputs;
         private KestraConfiguration kestraConfiguration;
-        private final List<String> secretOutputs;
+        private final Optional<String> secretKey;
 
         public DefaultBuilder() {
             this(Optional.empty());
@@ -361,15 +348,6 @@ public final class RunVariables {
 
         public DefaultBuilder(final Optional<String> secretKey) {
             this.secretKey = secretKey;
-            this.secretOutputs = new ArrayList<>();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public List<String> secretOutputs() {
-            return secretOutputs;
         }
 
         // Note: for performance reason, cloning maps should be avoided as much as possible.
@@ -417,21 +395,7 @@ public final class RunVariables {
 
                 builder.put("execution", RunVariables.of(realExecution, executionOutputs));
 
-                if (!MapUtils.isEmpty(outputs)) {
-                    if (decryptVariables) {
-                        // mask SECRET-typed flow output and trigger output
-                        final Secret secret = new Secret(secretKey, logger, decrypted ->
-                        {
-                            secretOutputs.add(decrypted);
-                            logger.usedSecret(decrypted);
-                        });
-                        builder.put("outputs", secret.decrypt(outputs));
-                    } else {
-                        builder.put("outputs", outputs);
-                    }
-                } else {
-                    builder.put("outputs", Collections.emptyMap());
-                }
+                builder.put("outputs", MapUtils.isEmpty(outputs) ? Collections.emptyMap() : outputs);
 
                 if (execution.getTaskRunList() != null || realExecution.getTaskRunList() != null) {
                     var taskRunList = ListUtils.concat(execution.getTaskRunList(), realExecution.getTaskRunList());
@@ -443,12 +407,6 @@ public final class RunVariables {
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (realExecution.getInputs() != null) {
                     inputs.putAll(realExecution.getInputs());
-                    if (decryptVariables && !ListUtils.isEmpty(secretInputs)) {
-                        final Secret secret = new Secret(secretKey, logger);
-                        for (String secretId : secretInputs) {
-                            decodeInput(secret, secretId, inputs);
-                        }
-                    }
                 }
 
                 if (flow != null && flow.getInputs() != null) {
@@ -462,34 +420,26 @@ public final class RunVariables {
                         .forEach(input ->
                         {
                             try {
-                                putNested(inputs, input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
+                                Object value = FlowInputOutput.resolveDefaultValue(input, context);
+                                // resolveDefaultValue renders a SECRET default as plaintext, so it is encrypted here:
+                                // every secret in the variables map must be encrypted until it is read, otherwise it
+                                // would be serialized in cleartext onto the worker job queue
+                                if (Type.SECRET == input.getType() && value != null) {
+                                    value = EncryptedString.from(new Secret(secretKey, logger::logger).encrypt(value.toString()));
+                                }
+                                putNested(inputs, input.getId(), value);
                             } catch (IllegalVariableEvaluationException e) {
                                 // Silent catch, if an input depends on another input, or a variable that is populated at runtime / input filling time, we can't resolve it here.
+                            } catch (GeneralSecurityException e) {
+                                throw new RuntimeException(e);
                             }
                         });
                 }
 
                 if (!inputs.isEmpty()) {
+                    // secrets are left encrypted in every subtree: DefaultRunContext decrypts them when they are
+                    // read and registers each one for masking then, so a serialized context holds no plaintext
                     builder.put("inputs", inputs);
-
-                    // if a secret input is used, add it to the list of secrets to mask on the logger
-                    if (logger != null && !ListUtils.isEmpty(secretInputs)) {
-                        for (String secretInput : secretInputs) {
-                            Object secretValue = getNested(inputs, secretInput);
-                            if (secretValue != null) {
-                                String secret;
-                                // if decryption is disabled, secret input would be still a map of type and encrypted value
-                                if (!decryptVariables) {
-                                    secret = ((Map<String, String>) secretValue).get("value");
-                                } else {
-                                    secret = (String) secretValue;
-                                }
-                                if (secret != null) {
-                                    logger.usedSecret(secret);
-                                }
-                            }
-                        }
-                    }
                 }
 
                 if (realExecution.getTrigger() != null) {
@@ -500,11 +450,8 @@ public final class RunVariables {
                     );
 
                     if (executionTrigger.getVariables() != null) {
-                        Map<String, Object> triggerVariables = executionTrigger.getVariables();
-                        if (decryptVariables) {
-                            final Secret secret = new Secret(secretKey, logger);
-                            triggerVariables = secret.decrypt(triggerVariables);
-                        }
+                        // copied so that adding '_context' never mutates the Execution's own trigger variables
+                        Map<String, Object> triggerVariables = new HashMap<>(executionTrigger.getVariables());
                         triggerVariables.put("_context", triggerContext);
                         builder.put("trigger", triggerVariables);
                     } else {
@@ -574,26 +521,6 @@ public final class RunVariables {
             return builder.build();
         }
 
-        @SuppressWarnings("unchecked")
-        private void decodeInput(Secret secret, String id, Map<String, Object> inputs) {
-            // find the input value that can be nested in case the input has a '.' in it.
-            if (id.indexOf('.') > -1) {
-                String nestedId = id.substring(0, id.indexOf('.'));
-                String restOfId = id.substring(id.indexOf('.') + 1);
-                decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
-            } else if (inputs.containsKey(id)) {
-                try {
-                    Map<String, String> encryptedString = (Map<String, String>) inputs.get(id);
-                    if (encryptedString != null) {
-                        String decoded = secret.decrypt(encryptedString.get("value"));
-                        inputs.put(id, decoded);
-                    }
-                } catch (GeneralSecurityException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
         /**
          * Nested-aware containsKey for a dotted id (e.g. {@code environment.region}): walks the nested input map and
          * returns true only when every segment resolves down to the leaf key.
@@ -606,20 +533,6 @@ public final class RunVariables {
             }
             Object child = inputs.get(id.substring(0, dot));
             return child instanceof Map<?, ?> map && containsNested((Map<String, Object>) map, id.substring(dot + 1));
-        }
-
-        /**
-         * Nested-aware get for a dotted id (e.g. {@code credentials.api_key}): walks the nested input map and returns
-         * the leaf value, or {@code null} if any segment is missing or not a map.
-         */
-        @SuppressWarnings("unchecked")
-        private Object getNested(Map<String, Object> inputs, String id) {
-            int dot = id.indexOf('.');
-            if (dot < 0) {
-                return inputs.get(id);
-            }
-            Object child = inputs.get(id.substring(0, dot));
-            return child instanceof Map<?, ?> map ? getNested((Map<String, Object>) map, id.substring(dot + 1)) : null;
         }
 
         /**

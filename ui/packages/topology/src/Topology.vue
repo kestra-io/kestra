@@ -31,6 +31,7 @@
             <TaskNode
                 v-bind="taskProps"
                 :icons="icons"
+                :loadIcon="loadIcon"
                 :playgroundEnabled="playgroundEnabled"
                 :playgroundReadyToStart="playgroundReadyToStart"
                 :replayEnabled="replayEnabled"
@@ -56,6 +57,9 @@
                 <template #details>
                     <slot name="taskDetails" v-bind="taskProps" />
                 </template>
+                <template #taskActions="taskActionProps">
+                    <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
+                </template>
             </TaskNode>
         </template>
 
@@ -63,6 +67,7 @@
             <BasicNode
                 v-bind="taskProps"
                 :icons="icons"
+                :loadIcon="loadIcon"
             />
         </template>
 
@@ -70,6 +75,7 @@
             <TriggerNode
                 v-bind="triggerProps as any"
                 :icons="icons"
+                :loadIcon="loadIcon"
                 :isReadOnly="isReadOnly"
                 :isAllowedEdit="isAllowedEdit"
                 @delete="emit(EVENTS.DELETE, $event)"
@@ -176,9 +182,12 @@
         namespace?: string;
         expandedSubflows?: string[];
         icons?: Record<string, any>;
+        // Per-class resolver for icons absent from `icons`, which only indexes the plugins
+        // registered on this instance (kestra-io/kestra#18129).
+        loadIcon?: (cls: string) => Promise<any>;
         enableSubflowInteraction?: boolean;
         execution?: any;
-        subflowsExecutions?: Record<string, any[]>;
+        subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;
@@ -199,6 +208,7 @@
         namespace: undefined,
         expandedSubflows: () => [],
         icons: () => ({}),
+        loadIcon: undefined,
         execution: undefined,
         enableSubflowInteraction: true,
         playgroundEnabled: false,
@@ -457,7 +467,7 @@
         z-index: 1000;
         list-style-type: none;
         background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         box-shadow: 0 12px 12px rgba(130, 103, 158, 0.1019607843);
         border-radius: 5px;
         text-align:left;
@@ -470,11 +480,11 @@
             width: 110px;
 
             &:first-child{
-                border-bottom: 1px solid var(--ks-border-primary);
+                border-bottom: 1px solid var(--ks-border-default);
             }
 
             &:hover {
-                background: var(--ks-button-background-secondary-hover);;
+                background: var(--ks-btn-secondary-bg-hover);
             }
         }
     }

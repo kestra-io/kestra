@@ -1,4 +1,4 @@
-import {YamlElement} from "@kestra-io/topology"
+import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrlWithoutTenants} from "../override/utils/route"
 import {useClient} from "@kestra-io/kestra-sdk"
 
@@ -12,6 +12,8 @@ export interface FunctionArgument {
 export interface PebbleFunctionDef {
     name: string;
     arguments: FunctionArgument[];
+    deprecated?: boolean;
+    replacement?: string | null;
 }
 
 let cachedFilters: string[] | null = null

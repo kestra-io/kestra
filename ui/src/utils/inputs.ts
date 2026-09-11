@@ -1,5 +1,5 @@
 import moment from "moment/moment"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {storageKeys} from "./constants"
 
 export type InputType = "STRING"

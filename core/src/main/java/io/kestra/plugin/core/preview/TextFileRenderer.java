@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.Set;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.preview.FilePreview;
@@ -32,10 +33,16 @@ import lombok.experimental.SuperBuilder;
 @Plugin
 public class TextFileRenderer implements FileRenderer {
     private static final int MAX_SIZE_IN_BYTES = 2_097_152; // 2 MB
+    private static final Set<String> SUPPORTED_EXTENSIONS = Set.of("txt", "md");
 
     @Override
     public boolean supports(String extension) {
-        return "txt".equalsIgnoreCase(extension) || ".md".equalsIgnoreCase(extension);
+        return extension != null && SUPPORTED_EXTENSIONS.contains(extension.toLowerCase());
+    }
+
+    @Override
+    public Set<String> extensions() {
+        return SUPPORTED_EXTENSIONS;
     }
 
     @Override

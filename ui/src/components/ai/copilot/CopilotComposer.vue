@@ -177,6 +177,9 @@
         const el = textareaEl.value
         if (!el) return
         el.style.height = "auto"
+        // A composer that is mounted but not laid out yet (dock still opening) measures zero and would
+        // collapse the box - leave the rows-based height, the observer below re-runs once it has one.
+        if (el.scrollHeight === 0) return
         el.style.height = `${el.scrollHeight}px`
     }
 
@@ -195,6 +198,31 @@
 
     // Keep the height in sync when the draft is cleared (e.g. after submit).
     watch(draft, () => nextTick(autosize))
+
+    /*
+        `input` and the draft watcher only cover text that arrives once the composer is on screen. A
+        seeded prompt ("Fix with AI", the editor shortcut) is already in the model by the time the
+        composer mounts - the chat swaps from the empty state to the footer composer, or the dock opens
+        on a rehydrated thread - so the box stayed one row tall around a multiline prompt. Size it on
+        mount, and again whenever the box gets a new width: a narrower dock rewraps the draft onto more
+        lines, and a mount inside a panel that is not laid out yet first measures a width of zero.
+    */
+    let lastWidth = 0
+    const resizeObserver = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0
+        if (width === lastWidth) return
+        lastWidth = width
+        autosize()
+    })
+
+    // Re-runs whenever the textarea is (re)created too - dictation swaps it out for the waveform.
+    watch(textareaEl, (el, previous) => {
+        if (previous) resizeObserver.unobserve(previous)
+        if (!el) return
+        lastWidth = el.clientWidth
+        autosize()
+        resizeObserver.observe(el)
+    }, {flush: "post"})
 
     // Enter submits; Shift+Enter inserts a newline.
     function onKeydown(event: KeyboardEvent): void {
@@ -357,6 +385,7 @@
             // ignore
         }
         stopAudioAnalysis()
+        resizeObserver.disconnect()
     })
 </script>
 

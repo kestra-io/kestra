@@ -318,6 +318,7 @@
     import {
         duplicateBlockAtPath,
         errorsLaneTarget,
+        moveBlockAtPath,
         groupValidationIssuesByTask,
         updateBlockAtPath,
         type BlockSection,
@@ -972,6 +973,19 @@
 
     const onDuplicate = (event: {id?: string}) => duplicateTaskById(event.id)
 
+    function reorderFocusedTask(direction: "up" | "down") {
+        const node = focusOrder.value.find(entry => entry.id === focusedTaskId.value)
+        if (!node) return false
+        const updated = moveBlockAtPath(flowSource.value ?? "", node.path, direction)
+        // Already at the end of its lane: nothing moved, so the key should not look handled.
+        if (updated === flowSource.value) return false
+        applyGraphYaml(updated)
+        trackAuthoringAction("task_moved", "topology", {
+            task_type: sourceTaskById.value[node.id]?.type as string | undefined,
+        })
+        return true
+    }
+
     function insertRelativeToFocused(position: "before" | "after") {
         const id = focusedTaskId.value
         if (!id) return
@@ -1016,6 +1030,8 @@
             return
         case "duplicate":
             return duplicateFocusedTask() ? undefined : false
+        case "reorder":
+            return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
             performUndo()
             return

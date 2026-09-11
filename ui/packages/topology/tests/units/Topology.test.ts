@@ -32,9 +32,6 @@ function mountTopology(id: string) {
         },
         global: {
             plugins: [i18n],
-            // VueFlow's own scoped slots (node-cluster, node-task, ...) are only invoked by its real
-            // implementation - stubbing it as an empty shell keeps this a test of Topology's own
-            // refit logic without needing to render the graph nodes or vue-flow's controls/panels.
             stubs: {
                 VueFlow: {template: "<div></div>"},
             },
@@ -93,6 +90,24 @@ describe("Topology view refit", () => {
         vueFlow.emits.nodesInitialized([])
 
         expect(fitView).toHaveBeenCalledTimes(1)
+    })
+
+    it("should refit when a subflow expansion reloads the graph", async () => {
+        const id = `topology-${Math.random()}`
+        const vueFlow = useVueFlow(id)
+        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
+
+        const wrapper = mountTopology(id)
+        await settle()
+        vueFlow.emits.nodesInitialized([])
+        expect(fitView).toHaveBeenCalledTimes(1)
+
+        await wrapper.setProps({expandedSubflows: ["1"]})
+        await wrapper.setProps({flowGraph: {...FLOW_GRAPH, nodes: [...FLOW_GRAPH.nodes]}})
+        await settle()
+        vueFlow.emits.nodesInitialized([])
+
+        expect(fitView).toHaveBeenCalledTimes(2)
     })
 
     it("should refit when the orientation is toggled explicitly", async () => {

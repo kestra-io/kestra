@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.StringJoiner;
 import java.util.UUID;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
@@ -14,11 +13,11 @@ abstract public class IdUtils {
     private static final char ID_SEPARATOR = '_';
 
     public static String create() {
-        return FriendlyId.createFriendlyId();
+        return Base62Encoder.createId();
     }
 
     public static String from(String from) {
-        return FriendlyId.toFriendlyId(
+        return Base62Encoder.encode(
             UUID.nameUUIDFromBytes(
                 HASH_FUNCTION.hashString(from, StandardCharsets.UTF_8).asBytes()
             )

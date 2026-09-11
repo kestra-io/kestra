@@ -7,13 +7,12 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
-import com.devskiller.friendly_id.FriendlyId;
-
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -46,9 +45,9 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000),
-                raw(tenant, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 2000),
-                raw(tenant, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 3000)
+                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 1000),
+                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 2000),
+                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 3000)
             )
         );
 
@@ -75,7 +74,7 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
         // can't straddle a rollover.
         Await.until(() -> Instant.now().toEpochMilli() % 60_000 < 55_000);
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, executionId, 1000));
 
         // When
@@ -96,13 +95,13 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000),
-                raw(tenant, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 2000)
+                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 1000),
+                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 2000)
             )
         );
         executionStatisticsCompactor.compact();
 
-        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 9000));
+        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 9000));
 
         // When: compacting again must merge the late row into the existing aggregate, not overwrite it
         executionStatisticsCompactor.compact();
@@ -124,11 +123,11 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant bucket = Instant.now().minus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
 
-        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 500));
+        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 500));
         executionStatisticsCompactor.compact();
 
         ExecutionStatistic lateWithoutTaskRuns = new ExecutionStatistic(
-            tenant, "namespace", "flow", bucket, State.Type.FAILED, 1, 200, 200, 200, 0, 0, null, null, FriendlyId.createFriendlyId()
+            tenant, "namespace", "flow", bucket, State.Type.FAILED, 1, 200, 200, 200, 0, 0, null, null, Base62Encoder.createId()
         );
         executionStatisticsRepository.save(lateWithoutTaskRuns);
 
@@ -154,7 +153,7 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
 
         executionStatisticsRepository.saveBatch(
             IntStream.range(0, 5)
-                .mapToObj(i -> raw(tenant, "flow-" + i, bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000))
+                .mapToObj(i -> raw(tenant, "flow-" + i, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 1000))
                 .toList()
         );
 

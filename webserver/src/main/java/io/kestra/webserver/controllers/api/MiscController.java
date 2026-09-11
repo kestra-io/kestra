@@ -20,6 +20,7 @@ import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.services.VersionService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthCredentials;
@@ -61,6 +62,9 @@ public class MiscController {
 
     @Inject
     InstanceService instanceService;
+
+    @Inject
+    VersionService versionService;
 
     @Inject
     FeatureUsageReport featureUsageReport;
@@ -137,6 +141,7 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
+            .versionUpgrade(versionService.pendingUpgradeNotice().orElse(null))
             .isCustomDashboardsEnabled(this.isCustomDashboardsEnabled())
             .isAnonymousUsageEnabled(this.usageReportConfig.enabled())
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
@@ -331,6 +336,8 @@ public class MiscController {
         String flowTemplate;
 
         ZonedDateTime commitDate;
+
+        VersionService.VersionUpgrade versionUpgrade;
 
         @JsonInclude
         Boolean isCustomDashboardsEnabled;

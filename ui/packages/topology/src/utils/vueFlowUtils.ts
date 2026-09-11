@@ -617,9 +617,8 @@ export function generateGraph(
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
                 parentNode: cluster ? cluster.uid : undefined,
-                // The layout is server-computed, so vue-flow must never reposition a node itself;
-                // carrying a task onto an edge is driven separately, off the `topology-carriable`
-                // class below.
+                // The drag is the browser's own (HTML5), like the No-code block cards, so vue-flow
+                // must not also reposition the node under the pointer.
                 draggable: false,
                 data: {
                     node: node,
@@ -634,14 +633,13 @@ export function generateGraph(
                     isReadOnly: isReadOnlyTask,
                     executionId: node.executionId,
                     unused: node.unused,
+                    isMovable: Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node),
                 },
                 class: [
                     node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
-                    // `nopan` is vue-flow's own opt-out: it adds it to draggable nodes, and without
-                    // it a drag starting on a card pans the whole canvas instead of carrying.
-                    Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node)
-                        ? "topology-carriable nopan"
-                        : "",
+                    // vue-flow adds `nopan` to nodes it drags itself; it no longer does, and without
+                    // it a drag starting on a card pans the canvas instead.
+                    Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node) ? "nopan" : "",
                 ]
                     .filter(Boolean)
                     .join(" "),

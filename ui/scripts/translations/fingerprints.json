@@ -806,6 +806,8 @@
   "failureDebugPanel|miniTimeline|title": "38406f393a0b",
   "failureDebugPanel|reopen": "4e8323dee32a",
   "failureDebugPanel|restart|caption": "c89726e716ad",
+  "failureDebugPanel|stateHistory|elapsed": "d05dad31a625",
+  "failureDebugPanel|stateHistory|title": "870ac9f4138f",
   "failureDebugPanel|structuralImpact|relation|child": "4e6d7bdb7ee5",
   "failureDebugPanel|structuralImpact|relation|focused": "bf26f4dd4c6f",
   "failureDebugPanel|structuralImpact|relation|parent": "fb8d859156cd",

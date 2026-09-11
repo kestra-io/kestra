@@ -972,6 +972,7 @@
       "success": "triggerのロックが解除されました"
     },
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
+    "trigger not toggleable": "このTriggerはSchedulerでは評価されません。Flowソース内で無効にしてください",
     "trigger enable dialog": {
       "title": "trigger を有効化",
       "bulk title": "{count} triggers を有効にする",

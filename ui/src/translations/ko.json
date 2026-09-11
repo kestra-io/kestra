@@ -972,6 +972,7 @@
       "success": "Trigger가 잠금 해제되었습니다"
     },
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
+    "trigger not toggleable": "이 Trigger는 Scheduler가 평가하지 않습니다. Flow 소스에서 비활성화하세요.",
     "trigger enable dialog": {
       "title": "trigger 활성화",
       "bulk title": "{count}개의 triggers 활성화",

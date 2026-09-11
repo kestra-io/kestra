@@ -972,6 +972,7 @@
       "success": "Le déclencheur est débloqué"
     },
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
+    "trigger not toggleable": "Ce trigger n'est pas évalué par le Scheduler, désactivez-le dans la source du flow",
     "trigger enable dialog": {
       "title": "Activer le trigger",
       "bulk title": "Activer {count} triggers",

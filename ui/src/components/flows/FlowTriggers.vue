@@ -147,8 +147,8 @@
                 <template #default="scope">
                     <KsTooltip
                         v-if="hasTrigger(scope.row)"
-                        :content="$t('trigger disabled')"
-                        :disabled="!scope.row.sourceDisabled"
+                        :content="notToggleableReason(scope.row)"
+                        :disabled="!notToggleableReason(scope.row)"
                     >
                         <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
                              moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
@@ -157,7 +157,7 @@
                             @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
                             inlinePrompt
                             class="switch-text"
-                            :disabled="scope.row.sourceDisabled"
+                            :disabled="!!notToggleableReason(scope.row)"
                         />
                     </KsTooltip>
                 </template>
@@ -647,6 +647,14 @@
     const enableDialogTrigger = ref<TriggerRow | null>(null)
 
     const isScheduleTrigger = (row?: TriggerRow) => row?.kind === "SCHEDULE" || isSchedule(row?.type)
+
+    // A trigger the scheduler does not evaluate never reads the stored disabled flag, so the API refuses to
+    // toggle it: it can only be disabled in the flow source.
+    const notToggleableReason = (row: TriggerRow): string | undefined => {
+        if (row.sourceDisabled) return t("trigger disabled")
+        if (row.kind === "UNSCHEDULED") return t("trigger not toggleable")
+        return undefined
+    }
 
     const setDisabled = (trigger: TriggerRow, value: boolean) => {
         if (value && isScheduleTrigger(trigger)) {

@@ -29,8 +29,6 @@ import io.kestra.core.runners.FlowMetaStores;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -83,9 +81,6 @@ public class WebhookService {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
-
-    @Inject
-    private TriggerEventQueue triggerEventQueue;
 
     @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
@@ -239,7 +234,6 @@ public class WebhookService {
             {
                 try {
                     executionCommandQueue.emit(command.withOperationId(operationId));
-                    triggerEventQueue.send(UnscheduledTriggerFired.of(execution));
                     eventPublisher.publishEvent(CrudEvent.create(execution));
                 } catch (Exception e) {
                     // Exceptions.propagate rethrows a runtime as-is and wraps a checked one, so a MessageTooBigException

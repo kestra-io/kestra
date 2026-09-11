@@ -972,6 +972,7 @@
       "success": "Trigger został odblokowany"
     },
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
+    "trigger not toggleable": "Ten Trigger nie jest oceniany przez Scheduler, wyłącz go w źródle Flow",
     "trigger enable dialog": {
       "title": "Włącz Trigger",
       "bulk title": "Włącz {count} Triggerów",

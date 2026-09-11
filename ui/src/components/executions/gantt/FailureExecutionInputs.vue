@@ -3,7 +3,7 @@
     <KsAlert v-else-if="error" type="error" :closable="false">
         {{ $t("failureDebugPanel.executionInputs.error") }}
     </KsAlert>
-    <KsEmpty v-else-if="props.inputIds.length === 0" :description="$t('failureDebugPanel.executionInputs.empty')" />
+    <KsEmpty v-else-if="props.inputIds.length === 0" :imageSize="80" :description="$t('failureDebugPanel.executionInputs.empty')" />
     <Vars v-else :data="values" />
 </template>
 

@@ -53,6 +53,11 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.SourceSearchService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemType;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.exceptions.BulkValidationException;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -875,16 +880,28 @@ public class FlowController {
         summary = "Delete flows by their IDs."
     )
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<BulkResponse> deleteFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws QueueException {
-        List<Flow> list = ids
-            .stream()
-            .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
-            .peek(throwConsumer(flow -> flowService.delete(flow)))
-            .collect(Collectors.toList());
+            List<FlowWithSource> flows = new ArrayList<>();
+            List<ProblemError> invalids = new ArrayList<>();
 
-        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
-    }
+            for (IdWithNamespace id : ids) {
+                Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId());
+                if (flow.isPresent()) {
+                    flows.add(flow.get());
+                } else {
+                    invalids.add(flowProblem(id, "flow not found", ProblemTypes.NOT_FOUND));
+                }
+            }
+            if (!invalids.isEmpty()) {
+                throw new BulkValidationException("One or more flows could not be deleted.", invalids);
+            }
+
+            flows.forEach(throwConsumer(flow -> flowService.delete(flow)));
+
+            return HttpResponse.ok(BulkResponse.builder().count(flows.size()).build());
+        }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/disable/by-query")
@@ -1094,5 +1111,9 @@ public class FlowController {
         String flowId,
         Integer revision,
         List<FlowService.TaskDeprecation> deprecatedTasks) {
+    }
+
+        private static ProblemError flowProblem(IdWithNamespace id, String detail, ProblemType type) {
+        return ProblemError.ofItem(detail, "flows[" + id.getNamespace() + "." + id.getId() + "]", type);
     }
 }

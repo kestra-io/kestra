@@ -100,12 +100,35 @@
                     </template>
                     <FailureResolvedConfig
                         v-if="focusedTaskRun"
-                        :namespace="execution.namespace"
-                        :flowId="execution.flowId"
-                        :flowRevision="execution.flowRevision"
+                        :rawBlock="focusedRawTaskBlock"
+                        :flowLoading="focusedFlowLoading"
+                        :flowError="focusedFlowError"
                         :executionId="execution.id"
                         :taskRunId="focusedTaskRun.id"
-                        :taskId="focusedTaskRun.taskId"
+                    />
+                </KsCard>
+
+                <KsCard shadow="never">
+                    <template #header>
+                        <h4>{{ $t("failureDebugPanel.executionInputs.title") }}</h4>
+                    </template>
+                    <FailureExecutionInputs
+                        v-if="focusedTaskRun"
+                        :inputIds="flowInputIds"
+                        :executionId="execution.id"
+                        :taskRunId="focusedTaskRun.id"
+                    />
+                </KsCard>
+
+                <KsCard shadow="never">
+                    <template #header>
+                        <h4>{{ $t("failureDebugPanel.upstreamOutputs.title") }}</h4>
+                    </template>
+                    <FailureUpstreamOutputs
+                        v-if="focusedTaskRun"
+                        :referencedTaskIds="referencedOutputTaskIds"
+                        :taskRunList="taskRunList"
+                        :executionId="execution.id"
                     />
                 </KsCard>
 
@@ -167,9 +190,13 @@
     import FailureMiniTimeline from "./FailureMiniTimeline.vue"
     import FailureStateHistory from "./FailureStateHistory.vue"
     import FailureResolvedConfig from "./FailureResolvedConfig.vue"
+    import FailureExecutionInputs from "./FailureExecutionInputs.vue"
+    import FailureUpstreamOutputs from "./FailureUpstreamOutputs.vue"
     import FailureStructuralImpact from "./FailureStructuralImpact.vue"
     import FailureLogPanel from "./FailureLogPanel.vue"
 
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+    import {flow as fetchFlow} from "@kestra-io/kestra-sdk/flows"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import * as Utils from "../../../utils/utils"
@@ -305,6 +332,58 @@
     const timelineNodes = computed<StructuralNode[]>(() =>
         [...structuralNodes.value].sort((a, b) => ts(a.taskRun.state.histories[0].date) - ts(b.taskRun.state.histories[0].date)),
     )
+
+    // Fetched once per execution (keyed on its flow revision, not the focused task run): every
+    // failed task run in the same execution ran against the same flow source, so switching the
+    // switcher's focus must not re-fetch it. Shared by "Resolved configuration" (the focused
+    // task's own block), "Execution inputs" (flow.inputs) and "Outputs consumed" (parsing the
+    // focused block for outputs.* references) instead of each fetching it independently.
+    const focusedFlow = ref<{source?: string; inputs?: Array<{id: string}>} | undefined>(undefined)
+    const focusedFlowLoading = ref(false)
+    const focusedFlowError = ref(false)
+
+    watch(
+        () => `${props.execution.namespace}/${props.execution.flowId}/${props.execution.flowRevision}`,
+        async () => {
+            focusedFlowLoading.value = true
+            focusedFlowError.value = false
+            focusedFlow.value = undefined
+            try {
+                focusedFlow.value = await fetchFlow({
+                    namespace: props.execution.namespace,
+                    id: props.execution.flowId,
+                    revision: props.execution.flowRevision,
+                    source: true,
+                })
+            } catch {
+                focusedFlowError.value = true
+            } finally {
+                focusedFlowLoading.value = false
+            }
+        },
+        {immediate: true},
+    )
+
+    // The exact revision this execution ran on, not the flow's current/latest source — the flow
+    // may have been edited since this task run failed.
+    const focusedRawTaskBlock = computed<string | undefined>(() => {
+        const source = focusedFlow.value?.source
+        const taskId = focusedTaskRun.value?.taskId
+        if (!source || !taskId) return undefined
+        return YAML_UTILS.extractBlock({source, section: "tasks", key: taskId})
+    })
+
+    const flowInputIds = computed<string[]>(() => (focusedFlow.value?.inputs ?? []).map((input) => input.id))
+
+    // Which other tasks' outputs the focused task's own config actually reads, so "Outputs
+    // consumed" shows exactly the upstream data that could have fed into this failure — not
+    // every structurally-adjacent task, which is what "Structural impact" is already for.
+    const referencedOutputTaskIds = computed<string[]>(() => {
+        const block = focusedRawTaskBlock.value
+        if (!block) return []
+        const matches = block.matchAll(/\{\{[^}]*\boutputs(?:\[['"]|\.)([A-Za-z0-9_-]+)/g)
+        return [...new Set([...matches].map((match) => match[1]))]
+    })
 
     watch(
         failedTaskRuns,

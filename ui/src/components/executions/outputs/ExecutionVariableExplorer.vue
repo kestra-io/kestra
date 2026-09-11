@@ -47,11 +47,14 @@
                                     type="warning"
                                     :closable="false"
                                     data-test="raw-value-truncated"
+                                    class="truncated-banner"
                                     :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
                                 >
-                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
-                                        {{ $t('download') }}
-                                    </KsButton>
+                                    <div class="truncated-actions">
+                                        <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                            {{ $t('download') }}
+                                        </KsButton>
+                                    </div>
                                 </KsAlert>
                                 <KsEditor
                                     v-bind="editorBindings"
@@ -86,11 +89,14 @@
                                     type="warning"
                                     :closable="false"
                                     data-test="raw-value-truncated"
+                                    class="truncated-banner"
                                     :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
                                 >
-                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
-                                        {{ $t('download') }}
-                                    </KsButton>
+                                    <div class="truncated-actions">
+                                        <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                            {{ $t('download') }}
+                                        </KsButton>
+                                    </div>
                                 </KsAlert>
                                 <div class="viewer__scalar">
                                     <code>{{ cappedRawValue }}</code>
@@ -591,6 +597,16 @@
     .file-preview {
         padding: var(--ks-spacing-4);
     }
+}
+
+.truncated-banner {
+    /* Match the 16px inset the rest of the panel's content already has. */
+    margin: 0 var(--ks-spacing-4);
+}
+
+.truncated-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .viewer--fill {

@@ -77,7 +77,7 @@
         }
 
         p.description {
-            color: #B9B9BA;
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-base);
             font-weight: 400;
             line-height: var(--ks-font-size-lg);

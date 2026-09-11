@@ -238,7 +238,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: var(--ks-bg-scrim);
             z-index: 999;
             animation: fadeIn 0.3s ease;
         }
@@ -257,7 +257,7 @@
             max-width: 100vw;
             z-index: 1000;
             transition: left 0.3s ease-in-out;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 2px 0 8px var(--ks-shadow-elevated);
             padding: 1rem;
             padding-top: 3.5rem;
             padding-right: 0.5rem;

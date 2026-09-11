@@ -20,31 +20,29 @@
         title: string
     }>()
 
-    const buttons = [{
-                         label: "Community Slack",
-                         description: "Discuss topics with other users and kestra Team",
-                         href: "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=support-link",
-                         icon: SlackIcon,
-                     },
-                     {
-                         label: "GitHub",
-                         description: "Give our open-source project a star",
-                         href: "https://github.com/kestra-io/kestra",
-                         icon: GithubIcon,
-                     },
-                     {
-                         label: "Help Center",
-                         description: "Contact support for help with your Enterprise account",
-                         href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=support-link",
-                         icon: LifebuoyIcon,
-                     }]
+    const buttons = [
+        {
+            label: "Community Slack",
+            description: "Discuss topics with other users and kestra Team",
+            href: "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=support-link",
+            icon: SlackIcon,
+        },
+        {
+            label: "GitHub",
+            description: "Give our open-source project a star",
+            href: "https://github.com/kestra-io/kestra",
+            icon: GithubIcon,
+        },
+        {
+            label: "Help Center",
+            description: "Contact support for help with your Enterprise account",
+            href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=support-link",
+            icon: LifebuoyIcon,
+        },
+    ]
 </script>
 
 <style scoped lang="scss">
-$black-3: #2B313E;
-$white: #FFFFFF;
-$white-1: #E0E0E0;
-$primary-1: #3F51B5;
 h2.support-title{
     border: none;
     font-size: var(--ks-font-size-lg);
@@ -62,10 +60,10 @@ h2.support-title{
 .support-link{
     padding: 1rem;
     border-radius: .5rem;
-    border: 1px solid $black-3;
+    border: 1px solid var(--ks-border-default);
     span{
         font-size: var(--ks-font-size-xl);
-        color: $white;
+        color: var(--ks-text-primary);
         margin-bottom: 1rem;
     }
     h3{
@@ -76,11 +74,11 @@ h2.support-title{
     p{
         margin-top: .5rem;
         font-size: var(--ks-font-size-sm);
-        color: $white-1;
+        color: var(--ks-text-secondary);
         line-height: 1.6em;
     }
     &:hover{
-        border-color: $primary-1;
+        border-color: var(--ks-border-focus);
     }
 }
 </style>

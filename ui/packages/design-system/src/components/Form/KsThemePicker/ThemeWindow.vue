@@ -38,7 +38,7 @@
         display: block;
         width: 100%;
         height: auto;
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+        filter: drop-shadow(0 1px 2px var(--ks-shadow-element));
     }
 
     .tw-sidebar { fill: var(--tp-sidebar); }
@@ -46,6 +46,6 @@
     .tw-main { fill: var(--tp-main); }
     .tw-bar { fill: var(--tp-bar); }
     .tw-panel { fill: var(--tp-panel); }
-    .tw-dot { fill: #9869f7; }
+    .tw-dot { fill: var(--ks-Artwork-fill); }
     .tw-frame { stroke: var(--tp-frame); }
 </style>

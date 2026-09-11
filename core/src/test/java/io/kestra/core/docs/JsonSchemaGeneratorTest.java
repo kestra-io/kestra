@@ -514,6 +514,22 @@ class JsonSchemaGeneratorTest {
                 .get("const"),
             is(new Constant().getType())
         );
+        assertThat(
+            ((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
+                .get("io.kestra.core.models.tasks.retrys.Constant")
+                .get("properties"))
+                .get("type")
+                .get("title"),
+            is("The retry type.")
+        );
+        assertThat(
+            ((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
+                .get("io.kestra.core.models.tasks.retrys.Constant")
+                .get("properties"))
+                .get("type")
+                .get("description"),
+            is("Fixed to `constant`, selecting a retry policy with a fixed delay between attempts.")
+        );
     }
 
     @SuppressWarnings("unchecked")

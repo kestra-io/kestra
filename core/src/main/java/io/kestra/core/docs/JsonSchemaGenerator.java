@@ -1029,31 +1029,47 @@ public class JsonSchemaGenerator {
                         return defaultOpt;
                     }
 
-                    return p.optional("allOf").flatMap(node ->
-                    {
-                        if (node.isArray()) {
-                            Iterable<JsonNode> iterable = node::values;
-                            return StreamSupport.stream(
-                                iterable.spliterator(),
-                                false
-                            ).filter(subNode -> subNode.has("default"))
-                                .findFirst()
-                                .map(subNode -> subNode.get("default").asText());
-                        }
-
-                        return Optional.empty();
-                    });
+                    return findAllOfNodeWithField(p, "default")
+                        .map(node -> node.get("default").asText());
                 })
                 .orElse(null);
             if (defaultValue == null) {
                 return;
             }
 
-            properties.set(
-                property, context.getGeneratorConfig().createObjectNode()
-                    .put("const", defaultValue)
-            );
+            ObjectNode constNode = context.getGeneratorConfig().createObjectNode()
+                .put("const", defaultValue);
+
+            Schema schemaAnnotation = Arrays.stream(targetType.getDeclaredFields())
+                .filter(f -> f.getName().equals(property))
+                .findFirst()
+                .map(f -> f.getAnnotation(Schema.class))
+                .orElse(null);
+
+            if (schemaAnnotation != null) {
+                if (!schemaAnnotation.title().isEmpty()) {
+                    constNode.put("title", schemaAnnotation.title());
+                }
+                if (!schemaAnnotation.description().isEmpty()) {
+                    constNode.put("description", schemaAnnotation.description());
+                }
+            }
+
+            properties.set(property, constNode);
         });
+    }
+
+    private static Optional<JsonNode> findAllOfNodeWithField(JsonNode parent, String fieldName) {
+        JsonNode allOf = parent.get("allOf");
+        if (allOf == null || !allOf.isArray()) {
+            return Optional.empty();
+        }
+        for (JsonNode child : allOf) {
+            if (child.has(fieldName)) {
+                return Optional.of(child);
+            }
+        }
+        return Optional.empty();
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {

@@ -32,9 +32,8 @@
                  rendered as a diff against the matching flow's current content, so the user sees exactly
                  what will change before approving. -->
             <DiffView
-                v-if="proposedSource !== null"
+                v-if="!resolved && proposedSource !== null"
                 class="proposed-action-diff"
-                data-test="copilot-proposed-diff"
                 :oldValue="currentFlowSource ?? ''"
                 :newValue="proposedSource"
             />
@@ -117,10 +116,11 @@
     })
 
     /**
-     * The proposed YAML/source body, when this action mutates one — a known key (`body`/`source`/`yaml`)
-     * takes priority; otherwise the sole argument long enough that `argEntries` would drop it as "too
-     * verbose to show inline" is assumed to be it. Null when there's nothing to diff (a plan card, a
-     * mutating action with no source payload, or more than one long argument to choose from).
+     * The proposed YAML/source body, when this action mutates one — only a known key
+     * (`body`/`source`/`yaml`) qualifies. There is no fallback onto "the sole long argument": a tool
+     * like `AuthorFlowTool` also carries a long `currentFlowYaml` (the *before* side, not the proposal),
+     * and guessing wrong there would render it as a confidently backwards diff — no diff is safer than
+     * a wrong one. Null when there's nothing to diff (a plan card, or no known source key present).
      */
     const proposedSource = computed<string | null>(() => {
         if (isPlan.value || !props.action.arguments) return null
@@ -128,11 +128,7 @@
             const value = props.action.arguments[key]
             if (typeof value === "string" && value.length > 0) return value
         }
-        const longValues = Object.entries(props.action.arguments)
-            .filter(([key]) => !(SOURCE_ARG_KEYS as readonly string[]).includes(key))
-            .map(([, value]) => value)
-            .filter((value): value is string => typeof value === "string" && value.length > MAX_ARG_LENGTH)
-        return longValues.length === 1 ? longValues[0] : null
+        return null
     })
 </script>
 

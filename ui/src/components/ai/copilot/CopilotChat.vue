@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="onNewChat">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -153,6 +153,7 @@
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
+    import {isViewingFlow, parseArtefactYaml} from "./useApplyDraft"
     import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowStore} from "../../../stores/flow"
@@ -225,19 +226,6 @@
         return flowStore.flowYaml || undefined
     })
 
-    // The "before" side of the pending proposal's diff: only when it's a flow-mutating action whose own
-    // namespace/id arguments match the flow currently focused, so a diff is never shown against the
-    // wrong flow's content. `id` is accepted alongside `flowId` since tool argument naming isn't fixed.
-    const pendingConfirmationFlowSource = computed<string | undefined>(() => {
-        const scope = routeInFocus.value
-        const args = pendingConfirmation.value?.arguments
-        if (!args || scope?.kind !== "FLOW" || !scope.namespace || !scope.flowId) return undefined
-        const namespace = typeof args.namespace === "string" ? args.namespace : undefined
-        const flowId = typeof args.flowId === "string" ? args.flowId : typeof args.id === "string" ? args.id : undefined
-        if (namespace !== scope.namespace || flowId !== scope.flowId) return undefined
-        return editorFlowSource.value
-    })
-
     /** Dismiss a single context pill and note its removal in the transcript. */
     function removeContext(part: ContextPart): void {
         const value = routeInFocus.value?.[part]
@@ -286,6 +274,48 @@
     ])
 
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, nextThreadTitle, sendChat, confirm, cancel, reset, retryLastTurn, loadThread, restoreThread, noteContext, noteModelChange} = useAiChat()
+
+    // The "before" side of the pending proposal's diff: only when it's a flow-mutating action whose own
+    // namespace/id arguments match the flow currently focused, so a diff is never shown against the
+    // wrong flow's content. `id` is accepted alongside `flowId` since tool argument naming isn't fixed.
+    const pendingConfirmationFlowSource = computed<string | undefined>(() => {
+        const scope = routeInFocus.value
+        const args = pendingConfirmation.value?.arguments
+        if (!args || scope?.kind !== "FLOW" || !scope.namespace || !scope.flowId) return undefined
+        const namespace = typeof args.namespace === "string" ? args.namespace : undefined
+        const flowId = typeof args.flowId === "string" ? args.flowId : typeof args.id === "string" ? args.id : undefined
+        if (namespace !== scope.namespace || flowId !== scope.flowId) return undefined
+        return editorFlowSource.value
+    })
+
+    // The most recent FLOW-kind artefact draft that targets the flow currently open, if any — mirrors
+    // `pendingConfirmationFlowSource`'s "is this targeting the open flow" check but for the
+    // non-mutating draft-card path (`useApplyDraft.ts`), reusing its `isViewingFlow`/`parseArtefactYaml`
+    // so the two "is this the flow I'm looking at" checks can't drift apart. Scanned newest-first so a
+    // later draft in the same thread supersedes an earlier one for the same flow, while an unrelated
+    // draft for a different flow in between doesn't hide it.
+    const pendingDraftFlowSource = computed<string | undefined>(() => {
+        for (let i = messages.value.length - 1; i >= 0; i--) {
+            const message = messages.value[i]
+            if (message.type !== "ARTEFACT_DRAFT" || message.draft?.kind !== "FLOW") continue
+            const {namespace, id} = parseArtefactYaml(message.draft.yaml)
+            if (namespace && id && isViewingFlow(route, namespace, id)) return message.draft.yaml
+        }
+        return undefined
+    })
+
+    // The one flow diff the main editor can mirror at a time: a pending mutate confirmation takes
+    // priority over a draft card on the rare chance both exist together.
+    const activeFlowPreview = computed<string | undefined>(() => pendingConfirmationFlowSource.value ?? pendingDraftFlowSource.value)
+
+    // Mirror it into the flow store so `FlowFileEditorTab.vue`'s main "Flow Code" editor shows the same
+    // diff live, in-place, instead of only inside this chat panel (kestra-io/kestra#19330). Reactive on
+    // `activeFlowPreview`, so it already clears itself once the confirmation/draft no longer targets the
+    // open flow (approved, rejected, superseded, or navigated away from) — `loadFlow` also resets it for
+    // free on a successful apply (`stores/flow.ts`).
+    watch(activeFlowPreview, (value) => {
+        flowStore.previewSource = value
+    }, {immediate: true})
 
     // `/configs` reports whether any AI provider is configured. It's known up front, but the copilot
     // waits for the user to actually try sending something before acting on it: an instance with no
@@ -375,12 +405,24 @@
             unavailable.value = true
             return
         }
+        // A new turn drops the editor's diff preview even before it resolves: `sendChat` already nulls
+        // `pendingConfirmation` (self-clearing `pendingConfirmationFlowSource`), but a past draft card
+        // stays in the transcript forever with no such reset, so it must be cleared here explicitly.
+        flowStore.previewSource = undefined
         sendChat({
             prompt,
             mode: mode.value,
             additionalContext: scopeToContext(activeScope.value, editorFlowSource.value),
             providerId: selectedProvider.value,
         })
+    }
+
+    /** "New chat": same stale-preview reasoning as `onSubmit` — a leftover draft card's preview
+     *  otherwise survives into the fresh conversation since `reset()` clears the transcript, not the
+     *  editor. */
+    function onNewChat(): void {
+        flowStore.previewSource = undefined
+        reset()
     }
 
     // Keep the transcript pinned to the bottom as content arrives: new messages, streamed
@@ -432,7 +474,12 @@
         if (value) consumeSeededPrompt()
     })
 
-    onBeforeUnmount(cancel)
+    onBeforeUnmount(() => {
+        cancel()
+        // The editor's diff preview must not outlive this panel — e.g. closing the copilot dock
+        // while a draft/proposal is still pending.
+        flowStore.previewSource = undefined
+    })
 </script>
 
 <style scoped>

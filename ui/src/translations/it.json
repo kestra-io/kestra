@@ -2181,7 +2181,7 @@
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",
           "applyTitle": "Applica flow",
-          "applyConfirm": "Applica il flow {namespace}.{id}? Verrà creato, o sovrascritto se esiste già.",
+          "applyConfirm": "Salvare il flow {namespace}.{id} come revisione bozza per la revisione? Verrà creato, oppure verrà aggiunta una nuova revisione bozza se esiste già — le bozze non vengono considerate da trigger o subflow finché non vengono pubblicate.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
           "applyError": "Impossibile applicare il flow. Riprova.",
           "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",

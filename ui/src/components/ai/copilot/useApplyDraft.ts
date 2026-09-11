@@ -1,5 +1,6 @@
 import {computed, h, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
+import type {RouteLocationNormalizedLoaded} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox, KsText} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -12,6 +13,27 @@ import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
 import DiffView from "./DiffView.vue"
 import type {ArtefactDraftEvent} from "./types"
+
+/**
+ * True when the given flow is the one currently open in the editor — reused by the editor's live
+ * diff preview (`CopilotChat.vue`) to decide whether a drafted flow should also mirror into
+ * `flowStore.previewSource`, so the two "is this the flow I'm looking at" checks can't drift apart.
+ */
+export function isViewingFlow(route: RouteLocationNormalizedLoaded, namespace: string, id: string): boolean {
+    return route.name === "flows/update"
+        && String(route.params.namespace) === namespace
+        && String(route.params.id) === id
+}
+
+/** Parse an artefact's namespace + id out of its YAML; empty strings when they can't be read. */
+export function parseArtefactYaml(yaml: string): {namespace: string; id: string} {
+    try {
+        const parsed = YAML_UTILS.parse(yaml)
+        return {namespace: parsed?.namespace ?? "", id: parsed?.id ?? ""}
+    } catch {
+        return {namespace: "", id: ""}
+    }
+}
 
 /**
  * Actions for an AI-drafted artefact:
@@ -77,7 +99,7 @@ export function useApplyDraft() {
     }
 
     async function applyFlow(draft: ArtefactDraftEvent): Promise<void> {
-        const {namespace, id} = parseYaml(draft.yaml)
+        const {namespace, id} = parseArtefactYaml(draft.yaml)
         if (!namespace || !id) {
             await KsMessageBox.alert(t("ai.copilot.draft.applyNoTarget"), t("ai.copilot.draft.applyTitle"), {type: "error"})
             return
@@ -86,24 +108,28 @@ export function useApplyDraft() {
         // Resolved once per apply (not merely rendering a draft card, so a store dependency here is
         // fine) — reused for the diff preview below and, on success, for the in-place refresh.
         const flowStore = useFlowStore()
-        const onThisFlow = isViewingFlow(namespace, id)
+        const onThisFlow = isViewingFlow(route, namespace, id)
 
-        const confirmed = await confirmApplyFlow(namespace, id, draft.yaml, onThisFlow, flowStore)
-        if (!confirmed) return
-
+        // Set before the confirm (which itself fetches the "before" diff source below) so a second
+        // click can't open a second confirm dialog while the first is still loading.
         applying.value = true
         try {
+            const confirmed = await confirmApplyFlow(namespace, id, draft.yaml, onThisFlow, flowStore)
+            if (!confirmed) return
+
             // Try to create; if the flow already exists, update it instead — one round trip rather
-            // than probing with a GET first.
+            // than probing with a GET first. Applied as a draft revision, not a live one: drafts aren't
+            // picked up by webhooks/schedules/subflows and skip constraint validation, so the user
+            // reviews and publishes it explicitly rather than a Copilot proposal going live unattended.
             try {
                 await FlowsAPI.createFlow(
-                    {body: draft.yaml, draft: false} as Parameters<typeof FlowsAPI.createFlow>[0],
+                    {body: draft.yaml, draft: true} as Parameters<typeof FlowsAPI.createFlow>[0],
                     silent,
                 )
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
                 await FlowsAPI.updateFlow(
-                    {namespace, id, body: draft.yaml} as Parameters<typeof FlowsAPI.updateFlow>[0],
+                    {namespace, id, body: draft.yaml, draft: true} as Parameters<typeof FlowsAPI.updateFlow>[0],
                     silent,
                 )
             }
@@ -122,13 +148,6 @@ export function useApplyDraft() {
         } finally {
             applying.value = false
         }
-    }
-
-    /** True when the given flow is the one currently open in the editor. */
-    function isViewingFlow(namespace: string, id: string): boolean {
-        return route.name === "flows/update"
-            && String(route.params.namespace) === namespace
-            && String(route.params.id) === id
     }
 
     /**
@@ -164,7 +183,10 @@ export function useApplyDraft() {
 
     async function persistedFlowSource(namespace: string, id: string, flowStore: ReturnType<typeof useFlowStore>): Promise<string> {
         try {
-            const data = await flowStore.loadFlow({namespace, id, store: false})
+            // A brand-new flow (the primary path — nothing persisted yet) 404s here by design; ignore
+            // it like the fallback below does, rather than letting the global interceptor raise its own
+            // error toast before the confirm dialog even opens.
+            const data = await flowStore.loadFlow({namespace, id, store: false}, {...silent, ignoreNotFound: true})
             return data?.source ?? ""
         } catch {
             return ""
@@ -173,7 +195,7 @@ export function useApplyDraft() {
 
     async function applyDashboard(draft: ArtefactDraftEvent): Promise<void> {
         // Dashboards are tenant-scoped and identified by `id` alone (no namespace).
-        const {id} = parseYaml(draft.yaml)
+        const {id} = parseArtefactYaml(draft.yaml)
         if (!id) {
             await KsMessageBox.alert(t("ai.copilot.draft.applyNoTarget"), t("ai.copilot.draft.applyTitleDashboard"), {type: "error"})
             return
@@ -212,16 +234,6 @@ export function useApplyDraft() {
     async function alertError(e: unknown, fallback: string, title: string): Promise<void> {
         const message = asProblem(e)?.detail ?? (e instanceof Error ? e.message : undefined) ?? fallback
         await KsMessageBox.alert(message, title, {type: "error"})
-    }
-
-    /** Parse an artefact's namespace + id out of its YAML; empty strings when they can't be read. */
-    function parseYaml(yaml: string): {namespace: string; id: string} {
-        try {
-            const parsed = YAML_UTILS.parse(yaml)
-            return {namespace: parsed?.namespace ?? "", id: parsed?.id ?? ""}
-        } catch {
-            return {namespace: "", id: ""}
-        }
     }
 
     /** A create failed because the artefact already exists, so update it instead. */

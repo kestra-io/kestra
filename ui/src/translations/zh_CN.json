@@ -2181,7 +2181,7 @@
           "openInEditor": "在编辑器中打开",
           "apply": "应用",
           "applyTitle": "应用 flow",
-          "applyConfirm": "应用 flow {namespace}.{id}？它将被创建，如果已存在则会被覆盖。",
+          "applyConfirm": "将 flow {namespace}.{id} 保存为待审核的草稿修订版？如果尚不存在将被创建，如果已存在则会添加一个新的草稿修订版 — 草稿在发布之前不会被 trigger 或 subflow 处理。",
           "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",
           "applyError": "无法应用该 flow。请重试。",
           "applyErrorDashboard": "未能应用仪表盘。请重试。",

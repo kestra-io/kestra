@@ -26,9 +26,10 @@
 </script>
 
 <style scoped>
-    /* KsEditor's own `.ks-editor { height: 100% }` rule is less specific than the scoped `.diff-view`
-       selector below (Vue adds a `[data-v-...]` attribute to it), so it would otherwise be overridden —
-       target both classes together so this rule wins instead. */
+    /* KsEditor's own height rule, `:not(.namespace-defaults, .kel-drawer__body) > .ks-editor`, is
+       (0,2,0) — :not() contributes the specificity of its most specific argument. A bare scoped
+       `.diff-view` compiles to `.diff-view[data-v-...]`, also (0,2,0): a tie, decided by source order
+       rather than lost outright. `.ks-editor.diff-view[data-v-...]` is (0,3,0) and wins cleanly. */
     .ks-editor.diff-view {
         height: 20rem;
     }

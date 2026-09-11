@@ -2181,7 +2181,7 @@
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",
           "applyTitle": "Flow anwenden",
-          "applyConfirm": "Den Flow {namespace}.{id} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
+          "applyConfirm": "{namespace}.{id} als Entwurfsrevision zur Überprüfung speichern? Der Flow wird erstellt oder, falls er bereits existiert, um eine neue Entwurfsrevision ergänzt – Entwürfe werden von Triggern oder Subflows erst nach der Veröffentlichung berücksichtigt.",
           "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
           "applyError": "Der Flow konnte nicht angewendet werden. Bitte versuche es erneut.",
           "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuche es erneut.",

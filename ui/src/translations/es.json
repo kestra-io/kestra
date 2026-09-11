@@ -2181,7 +2181,7 @@
           "openInEditor": "Abrir en el editor",
           "apply": "Aplicar",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Aplicar el flow {namespace}.{id}? Se creará, o se sobrescribirá si ya existe.",
+          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe — los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
           "applyConfirmDashboard": "Aplicar el panel de control {id}? Se creará, o se sobrescribirá si ya existe.",
           "applyError": "No se pudo aplicar el flow. Por favor, inténtalo de nuevo.",
           "applyErrorDashboard": "No se pudo aplicar el dashboard. Por favor, inténtelo de nuevo.",

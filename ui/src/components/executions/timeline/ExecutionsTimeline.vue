@@ -65,22 +65,24 @@
                         </span>
                     </div>
 
-                    <TimelineRow
-                        v-for="row in rows"
-                        :key="row.key"
-                        :label="row.label"
-                        :executions="row.executions"
-                        :total="row.total"
-                        :failed="row.failed"
-                        :rangeStartMs="rangeStartMs"
-                        :rangeEndMs="rangeEndMs"
-                        :availableWidthPx="availableWidthPx"
-                        :packLanes="viewLevel === 'flow'"
-                        :dimmedStates="dimmedStates"
-                        @drill-in="onDrillIn(row)"
-                        @open-own-page="onOpenOwnPage(row)"
-                        @show-only-flow="onShowOnlyFlow"
-                    />
+                    <TransitionGroup name="timeline-row" tag="div" class="timeline-rows">
+                        <TimelineRow
+                            v-for="row in rows"
+                            :key="row.key"
+                            :label="row.label"
+                            :executions="row.executions"
+                            :total="row.total"
+                            :failed="row.failed"
+                            :rangeStartMs="rangeStartMs"
+                            :rangeEndMs="rangeEndMs"
+                            :availableWidthPx="availableWidthPx"
+                            :packLanes="viewLevel === 'flow'"
+                            :dimmedStates="dimmedStates"
+                            @drill-in="onDrillIn(row)"
+                            @open-own-page="onOpenOwnPage(row)"
+                            @show-only-flow="onShowOnlyFlow"
+                        />
+                    </TransitionGroup>
                 </template>
             </KsSkeleton>
         </div>
@@ -431,13 +433,24 @@
     box-shadow: 0 var(--ks-spacing-1) var(--ks-spacing-2) 0 var(--ks-shadow-element);
     overflow: hidden;
     margin-bottom: var(--ks-spacing-4);
+    // Only the card's chrome transitions: .timeline-body's max-height swaps to `none` when
+    // expanded (see below) so a namespace with many rows is never clipped, and a CSS transition
+    // can't animate toward an unbounded target without a fixed pixel height to interpolate to.
+    transition: border-color var(--ks-duration-slow) ease, border-radius var(--ks-duration-slow) ease,
+        box-shadow var(--ks-duration-slow) ease, margin-bottom var(--ks-duration-slow) ease;
 }
 
 .executions-timeline.expanded {
-    border: none;
+    border-color: transparent;
     border-radius: 0;
-    box-shadow: none;
+    box-shadow: 0 var(--ks-spacing-1) var(--ks-spacing-2) 0 transparent;
     margin-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .executions-timeline {
+        transition: none;
+    }
 }
 
 .timeline-breadcrumb-bar {
@@ -452,6 +465,7 @@
 .scope-stats {
     display: flex;
     gap: var(--ks-spacing-2);
+    font-variant-numeric: tabular-nums;
 }
 
 .timeline-body {
@@ -484,6 +498,7 @@
     font-size: var(--ks-font-size-2xs);
     color: var(--ks-text-muted);
     text-align: left;
+    font-variant-numeric: tabular-nums;
 
     &:last-child {
         flex: 0;
@@ -505,6 +520,26 @@
     white-space: nowrap;
 }
 
+.timeline-row-enter-active {
+    transition: opacity var(--ks-duration-base) ease;
+}
+
+.timeline-row-leave-active {
+    transition: opacity var(--ks-duration-fast) ease;
+}
+
+.timeline-row-enter-from,
+.timeline-row-leave-to {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .timeline-row-enter-active,
+    .timeline-row-leave-active {
+        transition: none;
+    }
+}
+
 .timeline-skeleton {
     display: flex;
     flex-direction: column;
@@ -515,6 +550,9 @@
     display: flex;
     align-items: center;
     gap: var(--ks-spacing-3);
+    // Mirrors a single-lane TimelineRow's rendered height (LANE_HEIGHT_REM + its own vertical
+    // padding) so real rows don't jump the layout when they replace the skeleton.
+    min-height: calc(1.75rem + var(--ks-spacing-2) * 2);
 }
 
 .empty-actions {

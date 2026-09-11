@@ -296,6 +296,13 @@
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .timeline-bar[data-state="RUNNING"],
+    .timeline-bar[data-state="KILLING"] {
+        animation: none;
+    }
+}
+
 .timeline-bar-tooltip {
     display: flex;
     flex-direction: column;

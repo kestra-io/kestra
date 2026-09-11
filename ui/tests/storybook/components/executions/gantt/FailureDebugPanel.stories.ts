@@ -148,7 +148,9 @@ export const SingleFailure: Story = {
         await waitFor(() => expect(canvas.getByRole("button", {name: /Debug this failure/})).toBeVisible())
         await userEvent.click(canvas.getByRole("button", {name: /Debug this failure/}))
         await waitFor(() => expect(canvas.getByRole("region")).toBeVisible())
-        await expect(canvas.queryByRole("tablist")).toBeNull()
+        // No failure switcher for a single failure. The context card's own KsTabs also renders a
+        // role="tablist", so this checks the switcher specifically rather than a bare role query.
+        await expect(canvasElement.querySelector(".failure-switcher")).toBeNull()
         await expect(canvasElement.querySelector(".failure-debug-panel__subtitle")?.textContent).toContain("transform")
         await waitFor(() => expect(canvasElement.textContent).toContain("transforming"))
         // Execution inputs: the flow declares "region", resolved via the mocked render endpoint.
@@ -156,6 +158,16 @@ export const SingleFailure: Story = {
         // Outputs consumed: "transform" (the focused task) references outputs.extract in its
         // own config, so "extract"'s task run outputs should be pulled in and shown.
         await waitFor(() => expect(canvasElement.textContent).toContain("48203 rows"))
+
+        // State history, resolved configuration, execution inputs and outputs consumed are
+        // grouped as tabs of one card rather than four separate always-visible cards; switching
+        // actually changes the active tab.
+        const stateHistoryTab = canvas.getByRole("tab", {name: "State history"})
+        const executionInputsTab = canvas.getByRole("tab", {name: "Execution inputs"})
+        await expect(stateHistoryTab).toHaveAttribute("aria-selected", "true")
+        await userEvent.click(executionInputsTab)
+        await waitFor(() => expect(executionInputsTab).toHaveAttribute("aria-selected", "true"))
+        await expect(stateHistoryTab).toHaveAttribute("aria-selected", "false")
     },
 }
 
@@ -172,9 +184,10 @@ export const MultipleFailures: Story = {
         const canvas = within(canvasElement)
         await waitFor(() => expect(canvas.getByRole("button", {name: /Debug this failure/})).toBeVisible())
         await userEvent.click(canvas.getByRole("button", {name: /Debug this failure/}))
-        await waitFor(() => expect(canvas.getByRole("tablist")).toBeVisible())
+        await waitFor(() => expect(canvasElement.querySelector(".failure-switcher")).toBeVisible())
         // "load" failed at :05s, before "transform" at :10s — it is auto-focused first.
         await expect(canvasElement.querySelector(".failure-debug-panel__subtitle")?.textContent).toContain("load")
-        await expect(canvas.getAllByRole("tab")).toHaveLength(2)
+        // Scoped to the switcher: the context card's own KsTabs also renders role="tab" elements.
+        await expect(canvasElement.querySelectorAll(".failure-switcher [role=\"tab\"]")).toHaveLength(2)
     },
 }

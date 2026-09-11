@@ -415,6 +415,7 @@ If your `<style>` block needs to exist:
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
 | `KsColorPicker` | Color picker; `alphaOnSurface` shows translucent colours over the page surface instead of a checkerboard |
 | `KsDurationPicker` | ISO 8601 duration picker |
+| `KsRangeSlider` | Drag-to-select range over a numeric domain — two resizable handles plus a draggable body to pan; emits `change` once a drag or keyboard nudge finishes |
 | `KsCascaderPanel` | Cascading hierarchical selector |
 | `KsUpload` | File upload |
 | `KsForm` / `KsFormItem` | Form container with validation |

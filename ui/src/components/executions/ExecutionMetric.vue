@@ -13,6 +13,7 @@
                 :properties="{
                     shown: true,
                     columns: optionalColumns,
+                    displayColumns: table?.displayColumns,
                     storageKey: 'execution-metrics'
                 }"
                 :prefix="'execution-metrics'"
@@ -40,7 +41,7 @@
 
     const metricFilter = useMetricFilter()
 
-    const table = ref<typeof MetricsTable>()
+    const table = ref<InstanceType<typeof MetricsTable>>()
 
     const taskRunId = computed(() => route.query["filters[metric][EQUALS]"] as string | undefined)
 

@@ -3,6 +3,7 @@ import {useRoute, useRouter} from "vue-router"
 import {
     clearFilterQueryParams,
     encodeFilterGroupsToQuery,
+    filterQuerySignature,
     findUnrenderableFilterKeys,
     getUniqueFilters,
     isValidFilter,
@@ -149,7 +150,7 @@ export function useRouteSync({
         tree.replaceTree(finalGroups, parsedTop)
     }
 
-    watch(() => route.query, initializeFromRoute, {deep: true, immediate: false})
+    watch(() => filterQuerySignature(route.query), initializeFromRoute)
     watch(searchQuery, () => updateRoute(searchQuery.value.trim() !== ""))
     initializeFromRoute()
 

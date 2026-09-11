@@ -48,7 +48,6 @@
                                 id: data.id,
                             },
                         }"
-                        tag="div"
                         class="node"
                     >
                         <div class="d-flex">

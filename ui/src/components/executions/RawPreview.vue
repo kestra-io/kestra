@@ -1,6 +1,6 @@
 <template>
     <ListPreview v-if="type === 'LIST'" :value="content" />
-    <img v-else-if="type === 'IMAGE'" :src="imageContent" alt="Image output preview">
+    <img v-else-if="type === 'IMAGE'" :src="imageContent" :alt="$t('file_preview.image_alt')">
     <PdfPreview v-else-if="type === 'PDF'" :source="content" />
     <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="content" />
     <KsEditor
@@ -27,6 +27,7 @@
                         :autoClose="2000"
                     >
                         <KsButton
+                            :aria-label="$t('toggle_word_wrap')"
                             :icon="Wrap"
                             type="default"
                             @click="wordWrap = !wordWrap"
@@ -51,7 +52,7 @@
 
     export interface Preview {
         truncated?: boolean;
-        type?: "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
+        type?: "TEXT" | "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
         content?: any;
         extension?: string;
     }

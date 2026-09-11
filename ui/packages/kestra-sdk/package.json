@@ -35,7 +35,7 @@
   "scripts": {
     "generate:openapi": "openapi-ts",
     "build": "tsdown",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "check:types": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.0",

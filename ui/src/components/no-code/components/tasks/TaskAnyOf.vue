@@ -1,6 +1,21 @@
 <template>
+    <TaskEnum
+        v-if="enumSchema"
+        :schema="enumSchema"
+        :modelValue="model"
+        :required="required"
+        :root="root"
+        :allowCreate="enumAllowsCustomValues"
+        @update:model-value="onInput"
+    />
     <TaskString
-        v-if="durationSchema"
+        v-else-if="constraintOnlySchema"
+        :schema="constraintOnlySchema"
+        :modelValue="model"
+        @update:model-value="onInput"
+    />
+    <TaskString
+        v-else-if="durationSchema"
         :schema="durationSchema"
         :modelValue="model"
         @update:model-value="onInput"
@@ -61,6 +76,7 @@
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
     import TaskString from "./TaskString.vue"
+    import TaskEnum from "./TaskEnum.vue"
 
     const props = defineProps<{
         schema: Schema,
@@ -148,6 +164,30 @@
             return true
         })
     })
+
+    // Branches that only constrain the value (`enum`, `pattern`, ...) without naming a type of their own, as the
+    // backend emits for `@TimezoneId` fields: `anyOf: [{enum: [...zone ids]}, {pattern: ...offset...}]`. There is
+    // nothing to choose between, so the property renders as a single field of its own type instead of a switch.
+    const constraintOnlySchemas = computed(() => {
+        const list = schemas.value
+        return list.length > 0 && list.every((item: Schema) =>
+            item.type === undefined && item.$ref === undefined
+            && !item.properties && !item.items && !item.allOf && !item.anyOf && !item.oneOf,
+        )
+    })
+
+    const enumSchema = computed<Record<string, unknown> | null>(() => {
+        if (!constraintOnlySchemas.value) return null
+        const values = [...new Set(schemas.value.flatMap((item: Schema) => item.enum ?? []))]
+        return values.length ? {...props.schema, anyOf: undefined, enum: values} : null
+    })
+
+    // A branch without an `enum` (e.g. the offset `pattern`) accepts values outside the list.
+    const enumAllowsCustomValues = computed(() => schemas.value.some((item: Schema) => item.enum === undefined))
+
+    const constraintOnlySchema = computed<Schema | null>(() =>
+        constraintOnlySchemas.value ? {...props.schema, anyOf: undefined} : null,
+    )
 
     const singleStringSchema = computed<Schema | null>(() => {
         const list = schemas.value
@@ -302,7 +342,7 @@
     })
 
     onMounted(() => {
-        if (durationSchema.value) return
+        if (durationSchema.value || constraintOnlySchemas.value) return
         let schema = schemaOptions.value?.find((item: any) =>
             item.value === model.value?.type ||
             (typeof model.value === "string" && item.value === "string") ||

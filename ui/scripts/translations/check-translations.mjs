@@ -25,11 +25,19 @@
 // non-Latin-script locale is still carrying the untouched English text - the
 // shape a failed generator run leaves behind, which every other check passes.
 //
+// Both scopes also compare every English message with the fingerprint its
+// translations were generated from: an edited English value whose twelve
+// translations were not regenerated is reported as stale. The design-system
+// locale files always had this; the JSON locales relied on the generator
+// running at PR time, which a fork PR never gets.
+//
 // Both scopes also read the source code: every literal key passed to `t()`,
 // `$t()` or `<i18n-t keypath>` has to exist in some `en.json` the app loads
 // (OSS + design system for OSS code, plus EE's own for EE code). The locale
 // files agreeing with each other says nothing about a key that is missing from
-// all of them, and such a key renders as its raw id - see usageRules.mjs.
+// all of them, and such a key renders as its raw id - see usageRules.mjs. A
+// key completed at runtime (`t("crud.type." + type)`) is checked down to its
+// namespace, which has to exist for the same reason.
 //
 // --report <path> writes a JSON summary ({missing: {lang: [keys]},
 // duplicates: [keys], placeholders: {lang: [problems]},
@@ -49,7 +57,8 @@ import path from "node:path"
 import {fileURLToPath} from "node:url"
 import {allKeys, flattenStrings, leafKeys, placeholderProblems, shadowedOssKeys, untranslatedKeys} from "./translationRules.mjs"
 import {evalLocaleModule, staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
-import {isScannedSourceFile, translationKeyUsages, undefinedKeyUsages} from "./usageRules.mjs"
+import {isScannedSourceFile, translationKeyUsages, translationNamespaceUsages, undefinedKeyUsages, undefinedNamespaceUsages} from "./usageRules.mjs"
+import {staleKeys} from "./fingerprintRules.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 // ui/scripts/translations -> the OSS repo root
@@ -134,6 +143,21 @@ function readLanguage(dir, lang) {
     return fs.existsSync(file) ? unwrapLanguage(readJson(file), lang) : {}
 }
 
+/**
+ * Adds `result.stale` for every key whose English text no longer matches the fingerprint its
+ * translations were generated from - a new key, or an edited value that was not regenerated.
+ * Key paths are the generator's `a|b|c` form, as they appear in the fingerprints file.
+ */
+function checkStaleJson(result, label, dir, fingerprintsFile, fixHint) {
+    if (!fs.existsSync(fingerprintsFile)) return
+
+    const stale = staleKeys(readLanguage(dir, "en"), readJson(fingerprintsFile))
+    if (stale.length === 0) return
+
+    result.stale.push(...stale)
+    annotate("error", `[${label}] ${stale.length} key(s) have no up-to-date translation, either new or with an English source that changed after they were translated: ${stale.join(", ")} - ${fixHint}`)
+}
+
 /** Every key path, namespaces included, of OSS's `en.json` plus the design-system `en` blocks. */
 function ossDefinedKeys() {
     const keys = new Set(allKeys(readLanguage(ossTranslationsDir, "en")))
@@ -151,21 +175,30 @@ function ossDefinedKeys() {
  */
 function checkUsedKeys(result, label, repoRoot, sourceRoots, definedKeys) {
     const usagesByFile = {}
+    const namespacesByFile = {}
     for (const sourceRoot of sourceRoots) {
         if (!fs.existsSync(sourceRoot)) continue
         for (const file of fs.globSync(path.join(sourceRoot, "**/*"))) {
             if (!isScannedSourceFile(file) || !fs.statSync(file).isFile()) continue
-            const usages = translationKeyUsages(fs.readFileSync(file, "utf-8"))
-            if (usages.length > 0) usagesByFile[path.relative(repoRoot, file)] = usages
+            const source = fs.readFileSync(file, "utf-8")
+            const relativeFile = path.relative(repoRoot, file)
+            const usages = translationKeyUsages(source)
+            if (usages.length > 0) usagesByFile[relativeFile] = usages
+            const namespaces = translationNamespaceUsages(source)
+            if (namespaces.length > 0) namespacesByFile[relativeFile] = namespaces
         }
     }
 
     const findings = undefinedKeyUsages(usagesByFile, definedKeys)
-    if (findings.length === 0) return
-
     result.undefinedKeys.push(...findings)
     for (const {file, line, key} of findings) {
         annotate("error", `[${label}] Translation key "${key}" is used in ${file}:${line} but defined in no en.json, so it renders as its raw id - add it to en.json (or reuse an existing key) and run \`npm run translations:generate\``, {file, line})
+    }
+
+    const namespaceFindings = undefinedNamespaceUsages(namespacesByFile, definedKeys)
+    result.undefinedKeys.push(...namespaceFindings.map(({file, line, namespace}) => ({file, line, key: `${namespace}.*`})))
+    for (const {file, line, namespace} of namespaceFindings) {
+        annotate("error", `[${label}] Translation keys under "${namespace}." are built at runtime in ${file}:${line}, but no en.json defines that namespace, so every one of them renders as its raw id - restore the namespace in en.json and run \`npm run translations:generate\``, {file, line})
     }
 }
 
@@ -188,7 +221,7 @@ function checkDesignSystem(result) {
     const stale = staleLocaleEntries(localeFiles, fingerprintsFile)
     if (stale.length === 0) return
 
-    result.stale = stale.map(({file, key}) => `${file}: ${key}`)
+    result.stale.push(...stale.map(({file, key}) => `${file}: ${key}`))
     for (const {file, key} of stale) {
         annotate("error", `[OSS] Design-system string "${key}" in ${file} has no up-to-date translation - it is either new, or its English source changed after it was translated. Run \`npm run translations:generate\` in ui/`)
     }
@@ -207,6 +240,7 @@ function checkOss() {
     checkPlaceholders(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
     checkUntranslated(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
     checkDesignSystem(result)
+    checkStaleJson(result, "OSS", ossTranslationsDir, path.join(here, "fingerprints.json"), "run `npm run translations:generate` in kestra-io/kestra's ui/ and commit the result")
     checkUsedKeys(result, "OSS", ossRoot, ["ui/src", "ui/packages/design-system/src", "ui/packages/topology/src"].map(dir => path.join(ossRoot, dir)), ossDefinedKeys())
 
     const ossEn = readLanguage(ossTranslationsDir, "en")
@@ -243,6 +277,7 @@ function checkEe() {
     const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}, undefinedKeys: []}
     checkPlaceholders(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
     checkUntranslated(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
+    checkStaleJson(result, "EE", eeTranslationsDir, path.join(eeRoot, "ui-ee/scripts/translations/fingerprints.json"), "run `npm run translations:generate` in ui-ee/ and commit the result")
     const eeEn = readLanguage(eeTranslationsDir, "en")
     const eeEnKeys = leafKeys(eeEn)
 

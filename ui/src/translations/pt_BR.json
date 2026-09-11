@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "Alternar menu",
+    "favourites": "Favoritos",
+    "to close": "para fechar",
+    "tabs": "Abas",
+    "select": "Selecionar",
     "panel actions": "Ações do painel",
     "playground actions": "Ações do Playground",
     "bulk actions": "Ações em massa",
@@ -223,6 +227,7 @@
       "invalid duration": "Formato de duração inválido. Use o formato ISO 8601 (ex: PT30M, P1D).",
       "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (por exemplo, 'P1DT1H1M1S')",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
+      "examples": "Exemplos:",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (ex: P1DT1H1M1S)",
       "custom": "Personalizado",
       "last5minutes": "Últimos 5 minutos",
@@ -280,6 +285,7 @@
     "expiration date": "Data de expiração",
     "healthcheck date": "Data do HealthCheck",
     "last execution status": "Último status de execução",
+    "jump to": "Ir para",
     "jump to...": "Ir para...",
     "contextBar": {
       "ai": "IA",
@@ -478,12 +484,16 @@
       "big_file_download_only": "Este arquivo tem {size}. É muito grande para abrir no editor, baixe-o em vez disso.",
       "load_anyway": "Carregar mesmo assim",
       "load_error": "Falha ao carregar a pré-visualização do arquivo. Pode ser um problema temporário ou de permissões.",
+      "image_alt": "Pré-visualização do output de imagem",
       "retry": "Tentar novamente",
       "html_asset_warning": "Esta pré-visualização renderiza o HTML em um quadro isolado. Recursos locais como imagens e folhas de estilo referenciados por caminhos relativos não serão carregados.",
       "html_preview_title": "Pré-visualização do arquivo HTML"
     },
     "download": "Baixar",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Mostrando uma prévia truncada deste valor de {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
       "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."
@@ -498,6 +508,8 @@
     "docsPage": {
       "notFound": "Esta página da documentação não existe. Ela pode ter sido movida ou renomeada.",
       "loadError": "Não foi possível carregar esta página da documentação. Tente novamente.",
+      "close_menu": "Fechar menu",
+      "open_menu": "Abrir menu",
       "backToDocs": "Voltar aos Docs"
     },
     "documentation": {
@@ -554,8 +566,10 @@
       "names": "Plugins",
       "release": "Notas de lançamento",
       "beta": "Beta",
+      "beta_notice": "Este plugin está atualmente em beta. Embora seja considerado seguro para uso, esteja ciente de que sua API pode mudar em versões futuras de forma incompatível com versões anteriores, ou o plugin pode deixar de ter suporte.",
       "copy_type": "Copiar tipo",
       "deprecated": "Descontinuado",
+      "documentation_sections": "Seções da documentação",
       "dynamic": "dinâmico",
       "filter_all": "Todos",
       "filter_properties": "Filtrar propriedades…",
@@ -597,6 +611,8 @@
       "nav_overview": "Visão geral",
       "nav_properties": "Propriedades",
       "non_dynamic": "não dinâmico",
+      "possible_values": "Valores possíveis",
+      "sub_type": "Subtipo",
       "required": "Obrigatório"
     },
     "last execution date": "Data da última execução",
@@ -871,6 +887,7 @@
     "enable": "Ativar",
     "enabled": "Ativado",
     "flow delete": "Tem certeza de que deseja excluir <code>{flowCount}</code> flow(s)?",
+    "delete flow error": "Não foi possível excluir o flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flow disable": "Tem certeza de que deseja desativar <code>{flowCount}</code> flow(s)?",
     "flow enable": "Tem certeza de que deseja ativar <code>{flowCount}</code> flow(s)?",
@@ -1009,9 +1026,11 @@
         "file_already_exists": "Um arquivo com este nome já existe",
         "file_conflicts_with_folder": "Uma pasta com este nome já existe",
         "file_error": "Ocorreu um erro ao criar o arquivo",
+        "file_success": "Arquivo \"{name}\" criado com sucesso.",
         "folder": "Criar pasta",
         "folder_already_exists": "Uma pasta com este nome já existe",
         "folder_conflicts_with_file": "Um arquivo com este nome já existe",
+        "folder_success": "Pasta \"{name}\" criada com sucesso.",
         "folder_error": "Ocorreu um erro ao criar a pasta"
       },
       "rename": {
@@ -1025,8 +1044,10 @@
       "delete": {
         "label": "Excluir",
         "file": "Excluir arquivo",
+        "file_error": "Não foi possível excluir o arquivo: {name}",
         "folder": "Excluir pasta",
         "files": "Excluir {count} arquivos selecionados",
+        "bulk_success": "Arquivos selecionados excluídos com sucesso.",
         "folders": "Excluir {count} pastas selecionadas"
       },
       "move": {
@@ -1630,6 +1651,7 @@
     "webhook link copied": "Link do Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
+    "scheduleDateInPast": "A data do agendamento deve ser no futuro",
     "warning": "Aviso",
     "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Documentos",
@@ -1962,6 +1984,9 @@
         "label": "Editar Dashboard",
         "chart": "Edite este gráfico"
       },
+      "creation": {
+        "label": "Criar Dashboard"
+      },
       "no_description": "Sem descrição",
       "no_description_hint": "Adicione uma descrição a este flow para documentar o que ele faz.<br>Markdown é suportado.",
       "others": "Outros",
@@ -1972,6 +1997,7 @@
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"
       },
+      "show_all_statuses": "Mostrar todos os status",
       "quick_filters": {
         "all": "Todos",
         "running": "Em execução",
@@ -2191,7 +2217,6 @@
     "submit": "Enviar",
     "accept": "Aceitar",
     "reject": "Rejeitar",
-    "draft_available": "Mudança de rascunho disponível no editor",
     "last modified": "Última modificação",
     "run task in playground": "Executar task no playground",
     "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
@@ -2643,8 +2668,6 @@
       "open_mode_hint": "As Tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
     },
     "blocks": "Blocos",
-    "flow_description": "Descrição do flow",
-    "flow_no_description": "Sem descrição. Adicione uma descrição ao YAML do seu flow para documentar o que ele faz.",
     "split_horizontal": "Dividir horizontalmente",
     "split_vertical": "Dividir verticalmente",
     "pwa": {

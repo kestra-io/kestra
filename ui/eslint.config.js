@@ -5,6 +5,25 @@ import {defineConfig, globalIgnores} from "eslint/config"
 export default defineConfig([
     globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "packages/kestra-sdk/src/openapi/*"]),
     ...pluginVue.configs["flat/base"],
+    // Tooling (plugins/, scripts/, lint-rules/, *.config.js) stays JS on purpose; the app, test and storybook trees do not.
+    {
+        files: [
+            "src/**/*.{js,jsx,mjs,cjs}",
+            "tests/**/*.{js,jsx,mjs,cjs}",
+            ".storybook/**/*.{js,jsx,mjs,cjs}",
+            "packages/*/src/**/*.{js,jsx,mjs,cjs}",
+            "packages/*/tests/**/*.{js,jsx,mjs,cjs}",
+            "packages/*/.storybook/**/*.{js,jsx,mjs,cjs}",
+        ],
+        languageOptions: {parser: tsParser, parserOptions: {ecmaFeatures: {jsx: true}}},
+        linterOptions: {noInlineConfig: true},
+        rules: {
+            "no-restricted-syntax": ["error", {
+                selector: "Program",
+                message: "Write this as TypeScript: JavaScript files are not allowed in the app, test or storybook trees.",
+            }],
+        },
+    },
     // Formatting rules for JS/TS files (not .vue — handled below by vue/* variants)
     {
         files: ["**/*.{js,mjs,cjs,ts}"],
@@ -38,6 +57,7 @@ export default defineConfig([
             // Semantic rules
             "vue/block-lang": ["error", {"script": {"lang": "ts"}}],
             "vue/component-api-style": ["error", ["script-setup"]],
+            "vue/no-mutating-props": "error",
             "vue/this-in-template": "error",
             "vue/block-order": ["error", {order: ["template", "script", "style"]}],
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],

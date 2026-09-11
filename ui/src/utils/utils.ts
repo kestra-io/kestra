@@ -1,6 +1,6 @@
 import {computed} from "vue"
 import moment from "moment"
-import {copyToClipboard} from "@kestra-io/design-system"
+import {copyToClipboard, fileUtils} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -11,15 +11,9 @@ export function uid() {
         Date.now().toString(16).slice(4)
 }
 
-/**
- * Checks whether a value is a supported file URI.
- *
- * @param value Value to validate.
- * @returns `true` if the value is a string with a supported file prefix.
- */
+/** Checks whether a value is a supported file URI. */
 export function isFile(value: unknown): boolean {
-    const PREFIXES = ["kestra:///", "file://", "nsfile://"]
-    return typeof value === "string" && PREFIXES.some(p => value.startsWith(p))
+    return fileUtils.isFileUri(value)
 }
 
 /**
@@ -34,9 +28,15 @@ export function isIon(value: unknown): boolean {
 }
 
 export function flatten(object: Record<string, any>) {
-    return Object.assign({}, ...function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any>[] {
+    const result: Record<string, any> = {}
+
+    // Accumulate into one object: the previous `concat(...keys.map())` and
+    // `Object.assign({}, ...leaves)` spread one argument per key, which threw RangeError
+    // above ~100k leaves and left the outputs table unrenderable (kestra-io/kestra#19316).
+    function _flatten(child: Record<string, any> | null, path: string[]): void {
         if (child === null) {
-            return [{[path.join(".")]: null}]
+            result[path.join(".")] = null
+            return
         }
 
         const keys = Object.keys(child)
@@ -44,15 +44,21 @@ export function flatten(object: Record<string, any>) {
         // An empty container has no leaves, so recursing dropped the key entirely. The `path`
         // guard keeps a top-level `{}` flattening to `{}` rather than gaining a blank key.
         if (path.length > 0 && keys.length === 0) {
-            return [{[path.join(".")]: child}]
+            result[path.join(".")] = child
+            return
         }
 
-        return ([] as Record<string, any>[]).concat(...keys
-            .map(key => typeof child[key] === "object" ?
-                _flatten(child[key], path.concat([key])) :
-                [{[path.concat([key]).join(".")]: child[key]}],
-            ))
-    }(object))
+        for (const key of keys) {
+            if (typeof child[key] === "object") {
+                _flatten(child[key], path.concat([key]))
+            } else {
+                result[path.concat([key]).join(".")] = child[key]
+            }
+        }
+    }
+
+    _flatten(object, [])
+    return result
 }
 
 export function executionVars(data: Record<string, any>) {
@@ -82,6 +88,147 @@ export function executionVars(data: Record<string, any>) {
         return {key, value: rawValue}
 
     })
+}
+
+const DISPLAY_MAX_CHARS = 256 * 1024
+const DISPLAY_MAX_LINES = 200
+// Monaco costs per line, so one pathological line is as slow as a whole large document:
+// a 2.5 MiB string value pretty-prints to a single line and blocked for ~1 s under the other caps.
+export const DISPLAY_MAX_LINE_CHARS = 2000
+
+/**
+ * Clip text to what a value viewer can render without wedging the main thread: a few MiB of
+ * output values blocked it for seconds (kestra-io/kestra#19316). Compare lengths to detect a clip.
+ */
+export function capForDisplay(text: string): string {
+    const capped = text.slice(0, DISPLAY_MAX_CHARS)
+
+    let cut = -1
+    for (let line = 0; line < DISPLAY_MAX_LINES; line++) {
+        const next = capped.indexOf("\n", cut + 1)
+        if (next === -1) {
+            return clipLines(capped)
+        }
+        cut = next
+    }
+    return clipLines(capped.slice(0, cut))
+}
+
+function clipLines(text: string): string {
+    if (text.length <= DISPLAY_MAX_LINE_CHARS) {
+        return text
+    }
+    return text
+        .split("\n")
+        .map(line => line.length > DISPLAY_MAX_LINE_CHARS ? line.slice(0, DISPLAY_MAX_LINE_CHARS) : line)
+        .join("\n")
+}
+
+export const PREVIEW_MAX_ENTRIES = 100
+export const PREVIEW_MAX_NODES = 1000
+export const PREVIEW_MAX_CHARS = 32 * 1024
+export const PREVIEW_MAX_STRING_CHARS = 500
+
+// What a scalar and an entry's punctuation and indent cost, charged against the character budget.
+const SCALAR_PREVIEW_CHARS = 8
+const ENTRY_PREVIEW_CHARS = 4
+const INDENT_PREVIEW_CHARS = 2
+
+export interface BoundedValue {
+    value: unknown;
+    truncated: boolean;
+}
+
+/**
+ * Shrink a parsed value to a preview that stays valid JSON: clipping the serialized text instead
+ * cuts mid-token and Monaco then reports the preview as a syntax error (kestra-io/kestra#19316).
+ * Omitted entries are named by an `…` marker carrying how many were dropped.
+ */
+export function boundForDisplay(value: unknown): BoundedValue {
+    let nodes = PREVIEW_MAX_NODES
+    let chars = PREVIEW_MAX_CHARS
+    let truncated = false
+
+    // Keys count too: one long enough key is the single-line document Monaco chokes on.
+    function clip(text: string): string {
+        const kept = text.length <= PREVIEW_MAX_STRING_CHARS
+            ? text
+            : `${text.slice(0, PREVIEW_MAX_STRING_CHARS)}…`
+        if (kept !== text) {
+            truncated = true
+        }
+        chars -= kept.length
+        return kept
+    }
+
+    function hasRoom(taken: number, total: number): boolean {
+        return taken < total && taken < PREVIEW_MAX_ENTRIES && nodes > 0 && chars > 0
+    }
+
+    // An entry costs its own punctuation plus the indent its depth earns it, which is what stops a
+    // deeply nested value: the indent alone is megabytes long before any leaf is reached.
+    function entryCost(depth: number): number {
+        return ENTRY_PREVIEW_CHARS + depth * INDENT_PREVIEW_CHARS
+    }
+
+    function bound(node: unknown, depth: number): unknown {
+        if (typeof node === "string") {
+            return clip(node)
+        }
+
+        if (node === null || typeof node !== "object") {
+            chars -= SCALAR_PREVIEW_CHARS
+            return node
+        }
+
+        // The container's own closing line is indented too, which is half the cost at depth.
+        chars -= depth * INDENT_PREVIEW_CHARS
+
+        if (Array.isArray(node)) {
+            const bounded: unknown[] = []
+            while (hasRoom(bounded.length, node.length)) {
+                nodes--
+                chars -= entryCost(depth)
+                bounded.push(bound(node[bounded.length], depth + 1))
+            }
+            if (bounded.length < node.length) {
+                truncated = true
+                bounded.push(`… ${node.length - bounded.length}`)
+            }
+            return bounded
+        }
+
+        const keys = Object.keys(node)
+        const bounded: Record<string, unknown> = {}
+        let index = 0
+        let shown = 0
+        while (index < keys.length && hasRoom(shown, keys.length)) {
+            nodes--
+            chars -= entryCost(depth)
+            const key = keys[index]
+            index++
+            const clipped = clip(key)
+            // Two keys clipped to the same text would have the second overwrite the first, showing
+            // fewer entries than the value has; drop it instead so the `…` count stays honest.
+            if (clipped in bounded) {
+                continue
+            }
+            bounded[clipped] = bound((node as Record<string, unknown>)[key], depth + 1)
+            shown++
+        }
+        if (shown < keys.length) {
+            truncated = true
+            bounded["…"] = keys.length - shown
+        }
+        return bounded
+    }
+
+    return {value: bound(value, 1), truncated}
+}
+
+/** Size of `text` on the wire: a character count understates a multi-byte value. */
+export function humanTextSize(text: string): string {
+    return humanFileSize(new TextEncoder().encode(text).length)
 }
 
 /**
@@ -135,6 +282,15 @@ export function hexToRgba(hex: string, opacity: number) {
         return "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + "," + (opacity || 1) + ")"
     }
     throw new Error("Bad Hex")
+}
+
+/** Offer text as a file, so a value too large to render whole is still obtainable in full. */
+export function downloadText(text: string, filename: string): void {
+    const type = filename.endsWith(".json") ? "application/json" : "text/plain"
+    const url = window.URL.createObjectURL(new Blob([text], {type}))
+    downloadUrl(url, filename)
+    // Revoking in the same tick as the click cancels the download in some browsers.
+    setTimeout(() => window.URL.revokeObjectURL(url), 0)
 }
 
 export function downloadUrl(url: string, filename: string) {

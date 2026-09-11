@@ -77,7 +77,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
-    public Optional<TriggerState> findById(TriggerId trigger) {
+    public Optional<TriggerState> findByIdWithoutAcl(TriggerId trigger) {
         return findOne(DSL.noCondition(), KEY_FIELD.eq(trigger.uid()));
     }
 
@@ -183,7 +183,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
-        return buildTenantCondition(tenantId);
+        return buildTenantCondition(tenantId).and(aclCondition(Resource.TRIGGER));
     }
 
     @Override

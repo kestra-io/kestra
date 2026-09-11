@@ -40,7 +40,8 @@ public class LoopUntilCaseTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst())).isNotNull();
-        assertThat((Integer) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(4);
+        // the flow sets maxIterations: 3, so the loop must stop after three iterations
+        assertThat((Integer) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(3);
     }
 
     public void waitforMaxDuration(String tenantId) throws TimeoutException, QueueException {

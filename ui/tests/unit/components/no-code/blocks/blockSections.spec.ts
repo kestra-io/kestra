@@ -3,6 +3,15 @@ import {describe, it, expect} from "vitest"
 import {isRootSectionPath, isTaskListPath, moveTaskOntoEdge, resolveTaskInsertionTarget, resolveTaskInsertionTargetInAnySection, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
+interface DagLaneItem {
+    task: {id: string}
+    dependsOn?: string[]
+}
+
+interface DagProbeFlow {
+    tasks: {id: string; tasks?: DagLaneItem[]}[]
+}
+
 describe("blockSections", () => {
     const FLOW = `id: topology-insert
 namespace: company.team
@@ -209,11 +218,11 @@ tasks:
           message: spare
 `
         const idsOf = (source: string) =>
-            ((flowYamlUtils.parse(source) as any).tasks as any[]).map(t => t.id)
+            flowYamlUtils.parse<DagProbeFlow>(source)!.tasks.map(task => task.id)
 
         const dagOf = (source: string) => {
-            const lane = (flowYamlUtils.parse(source) as any).tasks[0].tasks
-            return Object.fromEntries(lane.map((i: any) => [i.task.id, i.dependsOn ?? null]))
+            const lane = flowYamlUtils.parse<DagProbeFlow>(source)!.tasks[0]!.tasks ?? []
+            return Object.fromEntries(lane.map(item => [item.task.id, item.dependsOn ?? null]))
         }
 
         it("reorders a sequential lane", () => {
@@ -247,7 +256,7 @@ tasks:
 
             expect(idsOf(next)).toEqual(["pipeline", "middle"])
             expect(dagOf(next)).toEqual({fetch: null, sink: ["fetch"], spare: null})
-            const moved = (flowYamlUtils.parse(next) as any).tasks[1]
+            const moved = flowYamlUtils.parse<DagProbeFlow>(next)!.tasks[1]! as DagLaneItem & {id: string}
             expect(moved.dependsOn).toBeUndefined()
             expect(moved.id).toBe("middle")
         })

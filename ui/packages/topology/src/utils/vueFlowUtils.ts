@@ -543,6 +543,9 @@ export function generateGraph(
                 id: clusterUid,
                 type: "cluster",
                 parentNode: parentNode,
+                // Without this the cluster falls back to vue-flow's global `nodesDraggable`, and
+                // dropping one on an edge emits a move for whatever its uid ends with.
+                draggable: false,
                 position: getNodePosition(
                     dagreNode,
                     parentNode ? dagreGraph.node(parentNode) : undefined,

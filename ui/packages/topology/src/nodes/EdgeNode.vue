@@ -22,7 +22,11 @@
         <button
             type="button"
             class="edge-add-button"
-            :class="{'edge-add-button--visible': hovered || isDropTarget, 'edge-add-button--drop': isDropTarget}"
+            :class="{
+                'edge-add-button--visible': hovered || isDropTarget,
+                'edge-add-button--standby': isDraggingNode && !isDropTarget,
+                'edge-add-button--drop': isDropTarget,
+            }"
             :style="{transform: `translate(${addButtonX}px, ${addButtonY}px) translate(-50%, -50%)`}"
             :aria-label="$t('topology-graph.add-task')"
             data-test="topology-edge-add-task"
@@ -52,7 +56,7 @@
     import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
     import type {AddTaskTarget} from "../utils/vueFlowUtils"
-    import {DROP_EDGE_INJECTION_KEY} from "../injectionKeys"
+    import {DRAGGING_NODE_INJECTION_KEY, DROP_EDGE_INJECTION_KEY} from "../injectionKeys"
 
     const props = defineProps({
         id: {type: String, default: undefined},
@@ -74,6 +78,9 @@
 
     const dropEdgeId = inject(DROP_EDGE_INJECTION_KEY, undefined)
     const isDropTarget = computed(() => Boolean(props.id) && dropEdgeId?.value === props.id)
+
+    const draggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const isDraggingNode = computed(() => Boolean(draggingNode?.value))
 
     // The graph already computed where a `+` on this edge should insert and relative to which
     // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
@@ -177,6 +184,12 @@
         transition: opacity 0.12s, color 0.12s;
     }
 
+    /* The button itself must never take the pointer during a drag, or it would shadow the edge
+       hit area the drop target is resolved from. */
+    .edge-add-button--standby {
+        opacity: 0.85;
+    }
+
     .edge-add-button-dot {
         display: flex;
         align-items: center;
@@ -186,7 +199,12 @@
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-strong);
         border-radius: 50%;
-        transition: border-color 0.12s;
+        transition: border-color 0.12s, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .edge-add-button--standby .edge-add-button-dot {
+        transform: scale(0.8);
+        border-style: dashed;
     }
 
     .edge-add-button--visible,
@@ -202,6 +220,24 @@
     .edge-add-button--drop .edge-add-button-dot {
         background: var(--ks-bg-info);
         border-color: var(--ks-border-focus);
+        transform: scale(1.3);
+        animation: edge-drop-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes edge-drop-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 var(--ks-bg-info); }
+        50% { box-shadow: 0 0 0 0.375rem var(--ks-bg-info); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .edge-add-button,
+        .edge-add-button-dot {
+            transition: none;
+        }
+
+        .edge-add-button--drop .edge-add-button-dot {
+            animation: none;
+        }
     }
 
     .edge-add-button:hover,

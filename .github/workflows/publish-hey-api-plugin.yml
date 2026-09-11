@@ -75,8 +75,9 @@ jobs:
         working-directory: .
         env:
           GH_TOKEN: ${{ steps.hey-api-plugin-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.value }}
         run: |
-          version="${{ steps.version.outputs.value }}"
+          version="$VERSION"
           tarball="ui/kestra-io-hey-api-plugin-${version}.tgz"
           gh release create "v${version}" "$tarball" \
             --repo kestra-io/hey-api-plugin \

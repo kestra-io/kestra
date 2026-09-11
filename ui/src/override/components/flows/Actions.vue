@@ -153,7 +153,7 @@
         deleteFlow: editorDeleteFlow,
     } = useFlowEditorActions()
 
-    const onSelectDashboard = (value: any) => {
+    const onSelectDashboard = (value: string) => {
         const key = dashboardStore.getUserDashboardStorageKey(route)
         localStorage.setItem(key, value)
         router.replace({

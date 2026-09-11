@@ -319,7 +319,7 @@
   "src/utils/toast.ts": 7,
   "src/utils/triggers.ts": 3,
   "src/utils/unsavedChange.ts": 1,
-  "src/utils/utils.ts": 15,
+  "src/utils/utils.ts": 14,
   "tests/e2e/api/kv.api.ts": 1,
   "tests/e2e/kv/kv-types.spec.ts": 1,
   "tests/storybook/components/MultiPanelTabs.stories.tsx": 5,

@@ -11,6 +11,7 @@ import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
+import {routeFamily} from "../../../utils/routeFamily"
 import DiffView from "./DiffView.vue"
 import type {ArtefactDraftEvent} from "./types"
 
@@ -20,7 +21,7 @@ import type {ArtefactDraftEvent} from "./types"
  * `flowStore.previewSource`, so the two "is this the flow I'm looking at" checks can't drift apart.
  */
 export function isViewingFlow(route: RouteLocationNormalizedLoaded, namespace: string, id: string): boolean {
-    return route.name === "flows/update"
+    return routeFamily(route.name) === "flows/update"
         && String(route.params.namespace) === namespace
         && String(route.params.id) === id
 }

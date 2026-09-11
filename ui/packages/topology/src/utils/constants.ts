@@ -21,6 +21,8 @@ export const EVENTS = {
     SHOW_DETAILS: "showDetails",
     CARD_CLICK: "cardClick",
     MOVE_TASK: "moveTask",
+    TASK_DRAG_START: "taskDragStart",
+    TASK_DRAG_END: "taskDragEnd",
 } as const
 
 export interface CustomActionConfig {

@@ -3,10 +3,8 @@
         :id="id"
         :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
-        :class="{'topology-carrying': Boolean(carriedLabel)}"
         :nodesDraggable="false"
         :nodesConnectable="false"
-        @pointerdown="onCarryPointerDown"
         :elevateNodesOnSelect="false"
         :elevateEdgesOnSelect="false"
     >
@@ -54,6 +52,9 @@
                 @mouseover="onMouseOver($event)"
                 @mouseleave="onMouseLeave()"
                 @add-error="emit('on-add-flowable-error', $event)"
+                @taskDragStart="onTaskDragStart"
+                @taskDragEnd="onTaskDragEnd"
+                :dragging="draggingNodeId === taskProps.id"
                 :enableSubflowInteraction="enableSubflowInteraction"
             >
                 <template #details>
@@ -98,6 +99,8 @@
                 v-bind="EdgeProps"
                 :yamlSource="source"
                 @add-task="emit(EVENTS.ADD_TASK, $event)"
+                @drag-over-edge="dropEdgeId = $event"
+                @drop-task="onDropTask"
                 :isReadOnly="isReadOnly"
                 :isAllowedEdit="isAllowedEdit"
             />
@@ -146,12 +149,21 @@
     </VueFlow>
 
     <div
-        v-if="carriedLabel"
-        class="carry-chip"
-        :style="{transform: `translate(${carryPoint.x}px, ${carryPoint.y}px)`}"
+        v-if="dragGhost"
+        class="drag-ghost"
+        :style="{transform: `translate(${dragGhost.x}px, ${dragGhost.y}px)`}"
         aria-hidden="true"
     >
-        {{ carriedLabel }}
+        <component
+            :is="taskIconComponent"
+            class="drag-ghost-icon"
+            :cls="dragGhost.cls"
+            variable="--ks-topology-icon-color"
+            :icons="icons"
+            :loadIcon="loadIcon"
+            onlyIcon
+        />
+        <span class="drag-ghost-label">{{ dragGhost.label }}</span>
     </div>
 </template>
 
@@ -173,13 +185,13 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsSwitch, KsTooltip, useTaskIcon} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CARRIED_NODE_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -273,102 +285,53 @@
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
 
-    const canAuthor = computed(() => Boolean(props.isAllowedEdit) && !props.isReadOnly)
     const dropEdgeId = ref<string | undefined>(undefined)
     const draggingNodeId = ref<string | undefined>(undefined)
 
     provide(DROP_EDGE_INJECTION_KEY, computed(() => dropEdgeId.value))
     provide(DRAGGING_NODE_INJECTION_KEY, computed(() => Boolean(draggingNodeId.value)))
 
-    function edgeTargetUnderPointer(point: {x: number; y: number}) {
-        const hit = document
-            .elementsFromPoint(point.x, point.y)
-            .find((element) => element.classList?.contains("edge-hit-area"))
-        const edgeId = hit?.getAttribute("data-edge-id")
-        if (!edgeId) return undefined
-        const edge = getEdges.value.find((candidate) => candidate.id === edgeId)
-        return edge?.data?.haveAdd ? {edgeId, target: edge.data.haveAdd} : undefined
+    const taskIconComponent = useTaskIcon()
+    const dragGhost = ref<{label: string; cls?: string; x: number; y: number} | undefined>(undefined)
+
+    function onTaskDragStart({nodeId, label, cls}: {nodeId: string; label: string; cls?: string}) {
+        draggingNodeId.value = nodeId
+        dragGhost.value = {label, cls, x: -9999, y: -9999}
+        window.addEventListener("dragover", onGhostMove)
     }
 
-    // The graph layout is computed server-side, so a node can never keep a position the user drags
-    // it to. Moving the card would only ever detach it from its edges and snap it back on release,
-    // so the card stays put and a chip is carried under the pointer instead.
-    const CARRY_THRESHOLD = 5
-    const carriedLabel = ref<string | undefined>(undefined)
-    const carryPoint = ref({x: 0, y: 0})
-    let candidate: {nodeId: string; label: string; x: number; y: number} | undefined
-
-    provide(CARRIED_NODE_INJECTION_KEY, computed(() => draggingNodeId.value))
-
-    function onCarryPointerDown(event: PointerEvent) {
-        if (!canAuthor.value || event.button !== 0) return
-        const target = event.target as HTMLElement | null
-        if (target?.closest("button, a, input, [role='button'], .vue-flow__handle")) return
-        const element = target?.closest<HTMLElement>(".vue-flow__node")
-        const nodeId = element?.dataset.id
-        if (!nodeId || !element?.classList.contains("topology-carriable")) return
-        candidate = {
-            nodeId,
-            label: afterLastDot(nodeId) ?? nodeId,
-            x: event.clientX,
-            y: event.clientY,
-        }
-        window.addEventListener("pointermove", onCarryPointerMove)
-        window.addEventListener("pointerup", onCarryPointerUp)
-        window.addEventListener("keydown", onCarryKeydown)
+    function onGhostMove(event: DragEvent) {
+        if (!dragGhost.value) return
+        // A drag leaving the window reports 0,0; keeping the last real point avoids a jump home.
+        if (!event.clientX && !event.clientY) return
+        dragGhost.value = {...dragGhost.value, x: event.clientX, y: event.clientY}
     }
 
-    function onCarryPointerMove(event: PointerEvent) {
-        if (!candidate) return
-        const point = {x: event.clientX, y: event.clientY}
-        if (!draggingNodeId.value) {
-            if (Math.hypot(point.x - candidate.x, point.y - candidate.y) < CARRY_THRESHOLD) return
-            draggingNodeId.value = candidate.nodeId
-            carriedLabel.value = candidate.label
-        }
-        carryPoint.value = point
-        dropEdgeId.value = edgeTargetUnderPointer(point)?.edgeId
-    }
-
-    function onCarryPointerUp(event: PointerEvent) {
-        const carried = candidate
-        const wasCarrying = Boolean(draggingNodeId.value)
-        const drop = wasCarrying
-            ? edgeTargetUnderPointer({x: event.clientX, y: event.clientY})
-            : undefined
-        endCarry()
-        if (!carried || !wasCarrying) return
-        const taskId = afterLastDot(carried.nodeId)
-        if (!drop || !taskId || taskId === drop.target.refId) return
-        emit(EVENTS.MOVE_TASK, {taskId, target: drop.target})
-    }
-
-    function onCarryKeydown(event: KeyboardEvent) {
-        if (event.key === "Escape") endCarry()
-    }
-
-    function endCarry() {
-        candidate = undefined
+    function onTaskDragEnd() {
+        dragGhost.value = undefined
+        window.removeEventListener("dragover", onGhostMove)
         dropEdgeId.value = undefined
-        carriedLabel.value = undefined
-        // Cleared a tick late so the click that ends the gesture does not also open the task.
+        // Cleared a tick late so the click that ends the drag does not also open the task.
         setTimeout(() => (draggingNodeId.value = undefined), 0)
-        window.removeEventListener("pointermove", onCarryPointerMove)
-        window.removeEventListener("pointerup", onCarryPointerUp)
-        window.removeEventListener("keydown", onCarryKeydown)
     }
 
+    function onDropTask({taskId, target}: {taskId: string; target: {refId: string}}) {
+        const id = afterLastDot(taskId)
+        onTaskDragEnd()
+        if (!id || id === target.refId) return
+        emit(EVENTS.MOVE_TASK, {taskId: id, target})
+    }
+
+    // A drag that ends outside any edge fires no drop, so the flags are cleared on the window too.
     onMounted(() => {
-        window.addEventListener("blur", endCarry)
-        document.addEventListener("visibilitychange", endCarry)
+        window.addEventListener("dragend", onTaskDragEnd)
+        window.addEventListener("blur", onTaskDragEnd)
     })
 
     onUnmounted(() => {
-        endCarry()
-        window.removeEventListener("blur", endCarry)
-        document.removeEventListener("visibilitychange", endCarry)
+        window.removeEventListener("dragend", onTaskDragEnd)
+        window.removeEventListener("blur", onTaskDragEnd)
     })
-
 
     const emit = defineEmits(
         [
@@ -573,39 +536,75 @@
         opacity: 0.3;
     }
 
-    /* The pane sets `grab` for panning and every node inherits it, so a card that cannot be
-       carried has to opt back out. */
-    :deep(.vue-flow__node.topology-carriable) {
+    /* vue-flow flags its own node wrapper, which is the only element that knows a node can be
+       picked up and when it is being dragged. The pane sets `grab` for panning and every node
+       inherits it, so a node that cannot be moved has to opt back out. */
+    :deep(.vue-flow__node.draggable) {
         cursor: grab;
     }
 
-    :deep(.vue-flow__node:not(.topology-carriable)) {
+    :deep(.vue-flow__node:not(.draggable)) {
         cursor: default;
     }
 
-    .carry-chip {
+    :deep(.vue-flow__node.dragging) {
+        cursor: grabbing;
+        /* vue-flow writes `z-index: 1` inline on every node, so the card being dragged slides
+           *under* the ones that come later in the DOM; only `!important` outranks that. It stays
+           below the drop marker on purpose. */
+        z-index: 5 !important;
+    }
+
+    :deep(.vue-flow__node .node-wrapper) {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    :deep(.vue-flow__node.dragging .node-wrapper) {
+        transform: scale(1.04);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :deep(.vue-flow__node .node-wrapper) {
+            transition: none;
+        }
+
+        :deep(.vue-flow__node.dragging .node-wrapper) {
+            transform: none;
+        }
+    }
+
+    .drag-ghost {
         position: fixed;
         top: 0;
         left: 0;
         z-index: 20;
-        margin: var(--ks-spacing-3) 0 0 var(--ks-spacing-3);
-        padding: var(--ks-spacing-1) var(--ks-spacing-3);
-        max-width: 14rem;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin: var(--ks-spacing-2) 0 0 var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        max-width: 16rem;
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: var(--ks-radius-base);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+        pointer-events: none;
+        rotate: -2deg;
+    }
+
+    .drag-ghost-icon {
+        flex-shrink: 0;
+        width: var(--ks-icon-size-lg);
+        height: var(--ks-icon-size-lg);
+    }
+
+    .drag-ghost-label {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-        font-size: var(--ks-font-size-xs);
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-text-primary);
-        background: var(--ks-bg-elevated);
-        border: 1px solid var(--ks-border-strong);
-        border-radius: var(--ks-radius-base);
-        box-shadow: 0 0.25rem 0.75rem var(--ks-shadow-elevated);
-        pointer-events: none;
-    }
-
-    .topology-carrying,
-    .topology-carrying :deep(.vue-flow__node) {
-        cursor: grabbing;
     }
 
     .exporting {

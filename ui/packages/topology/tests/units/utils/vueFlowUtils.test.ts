@@ -372,7 +372,7 @@ describe("generateGraph node draggability", () => {
         ],
     } as any
 
-    test("marks a task carriable but never the cluster wrapping it", () => {
+    test("marks a task movable but never the cluster wrapping it", () => {
         const elements =
             VueFlowUtils.generateGraph(
                 "vfid",
@@ -390,14 +390,16 @@ describe("generateGraph node draggability", () => {
                 false,
             ) ?? []
 
-        // vue-flow must never reposition a node itself: the layout is server-computed.
+        // The drag is the browser's own, so vue-flow must never reposition a node itself.
         expect(elements.every((element: any) => element.draggable !== true)).toBe(true)
 
         const cluster = elements.find((element: any) => element.type === "cluster") as any
         expect(cluster).toBeDefined()
-        expect(cluster.class).not.toContain("topology-carriable")
+        expect(cluster.data?.isMovable).toBeFalsy()
 
         const child = elements.find((element: any) => element.id === "root.branch.child") as any
-        expect(child?.class).toContain("topology-carriable")
+        expect(child?.data?.isMovable).toBe(true)
+        // Without `nopan` a drag starting on a card pans the canvas instead.
+        expect(child?.class).toContain("nopan")
     })
 })

@@ -8,4 +8,3 @@ export const VALIDATION_ISSUES_INJECTION_KEY = Symbol("validation-issues-injecti
 export const FOCUSED_TASK_INJECTION_KEY = Symbol("focused-task-injection-key") as InjectionKey<ComputedRef<string | undefined>>
 export const DROP_EDGE_INJECTION_KEY = Symbol("drop-edge-injection-key") as InjectionKey<ComputedRef<string | undefined>>
 export const DRAGGING_NODE_INJECTION_KEY = Symbol("dragging-node-injection-key") as InjectionKey<ComputedRef<boolean>>
-export const CARRIED_NODE_INJECTION_KEY = Symbol("carried-node-injection-key") as InjectionKey<ComputedRef<string | undefined>>

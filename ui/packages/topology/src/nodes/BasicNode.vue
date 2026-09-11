@@ -2,12 +2,16 @@
     <div
         class="node-wrapper"
         :style="nodeStyle"
-        :class="[classes, {'node-wrapper--execution': isExecution, 'node-wrapper--focused': focused, 'node-wrapper--carried': isCarried}]"
+        :class="[classes, {'node-wrapper--execution': isExecution, 'node-wrapper--focused': focused, 'node-wrapper--dragging': dragging}]"
+        :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
         @click="onCardClick"
+        @dragstart="onDragStart"
+        @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
         <div class="main-content">
+            <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
                 <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
                     <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
@@ -36,9 +40,10 @@
 <script lang="ts" setup>
     import {computed, inject} from "vue"
     import {KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import {EVENTS} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
-    import {CARRIED_NODE_INJECTION_KEY, EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
 
@@ -54,7 +59,28 @@
         EVENTS.ADD_TASK,
         EVENTS.SHOW_DESCRIPTION,
         EVENTS.CARD_CLICK,
+        EVENTS.TASK_DRAG_START,
+        EVENTS.TASK_DRAG_END,
     ])
+
+    const movable = computed(() => Boolean(props.data?.isMovable))
+
+    // A 1x1 transparent gif replaces the browser's own drag image, which is an OS-level layer we
+    // can neither style nor keep consistent across platforms; the graph draws its own instead.
+    const TRANSPARENT_PIXEL =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+
+    function onDragStart(event: DragEvent) {
+        if (!movable.value || !props.id) return
+        if (event.dataTransfer) {
+            event.dataTransfer.setData("text/plain", props.id)
+            event.dataTransfer.effectAllowed = "move"
+            const blank = new Image()
+            blank.src = TRANSPARENT_PIXEL
+            event.dataTransfer.setDragImage(blank, 0, 0)
+        }
+        emit(EVENTS.TASK_DRAG_START, {nodeId: props.id, label: displayTitle.value, cls: cls.value})
+    }
 
     function onCardClick(event: MouseEvent) {
         const target = event.target as HTMLElement | null
@@ -81,6 +107,7 @@
         loadIcon?: (cls: string) => Promise<any>;
         class?: string | string[] | Record<string, boolean>;
         focused?: boolean;
+        dragging?: boolean;
     }>()
 
     const taskIconComponent = useTaskIcon()
@@ -152,9 +179,6 @@
     // same `io.kestra.plugin.` prefix, so dropping it leaves the part that identifies the task.
     const shortType = computed(() => cls.value?.replace(/^io\.kestra\.plugin\./, ""))
 
-    const carriedNodeId = inject(CARRIED_NODE_INJECTION_KEY, undefined)
-    const isCarried = computed(() => Boolean(props.id) && carriedNodeId?.value === props.id)
-
     // On a plain task the tooltip only repeated the label already on the card, in a second box on
     // top of the native one; a subflow is the only node whose tooltip says something else.
     const extraTooltip = computed(() =>
@@ -163,13 +187,33 @@
 </script>
 
 <style lang="scss" scoped>
+    .node-grip {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        margin-left: calc(var(--ks-spacing-1) * -1);
+        color: var(--ks-icon-inactive);
+        cursor: grab;
+        opacity: 0;
+        transition: opacity 0.15s;
+
+        .node-wrapper:hover & {
+            opacity: 1;
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
     .node-wrapper--focused {
         outline: 2px solid var(--ks-border-focus);
         outline-offset: 2px;
     }
 
-    .node-wrapper--carried {
-        opacity: 0.4;
+    /* The card the user picked up: it stays in the layout as the hole the task came out of. */
+    .node-wrapper--dragging {
+        opacity: 0.35;
     }
 
     .node-wrapper {

@@ -203,6 +203,47 @@
     "gantt_no_tasks_executed": "Esta execução terminou sem executar nenhuma task.  \nVerifique sua visão geral e logs para encontrar o motivo.",
     "gantt_no_tasks_match_filters": "Tente ajustar os filtros de busca, estado ou nível de log.",
     "gantt_no_tasks_match_filters_title": "Nenhuma task corresponde aos filtros selecionados.",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} execução | {count} execuções",
+        "failed": "{count} com falha"
+      },
+      "toolbar": {
+        "panBack": "Voltar",
+        "panForward": "Avançar",
+        "zoomIn": "Aumentar zoom",
+        "zoomOut": "Diminuir zoom",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Alterar intervalo de tempo",
+        "rangeSliderStart": "Início do intervalo de tempo visível",
+        "rangeSliderEnd": "Fim do intervalo de tempo visível"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} execução | {count} execuções",
+        "failedCount": "{count} com falha"
+      },
+      "bucket": {
+        "hint": "Agregado: aumente o zoom para ver o detalhe de cada execução"
+      },
+      "popover": {
+        "openExecution": "Abrir execução",
+        "showOnlyFlow": "Mostrar somente este flow"
+      },
+      "empty": {
+        "description": "Não há execuções no período e filtros selecionados.",
+        "resetFilters": "Redefinir filtros",
+        "widenRange": "Ampliar para 7 dias"
+      },
+      "error": {
+        "title": "Não foi possível carregar a linha do tempo",
+        "description": "Ocorreu um erro ao carregar as execuções deste período."
+      },
+      "truncated": {
+        "description": "Mostrando as últimas {shown} de {total} execuções — reduza o período ou os filtros para ver todas."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Tente ajustar seus filtros, alterar o intervalo de tempo ou verificar se o flow foi executado recentemente.",
     "no_logs_data_title": "Nenhum log encontrado para os filtros selecionados.",
@@ -1702,6 +1743,10 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "chart preview": "Prévia do gráfico",
+    "chart mode": {
+      "counts": "Contagens",
+      "timeline": "Linha do tempo"
+    },
     "no_code": {
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",

@@ -203,6 +203,47 @@
     "gantt_no_tasks_executed": "यह execution बिना किसी task के चलाए समाप्त हो गया।  \nकारण के लिए इसका अवलोकन और logs जांचें।",
     "gantt_no_tasks_match_filters": "खोज, स्थिति, या log-level फ़िल्टर को समायोजित करने का प्रयास करें।",
     "gantt_no_tasks_match_filters_title": "कोई task चयनित फ़िल्टर से मेल नहीं खाता।",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "सभी",
+        "total": "{count} execution | {count} executions",
+        "failed": "{count} विफल"
+      },
+      "toolbar": {
+        "panBack": "पीछे खिसकाएं",
+        "panForward": "आगे खिसकाएं",
+        "zoomIn": "ज़ूम इन करें",
+        "zoomOut": "ज़ूम आउट करें",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "समय सीमा बदलें",
+        "rangeSliderStart": "दृश्यमान समय सीमा की शुरुआत",
+        "rangeSliderEnd": "दृश्यमान समय सीमा का अंत"
+      },
+      "row": {
+        "openOwnPage": "यह पेज खोलें",
+        "runsCount": "{count} execution | {count} executions",
+        "failedCount": "{count} विफल"
+      },
+      "bucket": {
+        "hint": "एकत्रित: execution-स्तर का विवरण देखने के लिए ज़ूम इन करें"
+      },
+      "popover": {
+        "openExecution": "execution खोलें",
+        "showOnlyFlow": "केवल यह flow दिखाएं"
+      },
+      "empty": {
+        "description": "चयनित सीमा और फ़िल्टर में कोई execution नहीं मिला।",
+        "resetFilters": "फ़िल्टर रीसेट करें",
+        "widenRange": "7 दिनों तक बढ़ाएं"
+      },
+      "error": {
+        "title": "टाइमलाइन लोड नहीं हो सकी",
+        "description": "इस सीमा के लिए execution लोड करते समय कुछ गड़बड़ हुई।"
+      },
+      "truncated": {
+        "description": "नवीनतम {shown} में से {total} executions दिखाए जा रहे हैं — सभी देखने के लिए समय सीमा या फ़िल्टर संकुचित करें।"
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
     "no_logs_data_title": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले।",
@@ -1702,6 +1743,10 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "chart preview": "चार्ट पूर्वावलोकन",
+    "chart mode": {
+      "counts": "गणना",
+      "timeline": "टाइमलाइन"
+    },
     "no_code": {
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",

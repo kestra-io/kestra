@@ -203,6 +203,47 @@
     "gantt_no_tasks_executed": "Diese Execution endete, ohne dass ein Task ausgeführt wurde.\nDen Grund findest du in der Übersicht und in den Logs.",
     "gantt_no_tasks_match_filters": "Passe die Filter für Suche, Status oder Log-Level an.",
     "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Alle",
+        "total": "{count} Ausführung | {count} Ausführungen",
+        "failed": "{count} fehlgeschlagen"
+      },
+      "toolbar": {
+        "panBack": "Zurück schwenken",
+        "panForward": "Vorwärts schwenken",
+        "zoomIn": "Vergrößern",
+        "zoomOut": "Verkleinern",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Zeitraum ändern",
+        "rangeSliderStart": "Anfang des sichtbaren Zeitraums",
+        "rangeSliderEnd": "Ende des sichtbaren Zeitraums"
+      },
+      "row": {
+        "openOwnPage": "Diese Seite öffnen",
+        "runsCount": "{count} Ausführung | {count} Ausführungen",
+        "failedCount": "{count} fehlgeschlagen"
+      },
+      "bucket": {
+        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene"
+      },
+      "popover": {
+        "openExecution": "Ausführung öffnen",
+        "showOnlyFlow": "Nur diesen Flow anzeigen"
+      },
+      "empty": {
+        "description": "Keine Ausführungen im gewählten Zeitraum und Filtern.",
+        "resetFilters": "Filter zurücksetzen",
+        "widenRange": "Auf 7 Tage erweitern"
+      },
+      "error": {
+        "title": "Zeitachse konnte nicht geladen werden",
+        "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
+      },
+      "truncated": {
+        "description": "Zeigt die neuesten {shown} von {total} Ausführungen – schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
     "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",
@@ -1702,6 +1743,10 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "chart preview": "Diagrammvorschau",
+    "chart mode": {
+      "counts": "Anzahl",
+      "timeline": "Zeitachse"
+    },
     "no_code": {
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",

@@ -203,6 +203,47 @@
     "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
     "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
     "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "全部",
+        "total": "{count} 次执行 | {count} 次执行",
+        "failed": "{count} 次失败"
+      },
+      "toolbar": {
+        "panBack": "向后平移",
+        "panForward": "向前平移",
+        "zoomIn": "放大",
+        "zoomOut": "缩小",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "更改时间范围",
+        "rangeSliderStart": "可见时间范围的开始",
+        "rangeSliderEnd": "可见时间范围的结束"
+      },
+      "row": {
+        "openOwnPage": "打开此页面",
+        "runsCount": "{count} 次执行 | {count} 次执行",
+        "failedCount": "{count} 次失败"
+      },
+      "bucket": {
+        "hint": "已聚合：放大后可查看每次执行的详情"
+      },
+      "popover": {
+        "openExecution": "打开执行",
+        "showOnlyFlow": "仅显示此 flow"
+      },
+      "empty": {
+        "description": "所选时间范围和过滤条件下没有执行记录。",
+        "resetFilters": "重置过滤条件",
+        "widenRange": "扩大到 7 天"
+      },
+      "error": {
+        "title": "无法加载时间线",
+        "description": "加载此时间范围的执行记录时出错。"
+      },
+      "truncated": {
+        "description": "正在显示最近 {total} 次执行中的 {shown} 次 — 缩小时间范围或筛选条件以查看全部。"
+      }
+    },
     "logs": "日志",
     "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_logs_data_title": "未找到所选过滤器的日志。",
@@ -1702,6 +1743,10 @@
     "custom value": "自定义值",
     "chart": "图表",
     "chart preview": "图表预览",
+    "chart mode": {
+      "counts": "计数",
+      "timeline": "时间线"
+    },
     "no_code": {
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",

@@ -120,7 +120,7 @@
   "src/components/executions/ChangeStatus.vue": 8,
   "src/components/executions/ExecutionRoot.vue": 1,
   "src/components/executions/ExecutionRootTopBar.vue": 1,
-  "src/components/executions/Executions.vue": 22,
+  "src/components/executions/Executions.vue": 17,
   "src/components/executions/FilePreview.vue": 1,
   "src/components/executions/Gantt.vue": 4,
   "src/components/executions/Logs.vue": 9,

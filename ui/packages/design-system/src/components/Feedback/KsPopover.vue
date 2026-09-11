@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
     import {ElPopover} from "element-plus"
-    import {ref, watch} from "vue"
+    import {onBeforeUnmount, ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -49,6 +49,21 @@
 
     const internalVisible = ref(false)
 
+    // ElTooltip (which ElPopover wraps) never wires up Escape-to-close itself — see
+    // https://github.com/element-plus/element-plus, tooltip/trigger.vue only reacts to `triggerKeys`
+    // (Enter/Space to open). Close explicitly so every KsPopover consumer gets it for free.
+    function handleEscapeKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") handleUpdateVisible(false)
+    }
+
+    // Declared before the `props.visible` watch below (and without `immediate`) so it already exists
+    // to react when that watch's own immediate run sets `internalVisible` — an `immediate` watch here
+    // too would fire on the ref's pristine initial value, one tick before that write happens.
+    watch(internalVisible, (visible) => {
+        if (visible) document.addEventListener("keydown", handleEscapeKeydown)
+        else document.removeEventListener("keydown", handleEscapeKeydown)
+    })
+
     watch(() => props.visible, (val) => {
         if (val !== undefined) internalVisible.value = val
     }, {immediate: true})
@@ -57,6 +72,8 @@
         internalVisible.value = v
         emit("update:visible", v)
     }
+
+    onBeforeUnmount(() => document.removeEventListener("keydown", handleEscapeKeydown))
 
     const filteredProps = useFilteredProps(props, ["visible"])
 </script>

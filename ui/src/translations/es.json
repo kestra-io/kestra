@@ -203,6 +203,47 @@
     "gantt_no_tasks_executed": "Esta ejecución terminó sin ejecutar ninguna task.\nVerifique su resumen y logs para conocer la razón.",
     "gantt_no_tasks_match_filters": "Intenta ajustar los filtros de búsqueda, estado o nivel de log.",
     "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} ejecución | {count} ejecuciones",
+        "failed": "{count} fallidas"
+      },
+      "toolbar": {
+        "panBack": "Desplazar hacia atrás",
+        "panForward": "Desplazar hacia adelante",
+        "zoomIn": "Acercar",
+        "zoomOut": "Alejar",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Cambiar rango de tiempo",
+        "rangeSliderStart": "Inicio del rango de tiempo visible",
+        "rangeSliderEnd": "Fin del rango de tiempo visible"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} ejecución | {count} ejecuciones",
+        "failedCount": "{count} fallidas"
+      },
+      "bucket": {
+        "hint": "Agregado: acerca el zoom para ver el detalle de cada ejecución"
+      },
+      "popover": {
+        "openExecution": "Abrir ejecución",
+        "showOnlyFlow": "Mostrar solo este flow"
+      },
+      "empty": {
+        "description": "No hay ejecuciones en el rango y los filtros seleccionados.",
+        "resetFilters": "Restablecer filtros",
+        "widenRange": "Ampliar a 7 días"
+      },
+      "error": {
+        "title": "No se pudo cargar la cronología",
+        "description": "Se produjo un error al cargar las ejecuciones de este rango."
+      },
+      "truncated": {
+        "description": "Mostrando las últimas {shown} de {total} ejecuciones — reduce el rango de tiempo o los filtros para ver todas."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
     "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",
@@ -1702,6 +1743,10 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "chart preview": "Vista previa del gráfico",
+    "chart mode": {
+      "counts": "Recuentos",
+      "timeline": "Cronología"
+    },
     "no_code": {
       "toggle_pebble": "Alternar editor de Pebble",
       "version_oss_placeholder": "Desbloquea la Versionado de Plugins con la Enterprise Edition",

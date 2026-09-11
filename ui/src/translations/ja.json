@@ -203,6 +203,47 @@
     "gantt_no_tasks_executed": "このExecutionは、タスクを実行せずに終了しました。  \n理由を確認するには、概要とLogsをチェックしてください。",
     "gantt_no_tasks_match_filters": "検索、状態、またはログレベルのフィルターを調整してみてください。",
     "gantt_no_tasks_match_filters_title": "選択したフィルターに一致するタスクがありません。",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "すべて",
+        "total": "{count} 件の実行 | {count} 件の実行",
+        "failed": "{count} 件失敗"
+      },
+      "toolbar": {
+        "panBack": "後方へ移動",
+        "panForward": "前方へ移動",
+        "zoomIn": "ズームイン",
+        "zoomOut": "ズームアウト",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "時間範囲を変更",
+        "rangeSliderStart": "表示中の時間範囲の開始",
+        "rangeSliderEnd": "表示中の時間範囲の終了"
+      },
+      "row": {
+        "openOwnPage": "このページを開く",
+        "runsCount": "{count} 件の実行 | {count} 件の実行",
+        "failedCount": "{count} 件失敗"
+      },
+      "bucket": {
+        "hint": "集計済み: ズームインすると実行単位の詳細が表示されます"
+      },
+      "popover": {
+        "openExecution": "実行を開く",
+        "showOnlyFlow": "この flow のみ表示"
+      },
+      "empty": {
+        "description": "選択した期間とフィルターに一致する実行がありません。",
+        "resetFilters": "フィルターをリセット",
+        "widenRange": "7日間に広げる"
+      },
+      "error": {
+        "title": "タイムラインを読み込めませんでした",
+        "description": "この期間の実行の読み込み中にエラーが発生しました。"
+      },
+      "truncated": {
+        "description": "最新の{total}件中{shown}件の実行を表示しています — すべて表示するには期間またはフィルターを絞り込んでください。"
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_logs_data_title": "選択したフィルターに対してログが見つかりませんでした。",
@@ -1702,6 +1743,10 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "chart preview": "チャートプレビュー",
+    "chart mode": {
+      "counts": "カウント",
+      "timeline": "タイムライン"
+    },
     "no_code": {
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",

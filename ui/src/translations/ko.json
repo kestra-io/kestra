@@ -203,6 +203,47 @@
     "gantt_no_tasks_executed": "이 실행은 어떤 task도 실행하지 않고 종료되었습니다.  \n개요와 logs를 확인하여 이유를 알아보세요.",
     "gantt_no_tasks_match_filters": "검색, 상태 또는 log-level 필터를 조정해 보세요.",
     "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "전체",
+        "total": "실행 {count}개 | 실행 {count}개",
+        "failed": "{count}개 실패"
+      },
+      "toolbar": {
+        "panBack": "뒤로 이동",
+        "panForward": "앞으로 이동",
+        "zoomIn": "확대",
+        "zoomOut": "축소",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "시간 범위 변경",
+        "rangeSliderStart": "표시된 시간 범위의 시작",
+        "rangeSliderEnd": "표시된 시간 범위의 끝"
+      },
+      "row": {
+        "openOwnPage": "이 페이지 열기",
+        "runsCount": "실행 {count}개 | 실행 {count}개",
+        "failedCount": "{count}개 실패"
+      },
+      "bucket": {
+        "hint": "집계됨: 확대하면 실행 단위 상세 정보가 표시됩니다"
+      },
+      "popover": {
+        "openExecution": "실행 열기",
+        "showOnlyFlow": "이 flow만 표시"
+      },
+      "empty": {
+        "description": "선택한 기간과 필터에 해당하는 실행이 없습니다.",
+        "resetFilters": "필터 재설정",
+        "widenRange": "7일로 확장"
+      },
+      "error": {
+        "title": "타임라인을 불러오지 못했습니다",
+        "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
+      },
+      "truncated": {
+        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다 — 모두 보려면 기간이나 필터를 좁혀 보세요."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",
@@ -1702,6 +1743,10 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "chart preview": "차트 미리보기",
+    "chart mode": {
+      "counts": "카운트",
+      "timeline": "타임라인"
+    },
     "no_code": {
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",

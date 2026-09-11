@@ -122,7 +122,13 @@ class GrpcWorkerIOSenderTest {
         TaskRun taskRun = buildTaskResult(Map.of()).getTaskRun()
             .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.SUCCESS)).build()))
             .withState(State.Type.SUCCESS);
-        WorkerTaskResult large = new WorkerTaskResult(taskRun, Map.of("output", new String(largePayload)));
+        WorkerTaskResult preceding = buildTaskResult(Map.of("child", "value"));
+        WorkerTaskResult large = new WorkerTaskResult(
+            taskRun,
+            List.of(),
+            Map.of("output", new String(largePayload)),
+            List.of(WorkerTaskResult.WorkerTaskResultPayload.from(preceding))
+        );
 
         taskResultSender.send(List.of(large));
 
@@ -137,6 +143,7 @@ class GrpcWorkerIOSenderTest {
         assertThat(received.getTaskRun().getId()).isEqualTo(large.getTaskRun().getId());
         assertThat(received.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(received.getOutputs()).isNull();
+        assertThat(received.getPrecedingResults()).singleElement().satisfies(result -> assertThat(result.outputs()).isNull());
         assertThat(received.getTaskRun().getAttempts()).hasSize(1);
         assertThat(received.getTaskRun().lastAttempt().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 

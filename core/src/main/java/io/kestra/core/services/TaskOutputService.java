@@ -72,6 +72,14 @@ public class TaskOutputService extends AbstractOutputService {
     }
 
     /**
+     * Returns whether outputs exist without reading their stored payload.
+     */
+    @SuppressWarnings("deprecation")
+    public boolean hasOutputs(TaskRun taskRun) {
+        return !MapUtils.isEmpty(taskRun.getOutputs()) || outputRepository.exists(taskRun.getTenantId(), taskRun.getId());
+    }
+
+    /**
      * Get the outputs of a task run. This method will read the outputs from the database or from the internal storage depending on where they are stored.
      */
     @SuppressWarnings("deprecation")

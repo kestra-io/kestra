@@ -32,7 +32,7 @@
             @mouseenter="hovered = true"
             @mouseleave="hovered = false"
         >
-            <Plus :size="12" />
+            <span class="edge-add-button-dot"><Plus :size="12" /></span>
         </button>
     </EdgeLabelRenderer>
 
@@ -163,17 +163,30 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 1.125rem;
-        height: 1.125rem;
+        /* The disc stays small so it does not hide the graph, but the target keeps the 24px
+           WCAG 2.5.8 minimum by padding around it. */
+        width: 1.5rem;
+        height: 1.5rem;
         padding: 0;
-        background: var(--ks-bg-elevated);
-        border: 1px solid var(--ks-border-strong);
-        border-radius: 50%;
+        background: none;
+        border: none;
         color: var(--ks-icon-default);
         cursor: pointer;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.12s, border-color 0.12s, color 0.12s;
+        transition: opacity 0.12s, color 0.12s;
+    }
+
+    .edge-add-button-dot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.125rem;
+        height: 1.125rem;
+        background: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: 50%;
+        transition: border-color 0.12s;
     }
 
     .edge-add-button--visible,
@@ -183,15 +196,21 @@
     }
 
     .edge-add-button--drop {
+        color: var(--ks-text-link);
+    }
+
+    .edge-add-button--drop .edge-add-button-dot {
         background: var(--ks-bg-info);
         border-color: var(--ks-border-focus);
-        color: var(--ks-text-link);
-        transform-origin: center;
     }
 
     .edge-add-button:hover,
     .edge-add-button:focus-visible {
-        border-color: var(--ks-border-focus);
         color: var(--ks-text-link);
+    }
+
+    .edge-add-button:hover .edge-add-button-dot,
+    .edge-add-button:focus-visible .edge-add-button-dot {
+        border-color: var(--ks-border-focus);
     }
 </style>

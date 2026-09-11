@@ -434,7 +434,10 @@
     }
 
     function onTaskTypeSelect() {
+        // The properties of the old type cannot carry over, but the id is not one of them: dropping
+        // it leaves a task the backend cannot even name in a validation error.
         const value: PartialNoCodeElement = {
+            ...(taskModel.value?.id ? {id: taskModel.value.id} : {}),
             type: selectedTaskType.value ?? "",
         }
 

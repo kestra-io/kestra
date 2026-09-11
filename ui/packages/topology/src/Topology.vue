@@ -278,19 +278,22 @@
     )
 
     onMounted(() => {
-        generateGraph()
+        generateGraph(true)
     })
 
+    // A data refresh (execution polling, live task progress) regenerates the same
+    // graph and must never discard the user's pan/zoom - only a layout-changing
+    // user action (orientation, extra-details toggle, expand/collapse) refits.
     watch(() => props.flowGraph, () => {
         generateGraph()
     })
 
     watch(() => props.isHorizontal, () => {
-        generateGraph()
+        generateGraph(true)
     })
 
     watch(showExtraDetails, () => {
-        generateGraph()
+        generateGraph(true)
     })
 
     watch(isRunning, () => {
@@ -309,7 +312,7 @@
         generateGraph()
     })
 
-    const generateGraph = () => {
+    const generateGraph = (shouldFit = false) => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
         removeSelectedElements(getElements.value)
@@ -344,7 +347,7 @@
 
             if (elements) {
                 setElements(elements)
-                refitOnNodesInitialized.value = true
+                if (shouldFit) refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
         })
@@ -405,7 +408,7 @@
         }
 
         if (regenerate) {
-            generateGraph()
+            generateGraph(true)
         }
     }
 
@@ -425,7 +428,7 @@
 
         collapsed.value.forEach(n => collapseCluster(n, false))
 
-        generateGraph()
+        generateGraph(true)
     }
 
 
@@ -434,7 +437,7 @@
         hiddenNodes.value = []
         edgeReplacer.value = {}
         clusterToNode.value = []
-        generateGraph()
+        generateGraph(true)
     }
 
     const controlsShown = ref(true)

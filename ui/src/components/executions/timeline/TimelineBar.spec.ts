@@ -9,6 +9,7 @@ import type {StateBucket, TimelineExecution} from "../../../utils/executionsTime
 // and absent in a bare component mount; stub it with a deterministic formatter instead.
 vi.mock("@kestra-io/design-system", () => ({
     dateUtils: {dateFilter: (iso: string) => iso},
+    durationUtils: {humanDuration: (seconds: number) => `${seconds}s`},
 }))
 
 const i18n = createI18n({legacy: false, globalInjection: true, locale: "en", messages: {en: {}}})
@@ -24,6 +25,7 @@ const stubs = {
     KsId: passthroughStub("KsId"),
     KsButton: passthroughStub("KsButton"),
     KsExecutionStatus: passthroughStub("KsExecutionStatus"),
+    KsDateAgo: passthroughStub("KsDateAgo"),
 }
 
 // KsPopover's own trigger element is the single node passed in the #reference slot - this stub

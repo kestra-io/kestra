@@ -617,8 +617,10 @@ export function generateGraph(
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
                 parentNode: cluster ? cluster.uid : undefined,
-                // Only a task can be dropped on an edge to be moved; dots and clusters stay put.
-                draggable: Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node),
+                // The layout is server-computed, so vue-flow must never reposition a node itself;
+                // carrying a task onto an edge is driven separately, off the `topology-carriable`
+                // class below.
+                draggable: false,
                 data: {
                     node: node,
                     parent: cluster ? cluster : undefined,
@@ -633,7 +635,16 @@ export function generateGraph(
                     executionId: node.executionId,
                     unused: node.unused,
                 },
-                class: node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
+                class: [
+                    node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
+                    // `nopan` is vue-flow's own opt-out: it adds it to draggable nodes, and without
+                    // it a drag starting on a card pans the whole canvas instead of carrying.
+                    Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node)
+                        ? "topology-carriable nopan"
+                        : "",
+                ]
+                    .filter(Boolean)
+                    .join(" "),
             })
         }
     }

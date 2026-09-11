@@ -237,6 +237,9 @@
       "error": {
         "title": "Impossible de charger la chronologie",
         "description": "Une erreur s'est produite lors du chargement des exécutions pour cette période."
+      },
+      "truncated": {
+        "description": "Affichage des {shown} dernières exécutions sur {total} — réduisez la période ou les filtres pour toutes les voir."
       }
     },
     "logs": "Fichiers journaux",

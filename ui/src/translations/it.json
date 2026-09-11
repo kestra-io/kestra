@@ -237,6 +237,9 @@
       "error": {
         "title": "Impossibile caricare la timeline",
         "description": "Si è verificato un errore durante il caricamento delle esecuzioni per questo intervallo."
+      },
+      "truncated": {
+        "description": "Vengono mostrate le ultime {shown} esecuzioni su {total} — restringi l'intervallo di tempo o i filtri per vederle tutte."
       }
     },
     "logs": "Logs",

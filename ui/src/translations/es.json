@@ -237,6 +237,9 @@
       "error": {
         "title": "No se pudo cargar la cronología",
         "description": "Se produjo un error al cargar las ejecuciones de este rango."
+      },
+      "truncated": {
+        "description": "Mostrando las últimas {shown} de {total} ejecuciones — reduce el rango de tiempo o los filtros para ver todas."
       }
     },
     "logs": "Logs",

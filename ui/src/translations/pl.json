@@ -237,6 +237,9 @@
       "error": {
         "title": "Nie udało się załadować osi czasu",
         "description": "Wystąpił błąd podczas ładowania wykonań dla tego zakresu."
+      },
+      "truncated": {
+        "description": "Wyświetlane są najnowsze {shown} z {total} wykonań — zawęź zakres czasu lub filtry, aby zobaczyć wszystkie."
       }
     },
     "logs": "Logs",

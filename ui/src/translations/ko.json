@@ -237,6 +237,9 @@
       "error": {
         "title": "타임라인을 불러오지 못했습니다",
         "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
+      },
+      "truncated": {
+        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다 — 모두 보려면 기간이나 필터를 좁혀 보세요."
       }
     },
     "logs": "Logs",

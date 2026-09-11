@@ -237,6 +237,9 @@
       "error": {
         "title": "टाइमलाइन लोड नहीं हो सकी",
         "description": "इस सीमा के लिए execution लोड करते समय कुछ गड़बड़ हुई।"
+      },
+      "truncated": {
+        "description": "नवीनतम {shown} में से {total} executions दिखाए जा रहे हैं — सभी देखने के लिए समय सीमा या फ़िल्टर संकुचित करें।"
       }
     },
     "logs": "Logs",

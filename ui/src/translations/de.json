@@ -237,6 +237,9 @@
       "error": {
         "title": "Zeitachse konnte nicht geladen werden",
         "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
+      },
+      "truncated": {
+        "description": "Zeigt die neuesten {shown} von {total} Ausführungen – schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
       }
     },
     "logs": "Logs",

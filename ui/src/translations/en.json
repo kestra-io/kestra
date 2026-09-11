@@ -237,6 +237,9 @@
       "error": {
         "title": "Couldn't load the timeline",
         "description": "Something went wrong while loading executions for this range."
+      },
+      "truncated": {
+        "description": "Showing the latest {shown} of {total} executions — narrow the time range or filters to see all."
       }
     },
     "logs": "Logs",

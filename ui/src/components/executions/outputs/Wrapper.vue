@@ -185,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, nextTick, onMounted, watch} from "vue";
+    import {ref, computed, shallowRef, onMounted, watch} from "vue";
     import {ElTree} from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -200,8 +200,9 @@
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import Editor from "../../inputs/Editor.vue";
     import VarValue from "../VarValue.vue";
-    import {buildChildren, limitFor, PAGE_SIZE} from "./transformOutputs";
+    import {buildChildren, PAGE_SIZE} from "./transformOutputs";
     import {downloadJson, isTooLargeToRender} from "../largeValues";
+    import {useCascaderPaging} from "./cascaderPaging";
     import Utils from "../../../utils/utils";
     import SubFlowLink from "../../flows/SubFlowLink.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
@@ -419,38 +420,7 @@
     }
 
     // How many pages of each level have been revealed, keyed by the level's path.
-    const childLimits = ref<Record<string, number>>({});
-
-    const loadMore = async (path: string, event: MouseEvent) => {
-        const wrap = (event.currentTarget as HTMLElement).closest<HTMLElement>(".el-cascader-menu__wrap");
-        const panel = wrap?.closest(".el-cascader-panel");
-        const column = wrap && panel
-            ? [...panel.querySelectorAll(".el-cascader-menu__wrap")].indexOf(wrap)
-            : -1;
-        const scrollTop = wrap?.scrollTop ?? 0;
-
-        childLimits.value = {
-            ...childLimits.value,
-            [path]: limitFor(childLimits.value, path) + PAGE_SIZE,
-        };
-
-        if (!panel || column < 0) {
-            return;
-        }
-
-        // The panel rebuilds the column and scrolls its active node into view, so the reader's
-        // position has to be put back after that has run, not just after the re-render.
-        const restore = () => {
-            const target = panel.querySelectorAll<HTMLElement>(".el-cascader-menu__wrap")[column];
-            if (target) {
-                target.scrollTop = scrollTop;
-            }
-        };
-
-        await nextTick();
-        restore();
-        requestAnimationFrame(restore);
-    };
+    const {limits: childLimits, loadMore} = useCascaderPaging();
 
     const transform = (o: any, isFirstPass: boolean, path = "") => {
         const result: TransformedTask[] = buildChildren(

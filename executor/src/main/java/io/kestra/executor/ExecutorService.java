@@ -197,11 +197,12 @@ public class ExecutorService {
             // but keep listeners on killing
             executor = this.handleAfterExecution(executor);
 
-            // send worker task to the Worker
-            executor = this.handleWorkerTasks(executor);
-
             // process flowable tasks
             executor = this.handleFlowableTasks(executor);
+
+            // send worker task to the Worker
+            // this is important to do it after handleFlowableTasks so new worker tasks created by flowable tasks are processed immediately
+            executor = this.handleWorkerTasks(executor);
 
             // search for execution updating tasks
             executor = this.handleExecutionUpdatingTasks(executor);
@@ -754,7 +755,7 @@ public class ExecutorService {
 
                                             executor.withExecution(
                                                 executor.getExecution()
-                                                    .withTaskRun(taskRun.withState(State.Type.RUNNING)),
+                                                    .withTaskRun(taskRun.run()),
                                                 "handleLoop"
                                             );
                                         }
@@ -1502,10 +1503,7 @@ public class ExecutorService {
                         return false;
                     }
 
-                    TaskRun runningTaskRun = workerTask
-                        .getTaskRun()
-                        .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()))
-                        .withState(State.Type.RUNNING);
+                    TaskRun runningTaskRun = workerTask.getTaskRun().run();
 
                     var newExecution = executionUpdatingTask.update(executor.getExecution(), executorTask.runContext());
                     if (newExecution.getState().getCurrent() == State.Type.KILLED) {

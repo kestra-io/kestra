@@ -1053,7 +1053,9 @@ public class FlowService {
         Optional<Flow> optional = revision.isPresent()
             ? flowRepository.findByIdWithoutAcl(tenant, namespace, id, revision)
             : flowRepository.findByIdForExecutionWithoutAcl(tenant, namespace, id);
-        if (optional.isEmpty()) {
+        // A delete appends a revision flagged deleted, so the tombstone is reachable only through
+        // an explicit revision; the no-revision lookup above already filters it out.
+        if (optional.isEmpty() || optional.get().isDeleted()) {
             throw new NoSuchElementException("Requested Flow is not found.");
         }
 

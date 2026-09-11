@@ -9,6 +9,7 @@ import {
 } from "./filterTypes"
 import {type DecodedParam, keyOfComparator} from "./helpers"
 import {TIME_RANGE_KEY} from "./constants"
+import {normalizeRelativeDate} from "./relativeDates"
 
 export const buildNewFilter = (key: FilterKeyConfig): AppliedFilter | null => {
     const comparator = key.comparators?.[0]
@@ -123,10 +124,10 @@ export const processFieldValue = (
 
     if (config?.valueType === "date" && typeof value === "string") {
         value = new Date(value)
-    } else if (config?.valueType === "time-range" && typeof value === "string" && !/^P/i.test(value)) {
-        // A custom single absolute date for a time-range field. Predefined relative durations
-        // (PT24H, P30D, …) start with "P" and must stay as the raw duration string.
-        value = new Date(value)
+    } else if (config?.valueType === "time-range" && typeof value === "string") {
+        // Predefined relative durations start with "P" and stay durations, normalized to the
+        // spelling the option lists and the API use; anything else is a custom absolute date.
+        value = /^P/i.test(value) ? normalizeRelativeDate(value) : new Date(value)
     }
 
     return {

@@ -28,7 +28,9 @@ import io.kestra.core.models.assets.External;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
+import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -229,8 +231,42 @@ class JsonSchemaGeneratorTest {
             // the polymorphic anyOf/const subtype branches nor in the type/itemType enum arrays (REUSABLE_INPUTS was
             // leaking through the latter).
             assertThat(schema, not(containsString("REUSABLE_INPUTS")));
+            // the class name is not the type name, so it survives the string strip: the subtype's definitions and the
+            // anyOf branch reaching them by $ref have to go too, or a reusable-inputs input still validates, minus its
+            // discriminator
+            assertThat(schema, not(containsString("ReusableInputsInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void excludedInputTypesLeaveNoBranchOrDefinitionBehind() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+            var flow = definitions.get(Flow.class.getName());
+            var inputs = (Map<String, Object>) ((Map<String, Object>) flow.get("properties")).get("inputs");
+            var items = (Map<String, Object>) inputs.get("items");
+            var branches = (List<Map<String, Object>>) items.get("anyOf");
+
+            String excluded = ReusableInputsInput.class.getName();
+            assertThat(
+                "no anyOf branch may reach the excluded subtype",
+                branches.stream().map(branch -> String.valueOf(branch.get("$ref"))).toList(),
+                everyItem(not(containsString(excluded)))
+            );
+            assertThat(
+                "the excluded subtype's definitions, orphaned by the branch removal, must go with it",
+                definitions.keySet().stream().filter(key -> key.startsWith(excluded)).toList(), is(empty())
+            );
+            // a body definition shared with the surviving subtypes must stay
+            assertThat(definitions, hasKey(DependsOn.class.getName()));
+            assertThat(branches, hasSize(greaterThan(1)));
         });
     }
 

@@ -106,6 +106,13 @@
 
         <BlockShortcutsDialog v-model:open="shortcutsOpen" :groups="shortcutGroups" />
 
+        <BlockCommandMenu
+            v-if="commandMenuOpen"
+            :items="commandMenuItems"
+            :contextLabel="commandMenuContextLabel"
+            @close="commandMenuOpen = false"
+        />
+
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
@@ -308,6 +315,12 @@
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
     import {BLOCK_EDITOR_KEYMAP} from "../no-code/blocks/keymap"
     import BlockShortcutsDialog from "../no-code/blocks/BlockShortcutsDialog.vue"
+    import BlockCommandMenu, {type BlockCommandMenuItem} from "../no-code/blocks/BlockCommandMenu.vue"
+    import {
+        buildCommandMenuContextLabel,
+        buildCommandMenuItems,
+        type BlockCommandMenuContext,
+    } from "../no-code/blocks/blockCommandMenu"
     import {buildShortcutGroups} from "../no-code/blocks/shortcutHints"
     import {useBlockEditorKeyboard} from "../no-code/blocks/useBlockEditorKeyboard"
     import {useAuthoringSurface} from "../no-code/blocks/useAuthoringSurface"
@@ -922,12 +935,14 @@
 
     const shortcutsOpen = ref(false)
     const shortcutGroups = buildShortcutGroups()
+    const commandMenuOpen = ref(false)
 
     const focusedTaskId = ref<string | undefined>(undefined)
     const focusOrder = computed(() => buildTopologyFocusOrder(flowSource.value ?? ""))
 
     const isAuthoringOverlayOpen = () =>
         shortcutsOpen.value
+        || commandMenuOpen.value
         || taskPicker.taskPickerVisible.value
         || Boolean(modalTarget.value)
         || isTaskModalOpen.value
@@ -999,6 +1014,10 @@
             shortcutsOpen.value = false
             return
         }
+        if (commandMenuOpen.value && id === "clear") {
+            commandMenuOpen.value = false
+            return
+        }
         if (props.isReadOnly || !props.isAllowedEdit) return false
         // Checked here rather than through a watch: watching the order would re-parse the whole
         // flow on every keystroke in the code editor, which shares this source.
@@ -1032,6 +1051,10 @@
         case "insert-before":
             insertRelativeToFocused("before")
             return
+        case "quick-insert":
+        case "command-menu":
+            openCommandMenu()
+            return
         case "duplicate":
             return duplicateFocusedTask() ? undefined : false
         case "reorder":
@@ -1048,6 +1071,44 @@
         default:
             return false
         }
+    }
+
+    const commandMenuContext = computed<BlockCommandMenuContext>(() => ({
+        t,
+        focusedId: focusedTaskId.value,
+        focusedBlockDisplayName: () => focusedTaskId.value ?? "",
+        sectionDisplayLabel: (section) => sectionDisplayLabel(t, section),
+        laneDisplayLabelFromPath: (parentPath) => laneDisplayLabelFromPath(t, parentPath),
+        close: () => (commandMenuOpen.value = false),
+        addAfterFocused: () => insertRelativeToFocused("after"),
+        addBeforeFocused: () => insertRelativeToFocused("before"),
+        insertInSection: (section) => taskPicker.openTaskPicker(section),
+        openFocused: openFocusedTask,
+        duplicateFocused: () => duplicateFocusedTask(),
+        deleteFocused: () => {
+            if (focusedTaskId.value) onDelete({id: focusedTaskId.value, section: focusedSection()})
+        },
+        // The canvas has no scroll of its own: the graph is laid out server-side, so jumping to a
+        // section means moving the focus ring to its first task.
+        goToSection: (section) => {
+            const first = focusOrder.value.find(
+                entry => sectionFromParentPath(entry.parentPath) === section,
+            )
+            if (first) focusedTaskId.value = first.id
+        },
+        saveFlow: () => saveFlowFromModal(),
+        taskEntries: taskPicker.focusedContextEntries.value,
+        insertTaskType: taskPicker.insertTaskInFocusedContext,
+    }))
+
+    const commandMenuContextLabel = computed(() => buildCommandMenuContextLabel(commandMenuContext.value))
+    const commandMenuItems = computed<BlockCommandMenuItem[]>(() =>
+        buildCommandMenuItems(commandMenuContext.value),
+    )
+
+    function openCommandMenu() {
+        taskPicker.ensurePluginData()
+        commandMenuOpen.value = true
     }
 
     const authoringSurface = useAuthoringSurface(vueFlow)

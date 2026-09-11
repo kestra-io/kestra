@@ -1,30 +1,49 @@
 <template>
-    <KsTable tableLayout="auto" fixed :data="variables">
-        <KsTableColumn prop="key" width="240" :label="$t(keyLabelTranslationKey)">
-            <template #default="scope">
-                <code class="key-col">{{ scope.row.key }}</code>
-            </template>
-        </KsTableColumn>
+    <KsNoData v-if="!variables.length" />
 
-        <KsTableColumn prop="value" :label="$t('value')">
-            <template #default="scope">
-                <template v-if="scope.row.date">
-                    <KsDateAgo :inverted="true" :date="scope.row.value" />
-                </template>
-                <template v-else-if="scope.row.subflow">
-                    {{ scope.row.value }}
-                    <SubFlowLink :executionId="scope.row.value" />
-                </template>
-                <template v-else>
-                    <VarValue :execution="executionsStore.execution" :value="scope.row.value" />
-                </template>
+    <div v-else class="vars">
+        <div class="vars-row vars-head">
+            <KsText size="small">{{ $t(keyLabelTranslationKey) }}</KsText>
+            <KsText size="small">{{ $t('value') }}</KsText>
+        </div>
+
+        <DynamicScroller
+            :items="variables"
+            :minItemSize="40"
+            keyField="key"
+            :buffer="200"
+            :prerender="20"
+            class="vars-rows"
+        >
+            <template #default="{item, index, active}">
+                <DynamicScrollerItem
+                    :item="item"
+                    :active="active"
+                    :dataIndex="index"
+                >
+                    <div class="vars-row">
+                        <code class="vars-key">{{ item.key }}</code>
+
+                        <div class="vars-value">
+                            <KsDateAgo v-if="item.date" :inverted="true" :date="item.value" />
+                            <template v-else-if="item.subflow">
+                                {{ item.value }}
+                                <SubFlowLink :executionId="item.value" />
+                            </template>
+                            <VarValue v-else :execution="executionsStore.execution" :value="item.value" :name="item.key" />
+                        </div>
+                    </div>
+                </DynamicScrollerItem>
             </template>
-        </KsTableColumn>
-    </KsTable>
+        </DynamicScroller>
+    </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+
     import * as Utils from "../../utils/utils"
     import VarValue from "./VarValue.vue"
     import SubFlowLink from "../flows/SubFlowLink.vue"
@@ -53,10 +72,44 @@
     const variables = computed<VariableRow[]>(() => {
         return Utils.executionVars(props.data)
     })
-
 </script>
-<style>
-    .key-col {
-        min-width: 200px;
-    }
+
+<style scoped lang="scss">
+.vars {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.vars-rows {
+    /* Bounds the scroll window so only the visible rows are built; a short list stays its own
+       height, since the total is below the max (kestra-io/kestra#19316). */
+    max-height: 60vh;
+}
+
+.vars-row {
+    /* The surface KsTable used to paint, so the list reads the same inside a drawer or a modal. */
+    background: var(--ks-bg-overlay);
+    display: grid;
+    grid-template-columns: minmax(10rem, 15rem) 1fr;
+    gap: var(--ks-spacing-4);
+    align-items: start;
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
+    border-bottom: 1px solid var(--ks-border-subtle);
+}
+
+.vars-head {
+    color: var(--ks-text-secondary);
+    border-bottom: 1px solid var(--ks-border-default);
+}
+
+.vars-key {
+    overflow-wrap: anywhere;
+}
+
+.vars-value {
+    /* A truncated value is one unbroken 2000-character line, unreadable without a wrap. */
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
 </style>

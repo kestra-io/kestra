@@ -737,7 +737,7 @@
     }
 
     .guide-note {
-        margin: var(--ks-spacing-3) 0 0;
+        margin: var(--ks-spacing-3) 0 var(--ks-spacing-4);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
     }

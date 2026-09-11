@@ -533,6 +533,40 @@
         opacity: 0.3;
     }
 
+    /* vue-flow flags its own node wrapper, which is the only element that knows a node can be
+       picked up and when it is being dragged. The pane sets `grab` for panning and every node
+       inherits it, so a node that cannot be moved has to opt back out. */
+    :deep(.vue-flow__node.draggable) {
+        cursor: grab;
+    }
+
+    :deep(.vue-flow__node:not(.draggable)) {
+        cursor: default;
+    }
+
+    :deep(.vue-flow__node.dragging) {
+        cursor: grabbing;
+    }
+
+    :deep(.vue-flow__node .node-wrapper) {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    :deep(.vue-flow__node.dragging .node-wrapper) {
+        transform: scale(1.04);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :deep(.vue-flow__node .node-wrapper) {
+            transition: none;
+        }
+
+        :deep(.vue-flow__node.dragging .node-wrapper) {
+            transform: none;
+        }
+    }
+
     .exporting {
         position: absolute;
         bottom: 0px;

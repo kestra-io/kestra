@@ -147,8 +147,8 @@
                 <template #default="scope">
                     <KsTooltip
                         v-if="hasTrigger(scope.row)"
-                        :content="$t('trigger disabled')"
-                        :disabled="!scope.row.sourceDisabled"
+                        :content="notToggleableReason(scope.row)"
+                        :disabled="!notToggleableReason(scope.row)"
                     >
                         <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
                              moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
@@ -157,7 +157,7 @@
                             @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
                             inlinePrompt
                             class="switch-text"
-                            :disabled="scope.row.sourceDisabled"
+                            :disabled="!!notToggleableReason(scope.row)"
                         />
                     </KsTooltip>
                 </template>
@@ -306,9 +306,13 @@
 
     <TriggerEnableDialog
         v-model="isEnableDialogOpen"
-        :count="enableDialogTrigger ? undefined : selection.length"
+        :count="enableDialogTrigger ? undefined : toggleableSelectionCount"
         @confirm="onEnableDialogConfirm"
-    />
+    >
+        <p v-if="!enableDialogTrigger && notToggleableSelectionCount">
+            {{ $t("bulk not toggleable warning", {count: notToggleableSelectionCount}) }}
+        </p>
+    </TriggerEnableDialog>
 
     <KsDrawer
         v-if="isOpen"
@@ -649,6 +653,14 @@
 
     const isScheduleTrigger = (row?: TriggerRow) => row?.kind === "SCHEDULE" || isSchedule(row?.type)
 
+    // A trigger the scheduler does not evaluate never reads the stored disabled flag, so the API refuses to
+    // toggle it: it can only be disabled in the flow source.
+    const notToggleableReason = (row: TriggerRow): string | undefined => {
+        if (row.sourceDisabled) return t("trigger disabled")
+        if (row.kind === "UNSCHEDULED") return t("trigger not toggleable")
+        return undefined
+    }
+
     const setDisabled = (trigger: TriggerRow, value: boolean) => {
         if (value && isScheduleTrigger(trigger)) {
             enableDialogTrigger.value = trigger
@@ -675,6 +687,7 @@
                 () => TriggersAPI.disabledTriggersByIds({triggers: selection.value, disabled: false, recoverMissedSchedules}),
                 "bulk success disabled status.false",
                 t("enable"),
+                toggleableSelectionCount.value,
             )
         }
     }
@@ -732,10 +745,20 @@
         triggerId: row.triggerId ?? row.id,
     })
 
-    const runBulk = (promiseFactory: () => Promise<ApiAsyncOperationResponse>, successKey: string, actionLabel: string) => {
+    const runBulk = (promiseFactory: () => Promise<ApiAsyncOperationResponse>, successKey: string, actionLabel: string, expected?: number) => {
+        const target = expected ?? selection.value.length
         return promiseFactory()
             .then(response => {
-                toast.success(t(successKey, {count: response.totalItems}))
+                // totalItems is what the API actually submitted, which is short of the target whenever it
+                // skipped rows it cannot act on -- a bulk action that did nothing at all must not report success.
+                const submitted = response.totalItems ?? 0
+                if (submitted === 0) {
+                    toast.warning(t("bulk none applied"))
+                } else if (submitted < target) {
+                    toast.warning(t("bulk partially applied", {count: submitted, requested: target}))
+                } else {
+                    toast.success(t(successKey, {count: submitted}))
+                }
                 dataTable.value?.toggleAllUnselected()
                 loadDataAfterAction()
             })
@@ -754,18 +777,31 @@
         const confirmKey = disabled ? "bulk disabled status.true" : "bulk disabled status.false"
         const successKey = disabled ? "bulk success disabled status.true" : "bulk success disabled status.false"
         const actionLabel = disabled ? t("disable") : t("enable")
+        const message = notToggleableSelectionCount.value
+            ? t(confirmKey, {count: toggleableSelectionCount.value})
+                + "<br><br><strong>" + t("bulk not toggleable warning", {count: notToggleableSelectionCount.value}) + "</strong>"
+            : t(confirmKey, {count: toggleableSelectionCount.value})
         toast.confirm(
-            t(confirmKey, {count: selection.value.length}),
+            message,
             () => runBulk(
                 () => TriggersAPI.disabledTriggersByIds({triggers: selection.value, disabled}),
                 successKey,
                 actionLabel,
+                toggleableSelectionCount.value,
             ),
         )
     }
 
     const findRowBySelection = (sel: TriggerControllerApiTriggerId) =>
         triggersWithType.value.find(row => (row.triggerId ?? row.id) === sel.triggerId)
+
+    // The API skips the triggers the scheduler does not evaluate on a bulk enable/disable, so counting the
+    // whole selection would announce a change to rows that will not be touched.
+    const notToggleableSelectionCount = computed<number>(() =>
+        selection.value.filter(sel => findRowBySelection(sel)?.kind === "UNSCHEDULED").length,
+    )
+
+    const toggleableSelectionCount = computed<number>(() => selection.value.length - notToggleableSelectionCount.value)
 
     const bulkUnlock = () => {
         toast.confirm(

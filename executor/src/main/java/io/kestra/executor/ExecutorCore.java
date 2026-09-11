@@ -43,7 +43,6 @@ import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
-import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.services.ExecutionService;
@@ -513,11 +512,7 @@ public class ExecutorCore {
                 .map(f -> f.getFlow())
                 .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
-                .forEach(throwConsumer(exec ->
-                {
-                    executionQueue.emit(exec);
-                    triggerEventQueue.send(UnscheduledTriggerFired.of(exec));
-                }));
+                .forEach(throwConsumer(executionQueue::emit));
 
             // send multiple conditions to the multiple condition queue for later processing
             flowTriggerService.withFlowTriggersOnly(allFlows.stream())

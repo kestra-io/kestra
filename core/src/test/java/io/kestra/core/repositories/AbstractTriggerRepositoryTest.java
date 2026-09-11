@@ -480,31 +480,22 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @Test
     void shouldExcludeUnscheduledTriggersFromFindTriggersEligibleForScheduling() {
-        // GIVEN a trigger the scheduler never evaluates, and one whose state predates TriggerType.UNSCHEDULED
+        // GIVEN three states the vNode, lock and evaluation-date predicates all accept, differing only by
+        // type: one the scheduler evaluates, one it never evaluates, and one whose type is unset because
+        // V2_0_03TriggerMigration leaves it so on rows migrated from 1.x
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerStateStore.save(trigger(tenant).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).type(TriggerType.SCHEDULE).build());
-        triggerStateStore.save(trigger(tenant).triggerId("B").locked(false).vnode(0).nextEvaluationDate(null).type(TriggerType.UNSCHEDULED).build());
-        triggerStateStore.save(trigger(tenant).triggerId("C").locked(false).vnode(0).nextEvaluationDate(null).type(null).build());
+        triggerStateStore.save(trigger(tenant).triggerId("scheduled").type(TriggerType.SCHEDULE).locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant).triggerId("unscheduled").type(TriggerType.UNSCHEDULED).locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant).triggerId("migrated").type(null).locked(false).vnode(0).nextEvaluationDate(null).build());
 
         // WHEN
         List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(0), false)
             .stream().filter(it -> tenant.equals(it.getTenantId())).toList();
 
-        // THEN
-        assertThat(results.stream().map(TriggerState::getTriggerId).toList()).containsExactlyInAnyOrder("A", "C");
-    }
-
-    @Test
-    void shouldReadTheDisabledFlagWithoutTheState() {
-        // GIVEN
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        TriggerState disabled = triggerStateStore.save(trigger(tenant).disabled(true).build());
-        TriggerState enabled = triggerStateStore.save(trigger(tenant).disabled(false).build());
-
-        // WHEN - THEN a state the scheduler has not initialized yet is never a disable
-        assertThat(triggerRepository.isDisabled(TriggerId.of(disabled))).isTrue();
-        assertThat(triggerRepository.isDisabled(TriggerId.of(enabled))).isFalse();
-        assertThat(triggerRepository.isDisabled(TriggerId.of(tenant, TEST_NAMESPACE, "unknown-flow", "unknown-trigger"))).isFalse();
+        // THEN the unscheduled one is left out, and the untyped one stays eligible: excluding it instead
+        // would stop every schedule firing on an instance upgraded from 1.x
+        assertThat(results.stream().map(TriggerState::getTriggerId).toList())
+            .containsExactlyInAnyOrder("scheduled", "migrated");
     }
 
     // -------------------------------------------------------------------------

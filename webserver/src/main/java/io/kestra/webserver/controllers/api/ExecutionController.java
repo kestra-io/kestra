@@ -56,7 +56,6 @@ import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
@@ -70,8 +69,6 @@ import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
-import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
@@ -97,7 +94,6 @@ import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
-import io.kestra.webserver.services.TriggerStateService;
 import io.kestra.webserver.services.WebhookBodyService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
@@ -256,12 +252,6 @@ public class ExecutionController {
 
     @Inject
     private WebhookBodyService webhookBodyService;
-
-    @Inject
-    private TriggerStateService triggerStateService;
-
-    @Inject
-    private TriggerEventQueue triggerEventQueue;
 
     @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
@@ -808,7 +798,7 @@ public class ExecutionController {
         final AbstractWebhookTrigger webhook = processedForRuntime(flow, resolved.trigger());
         this.onWebhookMatched(flow, webhook);
 
-        if (webhook.isDisabled() || triggerStateService.isDisabledByState(TriggerId.of(flow, webhook))) {
+        if (webhook.isDisabled()) {
             throw new ConflictException("Cannot execute webhook: the trigger '%s' is disabled.".formatted(webhook.getId()));
         }
 
@@ -839,7 +829,6 @@ public class ExecutionController {
 
             try {
                 executionCommandQueue.emit(createCommand);
-                triggerEventQueue.send(new UnscheduledTriggerFired(TriggerId.of(flow, webhook), executionId));
             } catch (QueueException ex) {
                 log.error("Unable to emit the failed execution command", ex);
             }

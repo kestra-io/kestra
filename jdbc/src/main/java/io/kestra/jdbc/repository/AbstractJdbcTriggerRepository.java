@@ -45,7 +45,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     private static final Field<Object> FLOW_ID_FIELD = field("flow_id");
     private static final Field<Object> WORKER_ID_FIELD = field("worker_id");
     private static final Field<String> TYPE_FIELD = field("type", String.class);
-    private static final Field<Boolean> DISABLED_FIELD = field("disabled", Boolean.class);
     private static final Field<Object> VALUE_FIELD = field("value");
     private static final String NEXT_EVALUATION_DATE_COLUMN = "next_evaluation_date";
     private static final String LAST_TRIGGERED_DATE_COLUMN = "last_triggered_date";
@@ -82,23 +81,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     @Override
     public Optional<TriggerState> findByIdWithoutAcl(TriggerId trigger) {
         return findOne(DSL.noCondition(), KEY_FIELD.eq(trigger.uid()));
-    }
-
-    /**
-     * Reads the generated {@code disabled} column instead of the whole row. Callers on the webhook, MCP and
-     * flow-trigger paths ask this per firing, where deserializing the full state would be the bulk of the cost.
-     */
-    @Override
-    public boolean isDisabled(TriggerId trigger) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .select(DISABLED_FIELD)
-                .from(this.jdbcRepository.getTable())
-                .where(KEY_FIELD.eq(trigger.uid()))
-                .fetchOne(DISABLED_FIELD)
-            ) == Boolean.TRUE;
     }
 
     @Override

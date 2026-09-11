@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -1569,6 +1570,85 @@ class FlowServiceTest {
         } finally {
             flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
                 .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldRejectExecutingADeletedFlowRevisionWhenRevisionIsExplicit() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+        FlowWithSource deleted = flowService.delete(created);
+
+        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
+            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision())
+        ))
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Requested Flow is not found.");
+    }
+
+    @Test
+    void shouldAllowExecutingADraftRevisionWhenRevisionIsExplicit() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            Flow executable = flowService.getFlowIfExecutableOrThrow(
+                saved.getTenantId(), saved.getNamespace(), saved.getId(), Optional.of(saved.getRevision())
+            );
+
+            assertThat(executable.isDraft()).isTrue();
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
+    }
+
+    @Test
+    void shouldWarnOnDeprecatedPebbleFunction() throws IllegalAccessException {
+        PebbleFunction deprecatedFunc = new PebbleFunction("oldFunc", List.of(), true, "newFunc");
+        PebbleExpressionService mockPebbleService = mock(PebbleExpressionService.class);
+        when(mockPebbleService.functions()).thenReturn(List.of(deprecatedFunc));
+        PebbleExpressionService original = (PebbleExpressionService) org.apache.commons.lang3.reflect.FieldUtils.readDeclaredField(flowService, "pebbleExpressionService", true);
+        try {
+            org.apache.commons.lang3.reflect.FieldUtils.writeDeclaredField(flowService, "pebbleExpressionService", mockPebbleService, true);
+            String flowId = IdUtils.create();
+            String source = """
+                id: %s
+                namespace: %s
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ oldFunc() }}"
+                """.formatted(flowId, TEST_NAMESPACE);
+            FlowWithSource flow = FlowWithSource.of(Flow.builder().id(flowId).namespace(TEST_NAMESPACE).build(), source);
+            List<String> warnings = flowService.warnings(flow, TenantService.MAIN_TENANT);
+            assertThat(warnings).contains("Pebble function 'oldFunc' is deprecated. Use 'newFunc' instead.");
+        } finally {
+            FieldUtils.writeDeclaredField(
+                flowService,
+                "pebbleExpressionService",
+                original,
+                true
+            );
         }
     }
 }

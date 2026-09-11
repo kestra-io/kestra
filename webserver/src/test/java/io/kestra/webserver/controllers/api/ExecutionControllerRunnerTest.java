@@ -50,6 +50,8 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
@@ -292,6 +294,38 @@ class ExecutionControllerRunnerTest {
             .as("the playground execution runs against the draft revision that was requested")
             .isEqualTo(1);
         assertThat(execution.getKind()).isEqualTo(ExecutionKind.PLAYGROUND);
+    }
+
+    @Test
+    void executingADeletedFlowRevisionIsRejected() {
+        // Deletion appends a revision flagged deleted rather than a fixture (@LoadFlows cannot
+        // express "deleted"), so build and delete the flow directly through the repository.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TESTS_FLOW_NS);
+
+        FlowWithSource created = flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+        FlowWithSource deleted = flowRepositoryInterface.delete(created);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/" + flowId + "?revision=" + deleted.getRevision(),
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("explicitly targeting the deleted revision is rejected as not found, same as a nonexistent flow")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test

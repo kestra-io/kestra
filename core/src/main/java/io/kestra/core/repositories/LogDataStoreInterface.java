@@ -129,6 +129,8 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
 
     void deleteByFilters(String tenantId, List<QueryFilter> filters);
 
+    int deleteByIds(String tenantId, List<String> ids);
+
     int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs,
         boolean purgeNonExecutionLogs, Integer batchSize);
 }

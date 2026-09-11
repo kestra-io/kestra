@@ -56,7 +56,7 @@ class CommandsWrapperKotlpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKotlp(new KotlpOptions(true, null, null))
+            .withKotlp(new KotlpOptions(true, null, null, false))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -80,8 +80,7 @@ class CommandsWrapperKotlpTest {
         // End to end: the embedded binary frames its records as ::{"otlp":<json>}:: and the matcher
         // turns them into metrics on the wrapper's own run context. A binary spelling the key the
         // old way would leave this empty rather than fail.
-        assertThat(runContext.metrics()).anySatisfy(metric ->
-            assertThat(metric.getName()).isEqualTo("process.cpu.time"));
+        assertThat(runContext.metrics()).anySatisfy(metric -> assertThat(metric.getName()).isEqualTo("process.cpu.time"));
     }
 
     @Test
@@ -90,7 +89,7 @@ class CommandsWrapperKotlpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKotlp(new KotlpOptions(true, "telemetry", null))
+            .withKotlp(new KotlpOptions(true, "telemetry", null, false))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -122,8 +121,7 @@ class CommandsWrapperKotlpTest {
         try (InputStream inputStream = Files.newInputStream(logFile)) {
             assertThat(matcher.parseOtlp(inputStream, runContext.logger(), runContext, Instant.now())).isNotEmpty();
         }
-        assertThat(runContext.metrics()).anySatisfy(metric ->
-            assertThat(metric.getName()).isEqualTo("process.cpu.time"));
+        assertThat(runContext.metrics()).anySatisfy(metric -> assertThat(metric.getName()).isEqualTo("process.cpu.time"));
     }
 
     @Test
@@ -132,7 +130,7 @@ class CommandsWrapperKotlpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKotlp(new KotlpOptions(true, "telemetry", Duration.ofSeconds(60)))
+            .withKotlp(new KotlpOptions(true, "telemetry", Duration.ofSeconds(60), false))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -156,7 +154,7 @@ class CommandsWrapperKotlpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKotlp(new KotlpOptions(true, null, Duration.ofSeconds(60)))
+            .withKotlp(new KotlpOptions(true, null, Duration.ofSeconds(60), false))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -193,7 +191,7 @@ class CommandsWrapperKotlpTest {
         // When — withEnv re-invokes the all-args constructor and must thread the kotlp options through.
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKotlp(new KotlpOptions(true, "telemetry", Duration.ofSeconds(60)))
+            .withKotlp(new KotlpOptions(true, "telemetry", Duration.ofSeconds(60), false))
             .withEnv(Map.of("FOO", "bar"));
 
         // Then

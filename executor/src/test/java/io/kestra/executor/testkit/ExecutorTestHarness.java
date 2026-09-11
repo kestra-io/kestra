@@ -34,7 +34,6 @@ import io.kestra.core.queues.event.Event;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
-import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -316,8 +315,7 @@ public final class ExecutorTestHarness {
             flowService,
             flowMetaStore,
             executionOutputService,
-            new ExecutionDepthConfiguration(100),
-            Mockito.mock(TriggerRepositoryInterface.class)
+            new ExecutionDepthConfiguration(100)
         );
         this.multipleConditionStateStore = new InMemoryMultipleConditionStateStore();
 

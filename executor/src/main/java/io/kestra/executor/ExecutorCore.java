@@ -50,7 +50,6 @@ import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
-import io.kestra.core.scheduler.events.UnscheduledTriggerFired;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.services.ExecutionService;
@@ -560,7 +559,6 @@ public class ExecutorCore {
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
                 .toList();
             executionQueue.emit(executions);
-            executions.forEach(exec -> triggerEventQueue.send(UnscheduledTriggerFired.of(exec)));
 
             // send multiple conditions to the multiple condition queue for later processing
             List<MultipleConditionEvent> multipleConditionEvents = flowTriggerService.withFlowTriggersOnly(allFlows.stream())

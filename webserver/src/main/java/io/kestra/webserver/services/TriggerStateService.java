@@ -3,7 +3,6 @@ package io.kestra.webserver.services;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -17,6 +16,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.notification.NotificationService;
 import io.kestra.core.notification.model.AsyncOperationType;
@@ -197,7 +197,7 @@ public class TriggerStateService {
         validateBackfillWindow(backfill);
         TriggerState state = getTriggerState(triggerId);
         if (!TriggerType.isEvaluatedByScheduler(state.getType())) {
-            throw new ConflictException("trigger %s is not evaluated by the scheduler, it cannot be backfilled".formatted(triggerId));
+            throw new ConflictException("Cannot backfill trigger '%s': the scheduler does not evaluate this kind of trigger.".formatted(triggerId));
         }
         validateBackfillable(triggerId, state);
         awaitBlockingAction(
@@ -360,10 +360,14 @@ public class TriggerStateService {
      * @param recoverMissedSchedules when {@code true}, missed schedules are recovered on enable according to the
      *        trigger's own configuration; {@code null} or {@code false} means they are skipped.
      * @throws NotFoundException if the flow or trigger does not exist.
-     * @throws ConflictException if the change failed.
+     * @throws ConflictException if the trigger is one the scheduler does not evaluate, or if the change failed.
      */
     public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled, @Nullable Boolean recoverMissedSchedules) throws NotFoundException, ConflictException {
-        validateToggleable(trigger);
+        if (!isEvaluatedByScheduler(findDeclaredTrigger(trigger))) {
+            throw new ConflictException(
+                "Cannot enable or disable trigger '%s': the scheduler does not evaluate this kind of trigger, change it in the flow source instead.".formatted(trigger)
+            );
+        }
         awaitBlockingAction(
             trigger.uid(),
             operationId -> triggerEventQueue.send(new SetDisableTrigger(trigger, disabled, recoverMissedSchedules).withOperationId(operationId)),
@@ -373,11 +377,12 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables the given triggers. Missing triggers are silently skipped.
+     * Enables or disables the given triggers. Missing triggers, and triggers the scheduler does not evaluate,
+     * are silently skipped.
      */
     public ApiAsyncOperationResponse toggleAllByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         List<TriggerId> toggleable = triggers.stream()
-            .filter(this::isFlowBackedTrigger)
+            .filter(this::isToggleable)
             .toList();
         return submitBatch(
             userId, tenantId,
@@ -388,23 +393,19 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables triggers matching the given filters.
+     * Enables or disables triggers matching the given filters. Triggers the scheduler does not evaluate are
+     * silently skipped.
      */
     public ApiAsyncOperationResponse toggleAllMatching(@Nullable String userId, String tenant, List<QueryFilter> filters, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         String operationId = IdUtils.create();
         List<String> toggledIds = triggerRepository.find(tenant, filters)
-            .map(trigger ->
+            .map(TriggerId::of)
+            .filter(this::isToggleable)
+            .map(id ->
             {
-                TriggerId id = TriggerId.of(trigger);
-                try {
-                    validateToggleable(id);
-                    triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId));
-                    return id.uid();
-                } catch (NotFoundException ignored) {
-                    return null;
-                }
+                triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId));
+                return id.uid();
             })
-            .filter(Objects::nonNull)
             .collectList()
             .blockOptional()
             .orElse(List.of());
@@ -463,13 +464,44 @@ public class TriggerStateService {
     }
 
     private void validateToggleable(TriggerId triggerId) throws NotFoundException {
+        findDeclaredTrigger(triggerId);
+    }
+
+    /**
+     * Returns the trigger as its flow declares it.
+     * <p>
+     * The definition answers both questions the toggle paths have — whether the trigger is still flow-backed,
+     * and whether the scheduler evaluates it — so resolving it once replaces a flow lookup followed by a
+     * trigger-state lookup. It is also the fresher of the two: {@code FlowService} derives the stored type from
+     * this same definition, so a state written before the flow last changed cannot disagree with it here.
+     *
+     * @throws NotFoundException if the flow is gone, no longer parses, or no longer declares the trigger.
+     */
+    private AbstractTrigger findDeclaredTrigger(TriggerId triggerId) throws NotFoundException {
         Flow flow = flowRepository.findById(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId())
             .orElseThrow(() -> new NotFoundException("Flow not found for trigger: %s".formatted(triggerId)));
 
-        ListUtils.emptyOnNull(flow.getTriggers()).stream()
+        // A flow that no longer parses carries no triggers rather than an empty list.
+        return ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(t -> t.getId().equals(triggerId.getTriggerId()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
+    }
+
+    private static boolean isEvaluatedByScheduler(AbstractTrigger trigger) {
+        return TriggerType.isEvaluatedByScheduler(TriggerType.from(trigger));
+    }
+
+    /**
+     * Whether a bulk enable/disable should act on this trigger: its flow still declares it, and the scheduler
+     * evaluates it and so honours its stored {@code disabled} flag.
+     */
+    private boolean isToggleable(TriggerId triggerId) {
+        try {
+            return isEvaluatedByScheduler(findDeclaredTrigger(triggerId));
+        } catch (NotFoundException e) {
+            return false;
+        }
     }
 
     /**

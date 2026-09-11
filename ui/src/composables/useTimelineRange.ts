@@ -18,8 +18,8 @@ export const TIMELINE_RANGE_PRESETS: TimelineRangePreset[] = [
 ]
 
 const DEFAULT_RANGE_MS = durationUtils.duration("PT24H") * 1000
-const MIN_RANGE_MS = durationUtils.duration("PT5M") * 1000
-const MAX_RANGE_MS = durationUtils.duration("PT8760H") * 1000
+export const MIN_RANGE_MS = durationUtils.duration("PT5M") * 1000
+export const MAX_RANGE_MS = durationUtils.duration("PT8760H") * 1000
 const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
 const END_QUERY_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
 // startDate/endDate and timeRange are mutually exclusive execution filters on the backend

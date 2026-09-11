@@ -308,6 +308,7 @@ public class Flow extends AbstractFlow implements HasUID {
         return this.toBuilder()
             .revision(this.revision + 1)
             .deleted(true)
+            .draft(false) // switch to false to avoid resurrecting the previous revision
             .build();
     }
 

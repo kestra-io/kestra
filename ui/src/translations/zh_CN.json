@@ -203,6 +203,65 @@
     "gantt_no_tasks_executed": "此执行结束时未运行任何task。  \n请检查其概览和logs以了解原因。",
     "gantt_no_tasks_match_filters": "尝试调整搜索、状态或log-level过滤器。",
     "gantt_no_tasks_match_filters_title": "没有任务符合所选过滤器。",
+    "failureDebugPanel": {
+      "title": "失败调试",
+      "subtitle": "聚焦于 {taskId}",
+      "announce": "{count} 个 task 失败。可进行失败调试，聚焦于 {taskId}。",
+      "reopen": "调试此失败",
+      "copyError": "复制错误",
+      "switcher": {
+        "label": "此次执行中的失败"
+      },
+      "restart": {
+        "caption": "从此 task 重新开始执行。之前的 task 不会重新运行，其 outputs 将被重复使用。"
+      },
+      "copilot": {
+        "ask": "询问 Copilot"
+      },
+      "miniTimeline": {
+        "title": "发生的位置",
+        "dragHint": "拖动以选择时间范围并筛选下方的 logs。按 Escape 清除选择。"
+      },
+      "stateHistory": {
+        "title": "状态历史",
+        "elapsed": "+{duration}"
+      },
+      "resolvedConfig": {
+        "title": "已解析的配置",
+        "empty": "在此次执行所运行的流程版本中找不到该 task 的定义。",
+        "error": "无法解析该 task 的配置。请从编辑流程重试。"
+      },
+      "inputsOutputs": {
+        "title": "input 与 output"
+      },
+      "executionInputs": {
+        "title": "执行的 input",
+        "empty": "此 flow 未声明任何 input。",
+        "error": "无法解析该执行的 input。"
+      },
+      "upstreamOutputs": {
+        "title": "引用的 output",
+        "empty": "该 task 的配置未引用任何其他 task 的 output。",
+        "error": "无法加载被引用 task 的 output。"
+      },
+      "structuralImpact": {
+        "title": "结构性影响",
+        "viewDefinition": "查看 task 定义",
+        "hideDefinition": "隐藏 task 定义",
+        "relation": {
+          "focused": "失败的 task",
+          "parent": "父 task",
+          "sibling": "同级 task",
+          "child": "子 task"
+        }
+      },
+      "logs": {
+        "title": "记录的内容",
+        "empty": "此 task 尚未记录任何 log。",
+        "emptyFiltered": "所选时间范围内没有 log。按 Escape 清除选择。",
+        "error": "无法加载 logs。请从日志标签页重试。"
+      }
+    },
     "logs": "日志",
     "no_logs_data_description": "请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_logs_data_title": "未找到所选过滤器的日志。",

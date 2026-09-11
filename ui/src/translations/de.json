@@ -203,6 +203,65 @@
     "gantt_no_tasks_executed": "Diese Execution endete, ohne dass ein Task ausgeführt wurde.\nDen Grund findest du in der Übersicht und in den Logs.",
     "gantt_no_tasks_match_filters": "Passe die Filter für Suche, Status oder Log-Level an.",
     "gantt_no_tasks_match_filters_title": "Keine Tasks entsprechen den ausgewählten Filtern.",
+    "failureDebugPanel": {
+      "title": "Fehler-Debugging",
+      "subtitle": "Fokussiert auf {taskId}",
+      "announce": "{count} task(s) fehlgeschlagen. Fehler-Debugging verfügbar, fokussiert auf {taskId}.",
+      "reopen": "Diesen Fehler debuggen",
+      "copyError": "Fehler kopieren",
+      "switcher": {
+        "label": "Fehler in dieser Ausführung"
+      },
+      "restart": {
+        "caption": "Startet die Ausführung ab diesem task neu. Vorgelagerte tasks werden nicht erneut ausgeführt, ihre outputs werden wiederverwendet."
+      },
+      "copilot": {
+        "ask": "Copilot fragen"
+      },
+      "miniTimeline": {
+        "title": "Wo es passiert ist",
+        "dragHint": "Ziehen, um einen Zeitraum auszuwählen und die logs unten zu filtern. Escape drücken, um die Auswahl zu löschen."
+      },
+      "stateHistory": {
+        "title": "Statusverlauf",
+        "elapsed": "+{duration}"
+      },
+      "resolvedConfig": {
+        "title": "Aufgelöste Konfiguration",
+        "empty": "Die Definition dieser task konnte in der Flow-Revision, mit der diese Ausführung lief, nicht gefunden werden.",
+        "error": "Die Konfiguration dieser task konnte nicht aufgelöst werden. Versuchen Sie es erneut über Flow bearbeiten."
+      },
+      "inputsOutputs": {
+        "title": "Inputs & Outputs"
+      },
+      "executionInputs": {
+        "title": "Inputs der Ausführung",
+        "empty": "Dieser flow deklariert keine inputs.",
+        "error": "Die inputs der Ausführung konnten nicht aufgelöst werden."
+      },
+      "upstreamOutputs": {
+        "title": "Verwendete outputs",
+        "empty": "Die Konfiguration dieser task verweist auf keine outputs einer anderen task.",
+        "error": "Die outputs der referenzierten tasks konnten nicht geladen werden."
+      },
+      "structuralImpact": {
+        "title": "Strukturelle Auswirkung",
+        "viewDefinition": "Task-Definition anzeigen",
+        "hideDefinition": "Task-Definition ausblenden",
+        "relation": {
+          "focused": "Fehlgeschlagener task",
+          "parent": "Übergeordneter task",
+          "sibling": "Paralleler task",
+          "child": "Untergeordneter task"
+        }
+      },
+      "logs": {
+        "title": "Was protokolliert wurde",
+        "empty": "Für diesen task wurden noch keine logs aufgezeichnet.",
+        "emptyFiltered": "Keine logs im ausgewählten Zeitraum. Escape drücken, um die Auswahl zu löschen.",
+        "error": "Logs konnten nicht geladen werden. Versuchen Sie es erneut über den Logs-Tab."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Passe deine Filter an, ändere den Zeitraum oder prüfe, ob der Flow kürzlich ausgeführt wurde.",
     "no_logs_data_title": "Keine Logs für die ausgewählten Filter gefunden.",

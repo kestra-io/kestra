@@ -203,6 +203,65 @@
     "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
     "gantt_no_tasks_match_filters": "Try adjusting the search, state, or log-level filters.",
     "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
+    "failureDebugPanel": {
+      "title": "Failure debug",
+      "subtitle": "Focused on {taskId}",
+      "announce": "{count} task(s) failed. Failure debug available, focused on {taskId}.",
+      "reopen": "Debug this failure",
+      "copyError": "Copy error",
+      "switcher": {
+        "label": "Failures in this execution"
+      },
+      "restart": {
+        "caption": "Restarts the execution from this task. Upstream tasks are not re-run and their outputs are reused."
+      },
+      "copilot": {
+        "ask": "Ask Copilot"
+      },
+      "miniTimeline": {
+        "title": "Where it happened",
+        "dragHint": "Drag to select a time range and filter the logs below. Press Escape to clear."
+      },
+      "stateHistory": {
+        "title": "State history",
+        "elapsed": "+{duration}"
+      },
+      "resolvedConfig": {
+        "title": "Resolved configuration",
+        "empty": "This task's definition could not be found in the flow revision this execution ran on.",
+        "error": "Could not resolve this task's configuration. Try again from Edit flow."
+      },
+      "inputsOutputs": {
+        "title": "Inputs & outputs"
+      },
+      "executionInputs": {
+        "title": "Execution inputs",
+        "empty": "This flow declares no inputs.",
+        "error": "Could not resolve the execution's inputs."
+      },
+      "upstreamOutputs": {
+        "title": "Outputs consumed",
+        "empty": "This task's configuration does not reference any other task's outputs.",
+        "error": "Could not load the referenced tasks' outputs."
+      },
+      "structuralImpact": {
+        "title": "Structural impact",
+        "viewDefinition": "View task definition",
+        "hideDefinition": "Hide task definition",
+        "relation": {
+          "focused": "Failed task",
+          "parent": "Parent task",
+          "sibling": "Sibling task",
+          "child": "Child task"
+        }
+      },
+      "logs": {
+        "title": "What it logged",
+        "empty": "No logs recorded for this task yet.",
+        "emptyFiltered": "No logs in the selected time range. Press Escape to clear the selection.",
+        "error": "Logs could not be loaded. Try again from the Logs tab."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
     "no_logs_data_title": "No logs found for the selected filters.",
@@ -306,19 +365,19 @@
     "steps": "Steps",
     "state": "State",
     "state_history": {
-        "title": "State history",
-        "open": "State history",
-        "aria_open": "Show the state history",
-        "aria_open_for": "Show the state history for {subject}",
-        "started_at": "Started {time}",
-        "failed_at": "Failed at {time}",
-        "skipped_at": "Skipped at {time}",
-        "created_at": "Created {time}",
-        "did_not_run": "This task did not run",
-        "waiting_to_start": "Waiting to start",
-        "attempt_n": "Attempt {index}",
-        "attempt_count": "{count} attempts",
-        "copy": "Copy state history"
+      "title": "State history",
+      "open": "State history",
+      "aria_open": "Show the state history",
+      "aria_open_for": "Show the state history for {subject}",
+      "started_at": "Started {time}",
+      "failed_at": "Failed at {time}",
+      "skipped_at": "Skipped at {time}",
+      "created_at": "Created {time}",
+      "did_not_run": "This task did not run",
+      "waiting_to_start": "Waiting to start",
+      "attempt_n": "Attempt {index}",
+      "attempt_count": "{count} attempts",
+      "copy": "Copy state history"
     },
     "search": "Search",
     "source search": "Source search",

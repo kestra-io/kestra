@@ -860,6 +860,10 @@ export type ExpressionControllerRenderExpressionRequest = {
      */
     executionId?: string | null;
     /**
+     * Resolve against this task run's context within the execution (requires executionId)
+     */
+    taskRunId?: string | null;
+    /**
      * Resolve against this flow's context (with flowId)
      */
     namespace?: string | null;

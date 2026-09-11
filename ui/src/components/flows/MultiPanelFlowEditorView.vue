@@ -38,7 +38,7 @@
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
-    import {useTopologyPanels} from "./useTopologyPanels"
+    import {useTopologyPanels, resolveEditTaskTarget} from "./useTopologyPanels"
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
     import {storageKeys} from "../../utils/constants"
 
@@ -110,6 +110,28 @@
                     "items",
                 ].join("/")
                 noCodeHandlers.onCreateTask({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
+            }
+        }
+
+        if(typeof route.query.editTask === "string"){
+            const taskId = route.query.editTask
+
+            if(!editorView.value?.openTabs.includes("nocode")) {
+                editorView.value?.setTabValue("nocode")
+            } else {
+                editorView.value?.focusTab("nocode")
+            }
+
+            const {editTask: _, ...query} = route.query
+            await router.replace({...route, query})
+
+            const target = resolveEditTaskTarget(flowStore.flowYaml ?? "", pluginsStore, "tasks", taskId)
+            if (target) {
+                const panelIndex = Math.max(
+                    0,
+                    panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))),
+                )
+                noCodeHandlers.onEditTask({panelIndex, tabIndex: 0}, target.parentPath, target.blockSchemaPath, target.refPath)
             }
         }
     })

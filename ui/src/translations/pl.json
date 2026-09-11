@@ -203,6 +203,65 @@
     "gantt_no_tasks_executed": "Ta egzekucja zakończyła się bez uruchomienia żadnego Taska.\nSprawdź jej przegląd i logi, aby poznać przyczynę.",
     "gantt_no_tasks_match_filters": "Spróbuj dostosować filtry wyszukiwania, statusu lub poziomu logów.",
     "gantt_no_tasks_match_filters_title": "Żaden Task nie pasuje do wybranych filtrów.",
+    "failureDebugPanel": {
+      "title": "Debugowanie błędu",
+      "subtitle": "Skupiono na {taskId}",
+      "announce": "Liczba nieudanych tasków: {count}. Dostępne debugowanie błędu, skupiono na {taskId}.",
+      "reopen": "Debuguj ten błąd",
+      "copyError": "Kopiuj błąd",
+      "switcher": {
+        "label": "Błędy w tym wykonaniu"
+      },
+      "restart": {
+        "caption": "Restartuje wykonanie od tego tasku. Wcześniejsze taski nie są uruchamiane ponownie, a ich outputs są ponownie wykorzystywane."
+      },
+      "copilot": {
+        "ask": "Zapytaj Copilota"
+      },
+      "miniTimeline": {
+        "title": "Gdzie to się stało",
+        "dragHint": "Przeciągnij, aby wybrać zakres czasu i filtrować logi poniżej. Naciśnij Escape, aby wyczyścić."
+      },
+      "stateHistory": {
+        "title": "Historia statusu",
+        "elapsed": "+{duration}"
+      },
+      "resolvedConfig": {
+        "title": "Rozwiązana konfiguracja",
+        "empty": "Nie znaleziono definicji tego tasku w wersji flow, na której działało to wykonanie.",
+        "error": "Nie udało się rozwiązać konfiguracji tego tasku. Spróbuj ponownie w Edytuj Flow."
+      },
+      "inputsOutputs": {
+        "title": "Inputy i outputy"
+      },
+      "executionInputs": {
+        "title": "Inputy wykonania",
+        "empty": "Ten flow nie deklaruje żadnych inputów.",
+        "error": "Nie udało się rozwiązać inputów wykonania."
+      },
+      "upstreamOutputs": {
+        "title": "Wykorzystane outputy",
+        "empty": "Konfiguracja tego tasku nie odwołuje się do outputów żadnego innego tasku.",
+        "error": "Nie udało się załadować outputów przywoływanych tasków."
+      },
+      "structuralImpact": {
+        "title": "Wpływ strukturalny",
+        "viewDefinition": "Pokaż definicję tasku",
+        "hideDefinition": "Ukryj definicję tasku",
+        "relation": {
+          "focused": "Nieudany task",
+          "parent": "Task nadrzędny",
+          "sibling": "Task równoległy",
+          "child": "Task podrzędny"
+        }
+      },
+      "logs": {
+        "title": "Co zarejestrowano",
+        "empty": "Dla tego tasku nie zarejestrowano jeszcze żadnych logów.",
+        "emptyFiltered": "Brak logów w wybranym zakresie czasu. Naciśnij Escape, aby wyczyścić zaznaczenie.",
+        "error": "Nie udało się załadować logów. Spróbuj ponownie w zakładce Logs."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Dostosuj filtry, zmień zakres czasu lub sprawdź, czy Flow był ostatnio uruchamiany.",
     "no_logs_data_title": "Nie znaleziono logów dla wybranych filtrów.",

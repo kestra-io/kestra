@@ -203,6 +203,65 @@
     "gantt_no_tasks_executed": "यह execution बिना किसी task के चलाए समाप्त हो गया।  \nकारण के लिए इसका अवलोकन और logs जांचें।",
     "gantt_no_tasks_match_filters": "खोज, स्थिति, या log-level फ़िल्टर को समायोजित करने का प्रयास करें।",
     "gantt_no_tasks_match_filters_title": "कोई task चयनित फ़िल्टर से मेल नहीं खाता।",
+    "failureDebugPanel": {
+      "title": "विफलता डिबग",
+      "subtitle": "{taskId} पर केंद्रित",
+      "announce": "{count} task विफल हुए। विफलता डिबग उपलब्ध है, {taskId} पर केंद्रित।",
+      "reopen": "इस विफलता को डिबग करें",
+      "copyError": "त्रुटि कॉपी करें",
+      "switcher": {
+        "label": "इस निष्पादन में विफलताएं"
+      },
+      "restart": {
+        "caption": "इस task से निष्पादन को पुनः आरंभ करता है। पिछले task फिर से नहीं चलाए जाते और उनके outputs पुनः उपयोग किए जाते हैं।"
+      },
+      "copilot": {
+        "ask": "Copilot से पूछें"
+      },
+      "miniTimeline": {
+        "title": "यह कहां हुआ",
+        "dragHint": "समय सीमा चुनने और नीचे दिए गए logs को फ़िल्टर करने के लिए खींचें। साफ़ करने के लिए Escape दबाएं।"
+      },
+      "stateHistory": {
+        "title": "स्थिति इतिहास",
+        "elapsed": "+{duration}"
+      },
+      "resolvedConfig": {
+        "title": "हल की गई कॉन्फ़िगरेशन",
+        "empty": "इस task की परिभाषा उस Flow रिविज़न में नहीं मिली जिस पर यह निष्पादन चला था।",
+        "error": "इस task का कॉन्फ़िगरेशन हल नहीं किया जा सका। Flow संपादित करें से पुनः प्रयास करें।"
+      },
+      "inputsOutputs": {
+        "title": "Inputs और outputs"
+      },
+      "executionInputs": {
+        "title": "निष्पादन के inputs",
+        "empty": "इस flow में कोई input घोषित नहीं है।",
+        "error": "निष्पादन के inputs हल नहीं किए जा सके।"
+      },
+      "upstreamOutputs": {
+        "title": "उपयोग किए गए outputs",
+        "empty": "इस task का कॉन्फ़िगरेशन किसी अन्य task के outputs का संदर्भ नहीं देता।",
+        "error": "संदर्भित tasks के outputs लोड नहीं किए जा सके।"
+      },
+      "structuralImpact": {
+        "title": "संरचनात्मक प्रभाव",
+        "viewDefinition": "task की परिभाषा देखें",
+        "hideDefinition": "task की परिभाषा छुपाएं",
+        "relation": {
+          "focused": "विफल task",
+          "parent": "पैरेंट task",
+          "sibling": "समान स्तर का task",
+          "child": "चाइल्ड task"
+        }
+      },
+      "logs": {
+        "title": "इसने क्या log किया",
+        "empty": "इस task के लिए अभी तक कोई log दर्ज नहीं हुआ है।",
+        "emptyFiltered": "चयनित समय सीमा में कोई log नहीं है। चयन साफ़ करने के लिए Escape दबाएं।",
+        "error": "logs लोड नहीं हो सके। Logs टैब से पुनः प्रयास करें।"
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
     "no_logs_data_title": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले।",

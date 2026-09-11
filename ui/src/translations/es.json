@@ -203,6 +203,65 @@
     "gantt_no_tasks_executed": "Esta ejecución terminó sin ejecutar ninguna task.\nVerifique su resumen y logs para conocer la razón.",
     "gantt_no_tasks_match_filters": "Intenta ajustar los filtros de búsqueda, estado o nivel de log.",
     "gantt_no_tasks_match_filters_title": "No hay tareas que coincidan con los filtros seleccionados.",
+    "failureDebugPanel": {
+      "title": "Depuración de fallos",
+      "subtitle": "Centrado en {taskId}",
+      "announce": "{count} task(s) fallidos. Depuración de fallos disponible, centrado en {taskId}.",
+      "reopen": "Depurar este fallo",
+      "copyError": "Copiar error",
+      "switcher": {
+        "label": "Fallos en esta ejecución"
+      },
+      "restart": {
+        "caption": "Reinicia la ejecución desde este task. Los tasks anteriores no se vuelven a ejecutar y se reutilizan sus outputs."
+      },
+      "copilot": {
+        "ask": "Preguntar a Copilot"
+      },
+      "miniTimeline": {
+        "title": "Dónde ocurrió",
+        "dragHint": "Arrastra para seleccionar un rango de tiempo y filtrar los logs de abajo. Pulsa Escape para borrar."
+      },
+      "stateHistory": {
+        "title": "Historial de estado",
+        "elapsed": "+{duration}"
+      },
+      "resolvedConfig": {
+        "title": "Configuración resuelta",
+        "empty": "No se pudo encontrar la definición de esta task en la revisión del flujo con la que se ejecutó esta ejecución.",
+        "error": "No se pudo resolver la configuración de esta task. Inténtalo de nuevo desde Editar flujo."
+      },
+      "inputsOutputs": {
+        "title": "Inputs y outputs"
+      },
+      "executionInputs": {
+        "title": "Inputs de la ejecución",
+        "empty": "Este flujo no declara inputs.",
+        "error": "No se pudieron resolver los inputs de la ejecución."
+      },
+      "upstreamOutputs": {
+        "title": "Outputs consumidos",
+        "empty": "La configuración de esta task no hace referencia a los outputs de ninguna otra task.",
+        "error": "No se pudieron cargar los outputs de las tasks referenciadas."
+      },
+      "structuralImpact": {
+        "title": "Impacto estructural",
+        "viewDefinition": "Ver definición del task",
+        "hideDefinition": "Ocultar definición del task",
+        "relation": {
+          "focused": "Task fallido",
+          "parent": "Task padre",
+          "sibling": "Task hermano",
+          "child": "Task hijo"
+        }
+      },
+      "logs": {
+        "title": "Qué registró",
+        "empty": "Aún no hay logs registrados para este task.",
+        "emptyFiltered": "No hay logs en el rango de tiempo seleccionado. Pulsa Escape para borrar la selección.",
+        "error": "No se pudieron cargar los logs. Inténtalo de nuevo desde la pestaña Logs."
+      }
+    },
     "logs": "Logs",
     "no_logs_data_description": "Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
     "no_logs_data_title": "No se encontraron logs para los filtros seleccionados.",

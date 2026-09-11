@@ -62,7 +62,7 @@
             type="warning"
             :closable="false"
             data-test="var-value-truncated"
-            :title="$t('large_outputs.value_truncated', {size: fullTextSize, lines: Utils.DISPLAY_MAX_LINES})"
+            :title="$t('large_outputs.value_truncated', {size: fullTextSize})"
         >
             <KsButton size="small" @click="copyFullValue">
                 {{ $t('copy') }}
@@ -198,7 +198,7 @@
 
     const isTruncated = computed(() => displayText.value.length < fullText.value.length)
 
-    const fullTextSize = computed(() => Utils.humanFileSize(fullText.value.length))
+    const fullTextSize = computed(() => Utils.humanTextSize(fullText.value))
 
     const editorHeight = computed(() => Math.min(20, Math.max(5, displayText.value.split("\n").length)))
 

@@ -124,6 +124,11 @@ function clipLines(text: string): string {
         .join("\n")
 }
 
+/** Size of `text` on the wire: a character count understates a multi-byte value. */
+export function humanTextSize(text: string): string {
+    return humanFileSize(new TextEncoder().encode(text).length)
+}
+
 /**
  * Format bytes as human-readable text.
  *

@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {flatten} from "./utils"
+import {capForDisplay, DISPLAY_MAX_LINE_CHARS, flatten} from "./utils"
 
 vi.mock("@kestra-io/design-system", () => ({
     fileUtils: {isFileUri: () => false},
@@ -24,5 +24,15 @@ describe("flatten", () => {
         const wide = Object.fromEntries(Array.from({length: 150_000}, (_, index) => [`item_${index}`, index]))
 
         expect(Object.keys(flatten(wide))).toHaveLength(150_000)
+    })
+})
+
+describe("capForDisplay", () => {
+    it("should clip a single long line even when the value is under every other limit", () => {
+        const text = ["short", "x".repeat(5000), "short"].join("\n")
+
+        const capped = capForDisplay(text)
+
+        expect(capped.split("\n").map((line) => line.length)).toEqual([5, DISPLAY_MAX_LINE_CHARS, 5])
     })
 })

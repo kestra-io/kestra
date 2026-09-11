@@ -42,7 +42,7 @@ const i18n = createI18n({
         en: {
             copy: "Copy",
             large_outputs: {
-                value_truncated: "Only the first {lines} lines of this {size} value are shown.",
+                value_truncated: "Showing a truncated preview of this {size} value.",
             },
         },
     },
@@ -88,7 +88,7 @@ describe("VarValue", () => {
 
         expect(editorContent(wrapper).length).toBeLessThanOrEqual(256 * 1024)
         expect(wrapper.find("[data-test=var-value-truncated]").text()).toContain(
-            "Only the first 200 lines of this 1.1 MiB value are shown.",
+            "Showing a truncated preview of this 1.1 MiB value.",
         )
     })
 

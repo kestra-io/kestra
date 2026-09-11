@@ -47,7 +47,7 @@
                                     type="warning"
                                     :closable="false"
                                     data-test="raw-value-truncated"
-                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize, lines: Utils.DISPLAY_MAX_LINES})"
+                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
                                 />
                                 <KsEditor
                                     v-bind="editorBindings"
@@ -82,7 +82,7 @@
                                     type="warning"
                                     :closable="false"
                                     data-test="raw-value-truncated"
-                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize, lines: Utils.DISPLAY_MAX_LINES})"
+                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
                                 />
                                 <div class="viewer__scalar">
                                     <code>{{ cappedRawValue }}</code>
@@ -424,7 +424,7 @@
 
     const isRawTruncated = computed(() => cappedRawValue.value.length < rawValue.value.length)
 
-    const rawValueSize = computed(() => Utils.humanFileSize(rawValue.value.length))
+    const rawValueSize = computed(() => Utils.humanTextSize(rawValue.value))
 
     async function selectItem(item: ExplorerItem) {
         if (item.taskRunId) {

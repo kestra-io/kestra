@@ -492,7 +492,7 @@
     "download": "Download",
     "jsonl": "JSONL",
     "large_outputs": {
-      "value_truncated": "Only the first {lines} lines of this {size} value are shown."
+      "value_truncated": "Showing a truncated preview of this {size} value."
     },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",

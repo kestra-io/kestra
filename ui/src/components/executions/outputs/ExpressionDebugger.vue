@@ -41,7 +41,7 @@
                         type="warning"
                         :closable="false"
                         data-test="result-truncated"
-                        :title="$t('large_outputs.value_truncated', {size: resultSize, lines: Utils.DISPLAY_MAX_LINES})"
+                        :title="$t('large_outputs.value_truncated', {size: resultSize})"
                     >
                         <KsButton size="small" @click="copyFullResult">
                             {{ $t('copy') }}
@@ -104,9 +104,10 @@
 
     const isResultTruncated = computed(() => displayResult.value.length < (result.value?.length ?? 0))
 
-    const resultSize = computed(() => Utils.humanFileSize(result.value?.length ?? 0))
+    const resultSize = computed(() => Utils.humanTextSize(result.value ?? ""))
 
     const copyFullResult = () => copyToClipboard(result.value ?? "")
+
     const resultLang = ref<"json" | "">("")
     const error = ref<string | undefined>(undefined)
 

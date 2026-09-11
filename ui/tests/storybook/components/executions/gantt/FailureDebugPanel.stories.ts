@@ -159,14 +159,14 @@ export const SingleFailure: Story = {
         // own config, so "extract"'s task run outputs should be pulled in and shown.
         await waitFor(() => expect(canvasElement.textContent).toContain("48203 rows"))
 
-        // State history, resolved configuration, execution inputs and outputs consumed are
-        // grouped as tabs of one card rather than four separate always-visible cards; switching
-        // actually changes the active tab.
+        // State history, resolved configuration, and inputs & outputs (execution inputs +
+        // outputs consumed share one tab) are grouped as tabs of one card rather than four
+        // separate always-visible cards; switching actually changes the active tab.
         const stateHistoryTab = canvas.getByRole("tab", {name: "State history"})
-        const executionInputsTab = canvas.getByRole("tab", {name: "Execution inputs"})
+        const inputsOutputsTab = canvas.getByRole("tab", {name: "Inputs & outputs"})
         await expect(stateHistoryTab).toHaveAttribute("aria-selected", "true")
-        await userEvent.click(executionInputsTab)
-        await waitFor(() => expect(executionInputsTab).toHaveAttribute("aria-selected", "true"))
+        await userEvent.click(inputsOutputsTab)
+        await waitFor(() => expect(inputsOutputsTab).toHaveAttribute("aria-selected", "true"))
         await expect(stateHistoryTab).toHaveAttribute("aria-selected", "false")
     },
 }

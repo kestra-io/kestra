@@ -4,6 +4,7 @@ import {nextTick} from "vue"
 import {createI18n} from "vue-i18n"
 import {useVueFlow} from "@vue-flow/core"
 import Topology from "../../src/Topology.vue"
+import type {FlowGraph} from "../../src/utils/vueFlowUtils"
 
 const i18n = createI18n({
     legacy: false,
@@ -13,14 +14,14 @@ const i18n = createI18n({
     fallbackWarn: false,
 })
 
-const FLOW_GRAPH = {
+const FLOW_GRAPH: FlowGraph = {
     nodes: [
-        {uid: "1", type: "task", task: {id: "task1", type: "io.kestra.plugin.core.log.Log"}},
-        {uid: "2", type: "task", task: {id: "task2", type: "io.kestra.plugin.core.log.Log"}},
+        {uid: "1", type: "task", task: {id: "task1", type: "io.kestra.plugin.core.log.Log", namespace: "io.kestra.tests", flowId: "flow"}},
+        {uid: "2", type: "task", task: {id: "task2", type: "io.kestra.plugin.core.log.Log", namespace: "io.kestra.tests", flowId: "flow"}},
     ],
-    edges: [{source: "1", target: "2", id: "e1", type: "default"}],
+    edges: [{source: "1", target: "2"}],
     clusters: [],
-} as any
+}
 
 function mountTopology(id: string) {
     return mount(Topology, {
@@ -51,8 +52,7 @@ describe("Topology view refit", () => {
     it("should fit the view once on the initial render", async () => {
         const id = `topology-${Math.random()}`
         const vueFlow = useVueFlow(id)
-        const fitView = vi.fn()
-        vueFlow.fitView = fitView
+        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
 
         mountTopology(id)
         await settle()
@@ -64,8 +64,7 @@ describe("Topology view refit", () => {
     it("should not recentre the view when the graph data is refreshed", async () => {
         const id = `topology-${Math.random()}`
         const vueFlow = useVueFlow(id)
-        const fitView = vi.fn()
-        vueFlow.fitView = fitView
+        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
 
         const wrapper = mountTopology(id)
         await settle()
@@ -82,8 +81,7 @@ describe("Topology view refit", () => {
     it("should not recentre the view when live task progress bumps taskDetailsVersion", async () => {
         const id = `topology-${Math.random()}`
         const vueFlow = useVueFlow(id)
-        const fitView = vi.fn()
-        vueFlow.fitView = fitView
+        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
 
         const wrapper = mountTopology(id)
         await settle()
@@ -100,8 +98,7 @@ describe("Topology view refit", () => {
     it("should refit when the orientation is toggled explicitly", async () => {
         const id = `topology-${Math.random()}`
         const vueFlow = useVueFlow(id)
-        const fitView = vi.fn()
-        vueFlow.fitView = fitView
+        const fitView = vi.spyOn(vueFlow, "fitView").mockResolvedValue(true)
 
         const wrapper = mountTopology(id)
         await settle()

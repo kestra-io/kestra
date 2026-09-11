@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
+import io.kestra.core.models.dashboards.filters.DurationFilters;
 import io.kestra.core.validations.DataChartKPIValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
@@ -44,6 +45,9 @@ public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIVa
         ) {
             violations.add("LABELS column is only supported with an ElasticSearch database.");
         }
+
+        violations.addAll(DurationFilters.violations(dataChart.getData().getWhere(), dataChart.getData().durationFields()));
+        violations.addAll(DurationFilters.violations(dataChart.getData().getNumerator(), dataChart.getData().durationFields()));
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();

@@ -492,7 +492,7 @@
     "download": "ダウンロード",
     "jsonl": "JSONL",
     "large_outputs": {
-      "value_truncated": "この{size}値の最初の{lines}行のみが表示されています。"
+      "value_truncated": "この{size}値の切り捨てられたプレビューを表示しています。"
     },
     "concurrency_limit": {
       "dialog_title": "同時実行制限",

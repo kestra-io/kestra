@@ -492,7 +492,7 @@
     "download": "डाउनलोड करें",
     "jsonl": "JSONL",
     "large_outputs": {
-      "value_truncated": "इस {size} मान की केवल पहली {lines} लाइनें दिखाई गई हैं।"
+      "value_truncated": "इस {size} मान का एक छोटा पूर्वावलोकन दिखाया जा रहा है।"
     },
     "concurrency_limit": {
       "dialog_title": "समानांतरता सीमाएँ",

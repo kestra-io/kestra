@@ -492,7 +492,7 @@
     "download": "下载",
     "jsonl": "JSONL",
     "large_outputs": {
-      "value_truncated": "此 {size} 值仅显示前 {lines} 行。"
+      "value_truncated": "正在显示此 {size} 值的截断预览。"
     },
     "concurrency_limit": {
       "dialog_title": "并发限制",

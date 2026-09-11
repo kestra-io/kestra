@@ -492,7 +492,7 @@
     "download": "다운로드",
     "jsonl": "JSONL",
     "large_outputs": {
-      "value_truncated": "이 {size} 값의 첫 {lines} 줄만 표시됩니다."
+      "value_truncated": "이 {size} 값의 잘린 미리보기를 표시합니다."
     },
     "concurrency_limit": {
       "dialog_title": "동시성 제한",

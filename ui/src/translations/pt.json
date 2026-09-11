@@ -1692,6 +1692,12 @@
     "item": "item",
     "items": "itens",
     "iterations": "Iterações",
+    "loop_iterations_notice": {
+      "logs": "As iterações do Loop são executadas como sub-execuções separadas, portanto, seus logs não são exibidos aqui.",
+      "outputs": "As iterações de loop são executadas como sub-execuções separadas, portanto, suas saídas não são exibidas aqui.",
+      "metrics": "As iterações de loop são executadas como sub-execuções separadas, portanto, suas métricas não são exibidas aqui.",
+      "view_iterations": "Ver iterações"
+    },
     "cron": "Cron",
     "execution_started": "A execução foi iniciada!",
     "execution_failed": "Execução FAILED!",

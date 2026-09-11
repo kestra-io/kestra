@@ -1692,6 +1692,12 @@
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
+    "loop_iterations_notice": {
+      "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
+      "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",
+      "metrics": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs métriques ne sont donc pas affichées ici.",
+      "view_iterations": "Afficher les itérations"
+    },
     "cron": "Cron",
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",

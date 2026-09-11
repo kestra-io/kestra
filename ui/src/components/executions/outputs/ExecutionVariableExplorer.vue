@@ -34,6 +34,13 @@
                                 </KsIconButton>
                             </div>
 
+                            <LoopIterationsNotice
+                                v-if="selectedLoopTaskId"
+                                kind="outputs"
+                                :taskId="selectedLoopTaskId"
+                                class="viewer-notice"
+                            />
+
                             <template v-if="selectedValue === undefined">
                                 <KsNoData
                                     :title="$t('variable_explorer.select_prompt')"
@@ -117,7 +124,9 @@
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
+    import {loopTaskIds} from "../../../utils/flowUtils"
     import FilePreview from "../FilePreview.vue"
+    import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -361,6 +370,7 @@
 
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
+    const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
     const expression = ref<string>(seededExpression())
@@ -402,6 +412,8 @@
             selectedValue.value = item.value
         }
         selectedBase.value = item.expression
+        selectedTaskId.value = (execution.value?.taskRunList ?? [])
+            .find((taskRun) => taskRun.id === item.taskRunId)?.taskId
         expressionPath.value = item.expression
         previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
@@ -424,6 +436,16 @@
             expression.value = `{{ ${baseExpressionPath} }}`
         }
     }
+
+    // A Loop over an empty list has no iteration to send the reader to.
+    const selectedLoopTaskId = computed(() => {
+        const taskId = selectedTaskId.value
+        if (!taskId || !loopTaskIds(executionsStore.flow).has(taskId)) {
+            return undefined
+        }
+        const iterationCount = (selectedValue.value as {iterationCount?: unknown} | undefined)?.iterationCount
+        return Number(iterationCount) > 0 ? taskId : undefined
+    })
 
     /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
     const debuggedFileUri = computed(() => {
@@ -500,6 +522,10 @@
     &__panel--debug {
         border-left: 1px solid var(--ks-border-default);
     }
+}
+
+.viewer-notice {
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) 0;
 }
 
 :deep(.kel-splitter),

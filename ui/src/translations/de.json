@@ -1692,6 +1692,12 @@
     "item": "Element",
     "items": "Elemente",
     "iterations": "Iterationen",
+    "loop_iterations_notice": {
+      "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",
+      "outputs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Outputs hier nicht angezeigt.",
+      "metrics": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Metriken hier nicht angezeigt.",
+      "view_iterations": "Iterationen ansehen"
+    },
     "cron": "Cron",
     "execution_started": "Die Execution wurde gestartet!",
     "execution_failed": "Execution fehlgeschlagen!",

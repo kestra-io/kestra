@@ -1692,6 +1692,12 @@
     "item": "elemento",
     "items": "elementos",
     "iterations": "Iteraciones",
+    "loop_iterations_notice": {
+      "logs": "Las iteraciones de bucle se ejecutan como subejecuciones separadas, por lo que sus logs no se muestran aquí.",
+      "outputs": "Las iteraciones de bucle se ejecutan como sub-executions separadas, por lo que sus outputs no se muestran aquí.",
+      "metrics": "Las iteraciones de bucle se ejecutan como sub-executions separadas, por lo que sus métricas no se muestran aquí.",
+      "view_iterations": "Ver iteraciones"
+    },
     "cron": "Cron",
     "execution_started": "¡La ejecución ha comenzado!",
     "execution_failed": "¡Ejecución fallida!",

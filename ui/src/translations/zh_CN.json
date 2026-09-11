@@ -1692,6 +1692,12 @@
     "item": "项目",
     "items": "项目",
     "iterations": "迭代次数",
+    "loop_iterations_notice": {
+      "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",
+      "outputs": "循环迭代作为单独的子 Execution 运行，因此它们的 output 不在此处显示。",
+      "metrics": "循环迭代作为单独的子 Execution 运行，因此它们的指标不在此处显示。",
+      "view_iterations": "查看迭代"
+    },
     "cron": "定时任务",
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",

@@ -1692,6 +1692,12 @@
     "item": "アイテム",
     "items": "アイテム",
     "iterations": "イテレーション",
+    "loop_iterations_notice": {
+      "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",
+      "outputs": "ループのイテレーションは個別のサブExecutionとして実行されるため、そのOutputはここに表示されません。",
+      "metrics": "ループのイテレーションは個別のサブ実行として実行されるため、そのメトリクスはここに表示されません。",
+      "view_iterations": "イテレーションを表示"
+    },
     "cron": "Cron（クーロン）",
     "execution_started": "実行が開始されました！",
     "execution_failed": "実行が失敗しました！",

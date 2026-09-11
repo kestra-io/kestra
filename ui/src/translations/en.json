@@ -1692,6 +1692,12 @@
     "item": "item",
     "items": "items",
     "iterations": "Iterations",
+    "loop_iterations_notice": {
+        "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
+        "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
+        "metrics": "Loop iterations run as separate sub-executions, so their metrics are not displayed here.",
+        "view_iterations": "View iterations"
+    },
     "cron": "Cron",
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",

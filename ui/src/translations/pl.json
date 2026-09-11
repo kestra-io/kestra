@@ -1692,6 +1692,12 @@
     "item": "element",
     "items": "elementy",
     "iterations": "Iteracje",
+    "loop_iterations_notice": {
+      "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",
+      "outputs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich outputy nie są tutaj wyświetlane.",
+      "metrics": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich metryki nie są tutaj wyświetlane.",
+      "view_iterations": "Wyświetl iteracje"
+    },
     "cron": "Cron",
     "execution_started": "Egzekucja została uruchomiona!",
     "execution_failed": "Egzekucja nie powiodła się!",

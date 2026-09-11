@@ -222,6 +222,10 @@
         "title": "Where it happened",
         "dragHint": "Drag to select a time range and filter the logs below. Press Escape to clear."
       },
+      "stateHistory": {
+        "title": "State history",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "Structural impact",
         "relation": {

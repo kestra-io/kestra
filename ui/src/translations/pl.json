@@ -222,6 +222,10 @@
         "title": "Gdzie to się stało",
         "dragHint": "Przeciągnij, aby wybrać zakres czasu i filtrować logi poniżej. Naciśnij Escape, aby wyczyścić."
       },
+      "stateHistory": {
+        "title": "Historia statusu",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "Wpływ strukturalny",
         "relation": {

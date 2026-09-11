@@ -222,6 +222,10 @@
         "title": "发生的位置",
         "dragHint": "拖动以选择时间范围并筛选下方的 logs。按 Escape 清除选择。"
       },
+      "stateHistory": {
+        "title": "状态历史",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "结构性影响",
         "relation": {

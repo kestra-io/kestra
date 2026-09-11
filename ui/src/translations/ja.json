@@ -222,6 +222,10 @@
         "title": "発生した場所",
         "dragHint": "ドラッグして時間範囲を選択し、下の logs を絞り込みます。Escape キーで選択を解除します。"
       },
+      "stateHistory": {
+        "title": "状態履歴",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "構造的な影響",
         "relation": {

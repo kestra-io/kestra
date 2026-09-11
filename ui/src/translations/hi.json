@@ -222,6 +222,10 @@
         "title": "यह कहां हुआ",
         "dragHint": "समय सीमा चुनने और नीचे दिए गए logs को फ़िल्टर करने के लिए खींचें। साफ़ करने के लिए Escape दबाएं।"
       },
+      "stateHistory": {
+        "title": "स्थिति इतिहास",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "संरचनात्मक प्रभाव",
         "relation": {

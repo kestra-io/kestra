@@ -222,6 +222,10 @@
         "title": "Dove è successo",
         "dragHint": "Trascina per selezionare un intervallo di tempo e filtrare i logs sottostanti. Premi Escape per cancellare."
       },
+      "stateHistory": {
+        "title": "Cronologia dello stato",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "Impatto strutturale",
         "relation": {

@@ -222,6 +222,10 @@
         "title": "Où cela s'est produit",
         "dragHint": "Faites glisser pour sélectionner une plage horaire et filtrer les logs ci-dessous. Appuyez sur Échap pour effacer."
       },
+      "stateHistory": {
+        "title": "Historique d'état",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "Impact structurel",
         "relation": {

@@ -222,6 +222,10 @@
         "title": "발생 위치",
         "dragHint": "드래그하여 시간 범위를 선택하고 아래 logs를 필터링합니다. Escape 키를 누르면 선택이 해제됩니다."
       },
+      "stateHistory": {
+        "title": "상태 기록",
+        "elapsed": "+{duration}"
+      },
       "structuralImpact": {
         "title": "구조적 영향",
         "relation": {

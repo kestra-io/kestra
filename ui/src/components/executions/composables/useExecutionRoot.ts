@@ -99,7 +99,7 @@ export function useExecutionRoot() {
 
         watch(route, () => {
             if (previousExecutionId.value !== route.params.id) {
-                executionsStore.logs = {total: 0, results: []}
+                executionsStore.resetLogs()
                 if (!flowMatchesTarget()) {
                     flowStore.flow = undefined
                     flowStore.flowGraph = undefined
@@ -112,7 +112,7 @@ export function useExecutionRoot() {
             executionsStore.closeSSE()
             window.removeEventListener("popstate", follow)
             executionsStore.execution = undefined
-            executionsStore.logs = {total: 0, results: []}
+            executionsStore.resetLogs()
             if (!flowMatchesTarget()) {
                 flowStore.flow = undefined
                 flowStore.flowGraph = undefined

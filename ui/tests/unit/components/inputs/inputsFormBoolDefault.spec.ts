@@ -4,7 +4,7 @@ import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
-import {useExecutionsStore} from "../../../../src/stores/executions"
+import {useExecutionsStore, type ValidationResponse} from "../../../../src/stores/executions"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -29,21 +29,17 @@ const flow = {namespace: "company.team", id: "get_data"} as any
  * `defaults` itself is stringified: Input.defaults is a Property, which serialises as its expression.
  */
 function stubValidate(id: string, defaults: boolean | undefined) {
-    return vi.fn(({formData}: {formData?: FormData}) => {
+    return vi.fn(({formData}: {formData?: FormData}): Promise<ValidationResponse> => {
         const submitted = formData?.get(id) ?? null
         const value = submitted !== null ? submitted === "true" : defaults
         return Promise.resolve({
-            status: 200,
-            headers: {},
-            data: {
-                checks: [],
-                inputs: [{
-                    enabled: true,
-                    isDefault: submitted === null && defaults !== undefined,
-                    value,
-                    input: {id, type: "BOOL", required: false, defaults: defaults === undefined ? undefined : String(defaults)},
-                }],
-            },
+            checks: [],
+            inputs: [{
+                enabled: true,
+                isDefault: submitted === null && defaults !== undefined,
+                value,
+                input: {id, type: "BOOL", required: false, defaults: defaults === undefined ? undefined : String(defaults)},
+            }],
         })
     })
 }

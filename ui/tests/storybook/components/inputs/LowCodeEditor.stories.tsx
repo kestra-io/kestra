@@ -6,6 +6,7 @@ import LowCodeEditor from "../../../../src/components/inputs/LowCodeEditor.vue";
 import {setMockClient} from "@kestra-io/kestra-sdk"
 import {mockClientFallback} from "../../../../.storybook/apiMock";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils";
 
 export default {
     title: "Components/Inputs/LowCodeEditor",
@@ -34,7 +35,7 @@ const Template: StoryFn<typeof LowCodeEditor> = (args) => ({
 
 export const Default = Template.bind({});
 Default.args = {
-    flowGraph: allowFailureDemo,
+    flowGraph: allowFailureDemo as unknown as FlowGraph,
     flowId: "allow-failure-demo",
     namespace: "sanitychecks.flows.blueprints",
     execution: {},

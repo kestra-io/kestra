@@ -5,6 +5,7 @@
         :class="[classes, {'node-wrapper--execution': isExecution}]"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
+        @click="onCardClick"
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
@@ -48,7 +49,15 @@
         EVENTS.DELETE,
         EVENTS.ADD_TASK,
         EVENTS.SHOW_DESCRIPTION,
+        EVENTS.CARD_CLICK,
     ])
+
+    function onCardClick(event: MouseEvent) {
+        const target = event.target as HTMLElement | null
+        // The card is one big target, so anything that already has its own action keeps it.
+        if (target?.closest("button, a, input, [role='button'], .vue-flow__handle")) return
+        emit(EVENTS.CARD_CLICK, event)
+    }
 
     defineOptions({
         name: "BasicNode",

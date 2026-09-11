@@ -31,6 +31,7 @@ export const EVENTS = {
     RUN_TASK: "runTask",
     SHOW_CUSTOM_ACTION: "showCustomAction",
     SHOW_DETAILS: "showDetails",
+    CARD_CLICK: "cardClick",
 } as const
 
 export interface CustomActionConfig {

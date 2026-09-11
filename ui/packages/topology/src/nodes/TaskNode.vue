@@ -11,6 +11,9 @@
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
         :focused="isKeyboardFocused"
         @cardClick="onCardClick"
+        @taskDragStart="emit(EVENTS.TASK_DRAG_START, $event)"
+        :dragging="props.dragging"
+        @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
         <template #badge>
             <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
@@ -181,6 +184,7 @@
         replayEnabled?: boolean;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
+        dragging?: boolean;
     }>(), {
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
@@ -190,6 +194,7 @@
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
+        dragging: false,
     })
 
     defineOptions({
@@ -214,6 +219,8 @@
         (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
         (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
         (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
+        (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
+        (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
 
     const execution = inject(EXECUTION_INJECTION_KEY)

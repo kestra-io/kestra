@@ -35,6 +35,9 @@
             @keydown.space.stop.prevent="emit('add-task', addTarget)"
             @mouseenter="hovered = true"
             @mouseleave="hovered = false"
+            @dragover.prevent="onDragOver"
+            @dragleave="onDragLeave"
+            @drop.prevent="onDrop"
         >
             <span class="edge-add-button-dot"><Plus :size="12" /></span>
         </button>
@@ -47,6 +50,9 @@
         :d="path[0]"
         @mouseenter="hovered = true"
         @mouseleave="hovered = false"
+        @dragover.prevent="onDragOver"
+        @dragleave="onDragLeave"
+        @drop.prevent="onDrop"
     />
 </template>
 
@@ -72,7 +78,23 @@
 
     const emit = defineEmits<{
         (event: "add-task", data: AddTaskTarget): void
+        (event: "drop-task", payload: {taskId: string; target: AddTaskTarget}): void
+        (event: "drag-over-edge", edgeId: string | undefined): void
     }>()
+
+    function onDragOver() {
+        if (props.id) emit("drag-over-edge", props.id)
+    }
+
+    function onDragLeave() {
+        emit("drag-over-edge", undefined)
+    }
+
+    function onDrop(event: DragEvent) {
+        const taskId = event.dataTransfer?.getData("text/plain")
+        emit("drag-over-edge", undefined)
+        if (taskId && addTarget.value) emit("drop-task", {taskId, target: addTarget.value})
+    }
 
     const hovered = ref(false)
 
@@ -184,8 +206,8 @@
         transition: opacity 0.12s, color 0.12s;
     }
 
-    /* The button must never take the pointer while a card is carried, or it would shadow the edge
-       hit area the drop target is resolved from. */
+    /* Shown for the whole drag so the eligible landing points are visible before the pointer
+       reaches one; the edge's hit area underneath is what actually receives the drop. */
     .edge-add-button--standby {
         opacity: 1;
         color: var(--ks-text-link);
@@ -200,12 +222,30 @@
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-strong);
         border-radius: 50%;
-        transition: border-color 0.12s, transform 0.15s ease, box-shadow 0.15s ease;
+        transition: border-color 0.12s, transform 0.15s ease;
     }
 
     .edge-add-button--standby .edge-add-button-dot {
         background: var(--ks-bg-info);
         border-color: var(--ks-border-info);
+    }
+
+    .edge-add-button--visible,
+    .edge-add-button:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Same drop-target treatment as the No-code block cards: link colour plus a dashed edge. */
+    .edge-add-button--drop {
+        color: var(--ks-text-link);
+    }
+
+    .edge-add-button--drop .edge-add-button-dot {
+        background: var(--ks-bg-info);
+        border-color: var(--ks-text-link);
+        border-style: dashed;
+        transform: scale(1.3);
     }
 
     .edge-add-button--visible,
@@ -228,19 +268,10 @@
         animation: edge-drop-pulse 1.2s ease-in-out infinite;
     }
 
-    @keyframes edge-drop-pulse {
-        0%, 100% { box-shadow: 0 0 0 0 var(--ks-bg-info); }
-        50% { box-shadow: 0 0 0 0.375rem var(--ks-bg-info); }
-    }
-
     @media (prefers-reduced-motion: reduce) {
         .edge-add-button,
         .edge-add-button-dot {
             transition: none;
-        }
-
-        .edge-add-button--drop .edge-add-button-dot {
-            animation: none;
         }
     }
 

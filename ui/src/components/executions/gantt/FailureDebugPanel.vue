@@ -100,19 +100,25 @@
                             :taskRunId="focusedTaskRun.id"
                         />
                     </KsTabPane>
-                    <KsTabPane name="executionInputs" :label="$t('failureDebugPanel.executionInputs.title')">
-                        <FailureExecutionInputs
-                            :inputIds="flowInputIds"
-                            :executionId="execution.id"
-                            :taskRunId="focusedTaskRun.id"
-                        />
-                    </KsTabPane>
-                    <KsTabPane name="upstreamOutputs" :label="$t('failureDebugPanel.upstreamOutputs.title')">
-                        <FailureUpstreamOutputs
-                            :referencedTaskIds="referencedOutputTaskIds"
-                            :taskRunList="taskRunList"
-                            :executionId="execution.id"
-                        />
+                    <KsTabPane name="inputsOutputs" :label="$t('failureDebugPanel.inputsOutputs.title')">
+                        <div class="failure-debug-panel__inputs-outputs">
+                            <div>
+                                <h4>{{ $t("failureDebugPanel.executionInputs.title") }}</h4>
+                                <FailureExecutionInputs
+                                    :inputIds="flowInputIds"
+                                    :executionId="execution.id"
+                                    :taskRunId="focusedTaskRun.id"
+                                />
+                            </div>
+                            <div>
+                                <h4>{{ $t("failureDebugPanel.upstreamOutputs.title") }}</h4>
+                                <FailureUpstreamOutputs
+                                    :referencedTaskIds="referencedOutputTaskIds"
+                                    :taskRunList="taskRunList"
+                                    :executionId="execution.id"
+                                />
+                            </div>
+                        </div>
                     </KsTabPane>
                 </KsTabs>
             </KsCard>
@@ -631,6 +637,14 @@
         grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
         gap: var(--ks-spacing-4);
         align-items: start;
+    }
+
+    // Execution inputs and outputs consumed share one tab (both are short "name → value"
+    // lists, resolved the same task-run-scoped way) rather than each getting a tab of its own.
+    .failure-debug-panel__inputs-outputs {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
     }
 
     .failure-debug-panel__hint {

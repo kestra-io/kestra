@@ -250,6 +250,8 @@
       },
       "structuralImpact": {
         "title": "Impacto estrutural",
+        "viewDefinition": "Ver definição da task",
+        "hideDefinition": "Ocultar definição da task",
         "relation": {
           "focused": "Task com falha",
           "parent": "Task pai",

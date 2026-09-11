@@ -250,6 +250,8 @@
       },
       "structuralImpact": {
         "title": "Wpływ strukturalny",
+        "viewDefinition": "Pokaż definicję tasku",
+        "hideDefinition": "Ukryj definicję tasku",
         "relation": {
           "focused": "Nieudany task",
           "parent": "Task nadrzędny",

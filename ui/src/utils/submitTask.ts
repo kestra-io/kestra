@@ -35,7 +35,7 @@ export const normalizeInputValues = (
             } else if (input.type === "DATE" && inputValue) {
                 normalized[inputName] = submitor.$moment(inputValue).format("YYYY-MM-DD")
             } else if (input.type === "TIME") {
-                normalized[inputName] = submitor.$moment(inputValue).format("hh:mm:ss")
+                normalized[inputName] = submitor.$moment(inputValue).format("HH:mm:ss")
             } else {
                 normalized[inputName] = inputValue
             }

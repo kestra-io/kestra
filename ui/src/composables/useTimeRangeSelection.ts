@@ -68,6 +68,14 @@ export function useTimeRangeSelection(timeAt: (clientX: number) => number) {
         selection.value = undefined
     }
 
+    // Defensive reset for a gesture that never reaches onPointerUp (pointercancel, or the pointer
+    // capture that setPointerCapture relies on being lost some other way) — without this, a drag
+    // interrupted off-track leaves dragStartX/dragCurrentX set and the preview band stuck on screen.
+    function cancelDrag() {
+        dragStartX.value = undefined
+        dragCurrentX.value = undefined
+    }
+
     return {
         selection,
         hasSelection,
@@ -76,6 +84,7 @@ export function useTimeRangeSelection(timeAt: (clientX: number) => number) {
         onPointerDown,
         onPointerMove,
         onPointerUp,
+        cancelDrag,
         clear,
     }
 }

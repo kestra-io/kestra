@@ -48,7 +48,11 @@
                                     :closable="false"
                                     data-test="raw-value-truncated"
                                     :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
-                                />
+                                >
+                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                        {{ $t('download') }}
+                                    </KsButton>
+                                </KsAlert>
                                 <KsEditor
                                     v-bind="editorBindings"
                                     :readOnly="true"
@@ -83,7 +87,11 @@
                                     :closable="false"
                                     data-test="raw-value-truncated"
                                     :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
-                                />
+                                >
+                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                        {{ $t('download') }}
+                                    </KsButton>
+                                </KsAlert>
                                 <div class="viewer__scalar">
                                     <code>{{ cappedRawValue }}</code>
                                 </div>
@@ -119,6 +127,7 @@
         KsSegmented,
         KsIconButton,
         KsAlert,
+        KsButton,
         KsEditor,
         KsJsonTree,
         copyToClipboard,
@@ -126,6 +135,7 @@
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Download from "vue-material-design-icons/Download.vue"
 
     import {useExecutionsStore, type Execution} from "../../../stores/executions"
     import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
@@ -502,6 +512,11 @@
 
     function copyValue() {
         copyToClipboard(rawValue.value)
+    }
+
+    function downloadValue() {
+        const name = expressionPath.value.split(".").pop() || "output"
+        Utils.downloadText(rawValue.value, `${name}.${isExpandableValue.value ? "json" : "txt"}`)
     }
 
     /* --------------------------------- Layout -------------------------------- */

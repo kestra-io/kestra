@@ -30,7 +30,7 @@
                                 {{ item.value }}
                                 <SubFlowLink :executionId="item.value" />
                             </template>
-                            <VarValue v-else :execution="executionsStore.execution" :value="item.value" />
+                            <VarValue v-else :execution="executionsStore.execution" :value="item.value" :name="item.key" />
                         </div>
                     </div>
                 </DynamicScrollerItem>

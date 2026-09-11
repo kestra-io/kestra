@@ -64,8 +64,11 @@
             data-test="var-value-truncated"
             :title="$t('large_outputs.value_truncated', {size: fullTextSize})"
         >
-            <KsButton size="small" @click="copyFullValue">
+            <KsButton size="small" data-test="copy-full" @click="copyFullValue">
                 {{ $t('copy') }}
+            </KsButton>
+            <KsButton size="small" :icon="Download" data-test="download-full" @click="downloadFullValue">
+                {{ $t('download') }}
             </KsButton>
         </KsAlert>
         <KsEditor
@@ -108,10 +111,13 @@
         value?: string | object | boolean | number;
         execution?: Execution;
         restrictUri?: boolean;
+        /** Output key this value came from, used to name the download of a truncated value. */
+        name?: string;
     }>(), {
         value: "",
         execution: () => ({id: ""}),
         restrictUri: false,
+        name: "output",
     })
 
     const editorBindings = useEditorBindings()
@@ -214,6 +220,11 @@
     const editorHeight = computed(() => Math.min(20, Math.max(5, displayText.value.split("\n").length)))
 
     const copyFullValue = () => copyToClipboard(fullText.value)
+
+    const downloadFullValue = () => Utils.downloadText(
+        fullText.value,
+        `${props.name}.${preview.value ? "json" : "txt"}`,
+    )
 
     const itemUrl = (value: string): string => {
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`

@@ -46,6 +46,9 @@
                         <KsButton size="small" @click="copyFullResult">
                             {{ $t('copy') }}
                         </KsButton>
+                        <KsButton size="small" :icon="Download" data-test="download-result" @click="downloadFullResult">
+                            {{ $t('download') }}
+                        </KsButton>
                     </KsAlert>
                     <KsEditor
                         v-bind="editorBindings"
@@ -66,6 +69,7 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
 
+    import Download from "vue-material-design-icons/Download.vue"
     import {KsEditor, KsButton, KsAlert, copyToClipboard} from "@kestra-io/design-system"
     import {evalExpression} from "@kestra-io/kestra-sdk/executions"
 
@@ -117,6 +121,11 @@
     const resultSize = computed(() => Utils.humanTextSize(result.value ?? ""))
 
     const copyFullResult = () => copyToClipboard(result.value ?? "")
+
+    const downloadFullResult = () => Utils.downloadText(
+        result.value ?? "",
+        `expression-result.${resultLang.value === "json" ? "json" : "txt"}`,
+    )
 
     const resultLang = ref<"json" | "">("")
     const error = ref<string | undefined>(undefined)

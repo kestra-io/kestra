@@ -241,6 +241,15 @@ export function hexToRgba(hex: string, opacity: number) {
     throw new Error("Bad Hex")
 }
 
+/** Offer text as a file, so a value too large to render whole is still obtainable in full. */
+export function downloadText(text: string, filename: string): void {
+    const type = filename.endsWith(".json") ? "application/json" : "text/plain"
+    const url = window.URL.createObjectURL(new Blob([text], {type}))
+    downloadUrl(url, filename)
+    // Revoking in the same tick as the click cancels the download in some browsers.
+    setTimeout(() => window.URL.revokeObjectURL(url), 0)
+}
+
 export function downloadUrl(url: string, filename: string) {
     const link = document.createElement("a")
     link.href = url

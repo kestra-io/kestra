@@ -2,6 +2,7 @@ import {describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent} from "vue"
+import * as Utils from "../../utils/utils"
 import VarValue from "./VarValue.vue"
 
 vi.mock("override/utils/route", () => ({
@@ -16,6 +17,7 @@ vi.mock("../../composables/useEditorBindings", () => ({
 vi.mock("./FilePreviewDrawer.vue", () => ({
     default: defineComponent({name: "FilePreviewDrawer", template: "<div />"}),
 }))
+
 // vi.mock is hoisted above plain consts, so the spy has to be hoisted with it.
 const {copyToClipboard} = vi.hoisted(() => ({copyToClipboard: vi.fn()}))
 
@@ -51,12 +53,13 @@ const i18n = createI18n({
 const KsButtonStub = defineComponent({
     name: "KsButton",
     // No explicit emits: the parent's @click lands as a native listener, so one click fires once.
-    template: "<button data-test=\"copy\"><slot /></button>",
+    // No data-test either: each button's own one falls through, so they stay distinguishable.
+    template: "<button><slot /></button>",
 })
 
-function mountVarValue(value: unknown) {
+function mountVarValue(value: unknown, name?: string) {
     return mount(VarValue, {
-        props: {value: value as string | object},
+        props: {value: value as string | object, name},
         global: {plugins: [i18n], stubs: {KsButton: KsButtonStub}},
     })
 }
@@ -104,12 +107,26 @@ describe("VarValue", () => {
         expect(wrapper.find("[data-test=var-value-truncated]").exists()).toBe(true)
     })
 
+    it("should download the whole value under the output's own name", async () => {
+        const value = {tasks: Array.from({length: 6000}, (_, index) => ({uid: `task ${index}`}))}
+        const downloadText = vi.spyOn(Utils, "downloadText").mockImplementation(() => {})
+
+        const wrapper = mountVarValue(value, "playbooks.plays")
+        await wrapper.find("[data-test=download-full]").trigger("click")
+
+        expect(downloadText).toHaveBeenCalledExactlyOnceWith(
+            JSON.stringify(value, null, 2),
+            "playbooks.plays.json",
+        )
+        downloadText.mockRestore()
+    })
+
     it("should copy the whole value, not the truncated one", async () => {
         const value = "x".repeat(400 * 1024) + " not json"
         copyToClipboard.mockClear()
 
         const wrapper = mountVarValue(value)
-        await wrapper.find("[data-test=copy]").trigger("click")
+        await wrapper.find("[data-test=copy-full]").trigger("click")
 
         expect(copyToClipboard).toHaveBeenCalledTimes(1)
         expect(copyToClipboard.mock.calls[0][0]).toBe(value)

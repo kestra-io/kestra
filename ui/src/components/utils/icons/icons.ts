@@ -1,3 +1,5 @@
+// design-system-disable: brand artwork, the colours are the asset rather than a themed surface
+
 export interface Icons {
     [key: string]: string;
 }

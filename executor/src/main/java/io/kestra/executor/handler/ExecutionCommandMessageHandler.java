@@ -119,14 +119,13 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                return newExecution != null ? executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
                 if (newExecution != null) {
                     if (execution.getId().equals(newExecution.getId())) {
-                        List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
-                        List<String> newIds = newExecution.getTaskRunList() != null ? newExecution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
+                        java.util.List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
+                        java.util.List<String> newIds = newExecution.getTaskRunList() != null ? newExecution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
 
                         if (originalIds.size() != newIds.size() || !newIds.containsAll(originalIds)) {
-                            List<TaskRun> pruned = execution.getTaskRunList().stream()
+                            java.util.List<TaskRun> pruned = execution.getTaskRunList().stream()
                                 .filter(tr -> !newIds.contains(tr.getId()))
                                 .toList();
                             if (!pruned.isEmpty()) {

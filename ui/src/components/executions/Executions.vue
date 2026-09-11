@@ -69,6 +69,7 @@
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
+                    :defaultDuration="chartDefaultDuration"
                 />
             </template>
 
@@ -417,7 +418,7 @@
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
+    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -452,6 +453,13 @@
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
     import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
+    import {
+        FALLBACK_TIME_RANGE,
+        queryHasAbsoluteDateFilter,
+        queryHasUserFilters,
+        readTimeRangeFromQuery,
+        widenEmptyTimeRange,
+    } from "./timeRangeWiden"
     import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
@@ -547,6 +555,18 @@
             description: t("filter.table_column.executions.state"),
         },
         {
+            label: t("flow"),
+            prop: "flowId",
+            default: true,
+            description: t("filter.table_column.executions.flow"),
+        },
+        {
+            label: t("namespace"),
+            prop: "namespace",
+            default: true,
+            description: t("filter.table_column.executions.namespace"),
+        },
+        {
             label: t("start date"),
             prop: "state.startDate",
             default: true,
@@ -563,18 +583,6 @@
             prop: "state.duration",
             default: true,
             description: t("filter.table_column.executions.duration"),
-        },
-        {
-            label: t("namespace"),
-            prop: "namespace",
-            default: true,
-            description: t("filter.table_column.executions.namespace"),
-        },
-        {
-            label: t("flow"),
-            prop: "flowId",
-            default: true,
-            description: t("filter.table_column.executions.flow"),
         },
         {
             label: t("labels"),
@@ -664,17 +672,53 @@
 
     const ready = ref(false)
     const dataTable = useTemplateRef<any>("dataTable")
+    const chartDefaultDuration = computed(() => miscStore.configs?.chartDefaultDuration ?? FALLBACK_TIME_RANGE)
+
+    let hasAttemptedTimeRangeWiden = false
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
         lastRefreshDate.value = new Date()
 
-        await executionsStore.findExecutions(loadQuery({
+        const query = loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "state.startDate:desc"),
             state: route.query?.state ? [route.query?.state] : props.statuses,
-        }))
+        }) as Record<string, any>
+
+        await executionsStore.findExecutions(query)
+
+        const currentTimeRange = readTimeRangeFromQuery(query)
+        if (currentTimeRange && !hasAttemptedTimeRangeWiden) {
+            hasAttemptedTimeRangeWiden = true
+            const widened = await widenEmptyTimeRange({
+                currentTimeRange,
+                defaultTimeRange: chartDefaultDuration.value,
+                hasAbsoluteDateFilter: queryHasAbsoluteDateFilter(query),
+                alreadyAttempted: false,
+                hasUserFilters: queryHasUserFilters(query),
+                currentTotal: executionsStore.total ?? 0,
+                search: async (timeRange) => {
+                    await executionsStore.findExecutions(
+                        normalizeRouteTimeRangeFilter({...query, page: 1}, timeRange),
+                    )
+                    return executionsStore.total ?? 0
+                },
+            })
+            if (widened.widened && widened.timeRange) {
+                if (props.embed) {
+                    localPage.value = 1
+                }
+                await router.replace({
+                    ...route,
+                    query: {
+                        ...normalizeRouteTimeRangeFilter({...route.query} as Record<string, any>, widened.timeRange),
+                        page: "1",
+                    },
+                })
+            }
+        }
 
         if (props.isConcurrency) {
             emitStateCount()

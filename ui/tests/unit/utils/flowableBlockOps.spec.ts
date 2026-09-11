@@ -25,6 +25,15 @@ import {
     wrapAsDagTask,
 } from "../../../src/utils/flowableBlockOps"
 
+interface DagLaneItem {
+    task: {id: string}
+    dependsOn?: string[]
+}
+
+interface DagProbeFlow {
+    tasks: {id: string; tasks?: DagLaneItem[]}[]
+}
+
 const SIMPLE_FLOW = `
 id: my_flow
 namespace: company.team
@@ -1272,8 +1281,8 @@ tasks:
 `
         const LANE = "tasks[0].tasks"
         const dagOf = (source: string) => {
-            const lane = (flowYamlUtils.parse(source) as any).tasks[0].tasks
-            return Object.fromEntries(lane.map((i: any) => [i.task.id, i.dependsOn ?? null]))
+            const lane = flowYamlUtils.parse<DagProbeFlow>(source)!.tasks[0]!.tasks ?? []
+            return Object.fromEntries(lane.map(item => [item.task.id, item.dependsOn ?? null]))
         }
 
         it("splices the task between the two ends of the edge it was dropped on", () => {

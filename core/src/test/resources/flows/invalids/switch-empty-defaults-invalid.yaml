@@ -1,0 +1,13 @@
+id: switch-empty-defaults-invalid
+namespace: io.kestra.tests
+
+tasks:
+  - id: switch
+    type: io.kestra.plugin.core.flow.Switch
+    value: A
+    cases:
+      A:
+        - id: a
+          type: io.kestra.plugin.core.debug.Return
+          format: A
+    defaults: []

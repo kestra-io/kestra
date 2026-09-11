@@ -155,7 +155,7 @@ export function trackFileOpen(fileName: string) {
     makeEvent("files_open", "files_browser", {file_name: fileName})
 }
 
-export type AuthoringAction = "task_added" | "task_edited" | "task_deleted"
+export type AuthoringAction = "task_added" | "task_edited" | "task_deleted" | "task_moved"
 export type AuthoringSurface = "no_code" | "topology"
 
 export interface AuthoringActionMetadata {

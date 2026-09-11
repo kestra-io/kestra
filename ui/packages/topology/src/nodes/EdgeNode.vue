@@ -215,6 +215,9 @@
 
     .edge-add-button--drop {
         color: var(--ks-text-link);
+        /* The dragged card is z-index 1 in the same stacking context and comes later in the DOM,
+           so the marker has to outrank it or it is buried under the card heading for it. */
+        z-index: 10;
     }
 
     .edge-add-button--drop .edge-add-button-dot {

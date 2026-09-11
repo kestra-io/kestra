@@ -555,6 +555,7 @@
     :deep(.vue-flow__node.dragging .node-wrapper) {
         transform: scale(1.04);
         box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+        opacity: 0.85;
     }
 
     @media (prefers-reduced-motion: reduce) {

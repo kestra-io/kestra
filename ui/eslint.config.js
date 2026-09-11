@@ -1,6 +1,7 @@
 import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
 import {defineConfig, globalIgnores} from "eslint/config"
+import kestraTokens from "./scripts/tokens/eslintPlugin.mjs"
 
 export default defineConfig([
     globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "packages/kestra-sdk/src/openapi/*"]),
@@ -23,6 +24,20 @@ export default defineConfig([
                 message: "Write this as TypeScript: JavaScript files are not allowed in the app, test or storybook trees.",
             }],
         },
+    },
+    // `<style>` blocks are stylelint's half of this; here it is the tokens written in JavaScript.
+    // `.jsx`/`.tsx` carry no other rule in this repo, so they get the parser they need and this rule
+    // alone — three Storybook stories were reaching for an undeclared token where nothing looked.
+    {
+        files: ["**/*.{js,mjs,cjs,ts,vue}"],
+        plugins: {"kestra-tokens": kestraTokens},
+        rules: {"kestra-tokens/no-undeclared-ks-token": "error"},
+    },
+    {
+        files: ["**/*.{jsx,tsx}"],
+        languageOptions: {parser: tsParser, parserOptions: {ecmaFeatures: {jsx: true}}},
+        plugins: {"kestra-tokens": kestraTokens},
+        rules: {"kestra-tokens/no-undeclared-ks-token": "error"},
     },
     // Formatting rules for JS/TS files (not .vue — handled below by vue/* variants)
     {

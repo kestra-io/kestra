@@ -34,11 +34,9 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 8. **Don't fork — extend.** If a `Ks*` component is *almost* what you need, add a prop or a slot to the component in `ui/packages/design-system/`. Copy-pasting the component into your feature folder is forbidden.
 9. **Every new `Ks*` component needs a Storybook story and a unit test.** Stories double as living documentation for design and product reviewers.
 10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
-11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere. One grep is enough:
+11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere, and the interval filter's Apply-to row shipped with no visible selection for the same reason (kestra-io/kestra#18777).
 
-    ```bash
-    grep -rn -- "--ks-your-token" packages/design-system/src/assets/styles/
-    ```
+    Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
 
 ## Best practices for keeping the design system healthy
@@ -321,7 +319,7 @@ If your `<style>` block needs to exist:
 .my-feature {
     background: var(--ks-bg-surface);
     color: var(--ks-text-primary);
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
 }
 ```
 

@@ -25,7 +25,7 @@
         "preview": "vite preview",
         "precheck:types": "node scripts/ensure-sdk.mjs",
         "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsc --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
-        "test:lint": "oxlint src packages tests && eslint",
+        "test:lint": "oxlint src packages tests && eslint && stylelint \"{src,packages,tests}/**/*.{vue,scss,css}\"",
         "check:ts-any": "node scripts/explicit-any/baseline.mjs src packages tests",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
@@ -35,7 +35,7 @@
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "node ./scripts/translations/check-translations.mjs --scope oss && node --experimental-strip-types ./scripts/translations/check.ts",
         "translations:generate": "node --experimental-strip-types ./scripts/translations/generate.ts",
-        "lint": "oxlint --fix src packages tests && eslint --fix",
+        "lint": "oxlint --fix src packages tests && eslint --fix && stylelint \"{src,packages,tests}/**/*.{vue,scss,css}\"",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "postinstall": "npx patch-package"
@@ -161,6 +161,9 @@
         "dompurify": "^3.4.13"
     },
     "lint-staged": {
+        "**/*.{vue,scss,css}": [
+            "stylelint"
+        ],
         "**/*.{js,mjs,cjs,ts,vue}": [
             "oxlint --fix",
             "eslint --fix"
@@ -182,5 +185,11 @@
         "fsevents@2.3.3": true,
         "protobufjs@7.6.5": true,
         "tree-sitter-json@0.24.8": true
+    },
+    "devDependencies": {
+        "postcss-html": "^1.8.1",
+        "postcss-scss": "^4.0.9",
+        "stylelint": "^16.26.1",
+        "stylelint-config-recommended-vue": "^1.6.1"
     }
 }

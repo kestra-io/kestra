@@ -458,7 +458,7 @@
 
 button.playground-button {
     color: var(--ks-white);
-    background-color: var(--ks-playground-bg-color);
+    background-color: var(--ks-toggle-playground);
 }
 
 .status-tag {

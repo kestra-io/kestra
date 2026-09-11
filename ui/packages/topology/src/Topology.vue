@@ -40,6 +40,7 @@
                 :showDetails="showDetails"
                 @edit="emit(EVENTS.EDIT, $event)"
                 @delete="emit(EVENTS.DELETE, $event)"
+                @duplicate="emit(EVENTS.DUPLICATE, $event)"
                 @run-task="emit(EVENTS.RUN_TASK, $event)"
                 @expand="expand($event)"
                 @open-link="emit(EVENTS.OPEN_LINK, $event)"
@@ -338,6 +339,7 @@
         [
             EVENTS.EDIT,
             EVENTS.DELETE,
+            EVENTS.DUPLICATE,
             EVENTS.RUN_TASK,
             EVENTS.OPEN_LINK,
             EVENTS.SHOW_LOGS,

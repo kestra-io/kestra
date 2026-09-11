@@ -17,6 +17,7 @@ export const GRAPH_BACKGROUND = {
 export const EVENTS = {
     EDIT: "edit",
     DELETE: "delete",
+    DUPLICATE: "duplicate",
     SHOW_DESCRIPTION: "showDescription",
     COLLAPSE: "collapse",
     EXPAND: "expand",

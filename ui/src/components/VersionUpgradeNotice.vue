@@ -1,23 +1,33 @@
 <template>
-    <KsAlert
-        v-if="visible"
-        type="info"
-        center
-        closable
-        class="banner"
-        @close="dismiss"
-    >
-        <template #title>
+    <aside v-if="visible" class="version-upgrade-notice">
+        <div class="notice-header">
+            <InformationOutline :size="16" />
+            <KsIconButton size="xs" :tooltip="$t('close')" placement="right" @click="dismiss">
+                <Close :size="14" />
+            </KsIconButton>
+        </div>
+        <p class="notice-message">
             {{ $t("versionUpgradeNotice.message", {version: notice!.to}) }}
-            <KsLink type="primary" :href="migrationGuideUrl" target="_blank">
-                {{ $t("versionUpgradeNotice.cta") }}
-            </KsLink>
-        </template>
-    </KsAlert>
+        </p>
+        <KsButton
+            class="notice-cta"
+            type="primary"
+            size="small"
+            tag="a"
+            :href="migrationGuideUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            {{ $t("versionUpgradeNotice.cta") }}
+        </KsButton>
+    </aside>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import {KsButton, KsIconButton} from "@kestra-io/design-system"
+    import Close from "vue-material-design-icons/Close.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import {useVersionUpgradeNotice} from "../composables/useVersionUpgradeNotice"
 
     const {notice, visible, dismiss} = useVersionUpgradeNotice()
@@ -30,13 +40,29 @@
 </script>
 
 <style lang="scss" scoped>
-    // Spans the viewport above the app shell, so the card treatment of a standard alert is dropped.
-    // Matches the announcement, kill-switch and maintenance banners in the EE shell.
-    .banner {
-        border-left: none;
-        border-right: none;
-        border-top: none;
-        border-radius: 0;
-        flex-shrink: 0;
+    .version-upgrade-notice {
+        margin: 0 var(--ks-spacing-4) var(--ks-spacing-3);
+        padding: var(--ks-spacing-3);
+        border: var(--ks-border-width-thin) solid var(--ks-border-info);
+        border-radius: var(--ks-radius-base);
+        background: var(--ks-bg-info);
+    }
+
+    .notice-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        color: var(--ks-icon-info);
+    }
+
+    .notice-message {
+        margin: var(--ks-spacing-1) 0 var(--ks-spacing-3);
+        color: var(--ks-text-info);
+        font-size: var(--ks-font-size-xs);
+        line-height: var(--ks-line-height-base);
+    }
+
+    .notice-cta {
+        width: 100%;
     }
 </style>

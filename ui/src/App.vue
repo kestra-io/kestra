@@ -2,7 +2,6 @@
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
     <component :is="SdkDriftBanner" v-if="SdkDriftBanner" />
-    <VersionUpgradeNotice v-if="loaded && route?.name && !route.meta?.anonymous" />
     <div id="app-shell">
         <AppTopNavBar  v-if="loaded && route?.name && !route.meta?.anonymous"  />
         <div id="app-body">
@@ -39,7 +38,6 @@
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
-    import VersionUpgradeNotice from "./components/VersionUpgradeNotice.vue"
     import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"

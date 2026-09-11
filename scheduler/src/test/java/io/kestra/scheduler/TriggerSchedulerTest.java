@@ -251,6 +251,34 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldNotLockPollingTriggerWhenWorkerJobIsNotDispatched() throws Exception {
+        // region [GIVEN]
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestPollingTrigger.builder()
+                .id("polling")
+                .type(TestPollingTrigger.class.getName())
+                .interval(Duration.ofMinutes(30))
+                .build()
+        );
+        TriggerWorkerJobPublisher publisher = Mockito.mock(TriggerWorkerJobPublisher.class);
+        Mockito.when(publisher.send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(false);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow), publisher);
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN — the evaluation lock is not taken when dispatch is a no-op, so the trigger stays
+        // eligible instead of being silently stuck until a manual unlock.
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("polling")).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isLocked()).isFalse();
+        assertThat(state.getLastTriggeredDate()).isNull();
+        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(30).toInstant());
+    }
+
+    @Test
     void shouldSucceedScheduleScheduleOnDateTriggerGivenValidTimeZone() {
         // region [GIVEN]
         SchedulerClock.setClock(Clock.fixed(Instant.parse("2025-10-31T00:00:00Z"), ZoneId.systemDefault()));

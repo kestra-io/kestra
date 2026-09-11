@@ -61,7 +61,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         },
                         searchable: true,
                     },
-                ] : []) as any,
+                ] : []) as FilterConfiguration["keys"],
                 ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
@@ -89,7 +89,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     searchable: true,
                     showComparatorSelection: true,
-                }] : []) as any,
+                }] : []) as FilterConfiguration["keys"],
                 {
                     key: "kind",
                     label: t("filter.kind.label"),

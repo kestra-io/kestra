@@ -2184,7 +2184,7 @@
           "openInEditor": "에디터에서 열기",
           "apply": "적용",
           "applyTitle": "flow 적용",
-          "applyConfirm": "flow {namespace}.{id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
+          "applyConfirm": "{namespace}.{id}를 검토를 위한 드래프트 리비전으로 저장하시겠습니까? 생성되거나, 이미 존재하는 경우 새 드래프트 리비전이 추가됩니다 — 드래프트는 게시되기 전까지 trigger나 subflow에서 사용되지 않습니다.",
           "applyConfirmDashboard": "대시보드 {id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
           "applyError": "flow를 적용할 수 없습니다. 다시 시도해주세요.",
           "applyErrorDashboard": "대시보드를 적용할 수 없었습니다. 다시 시도해 주세요.",

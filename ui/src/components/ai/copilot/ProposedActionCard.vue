@@ -27,6 +27,16 @@
                     <dd class="proposed-action-arg-value">{{ value }}</dd>
                 </div>
             </dl>
+
+            <!-- The YAML/source body of a mutating action — the one thing a text summary can't convey —
+                 rendered as a diff against the matching flow's current content, so the user sees exactly
+                 what will change before approving. -->
+            <DiffView
+                v-if="!resolved && proposedSource !== null"
+                class="proposed-action-diff"
+                :oldValue="currentFlowSource ?? ''"
+                :newValue="proposedSource"
+            />
         </div>
 
         <div v-if="!resolved" class="proposed-action-footer">
@@ -55,6 +65,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
+    import DiffView from "./DiffView.vue"
     import type {ProposedActionEvent, ProposedStep} from "./types"
 
     const props = defineProps<{
@@ -63,6 +74,9 @@
         disabled?: boolean
         /** Historical (already-decided) proposal in the transcript: no footer actions, no pending status. */
         resolved?: boolean
+        /** The current source of the flow this action targets, when known — the diff's "before" side.
+         *  Absent/empty renders the proposed source as a pure addition. */
+        currentFlowSource?: string | null
     }>()
 
     const emit = defineEmits<{
@@ -82,17 +96,39 @@
     /** Longest scalar arg we'll show inline — anything above is a verbose payload (e.g. a YAML body). */
     const MAX_ARG_LENGTH = 120
 
+    /** Argument keys, in preference order, that carry the full YAML/source body of a mutating action —
+     *  shown as a diff instead of in the identifying-args list below. */
+    const SOURCE_ARG_KEYS = ["body", "source", "yaml"] as const
+
     /**
      * The identifying arguments shown under the summary so the user sees exactly what will run (e.g.
-     * namespace/flowId, executionId). Scalars only — objects/arrays and long values (YAML/source bodies)
-     * are omitted to keep the card compact; empty for plan cards (no concrete tool call).
+     * namespace/flowId, executionId). Scalars only — objects/arrays, the source/body argument (rendered
+     * as a diff instead) and long values are omitted to keep the card compact; empty for plan cards
+     * (no concrete tool call).
      */
     const argEntries = computed<[string, string][]>(() => {
         if (isPlan.value || !props.action.arguments) return []
         return Object.entries(props.action.arguments)
+            .filter(([key]) => !(SOURCE_ARG_KEYS as readonly string[]).includes(key))
             .filter(([, value]) => typeof value === "string" || typeof value === "number" || typeof value === "boolean")
             .map(([key, value]) => [key, String(value)] as [string, string])
             .filter(([, value]) => value.length > 0 && value.length <= MAX_ARG_LENGTH)
+    })
+
+    /**
+     * The proposed YAML/source body, when this action mutates one — only a known key
+     * (`body`/`source`/`yaml`) qualifies. There is no fallback onto "the sole long argument": a tool
+     * like `AuthorFlowTool` also carries a long `currentFlowYaml` (the *before* side, not the proposal),
+     * and guessing wrong there would render it as a confidently backwards diff — no diff is safer than
+     * a wrong one. Null when there's nothing to diff (a plan card, or no known source key present).
+     */
+    const proposedSource = computed<string | null>(() => {
+        if (isPlan.value || !props.action.arguments) return null
+        for (const key of SOURCE_ARG_KEYS) {
+            const value = props.action.arguments[key]
+            if (typeof value === "string" && value.length > 0) return value
+        }
+        return null
     })
 </script>
 
@@ -169,6 +205,10 @@
         font-family: var(--ks-font-family-mono);
         color: var(--ks-text-primary);
         word-break: break-word;
+    }
+
+    .proposed-action-diff {
+        margin-top: var(--ks-spacing-2);
     }
 
     .proposed-action-steps {

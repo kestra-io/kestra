@@ -2184,7 +2184,7 @@
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Aplicar o flow {namespace}.{id}? Ele será criado, ou sobrescrito se já existir.",
+          "applyConfirm": "Guardar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Será criado, ou será adicionada uma nova revisão de rascunho se já existir — os rascunhos não são acionados por triggers nem subflows até serem publicados.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",

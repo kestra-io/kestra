@@ -2184,7 +2184,7 @@
           "openInEditor": "Otwórz w edytorze",
           "apply": "Zastosuj",
           "applyTitle": "Zastosuj Flow",
-          "applyConfirm": "Zastosować Flow {namespace}.{id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza — wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyError": "Nie udało się zastosować Flow. Spróbuj ponownie.",
           "applyErrorDashboard": "Nie udało się zastosować Dashboardu. Spróbuj ponownie.",

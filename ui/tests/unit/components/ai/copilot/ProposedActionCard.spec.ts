@@ -1,5 +1,8 @@
-import {describe, it, expect} from "vitest"
+import {describe, it, expect, vi} from "vitest"
 import {mount} from "@vue/test-utils"
+// DiffView (rendered for a MUTATE action carrying a source argument) binds useEditorBindings, which
+// pulls in three Pinia stores — stub it out, matching VarValue.spec.ts / FlowFileEditorTab.spec.ts.
+vi.mock("../../../../../src/composables/useEditorBindings", () => ({useEditorBindings: () => ({})}))
 import ProposedActionCard from "../../../../../src/components/ai/copilot/ProposedActionCard.vue"
 import {mountGlobal} from "./_helpers"
 import type {ProposedActionEvent} from "../../../../../src/components/ai/copilot/types"
@@ -88,5 +91,74 @@ describe("ProposedActionCard", () => {
         const w = mountCard(mutateAction, {disabled: true})
         expect(approve(w).attributes("disabled")).toBeDefined()
         expect(reject(w).attributes("disabled")).toBeDefined()
+    })
+
+    describe("diff", () => {
+        const editor = (w: ReturnType<typeof mountCard>) => w.findComponent({name: "KsEditor"})
+
+        it("shows no diff for a plan card", () => {
+            expect(editor(mountCard(planAction)).exists()).toBe(false)
+        })
+
+        it("shows no diff when the action has no recognized source and no single long argument", () => {
+            expect(editor(mountCard(mutateAction)).exists()).toBe(false) // only a short `id` arg
+        })
+
+        it("shows a diff as a pure addition when the action carries a `body` argument and no current source", () => {
+            const w = mountCard({
+                confirmationId: "c9", tool: "create-flow", family: "MUTATE", summary: "Create flow",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team"},
+            })
+            expect(editor(w).exists()).toBe(true)
+            expect(editor(w).props("original")).toBe("")
+            expect(editor(w).props("modelValue")).toBe("id: my-flow\nnamespace: company.team")
+        })
+
+        // Once a real mutate tool exists, every past PROPOSED_ACTION message re-renders read-only via
+        // `resolved` — mounting a diff for an already-applied change would be misleading (no
+        // currentFlowSource is threaded through history, so it would show as a false pure addition)
+        // and expensive to mount per historical message in a long thread.
+        it("shows no diff for a resolved (historical) action, even with a recognized source key", () => {
+            const w = mountCard(
+                {
+                    confirmationId: "c13", tool: "update-flow", family: "MUTATE", summary: "Update flow",
+                    arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team"},
+                },
+                {resolved: true},
+            )
+            expect(editor(w).exists()).toBe(false)
+        })
+
+        it("diffs the source argument against currentFlowSource when provided", () => {
+            const w = mountCard(
+                {
+                    confirmationId: "c10", tool: "update-flow", family: "MUTATE", summary: "Update flow",
+                    arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team\ndescription: new"},
+                },
+                {currentFlowSource: "id: my-flow\nnamespace: company.team"},
+            )
+            expect(editor(w).props("original")).toBe("id: my-flow\nnamespace: company.team")
+            expect(editor(w).props("modelValue")).toContain("description: new")
+        })
+
+        // No fallback onto "the sole long argument": a tool can carry a long argument that isn't the
+        // proposal itself (e.g. AuthorFlowTool's `currentFlowYaml`, the *before* side), and guessing
+        // wrong there would render a confidently backwards diff — no diff is safer than a wrong one.
+        it("shows no diff when no recognized source key is present, even with a single long argument", () => {
+            const w = mountCard({
+                confirmationId: "c11", tool: "mystery-tool", family: "MUTATE", summary: "Do a thing",
+                arguments: {namespace: "company.team", payload: "x".repeat(200)},
+            })
+            expect(editor(w).exists()).toBe(false)
+        })
+
+        it("excludes the source/body argument from the identifying args list", () => {
+            const w = mountCard({
+                confirmationId: "c12", tool: "create-flow", family: "MUTATE", summary: "Create flow",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow"},
+            })
+            const args = w.find("[data-test=\"copilot-proposed-args\"]")
+            expect(args.text()).not.toContain("body")
+        })
     })
 })

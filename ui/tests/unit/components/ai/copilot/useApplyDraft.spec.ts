@@ -10,14 +10,24 @@ vi.mock("vue-router", () => ({
 }))
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (k: string) => k})}))
 
-// Flow store — assert the in-place refresh (loadFlow/loadGraph) when applying to an open flow.
+// Flow store — assert the in-place refresh (loadFlow/loadGraph) when applying to an open flow, and
+// the "before" source read for the diff preview (the live buffer, or a store:false fetch).
 const loadFlow = vi.fn()
 const loadGraph = vi.fn().mockResolvedValue(undefined)
-vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => ({loadFlow, loadGraph})}))
+const flowYaml = "id: my-flow\nnamespace: company.team\ndescription: unsaved edit"
+vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => ({loadFlow, loadGraph, flowYaml})}))
 
 const confirm = vi.fn()
 const alert = vi.fn().mockResolvedValue(undefined)
-vi.mock("@kestra-io/design-system", () => ({KsMessageBox: {confirm: (...a: unknown[]) => confirm(...a), alert: (...a: unknown[]) => alert(...a)}}))
+// The flow-apply confirm goes through the raw callable form (`KsMessageBox({...})`, for a custom
+// VNode message carrying the diff) instead of `.confirm()`; the dashboard path still uses `.confirm()`.
+const messageBox = vi.fn()
+vi.mock("@kestra-io/design-system", () => ({
+    KsMessageBox: Object.assign(
+        (...a: unknown[]) => messageBox(...a),
+        {confirm: (...a: unknown[]) => confirm(...a), alert: (...a: unknown[]) => alert(...a)},
+    ),
+}))
 
 let parsed: {namespace?: string; id?: string} = {}
 vi.mock("@kestra-io/topology", () => ({flowYamlUtils: {parse: () => parsed}}))
@@ -59,7 +69,8 @@ const problem = (detail: string) => ({
 const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
 const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
-import {useApplyDraft} from "../../../../../src/components/ai/copilot/useApplyDraft"
+import type {RouteLocationNormalizedLoaded} from "vue-router"
+import {useApplyDraft, isViewingFlow} from "../../../../../src/components/ai/copilot/useApplyDraft"
 
 const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: my-flow\nnamespace: company.team", valid: true, constraints: null, ...over})
 
@@ -89,13 +100,14 @@ describe("useApplyDraft", () => {
         }))
     })
 
-    it("apply CREATES the flow, then navigates to it", async () => {
-        confirm.mockResolvedValueOnce(undefined) // user confirms
+    it("apply CREATES the flow as a draft revision, then navigates to it", async () => {
+        messageBox.mockResolvedValueOnce(undefined) // user confirms
         await useApplyDraft().apply(draft())
         // The create opts out of the global error toast (2nd arg) so the create→update fallback and
-        // our own alert stay the only user-facing failure paths.
+        // our own alert stay the only user-facing failure paths. `draft: true` so a Copilot proposal
+        // is saved for review rather than going live unattended.
         expect(createFlow).toHaveBeenCalledWith(
-            expect.objectContaining({body: "id: my-flow\nnamespace: company.team"}),
+            expect.objectContaining({body: "id: my-flow\nnamespace: company.team", draft: true}),
             expect.objectContaining({showMessageOnError: false}),
         )
         expect(updateFlow).not.toHaveBeenCalled()
@@ -109,7 +121,7 @@ describe("useApplyDraft", () => {
     it("apply refreshes the flow in place (no navigation) when already viewing it", async () => {
         routeName = "flows/update"
         routeParams = {tenant: "main", namespace: "company.team", id: "my-flow"}
-        confirm.mockResolvedValueOnce(undefined)
+        messageBox.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce(alreadyExists) // existing flow → update in place
         await useApplyDraft().apply(draft())
         expect(updateFlow).toHaveBeenCalled()
@@ -120,7 +132,7 @@ describe("useApplyDraft", () => {
     })
 
     it("apply UPDATES the flow when create reports it already exists", async () => {
-        confirm.mockResolvedValueOnce(undefined)
+        messageBox.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce(alreadyExists) // create → entity-already-exists → fall back to update
         await useApplyDraft().apply(draft())
         expect(updateFlow).toHaveBeenCalledWith(
@@ -133,7 +145,7 @@ describe("useApplyDraft", () => {
     it("does NOT fall back to update for a different problem that merely mentions existing", async () => {
         // The old implementation regexed /already exists/i over the whole serialized body, so a validation
         // failure whose text happened to contain the phrase would silently overwrite the user's flow.
-        confirm.mockResolvedValueOnce(undefined)
+        messageBox.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce({
             response: {
                 status: 422,
@@ -150,7 +162,7 @@ describe("useApplyDraft", () => {
     })
 
     it("apply surfaces an error (no update) when create fails for another reason", async () => {
-        confirm.mockResolvedValueOnce(undefined)
+        messageBox.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce({
             response: {
                 status: 422,
@@ -169,7 +181,7 @@ describe("useApplyDraft", () => {
     })
 
     it("apply does nothing when the confirm is cancelled", async () => {
-        confirm.mockRejectedValueOnce(new Error("cancel")) // user cancels
+        messageBox.mockRejectedValueOnce(new Error("cancel")) // user cancels
         await useApplyDraft().apply(draft())
         expect(createFlow).not.toHaveBeenCalled()
         expect(updateFlow).not.toHaveBeenCalled()
@@ -179,8 +191,87 @@ describe("useApplyDraft", () => {
         parsed = {} // no namespace/id parsed from the YAML
         await useApplyDraft().apply(draft({yaml: "not: a-flow"}))
         expect(alert).toHaveBeenCalled()
-        expect(confirm).not.toHaveBeenCalled()
+        expect(messageBox).not.toHaveBeenCalled()
         expect(createFlow).not.toHaveBeenCalled()
+    })
+
+    // --- isViewingFlow (route-identity check reused by the editor's live diff preview) ---
+
+    describe("isViewingFlow", () => {
+        // `flows/update` migrated from a flat `:tab?` param to vue-router children (routeFamily.ts), so
+        // the real route name on the flow-editor page is nested, e.g. `flows/update/edit`, never the flat
+        // `flows/update` alone (kestra-io/kestra#19330 follow-up: this check never matched in the running
+        // app, silently disabling the live diff mirror on the page users actually land on).
+        const route = (name: string, namespace: string, id: string) =>
+            ({name, params: {namespace, id}}) as unknown as RouteLocationNormalizedLoaded
+
+        it("matches the default nested edit tab", () => {
+            expect(isViewingFlow(route("flows/update/edit", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("matches another nested tab", () => {
+            expect(isViewingFlow(route("flows/update/topology", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("matches the flat pre-migration route name", () => {
+            expect(isViewingFlow(route("flows/update", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("does not match a different route family", () => {
+            expect(isViewingFlow(route("flows/list", "company.team", "my-flow"), "company.team", "my-flow")).toBe(false)
+        })
+
+        it("does not match when the namespace or id differs", () => {
+            expect(isViewingFlow(route("flows/update/edit", "other.team", "my-flow"), "company.team", "my-flow")).toBe(false)
+        })
+    })
+
+    // --- diff preview (the confirm dialog's "before" side) ---
+
+    it("uses the live editor buffer as the diff's before-source when the flow is already open, without an extra fetch", async () => {
+        routeName = "flows/update"
+        routeParams = {tenant: "main", namespace: "company.team", id: "my-flow"}
+        messageBox.mockResolvedValueOnce(undefined)
+        createFlow.mockRejectedValueOnce(alreadyExists)
+        await useApplyDraft().apply(draft())
+        // loadFlow is called exactly once — the post-apply refresh — not again beforehand to fetch a
+        // "before" source that's already available as the live buffer.
+        expect(loadFlow).toHaveBeenCalledTimes(1)
+        expect(loadFlow).toHaveBeenCalledWith({namespace: "company.team", id: "my-flow"})
+    })
+
+    it("fetches the persisted flow source (store: false) as the diff's before-source when the flow isn't open, ignoring a not-yet-created flow's 404", async () => {
+        messageBox.mockResolvedValueOnce(undefined)
+        await useApplyDraft().apply(draft())
+        expect(loadFlow).toHaveBeenCalledWith(
+            {namespace: "company.team", id: "my-flow", store: false},
+            expect.objectContaining({ignoreNotFound: true, showMessageOnError: false}),
+        )
+    })
+
+    // The confirm dialog itself fetches the "before" diff source (a round trip), so `applying` must be
+    // set before that fetch — not only around the eventual create/update — or a second click while the
+    // first confirm is still loading opens a second dialog.
+    it("marks applying while the confirm dialog's diff fetch is in flight, not only during the write", async () => {
+        let resolveConfirm: (() => void) | undefined
+        messageBox.mockReturnValueOnce(new Promise((resolve) => {
+            resolveConfirm = () => resolve(undefined)
+        }))
+        const {applying, apply} = useApplyDraft()
+        const applied = apply(draft())
+        await Promise.resolve()
+        expect(applying.value).toBe(true)
+        resolveConfirm?.()
+        await applied
+        expect(applying.value).toBe(false)
+    })
+
+    it("still shows the confirm (before-source falls back to empty) when the persisted-flow fetch fails", async () => {
+        messageBox.mockResolvedValueOnce(undefined)
+        loadFlow.mockRejectedValueOnce(new Error("not found"))
+        await useApplyDraft().apply(draft())
+        expect(messageBox).toHaveBeenCalled()
+        expect(createFlow).toHaveBeenCalled()
     })
 
     // --- dashboards ---

@@ -1,22 +1,15 @@
 import {describe, expect, it} from "vitest"
 import {defineComponent} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
-
 import NavBarActions from "../../../../src/components/layout/NavBarActions.vue"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {en: {actions: "Actions"}},
-})
+const messages = {actions: "Actions"}
 
 function mountActions(slots: Record<string, string>) {
-    return mount(NavBarActions, {
-        global: {plugins: [i18n, KestraDesignSystem]},
+    return i18nMount(NavBarActions, {
+        messages,
+        global: {plugins: [KestraDesignSystem]},
         slots,
     })
 }
@@ -94,9 +87,10 @@ describe("NavBarActions — callers that opt into the secondary slot", () => {
             `,
         })
 
-        const wrapper = mount(parent, {
+        const wrapper = i18nMount(parent, {
+            messages,
             props: {showSecondary: false},
-            global: {plugins: [i18n, KestraDesignSystem]},
+            global: {plugins: [KestraDesignSystem]},
         })
 
         // Legacy layout: a lone action renders inline, no overflow.

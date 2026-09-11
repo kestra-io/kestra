@@ -255,6 +255,7 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 ### Testing UI
 
 - Unit tests with **Vitest** + `@vue/test-utils`, colocated next to the component.
+- Mount through `i18nMount` or `i18nShallowMount` from `tests/unit/i18nMount.ts` (`tests/units/i18nMount.ts` in the design system, which also installs the design-system plugin) rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.

@@ -1,13 +1,6 @@
 import {describe, it, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import FieldNavBreadcrumb from "../../../src/components/no-code/components/FieldNavBreadcrumb.vue"
-
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {no_code: {nav: {back: "Back", breadcrumb_aria: "Breadcrumb"}}}},
-})
+import {i18nMount} from "../i18nMount"
 
 const frames = [
     {path: "workerSelector", label: "workerSelector", schema: {}},
@@ -15,9 +8,9 @@ const frames = [
 ]
 
 function render() {
-    return mount(FieldNavBreadcrumb, {
+    return i18nMount(FieldNavBreadcrumb, {
+        messages: {no_code: {nav: {back: "Back", breadcrumb_aria: "Breadcrumb"}}},
         props: {frames, rootLabel: "backup_users_db"},
-        global: {plugins: [i18n]},
     })
 }
 

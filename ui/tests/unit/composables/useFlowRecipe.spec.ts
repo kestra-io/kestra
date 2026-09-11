@@ -1,6 +1,7 @@
 import {describe, it, expect, vi} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../i18nMount"
+
 import {defineComponent, h} from "vue"
 
 const installedPlugins: unknown[] = []
@@ -12,15 +13,13 @@ vi.mock("../../../src/stores/plugins", () => ({
 import {useFlowRecipe} from "../../../src/composables/useFlowRecipe"
 import {NOTIFY_TASK_CONFIGS} from "../../../src/utils/recipeToYaml"
 
-const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
-
 function setup() {
     let api!: ReturnType<typeof useFlowRecipe>
     const Comp = defineComponent({setup() {
         api = useFlowRecipe()
         return () => h("div")
     }})
-    mount(Comp, {global: {plugins: [i18n]}})
+    i18nMount(Comp)
     return api
 }
 

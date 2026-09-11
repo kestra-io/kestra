@@ -1,6 +1,4 @@
 import {describe, it, expect, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 
 vi.mock("vue-router", () => ({
@@ -22,9 +20,11 @@ vi.mock("../../../../src/components/no-code/components/TaskEditor.vue", () => ({
 }))
 
 import TaskEditPanes from "../../../../src/components/flows/TaskEditPanes.vue"
+import {i18nMount} from "../../i18nMount"
 
 function mountPanes(editorPath?: string) {
-    return mount(TaskEditPanes, {
+    return i18nMount(TaskEditPanes, {
+        messages: {form: "Form", source: "Source"},
         props: {
             modelValue: "id: some_task\ntype: io.kestra.plugin.core.log.Log\n",
             section: "tasks",
@@ -32,10 +32,7 @@ function mountPanes(editorPath?: string) {
             editorPath,
         },
         global: {
-            plugins: [
-                createI18n({legacy: false, locale: "en", messages: {en: {form: "Form", source: "Source"}}}),
-                createPinia(),
-            ],
+            plugins: [createPinia()],
             stubs: {
                 KsTabs: {name: "KsTabs", template: "<div><slot /></div>"},
                 KsTabPane: {name: "KsTabPane", props: ["name"], template: "<div><slot /></div>"},

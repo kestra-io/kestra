@@ -1,8 +1,5 @@
 import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
 import {defineComponent} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-
 const mockFeeds: {value: Array<{publicationDate: string}>} = {value: []}
 vi.mock("../../../src/stores/api", () => ({
     useApiStore: () => ({feeds: mockFeeds.value}),
@@ -14,12 +11,7 @@ vi.mock("@vueuse/core", async (importOriginal) => {
 })
 
 import {useContextButtons} from "../../../src/override/composables/contextButtons"
-
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star"}}},
-})
+import {i18nMount} from "../i18nMount"
 
 function mountButtons() {
     let api: ReturnType<typeof useContextButtons>
@@ -29,7 +21,7 @@ function mountButtons() {
             return () => null
         },
     })
-    mount(Comp, {global: {plugins: [i18n]}})
+    i18nMount(Comp, {messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star"}}})
     return api!
 }
 

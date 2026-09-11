@@ -1,13 +1,11 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../src/index"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
 import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
 import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
+import {i18nMount} from "../i18nMount"
 
-const globalConfig = {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]}
+const globalConfig = {}
 
 const SAMPLE_DATA = [
     {id: "flow-001", namespace: "company.team", status: "SUCCESS"},
@@ -17,7 +15,7 @@ const SAMPLE_DATA = [
 
 describe("KsDataTable", () => {
     test("renders table element", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
             global: globalConfig,
         })
@@ -25,7 +23,7 @@ describe("KsDataTable", () => {
     })
 
     test("renders with columns", () => {
-        const wrapper = mount({
+        const wrapper = i18nMount({
             components: {KsDataTable, KsTableColumn},
             template: `
                 <ks-data-table :data="data" :total="3">
@@ -39,7 +37,7 @@ describe("KsDataTable", () => {
     })
 
     test("forwards row-click from the underlying table", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
             global: globalConfig,
         })
@@ -52,7 +50,7 @@ describe("KsDataTable", () => {
     })
 
     test("does not render pagination when total is 0", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -60,7 +58,7 @@ describe("KsDataTable", () => {
     })
 
     test("renders pagination when total > 0", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 30},
             global: globalConfig,
         })
@@ -68,7 +66,7 @@ describe("KsDataTable", () => {
     })
 
     test("renders navbar slot when provided", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             slots: {navbar: "<span class='test-navbar'>Filters</span>"},
             global: globalConfig,
@@ -77,7 +75,7 @@ describe("KsDataTable", () => {
     })
 
     test("does not render navbar when slot is absent", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -85,7 +83,7 @@ describe("KsDataTable", () => {
     })
 
     test("renders custom #table slot instead of internal table", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
             slots: {table: "<div class='custom-content'>Custom</div>"},
             global: globalConfig,
@@ -95,7 +93,7 @@ describe("KsDataTable", () => {
     })
 
     test("shows loading state when loading prop is true", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3, loading: true},
             global: globalConfig,
         })
@@ -103,7 +101,7 @@ describe("KsDataTable", () => {
     })
 
     test("exposes isLoading ref", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -111,7 +109,7 @@ describe("KsDataTable", () => {
     })
 
     test("exposes clearSelection method", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -119,7 +117,7 @@ describe("KsDataTable", () => {
     })
 
     test("exposes setSelection method", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -127,7 +125,7 @@ describe("KsDataTable", () => {
     })
 
     test("exposes getSelectionRows method", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -135,7 +133,7 @@ describe("KsDataTable", () => {
     })
 
     test("exposes toggleAllSelection method", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -143,7 +141,7 @@ describe("KsDataTable", () => {
     })
 
     test("exposes toggleRowExpansion method", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -151,7 +149,7 @@ describe("KsDataTable", () => {
     })
 
     test("exposes waitTableRender method", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -159,7 +157,7 @@ describe("KsDataTable", () => {
     })
 
     test("emits page-changed on page change", async () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
             global: globalConfig,
         })
@@ -170,7 +168,7 @@ describe("KsDataTable", () => {
     })
 
     test("emits page-changed with correct page on page change", async () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
             global: globalConfig,
         })
@@ -179,7 +177,7 @@ describe("KsDataTable", () => {
     })
 
     test("renders without error when selectable is true", () => {
-        const wrapper = mount({
+        const wrapper = i18nMount({
             components: {KsDataTable, KsTableColumn},
             template: `
                 <ks-data-table :data="data" :total="3" :selectable="true" :show-selection="true">
@@ -193,7 +191,7 @@ describe("KsDataTable", () => {
     })
 
     test("select-all count reflects only selectable rows", async () => {
-        const wrapper = mount({
+        const wrapper = i18nMount({
             components: {KsDataTable, KsTableColumn},
             template: `
                 <ks-data-table
@@ -222,7 +220,7 @@ describe("KsDataTable", () => {
     })
 
     test("isLoading updates when loading prop changes", async () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0, loading: false},
             global: globalConfig,
         })
@@ -232,7 +230,7 @@ describe("KsDataTable", () => {
     })
 
     test("can set isLoading directly from outside", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             global: globalConfig,
         })
@@ -241,7 +239,7 @@ describe("KsDataTable", () => {
     })
 
     test("emits update:currentPage on page change (v-model contract)", async () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 1},
             global: globalConfig,
         })
@@ -250,7 +248,7 @@ describe("KsDataTable", () => {
     })
 
     test("emits update:currentPage and update:pageSize on size change", async () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 3},
             global: globalConfig,
         })
@@ -261,7 +259,7 @@ describe("KsDataTable", () => {
 
     test("resetAndReload on page > 1 emits page 1 and does NOT reload directly", async () => {
         let loadCount = 0
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 3, loadData: async () => { loadCount++ }},
             global: globalConfig,
         })
@@ -276,7 +274,7 @@ describe("KsDataTable", () => {
 
     test("resetAndReload on page 1 reloads directly without emitting page", async () => {
         let loadCount = 0
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 1, loadData: async () => { loadCount++ }},
             global: globalConfig,
         })
@@ -292,7 +290,7 @@ describe("KsDataTable", () => {
         let loadCallCount = 0
         const loadDataSpy = async () => { loadCallCount++ }
 
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {
                 data: SAMPLE_DATA,
                 total: 100,
@@ -318,7 +316,7 @@ describe("KsDataTable", () => {
     })
 
     test("emits loaded after every load, not only the first", async () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 1, loadData: async () => {}},
             global: globalConfig,
         })
@@ -338,7 +336,7 @@ describe("KsDataTable", () => {
 
     const mountWithSpy = (props: Record<string, any>): Load[] => {
         const loads: Load[] = []
-        mount(KsDataTable, {
+        i18nMount(KsDataTable, {
             props: {
                 data: SAMPLE_DATA,
                 total: 100,
@@ -429,7 +427,7 @@ describe("KsDataTable", () => {
 
     const mountWithSortSpy = (props: Record<string, any>) => {
         const loads: Load[] = []
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {
                 data: SAMPLE_DATA,
                 total: 100,
@@ -458,7 +456,7 @@ describe("KsDataTable", () => {
     })
 
     test("applies ks-data-table-body--fit modifier class when fitHeight is true", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3, fitHeight: true},
             global: globalConfig,
         })
@@ -466,7 +464,7 @@ describe("KsDataTable", () => {
     })
 
     test("does not apply ks-data-table-body--fit modifier class when fitHeight is false (default)", () => {
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
             global: globalConfig,
         })

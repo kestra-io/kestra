@@ -1,7 +1,4 @@
 import {describe, it, expect, vi} from "vitest"
-import {createI18n} from "vue-i18n"
-import {mount} from "@vue/test-utils"
-
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "dashboards", params: {}, query: {}}),
 }))
@@ -12,13 +9,12 @@ vi.mock("../../../../src/stores/dashboard", () => ({
 
 import Markdown from "../../../../src/components/dashboard/sections/Markdown.vue"
 import en from "../../../../src/translations/en.json"
-
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: en})
+import {i18nMount} from "../../i18nMount"
 
 function mountMarkdown(chart: any) {
-    return mount(Markdown, {
+    return i18nMount(Markdown, {
+        locales: en,
         props: {chart, filters: [], showDefault: false},
-        global: {plugins: [i18n]},
     })
 }
 

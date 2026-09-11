@@ -1,24 +1,25 @@
 import {describe, test, expect} from "vitest"
 import {nextTick} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
 import {STATES} from "../../../../src/utils/state"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {expand: "Expand", collapse: "Collapse", filter: {state_group: {running: "Running", paused: "Paused", completed: "Completed", failed: "Failed", other: "Other"}}}}})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
+const messages = {expand: "Expand", collapse: "Collapse", filter: {state_group: {running: "Running", paused: "Paused", completed: "Completed", failed: "Failed", other: "Other"}}}
+
+const globalConfig = {}
 
 const ALL_STATE_OPTIONS = Object.keys(STATES).map(state => ({value: state, label: state}))
 
 const mountStateFilter = (modelValue: string[] = [], options = ALL_STATE_OPTIONS) =>
-    mount(FilterMultiSelect, {
+    i18nMount(FilterMultiSelect, {
+        messages,
         props: {filterKey: "state", modelValue, options, searchable: true},
         global: globalConfig,
     })
 
 const mountFlatFilter = (modelValue: string[] = []) =>
-    mount(FilterMultiSelect, {
+    i18nMount(FilterMultiSelect, {
+        messages,
         props: {
             filterKey: "namespace",
             modelValue,

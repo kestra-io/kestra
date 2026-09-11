@@ -1,17 +1,14 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../src/index"
 import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
+import {i18nMount} from "../i18nMount"
 
 const globalConfig = {
-    plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
 }
 
 describe("KsTable", () => {
     test("renders table element", () => {
-        const wrapper = mount(KsTable, {
+        const wrapper = i18nMount(KsTable, {
             props: {data: [{name: "test"}]},
             global: globalConfig,
         })
@@ -19,7 +16,7 @@ describe("KsTable", () => {
     })
 
     test("exposes clearSelection method", () => {
-        const wrapper = mount(KsTable, {
+        const wrapper = i18nMount(KsTable, {
             props: {data: []},
             global: globalConfig,
         })
@@ -27,7 +24,7 @@ describe("KsTable", () => {
     })
 
     test("exposes toggleAllSelection method", () => {
-        const wrapper = mount(KsTable, {
+        const wrapper = i18nMount(KsTable, {
             props: {data: []},
             global: globalConfig,
         })
@@ -35,7 +32,7 @@ describe("KsTable", () => {
     })
 
     test("exposes clearSort method", () => {
-        const wrapper = mount(KsTable, {
+        const wrapper = i18nMount(KsTable, {
             props: {data: []},
             global: globalConfig,
         })
@@ -43,7 +40,7 @@ describe("KsTable", () => {
     })
 
     test("exposes sort method", () => {
-        const wrapper = mount(KsTable, {
+        const wrapper = i18nMount(KsTable, {
             props: {data: []},
             global: globalConfig,
         })
@@ -51,7 +48,7 @@ describe("KsTable", () => {
     })
 
     test("renders with columns", () => {
-        const wrapper = mount({
+        const wrapper = i18nMount({
             components: {KsTable, KsTableColumn},
             template: `
                 <ks-table :data="[{id: '1', name: 'Test'}]">

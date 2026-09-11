@@ -1,14 +1,11 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import FilterSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterSelect.vue"
 import KsDatePicker from "../../../../src/components/Form/KsDatePicker.vue"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
+const globalConfig = {}
 
-const mountCustomTimeRange = () => mount(FilterSelect, {
+const mountCustomTimeRange = () => i18nMount(FilterSelect, {
     props: {
         modelValue: "",
         options: [],

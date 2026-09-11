@@ -1,16 +1,12 @@
 import {describe, it, expect, vi} from "vitest"
 import {defineComponent, h} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "executions/list", query: {}}),
 }))
 
 import {useExecutionFilter} from "../../../../../src/components/filter/configurations/executionFilter"
 import {useFlowExecutionFilter} from "../../../../../src/components/filter/configurations/flowExecutionFilter"
-
-const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
+import {i18nMount} from "../../../i18nMount"
 
 function setup<T>(useComposable: () => T): T {
     let api!: T
@@ -20,7 +16,7 @@ function setup<T>(useComposable: () => T): T {
             return () => h("div")
         },
     })
-    mount(Comp, {global: {plugins: [i18n]}})
+    i18nMount(Comp)
     return api
 }
 

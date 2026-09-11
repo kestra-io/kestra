@@ -1,19 +1,16 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../src/index"
 import KsTopNavBar from "../../../src/components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import locales from "../../../src/components/Navigation/KsTopNavBar/KsTopNavBar.locale"
+import {i18nMount} from "../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: locales})
 const globalConfig = {
-    plugins: [i18n, KestraDesignSystem],
     stubs: {RouterLink: {template: "<a><slot /></a>"}},
 }
 
 describe("KsTopNavBar", () => {
     test("renders nav element with the topnavbar class", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             global: globalConfig,
         })
@@ -21,7 +18,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders the title via the breadcrumb title slot", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "My Flows"},
             global: globalConfig,
         })
@@ -29,7 +27,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders breadcrumb items", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {
                 title: "my-flow",
                 breadcrumb: [
@@ -44,7 +43,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders description tooltip icon when description prop provided", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", description: "All flows"},
             global: globalConfig,
         })
@@ -52,7 +52,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("does not render description tooltip when no description", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             global: globalConfig,
         })
@@ -60,7 +61,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders beta tag when beta prop is true", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Apps", beta: true},
             global: globalConfig,
         })
@@ -68,7 +70,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("star button has active class when bookmarked", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", isBookmarked: true},
             global: globalConfig,
         })
@@ -76,7 +79,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("star button does not have active class when not bookmarked", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", isBookmarked: false},
             global: globalConfig,
         })
@@ -84,7 +88,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("emits star-click when star button is clicked", async () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             global: globalConfig,
         })
@@ -93,7 +98,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders sidebar toggle button when sidebarCollapsed is true", async () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", sidebarCollapsed: true},
             global: globalConfig,
         })
@@ -104,7 +110,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("does not render sidebar toggle button when sidebar is not collapsed", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", sidebarCollapsed: false},
             global: globalConfig,
         })
@@ -112,7 +119,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders tab select when tabs are provided", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {
                 title: "Flows",
                 tabs: [
@@ -127,7 +135,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("does not render tab select when no tabs", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             global: globalConfig,
         })
@@ -135,7 +144,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders dock-toggle button when showDockToggle is true", async () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", showDockToggle: true},
             global: globalConfig,
         })
@@ -146,7 +156,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("dock-toggle has is-open class when isDockOpen is true", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", showDockToggle: true, isDockOpen: true},
             global: globalConfig,
         })
@@ -154,7 +165,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("does not render dock-toggle when showDockToggle is false", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", showDockToggle: false},
             global: globalConfig,
         })
@@ -162,7 +174,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders custom title slot", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             slots: {title: "<span class=\"custom-title\">Custom Title</span>"},
             global: globalConfig,
@@ -171,7 +184,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders search slot", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             slots: {search: "<input class=\"search-input\" />"},
             global: globalConfig,
@@ -180,7 +194,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders actions slot", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             slots: {actions: "<button class=\"delete-btn\">Delete</button>"},
             global: globalConfig,
@@ -189,7 +204,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("renders panel-toggle slot", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows"},
             slots: {"panel-toggle": "<button class=\"bell-btn\">Bell</button>"},
             global: globalConfig,
@@ -198,7 +214,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("description slot is hidden via v-show when showDescription is false", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", showDescription: false},
             slots: {description: "<span class=\"desc\">hidden</span>"},
             global: globalConfig,
@@ -209,7 +226,8 @@ describe("KsTopNavBar", () => {
     })
 
     test("description slot is visible when showDescription is true", () => {
-        const wrapper = mount(KsTopNavBar, {
+        const wrapper = i18nMount(KsTopNavBar, {
+            locales,
             props: {title: "Flows", showDescription: true},
             slots: {description: "<span class=\"desc\">shown</span>"},
             global: globalConfig,

@@ -1,7 +1,4 @@
 import {describe, expect, test, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-
 vi.mock("@kestra-io/design-system", () => ({
     KsSearch: {
         props: ["modelValue", "placeholder"],
@@ -21,19 +18,14 @@ vi.mock("@kestra-io/design-system", () => ({
 }))
 
 import SidebarList, {type ExplorerSection} from "../../../../../src/components/executions/outputs/SidebarList.vue"
+import {i18nMount} from "../../../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            variable_explorer: {
-                empty: "No results",
-                search_placeholder: "Search Key or value...",
-            },
-        },
+const messages = {
+    variable_explorer: {
+        empty: "No results",
+        search_placeholder: "Search Key or value...",
     },
-})
+}
 
 const sections: ExplorerSection[] = [
     {
@@ -61,10 +53,10 @@ const sections: ExplorerSection[] = [
 ]
 
 function mountSidebarList() {
-    return mount(SidebarList, {
+    return i18nMount(SidebarList, {
+        messages,
         props: {sections},
         global: {
-            plugins: [i18n],
             stubs: {
                 KsNoData: {props: ["title"], template: "<div>{{ title }}</div>"},
             },

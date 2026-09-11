@@ -1,7 +1,5 @@
 import {describe, expect, it} from "vitest"
 import {computed, ref} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import TaskNode from "../../../src/nodes/TaskNode.vue"
 import NodeMenu from "../../../src/nodes/NodeMenu.vue"
 import {
@@ -10,13 +8,7 @@ import {
     SHOW_EXTRA_DETAILS_INJECTION_KEY,
 } from "../../../src/injectionKeys"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {}},
-    missingWarn: false,
-    fallbackWarn: false,
-})
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const TASK = {
     id: "my-task",
@@ -46,7 +38,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
     isReadOnly?: boolean,
     isFlowable?: boolean,
 }) {
-    return mount(TaskNode, {
+    return i18nMount(TaskNode, {
         props: {
             id: "root.my-task",
             data: {
@@ -65,7 +57,6 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
             replayEnabled,
         },
         global: {
-            plugins: [i18n],
             stubs: {
                 Handle: true,
                 NodeMenu: true,
@@ -192,7 +183,7 @@ describe("TaskNode actions", () => {
     })
 
     it("should replace NodeMenu when the taskActions slot is provided, and support filtering actions", () => {
-        const wrapper = mount(TaskNode, {
+        const wrapper = i18nMount(TaskNode, {
             props: {
                 id: "root.my-task",
                 data: {
@@ -210,7 +201,6 @@ describe("TaskNode actions", () => {
                 replayEnabled: true,
             },
             global: {
-                plugins: [i18n],
                 stubs: {
                     Handle: true,
                     NodeMenu: true,

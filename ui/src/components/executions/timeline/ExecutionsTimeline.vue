@@ -23,6 +23,13 @@
             </div>
         </div>
 
+        <KsAlert
+            v-if="isTruncated"
+            type="warning"
+            :description="$t('executionsTimeline.truncated.description', {shown: rawExecutions.length, total: fetchedTotal})"
+            :closable="false"
+        />
+
         <div ref="bodyRef" class="timeline-body">
             <KsSkeleton :loading="loading" :rows="5" animated>
                 <template #template>
@@ -101,7 +108,7 @@
     import {useExecutionsQueryScope} from "../../../composables/useExecutionsQueryScope"
     import {useTimelineRange} from "../../../composables/useTimelineRange"
     import {useExecutionFilter, useFlowExecutionFilter} from "../../filter/configurations"
-    import {groupByNamespace, countByState, buildAxisTicks, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {groupByNamespace, countByState, buildAxisTicks, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     // Shared with the state filter chip in the filter bar (KsFilter's "state" key uses the same
@@ -170,7 +177,7 @@
 
     const scopedExecutions = computed(() => rawExecutions.value)
     const scopedFailedCount = computed(() =>
-        scopedExecutions.value.filter(e => ["FAILED", "KILLED", "WARNING"].includes(e.state)).length,
+        scopedExecutions.value.filter(e => isFailedLikeState(e.state)).length,
     )
 
     interface TimelineRowData {
@@ -237,8 +244,12 @@
         KILLED: "var(--ks-chart-killed)",
     }
 
+    // Derived from a fetch that ignores the legend's own state-exclude filter (unlike
+    // scopedExecutions), so a toggled-off state's entry stays in the legend instead of vanishing
+    // the moment its executions are excluded from the main, filtered fetch.
+    const legendExecutions = ref<TimelineExecution[]>([])
     const legendItems = computed(() =>
-        countByState(scopedExecutions.value).map(({state, count}) => ({
+        countByState(legendExecutions.value).map(({state, count}) => ({
             label: state,
             color: STATE_CHART_COLOR_VARS[state] ?? `var(--ks-chart-${state.toLowerCase()})`,
             count,
@@ -333,30 +344,48 @@
         router.push({query: cleared})
     }
 
+    const fetchedTotal = ref(0)
+    const isTruncated = computed(() => fetchedTotal.value > rawExecutions.value.length)
+
+    function mapToTimelineExecutions(results: ApiLightExecution[] | undefined): TimelineExecution[] {
+        // Search executions returns the light DTO (ApiLightExecution), not the full Execution;
+        // the store's findExecutions is declared Promise<any>, so this cast is what vue-tsc would
+        // otherwise infer on its own.
+        return (results ?? [])
+            .filter((execution): execution is ApiLightExecution & {state: {startDate: string}} => Boolean(execution.state?.startDate))
+            .map((execution) => ({
+                id: execution.id,
+                namespace: execution.namespace,
+                flowId: execution.flowId,
+                state: execution.state.current,
+                startMs: new Date(execution.state.startDate).getTime(),
+                endMs: execution.state.endDate ? new Date(execution.state.endDate).getTime() : Date.now(),
+            }))
+    }
+
     async function fetchExecutions() {
         loading.value = true
         error.value = undefined
         try {
-            // Search executions returns the light DTO (ApiLightExecution), not the full Execution;
-            // the store's findExecutions is declared Promise<any>, so this cast is what vue-tsc would
-            // otherwise infer on its own.
-            const response = await executionsStore.findExecutions(loadQuery({
+            const query = loadQuery({
                 size: MAX_FETCHED_EXECUTIONS,
                 page: 1,
                 sort: "state.startDate:desc",
                 commit: false,
-            })) as PagedResultsApiLightExecution
-            rawExecutions.value = (response.results ?? [])
-                .filter((execution): execution is ApiLightExecution & {state: {startDate: string}} => Boolean(execution.state?.startDate))
-                .map((execution) => ({
-                    id: execution.id,
-                    namespace: execution.namespace,
-                    flowId: execution.flowId,
-                    state: execution.state.current,
-                    startMs: new Date(execution.state.startDate).getTime(),
-                    endMs: execution.state.endDate ? new Date(execution.state.endDate).getTime() : Date.now(),
-                }))
-        } catch {
+            })
+            const response = await executionsStore.findExecutions(query) as PagedResultsApiLightExecution
+            rawExecutions.value = mapToTimelineExecutions(response.results)
+            fetchedTotal.value = response.total ?? response.results?.length ?? 0
+
+            if (dimmedStates.value.size > 0) {
+                const {[STATE_EXCLUDE_KEY]: _excluded, ...legendQuery} = query
+                const legendResponse = await executionsStore.findExecutions(legendQuery) as PagedResultsApiLightExecution
+                legendExecutions.value = mapToTimelineExecutions(legendResponse.results)
+            } else {
+                legendExecutions.value = rawExecutions.value
+            }
+        } catch (fetchError) {
+            console.error("Failed to load timeline executions", fetchError)
             error.value = t("executionsTimeline.error.description")
         } finally {
             loading.value = false

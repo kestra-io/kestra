@@ -9,6 +9,7 @@
         :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
+        :focused="isKeyboardFocused"
         @cardClick="onCardClick"
     >
         <template #badge>
@@ -91,6 +92,7 @@
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
         VALIDATION_ISSUES_INJECTION_KEY,
+        FOCUSED_TASK_INJECTION_KEY,
     } from "../injectionKeys"
 
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
@@ -221,6 +223,9 @@
         if (props.data.isReadOnly || !task) return
         emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
     }
+
+    const focusedTaskId = inject(FOCUSED_TASK_INJECTION_KEY, undefined)
+    const isKeyboardFocused = computed(() => Boolean(taskId.value) && focusedTaskId?.value === taskId.value)
 
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 

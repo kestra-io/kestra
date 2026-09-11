@@ -26,6 +26,7 @@
             :showDetailsToggle="props.showDetailsToggle && hasExtraDetails"
             :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
+            :focusedTaskId="focusedTaskId"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -299,6 +300,14 @@
         isTaskListPath,
     } from "../no-code/blocks/blockSections"
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
+    import {BLOCK_EDITOR_KEYMAP} from "../no-code/blocks/keymap"
+    import {useBlockEditorKeyboard} from "../no-code/blocks/useBlockEditorKeyboard"
+    import {
+        buildTopologyFocusOrder,
+        firstChildOf,
+        moveWithinSiblings,
+        parentOf,
+    } from "../no-code/blocks/topologyFocus"
     import {
         errorsLaneTarget,
         groupValidationIssuesByTask,
@@ -889,6 +898,82 @@
     })
 
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
+
+    const focusedTaskId = ref<string | undefined>(undefined)
+    const focusOrder = computed(() => buildTopologyFocusOrder(flowSource.value ?? ""))
+
+    const isAuthoringOverlayOpen = () => taskPicker.taskPickerVisible.value || Boolean(modalTarget.value)
+
+    function openFocusedTask() {
+        const id = focusedTaskId.value
+        const task = id ? sourceTaskById.value[id] : undefined
+        if (!task) return
+        onEditTask({task, section: SECTIONS.TASKS})
+    }
+
+    function insertRelativeToFocused(position: "before" | "after") {
+        const id = focusedTaskId.value
+        if (!id) return
+        const target = resolveTaskInsertionTargetInAnySection(flowSource.value ?? "", id)
+        if (!target) return
+        taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex, undefined, position)
+    }
+
+    function dispatchTopologyShortcut(id: string, event: KeyboardEvent) {
+        if (props.isReadOnly || !props.isAllowedEdit) return false
+        switch (id) {
+        case "move":
+            focusedTaskId.value = moveWithinSiblings(
+                focusOrder.value,
+                focusedTaskId.value,
+                event.key === "ArrowDown" || event.key === "j" ? 1 : -1,
+            )
+            return
+        case "step-into":
+            focusedTaskId.value = firstChildOf(focusOrder.value, focusedTaskId.value) ?? focusedTaskId.value
+            return
+        case "step-out":
+            focusedTaskId.value = parentOf(focusOrder.value, focusedTaskId.value) ?? focusedTaskId.value
+            return
+        case "open":
+            openFocusedTask()
+            return
+        case "delete":
+            if (!focusedTaskId.value) return false
+            onDelete({id: focusedTaskId.value, section: SECTIONS.TASKS})
+            return
+        case "insert-after":
+            insertRelativeToFocused("after")
+            return
+        case "insert-before":
+            insertRelativeToFocused("before")
+            return
+        case "undo":
+            performUndo()
+            return
+        case "clear":
+            // Dismissing the picker or the modal must not also cost the user their place.
+            if (isAuthoringOverlayOpen()) return false
+            if (!focusedTaskId.value) return false
+            focusedTaskId.value = undefined
+            return
+        default:
+            return false
+        }
+    }
+
+    useBlockEditorKeyboard({
+        keymap: BLOCK_EDITOR_KEYMAP,
+        dispatch: dispatchTopologyShortcut,
+        isOverlayOpen: isAuthoringOverlayOpen,
+    })
+
+    // A focused task that the source no longer holds would keep an invisible ring alive.
+    watch(focusOrder, (order) => {
+        if (focusedTaskId.value && !order.some(entry => entry.id === focusedTaskId.value)) {
+            focusedTaskId.value = undefined
+        }
+    })
 
     const onAddFlowableError = (event: {task: Record<string, any>}) => {
         const target = errorsLaneTarget(flowSource.value ?? "", event.task.id)

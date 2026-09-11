@@ -167,7 +167,7 @@
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -200,6 +200,7 @@
         // slot content is only re-evaluated when a node's graph data is regenerated.
         taskDetailsVersion?: number;
         validationIssuesByTask?: Map<string, string[]>;
+        focusedTaskId?: string;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -222,6 +223,7 @@
         showDetailsToggle: true,
         taskDetailsVersion: undefined,
         validationIssuesByTask: undefined,
+        focusedTaskId: undefined,
     })
 
     const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
@@ -257,6 +259,7 @@
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
     provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails)
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
+    provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
 
 
     const emit = defineEmits(

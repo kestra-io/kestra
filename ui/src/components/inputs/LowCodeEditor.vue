@@ -902,7 +902,17 @@
             if (!id) return
             // The insert already landed, so the source has to be read live from the store —
             // props.source only catches up on the next render.
-            const target = resolveTaskInsertionTargetInAnySection(flowStore.flowYaml ?? "", id)
+            const yaml = flowStore.flowYaml ?? ""
+            // Triggers are resolved separately: the shared helper deliberately skips them so the
+            // edge `+` can never target one, but a trigger just inserted still has to open its
+            // editor — a Schedule with no cron would otherwise leave the flow invalid with nothing
+            // on screen to fix it.
+            const inTasks = resolveTaskInsertionTargetInAnySection(yaml, id)
+            const asTrigger = inTasks
+                ? undefined
+                : resolveTaskInsertionTarget(yaml, "triggers", id)
+            const target = inTasks
+                ?? (asTrigger ? {...asTrigger, section: "triggers" as BlockSection} : undefined)
             if (!target) return
             pushModalTarget({
                 parentPath: target.parentPath,

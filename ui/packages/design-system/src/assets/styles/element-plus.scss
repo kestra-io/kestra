@@ -339,6 +339,11 @@ $fill-color-base: #fafcff;
         align-items: flex-start;
     }
 
+    .kel-message-box__message {
+        flex: 1;
+        min-width: 0;
+    }
+
     .kel-message-box__message .ks-markdown > * {
         margin: var(--ks-spacing-3) 0;
 

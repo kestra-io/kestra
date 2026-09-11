@@ -42,20 +42,18 @@
                             </template>
 
                             <template v-else-if="isRawEditor">
-                                <KsAlert
-                                    v-if="rawPreview.truncated"
-                                    type="warning"
-                                    :closable="false"
-                                    data-test="raw-value-truncated"
-                                    class="truncated-banner"
-                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
-                                >
-                                    <div class="truncated-actions">
-                                        <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
-                                            {{ $t('download') }}
-                                        </KsButton>
-                                    </div>
-                                </KsAlert>
+                                <div v-if="rawPreview.truncated" class="truncated-banner">
+                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                                        <template #title>
+                                            <div class="truncated-row">
+                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                                    {{ $t('download') }}
+                                                </KsButton>
+                                            </div>
+                                        </template>
+                                    </KsAlert>
+                                </div>
                                 <KsEditor
                                     v-bind="editorBindings"
                                     :readOnly="true"
@@ -84,20 +82,18 @@
                             />
 
                             <template v-else>
-                                <KsAlert
-                                    v-if="isRawTruncated"
-                                    type="warning"
-                                    :closable="false"
-                                    data-test="raw-value-truncated"
-                                    class="truncated-banner"
-                                    :title="$t('large_outputs.value_truncated', {size: rawValueSize})"
-                                >
-                                    <div class="truncated-actions">
-                                        <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
-                                            {{ $t('download') }}
-                                        </KsButton>
-                                    </div>
-                                </KsAlert>
+                                <div v-if="isRawTruncated" class="truncated-banner">
+                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                                        <template #title>
+                                            <div class="truncated-row">
+                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                                    {{ $t('download') }}
+                                                </KsButton>
+                                            </div>
+                                        </template>
+                                    </KsAlert>
+                                </div>
                                 <div class="viewer__scalar">
                                     <code>{{ cappedRawValue }}</code>
                                 </div>
@@ -521,7 +517,10 @@
     }
 
     function downloadValue() {
-        const name = expressionPath.value.split(".").pop() || "output"
+        // formatStep writes a non-identifier key as ["a.b"], so the last segment is not just a split.
+        const path = expressionPath.value
+        const last = path.match(/\["(.*)"\]$/)?.[1] ?? path.split(".").pop() ?? ""
+        const name = last.replace(/[^\w.-]+/g, "_") || "output"
         Utils.downloadText(rawValue.value, `${name}.${isExpandableValue.value ? "json" : "txt"}`)
     }
 
@@ -600,13 +599,18 @@
 }
 
 .truncated-banner {
-    /* Match the 16px inset the rest of the panel's content already has. */
-    margin: 0 var(--ks-spacing-4);
+    /* Padding on a wrapper, not a margin on the alert: the alert is width:100%, so a margin
+       pushes it 32px past the panel and the whole panel scrolls sideways. */
+    padding: 0 var(--ks-spacing-4);
 }
 
-.truncated-actions {
+.truncated-row {
+    /* The alert's title is an inline span, so the row needs a width of its own to reach the edge. */
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ks-spacing-3);
+    width: 100%;
 }
 
 .viewer--fill {

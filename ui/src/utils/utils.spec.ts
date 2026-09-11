@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {boundForDisplay, capForDisplay, DISPLAY_MAX_LINE_CHARS, flatten, PREVIEW_MAX_ENTRIES} from "./utils"
+import {boundForDisplay, capForDisplay, DISPLAY_MAX_LINE_CHARS, flatten, PREVIEW_MAX_ENTRIES, PREVIEW_MAX_STRING_CHARS} from "./utils"
 
 vi.mock("@kestra-io/design-system", () => ({
     fileUtils: {isFileUri: () => false},
@@ -57,6 +57,27 @@ describe("boundForDisplay", () => {
         expect(bounded.list).toHaveLength(PREVIEW_MAX_ENTRIES + 1)
         expect(bounded.list.at(-1)).toBe(`… ${150 - PREVIEW_MAX_ENTRIES}`)
         expect(bounded.record["…"]).toBe(150 - PREVIEW_MAX_ENTRIES)
+    })
+
+    it("should clip a long key, which is otherwise a whole document on one line", () => {
+        const value = {["k".repeat(2_000_000)]: "value"}
+
+        const {value: bounded, truncated} = boundForDisplay(value)
+
+        expect(truncated).toBe(true)
+        expect(JSON.stringify(bounded).length).toBeLessThan(2 * PREVIEW_MAX_STRING_CHARS)
+    })
+
+    it("should bound the preview when depth, not content, is what makes it large", () => {
+        let value: unknown = {leaf: "y".repeat(600)}
+        for (let depth = 0; depth < 1200; depth++) {
+            value = {[`level_${depth}`]: value, sibling: "z".repeat(600)}
+        }
+
+        const preview = JSON.stringify(boundForDisplay(value).value, null, 2)
+
+        // Indentation is the whole cost here: unbounded, this serializes to some 3 MB.
+        expect(preview.length).toBeLessThan(256 * 1024)
     })
 
     it("should return a small value untouched and unflagged", () => {

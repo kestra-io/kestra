@@ -126,7 +126,13 @@ function clipLines(text: string): string {
 
 export const PREVIEW_MAX_ENTRIES = 100
 export const PREVIEW_MAX_NODES = 1000
+export const PREVIEW_MAX_CHARS = 32 * 1024
 export const PREVIEW_MAX_STRING_CHARS = 500
+
+// What a scalar and an entry's punctuation and indent cost, charged against the character budget.
+const SCALAR_PREVIEW_CHARS = 8
+const ENTRY_PREVIEW_CHARS = 4
+const INDENT_PREVIEW_CHARS = 2
 
 export interface BoundedValue {
     value: unknown;
@@ -139,39 +145,64 @@ export interface BoundedValue {
  * Omitted entries are named by an `…` marker carrying how many were dropped.
  */
 export function boundForDisplay(value: unknown): BoundedValue {
-    let budget = PREVIEW_MAX_NODES
+    let nodes = PREVIEW_MAX_NODES
+    let chars = PREVIEW_MAX_CHARS
     let truncated = false
 
-    function bound(node: unknown): unknown {
-        if (typeof node === "string") {
-            if (node.length <= PREVIEW_MAX_STRING_CHARS) {
-                return node
-            }
+    // Keys count too: one long enough key is the single-line document Monaco chokes on.
+    function clip(text: string): string {
+        const kept = text.length <= PREVIEW_MAX_STRING_CHARS
+            ? text
+            : `${text.slice(0, PREVIEW_MAX_STRING_CHARS)}…`
+        if (kept !== text) {
             truncated = true
-            return `${node.slice(0, PREVIEW_MAX_STRING_CHARS)}…`
+        }
+        chars -= kept.length
+        return kept
+    }
+
+    function hasRoom(taken: number, total: number): boolean {
+        return taken < total && taken < PREVIEW_MAX_ENTRIES && nodes > 0 && chars > 0
+    }
+
+    // An entry costs its own punctuation plus the indent its depth earns it, which is what stops a
+    // deeply nested value: the indent alone is megabytes long before any leaf is reached.
+    function entryCost(depth: number): number {
+        return ENTRY_PREVIEW_CHARS + depth * INDENT_PREVIEW_CHARS
+    }
+
+    function bound(node: unknown, depth: number): unknown {
+        if (typeof node === "string") {
+            return clip(node)
         }
 
         if (node === null || typeof node !== "object") {
+            chars -= SCALAR_PREVIEW_CHARS
             return node
         }
 
         if (Array.isArray(node)) {
-            const kept = Math.min(node.length, PREVIEW_MAX_ENTRIES, budget)
-            budget -= kept
-            const bounded = node.slice(0, kept).map(bound)
-            if (kept < node.length) {
+            const bounded: unknown[] = []
+            while (hasRoom(bounded.length, node.length)) {
+                nodes--
+                chars -= entryCost(depth)
+                bounded.push(bound(node[bounded.length], depth + 1))
+            }
+            if (bounded.length < node.length) {
                 truncated = true
-                bounded.push(`… ${node.length - kept}`)
+                bounded.push(`… ${node.length - bounded.length}`)
             }
             return bounded
         }
 
         const keys = Object.keys(node)
-        const kept = Math.min(keys.length, PREVIEW_MAX_ENTRIES, budget)
-        budget -= kept
         const bounded: Record<string, unknown> = {}
-        for (let index = 0; index < kept; index++) {
-            bounded[keys[index]] = bound((node as Record<string, unknown>)[keys[index]])
+        let kept = 0
+        while (hasRoom(kept, keys.length)) {
+            nodes--
+            chars -= entryCost(depth)
+            bounded[clip(keys[kept])] = bound((node as Record<string, unknown>)[keys[kept]], depth + 1)
+            kept++
         }
         if (kept < keys.length) {
             truncated = true
@@ -180,7 +211,7 @@ export function boundForDisplay(value: unknown): BoundedValue {
         return bounded
     }
 
-    return {value: bound(value), truncated}
+    return {value: bound(value, 1), truncated}
 }
 
 /** Size of `text` on the wire: a character count understates a multi-byte value. */

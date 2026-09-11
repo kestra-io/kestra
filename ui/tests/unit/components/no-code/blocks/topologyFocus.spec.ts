@@ -6,6 +6,7 @@ import {
     moveWithinSiblings,
     parentOf,
 } from "../../../../../src/components/no-code/blocks/topologyFocus"
+import {duplicateBlockAtPath, moveBlockAtPath} from "../../../../../src/utils/flowableBlockOps"
 
 describe("topologyFocus", () => {
     const FLOW = `id: nav
@@ -97,5 +98,29 @@ errors:
 
     it("returns nothing for a source that does not parse into a flow", () => {
         expect(buildTopologyFocusOrder("")).toEqual([])
+    })
+
+    // The canvas actions address a task by the path this walk hands them, and both helpers return
+    // the source untouched on a path they cannot resolve — so a drift here is a silent no-op.
+    it("hands every focusable task a path the block operations can resolve", () => {
+        const order = buildTopologyFocusOrder(FLOW)
+        expect(order.length).toBeGreaterThan(5)
+
+        for (const entry of order) {
+            expect(duplicateBlockAtPath(FLOW, entry.path), `duplicate ${entry.id}`).not.toBe(FLOW)
+        }
+
+        // A lone task in its lane cannot move, so only the ones with a sibling are asserted.
+        const withSibling = order.filter(
+            entry => order.filter(other => other.parentPath === entry.parentPath).length > 1,
+        )
+        expect(withSibling.length).toBeGreaterThan(0)
+        for (const entry of withSibling) {
+            const moved = ["up", "down"] as const
+            expect(
+                moved.some(direction => moveBlockAtPath(FLOW, entry.path, direction) !== FLOW),
+                `reorder ${entry.id}`,
+            ).toBe(true)
+        }
     })
 })

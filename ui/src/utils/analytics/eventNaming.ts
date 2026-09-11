@@ -24,6 +24,7 @@ const EDITOR_TAB_ACTION_NAMES: Record<string, string> = {
     task_edited: "app.editor-task.edited",
     task_deleted: "app.editor-task.deleted",
     task_moved: "app.editor-task.moved",
+    task_duplicated: "app.editor-task.duplicated",
 }
 
 const OSSAUTH_NAMES: Record<string, string> = {

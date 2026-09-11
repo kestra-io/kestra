@@ -107,6 +107,7 @@
     import SendLock from "vue-material-design-icons/SendLock.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
@@ -213,6 +214,7 @@
         (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
         (event: typeof EVENTS.EDIT, data: any) :void;
         (event: typeof EVENTS.DELETE, data: any) :void;
+        (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
         (event: typeof EVENTS.ADD_TASK, data: any) :void;
         (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
         (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
@@ -450,6 +452,13 @@
             })
         }
         if (!readOnly) {
+            list.push({
+                key: "duplicate",
+                label: t("block_editor.duplicate"),
+                icon: ContentCopy,
+                divided: true,
+                onClick: () => emit(EVENTS.DUPLICATE, {id: taskId.value}),
+            })
             list.push({
                 key: "delete",
                 label: t("delete"),

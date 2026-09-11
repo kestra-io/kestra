@@ -30,6 +30,7 @@
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
+            @duplicate="onDuplicate"
             @open-link="openFlow"
             @show-logs="showLogs"
             @show-outputs="showOutputs"
@@ -312,6 +313,7 @@
         parentOf,
     } from "../no-code/blocks/topologyFocus"
     import {
+        duplicateBlockAtPath,
         errorsLaneTarget,
         groupValidationIssuesByTask,
         updateBlockAtPath,
@@ -934,6 +936,24 @@
         onEditTask({task, section: focusedSection()})
     }
 
+    function duplicateTaskById(id: string | undefined) {
+        const node = focusOrder.value.find(entry => entry.id === id)
+        if (!node) return false
+        const updated = duplicateBlockAtPath(flowSource.value ?? "", node.path)
+        if (updated === flowSource.value) return false
+        applyGraphYaml(updated)
+        trackAuthoringAction("task_duplicated", "topology", {
+            task_type: sourceTaskById.value[node.id]?.type as string | undefined,
+        })
+        return true
+    }
+
+    function duplicateFocusedTask() {
+        return duplicateTaskById(focusedTaskId.value)
+    }
+
+    const onDuplicate = (event: {id?: string}) => duplicateTaskById(event.id)
+
     function insertRelativeToFocused(position: "before" | "after") {
         const id = focusedTaskId.value
         if (!id) return
@@ -976,6 +996,8 @@
         case "insert-before":
             insertRelativeToFocused("before")
             return
+        case "duplicate":
+            return duplicateFocusedTask() ? undefined : false
         case "undo":
             performUndo()
             return

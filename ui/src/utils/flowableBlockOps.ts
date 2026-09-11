@@ -419,6 +419,66 @@ export function wrapAsDagTask(task: Record<string, unknown>): Record<string, unk
     return {task}
 }
 
+export interface DagDependency {
+    fromId?: string
+    toId?: string
+}
+
+/**
+ * Splices a task into a Dag's dependency chain. A Dag expresses order through `dependsOn` rather
+ * than list position, so inserting into the array alone would leave the new task a disconnected
+ * root; dropping it on the edge `fromId -> toId` has to mean `fromId -> insertedId -> toId`.
+ */
+export function rewireDagDependency(
+    source: string,
+    parentPath: string,
+    insertedId: string,
+    dependency: DagDependency,
+): string {
+    const {fromId, toId} = dependency
+    if (!fromId && !toId) return source
+
+    const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+    if (!parsed) return source
+    const lane = getAtPath(parsed, parentPath)
+    if (!Array.isArray(lane)) return source
+
+    const indexOf = (id: string) =>
+        lane.findIndex(item => String(displayTaskOf(item as Record<string, unknown>)?.id ?? "") === id)
+
+    const writeItem = (current: string, index: number, item: Record<string, unknown>) =>
+        flowYamlUtils.replaceBlockWithPath({
+            source: current,
+            path: `${parentPath}[${index}]`,
+            newContent: flowYamlUtils.stringify(item),
+        })
+
+    let next = source
+
+    const insertedIndex = indexOf(insertedId)
+    if (insertedIndex === -1) return source
+    if (fromId) {
+        const inserted = {...(lane[insertedIndex] as Record<string, unknown>), dependsOn: [fromId]}
+        next = writeItem(next, insertedIndex, inserted)
+    }
+
+    if (!toId) return next
+
+    const downstreamIndex = indexOf(toId)
+    if (downstreamIndex === -1) return next
+    const downstream = {...(lane[downstreamIndex] as Record<string, unknown>)}
+    const existing = Array.isArray(downstream.dependsOn) ? [...(downstream.dependsOn as string[])] : []
+    const replaceAt = fromId ? existing.indexOf(fromId) : -1
+    if (replaceAt >= 0) {
+        existing[replaceAt] = insertedId
+    } else if (!existing.includes(insertedId)) {
+        existing.push(insertedId)
+    }
+    downstream.dependsOn = existing
+
+    return writeItem(next, downstreamIndex, downstream)
+}
+
 export function groupValidationIssuesByTask(
     errors: string[] | undefined,
     flow?: Record<string, unknown>,

@@ -277,7 +277,7 @@
     import {Execution} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+    import type {FlowGraph, AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
@@ -767,11 +767,17 @@
         return [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/")
     }
 
-    const onCreateNewTask = (event: [string, "before" | "after"]) => {
-        const [taskId, position] = event
-        const target = resolveTaskInsertionTargetInAnySection(flowSource.value ?? "", taskId)
+    const onCreateNewTask = (event: AddTaskTarget) => {
+        const target = resolveTaskInsertionTargetInAnySection(flowSource.value ?? "", event.refId)
         if (!target) return
-        taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex, undefined, position)
+        taskPicker.openTaskPickerAtPath(
+            target.parentPath,
+            target.refIndex,
+            undefined,
+            event.position,
+            undefined,
+            event.dagDependency,
+        )
     }
 
     const onEditTask = (event: {

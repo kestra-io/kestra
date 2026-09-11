@@ -19,23 +19,21 @@
     </EdgeLabelRenderer>
 
     <EdgeLabelRenderer v-if="path?.length && addTarget">
-        <KsTooltip :content="$t('topology-graph.add-task')">
-            <button
-                type="button"
-                class="edge-add-button"
-                :class="{'edge-add-button--visible': hovered}"
-                :style="{transform: `translate(${addButtonX}px, ${addButtonY}px) translate(-50%, -50%)`}"
-                :aria-label="$t('topology-graph.add-task')"
-                data-test="topology-edge-add-task"
-                @click.stop="emit('add-task', addTarget)"
-                @keydown.enter.stop.prevent="emit('add-task', addTarget)"
-                @keydown.space.stop.prevent="emit('add-task', addTarget)"
-                @mouseenter="hovered = true"
-                @mouseleave="hovered = false"
-            >
-                <Plus :size="12" />
-            </button>
-        </KsTooltip>
+        <button
+            type="button"
+            class="edge-add-button"
+            :class="{'edge-add-button--visible': hovered}"
+            :style="{transform: `translate(${addButtonX}px, ${addButtonY}px) translate(-50%, -50%)`}"
+            :aria-label="$t('topology-graph.add-task')"
+            data-test="topology-edge-add-task"
+            @click.stop="emit('add-task', addTarget)"
+            @keydown.enter.stop.prevent="emit('add-task', addTarget)"
+            @keydown.space.stop.prevent="emit('add-task', addTarget)"
+            @mouseenter="hovered = true"
+            @mouseleave="hovered = false"
+        >
+            <Plus :size="12" />
+        </button>
     </EdgeLabelRenderer>
 
     <path
@@ -51,8 +49,8 @@
     import {computed, ref} from "vue"
     import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
-    import {KsTooltip} from "@kestra-io/design-system"
     import Plus from "vue-material-design-icons/Plus.vue"
+    import type {AddTaskTarget} from "../utils/vueFlowUtils"
 
     const props = defineProps({
         id: {type: String, default: undefined},
@@ -67,14 +65,14 @@
     })
 
     const emit = defineEmits<{
-        (event: "add-task", data: [string, "before" | "after"]): void
+        (event: "add-task", data: AddTaskTarget): void
     }>()
 
     const hovered = ref(false)
 
     // The graph already computed where a `+` on this edge should insert and relative to which
     // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
-    const addTarget = computed<[string, "before" | "after"] | undefined>(() => props.data?.haveAdd)
+    const addTarget = computed<AddTaskTarget | undefined>(() => props.data?.haveAdd)
 
     const classes = computed(() => {
         return props.data

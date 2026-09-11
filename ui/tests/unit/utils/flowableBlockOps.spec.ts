@@ -12,6 +12,7 @@ import {
     duplicateBlockAtPath,
     errorsLaneTarget,
     groupValidationIssuesByTask,
+    rewireDagDependency,
     isFlowableType,
     isWrappedLaneItem,
     isWrapperLane,
@@ -1240,6 +1241,81 @@ tasks:
 
         it("should return undefined for an unknown task id", () => {
             expect(errorsLaneTarget(FLOW_WITH_FLOWABLE, "nope")).toBeUndefined()
+        })
+    })
+
+    describe("rewireDagDependency", () => {
+        const DAG = `id: dag
+namespace: qa
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: fetch_orders
+          type: io.kestra.plugin.core.log.Log
+          message: orders
+      - task:
+          id: fetch_customers
+          type: io.kestra.plugin.core.log.Log
+          message: customers
+      - task:
+          id: inserted
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: join_data
+          type: io.kestra.plugin.core.log.Log
+          message: join
+        dependsOn:
+          - fetch_orders
+          - fetch_customers
+`
+        const LANE = "tasks[0].tasks"
+        const dagOf = (source: string) => {
+            const lane = (flowYamlUtils.parse(source) as any).tasks[0].tasks
+            return Object.fromEntries(lane.map((i: any) => [i.task.id, i.dependsOn ?? null]))
+        }
+
+        it("splices the task between the two ends of the edge it was dropped on", () => {
+            const next = rewireDagDependency(DAG, LANE, "inserted", {fromId: "fetch_orders", toId: "join_data"})
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                fetch_customers: null,
+                inserted: ["fetch_orders"],
+                // fetch_orders is replaced, not appended: the chain stays a chain.
+                join_data: ["inserted", "fetch_customers"],
+            })
+        })
+
+        it("makes the task a new root when dropped on an edge that starts the dag", () => {
+            const next = rewireDagDependency(DAG, LANE, "inserted", {toId: "fetch_orders"})
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: ["inserted"],
+                fetch_customers: null,
+                inserted: null,
+                join_data: ["fetch_orders", "fetch_customers"],
+            })
+        })
+
+        it("only adds an upstream dependency when dropped on a leaf edge", () => {
+            const next = rewireDagDependency(DAG, LANE, "inserted", {fromId: "join_data"})
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                fetch_customers: null,
+                inserted: ["join_data"],
+                join_data: ["fetch_orders", "fetch_customers"],
+            })
+        })
+
+        it("leaves the source untouched when the edge carries no endpoint", () => {
+            expect(rewireDagDependency(DAG, LANE, "inserted", {})).toBe(DAG)
+        })
+
+        it("leaves the source untouched when the inserted id is not in the lane", () => {
+            expect(rewireDagDependency(DAG, LANE, "absent", {fromId: "fetch_orders"})).toBe(DAG)
         })
     })
 

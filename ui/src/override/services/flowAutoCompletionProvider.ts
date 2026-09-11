@@ -11,6 +11,7 @@ import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
+import {useBaseNamespacesStore} from "../../composables/useBaseNamespaces"
 import type {YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
@@ -141,7 +142,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         return probeIndexes
     }
 
-    private taskIdFromCandidates(candidates: Record<string, unknown>[]): string | undefined {
+    private taskIdFromCandidates(candidates: (Record<string, unknown> | undefined)[]): string | undefined {
         for (let i = candidates.length - 1; i >= 0; i--) {
             const candidate = candidates[i]
             if (
@@ -183,7 +184,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
         const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
             .map(task => task.get("type"))
-            ?.[0]
+            ?.[0] as string | undefined
 
         if (!taskType) {
             return []
@@ -217,13 +218,13 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     async nestedFieldAutoCompletion(source: string, parsed: ParsedFlow | undefined, parentField: string, cursorIndex?: number): Promise<string[]> {
         switch (parentField) {
             case "inputs":
-                return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? [])
+                return Promise.resolve(parsed?.inputs?.map(input => input.id).filter((id): id is string => id !== undefined) ?? [])
             case "outputs": {
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex)
                 return Promise.resolve(
                     parsed?.tasks
-                        ?.map((task: {id?: string}) => task.id)
-                        .filter((taskId: string | undefined) => taskId && taskId !== currentTaskId) ?? [],
+                        ?.map(task => task.id)
+                        .filter((taskId): taskId is string => !!taskId && taskId !== currentTaskId) ?? [],
                 )
             }
             case "labels":
@@ -264,9 +265,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 const formMatch = parentField.match(/^inputs\.([^.]+)$/)
                 if (formMatch) {
                     const form = parsed?.inputs?.find(
-                        (input: {id?: string; type?: string}) => input.id === formMatch[1] && input.type === "FORM",
+                        input => input.id === formMatch[1] && input.type === "FORM",
                     )
-                    return Promise.resolve(form?.inputs?.map((child: {id?: string}) => child.id) ?? [])
+                    return Promise.resolve(form?.inputs?.map(child => child.id).filter((id): id is string => id !== undefined) ?? [])
                 }
 
                 return Promise.resolve([])
@@ -381,7 +382,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([])
                 }
-                return Array.from(new Set<string>((await this.namespacesStore.usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)))
+                const namespacesStore = this.namespacesStore as unknown as ReturnType<typeof useBaseNamespacesStore>
+                return Array.from(new Set<string>((await namespacesStore.usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)))
             }
             case "kv": {
                 const namespace = this.extractArgValue(namespaceArg)

@@ -117,6 +117,7 @@
         margin-bottom: var(--ks-spacing-2);
         font-size: var(--ks-font-size-2xs);
         color: var(--ks-text-secondary);
+        font-variant-numeric: tabular-nums;
 
         &.center {
             justify-content: center;

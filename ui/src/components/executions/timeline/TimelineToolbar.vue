@@ -152,6 +152,10 @@
     background: var(--ks-bg-surface);
 }
 
+.range-pill {
+    font-variant-numeric: tabular-nums;
+}
+
 .range-pill.is-active {
     color: var(--ks-text-primary);
     background: var(--ks-btn-secondary-bg-active);

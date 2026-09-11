@@ -131,11 +131,35 @@ export function hexToRgba(hex: string, opacity: number) {
     throw new Error("Bad Hex")
 }
 
+// The `download` attribute is only honored by the browser for a same-origin
+// (or blob:/data:) URL; for a cross-origin one the browser ignores it and
+// just navigates there instead.
+function isDownloadableOrigin(url: string): boolean {
+    if (url.startsWith("blob:") || url.startsWith("data:")) {
+        return true
+    }
+    try {
+        return new URL(url, window.location.href).origin === window.location.origin
+    } catch {
+        return false
+    }
+}
+
 export function downloadUrl(url: string, filename: string) {
     const link = document.createElement("a")
     link.href = url
     link.setAttribute("download", filename)
-    link.setAttribute("target", "_blank")
+    // See isDownloadableOrigin above: for a same-origin/blob:/data: URL, `download`
+    // already takes precedence for a same-document anchor click, so `target` does
+    // nothing there and is a documented footgun for `download` + blob: specifically
+    // in some browsers (kestra-io/kestra#17322). For a cross-origin URL - e.g. a
+    // namespace files export that redirects to cloud storage
+    // (useBaseNamespaces.ts's exportFileDirectory) - `download` is not honored at
+    // all, so without `target="_blank"` the click would navigate the current tab
+    // away instead: the same symptom #17322 reports, just from a different cause.
+    if (!isDownloadableOrigin(url)) {
+        link.setAttribute("target", "_blank")
+    }
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

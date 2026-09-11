@@ -17,6 +17,8 @@ jobs:
       CHANGESET_FILE: .changeset/sync-slot-contracts.md
     steps:
       - name: Checkout kestra
+        with:
+          persist-credentials: false
         uses: actions/checkout@v7
 
       # The branch, the commit and the PR in artifact-sdk are all attributed to whoever owns the
@@ -36,6 +38,7 @@ jobs:
           repository: kestra-io/artifact-sdk
           token: ${{ steps.app-token.outputs.token }}
           path: artifact-sdk
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -68,9 +71,15 @@ jobs:
 
       - name: Create or reset chore/contracts branch
         working-directory: artifact-sdk
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git fetch origin
-          if git ls-remote --heads origin chore/contracts | grep -q chore/contracts; then
+          # persist-credentials is disabled on checkout: authenticate every git command that touches
+          # artifact-sdk's origin with a one-off extraheader instead, so the token is never written
+          # to .git/config.
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)"
+          git -c http.https://github.com/.extraheader="${AUTH_HEADER}" fetch origin
+          if git -c http.https://github.com/.extraheader="${AUTH_HEADER}" ls-remote --heads origin chore/contracts | grep -q chore/contracts; then
             git checkout chore/contracts
             git reset --hard origin/main
           else
@@ -121,6 +130,8 @@ jobs:
       - name: Commit and push
         id: commit
         working-directory: artifact-sdk
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git add packages/artifact-sdk/src/contracts .changeset
           if git diff --cached --quiet; then
@@ -129,7 +140,9 @@ jobs:
             exit 0
           fi
           git commit -m "chore: sync slot contracts from kestra-io/kestra $(date +%s)"
-          git push --force-with-lease origin chore/contracts
+          # persist-credentials is disabled on checkout: authenticate this push with a one-off
+          # extraheader instead, so the token is never written to .git/config.
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)" push --force-with-lease origin chore/contracts
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create or update PR

@@ -42,7 +42,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        
+        with:
+          persist-credentials: false
+
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -85,13 +87,17 @@ jobs:
 
       - name: Commit and tag
         working-directory: .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # setup the bot for commit and tag
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # tag the version and push
           git tag "${{ inputs.package }}/v${{ steps.version.outputs.value }}"
-          git push --tags
+          # persist-credentials is disabled on checkout: authenticate this push with a one-off
+          # extraheader instead, so the token is never written to .git/config.
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)" push --tags
 
       # Trusted publishing need npm 11.+
       - name: Upgrade npm

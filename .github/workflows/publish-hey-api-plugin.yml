@@ -37,6 +37,8 @@ jobs:
         working-directory: ui
     steps:
       - name: Checkout
+        with:
+          persist-credentials: false
         uses: actions/checkout@v7
 
       - name: Setup Node.js

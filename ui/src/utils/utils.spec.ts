@@ -80,6 +80,17 @@ describe("boundForDisplay", () => {
         expect(preview.length).toBeLessThan(256 * 1024)
     })
 
+    it("should count a key clipped into a collision as dropped, not merge it into the first", () => {
+        const prefix = "p".repeat(PREVIEW_MAX_STRING_CHARS + 100)
+        const value = {[`${prefix}a`]: 1, [`${prefix}b`]: 2, other: 3}
+
+        const {value: bounded} = boundForDisplay(value) as {value: Record<string, unknown>}
+
+        // The survivor, `other`, and the marker: the collided key is counted as dropped.
+        expect(Object.keys(bounded)).toHaveLength(3)
+        expect(bounded["…"]).toBe(1)
+    })
+
     it("should return a small value untouched and unflagged", () => {
         const value = {a: {b: [1, null, "x"]}, c: {}}
 

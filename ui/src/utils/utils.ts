@@ -181,6 +181,9 @@ export function boundForDisplay(value: unknown): BoundedValue {
             return node
         }
 
+        // The container's own closing line is indented too, which is half the cost at depth.
+        chars -= depth * INDENT_PREVIEW_CHARS
+
         if (Array.isArray(node)) {
             const bounded: unknown[] = []
             while (hasRoom(bounded.length, node.length)) {
@@ -197,16 +200,25 @@ export function boundForDisplay(value: unknown): BoundedValue {
 
         const keys = Object.keys(node)
         const bounded: Record<string, unknown> = {}
-        let kept = 0
-        while (hasRoom(kept, keys.length)) {
+        let index = 0
+        let shown = 0
+        while (index < keys.length && hasRoom(shown, keys.length)) {
             nodes--
             chars -= entryCost(depth)
-            bounded[clip(keys[kept])] = bound((node as Record<string, unknown>)[keys[kept]], depth + 1)
-            kept++
+            const key = keys[index]
+            index++
+            const clipped = clip(key)
+            // Two keys clipped to the same text would have the second overwrite the first, showing
+            // fewer entries than the value has; drop it instead so the `…` count stays honest.
+            if (clipped in bounded) {
+                continue
+            }
+            bounded[clipped] = bound((node as Record<string, unknown>)[key], depth + 1)
+            shown++
         }
-        if (kept < keys.length) {
+        if (shown < keys.length) {
             truncated = true
-            bounded["…"] = keys.length - kept
+            bounded["…"] = keys.length - shown
         }
         return bounded
     }

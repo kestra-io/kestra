@@ -72,6 +72,19 @@ class PathMatcherPredicateTest {
     }
 
     @Test
+    void shouldMatchAllGivenSimpleDotfileExpressionAndNoBasePath() {
+        for (String pattern : List.of(".env", ".gitignore", ".env.local", ".eslintrc.json")) {
+            // Given
+            List<Path> paths = Stream.of("/base/" + pattern, "/base/sub/dir/" + pattern).map(Path::of).toList();
+            PathMatcherPredicate predicate = PathMatcherPredicate.matches(List.of(pattern));
+            // When
+            List<Path> filtered = paths.stream().filter(predicate).toList();
+            // Then
+            assertEquals(paths, filtered);
+        }
+    }
+
+    @Test
     void shouldMatchGivenSimpleExpressionAndBasePath() {
         // Given
         List<Path> paths = Stream.of("/base/test.txt", "/base/sub/dir/test.txt").map(Path::of).toList();

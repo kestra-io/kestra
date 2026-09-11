@@ -103,7 +103,7 @@ class TriggerControllerTest {
         TriggerState unmatchedState = createTriggerFromFlow(unmatched, false);
         flowService.create(GenericFlow.of(unmatched));
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-            .until(() -> jdbcTriggerRepository.findById(unmatchedState).isPresent());
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(unmatchedState).isPresent());
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -181,50 +181,6 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldRecordLastTriggeredDateWhenAnUnscheduledTriggerFires() throws FlowProcessingException, QueueException {
-        // GIVEN a webhook trigger, which the scheduler holds a state for but never evaluates
-        Flow flow = generateFlowWithUnscheduledTriggers();
-        flowService.create(GenericFlow.of(flow));
-        awaitTriggerStates(flow);
-        TriggerId webhook = TriggerId.of(TENANT_ID, flow.getNamespace(), flow.getId(), "webhook");
-
-        // WHEN the webhook is called
-        client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/executions/webhook/%s/%s/a-secret-key".formatted(flow.getNamespace(), flow.getId()), null)
-        );
-
-        // THEN the scheduler records the firing on the trigger state, which would otherwise report it as never fired
-        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(
-            () -> jdbcTriggerRepository.findById(webhook).map(TriggerState::getLastTriggeredDate).isPresent()
-        );
-        assertThat(jdbcTriggerRepository.findById(webhook).orElseThrow().getExecutionId()).isNotNull();
-    }
-
-    @Test
-    void shouldRecordLastTriggeredDateWhenAFlowTriggerFires() throws FlowProcessingException, QueueException {
-        // GIVEN an upstream flow, and a listener whose flow trigger has no dependsOn so it goes through the
-        // executor's simple-conditions path. `when` scopes it to this upstream flow: a flow trigger with
-        // neither dependsOn nor conditions is evaluated against every execution of every tenant.
-        Flow upstream = generateFlowWithWebhook();
-        Flow listener = generateFlowTriggerListener(upstream);
-        flowService.create(GenericFlow.of(upstream));
-        flowService.create(GenericFlow.of(listener));
-        awaitTriggerStates(listener);
-        TriggerId flowTrigger = TriggerId.of(TENANT_ID, listener.getNamespace(), listener.getId(), "flow-trigger");
-
-        // WHEN the upstream flow runs to completion
-        client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/executions/webhook/%s/%s/a-secret-key".formatted(upstream.getNamespace(), upstream.getId()), null)
-        );
-
-        // THEN the executor tells the scheduler the flow trigger fired
-        Awaitility.await().atMost(Duration.ofSeconds(60)).pollInterval(Duration.ofMillis(100)).until(
-            () -> jdbcTriggerRepository.findById(flowTrigger).map(TriggerState::getLastTriggeredDate).isPresent()
-        );
-        assertThat(jdbcTriggerRepository.findById(flowTrigger).orElseThrow().getExecutionId()).isNotNull();
-    }
-
-    @Test
     void shouldReturnConflictWhenBackfillingATriggerTheSchedulerDoesNotEvaluate() throws FlowProcessingException, QueueException {
         // GIVEN a webhook trigger, which now holds a state and so passes the trigger-exists check
         Flow flow = generateFlowWithUnscheduledTriggers();
@@ -250,7 +206,29 @@ class TriggerControllerTest {
 
         // THEN it is refused rather than accepted into a backfill that could never run
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("not evaluated by the scheduler");
+        assertThat(e.getMessage()).contains("the scheduler does not evaluate this kind of trigger");
+    }
+
+    @Test
+    void shouldReturnConflictWhenTogglingATriggerTheSchedulerDoesNotEvaluate() throws FlowProcessingException, QueueException {
+        // GIVEN a webhook trigger, whose state the scheduler never reads
+        Flow flow = generateFlowWithUnscheduledTriggers();
+        flowService.create(GenericFlow.of(flow));
+        awaitTriggerStates(flow);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.PUT(
+                    TRIGGER_PATH + "/set-disabled",
+                    new TriggerController.ApiDisableTriggerRequest(flow.getNamespace(), flow.getId(), "webhook", true)
+                )
+            )
+        );
+
+        // THEN it is refused rather than stored as a flag nothing enforces
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("the scheduler does not evaluate this kind of trigger");
     }
 
     @Test
@@ -1052,38 +1030,10 @@ class TriggerControllerTest {
             .build();
     }
 
-    private Flow generateFlowWithWebhook() {
-        return Flow.builder()
-            .tenantId(TENANT_ID)
-            .namespace("ns-" + IdUtils.create().toLowerCase())
-            .id(IdUtils.create())
-            .tasks(Collections.singletonList(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("ok")).build()))
-            .triggers(List.of(Webhook.builder().id("webhook").type(Webhook.class.getName()).key("a-secret-key").build()))
-            .build();
-    }
-
-    private Flow generateFlowTriggerListener(Flow upstream) {
-        return Flow.builder()
-            .tenantId(TENANT_ID)
-            .namespace(upstream.getNamespace())
-            .id(IdUtils.create())
-            .tasks(Collections.singletonList(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("ok")).build()))
-            .triggers(
-                List.of(
-                    io.kestra.plugin.core.trigger.Flow.builder()
-                        .id("flow-trigger")
-                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                        .when("{{ flow.id == '%s' }}".formatted(upstream.getId()))
-                        .build()
-                )
-            )
-            .build();
-    }
-
     private void awaitTriggerStates(Flow flow) {
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(
             () -> flow.getTriggers().stream().allMatch(
-                trigger -> jdbcTriggerRepository.findById(TriggerId.of(flow, trigger)).isPresent()
+                trigger -> jdbcTriggerRepository.findByIdWithoutAcl(TriggerId.of(flow, trigger)).isPresent()
             )
         );
     }

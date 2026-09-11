@@ -1957,6 +1957,7 @@
   "trigger enable dialog|title": "1e3e32dba984",
   "trigger filter|options|CHILD": "01c18c7c109d",
   "trigger filter|options|MAIN": "0064f8912b13",
+  "trigger not toggleable": "3e49e8dde7d9",
   "triggerId": "08e6b2bfdf95",
   "trigger_check_warning": "515b2e2e9c91",
   "trigger_states": "2f6e9daec8e9",

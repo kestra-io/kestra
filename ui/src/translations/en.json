@@ -976,6 +976,10 @@
       "success": "Trigger is unlocked"
     },
     "trigger disabled": "Trigger is disabled within Flow source",
+    "trigger not toggleable": "This trigger is not evaluated by the Scheduler, disable it in the Flow source",
+    "bulk not toggleable warning": "{count} selected trigger(s) will be skipped: the Scheduler does not evaluate them, so they can only be disabled in the Flow source.",
+    "bulk none applied": "No triggers were affected: none of the selected ones could be processed.",
+    "bulk partially applied": "{count} of {requested} triggers were processed, the others were skipped.",
     "trigger enable dialog": {
       "title": "Enable trigger",
       "bulk title": "Enable {count} triggers",

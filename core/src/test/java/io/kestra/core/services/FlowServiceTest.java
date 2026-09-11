@@ -21,6 +21,7 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -34,12 +35,16 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
@@ -66,6 +71,8 @@ class FlowServiceTest {
     private BroadcastQueueInterface<FlowInterface> flowQueue;
     @Inject
     private TriggerEventQueue triggerEventQueue;
+    @Inject
+    private TriggerStateStore triggerStateStore;
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
     @Inject
@@ -1653,5 +1660,71 @@ class FlowServiceTest {
                 true
             );
         }
+    }
+
+    @Test
+    void shouldWriteTriggerStateDirectlyWhenCreatingFlowWithWebhookTrigger() throws FlowProcessingException, QueueException {
+        // Given - a flow with a webhook trigger, which the scheduler never evaluates
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(Webhook.builder().id("webhook").type(Webhook.class.getName()).key("a-key").build()))
+            .build();
+        reset(triggerEventQueue);
+
+        // When
+        flowService.create(GenericFlow.of(flow));
+
+        // Then - its state is written straight to the store, so the triggers page can list it, and nothing
+        // reaches the scheduler's event loop
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(TriggerId.of(flow, flow.getTriggers().getFirst())).orElseThrow();
+        assertThat(state.getType()).isEqualTo(TriggerType.UNSCHEDULED);
+        assertThat(state.getNextEvaluationDate()).isNull();
+        verify(triggerEventQueue, never()).send(any());
+    }
+
+    @Test
+    void shouldDeleteTriggerStateWhenRemovingWebhookTriggerFromFlow() throws FlowProcessingException, QueueException {
+        // Given - a flow whose webhook trigger already holds a state
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(Webhook.builder().id("webhook").type(Webhook.class.getName()).key("a-key").build()))
+            .build();
+        TriggerId triggerId = TriggerId.of(flow, flow.getTriggers().getFirst());
+        flowService.create(GenericFlow.of(flow));
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isPresent();
+
+        // When - the trigger is dropped from a new revision
+        Flow updated = flow.toBuilder().triggers(List.of()).build();
+        flowService.update(GenericFlow.of(updated), GenericFlow.of(flow));
+
+        // Then
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isEmpty();
+    }
+
+    @Test
+    void shouldDeleteTriggerStateWhenDeletingFlowWithWebhookTrigger() throws FlowProcessingException, QueueException {
+        // Given
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(Webhook.builder().id("webhook").type(Webhook.class.getName()).key("a-key").build()))
+            .build();
+        TriggerId triggerId = TriggerId.of(flow, flow.getTriggers().getFirst());
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isPresent();
+
+        // When
+        flowService.delete(created);
+
+        // Then
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isEmpty();
     }
 }

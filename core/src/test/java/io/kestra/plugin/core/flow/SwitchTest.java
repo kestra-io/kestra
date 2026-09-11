@@ -104,7 +104,7 @@ class SwitchTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("default");
-        assertThat((Boolean) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("parent-seq").getFirst()).get("defaults")).isTrue();
+        assertThat((Boolean) execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isTrue();
     }
 
     @Test

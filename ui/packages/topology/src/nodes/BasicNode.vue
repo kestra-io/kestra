@@ -2,7 +2,7 @@
     <div
         class="node-wrapper"
         :style="nodeStyle"
-        :class="[classes, {'node-wrapper--execution': isExecution}]"
+        :class="[classes, {'node-wrapper--execution': isExecution, 'node-wrapper--focused': focused}]"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
         @click="onCardClick"
@@ -76,6 +76,7 @@
         // in the index has no way to ever get an icon (kestra-io/kestra#18129).
         loadIcon?: (cls: string) => Promise<any>;
         class?: string | string[] | Record<string, boolean>;
+        focused?: boolean;
     }>()
 
     const taskIconComponent = useTaskIcon()
@@ -145,6 +146,11 @@
 </script>
 
 <style lang="scss" scoped>
+    .node-wrapper--focused {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: 2px;
+    }
+
     .node-wrapper {
         background-color: var(--ks-bg-surface);
         border-radius: var(--ks-radius-base);

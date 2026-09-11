@@ -132,8 +132,9 @@ describe("FailureDebugPanel", () => {
         })
 
         expect(wrapper.get(".failure-debug-panel__subtitle").text()).toContain("task-1")
-        // The switcher only renders when more than one failure is present.
-        expect(wrapper.find("[role=\"tablist\"]").exists()).toBe(true)
+        // The switcher only renders when more than one failure is present. Scoped to
+        // .failure-switcher: the context card's own KsTabs also renders a role="tablist".
+        expect(wrapper.find(".failure-switcher").exists()).toBe(true)
     })
 
     it("should fetch the flow once per execution, not again on every switcher focus change", async () => {
@@ -151,7 +152,7 @@ describe("FailureDebugPanel", () => {
         expect(mocks.flow).toHaveBeenCalledTimes(1)
         expect(mocks.flow).toHaveBeenCalledWith(expect.objectContaining({revision: 3}))
 
-        await wrapper.get("[role=\"tab\"]:last-child").trigger("click")
+        await wrapper.get(".failure-switcher [role=\"tab\"]:last-child").trigger("click")
         await flushPromises()
 
         expect(mocks.flow).toHaveBeenCalledTimes(1)
@@ -179,7 +180,7 @@ describe("FailureDebugPanel", () => {
             taskRunList: [taskRun("tr-1", "task-1", "FAILED", "2024-01-01T00:00:00Z")],
         })
 
-        expect(wrapper.find("[role=\"tablist\"]").exists()).toBe(false)
+        expect(wrapper.find(".failure-switcher").exists()).toBe(false)
     })
 
     it("should start closed, with the reopen affordance as the only entry point", async () => {

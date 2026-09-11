@@ -2,7 +2,7 @@ import {afterEach, describe, expect, it} from "vitest"
 import {defineComponent, h} from "vue"
 import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
 import {createRouter, createMemoryHistory, type Router} from "vue-router"
-import {useTimelineRange} from "../../../src/composables/useTimelineRange"
+import {useTimelineRange} from "./useTimelineRange"
 
 const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"

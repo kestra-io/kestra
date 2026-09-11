@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from "vitest"
+import {describe, expect, it, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent} from "vue"
@@ -24,6 +24,30 @@ const stubs = {
     KsId: passthroughStub("KsId"),
     KsButton: passthroughStub("KsButton"),
     KsExecutionStatus: passthroughStub("KsExecutionStatus"),
+}
+
+// KsPopover's own trigger element is the single node passed in the #reference slot - this stub
+// mirrors that contract so a regression that stacks another trigger on top (the ElOnlyChild
+// composition bug this guards against) would render a second element.
+const popoverAwareStubs = {
+    ...stubs,
+    KsPopover: {
+        props: ["visible"],
+        emits: ["update:visible"],
+        template: `
+            <div>
+                <div data-test="reference" @click="$emit('update:visible', !visible)">
+                    <slot name="reference" />
+                </div>
+                <div v-if="visible" data-test="popover-body"><slot /></div>
+            </div>
+        `,
+    },
+    KsTooltip: {
+        props: ["visible"],
+        template: "<div v-if=\"visible\" data-test=\"tooltip-body\"><slot name=\"content\" /></div>",
+    },
+    KsId: {props: ["value"], template: "<span>{{ value }}</span>"},
 }
 
 const execution: TimelineExecution = {
@@ -84,5 +108,28 @@ describe("TimelineBar", () => {
 
         expect(lightMix).toContain("30%")
         expect(denseMix).toContain("100%")
+    })
+
+    test("renders a single clickable bar element, not a duplicated trigger wrapper", () => {
+        const wrapper = mountBar({execution})
+
+        const bars = wrapper.findAll(".timeline-bar")
+        expect(bars).toHaveLength(1)
+        expect(bars[0].element.tagName).toBe("BUTTON")
+    })
+
+    test("opens the execution detail popover when the bar is clicked", async () => {
+        const clickedExecution: TimelineExecution = {...execution, id: "execution-id", flowId: "my-flow"}
+        const wrapper = mount(TimelineBar, {
+            props: {leftPercent: 0, widthPercent: 10, dimmed: false, execution: clickedExecution},
+            global: {plugins: [i18n], stubs: popoverAwareStubs},
+        })
+        expect(wrapper.find("[data-test=\"popover-body\"]").exists()).toBe(false)
+
+        await wrapper.get(".timeline-bar").trigger("click")
+
+        expect(wrapper.find("[data-test=\"popover-body\"]").exists()).toBe(true)
+        expect(wrapper.text()).toContain("execution-id")
+        expect(wrapper.text()).toContain("my-flow")
     })
 })

@@ -107,7 +107,7 @@
     import {dateUtils, durationUtils, KsButton} from "@kestra-io/design-system"
     import TimeSelect from "../date-select/TimeSelect.vue"
     import DateRange from "../../layout/DateRange.vue"
-    import {MAX_RANGE_MS, MIN_RANGE_MS} from "../../../composables/useTimelineRange"
+    import {MIN_RANGE_MS, computeSliderDomain} from "../../../composables/useTimelineRange"
 
     const props = defineProps<{
         rangeStartMs: number;
@@ -155,11 +155,14 @@
         emit("custom-range", {startMs: Date.parse(startDate), endMs: Date.parse(endDate)})
     }
 
-    // The slider's track represents the widest window a user can zoom out to (MAX_RANGE_MS, the
-    // same cap useTimelineRange's zoom() already enforces), anchored to now — widened further only
-    // if the current selection already reaches outside it (e.g. an absolute range picked further back).
-    const domainEndMs = computed(() => Math.max(Date.now(), props.rangeEndMs))
-    const domainStartMs = computed(() => Math.min(domainEndMs.value - MAX_RANGE_MS, props.rangeStartMs))
+    // Sized relative to the current selection (see computeSliderDomain) rather than a fixed span, so
+    // the selection stays a graspable handle at any zoom level. Derived only from rangeStartMs/rangeEndMs
+    // props, which the slider's own drag doesn't touch (no v-model binding here, only @change on drop),
+    // so a live drag never fights this recomputation — the domain only resettles once the drag ends and
+    // custom-range flows back through the URL.
+    const sliderDomain = computed(() => computeSliderDomain(props.rangeStartMs, props.rangeEndMs))
+    const domainStartMs = computed(() => sliderDomain.value[0])
+    const domainEndMs = computed(() => sliderDomain.value[1])
 
     // Memoized so the array reference is stable across unrelated re-renders: KsRangeSlider's
     // defineModel() treats a new reference as an external change and would snap an in-progress

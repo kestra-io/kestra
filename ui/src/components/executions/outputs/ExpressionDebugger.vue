@@ -35,17 +35,32 @@
                     :value="fileResult"
                     :execution="execution"
                 />
-                <KsEditor
-                    v-else
-                    v-bind="editorBindings"
-                    :readOnly="true"
-                    :inline="true"
-                    :navbar="false"
-                    :options="{showScroll: true, fullHeight: false, customHeight: 8}"
-                    :modelValue="result"
-                    :lang="resultLang"
-                    class="result"
-                />
+                <template v-else>
+                    <KsAlert
+                        v-if="isResultTruncated"
+                        type="warning"
+                        :closable="false"
+                        data-test="result-truncated"
+                        :title="$t('large_outputs.value_truncated', {size: resultSize})"
+                    >
+                        <KsButton size="small" @click="copyFullResult">
+                            {{ $t('copy') }}
+                        </KsButton>
+                        <KsButton size="small" :icon="Download" data-test="download-result" @click="downloadFullResult">
+                            {{ $t('download') }}
+                        </KsButton>
+                    </KsAlert>
+                    <KsEditor
+                        v-bind="editorBindings"
+                        :readOnly="true"
+                        :inline="true"
+                        :navbar="false"
+                        :options="{showScroll: true, fullHeight: false, customHeight: 8}"
+                        :modelValue="displayResult"
+                        :lang="resultLang"
+                        class="result"
+                    />
+                </template>
             </div>
         </template>
     </div>
@@ -54,7 +69,8 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
 
-    import {KsEditor, KsButton, KsAlert} from "@kestra-io/design-system"
+    import Download from "vue-material-design-icons/Download.vue"
+    import {KsEditor, KsButton, KsAlert, copyToClipboard} from "@kestra-io/design-system"
     import {evalExpression} from "@kestra-io/kestra-sdk/executions"
 
     import {useEditorBindings} from "../../../composables/useEditorBindings"
@@ -86,6 +102,31 @@
     )
 
     const result = ref<string | undefined>(undefined)
+    const parsedResult = ref<unknown>(undefined)
+
+    // Evaluating an expression over a large output put the whole result in Monaco. A JSON result
+    // previews through its parsed value so the editor is never handed a clipped, broken one.
+    const resultPreview = computed(() => parsedResult.value === undefined
+        ? undefined
+        : Utils.boundForDisplay(parsedResult.value))
+
+    const displayResult = computed(() => resultPreview.value
+        ? JSON.stringify(resultPreview.value.value, null, 2) ?? ""
+        : Utils.capForDisplay(result.value ?? ""))
+
+    const isResultTruncated = computed(() => resultPreview.value
+        ? resultPreview.value.truncated
+        : displayResult.value.length < (result.value?.length ?? 0))
+
+    const resultSize = computed(() => Utils.humanTextSize(result.value ?? ""))
+
+    const copyFullResult = () => copyToClipboard(result.value ?? "")
+
+    const downloadFullResult = () => Utils.downloadText(
+        result.value ?? "",
+        `expression-result.${resultLang.value === "json" ? "json" : "txt"}`,
+    )
+
     const resultLang = ref<"json" | "">("")
     const error = ref<string | undefined>(undefined)
 
@@ -98,6 +139,7 @@
 
     function clear() {
         result.value = undefined
+        parsedResult.value = undefined
         error.value = undefined
     }
 
@@ -116,7 +158,10 @@
             }
 
             try {
-                result.value = JSON.stringify(JSON.parse(response.result ?? ""), null, 2)
+                const parsed = JSON.parse(response.result ?? "")
+                result.value = JSON.stringify(parsed, null, 2)
+                // Only a container previews structurally; a scalar is worth reading in full.
+                parsedResult.value = typeof parsed === "object" && parsed !== null ? parsed : undefined
                 resultLang.value = "json"
             } catch {
                 result.value = response.result ?? ""

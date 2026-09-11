@@ -491,6 +491,9 @@
     },
     "download": "Download",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Showing a truncated preview of this {size} value."
+    },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."

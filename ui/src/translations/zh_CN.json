@@ -491,6 +491,9 @@
     },
     "download": "下载",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "正在显示此 {size} 值的截断预览。"
+    },
     "concurrency_limit": {
       "dialog_title": "并发限制",
       "warning": "更改运行计数器可能会损坏并发性，因此执行可能会超出允许的限制。"

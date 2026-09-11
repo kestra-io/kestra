@@ -12,6 +12,7 @@ import {
     duplicateBlockAtPath,
     errorsLaneTarget,
     groupValidationIssuesByTask,
+    rewireDagDependency,
     isFlowableType,
     isWrappedLaneItem,
     isWrapperLane,
@@ -23,6 +24,15 @@ import {
     updateBlockAtPath,
     wrapAsDagTask,
 } from "../../../src/utils/flowableBlockOps"
+
+interface DagLaneItem {
+    task: {id: string}
+    dependsOn?: string[]
+}
+
+interface DagProbeFlow {
+    tasks: {id: string; tasks?: DagLaneItem[]}[]
+}
 
 const SIMPLE_FLOW = `
 id: my_flow
@@ -1243,6 +1253,87 @@ tasks:
         })
     })
 
+    describe("rewireDagDependency", () => {
+        const DAG = `id: dag
+namespace: qa
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: fetch_orders
+          type: io.kestra.plugin.core.log.Log
+          message: orders
+      - task:
+          id: fetch_customers
+          type: io.kestra.plugin.core.log.Log
+          message: customers
+      - task:
+          id: inserted
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: join_data
+          type: io.kestra.plugin.core.log.Log
+          message: join
+        dependsOn:
+          - fetch_orders
+          - fetch_customers
+`
+        const LANE = "tasks[0].tasks"
+        const dagOf = (source: string) => {
+            const lane = flowYamlUtils.parse<DagProbeFlow>(source)!.tasks[0]!.tasks ?? []
+            return Object.fromEntries(lane.map(item => [item.task.id, item.dependsOn ?? null]))
+        }
+
+        it("splices the task between the two ends of the edge it was dropped on", () => {
+            const next = rewireDagDependency(DAG, LANE, "inserted", {fromId: "fetch_orders", toId: "join_data"})
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                fetch_customers: null,
+                inserted: ["fetch_orders"],
+                // fetch_orders is replaced, not appended: the chain stays a chain.
+                join_data: ["inserted", "fetch_customers"],
+            })
+        })
+
+        it("makes the task a new root when dropped on an edge that starts the dag", () => {
+            const next = rewireDagDependency(DAG, LANE, "inserted", {toId: "fetch_orders"})
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: ["inserted"],
+                fetch_customers: null,
+                inserted: null,
+                join_data: ["fetch_orders", "fetch_customers"],
+            })
+        })
+
+        it("only adds an upstream dependency when dropped on a leaf edge", () => {
+            const next = rewireDagDependency(DAG, LANE, "inserted", {fromId: "join_data"})
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                fetch_customers: null,
+                inserted: ["join_data"],
+                join_data: ["fetch_orders", "fetch_customers"],
+            })
+        })
+
+        it("leaves the source untouched when the edge carries no endpoint", () => {
+            expect(rewireDagDependency(DAG, LANE, "inserted", {})).toBe(DAG)
+        })
+
+        // Dropping a mid-chain task on its own outgoing edge makes it both ends of the rewiring.
+        it("refuses to make a task depend on itself", () => {
+            expect(rewireDagDependency(DAG, LANE, "join_data", {fromId: "join_data", toId: "publish"})).toBe(DAG)
+            expect(rewireDagDependency(DAG, LANE, "join_data", {fromId: "fetch_orders", toId: "join_data"})).toBe(DAG)
+        })
+
+        it("leaves the source untouched when the inserted id is not in the lane", () => {
+            expect(rewireDagDependency(DAG, LANE, "absent", {fromId: "fetch_orders"})).toBe(DAG)
+        })
+    })
+
     describe("groupValidationIssuesByTask", () => {
         it("groups a plain 'id.field: message' constraint under the task id", () => {
             const grouped = groupValidationIssuesByTask(["fetch_data.uri: must not be null"])
@@ -1346,6 +1437,40 @@ afterExecution:
 
             it("ignores a path-addressed constraint when no flow is provided", () => {
                 expect(groupValidationIssuesByTask(["errors[0].message: must not be null"]).size).toBe(0)
+            })
+
+            // `POST /flows/validate` addresses a task constraint by id, not by index — this is the
+            // shape the topology's per-node badge actually receives.
+            it("resolves the id-keyed path the validate endpoint returns", () => {
+                const grouped = groupValidationIssuesByTask(
+                    ["Validation error: tasks[publish].message: must not be null\n"],
+                    flow,
+                )
+                expect(grouped.get("publish")).toEqual(["message: must not be null"])
+            })
+
+            it("resolves an id-keyed path in a non-tasks section", () => {
+                const grouped = groupValidationIssuesByTask(["errors[on_error].message: must not be null"], flow)
+                expect(grouped.get("on_error")).toEqual(["message: must not be null"])
+            })
+
+            it("resolves an id-keyed path without needing the flow, since the id is in the path", () => {
+                const grouped = groupValidationIssuesByTask(["tasks[publish].message: must not be null"])
+                expect(grouped.get("publish")).toEqual(["message: must not be null"])
+            })
+
+            // A task inside a Dag is addressed through its wrapper, which the badge should not echo.
+            it("resolves a task nested in a dag and drops the wrapper segment", () => {
+                const grouped = groupValidationIssuesByTask(
+                    ["Validation error: tasks[pipeline].tasks[publish_report].task.flowId: must not be null\n"],
+                    flow,
+                )
+                expect(grouped.get("publish_report")).toEqual(["flowId: must not be null"])
+            })
+
+            it("keeps a multi-segment field path that is not a dag wrapper", () => {
+                const grouped = groupValidationIssuesByTask(["tasks[send].headers.Authorization: must not be blank"])
+                expect(grouped.get("send")).toEqual(["headers.Authorization: must not be blank"])
             })
         })
     })

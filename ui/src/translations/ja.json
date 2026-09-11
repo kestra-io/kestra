@@ -442,7 +442,8 @@
       "zoom-fit": "フィット",
       "invalid": "グラフエラー",
       "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
-      "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。"
+      "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。",
+      "add-task": "Taskを追加"
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",

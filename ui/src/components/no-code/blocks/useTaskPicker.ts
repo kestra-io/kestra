@@ -5,6 +5,8 @@ import RecentIcon from "vue-material-design-icons/History.vue"
 import {
     addBlock,
     addBlockAtPath,
+    rewireDagDependency,
+    type DagDependency,
     buildMinimalTask,
     collectAllIds,
     isWrapperLane,
@@ -23,6 +25,7 @@ import {
 } from "./taskPickerCatalog"
 import {isRootSectionPath, parentPathFromLaneSentinel, sectionFromParentPath, sectionFromSentinel} from "./blockSections"
 import {computePickerPosition, type AnchorRect} from "./taskPickerPosition"
+import {trackAuthoringAction, type AuthoringSurface} from "../../../utils/tabTracking"
 
 export type PickerTab = "suggested" | "apps" | "recent"
 
@@ -45,6 +48,8 @@ export interface TaskPickerDeps {
     laneDisplayLabel: (parentPath: string) => string
     flowYaml: Ref<string>
     applyYaml: (yaml: string) => void
+    /** Which editor surface this picker instance belongs to, for authoring analytics. */
+    surface: AuthoringSurface
 }
 
 export function useTaskPicker(deps: TaskPickerDeps) {
@@ -67,6 +72,7 @@ export function useTaskPicker(deps: TaskPickerDeps) {
     const taskPickerParentPath = ref<string | undefined>(undefined)
     const taskPickerAfterIndex = ref<number | undefined>(undefined)
     const taskPickerPosition = ref<"before" | "after">("after")
+    const taskPickerDagDependency = ref<DagDependency | undefined>(undefined)
     const pluginsLoading = ref(false)
     const pickerFocusedIndex = ref(-1)
     const pickerTab = ref<PickerTab>("suggested")
@@ -177,6 +183,7 @@ export function useTaskPicker(deps: TaskPickerDeps) {
         taskPickerParentPath.value = undefined
         taskPickerAfterIndex.value = undefined
         taskPickerPosition.value = "after"
+        taskPickerDagDependency.value = undefined
         resetPickerView()
         taskPickerVisible.value = true
         ensurePluginData()
@@ -189,12 +196,14 @@ export function useTaskPicker(deps: TaskPickerDeps) {
         evt?: Event,
         position: "before" | "after" = "after",
         anchorEl?: HTMLElement,
+        dagDependency?: DagDependency,
     ) {
         anchorFrom(evt, anchorEl)
         taskPickerSection.value = sectionFromParentPath(parentPath)
         taskPickerParentPath.value = parentPath
         taskPickerAfterIndex.value = refIndex >= 0 ? refIndex : undefined
         taskPickerPosition.value = position
+        taskPickerDagDependency.value = dagDependency
         resetPickerView()
         taskPickerVisible.value = true
         ensurePluginData()
@@ -300,7 +309,11 @@ export function useTaskPicker(deps: TaskPickerDeps) {
         if (taskPickerParentPath.value !== undefined) {
             const parentPath = taskPickerParentPath.value
             const blockToInsert = isWrapperLane(deps.flowYaml.value, parentPath) ? wrapAsDagTask(block) : block
-            deps.applyYaml(addBlockAtPath(deps.flowYaml.value, parentPath, blockToInsert, taskPickerAfterIndex.value, taskPickerPosition.value))
+            const inserted = addBlockAtPath(deps.flowYaml.value, parentPath, blockToInsert, taskPickerAfterIndex.value, taskPickerPosition.value)
+            const dependency = taskPickerDagDependency.value
+            deps.applyYaml(dependency
+                ? rewireDagDependency(inserted, parentPath, String(block.id), dependency)
+                : inserted)
         } else {
             const section = taskPickerSection.value
             const list = deps.sectionList(section)
@@ -309,6 +322,7 @@ export function useTaskPicker(deps: TaskPickerDeps) {
                 : undefined
             deps.applyYaml(addBlock(deps.flowYaml.value, section, block, lastId))
         }
+        trackAuthoringAction("task_added", deps.surface, {task_type: fqcn, position: taskPickerPosition.value})
         deps.focusCanvasCard(String(block.id))
         taskPickerVisible.value = false
     }

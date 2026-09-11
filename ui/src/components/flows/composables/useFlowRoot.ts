@@ -156,6 +156,7 @@ export function useFlowRoot() {
         onUnmounted(() => {
             flowStore.flow = undefined
             flowStore.flowGraph = undefined
+            flowStore.invalidGraph = false
         })
     }
 

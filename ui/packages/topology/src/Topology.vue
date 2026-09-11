@@ -3,8 +3,11 @@
         :id="id"
         :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
-        :nodesDraggable="false"
+        :nodesDraggable="canAuthor"
         :nodesConnectable="false"
+        @node-drag-start="onNodeDragStart"
+        @node-drag="onNodeDrag"
+        @node-drag-stop="onNodeDragStop"
         :elevateNodesOnSelect="false"
         :elevateEdgesOnSelect="false"
     >
@@ -145,7 +148,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
     import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -166,8 +169,9 @@
     import {CLUSTER_PREFIX} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
+    import {afterLastDot} from "./utils/utils"
     import {useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -199,6 +203,8 @@
         // live metrics or progress) changes but isn't itself part of `execution`/`flowGraph` — the
         // slot content is only re-evaluated when a node's graph data is regenerated.
         taskDetailsVersion?: number;
+        validationIssuesByTask?: Map<string, string[]>;
+        focusedTaskId?: string;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -220,6 +226,8 @@
         showDetails: () => ({}),
         showDetailsToggle: true,
         taskDetailsVersion: undefined,
+        validationIssuesByTask: undefined,
+        focusedTaskId: undefined,
     })
 
     const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
@@ -254,6 +262,72 @@
     provide(EXECUTION_INJECTION_KEY, computed(() => props.execution))
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
     provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails)
+    provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
+    provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
+
+    const canAuthor = computed(() => Boolean(props.isAllowedEdit) && !props.isReadOnly)
+    const dropEdgeId = ref<string | undefined>(undefined)
+    const draggingNodeId = ref<string | undefined>(undefined)
+
+    provide(DROP_EDGE_INJECTION_KEY, computed(() => dropEdgeId.value))
+    provide(DRAGGING_NODE_INJECTION_KEY, computed(() => Boolean(draggingNodeId.value)))
+
+    /** The dragged card sits under the cursor, so the edge has to be found through the stack. */
+    function pointerCoordinates(event: MouseEvent | TouchEvent | undefined) {
+        if (!event) return undefined
+        if ("clientX" in event) return {x: event.clientX, y: event.clientY}
+        const touch = event.changedTouches?.[0] ?? event.touches?.[0]
+        return touch ? {x: touch.clientX, y: touch.clientY} : undefined
+    }
+
+    function edgeTargetUnderPointer(event: MouseEvent | TouchEvent | undefined) {
+        const point = pointerCoordinates(event)
+        if (!point) return undefined
+        const hit = document
+            .elementsFromPoint(point.x, point.y)
+            .find((element) => element.classList?.contains("edge-hit-area"))
+        const edgeId = hit?.getAttribute("data-edge-id")
+        if (!edgeId) return undefined
+        const edge = getEdges.value.find((candidate) => candidate.id === edgeId)
+        return edge?.data?.haveAdd ? {edgeId, target: edge.data.haveAdd} : undefined
+    }
+
+    function onNodeDragStart({node}: {node: {id: string}}) {
+        draggingNodeId.value = node.id
+    }
+
+    // vue-flow ends a drag on pointerup, which never arrives if the window loses focus mid-drag;
+    // a stuck flag would keep click-to-edit disabled for the rest of the session.
+    function releaseDrag() {
+        draggingNodeId.value = undefined
+        dropEdgeId.value = undefined
+    }
+
+    onMounted(() => {
+        window.addEventListener("blur", releaseDrag)
+        document.addEventListener("visibilitychange", releaseDrag)
+    })
+
+    onUnmounted(() => {
+        window.removeEventListener("blur", releaseDrag)
+        document.removeEventListener("visibilitychange", releaseDrag)
+    })
+
+    function onNodeDrag({event}: {event: MouseEvent | TouchEvent}) {
+        dropEdgeId.value = edgeTargetUnderPointer(event)?.edgeId
+    }
+
+    function onNodeDragStop({node, event}: {node: {id: string}; event: MouseEvent | TouchEvent}) {
+        const drop = edgeTargetUnderPointer(event)
+        dropEdgeId.value = undefined
+        // Cleared a tick late so the click the drag ends with does not open the task.
+        setTimeout(() => (draggingNodeId.value = undefined), 0)
+        // The layout is server-computed, so the node snaps back either way; only the yaml moves.
+        generateGraph()
+        const taskId = afterLastDot(node.id)
+        if (!drop || !taskId || taskId === drop.target.refId) return
+        emit(EVENTS.MOVE_TASK, {taskId, target: drop.target})
+    }
 
 
     const emit = defineEmits(
@@ -274,6 +348,7 @@
             EVENTS.SHOW_CONDITION,
             EVENTS.SHOW_CUSTOM_ACTION,
             EVENTS.SHOW_DETAILS,
+            EVENTS.MOVE_TASK,
         ],
     )
 
@@ -456,6 +531,40 @@
 <style scoped lang="scss">
     :deep(.unused-path) {
         opacity: 0.3;
+    }
+
+    /* vue-flow flags its own node wrapper, which is the only element that knows a node can be
+       picked up and when it is being dragged. The pane sets `grab` for panning and every node
+       inherits it, so a node that cannot be moved has to opt back out. */
+    :deep(.vue-flow__node.draggable) {
+        cursor: grab;
+    }
+
+    :deep(.vue-flow__node:not(.draggable)) {
+        cursor: default;
+    }
+
+    :deep(.vue-flow__node.dragging) {
+        cursor: grabbing;
+    }
+
+    :deep(.vue-flow__node .node-wrapper) {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    :deep(.vue-flow__node.dragging .node-wrapper) {
+        transform: scale(1.04);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :deep(.vue-flow__node .node-wrapper) {
+            transition: none;
+        }
+
+        :deep(.vue-flow__node.dragging .node-wrapper) {
+            transform: none;
+        }
     }
 
     .exporting {

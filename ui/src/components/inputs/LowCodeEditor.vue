@@ -25,6 +25,8 @@
             :customActions="customActions"
             :showDetailsToggle="props.showDetailsToggle && hasExtraDetails"
             :taskDetailsVersion="taskDetailsVersion"
+            :validationIssuesByTask="validationIssuesByTask"
+            :focusedTaskId="focusedTaskId"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -37,6 +39,7 @@
             @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
+            @move-task="onMoveTask"
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
@@ -75,6 +78,29 @@
         </Topology>
 
         <BlockTaskPicker :picker="taskPicker" modal />
+
+        <TaskEditModal
+            v-if="modalTarget"
+            :task="modalTaskData"
+            :taskRaw="modalTaskRaw"
+            :section="modalSection"
+            :flowId="props.flowId ?? ''"
+            :namespace="props.namespace ?? ''"
+            :editorKey="modalItemPath"
+            :parentPath="modalTarget.parentPath"
+            :refPath="modalTarget.refPath"
+            :blockSchemaPath="modalTarget.blockSchemaPath"
+            :crumbs="modalCrumbs"
+            :creating="modalTarget.creating"
+            @update:task="onModalTaskEdited"
+            @close="closeModal"
+            @open-in-tabs="onModalOpenInTabs"
+            @navigate="popModalTo"
+            @select-nested="onModalSelectNested"
+            @created="resolveCreatedTarget"
+        />
+
+        <UndoToast :state="undoState" @undo="performUndo" />
 
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
@@ -253,15 +279,45 @@
     import {Execution} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+    import type {FlowGraph, AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
+    import TaskEditModal from "../no-code/blocks/TaskEditModal.vue"
+    import UndoToast from "../no-code/blocks/UndoToast.vue"
     import {useTaskPicker} from "../no-code/blocks/useTaskPicker"
-    import {laneDisplayLabelFromPath, sectionDisplayLabel} from "../no-code/blocks/blockSections"
-    import {errorsLaneTarget} from "../../utils/flowableBlockOps"
+    import {useTaskEditModalStack, modalItemPathOf} from "../no-code/blocks/useTaskEditModalStack"
+    import {useEditTarget, taskCrumbAt} from "../no-code/blocks/useEditTarget"
+    import {useYamlUndo} from "../no-code/blocks/useYamlUndo"
+    import type {Crumb} from "../no-code/utils/useFieldNavigation"
+    import {
+        laneDisplayLabelFromPath,
+        sectionDisplayLabel,
+        sectionFromParentPath,
+        resolveTaskInsertionTarget,
+        resolveTaskInsertionTargetInAnySection,
+        moveTaskOntoEdge,
+        isTaskListPath,
+    } from "../no-code/blocks/blockSections"
+    import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
+    import {BLOCK_EDITOR_KEYMAP} from "../no-code/blocks/keymap"
+    import {useBlockEditorKeyboard} from "../no-code/blocks/useBlockEditorKeyboard"
+    import {useAuthoringSurface} from "../no-code/blocks/useAuthoringSurface"
+    import {
+        buildTopologyFocusOrder,
+        firstChildOf,
+        moveWithinSiblings,
+        parentOf,
+    } from "../no-code/blocks/topologyFocus"
+    import {
+        errorsLaneTarget,
+        groupValidationIssuesByTask,
+        updateBlockAtPath,
+        type BlockSection,
+    } from "../../utils/flowableBlockOps"
+    import {trackAuthoringAction} from "../../utils/tabTracking"
     import {useAuthStore} from "override/stores/auth"
     import action from "../../models/action"
     import resource from "../../models/resource"
@@ -576,7 +632,6 @@
 
     const emit = defineEmits([
         "follow",
-        "on-edit",
         "loading",
         "expand-subflow",
     ])
@@ -674,8 +729,22 @@
         }
     }
 
+    // Topology renders the whole graph, so every graph-originated mutation needs the graph
+    // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
+        flowStore,
+        (name: string) => t("block_editor.block_deleted", {name}),
+    )
+
+    function applyGraphYaml(yaml: string) {
+        applyYamlWithUndo(yaml)
+        flowStore.loadGraphFromSource({flow: yaml}).catch((error: unknown) => {
+            console.error("Error loading graph:", error)
+        })
+    }
+
     const onDelete = (event: any) => {
-        const flowParsed = YAML_UTILS.parse(props.source)
+        const flowParsed = YAML_UTILS.parse(flowSource.value)
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             async () => {
@@ -692,43 +761,111 @@
                     }
                     return
                 }
-                const updatedYmlSource = YAML_UTILS.deleteBlock({
-                    source: props.source ?? "",
-                    section,
-                    key: event.id,
+                const taskType = flowParsed.tasks.find((e: any) => e.id === event.id)?.type as string | undefined
+                deleteWithUndo(event.id, () => {
+                    const updatedYmlSource = YAML_UTILS.deleteBlock({
+                        source: flowSource.value ?? "",
+                        section,
+                        key: event.id,
+                    })
+                    applyGraphYaml(updatedYmlSource)
+                    trackAuthoringAction("task_deleted", "topology", {task_type: taskType})
                 })
-                emit(
-                    "on-edit",
-                    updatedYmlSource,
-                    true,
-                )
             },
         )
     }
 
-    const onCreateNewTask = (event: [string, "before" | "after"]) => {
-        topologyClick.value = {
-            action: "create",
-            params: {
-                section: SECTIONS.TASKS.toLowerCase() as any,
-                position: event[1],
-                id: event[0],
-            },
-        }
+    function blockSchemaPathFor(section: BlockSection): string {
+        return [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/")
+    }
+
+    const onCreateNewTask = (event: AddTaskTarget) => {
+        const target = resolveTaskInsertionTargetInAnySection(flowSource.value ?? "", event.refId)
+        if (!target) return
+        taskPicker.openTaskPickerAtPath(
+            target.parentPath,
+            target.refIndex,
+            undefined,
+            event.position,
+            undefined,
+            event.dagDependency,
+        )
+    }
+
+    const onMoveTask = (event: {taskId: string; target: AddTaskTarget}) => {
+        const moved = moveTaskOntoEdge(flowSource.value ?? "", event.taskId, event.target)
+        if (moved === flowSource.value) return
+        applyGraphYaml(moved)
+        trackAuthoringAction("task_moved", "topology", {
+            task_type: sourceTaskById.value[event.taskId]?.type,
+            position: event.target.position,
+        })
     }
 
     const onEditTask = (event: {
         task: Record<string, any>;
         section?: string;
     }) => {
+        const section = (event.section ?? SECTIONS.TASKS).toLowerCase() as BlockSection
+        const target = resolveTaskInsertionTarget(flowSource.value ?? "", section, event.task.id)
+        if (!target) return
+        pushModalTarget({
+            parentPath: target.parentPath,
+            blockSchemaPath: blockSchemaPathFor(section),
+            refPath: target.refIndex,
+        })
+    }
+
+    const {modalStack, modalTarget, pushModalTarget, resolveCreatedTarget, popModalTo, closeModal} = useTaskEditModalStack()
+
+    const modalItemPath = computed<string>(() => {
+        const target = modalTarget.value
+        return target ? modalItemPathOf(target) : ""
+    })
+
+    const modalCrumbs = computed<Crumb[]>(() =>
+        modalStack.value.map((target) => taskCrumbAt(flowSource.value, modalItemPathOf(target))),
+    )
+
+    const alwaysResolved = computed(() => true)
+
+    const {
+        path: modalPath,
+        data: modalTaskData,
+        raw: modalTaskRaw,
+    } = useEditTarget(flowSource, modalItemPath, alwaysResolved, alwaysResolved)
+
+    const modalSection = computed<BlockSection>(() =>
+        modalTarget.value ? sectionFromParentPath(modalTarget.value.parentPath) : "tasks",
+    )
+
+    function onModalTaskEdited(newContent: string) {
+        if (!modalPath.value) return
+        applyGraphYaml(updateBlockAtPath(flowSource.value, modalPath.value, newContent))
+        trackAuthoringAction("task_edited", "topology", {task_type: modalTaskData.value?.type as string | undefined})
+    }
+
+    function onModalOpenInTabs() {
+        const target = modalTarget.value
+        const id = modalTaskData.value?.id
+        if (!target || id == null) return
         topologyClick.value = {
             action: "edit",
             params: {
-                section: (event.section ?? SECTIONS.TASKS).toLowerCase() as any,
-                id: event.task.id,
+                section: sectionFromParentPath(target.parentPath) as any,
+                id: String(id),
             },
         }
+        closeModal()
     }
+
+    function onModalSelectNested(parentPath: string, blockSchemaPath: string, refPath: number | undefined) {
+        pushModalTarget({parentPath, blockSchemaPath, refPath})
+    }
+
+    const validationIssuesByTask = computed<Map<string, string[]>>(() =>
+        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+    )
 
     const taskPicker = useTaskPicker({
         pluginsStore,
@@ -738,22 +875,25 @@
         focusedBlockPath: () => undefined,
         focusCanvasCard: (id) => {
             if (!id) return
-            topologyClick.value = {
-                action: "edit",
-                params: {
-                    section: SECTIONS.TASKS.toLowerCase() as any,
-                    id,
-                },
-            }
+            // The insert already landed, so the source has to be read live from the store —
+            // props.source only catches up on the next render.
+            const target = resolveTaskInsertionTargetInAnySection(flowStore.flowYaml ?? "", id)
+            if (!target) return
+            pushModalTarget({
+                parentPath: target.parentPath,
+                blockSchemaPath: blockSchemaPathFor(target.section),
+                refPath: target.refIndex,
+            })
         },
         sectionList: (section) => {
-            const list = YAML_UTILS.parse<Record<string, any>>(props.source ?? "")?.[section]
+            const list = YAML_UTILS.parse<Record<string, any>>(flowSource.value ?? "")?.[section]
             return Array.isArray(list) ? list : []
         },
         sectionDisplayLabel: (section) => sectionDisplayLabel(t, section),
         laneDisplayLabel: (parentPath) => laneDisplayLabelFromPath(t, parentPath),
-        flowYaml: computed(() => props.source ?? ""),
-        applyYaml: (yaml) => emit("on-edit", yaml, true),
+        flowYaml: computed(() => flowSource.value ?? ""),
+        applyYaml: applyGraphYaml,
+        surface: "topology",
     })
 
     const onPickerEscape = (event: KeyboardEvent) => {
@@ -772,11 +912,134 @@
 
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
+    const focusedTaskId = ref<string | undefined>(undefined)
+    const focusOrder = computed(() => buildTopologyFocusOrder(flowSource.value ?? ""))
+
+    const isAuthoringOverlayOpen = () =>
+        taskPicker.taskPickerVisible.value
+        || Boolean(modalTarget.value)
+        || isTaskModalOpen.value
+        || isDrawerOpen.value
+
+    /** The focus walk reaches every task-holding lane, so the action has to follow it there. */
+    function focusedSection(): BlockSection {
+        const node = focusOrder.value.find(entry => entry.id === focusedTaskId.value)
+        return node ? sectionFromParentPath(node.parentPath) : "tasks"
+    }
+
+    function openFocusedTask() {
+        const id = focusedTaskId.value
+        const task = id ? sourceTaskById.value[id] : undefined
+        if (!task) return
+        onEditTask({task, section: focusedSection()})
+    }
+
+    function insertRelativeToFocused(position: "before" | "after") {
+        const id = focusedTaskId.value
+        if (!id) return
+        const target = resolveTaskInsertionTargetInAnySection(flowSource.value ?? "", id)
+        if (!target) return
+        taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex, undefined, position)
+    }
+
+    function dispatchTopologyShortcut(id: string, event: KeyboardEvent) {
+        if (props.isReadOnly || !props.isAllowedEdit) return false
+        // Checked here rather than through a watch: watching the order would re-parse the whole
+        // flow on every keystroke in the code editor, which shares this source.
+        if (focusedTaskId.value && !focusOrder.value.some(entry => entry.id === focusedTaskId.value)) {
+            focusedTaskId.value = undefined
+        }
+        switch (id) {
+        case "move":
+            focusedTaskId.value = moveWithinSiblings(
+                focusOrder.value,
+                focusedTaskId.value,
+                event.key === "ArrowDown" || event.key === "j" ? 1 : -1,
+            )
+            return
+        case "step-into":
+            focusedTaskId.value = firstChildOf(focusOrder.value, focusedTaskId.value) ?? focusedTaskId.value
+            return
+        case "step-out":
+            focusedTaskId.value = parentOf(focusOrder.value, focusedTaskId.value) ?? focusedTaskId.value
+            return
+        case "open":
+            openFocusedTask()
+            return
+        case "delete":
+            if (!focusedTaskId.value) return false
+            onDelete({id: focusedTaskId.value, section: focusedSection()})
+            return
+        case "insert-after":
+            insertRelativeToFocused("after")
+            return
+        case "insert-before":
+            insertRelativeToFocused("before")
+            return
+        case "undo":
+            performUndo()
+            return
+        case "clear":
+            // Dismissing the picker or the modal must not also cost the user their place.
+            if (isAuthoringOverlayOpen()) return false
+            if (!focusedTaskId.value) return false
+            focusedTaskId.value = undefined
+            return
+        default:
+            return false
+        }
+    }
+
+    const authoringSurface = useAuthoringSurface(vueFlow)
+
+    useBlockEditorKeyboard({
+        keymap: BLOCK_EDITOR_KEYMAP,
+        dispatch: (id, event) => (authoringSurface.isActive() ? dispatchTopologyShortcut(id, event) : false),
+        isOverlayOpen: isAuthoringOverlayOpen,
+    })
+
+
+
     const onAddFlowableError = (event: {task: Record<string, any>}) => {
-        const target = errorsLaneTarget(props.source ?? "", event.task.id)
+        const target = errorsLaneTarget(flowSource.value ?? "", event.task.id)
         if (!target) return
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }
+
+    async function saveFlowFromModal() {
+        const outcome = await flowStore.save?.()
+        if (outcome === "blocked") {
+            coreStore.message = {
+                variant: "error",
+                title: t("block_editor.save_blocked.title"),
+                content: flowStore.flowErrors?.join("\n") ?? t("block_editor.save_blocked.message"),
+            }
+        }
+    }
+
+    // Only a lane of tasks can be filled from the task picker; every other list (e.g. flow
+    // inputs) needs its own schema-driven form, stacked on the modal like any nested edit.
+    function createNestedBlock(parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) {
+        if (isTaskListPath(parentPath)) {
+            taskPicker.openTaskPickerAtPath(parentPath, refPath ?? -1, undefined, "after", anchorEl)
+            return
+        }
+        pushModalTarget({parentPath, blockSchemaPath, refPath, creating: true})
+    }
+
+    // TaskEditModalForm re-provides the path/section keys it needs for its own subtree — this
+    // only has to cover what it doesn't: schema resolution and the nested-edit/save callbacks.
+    useBlockEditorProvides({
+        props: {},
+        flowYaml: flowSource,
+        validationIssuesByTask,
+        inlineEditPanel: ref(),
+        createTask: createNestedBlock,
+        editTask: (parentPath, blockSchemaPath, refPath) => pushModalTarget({parentPath, blockSchemaPath, refPath}),
+        closeTask: () => closeModal(),
+        updateYaml: (yaml: string) => applyGraphYaml(yaml),
+        saveFlow: () => saveFlowFromModal(),
+    })
 
     const fitViewOrientation = () => {
         if(vueFlow.value){

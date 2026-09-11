@@ -43,7 +43,7 @@ test.describe("Block editor — mutations & split view", () => {
         // Gone, focus continues from the deletion point, undo pill offered
         await expect(page.locator("[data-block-id='middle_task']")).toBeHidden()
         await expectRing(page, "last_task")
-        await page.locator("[data-test='block-editor-undo']").click()
+        await page.locator("[data-test='undo-toast-button']").click()
         await expect(page.locator("[data-block-id='middle_task']")).toBeVisible()
     })
 

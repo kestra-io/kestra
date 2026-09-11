@@ -2,21 +2,26 @@
     <div
         class="node-wrapper"
         :style="nodeStyle"
-        :class="[classes, {'node-wrapper--execution': isExecution}]"
+        :class="[classes, {'node-wrapper--execution': isExecution, 'node-wrapper--focused': focused}]"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
+        @click="onCardClick"
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" />
+                <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
+                    <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                </KsTooltip>
+                <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
             </div>
             <div class="node-content">
                 <slot name="badge" />
                 <div class="node-title">
-                    <div class="task-title" :title="hoverTooltip">
-                        <KsTooltip :content="hoverTooltip">
+                    <div class="task-title">
+                        <KsTooltip v-if="extraTooltip" :content="extraTooltip">
                             {{ displayTitle }}
                         </KsTooltip>
+                        <template v-else>{{ displayTitle }}</template>
                     </div>
                 </div>
                 <slot name="content" />
@@ -48,7 +53,15 @@
         EVENTS.DELETE,
         EVENTS.ADD_TASK,
         EVENTS.SHOW_DESCRIPTION,
+        EVENTS.CARD_CLICK,
     ])
+
+    function onCardClick(event: MouseEvent) {
+        const target = event.target as HTMLElement | null
+        // The card is one big target, so anything that already has its own action keeps it.
+        if (target?.closest("button, a, input, [role='button'], .vue-flow__handle")) return
+        emit(EVENTS.CARD_CLICK, event)
+    }
 
     defineOptions({
         name: "BasicNode",
@@ -67,6 +80,7 @@
         // in the index has no way to ever get an icon (kestra-io/kestra#18129).
         loadIcon?: (cls: string) => Promise<any>;
         class?: string | string[] | Record<string, boolean>;
+        focused?: boolean;
     }>()
 
     const taskIconComponent = useTaskIcon()
@@ -133,9 +147,24 @@
     })
 
     const displayTitle = computed(() => props.title ?? trimmedId.value)
+
+    // The full class is what made the old hover box wide; every core and plugin task shares the
+    // same `io.kestra.plugin.` prefix, so dropping it leaves the part that identifies the task.
+    const shortType = computed(() => cls.value?.replace(/^io\.kestra\.plugin\./, ""))
+
+    // On a plain task the tooltip only repeated the label already on the card, in a second box on
+    // top of the native one; a subflow is the only node whose tooltip says something else.
+    const extraTooltip = computed(() =>
+        hoverTooltip.value === displayTitle.value ? undefined : hoverTooltip.value,
+    )
 </script>
 
 <style lang="scss" scoped>
+    .node-wrapper--focused {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: 2px;
+    }
+
     .node-wrapper {
         background-color: var(--ks-bg-surface);
         border-radius: var(--ks-radius-base);

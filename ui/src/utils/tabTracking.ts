@@ -154,3 +154,20 @@ export function trackPluginDocumentationView(pluginClass: string) {
 export function trackFileOpen(fileName: string) {
     makeEvent("files_open", "files_browser", {file_name: fileName})
 }
+
+export type AuthoringAction = "task_added" | "task_edited" | "task_deleted" | "task_moved"
+export type AuthoringSurface = "no_code" | "topology"
+
+export interface AuthoringActionMetadata {
+    task_type?: string
+    position?: "before" | "after"
+}
+
+/** Distinguishes "opened this surface" (trackTabOpen) from "actually built a flow with it". */
+export function trackAuthoringAction(
+    action: AuthoringAction,
+    surface: AuthoringSurface,
+    metadata?: AuthoringActionMetadata,
+) {
+    makeEvent(action, surface, metadata ?? {})
+}

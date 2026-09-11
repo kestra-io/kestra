@@ -419,6 +419,112 @@ export function wrapAsDagTask(task: Record<string, unknown>): Record<string, unk
     return {task}
 }
 
+export interface DagDependency {
+    fromId?: string
+    toId?: string
+}
+
+/**
+ * Closes the gap a task leaves behind in a Dag: whoever depended on it inherits what it depended on,
+ * so pulling a task out of `a -> b -> c` leaves `a -> c` instead of orphaning `c`.
+ */
+export function healDagRemoval(source: string, lanePath: string, removedId: string): string {
+    const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+    if (!parsed) return source
+    const lane = getAtPath(parsed, lanePath)
+    if (!Array.isArray(lane)) return source
+
+    const removed = lane.find(
+        item => String(displayTaskOf(item as Record<string, unknown>)?.id ?? "") === removedId,
+    ) as Record<string, unknown> | undefined
+    if (!removed) return source
+    const inherited = Array.isArray(removed.dependsOn) ? (removed.dependsOn as string[]) : []
+
+    let next = source
+    lane.forEach((raw, index) => {
+        const item = raw as Record<string, unknown>
+        const deps = Array.isArray(item.dependsOn) ? (item.dependsOn as string[]) : undefined
+        if (!deps?.includes(removedId)) return
+
+        const rebuilt: string[] = []
+        const push = (id: string) => {
+            if (id !== removedId && !rebuilt.includes(id)) rebuilt.push(id)
+        }
+        for (const dep of deps) {
+            if (dep === removedId) inherited.forEach(push)
+            else push(dep)
+        }
+
+        const updated = {...item}
+        if (rebuilt.length > 0) updated.dependsOn = rebuilt
+        else delete updated.dependsOn
+
+        next = flowYamlUtils.replaceBlockWithPath({
+            source: next,
+            path: `${lanePath}[${index}]`,
+            newContent: flowYamlUtils.stringify(updated),
+        })
+    })
+    return next
+}
+
+/**
+ * Splices a task into a Dag's dependency chain. A Dag expresses order through `dependsOn` rather
+ * than list position, so inserting into the array alone would leave the new task a disconnected
+ * root; dropping it on the edge `fromId -> toId` has to mean `fromId -> insertedId -> toId`.
+ */
+export function rewireDagDependency(
+    source: string,
+    parentPath: string,
+    insertedId: string,
+    dependency: DagDependency,
+): string {
+    const {fromId, toId} = dependency
+    if (!fromId && !toId) return source
+    // Dropping a task on an edge it is already an endpoint of would make it depend on itself.
+    if (fromId === insertedId || toId === insertedId) return source
+
+    const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+    if (!parsed) return source
+    const lane = getAtPath(parsed, parentPath)
+    if (!Array.isArray(lane)) return source
+
+    const indexOf = (id: string) =>
+        lane.findIndex(item => String(displayTaskOf(item as Record<string, unknown>)?.id ?? "") === id)
+
+    const writeItem = (current: string, index: number, item: Record<string, unknown>) =>
+        flowYamlUtils.replaceBlockWithPath({
+            source: current,
+            path: `${parentPath}[${index}]`,
+            newContent: flowYamlUtils.stringify(item),
+        })
+
+    let next = source
+
+    const insertedIndex = indexOf(insertedId)
+    if (insertedIndex === -1) return source
+    if (fromId) {
+        const inserted = {...(lane[insertedIndex] as Record<string, unknown>), dependsOn: [fromId]}
+        next = writeItem(next, insertedIndex, inserted)
+    }
+
+    if (!toId) return next
+
+    const downstreamIndex = indexOf(toId)
+    if (downstreamIndex === -1) return next
+    const downstream = {...(lane[downstreamIndex] as Record<string, unknown>)}
+    const existing = Array.isArray(downstream.dependsOn) ? [...(downstream.dependsOn as string[])] : []
+    const replaceAt = fromId ? existing.indexOf(fromId) : -1
+    if (replaceAt >= 0) {
+        existing[replaceAt] = insertedId
+    } else if (!existing.includes(insertedId)) {
+        existing.push(insertedId)
+    }
+    downstream.dependsOn = existing
+
+    return writeItem(next, downstreamIndex, downstream)
+}
+
 export function groupValidationIssuesByTask(
     errors: string[] | undefined,
     flow?: Record<string, unknown>,
@@ -441,15 +547,29 @@ export function groupValidationIssuesByTask(
             continue
         }
 
-        const pathMatch = /^(.+\])(?:\.([A-Za-z0-9_]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (!pathMatch || !flow) continue
-        const [, rawPath, field, message] = pathMatch
+        // The field can be a path of its own (`headers.Authorization`), and a task nested in a Dag
+        // is addressed through its `task` wrapper (`...].task.flowId`), which says nothing useful.
+        const pathMatch = /^(.+\])(?:\.([A-Za-z0-9_.]+))?\s*:\s*(.+)$/.exec(cleaned)
+        if (!pathMatch) continue
+        const [, rawPath, rawField, message] = pathMatch
         const taskPath = rawPath.replace(/^_/, "")
+        const field = rawField?.replace(/^task\./, "")
+        const entry = field ? `${field}: ${message.trim()}` : message.trim()
+
+        // A task constraint violation comes back id-keyed (`tasks[publish].message`), so the last
+        // bracket already names the task; only a numeric path has to be resolved against the flow.
+        const lastBracket = /\[["']?([^"'\]]+)["']?\]$/.exec(taskPath)?.[1]
+        if (lastBracket && !/^\d+$/.test(lastBracket)) {
+            add(lastBracket, entry)
+            continue
+        }
+
+        if (!flow) continue
         const item = getAtPath(flow, taskPath)
         if (!item || typeof item !== "object") continue
         const id = displayTaskOf(item as Record<string, unknown>).id
         if (id == null) continue
-        add(String(id), field ? `${field}: ${message.trim()}` : message.trim())
+        add(String(id), entry)
     }
     return grouped
 }

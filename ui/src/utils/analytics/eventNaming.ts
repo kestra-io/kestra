@@ -20,6 +20,10 @@ const EDITOR_TAB_ACTION_NAMES: Record<string, string> = {
     plugin_doc: "app.plugin-doc.viewed",
     files_open: "app.editor-files.opened",
     blueprint_selection: "app.editor-blueprint.selected",
+    task_added: "app.editor-task.added",
+    task_edited: "app.editor-task.edited",
+    task_deleted: "app.editor-task.deleted",
+    task_moved: "app.editor-task.moved",
 }
 
 const OSSAUTH_NAMES: Record<string, string> = {

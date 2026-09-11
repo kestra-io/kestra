@@ -35,6 +35,17 @@
             <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
         </template>
         <template #panel-toggle>
+            <KsButton
+                v-if="showCopilotButton"
+                class="copilot-button"
+                :class="{'is-open': isCopilotOpen}"
+                data-testid="topnav-copilot-button"
+                :icon="AiMenuIcon"
+                :aria-pressed="isCopilotOpen"
+                @click="toggleCopilot"
+            >
+                {{ $t("ai.copilot.title") }}
+            </KsButton>
             <slot name="panel-toggle" />
         </template>
     </KsTopNavBar>
@@ -43,7 +54,9 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {KsButton} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
+    import AiMenuIcon from "../ai/AiMenuIcon.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
@@ -66,6 +79,16 @@
 
     function togglePanel() {
         miscStore.contextInfoBarOpenTab = miscStore.contextInfoBarOpenTab ? "" : miscStore.lastContextTab
+    }
+
+    const isCopilotOpen = computed(() => miscStore.contextInfoBarOpenTab === "ai")
+
+    function toggleCopilot() {
+        if (isCopilotOpen.value) {
+            miscStore.contextInfoBarOpenTab = ""
+            return
+        }
+        miscStore.openCopilot()
     }
 
     const selectTabs = computed(() =>
@@ -117,6 +140,20 @@
     })
 
     const activeMenuIcon = computed(() => activeMenuItem.value?.icon?.element)
+
+    // The menu resolves its hrefs to path strings, so match on where the item leads rather than
+    // on the shape of its href.
+    const isCopilotMenuItem = (item: MenuItem) =>
+        !item.child && !!item.href && router.resolve(item.href).name === "ai"
+
+    // The top bar entry follows the left-menu copilot item, so whatever hides that item (EE hides
+    // it for users without the COPILOT permission) hides this button too, with no second copy of
+    // the rule. It also stays out of the way on the full-page copilot, where the dock tab it opens
+    // is hidden.
+    const showCopilotButton = computed(() => {
+        const item = flattenMenu(menu.value).find(isCopilotMenuItem)
+        return !!item && !item.hidden && route.name !== "ai"
+    })
 
     const hideBookmark = computed(() => {
         const href = activeMenuItem.value?.href
@@ -179,6 +216,19 @@
 </script>
 
 <style scoped lang="scss">
+    .copilot-button {
+        flex-shrink: 0;
+
+        &.is-open {
+            color: var(--ks-text-link);
+        }
+
+        // Same breakpoint as the dock toggle it sits next to: the dock it opens is desktop-only.
+        @media (max-width: 767px) {
+            display: none;
+        }
+    }
+
     .playgroundMode {
         background:
             linear-gradient(

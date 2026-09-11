@@ -9,6 +9,7 @@
         :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
+        @cardClick="onCardClick"
     >
         <template #badge>
             <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
@@ -99,7 +100,6 @@
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import Pencil from "vue-material-design-icons/Pencil.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
@@ -216,6 +216,12 @@
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    function onCardClick() {
+        const task = props.data.node.task
+        if (props.data.isReadOnly || !task) return
+        emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
+    }
+
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
     const taskId = computed(() => Utils.afterLastDot(props.id))
@@ -418,14 +424,6 @@
                 label: t("add error handler"),
                 icon: AlertOutline,
                 onClick: () => emit(EVENTS.ADD_ERROR, {task}),
-            })
-        }
-        if (!readOnly) {
-            list.push({
-                key: "edit",
-                label: t("edit"),
-                icon: Pencil,
-                onClick: () => emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS}),
             })
         }
         if (actionConfig.value && task) {

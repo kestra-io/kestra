@@ -104,6 +104,12 @@ export const useMiscStore = defineStore("misc", () => {
         })
     }
 
+    // Called once the onboarding survey step completes or is skipped, after the admin account
+    // (and its addBasicAuth() event) already exists — the newsletter choice isn't known any earlier.
+    async function updateNewsletterOptIn(newsletterOptedIn: boolean) {
+        await axios.post(`${apiUrl()}/basicAuth/newsletter`, {newsletterOptedIn})
+    }
+
     return {
         configs,
         contextInfoBarOpenTab,
@@ -119,5 +125,6 @@ export const useMiscStore = defineStore("misc", () => {
         loadBasicAuthValidationErrors,
         loadAllUsages,
         addBasicAuth,
+        updateNewsletterOptIn,
     }
 })

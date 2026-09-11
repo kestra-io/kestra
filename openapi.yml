@@ -631,6 +631,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/PagedResults_ConcurrencyLimit_"
   /api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}:
+    get:
+      tags:
+      - Flows
+      summary: Get the concurrency limit of a flow
+      operationId: getConcurrencyLimit
+      parameters:
+      - name: namespace
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: flowId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getConcurrencyLimit 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConcurrencyLimit"
     put:
       tags:
       - Flows

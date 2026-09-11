@@ -171,10 +171,10 @@
         return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
     });
 
-    // Saving a namespace file hits POST /namespaces/{namespace}/files, guarded by FLOW:CREATE.
+    // Saving a namespace file hits POST /namespaces/{namespace}/files, guarded by NAMESPACE:CREATE.
     const canWriteFiles = computed<boolean>(() => {
         const fileNamespace = namespace.value ?? route.params?.namespace;
-        return authStore.user?.isAllowed(permission.FLOW, action.CREATE, fileNamespace?.toString()) ?? false;
+        return authStore.user?.isAllowed(permission.NAMESPACE, action.CREATE, fileNamespace?.toString()) ?? false;
     });
 
     /** 10MB */

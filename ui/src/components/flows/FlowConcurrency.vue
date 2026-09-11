@@ -59,7 +59,7 @@
     const totalCount = ref(0);
     const runningCountSet = ref(false);
     const loading = ref(false);
-    const error = ref<string | undefined>(undefined);
+    const error = ref(false);
     const concurrencyLimit = ref<{ tenantId: string; namespace: string; flowId: string; running: number } | undefined>(undefined);
 
     const progress = computed(() => {
@@ -73,31 +73,27 @@
         }
 
         loading.value = true;
-        error.value = undefined;
+        error.value = false;
 
         try {
-            const response = await axios.get(`${apiUrl()}/concurrency-limit/search`);
-            const limits = response.data?.results || [];
-
-            const currentFlowLimit = limits.find(
-                (limit: any) =>
-                    limit.namespace === flowStore.flow?.namespace &&
-                    limit.flowId === flowStore.flow?.id
+            const response = await axios.get(
+                `${apiUrl()}/concurrency-limit/${flowStore.flow.namespace}/${flowStore.flow.id}`,
+                {ignoreNotFound: true, showMessageOnError: false},
             );
 
-            if (currentFlowLimit) {
-                concurrencyLimit.value = currentFlowLimit;
-                runningCount.value = currentFlowLimit.running;
-                runningCountSet.value = true;
-                totalCount.value = currentFlowLimit.running;
-            } else {
+            concurrencyLimit.value = response.data;
+            runningCount.value = response.data?.running ?? 0;
+            runningCountSet.value = true;
+            totalCount.value = runningCount.value;
+        } catch (err: any) {
+            if (err?.status === 404 || err?.response?.status === 404) {
                 concurrencyLimit.value = undefined;
                 runningCount.value = 0;
                 runningCountSet.value = true;
                 totalCount.value = 0;
+            } else {
+                error.value = true;
             }
-        } catch (e: any) {
-            error.value = e.message;
         } finally {
             loading.value = false;
         }

@@ -1,10 +1,5 @@
 {
   "ru": {
-    "loading": "Загрузка...",
-        "back": "Назад",
-        "next": "Далее",
-        "done": "Готово",
-        "review your inputs": "Проверьте введённые данные",
     "Add flow": "Добавить flow",
     "Default log level": "Уровень log по умолчанию",
     "Default namespace": "Namespace по умолчанию",
@@ -77,6 +72,7 @@
     "automatic refresh": "Автоматическое обновление",
     "avg": "Среднее",
     "avg duration": "Средняя длительность выполнения",
+    "back": "Назад",
     "back_to_dashboard": "Вернуться на панель управления",
     "backfill": "Заполнение",
     "backfill executions": "Выполнения заполнение",
@@ -322,12 +318,12 @@
         "title": "Управление пользователями через IAM с SSO, SCIM и RBAC"
       },
       "apps": {
-        "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения.",
-        "title": "Создавайте пользовательские приложения с Kestra",
         "blueprints": {
-          "title": "Начните с blueprint приложения.",
-          "message": "Готовые blueprints приложений для распространенных сценариев использования, таких как формы, утверждения и отправка данных. С Kestra Enterprise Edition вы можете использовать любой blueprint в качестве отправной точки и адаптировать его для создания пользовательских UI поверх ваших workflows."
-        }
+          "message": "Готовые blueprints приложений для распространенных сценариев использования, таких как формы, утверждения и отправка данных. С Kestra Enterprise Edition вы можете использовать любой blueprint в качестве отправной точки и адаптировать его для создания пользовательских UI поверх ваших workflows.",
+          "title": "Начните с blueprint приложения."
+        },
+        "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения.",
+        "title": "Создавайте пользовательские приложения с Kestra"
       },
       "assets": {
         "header": "Метаданные и наблюдаемость активов",
@@ -426,6 +422,7 @@
     "disabled": "Отключено",
     "disabled flow desc": "Этот flow отключен, пожалуйста, включите его для выполнения.",
     "disabled flow title": "Этот flow отключен",
+    "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "display direct sub tasks count": "Показать количество прямых подзадач",
     "display flow {id} executions": "Показать выполнения flow {id}",
     "display metric for specific task": "Показать метрику для конкретной задачи",
@@ -437,11 +434,9 @@
       "github": "Открыть проблему на GitHub"
     },
     "documentationMenu": "Меню документации",
+    "done": "Готово",
     "down trend": "Уменьшается",
     "download": "Скачать",
-    "file_preview": {
-        "big_file_download_only": "Этот файл имеет размер {size}. Он слишком большой, чтобы открыть его в редакторе, скачайте его вместо этого."
-    },
     "download logs": "Скачать логи",
     "download_logos": "Скачать пакет логотипов",
     "draft_available": "Черновик изменений доступен в редакторе",
@@ -581,7 +576,6 @@
     "execute backfill": "Выполнить заполнение",
     "execute flow behaviour": "Выполнить flow",
     "execute flow now ?": "Вы хотите выполнить этот flow?",
-    "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
@@ -655,6 +649,9 @@
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
+    "file_preview": {
+      "big_file_download_only": "Этот файл имеет размер {size}. Он слишком большой, чтобы открыть его в редакторе, скачайте его вместо этого."
+    },
     "files": "Файлы",
     "filter": {
       "active key value pairs": "Активные пары Key/Value",
@@ -1125,6 +1122,11 @@
     "label": "Метка",
     "label filter placeholder": "Метка как 'key:value'",
     "labels": "Метки",
+    "large_outputs": {
+      "download_json": "Download JSON",
+      "load_more": "Load {count} more ({remaining} left)",
+      "value_too_large": "This value is {size}. It is too large to render here, download it instead."
+    },
     "last 48 hours": "последние 48 часов",
     "last X days count": "{count} за последние {days} дней",
     "last execution date": "Дата последнего выполнения",
@@ -1268,6 +1270,7 @@
     "neutral trend": "Стабильно",
     "new": "Новый",
     "new version": "Доступна новая версия {version}!",
+    "next": "Далее",
     "next evaluation date": "Следующая дата оценки",
     "next evaluation date tooltip": "Когда trigger будет оцениваться в следующий раз, на основе его интервала. Не всегда совпадает с датой следующей Ausführung, если условия не выполнены.",
     "next execution date": "Дата следующего выполнения",
@@ -1374,14 +1377,14 @@
     "no_logs_data_description": "Для выбранных фильтров логи не найдены. <br> Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
     "no_results": {
+      "all_columns_hidden": "Все столбцы скрыты",
       "assets": "Активы не найдены",
       "executions": "Исполнения не найдены",
       "flows": "Потоки не найдены",
       "kv_pairs": "Пары kv store не найдены",
       "secrets": "Секреты не найдены",
       "templates": "Шаблоны не найдены",
-      "triggers": "Триггеры не найдены",
-      "all_columns_hidden": "Все столбцы скрыты"
+      "triggers": "Триггеры не найдены"
     },
     "no_results_found": "Результаты не найдены",
     "no_tasks_running": "Ещё нет запущенных tasks.",
@@ -1670,6 +1673,7 @@
     "resumed title": "Возобновить выполнение <code>{id}</code>",
     "reuse original inputs": "Повторное использование оригинальных input",
     "reuse_original_inputs": "Повторно использовать оригинальные inputы",
+    "review your inputs": "Проверьте введённые данные",
     "revision": "Редакция",
     "revision deleted": "Ревизия {revision} была успешно удалена",
     "revisions": "Редакции",

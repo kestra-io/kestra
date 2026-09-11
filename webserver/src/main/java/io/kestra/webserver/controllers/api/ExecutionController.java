@@ -602,8 +602,19 @@ public class ExecutionController {
         String key,
         String path,
         HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
-        return webhook(find, key, path, request);
+        return webhook(findFlowForWebhook(namespace, id), key, path, request);
+    }
+
+    /**
+     * The response the caller sees never says whether the flow was absent (GHSA-6wcq-4vx6-rx53); this is
+     * where that distinction is still recorded, for whoever operates the instance.
+     */
+    private Optional<Flow> findFlowForWebhook(String namespace, String id) {
+        Optional<Flow> maybeFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
+        if (maybeFlow.isEmpty()) {
+            log.debug("Rejected a webhook call: no flow '{}.{}' found.", namespace, id);
+        }
+        return maybeFlow;
     }
 
     protected Mono<HttpResponse<?>> webhook(
@@ -611,44 +622,9 @@ public class ExecutionController {
         String key,
         String path,
         HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        if (maybeFlow.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
-        }
-
-        var flow = maybeFlow.get();
-        if (flow.isDisabled()) {
-            throw new IllegalStateException("Cannot execute a disabled flow");
-        }
-        if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
-        }
-
-        Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
-            : flow
-                .getTriggers())
-            .stream()
-            .filter(o -> o instanceof AbstractWebhookTrigger)
-            .map(o -> (AbstractWebhookTrigger) o)
-            .filter(w ->
-            {
-                RunContext runContext = runContextFactory.of(flow, w);
-                try {
-                    String webhookKey = runContext.render(w.getKey()).trim();
-                    // compare via MessageDigest.isEqual to prevent timing attacks
-                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
-                } catch (IllegalVariableEvaluationException e) {
-                    // be conservative, don't crash but filter the webhook
-                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
-                    return false;
-                }
-            })
-            .findFirst();
-
-        if (maybeWebhook.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
-        }
-
-        final AbstractWebhookTrigger webhook = maybeWebhook.get();
+        Flow flow = maybeFlow.orElseThrow(ExecutionController::webhookNotFound);
+        final AbstractWebhookTrigger webhook = findWebhook(flow, key);
+        ensureExecutable(flow);
 
         // Webhook context
         var webhookContext = new WebhookContext(
@@ -684,6 +660,55 @@ public class ExecutionController {
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+
+    /**
+     * @throws IllegalStateException if the flow cannot be executed
+     */
+    private static void ensureExecutable(Flow flow) {
+        if (flow.isDisabled()) {
+            throw new IllegalStateException("Cannot execute a disabled flow");
+        }
+        if (flow instanceof FlowWithException fwe) {
+            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+        }
+    }
+
+    private static HttpStatusException webhookNotFound() {
+        return new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
+    }
+
+    /**
+     * @return the webhook trigger of the flow the given key matches
+     * @throws HttpStatusException if no webhook trigger matches the key
+     */
+    private AbstractWebhookTrigger findWebhook(Flow flow, String key) {
+        return (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
+            : flow
+                .getTriggers())
+            .stream()
+            .filter(o -> o instanceof AbstractWebhookTrigger)
+            .map(o -> (AbstractWebhookTrigger) o)
+            .filter(w ->
+            {
+                RunContext runContext = runContextFactory.of(flow, w);
+                try {
+                    String webhookKey = runContext.render(w.getKey()).trim();
+                    // compare via MessageDigest.isEqual to prevent timing attacks
+                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
+                } catch (IllegalVariableEvaluationException e) {
+                    // Neither key is logged: `w.getKey()` is the trigger's own secret, and the caller-supplied
+                    // one is attacker-controlled on this anonymous route and reachable on every call to this
+                    // flow regardless of what it guesses.
+                    log.warn("Unable to render the key of webhook trigger '{}' on flow '{}.{}', the webhook will be ignored.", w.getId(), flow.getNamespace(), flow.getId(), e);
+                    return false;
+                }
+            })
+            .findFirst()
+            .orElseThrow(() -> {
+                log.debug("Rejected a webhook call: no trigger on flow '{}.{}' matches the given key.", flow.getNamespace(), flow.getId());
+                return webhookNotFound();
+            });
     }
 
     @ExecuteOn(TaskExecutors.IO)

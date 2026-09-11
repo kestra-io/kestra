@@ -2179,6 +2179,11 @@
                     "prompt": "Create a weekly scheduled flow that calculates sales KPIs with DuckDB and posts the summary to Slack."
                 }
             }
+        },
+        "large_outputs": {
+            "value_too_large": "This value is {size}. It is too large to render here, download it instead.",
+            "download_json": "Download JSON",
+            "load_more": "Load {count} more ({remaining} left)"
         }
     }
 }

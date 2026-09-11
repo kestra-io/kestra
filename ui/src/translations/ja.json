@@ -1,10 +1,5 @@
 {
   "ja": {
-    "loading": "読み込み中...",
-        "back": "戻る",
-        "next": "次へ",
-        "done": "完了",
-        "review your inputs": "入力内容を確認してください",
     "Add flow": "Flowを追加",
     "Default log level": "デフォルトlogレベル",
     "Default namespace": "デフォルトnamespace",
@@ -77,6 +72,7 @@
     "automatic refresh": "自動更新",
     "avg": "平均",
     "avg duration": "平均実行時間",
+    "back": "戻る",
     "back_to_dashboard": "ダッシュボードに戻る",
     "backfill": "Backfill",
     "backfill executions": "backfill実行",
@@ -322,12 +318,12 @@
         "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）"
       },
       "apps": {
-        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
-        "title": "Kestraでカスタムアプリを構築する",
         "blueprints": {
-          "title": "アプリのblueprintから開始します。",
-          "message": "アプリのblueprintは、フォーム、承認、データ送信などの一般的なユースケースに対応する既製のアプリです。Kestra Enterprise Editionでは、任意のblueprintを起点として使用し、ワークフローの上にカスタムUIを構築するために適応させることができます。"
-        }
+          "message": "アプリのblueprintは、フォーム、承認、データ送信などの一般的なユースケースに対応する既製のアプリです。Kestra Enterprise Editionでは、任意のblueprintを起点として使用し、ワークフローの上にカスタムUIを構築するために適応させることができます。",
+          "title": "アプリのblueprintから開始します。"
+        },
+        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
+        "title": "Kestraでカスタムアプリを構築する"
       },
       "assets": {
         "header": "アセットメタデータとオブザーバビリティ",
@@ -426,6 +422,7 @@
     "disabled": "無効",
     "disabled flow desc": "このFlowは無効です。実行するには有効にしてください。",
     "disabled flow title": "このFlowは無効です",
+    "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "display direct sub tasks count": "直接のサブタスク数を表示",
     "display flow {id} executions": "Flow {id}の実行を表示",
     "display metric for specific task": "特定のTaskのメトリクスを表示",
@@ -437,11 +434,9 @@
       "github": "GitHub issueを開く"
     },
     "documentationMenu": "ドキュメントメニュー",
+    "done": "完了",
     "down trend": "減少",
     "download": "ダウンロード",
-    "file_preview": {
-        "big_file_download_only": "このファイルのサイズは{size}です。エディタで開くには大きすぎるため、代わりにダウンロードしてください。"
-    },
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
     "draft_available": "エディターでドラフト変更が利用可能です",
@@ -581,7 +576,6 @@
     "execute backfill": "backfillを実行",
     "execute flow behaviour": "Flowを実行",
     "execute flow now ?": "このFlowを実行しますか？",
-    "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
@@ -655,6 +649,9 @@
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
+    "file_preview": {
+      "big_file_download_only": "このファイルのサイズは{size}です。エディタで開くには大きすぎるため、代わりにダウンロードしてください。"
+    },
     "files": "ファイル",
     "filter": {
       "active key value pairs": "アクティブなKey/Valueペア",
@@ -1125,6 +1122,11 @@
     "label": "ラベル",
     "label filter placeholder": "ラベルを 'key:value' として設定",
     "labels": "ラベル",
+    "large_outputs": {
+      "download_json": "Download JSON",
+      "load_more": "Load {count} more ({remaining} left)",
+      "value_too_large": "This value is {size}. It is too large to render here, download it instead."
+    },
     "last 48 hours": "過去48時間",
     "last X days count": "過去{days}日間に{count}",
     "last execution date": "最後の実行日",
@@ -1268,6 +1270,7 @@
     "neutral trend": "安定",
     "new": "新規",
     "new version": "新しいバージョン{version}が利用可能です！",
+    "next": "次へ",
     "next evaluation date": "次の評価日",
     "next evaluation date tooltip": "トリガーが次に評価されるタイミングは、その間隔に基づきます。条件が満たされない場合、次の実行日と常に同じとは限りません。",
     "next execution date": "次の実行日",
@@ -1374,14 +1377,14 @@
     "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
+      "all_columns_hidden": "すべての列が非表示です",
       "assets": "アセットが見つかりません",
       "executions": "実行が見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
       "secrets": "シークレットが見つかりません",
       "templates": "テンプレートが見つかりません",
-      "triggers": "トリガーが見つかりません",
-      "all_columns_hidden": "すべての列が非表示です"
+      "triggers": "トリガーが見つかりません"
     },
     "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",
@@ -1670,6 +1673,7 @@
     "resumed title": "実行<code>{id}</code>を再開",
     "reuse original inputs": "元のinputを再利用",
     "reuse_original_inputs": "元のinputを再利用",
+    "review your inputs": "入力内容を確認してください",
     "revision": "リビジョン",
     "revision deleted": "リビジョン{revision}が正常に削除されました",
     "revisions": "リビジョン",

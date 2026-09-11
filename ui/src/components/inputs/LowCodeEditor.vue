@@ -39,6 +39,7 @@
             @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
+            @move-task="onMoveTask"
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
@@ -297,6 +298,7 @@
         sectionFromParentPath,
         resolveTaskInsertionTarget,
         resolveTaskInsertionTargetInAnySection,
+        moveTaskOntoEdge,
         isTaskListPath,
     } from "../no-code/blocks/blockSections"
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
@@ -787,6 +789,16 @@
             undefined,
             event.dagDependency,
         )
+    }
+
+    const onMoveTask = (event: {taskId: string; target: AddTaskTarget}) => {
+        const moved = moveTaskOntoEdge(flowSource.value ?? "", event.taskId, event.target)
+        if (moved === flowSource.value) return
+        applyGraphYaml(moved)
+        trackAuthoringAction("task_moved", "topology", {
+            task_type: sourceTaskById.value[event.taskId]?.type,
+            position: event.target.position,
+        })
     }
 
     const onEditTask = (event: {

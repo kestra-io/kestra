@@ -30,6 +30,7 @@ const fixtures: [string, Record<string, any>, string][] = [
     ["editor_tab_action", {action: "task_added", tab_type: "topology"}, "app.editor-task.added"],
     ["editor_tab_action", {action: "task_edited", tab_type: "no_code"}, "app.editor-task.edited"],
     ["editor_tab_action", {action: "task_deleted", tab_type: "topology"}, "app.editor-task.deleted"],
+    ["editor_tab_action", {action: "task_moved", tab_type: "topology"}, "app.editor-task.moved"],
     ["ossauth", {action: "forgot_password_click"}, "app.forgot-password.clicked"],
     ["ossauth", {}, "app.oss-auth.completed"],
     ["onboarding", {onboarding: {action: "step_viewed"}}, "app.onboarding-step.viewed"],

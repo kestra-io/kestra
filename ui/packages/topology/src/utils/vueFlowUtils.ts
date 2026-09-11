@@ -614,7 +614,8 @@ export function generateGraph(
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
                 parentNode: cluster ? cluster.uid : undefined,
-                draggable: false,
+                // Only a task can be dropped on an edge to be moved; dots and clusters stay put.
+                draggable: Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node),
                 data: {
                     node: node,
                     parent: cluster ? cluster : undefined,

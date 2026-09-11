@@ -3,8 +3,11 @@
         :id="id"
         :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
-        :nodesDraggable="false"
+        :nodesDraggable="canAuthor"
         :nodesConnectable="false"
+        @node-drag-start="onNodeDragStart"
+        @node-drag="onNodeDrag"
+        @node-drag-stop="onNodeDragStop"
         :elevateNodesOnSelect="false"
         :elevateEdgesOnSelect="false"
     >
@@ -166,8 +169,9 @@
     import {CLUSTER_PREFIX} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
+    import {afterLastDot} from "./utils/utils"
     import {useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -261,6 +265,53 @@
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
 
+    const canAuthor = computed(() => Boolean(props.isAllowedEdit) && !props.isReadOnly)
+    const dropEdgeId = ref<string | undefined>(undefined)
+    const draggingNodeId = ref<string | undefined>(undefined)
+
+    provide(DROP_EDGE_INJECTION_KEY, computed(() => dropEdgeId.value))
+    provide(DRAGGING_NODE_INJECTION_KEY, computed(() => Boolean(draggingNodeId.value)))
+
+    /** The dragged card sits under the cursor, so the edge has to be found through the stack. */
+    function pointerCoordinates(event: MouseEvent | TouchEvent | undefined) {
+        if (!event) return undefined
+        if ("clientX" in event) return {x: event.clientX, y: event.clientY}
+        const touch = event.changedTouches?.[0] ?? event.touches?.[0]
+        return touch ? {x: touch.clientX, y: touch.clientY} : undefined
+    }
+
+    function edgeTargetUnderPointer(event: MouseEvent | TouchEvent | undefined) {
+        const point = pointerCoordinates(event)
+        if (!point) return undefined
+        const hit = document
+            .elementsFromPoint(point.x, point.y)
+            .find((element) => element.classList?.contains("edge-hit-area"))
+        const edgeId = hit?.getAttribute("data-edge-id")
+        if (!edgeId) return undefined
+        const edge = getEdges.value.find((candidate) => candidate.id === edgeId)
+        return edge?.data?.haveAdd ? {edgeId, target: edge.data.haveAdd} : undefined
+    }
+
+    function onNodeDragStart({node}: {node: {id: string}}) {
+        draggingNodeId.value = node.id
+    }
+
+    function onNodeDrag({event}: {event: MouseEvent | TouchEvent}) {
+        dropEdgeId.value = edgeTargetUnderPointer(event)?.edgeId
+    }
+
+    function onNodeDragStop({node, event}: {node: {id: string}; event: MouseEvent | TouchEvent}) {
+        const drop = edgeTargetUnderPointer(event)
+        dropEdgeId.value = undefined
+        // Cleared a tick late so the click the drag ends with does not open the task.
+        setTimeout(() => (draggingNodeId.value = undefined), 0)
+        // The layout is server-computed, so the node snaps back either way; only the yaml moves.
+        generateGraph()
+        const taskId = afterLastDot(node.id)
+        if (!drop || !taskId || taskId === drop.target.refId) return
+        emit(EVENTS.MOVE_TASK, {taskId, target: drop.target})
+    }
+
 
     const emit = defineEmits(
         [
@@ -280,6 +331,7 @@
             EVENTS.SHOW_CONDITION,
             EVENTS.SHOW_CUSTOM_ACTION,
             EVENTS.SHOW_DETAILS,
+            EVENTS.MOVE_TASK,
         ],
     )
 

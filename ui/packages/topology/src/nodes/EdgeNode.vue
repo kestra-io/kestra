@@ -22,7 +22,7 @@
         <button
             type="button"
             class="edge-add-button"
-            :class="{'edge-add-button--visible': hovered}"
+            :class="{'edge-add-button--visible': hovered || isDropTarget, 'edge-add-button--drop': isDropTarget}"
             :style="{transform: `translate(${addButtonX}px, ${addButtonY}px) translate(-50%, -50%)`}"
             :aria-label="$t('topology-graph.add-task')"
             data-test="topology-edge-add-task"
@@ -39,6 +39,7 @@
     <path
         v-if="path?.length && addTarget"
         class="edge-hit-area"
+        :data-edge-id="id"
         :d="path[0]"
         @mouseenter="hovered = true"
         @mouseleave="hovered = false"
@@ -46,11 +47,12 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref} from "vue"
+    import {computed, inject, ref} from "vue"
     import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
     import type {AddTaskTarget} from "../utils/vueFlowUtils"
+    import {DROP_EDGE_INJECTION_KEY} from "../injectionKeys"
 
     const props = defineProps({
         id: {type: String, default: undefined},
@@ -69,6 +71,9 @@
     }>()
 
     const hovered = ref(false)
+
+    const dropEdgeId = inject(DROP_EDGE_INJECTION_KEY, undefined)
+    const isDropTarget = computed(() => Boolean(props.id) && dropEdgeId?.value === props.id)
 
     // The graph already computed where a `+` on this edge should insert and relative to which
     // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
@@ -175,6 +180,13 @@
     .edge-add-button:focus-visible {
         opacity: 1;
         pointer-events: auto;
+    }
+
+    .edge-add-button--drop {
+        background: var(--ks-bg-info);
+        border-color: var(--ks-border-focus);
+        color: var(--ks-text-link);
+        transform-origin: center;
     }
 
     .edge-add-button:hover,

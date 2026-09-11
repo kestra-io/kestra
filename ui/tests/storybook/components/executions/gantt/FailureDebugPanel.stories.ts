@@ -34,13 +34,18 @@ function execution(state: string, taskRunList: ReturnType<typeof taskRun>[]): Ex
 
 const FLOW_SOURCE = `id: orders-pipeline
 namespace: company.team
+
+inputs:
+  - id: region
+    type: STRING
+
 tasks:
   - id: extract
     type: io.kestra.plugin.core.log.Log
     message: extracting
   - id: transform
     type: io.kestra.plugin.core.log.Log
-    message: transforming
+    message: "transforming {{ outputs.extract.value }}"
   - id: load
     type: io.kestra.plugin.core.log.Log
     message: "{{ secret('WAREHOUSE_URL') }}"
@@ -74,15 +79,27 @@ const meta: Meta<typeof FailureDebugPanel> = {
     beforeEach() {
         mockStoryApiRoutes({
             "GET /logs/exec-failed": {results: [], total: 0},
-            "GET /flows/company.team/orders-pipeline": {source: FLOW_SOURCE},
-            // Echoes the raw task block back unchanged — good enough for a story, where the
-            // point is showing the card renders, not the display-renderer's own masking logic
-            // (already covered by ExpressionControllerTest on the backend). context.body is the
-            // raw request text, not a parsed object — the mock fetch layer hands it through as-is.
+            // The real backend parses the YAML source server-side into a structured `inputs`
+            // array alongside `source` — the mock has to supply both, since nothing here parses
+            // FLOW_SOURCE itself.
+            "GET /flows/company.team/orders-pipeline": {source: FLOW_SOURCE, inputs: [{id: "region", type: "STRING"}]},
+            // A `{{ inputs.<id> }}` expression resolves to a canned value; everything else (the
+            // resolved-config task block) echoes back unchanged — good enough for a story, where
+            // the point is showing each card renders, not the display-renderer's own masking
+            // logic (already covered by ExpressionControllerTest on the backend). context.body is
+            // the raw request text, not a parsed object — the mock fetch layer hands it through as-is.
             "POST /expressions/render": (context: {body?: unknown}) => {
-                const expression = (JSON.parse((context.body as string) ?? "{}")?.expressions?.[0]) ?? ""
-                return {rendered: {[expression]: expression}}
+                const {expressions} = JSON.parse((context.body as string) ?? "{}") as {expressions?: string[]}
+                const rendered: Record<string, string> = {}
+                for (const expression of expressions ?? []) {
+                    const inputMatch = /^\{\{ inputs\.(\w+) \}\}$/.exec(expression)
+                    rendered[expression] = inputMatch ? "us-east-1" : expression
+                }
+                return {rendered}
             },
+            // The "extract" task's own task run id (tr-1) is what "transform" (SingleFailure's
+            // focused task) references via outputs.extract — used by "Outputs consumed".
+            "GET /outputs/tasks/exec-failed/tr-1": {value: "48203 rows"},
         })
     },
 }
@@ -134,6 +151,11 @@ export const SingleFailure: Story = {
         await expect(canvas.queryByRole("tablist")).toBeNull()
         await expect(canvasElement.querySelector(".failure-debug-panel__subtitle")?.textContent).toContain("transform")
         await waitFor(() => expect(canvasElement.textContent).toContain("transforming"))
+        // Execution inputs: the flow declares "region", resolved via the mocked render endpoint.
+        await waitFor(() => expect(canvasElement.textContent).toContain("us-east-1"))
+        // Outputs consumed: "transform" (the focused task) references outputs.extract in its
+        // own config, so "extract"'s task run outputs should be pulled in and shown.
+        await waitFor(() => expect(canvasElement.textContent).toContain("48203 rows"))
     },
 }
 

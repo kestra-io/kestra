@@ -32,8 +32,6 @@ vi.mock("@kestra-io/design-system", () => ({
         props: {title: {type: String, default: ""}},
         template: "<div data-test=\"var-value-truncated\">{{ title }}<slot /></div>",
     }),
-    // No explicit emits: the parent's @click lands as a native listener, so one click fires once.
-
 }))
 
 const i18n = createI18n({

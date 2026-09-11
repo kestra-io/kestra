@@ -5,7 +5,7 @@ describe("computeDurationBreakdown", () => {
     it("should return zeroed breakdown when there is no history", () => {
         const result = computeDurationBreakdown([])
 
-        expect(result).toEqual({total: 0, queued: 0, running: 0, paused: 0, isRunning: false})
+        expect(result).toEqual({total: 0, duration: 0, queued: 0, running: 0, paused: 0, isRunning: false})
     })
 
     it("should return zero duration when the task never ran (single terminal entry)", () => {
@@ -13,7 +13,7 @@ describe("computeDurationBreakdown", () => {
             {date: 1_000, state: "SKIPPED"},
         ])
 
-        expect(result).toEqual({total: 0, queued: 0, running: 0, paused: 0, isRunning: false})
+        expect(result).toEqual({total: 0, duration: 0, queued: 0, running: 0, paused: 0, isRunning: false})
     })
 
     it("should count elapsed time as queued while waiting for a single pending entry to start running", () => {
@@ -22,7 +22,7 @@ describe("computeDurationBreakdown", () => {
             1_420,
         )
 
-        expect(result).toEqual({total: 420, queued: 420, running: 0, paused: 0, isRunning: true})
+        expect(result).toEqual({total: 420, duration: 0, queued: 420, running: 0, paused: 0, isRunning: true})
     })
 
     it("should keep accumulating running time against now while the task is still running", () => {
@@ -34,7 +34,7 @@ describe("computeDurationBreakdown", () => {
             3_500,
         )
 
-        expect(result).toEqual({total: 2_500, queued: 250, running: 2_250, paused: 0, isRunning: true})
+        expect(result).toEqual({total: 2_500, duration: 2_250, queued: 250, running: 2_250, paused: 0, isRunning: true})
     })
 
     it("should bill an inter-attempt gap as queued rather than running", () => {
@@ -49,6 +49,7 @@ describe("computeDurationBreakdown", () => {
 
         expect(result.queued).toBe(2_200)
         expect(result.running).toBe(2_000)
+        expect(result.duration).toBe(2_000)
         expect(result.total).toBe(4_200)
         expect(result.queued + result.running).toBe(result.total)
         expect(result.isRunning).toBe(false)
@@ -80,6 +81,7 @@ describe("computeDurationBreakdown", () => {
 
         expect(result.paused).toBe(14_400_000)
         expect(result.running).toBe(3_000)
+        expect(result.duration).toBe(14_403_000)
         expect(result.queued).toBe(100)
         expect(result.queued + result.running + result.paused).toBe(result.total)
     })
@@ -132,5 +134,31 @@ describe("computeDurationBreakdown", () => {
         expect(result.queued).toBe(1_000)
         expect(result.running).toBe(2_000)
         expect(result.total).toBe(3_000)
+    })
+
+    it("should keep accumulating queued time against now while an execution waits for a concurrency slot", () => {
+        const result = computeDurationBreakdown(
+            [
+                {date: 0, state: "CREATED"},
+                {date: 100, state: "QUEUED"},
+            ],
+            60_100,
+        )
+
+        expect(result).toEqual({total: 60_100, duration: 0, queued: 60_100, running: 0, paused: 0, isRunning: true})
+    })
+
+    it("should leave the queued wait out of the duration once a queued execution has run", () => {
+        const result = computeDurationBreakdown([
+            {date: 0, state: "CREATED"},
+            {date: 100, state: "QUEUED"},
+            {date: 420_100, state: "RUNNING"},
+            {date: 432_100, state: "SUCCESS"},
+        ])
+
+        expect(result.duration).toBe(12_000)
+        expect(result.queued).toBe(420_100)
+        expect(result.total).toBe(432_100)
+        expect(result.isRunning).toBe(false)
     })
 })

@@ -27,6 +27,7 @@
 
     import {durationUtils, KsProgress, KsText} from "@kestra-io/design-system"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
+    import {computeDurationBreakdown} from "@kestra-io/topology"
 
     import {type Execution} from "../../stores/executions"
 
@@ -39,16 +40,13 @@
     const averageDurationMs = ref<number | null>(null)
 
     // Timezone-independent: Date.now() counts milliseconds since the UTC epoch, as does parsing the
-    // execution's ISO start date below, so the two can be subtracted whatever the browser timezone.
+    // ISO dates of the state history below, so the two can be subtracted whatever the browser timezone.
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
     const now = ref(Date.now())
     let ticker: ReturnType<typeof setInterval> | undefined
 
-    const elapsedMs = computed(() => {
-        const {startDate} = props.execution.state
-        if (!startDate) return 0
-        return Math.max(0, now.value - new Date(startDate).getTime())
-    })
+    // Queued time is left out, as it is from the average duration this elapsed time is compared with.
+    const elapsedMs = computed(() => computeDurationBreakdown(props.execution.state.histories, now.value).duration)
 
     const remainingMs = computed(() => {
         if (!averageDurationMs.value) return 0

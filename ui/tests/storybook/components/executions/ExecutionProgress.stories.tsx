@@ -28,13 +28,18 @@ function stubAverageDuration(avgDurationMs: number | null) {
 }
 
 function execution(startedMsAgo: number) {
+    const startDate = new Date(Date.now() - startedMsAgo).toISOString();
     return {
         id: "5cBZ1Ec74EWvvKcULDMBGJ",
         namespace: "company.team",
         flowId: "hello_world",
         state: {
             current: "RUNNING",
-            startDate: new Date(Date.now() - startedMsAgo).toISOString(),
+            startDate,
+            histories: [
+                {state: "CREATED", date: startDate},
+                {state: "RUNNING", date: startDate},
+            ],
         },
     };
 }

@@ -9,13 +9,15 @@ export interface DurationHistoryEntry {
 export interface DurationBreakdown {
     /** Total elapsed time in milliseconds, always equal to `queued + running + paused`. */
     total: number;
-    /** Time spent waiting to be picked up by a worker, including inter-attempt waiting. */
+    /** Time spent running or paused, `total - queued`: the value the backend persists as `state.duration`. */
+    duration: number;
+    /** Time spent waiting to run: for a concurrency slot, to be picked up by a worker, or between attempts. */
     queued: number;
     /** Time spent executing, including the teardown window while a run is being killed. */
     running: number;
     /** Time spent waiting on a human, from a paused run or a debug breakpoint. */
     paused: number;
-    /** Whether the task run has not yet reached a terminal state. */
+    /** Whether the execution or task run has not yet reached a terminal state. */
     isRunning: boolean;
 }
 
@@ -23,6 +25,16 @@ type Bucket = "queued" | "running" | "paused"
 
 const EXECUTING_STATES: string[] = [State.RUNNING, State.KILLING]
 const WAITING_ON_HUMAN_STATES: string[] = [State.PAUSED, State.BREAKPOINT]
+const TERMINAL_STATES: string[] = [
+    State.SUCCESS,
+    State.WARNING,
+    State.FAILED,
+    State.KILLED,
+    State.CANCELLED,
+    State.RETRIED,
+    State.SKIPPED,
+    State.RESUBMITTED,
+]
 
 function bucketOf(state: string): Bucket {
     if (EXECUTING_STATES.includes(state)) return "running"
@@ -37,7 +49,7 @@ function toMillis(date: Moment | string | number): number {
 }
 
 /**
- * Splits a task run's flat state-history transitions into queued, running and paused time.
+ * Splits an execution's or task run's flat state-history transitions into queued, running and paused time.
  * Each transition opens a span that lasts until the next one and is attributed by the state that
  * opened it, so `queued + running + paused` is always exactly `total`.
  */
@@ -51,11 +63,11 @@ export function computeDurationBreakdown(
         .sort((a, b) => a.date - b.date)
 
     if (entries.length === 0) {
-        return {total: 0, queued: 0, running: 0, paused: 0, isRunning: false}
+        return {total: 0, duration: 0, queued: 0, running: 0, paused: 0, isRunning: false}
     }
 
     const last = entries[entries.length - 1]
-    const isRunning = Boolean(State.isRunning(last.state))
+    const isRunning = !TERMINAL_STATES.includes(last.state)
 
     const spans: Record<Bucket, number> = {queued: 0, running: 0, paused: 0}
 
@@ -69,6 +81,7 @@ export function computeDurationBreakdown(
 
     return {
         total: spans.queued + spans.running + spans.paused,
+        duration: spans.running + spans.paused,
         queued: spans.queued,
         running: spans.running,
         paused: spans.paused,

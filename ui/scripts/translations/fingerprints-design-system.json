@@ -168,6 +168,7 @@
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|table_column|executions|labels": "44849543528c",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|table_column|executions|namespace": "3137e79738aa",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|table_column|executions|parent-execution": "b0fc5e558a66",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|table_column|executions|queued-duration": "0136ce188f62",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|table_column|executions|revision": "8d5fe119c9a3",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|table_column|executions|start-date": "e744eb789b32",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|table_column|executions|state": "8f1c1dffe224",

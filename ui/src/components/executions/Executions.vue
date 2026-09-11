@@ -198,7 +198,10 @@
                         <KsDateAgo :inverted="true" :date="scope.row?.state?.endDate" />
                     </template>
                     <template v-else-if="col.prop === 'state.duration'">
-                        <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
+                        <Duration :field="scope.row?.state?.duration" :histories="scope.row?.state?.histories" />
+                    </template>
+                    <template v-else-if="col.prop === 'state.queuedDuration'">
+                        <Duration :field="scope.row?.state?.queuedDuration" :histories="scope.row?.state?.histories" queued />
                     </template>
                     <template v-else-if="col.prop === 'namespace' && routeFamily($route.name) !== 'flows/update'">
                         <KsEntityLink
@@ -565,6 +568,12 @@
             description: t("filter.table_column.executions.duration"),
         },
         {
+            label: t("queued duration"),
+            prop: "state.queuedDuration",
+            default: false,
+            description: t("filter.table_column.executions.queued-duration"),
+        },
+        {
             label: t("namespace"),
             prop: "namespace",
             default: true,
@@ -641,7 +650,7 @@
 
     const isColumnSortable = (prop: string) => {
         if (prop in cellComponents) return false
-        return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
+        return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId", "state.queuedDuration"].includes(prop)
     }
 
     const selectionMapper = (execution: any) => {

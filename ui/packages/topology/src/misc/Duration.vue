@@ -33,12 +33,12 @@
                         <span class="duration-total-note">{{ $t('state_history.did_not_run') }}</span>
                     </template>
                     <template v-else>
-                        {{ formatCardTotal(breakdown.total) }}
+                        {{ formatCardTotal(breakdown.duration) }}
                         <span v-if="waitingToStart" class="duration-total-note">{{ $t('state_history.waiting_to_start') }}</span>
                         <span v-else-if="displayedAttemptCount" class="duration-total-note">{{ $t('state_history.attempt_count', {count: displayedAttemptCount}) }}</span>
                     </template>
                 </div>
-                <template v-if="!neverRan">
+                <template v-if="breakdown.total > 0">
                     <div class="split-bar" aria-hidden="true">
                         <span
                             v-if="breakdown.queued > 0"
@@ -212,7 +212,7 @@
 
     const isActivelyRunning = computed(() => breakdown.value.isRunning && lastState.value === State.RUNNING)
     const waitingToStart = computed(() => breakdown.value.isRunning && breakdown.value.running === 0)
-    const neverRan = computed(() => hasHistory.value && !breakdown.value.isRunning && breakdown.value.total === 0)
+    const neverRan = computed(() => hasHistory.value && !breakdown.value.isRunning && breakdown.value.duration === 0)
 
     const derivedAttemptGroupCount = computed(() => {
         if (!hasHistory.value) return 0
@@ -279,7 +279,7 @@
 
     const triggerLabel = computed(() => {
         if (!hasHistory.value || neverRan.value) return "—"
-        return formatDuration(breakdown.value.total)
+        return formatDuration(breakdown.value.duration)
     })
 
     function shareOf(part: number): number {

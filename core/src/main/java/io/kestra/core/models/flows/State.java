@@ -87,16 +87,13 @@ public class State {
     }
 
     /**
-     * non-terminated execution duration is hard to provide in SQL, so we set it to null when endDate is empty
+     * Time spent running or paused: the elapsed time minus {@link #getQueuedDuration()}.
+     * Non-terminated execution duration is hard to provide in SQL, so we set it to null when endDate is empty.
      */
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public Optional<Duration> getDuration() {
-        if (this.getEndDate().isPresent()) {
-            return Optional.of(Duration.between(this.getStartDate(), this.getEndDate().get()));
-        } else {
-            return Optional.empty();
-        }
+        return this.getEndDate().map(this::durationUntil);
     }
 
     /**
@@ -104,13 +101,28 @@ public class State {
      */
     @JsonIgnore
     public Duration getDurationOrComputeIt() {
-        return this.getDuration().orElseGet(() -> Duration.between(this.getStartDate(), Instant.now()));
+        return this.getDuration().orElseGet(() -> this.durationUntil(Instant.now()));
+    }
+
+    /**
+     * Time spent waiting to run, in any state that is neither running nor paused: before the first
+     * {@link Type#RUNNING} transition, while {@link Type#QUEUED}, and between retry attempts.
+     * Empty while still waiting, as a persisted value would go stale: the UI computes it live from the histories.
+     */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Optional<Duration> getQueuedDuration() {
+        if (this.histories.isEmpty() || (!this.isTerminated() && isWaiting(this.current))) {
+            return Optional.empty();
+        }
+
+        return Optional.of(this.queuedDurationUntil(this.histories.getLast().getDate()));
     }
 
     /**
      * Duration from the most recent {@link Type#RUNNING} transition to the terminal date — how long the last
-     * attempt actually ran. Empty if it never entered RUNNING or hasn't ended. Unlike {@link #getDuration()}
-     * (start → end), this excludes pre-RUNNING time and earlier retry attempts.
+     * attempt actually ran. Empty if it never entered RUNNING or hasn't ended. Unlike {@link #getDuration()},
+     * which sums the running time of every attempt, this covers the last attempt only.
      */
     @JsonIgnore
     public Optional<Duration> lastRunningDuration() {
@@ -267,6 +279,27 @@ public class State {
      */
     public boolean failedThenRestarted() {
         return this.current == Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
+    }
+
+    private Duration durationUntil(Instant until) {
+        return Duration.between(this.getStartDate(), until).minus(this.queuedDurationUntil(until));
+    }
+
+    private Duration queuedDurationUntil(Instant until) {
+        Duration queued = Duration.ZERO;
+        for (int i = 0; i < this.histories.size(); i++) {
+            History history = this.histories.get(i);
+            if (!isWaiting(history.getState())) {
+                continue;
+            }
+            Instant next = i + 1 < this.histories.size() ? this.histories.get(i + 1).getDate() : until;
+            queued = queued.plus(Duration.between(history.getDate(), next));
+        }
+        return queued;
+    }
+
+    private static boolean isWaiting(Type type) {
+        return !type.isRunning() && !type.isPaused() && !type.isBreakpoint();
     }
 
     public enum Type {

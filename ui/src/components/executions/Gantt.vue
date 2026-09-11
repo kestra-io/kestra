@@ -43,7 +43,7 @@
                             <div class="top">
                                 <div class="summary">
                                     <span class="item">
-                                        <span class="label">{{ $t("total_duration") }}</span>
+                                        <span class="label">{{ $t("duration") }}</span>
                                         <Duration class="value" :histories="execution.state.histories" />
                                     </span>
                                     <span class="separator">/</span>

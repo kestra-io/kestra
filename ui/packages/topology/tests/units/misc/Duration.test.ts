@@ -71,14 +71,15 @@ describe("Duration", () => {
         expect(trigger.attributes("disabled")).toBeDefined()
     })
 
-    it("should show the queued/running split in the tier-1 card for a simple run", () => {
+    it("should headline the running time and show the queued/running split in the tier-1 card for a simple run", () => {
         const wrapper = mountDuration([
             {date: "2026-08-07T15:36:15.804Z", state: "CREATED"},
             {date: "2026-08-07T15:36:16.054Z", state: "RUNNING"},
             {date: "2026-08-07T15:37:27.776Z", state: "SUCCESS"},
         ])
 
-        expect(wrapper.find(".duration-total").text()).toContain("1m 11.97s")
+        expect(wrapper.find("button.ks-duration-value").text()).toBe("1m, 11.72s")
+        expect(wrapper.find(".duration-total").text()).toContain("1m 11.72s")
 
         const rows = wrapper.findAll(".split-row")
         expect(rows).toHaveLength(2)
@@ -191,14 +192,14 @@ describe("Duration", () => {
 
     it("should show sub-second card totals in milliseconds, and leave the trigger label alone", () => {
         const oneMillisecond = mountDuration([
-            {date: 0, state: "CREATED"},
+            {date: 0, state: "RUNNING"},
             {date: 1, state: "SUCCESS"},
         ])
         expect(oneMillisecond.find(".duration-total").text()).toContain("1ms")
         expect(oneMillisecond.find("button.ks-duration-value").text()).not.toContain("1ms")
 
         const overOneSecond = mountDuration([
-            {date: 0, state: "CREATED"},
+            {date: 0, state: "RUNNING"},
             {date: 13_558, state: "SUCCESS"},
         ])
         expect(overOneSecond.find(".duration-total").text()).toContain("13.55s")
@@ -245,16 +246,40 @@ describe("Duration", () => {
         const wrapper = mountDuration(firstAttempt, {interval: 100})
         const label = () => wrapper.find("button.ks-duration-value").text()
 
-        // RETRYING is not a running state, so the elapsed time is frozen at the last transition.
-        expect(label()).toBe("3.00s")
+        // The retry wait is billed as queued, so the running time stays frozen at the first attempt's.
+        expect(label()).toBe("1.00s")
         await vi.advanceTimersByTimeAsync(1_000)
-        expect(label()).toBe("3.00s")
+        expect(label()).toBe("1.00s")
 
         await wrapper.setProps({histories: [...firstAttempt, {date: 5_000, state: "RUNNING"}]})
-        expect(label()).toBe("5.00s")
+        expect(label()).toBe("1.00s")
 
         await vi.advanceTimersByTimeAsync(1_000)
-        expect(label()).toBe("6.00s")
+        expect(label()).toBe("2.00s")
+    })
+
+    it("should count the wait live and flag it as waiting to start while an execution is queued", async () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(60_100)
+
+        const wrapper = mountDuration(
+            [
+                {date: 0, state: "CREATED"},
+                {date: 100, state: "QUEUED"},
+            ],
+            {interval: 100},
+        )
+
+        expect(wrapper.find("button.ks-duration-value").text()).toBe("0.00s")
+        expect(wrapper.find(".duration-total-note").text()).toBe("state_history.waiting_to_start")
+
+        const rows = wrapper.findAll(".split-row")
+        expect(rows).toHaveLength(1)
+        expect(rows[0].text()).toContain("1m 0.10s")
+        expect(rows[0].text()).toContain("100%")
+
+        await vi.advanceTimersByTimeAsync(1_000)
+        expect(wrapper.findAll(".split-row")[0].text()).toContain("1m 1.10s")
     })
 
     it("should not show a state history button when there is no history to show", () => {

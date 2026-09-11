@@ -39,7 +39,7 @@ public class StateDurationTest {
                 new State.History(State.Type.SUCCESS, THREE)
             )
         );
-        assertThat(state.getDuration()).isEqualTo(Optional.of(Duration.between(ONE, THREE)));
+        assertThat(state.getDuration()).isEqualTo(Optional.of(Duration.between(TWO, THREE)));
     }
 
     @Test

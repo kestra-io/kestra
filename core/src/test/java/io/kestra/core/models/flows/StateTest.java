@@ -14,12 +14,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class StateTest {
 
     private static final Instant START = Instant.parse("2024-01-01T00:00:00Z");
+    private static final Instant RUNNING_AT = Instant.parse("2024-01-01T00:00:01Z");
     private static final Instant END = Instant.parse("2024-01-01T01:01:01Z");
 
     private State terminatedState() {
         return new State(
             State.Type.SUCCESS, List.of(
                 new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.RUNNING, RUNNING_AT),
                 new State.History(State.Type.SUCCESS, END)
             )
         );
@@ -70,9 +72,9 @@ class StateTest {
     }
 
     @Test
-    void shouldGetDurationBetweenStartAndEndWhenTerminated() {
+    void shouldGetDurationBetweenRunningAndEndWhenTerminated() {
         // Given / When / Then
-        assertThat(terminatedState().getDuration()).contains(Duration.between(START, END));
+        assertThat(terminatedState().getDuration()).contains(Duration.between(RUNNING_AT, END));
     }
 
     @Test
@@ -87,7 +89,7 @@ class StateTest {
     @Test
     void shouldGetPersistedDurationWhenTerminated() {
         // Given / When / Then
-        assertThat(terminatedState().getDurationOrComputeIt()).isEqualTo(Duration.between(START, END));
+        assertThat(terminatedState().getDurationOrComputeIt()).isEqualTo(Duration.between(RUNNING_AT, END));
     }
 
     @Test
@@ -98,6 +100,82 @@ class StateTest {
 
         // When / Then
         assertThat(state.getDurationOrComputeIt()).isCloseTo(Duration.ofSeconds(5), Duration.ofSeconds(3));
+    }
+
+    @Test
+    void shouldExcludeQueuedTimeFromDurationWhenTerminated() {
+        Instant runningAt = START.plus(Duration.ofMinutes(10));
+        State state = new State(
+            State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.QUEUED, START.plusSeconds(1)),
+                new State.History(State.Type.RUNNING, runningAt),
+                new State.History(State.Type.SUCCESS, runningAt.plusSeconds(30))
+            )
+        );
+
+        assertThat(state.getDuration()).contains(Duration.ofSeconds(30));
+        assertThat(state.getQueuedDuration()).contains(Duration.ofMinutes(10));
+    }
+
+    @Test
+    void shouldGetEmptyQueuedDurationWhileQueued() {
+        State state = new State(
+            State.Type.QUEUED, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.QUEUED, START.plusSeconds(1))
+            )
+        );
+
+        assertThat(state.getQueuedDuration()).isEmpty();
+    }
+
+    @Test
+    void shouldComputeDurationOnTheFlyWithoutQueuedTimeWhenRunning() {
+        Instant createdAt = Instant.now().minusSeconds(15);
+        State state = new State(
+            State.Type.RUNNING, List.of(
+                new State.History(State.Type.CREATED, createdAt),
+                new State.History(State.Type.QUEUED, createdAt),
+                new State.History(State.Type.RUNNING, createdAt.plusSeconds(10))
+            )
+        );
+
+        assertThat(state.getDurationOrComputeIt()).isCloseTo(Duration.ofSeconds(5), Duration.ofSeconds(3));
+        assertThat(state.getQueuedDuration()).contains(Duration.ofSeconds(10));
+    }
+
+    @Test
+    void shouldCountRetryWaitAsQueuedDuration() {
+        State state = new State(
+            State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.RUNNING, START.plusMillis(100)),
+                new State.History(State.Type.FAILED, START.plusMillis(1_100)),
+                new State.History(State.Type.RETRYING, START.plusMillis(3_100)),
+                new State.History(State.Type.RUNNING, START.plusMillis(3_200)),
+                new State.History(State.Type.SUCCESS, START.plusMillis(4_200))
+            )
+        );
+
+        assertThat(state.getDuration()).contains(Duration.ofMillis(2_000));
+        assertThat(state.getQueuedDuration()).contains(Duration.ofMillis(2_200));
+    }
+
+    @Test
+    void shouldCountPausedTimeInDuration() {
+        State state = new State(
+            State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.RUNNING, START.plusMillis(100)),
+                new State.History(State.Type.PAUSED, START.plusMillis(1_100)),
+                new State.History(State.Type.RUNNING, START.plusMillis(5_100)),
+                new State.History(State.Type.SUCCESS, START.plusMillis(6_100))
+            )
+        );
+
+        assertThat(state.getDuration()).contains(Duration.ofMillis(6_000));
+        assertThat(state.getQueuedDuration()).contains(Duration.ofMillis(100));
     }
 
     @Test
@@ -142,7 +220,7 @@ class StateTest {
     @Test
     void shouldFormatHumanDurationAsHoursMinutesSeconds() {
         // Given / When / Then
-        assertThat(terminatedState().humanDuration()).isEqualTo("01:01:01.000");
+        assertThat(terminatedState().humanDuration()).isEqualTo("01:01:00.000");
     }
 
     @Test

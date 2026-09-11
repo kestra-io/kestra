@@ -861,7 +861,11 @@ public abstract class AbstractExecutionRepositoryTest {
             .state(
                 new State(
                     Type.SUCCESS,
-                    List.of(new State.History(State.Type.CREATED, createDate), new State.History(Type.SUCCESS, createDate.plus(duration)))
+                    List.of(
+                        new State.History(State.Type.CREATED, createDate),
+                        new State.History(State.Type.RUNNING, createDate),
+                        new State.History(Type.SUCCESS, createDate.plus(duration))
+                    )
                 )
             )
             .taskRunList(List.of())
@@ -1329,7 +1333,7 @@ public abstract class AbstractExecutionRepositoryTest {
                             new State.History(State.Type.CREATED, clock.plus(passedTime.addAndGet(ten), SECONDS)),
                             new State.History(Type.QUEUED, clock.plus(passedTime.get(), SECONDS)),
                             new State.History(State.Type.RUNNING, clock.plus(passedTime.addAndGet(ten), SECONDS)),
-                            new State.History(State.Type.SUCCESS, clock.plus(passedTime.addAndGet(ten), SECONDS))
+                            new State.History(State.Type.SUCCESS, clock.plus(passedTime.addAndGet(ten * 2), SECONDS))
                         )
                     )
                 ).build();
@@ -1366,6 +1370,7 @@ public abstract class AbstractExecutionRepositoryTest {
                         Type.FAILED,
                         List.of(
                             new State.History(State.Type.CREATED, clock.plus(passedTime.addAndGet(ten), SECONDS)),
+                            new State.History(State.Type.RUNNING, clock.plus(passedTime.get(), SECONDS)),
                             new State.History(Type.FAILED, clock.plus(passedTime.addAndGet(ten), SECONDS))
                         )
                     )
@@ -1453,6 +1458,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 State.Type.SUCCESS,
                 List.of(
                     new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.RUNNING, clock),
                     new State.History(State.Type.SUCCESS, clock.plus(Duration.ofMinutes(5)))
                 )
             )).build();
@@ -1468,6 +1474,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 State.Type.SUCCESS,
                 List.of(
                     new State.History(State.Type.CREATED, clock),
+                    new State.History(State.Type.RUNNING, clock),
                     new State.History(State.Type.SUCCESS, clock.plus(Duration.ofSeconds(20)))
                 )
             )).build();

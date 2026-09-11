@@ -190,6 +190,7 @@ export const QUEUED = "QUEUED" as const
 export const RETRYING = "RETRYING" as const
 export const RETRIED = "RETRIED" as const
 export const BREAKPOINT = "BREAKPOINT" as const
+export const RESUBMITTED = "RESUBMITTED" as const
 
 export function isRunning(state:string) {
     return STATES[state]?.isRunning

@@ -22,6 +22,7 @@ vi.mock("vue-router", () => ({
 }))
 
 import FailureDebugPanel from "./FailureDebugPanel.vue"
+import FailureMiniTimeline from "./FailureMiniTimeline.vue"
 import en from "../../../translations/en.json"
 
 const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en: en.en}})
@@ -113,6 +114,21 @@ describe("FailureDebugPanel", () => {
         expect(wrapper.get(".failure-debug-panel__subtitle").text()).toContain("task-1")
         // The switcher only renders when more than one failure is present.
         expect(wrapper.find("[role=\"tablist\"]").exists()).toBe(true)
+    })
+
+    it("should order the mini-timeline chronologically, matching the Gantt view, instead of focused-first by proximity", () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [
+                taskRun("tr-1", "extract_orders", "SUCCESS", "2024-01-01T00:00:00Z"),
+                taskRun("tr-2", "transform_orders", "SUCCESS", "2024-01-01T00:00:05Z"),
+                taskRun("tr-3", "load_warehouse", "FAILED", "2024-01-01T00:00:10Z"),
+            ],
+        })
+
+        const nodes = wrapper.findComponent(FailureMiniTimeline).props("nodes") as Array<{taskRun: {taskId: string}}>
+        expect(nodes.map((node) => node.taskRun.taskId)).toEqual(["extract_orders", "transform_orders", "load_warehouse"])
     })
 
     it("should not render a failure switcher for a single failure", () => {

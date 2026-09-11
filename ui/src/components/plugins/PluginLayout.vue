@@ -354,7 +354,7 @@
         display: flex;
         height: 100%;
         min-height: 0;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         container-type: inline-size;
         container-name: plugin-page;
 

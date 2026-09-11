@@ -6,25 +6,6 @@
         class="admin-item"
         @click="open"
     >
-        <template v-if="configs?.version" #suffix>
-            <KsTooltip placement="top" effect="light">
-                <template #content>
-                    <div class="admin-item__tooltip">
-                        <div>{{ $t("version") }}: {{ configs.version }}</div>
-                        <div v-if="configs.commitId">
-                            {{ $t("commit_id") }}:
-                            <span class="admin-item__commit">{{ configs.commitId }}</span>
-                        </div>
-                        <div v-if="configs.commitDate">
-                            {{ $t("date") }}: {{ dateUtils.dateFilter(configs.commitDate) }}
-                        </div>
-                    </div>
-                </template>
-                <span class="admin-item__version">
-                    v.{{ configs.version.split(".").slice(0, 2).join(".") }}
-                </span>
-            </KsTooltip>
-        </template>
     </KsSideBarItem>
 </template>
 
@@ -32,9 +13,8 @@
     import {computed, onUnmounted, watch} from "vue"
     import {useRoute, useRouter, type RouteLocationRaw} from "vue-router"
     import CogOutline from "vue-material-design-icons/CogOutline.vue"
-    import {KsSideBarItem, KsTooltip, dateUtils} from "@kestra-io/design-system"
+    import {KsSideBarItem} from "@kestra-io/design-system"
     import {useRouteTabsStore, activeScopeTab, type RouteTab} from "../../stores/routeTabs"
-    import {useMiscStore} from "override/stores/misc"
 
     const props = defineProps<{
         tabs: RouteTab[]
@@ -48,9 +28,6 @@
     const route = useRoute()
     const router = useRouter()
     const store = useRouteTabsStore()
-    const miscStore = useMiscStore()
-
-    const configs = computed(() => miscStore.configs)
 
     const active = computed(() => Boolean(activeScopeTab(route, props.tabs, router)))
 
@@ -75,29 +52,5 @@
     .admin-item {
         margin: 0;
         --ks-sidebar-item-title-color: currentColor;
-    }
-
-    .admin-item__version {
-        padding: var(--ks-spacing-1);
-        border: 1px solid var(--ks-border-subtle);
-        border-radius: var(--ks-radius-base);
-        font-size: var(--ks-font-size-2xs);
-        font-weight: var(--ks-font-weight-regular);
-        color: var(--ks-text-secondary);
-        line-height: 1;
-        white-space: nowrap;
-    }
-
-    .admin-item__tooltip {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-1);
-        font-size: var(--ks-font-size-2xs);
-        font-weight: var(--ks-font-weight-regular);
-    }
-
-    .admin-item__commit {
-        color: var(--ks-text-link);
-        font-family: var(--kel-font-family-monospace);
     }
 </style>

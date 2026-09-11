@@ -6,9 +6,9 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.queue.QueueService;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -24,6 +24,7 @@ import io.kestra.cli.schema.PluginsSchemaCommand;
 import io.kestra.cli.services.EnvironmentProvider;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
+import io.kestra.core.plugins.ExternalPluginsRegistrar;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
@@ -246,6 +247,11 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
         Map<String, Object> propertiesOverrides = getPropertiesFromMethod(cls, "propertiesOverrides", null);
         if (propertiesOverrides != null && isPracticalCommand(commandLine)) {
             properties.putAll(propertiesOverrides);
+        }
+
+        if (isPracticalCommand(commandLine) && commandLine.getCommandSpec().userObject() instanceof AbstractCommand command
+            && command.pluginsPath != null && command.loadExternalPlugins()) {
+            properties.put(ExternalPluginsRegistrar.PLUGINS_PATH_PROPERTY, command.pluginsPath.toString());
         }
 
         // custom server configuration

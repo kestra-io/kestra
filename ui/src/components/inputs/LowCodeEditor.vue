@@ -280,7 +280,6 @@
     import {useStorage} from "@vueuse/core"
     import {useRoute, useRouter} from "vue-router"
     import {storageKeys, topologyOrientations} from "../../utils/constants"
-    import {useVueFlow} from "@vue-flow/core"
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
@@ -368,7 +367,6 @@
     const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
-    const {fitView} = useVueFlow(vueflowId.value)
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
@@ -686,11 +684,9 @@
     watch(() => props.horizontalDefault, (value) => {
         if (value !== undefined && value !== isHorizontal.value) {
             isHorizontal.value = value
-            fitViewOrientation()
         }
     })
     const vueFlow = ref<HTMLDivElement>()
-    const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
     const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
     const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem("defaultLogLevel")))
@@ -722,8 +718,6 @@
     )
 
     onMounted(() => {
-        // Regenerate graph on window resize
-        observeWidth()
         pluginsStore.fetchIcons()
     })
 
@@ -752,20 +746,6 @@
             }
         },
     )
-
-    const observeWidth = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(function () {
-                clearTimeout(timer.value)
-                timer.value = setTimeout(() => {
-                    nextTick(() => {
-                        fitView()
-                    })
-                }, 50) as any
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
-    }
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
@@ -1206,22 +1186,9 @@
         saveFlow: () => saveFlow(),
     })
 
-    const fitViewOrientation = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(() => {
-                clearTimeout(timer.value)
-                nextTick(() => {
-                    fitView()
-                })
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
-    }
-
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value
         isHorizontalLS.value = isHorizontal.value
-        fitViewOrientation()
     }
 
     const openFlow = (data: any) => {

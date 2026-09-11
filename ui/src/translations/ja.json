@@ -2144,7 +2144,7 @@
         },
         "unavailable": {
           "title": "AI Copilot は利用できません",
-          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼してください。",
+          "detail": "このインスタンスにはAIプロバイダーが設定されていません。AI Copilotを有効にするには、Kestra設定ファイルでAIプロバイダーを設定してください。",
           "docs": "ドキュメントを見る"
         },
         "thinkingWords": [

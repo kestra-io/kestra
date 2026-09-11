@@ -2144,7 +2144,7 @@
         },
         "unavailable": {
           "title": "AI Copilot non è disponibile",
-          "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno.",
+          "detail": "Nessun provider AI è configurato per questa istanza. Configuralo nel tuo file di configurazione Kestra per abilitare AI Copilot.",
           "docs": "Visualizza la documentazione"
         },
         "thinkingWords": [

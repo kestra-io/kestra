@@ -2144,7 +2144,7 @@
         },
         "unavailable": {
           "title": "AI Copilot 不可用",
-          "detail": "未配置 AI 提供商。请联系管理员进行设置。",
+          "detail": "此实例未配置 AI 提供商。请在 Kestra 配置文件中配置一个以启用 AI Copilot。",
           "docs": "查看文档"
         },
         "thinkingWords": [

@@ -51,4 +51,8 @@
             }
         }
     }
+
+    .kel-color-predefine__color-selector {
+        border: 1px solid var(--ks-border-strong);
+    }
 </style>

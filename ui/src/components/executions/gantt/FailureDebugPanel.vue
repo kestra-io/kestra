@@ -73,15 +73,17 @@
                 <template #header>
                     <h4>{{ $t("failureDebugPanel.miniTimeline.title") }}</h4>
                 </template>
-                <p class="failure-debug-panel__hint">{{ $t("failureDebugPanel.miniTimeline.dragHint") }}</p>
-                <FailureMiniTimeline
-                    v-if="focusedId"
-                    ref="miniTimelineRef"
-                    :nodes="timelineNodes"
-                    :focusedId="focusedId"
-                    @focus-task="focusFailureFromNeighbor"
-                    @select-range="onSelectRange"
-                />
+                <div class="failure-debug-panel__timeline-body">
+                    <p class="failure-debug-panel__hint">{{ $t("failureDebugPanel.miniTimeline.dragHint") }}</p>
+                    <FailureMiniTimeline
+                        v-if="focusedId"
+                        ref="miniTimelineRef"
+                        :nodes="timelineNodes"
+                        :focusedId="focusedId"
+                        @focus-task="focusFailureFromNeighbor"
+                        @select-range="onSelectRange"
+                    />
+                </div>
             </KsCard>
 
             <div class="failure-debug-panel__grid">
@@ -382,6 +384,7 @@
         if (!taskRun) return
 
         const errorLines = await loadFocusedErrorText()
+        if (!errorLines) return
         const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLines}`
         miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: taskRun.taskId}), newThread: true})
     }
@@ -418,7 +421,7 @@
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-status-border-failed);
         border-radius: var(--ks-radius-xl);
-        box-shadow: 0 12px 32px 0 var(--ks-shadow-elevated);
+        box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
         z-index: 5;
 
         h3, h4 {
@@ -527,12 +530,10 @@
     // taller structural-impact/logs cards: it never grows to fill a stretched grid row (its own
     // content doesn't expand), which used to leave a block of dead space under a couple of short
     // bars. Full width also gives long task ids more room on the label side of the track.
-    .failure-debug-panel__timeline {
-        :deep(.kel-card__body) {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-2);
-        }
+    .failure-debug-panel__timeline-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
     }
 
     .failure-debug-panel__grid {

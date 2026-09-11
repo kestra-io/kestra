@@ -43,6 +43,21 @@ describe("useTimeRangeSelection", () => {
         expect(isDragging.value).toBe(false)
     })
 
+    it("should stop dragging on cancelDrag without producing a selection", () => {
+        const {onPointerDown, onPointerMove, cancelDrag, isDragging, dragBandPx, selection} = useTimeRangeSelection(timeAt)
+
+        onPointerDown({button: 0, clientX: 10})
+        onPointerMove({clientX: 40})
+        expect(isDragging.value).toBe(true)
+        expect(dragBandPx.value).toBeDefined()
+
+        cancelDrag()
+
+        expect(isDragging.value).toBe(false)
+        expect(dragBandPx.value).toBeUndefined()
+        expect(selection.value).toBeUndefined()
+    })
+
     it("should clear an existing selection", () => {
         const {onPointerDown, onPointerUp, clear, selection, hasSelection} = useTimeRangeSelection(timeAt)
 

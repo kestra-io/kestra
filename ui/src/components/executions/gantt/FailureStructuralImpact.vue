@@ -94,8 +94,8 @@
         height: 1.5rem;
         padding: var(--ks-spacing-1);
         border: 1px solid var(--ks-border-default);
-        border-radius: 0.5rem;
-        background: var(--ks-white);
+        border-radius: var(--ks-radius-base);
+        background: var(--ks-bg-plugin-icon);
     }
 
     .structural-node__body {

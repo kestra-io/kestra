@@ -137,6 +137,7 @@
                         :nodes="structuralNodes"
                         :focusedId="focusedId"
                         :flow="flow"
+                        :rawBlocks="structuralRawBlocks"
                         @focus="focusFailureFromNeighbor"
                     />
                 </KsCard>
@@ -380,6 +381,20 @@
         if (!block) return []
         const matches = block.matchAll(/\{\{[^}]*\boutputs(?:\[['"]|\.)([A-Za-z0-9_-]+)/g)
         return [...new Set([...matches].map((match) => match[1]))]
+    })
+
+    // A neighbor's raw (unresolved) YAML block, for "Structural impact" to offer alongside each
+    // task — as-authored, never Pebble-rendered, so there is no secret-exposure surface the way
+    // rendering an arbitrary task's expressions would have (that task may not even have run).
+    const structuralRawBlocks = computed<Record<string, string | undefined>>(() => {
+        const source = focusedFlow.value?.source
+        if (!source) return {}
+        return Object.fromEntries(
+            structuralNodes.value.map((node) => [
+                node.taskRun.id,
+                YAML_UTILS.extractBlock({source, section: "tasks", key: node.taskRun.taskId}),
+            ]),
+        )
     })
 
     watch(

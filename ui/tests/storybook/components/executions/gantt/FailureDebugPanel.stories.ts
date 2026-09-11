@@ -168,6 +168,16 @@ export const SingleFailure: Story = {
         await userEvent.click(inputsOutputsTab)
         await waitFor(() => expect(inputsOutputsTab).toHaveAttribute("aria-selected", "true"))
         await expect(stateHistoryTab).toHaveAttribute("aria-selected", "false")
+
+        // Structural impact: "extract" (a sibling of the focused "transform" task) offers its
+        // raw, unresolved task definition — not the focused task itself, which already has its
+        // own "Resolved configuration" tab. The flow source was already fetched above, so the
+        // toggle for the one eligible neighbor is present by now.
+        await waitFor(() => expect(canvas.getAllByRole("button", {name: "View task definition"})).toHaveLength(1))
+        await userEvent.click(canvas.getByRole("button", {name: "View task definition"}))
+        await waitFor(() => expect(canvasElement.textContent).toContain("message: extracting"))
+        await userEvent.click(canvas.getByRole("button", {name: "Hide task definition"}))
+        await waitFor(() => expect(canvasElement.textContent).not.toContain("message: extracting"))
     },
 }
 

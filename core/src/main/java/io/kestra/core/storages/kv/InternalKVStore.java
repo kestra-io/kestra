@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.serializers.JacksonMapper;
@@ -132,10 +133,17 @@ public class InternalKVStore implements KVStore {
      */
     @Override
     public Optional<KVValue> getValue(String key) throws IOException, ResourceExpiredException {
-        return this.getRawValue(key).map(throwFunction(raw ->
+        return this.getRawWithMetadata(key).map(throwFunction(stored ->
         {
-            Object value = JacksonMapper.ofIon().readValue(raw, Object.class);
-            if (value instanceof String valueStr && DURATION_PATTERN.matcher(valueStr).matches()) {
+            Object value = JacksonMapper.ofIon().readValue((String) stored.value(), Object.class);
+            // ION has no duration type, so a duration is recognised by shape. An entry whose writer
+            // stated STRING opts out of that guess; one written before the type was recorded has no
+            // metadata and keeps being inferred.
+            boolean declaredString = Optional.ofNullable(stored.metadata())
+                .map(KVMetadata::getType)
+                .filter(KVType.STRING::equals)
+                .isPresent();
+            if (!declaredString && value instanceof String valueStr && DURATION_PATTERN.matcher(valueStr).matches()) {
                 return new KVValue(Duration.parse(valueStr));
             }
             return new KVValue(value);
@@ -143,6 +151,10 @@ public class InternalKVStore implements KVStore {
     }
 
     public Optional<String> getRawValue(String key) throws IOException, ResourceExpiredException {
+        return this.getRawWithMetadata(key).map(stored -> (String) stored.value());
+    }
+
+    private Optional<KVValueAndMetadata> getRawWithMetadata(String key) throws IOException, ResourceExpiredException {
         KVStore.validateKey(key);
 
         Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
@@ -166,9 +178,7 @@ public class InternalKVStore implements KVStore {
         } catch (FileNotFoundException e) {
             return Optional.empty();
         }
-        KVValueAndMetadata kvStoreValueWrapper = KVValueAndMetadata.from(withMetadata);
-
-        return Optional.of((String) (kvStoreValueWrapper.value()));
+        return Optional.of(KVValueAndMetadata.from(withMetadata));
     }
 
     /**

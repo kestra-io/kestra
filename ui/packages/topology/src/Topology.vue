@@ -281,11 +281,12 @@
         generateGraph(true)
     })
 
-    // A data refresh (execution polling, live task progress) regenerates the same
-    // graph and must never discard the user's pan/zoom - only a layout-changing
-    // user action (orientation, extra-details toggle, expand/collapse) refits.
+    let expandedSubflowsAtLastGraph = props.expandedSubflows
+
     watch(() => props.flowGraph, () => {
-        generateGraph()
+        const subflowExpanded = props.expandedSubflows !== expandedSubflowsAtLastGraph
+        expandedSubflowsAtLastGraph = props.expandedSubflows
+        generateGraph(subflowExpanded)
     })
 
     watch(() => props.isHorizontal, () => {

@@ -10,12 +10,19 @@ import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.queue.QueueService;
 
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JdbcBroadcastSubscriber<T extends Event> extends JdbcSubscriber<T> {
     private Long maxOffset = null;
 
+    /**
+     * @deprecated use the overload taking a {@link QueueWakeRegistry} — kept so existing callers
+     *             built against the pre-{@link QueueWakeRegistry} signature keep compiling; they
+     *             simply get no realtime wake-up.
+     */
+    @Deprecated
     public JdbcBroadcastSubscriber(
         Class<T> cls,
         QueueService queueService,
@@ -23,7 +30,18 @@ public class JdbcBroadcastSubscriber<T extends Event> extends JdbcSubscriber<T> 
         String queueName,
         MetricRegistry metricRegistry,
         IgnoreExecutionService ignoreExecutionService) {
-        super(cls, queueService, jdbcQueueClient, queueName, metricRegistry, ignoreExecutionService);
+        this(cls, queueService, jdbcQueueClient, queueName, metricRegistry, ignoreExecutionService, null);
+    }
+
+    public JdbcBroadcastSubscriber(
+        Class<T> cls,
+        QueueService queueService,
+        JdbcQueueClient jdbcQueueClient,
+        String queueName,
+        MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService,
+        @Nullable QueueWakeRegistry wakeRegistry) {
+        super(cls, queueService, jdbcQueueClient, queueName, metricRegistry, ignoreExecutionService, wakeRegistry);
     }
 
     @Override

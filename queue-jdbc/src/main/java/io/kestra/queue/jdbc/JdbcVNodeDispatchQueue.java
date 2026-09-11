@@ -13,7 +13,9 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.queue.*;
 import io.kestra.queue.jdbc.client.JdbcDispatchSubscriber;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
+import io.kestra.queue.jdbc.client.QueueWakeRegistry;
 
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -22,13 +24,28 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
     private final MetricRegistry metricRegistry;
     private final IgnoreExecutionService ignoreExecutionService;
 
+    @Nullable
+    private final QueueWakeRegistry queueWakeRegistry;
+
+    /**
+     * @deprecated use the overload taking a {@link QueueWakeRegistry} — kept so existing callers
+     *             built against the pre-{@link QueueWakeRegistry} signature keep compiling; they
+     *             simply get no realtime wake-up.
+     */
+    @Deprecated
     public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
         IgnoreExecutionService ignoreExecutionService) {
+        this(cls, queueService, jdbcQueueClient, executorsUtils, metricRegistry, ignoreExecutionService, null);
+    }
+
+    public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService, @Nullable QueueWakeRegistry queueWakeRegistry) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.metricRegistry = metricRegistry;
         this.ignoreExecutionService = ignoreExecutionService;
+        this.queueWakeRegistry = queueWakeRegistry;
     }
 
     @Override
@@ -71,7 +88,8 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
                 .map(this::vNodeRoutingKey)
                 .toList(),
             metricRegistry,
-            ignoreExecutionService
+            ignoreExecutionService,
+            queueWakeRegistry
         );
     }
 }

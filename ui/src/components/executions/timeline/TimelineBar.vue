@@ -67,12 +67,10 @@
             virtualTriggering
         >
             <template #content>
-                <div class="timeline-bar-tooltip">
-                    <strong>{{ execution.flowId }}</strong>
-                    <span>{{ execution.namespace }}</span>
-                    <span>{{ execution.state }}</span>
-                    <span>{{ formattedStart }} &rarr; {{ formattedEnd }}</span>
-                    <span>{{ $t("id") }}: {{ execution.id }}</span>
+                <div class="timeline-bar-tooltip-glance">
+                    <KsExecutionStatus :status="execution.state" size="small" />
+                    <span>{{ tooltipDuration }}</span>
+                    <KsDateAgo :date="new Date(execution.startMs)" :showTooltip="false" />
                 </div>
             </template>
         </KsTooltip>
@@ -98,7 +96,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import {useRouter} from "vue-router"
-    import {dateUtils} from "@kestra-io/design-system"
+    import {dateUtils, durationUtils} from "@kestra-io/design-system"
     import type {StateBucket, TimelineExecution} from "../../../utils/executionsTimeline"
 
     const props = defineProps<{
@@ -139,6 +137,7 @@
 
     const formattedStart = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.startMs).toISOString()) : "")
     const formattedEnd = computed(() => props.execution ? dateUtils.dateFilter(new Date(props.execution.endMs).toISOString()) : "")
+    const tooltipDuration = computed(() => props.execution ? durationUtils.humanDuration((props.execution.endMs - props.execution.startMs) / 1000) : "")
 
     function openExecution() {
         if (!props.execution) return
@@ -312,6 +311,13 @@
     .hint {
         color: var(--ks-text-secondary);
     }
+}
+
+.timeline-bar-tooltip-glance {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    font-size: var(--ks-font-size-xs);
 }
 
 .timeline-bar-popover {

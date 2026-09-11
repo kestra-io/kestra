@@ -545,10 +545,13 @@ export function groupValidationIssuesByTask(
             continue
         }
 
-        const pathMatch = /^(.+\])(?:\.([A-Za-z0-9_]+))?\s*:\s*(.+)$/.exec(cleaned)
+        // The field can be a path of its own (`headers.Authorization`), and a task nested in a Dag
+        // is addressed through its `task` wrapper (`...].task.flowId`), which says nothing useful.
+        const pathMatch = /^(.+\])(?:\.([A-Za-z0-9_.]+))?\s*:\s*(.+)$/.exec(cleaned)
         if (!pathMatch) continue
-        const [, rawPath, field, message] = pathMatch
+        const [, rawPath, rawField, message] = pathMatch
         const taskPath = rawPath.replace(/^_/, "")
+        const field = rawField?.replace(/^task\./, "")
         const entry = field ? `${field}: ${message.trim()}` : message.trim()
 
         // A task constraint violation comes back id-keyed (`tasks[publish].message`), so the last

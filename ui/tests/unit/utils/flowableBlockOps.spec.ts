@@ -1452,6 +1452,20 @@ afterExecution:
                 const grouped = groupValidationIssuesByTask(["tasks[publish].message: must not be null"])
                 expect(grouped.get("publish")).toEqual(["message: must not be null"])
             })
+
+            // A task inside a Dag is addressed through its wrapper, which the badge should not echo.
+            it("resolves a task nested in a dag and drops the wrapper segment", () => {
+                const grouped = groupValidationIssuesByTask(
+                    ["Validation error: tasks[pipeline].tasks[publish_report].task.flowId: must not be null\n"],
+                    flow,
+                )
+                expect(grouped.get("publish_report")).toEqual(["flowId: must not be null"])
+            })
+
+            it("keeps a multi-segment field path that is not a dag wrapper", () => {
+                const grouped = groupValidationIssuesByTask(["tasks[send].headers.Authorization: must not be blank"])
+                expect(grouped.get("send")).toEqual(["headers.Authorization: must not be blank"])
+            })
         })
     })
 

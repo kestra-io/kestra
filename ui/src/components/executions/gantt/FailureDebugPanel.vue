@@ -89,19 +89,23 @@
             <KsCard v-if="focusedTaskRun" shadow="never" class="failure-debug-panel__context">
                 <KsTabs v-model="activeContextTab" type="box">
                     <KsTabPane name="stateHistory" :label="$t('failureDebugPanel.stateHistory.title')">
-                        <FailureStateHistory :taskRun="focusedTaskRun" />
+                        <div class="failure-debug-panel__tab-pane">
+                            <FailureStateHistory :taskRun="focusedTaskRun" />
+                        </div>
                     </KsTabPane>
                     <KsTabPane name="resolvedConfig" :label="$t('failureDebugPanel.resolvedConfig.title')">
-                        <FailureResolvedConfig
-                            :rawBlock="focusedRawTaskBlock"
-                            :flowLoading="focusedFlowLoading"
-                            :flowError="focusedFlowError"
-                            :executionId="execution.id"
-                            :taskRunId="focusedTaskRun.id"
-                        />
+                        <div class="failure-debug-panel__tab-pane">
+                            <FailureResolvedConfig
+                                :rawBlock="focusedRawTaskBlock"
+                                :flowLoading="focusedFlowLoading"
+                                :flowError="focusedFlowError"
+                                :executionId="execution.id"
+                                :taskRunId="focusedTaskRun.id"
+                            />
+                        </div>
                     </KsTabPane>
                     <KsTabPane name="inputsOutputs" :label="$t('failureDebugPanel.inputsOutputs.title')">
-                        <div class="failure-debug-panel__inputs-outputs">
+                        <div class="failure-debug-panel__tab-pane failure-debug-panel__inputs-outputs">
                             <div>
                                 <h4>{{ $t("failureDebugPanel.executionInputs.title") }}</h4>
                                 <FailureExecutionInputs
@@ -637,6 +641,13 @@
         grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
         gap: var(--ks-spacing-4);
         align-items: start;
+    }
+
+    // KsTabPane content sits flush against the box-type nav's bottom border with no padding of
+    // its own, unlike a KsCard body (which gets --kel-card-padding on every side) — every pane's
+    // content needs its own top inset to breathe the same way the rest of the panel's cards do.
+    .failure-debug-panel__tab-pane {
+        padding-top: var(--ks-spacing-4);
     }
 
     // Execution inputs and outputs consumed share one tab (both are short "name → value"

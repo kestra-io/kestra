@@ -1323,6 +1323,12 @@ tasks:
             expect(rewireDagDependency(DAG, LANE, "inserted", {})).toBe(DAG)
         })
 
+        // Dropping a mid-chain task on its own outgoing edge makes it both ends of the rewiring.
+        it("refuses to make a task depend on itself", () => {
+            expect(rewireDagDependency(DAG, LANE, "join_data", {fromId: "join_data", toId: "publish"})).toBe(DAG)
+            expect(rewireDagDependency(DAG, LANE, "join_data", {fromId: "fetch_orders", toId: "join_data"})).toBe(DAG)
+        })
+
         it("leaves the source untouched when the inserted id is not in the lane", () => {
             expect(rewireDagDependency(DAG, LANE, "absent", {fromId: "fetch_orders"})).toBe(DAG)
         })

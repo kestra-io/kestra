@@ -9,7 +9,7 @@
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" />
+                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
             </div>
             <div class="node-content">
                 <slot name="badge" />

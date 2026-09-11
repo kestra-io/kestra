@@ -89,6 +89,13 @@
             <div class="failure-debug-panel__grid">
                 <KsCard shadow="never">
                     <template #header>
+                        <h4>{{ $t("failureDebugPanel.stateHistory.title") }}</h4>
+                    </template>
+                    <FailureStateHistory v-if="focusedTaskRun" :taskRun="focusedTaskRun" />
+                </KsCard>
+
+                <KsCard shadow="never">
+                    <template #header>
                         <h4>{{ $t("failureDebugPanel.structuralImpact.title") }}</h4>
                     </template>
                     <FailureStructuralImpact
@@ -143,6 +150,7 @@
     import AiIcon from "../../ai/AiIcon.vue"
     import Restart from "../overview/components/actions/Restart.vue"
     import FailureMiniTimeline from "./FailureMiniTimeline.vue"
+    import FailureStateHistory from "./FailureStateHistory.vue"
     import FailureStructuralImpact from "./FailureStructuralImpact.vue"
     import FailureLogPanel from "./FailureLogPanel.vue"
 

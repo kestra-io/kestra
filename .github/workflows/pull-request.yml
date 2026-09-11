@@ -153,12 +153,18 @@ jobs:
 
   e2e-tests:
     name: E2E - Tests
+    needs: [build-artifacts]
+    # Runs on every PR: with the prebuilt exe when Build Artifacts produced one, from
+    # source when that job was skipped (docs-only and fork PRs). Only a failed build
+    # leaves nothing worth testing.
+    if: "!cancelled() && needs.build-artifacts.result != 'failure'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
+      exe-artifact: ${{ needs.build-artifacts.result == 'success' && 'exe' || '' }}
 
   generate-pull-request-docker-image:
     name: Generate PR docker image

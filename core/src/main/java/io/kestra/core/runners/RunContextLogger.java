@@ -310,7 +310,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             this.logger = logger;
         }
 
-        private String replaceSecret(String data) {
+        protected String replaceSecret(String data) {
             for (String s : runContextLogger.useSecrets) {
                 if (data.contains(s)) {
                     data = data.replace(s, "******");

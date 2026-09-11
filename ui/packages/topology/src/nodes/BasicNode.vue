@@ -9,7 +9,10 @@
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
+                    <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                </KsTooltip>
+                <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
             </div>
             <div class="node-content">
                 <slot name="badge" />
@@ -144,6 +147,10 @@
     })
 
     const displayTitle = computed(() => props.title ?? trimmedId.value)
+
+    // The full class is what made the old hover box wide; every core and plugin task shares the
+    // same `io.kestra.plugin.` prefix, so dropping it leaves the part that identifies the task.
+    const shortType = computed(() => cls.value?.replace(/^io\.kestra\.plugin\./, ""))
 
     // On a plain task the tooltip only repeated the label already on the card, in a second box on
     // top of the native one; a subflow is the only node whose tooltip says something else.

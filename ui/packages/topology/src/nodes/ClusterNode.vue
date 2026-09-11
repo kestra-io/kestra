@@ -6,6 +6,17 @@
         >{{ clusterName }}</span>
         <div class="top-button-div">
             <span
+                v-if="data.canAddTrigger"
+                class="circle-button"
+                :style="{backgroundColor: `var(--ks-topology-btn-${data.color})`}"
+                data-test="topology-add-trigger"
+                @click="emit(EVENTS.ADD_TRIGGER)"
+            >
+                <KsTooltip :content="$t('topology-graph.add-trigger')">
+                    <Plus class="button-icon" />
+                </KsTooltip>
+            </span>
+            <span
                 v-if="data.collaspsible"
                 class="circle-button"
                 :style="{backgroundColor: `var(--ks-topology-btn-${data.color})`}"
@@ -21,6 +32,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
     import {KsTooltip} from "@kestra-io/design-system"
     import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
     import * as Utils from "../utils/utils"
@@ -40,7 +52,7 @@
         }
     })
 
-    const emit = defineEmits([EVENTS.COLLAPSE])
+    const emit = defineEmits([EVENTS.COLLAPSE, EVENTS.ADD_TRIGGER])
 
     const collapse = () => emit(EVENTS.COLLAPSE, props.id)
 

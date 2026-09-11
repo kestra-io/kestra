@@ -31,6 +31,7 @@
             @edit="onEditTask"
             @delete="onDelete"
             @duplicate="onDuplicate"
+            @addTrigger="onAddTrigger"
             @open-link="openFlow"
             @show-logs="showLogs"
             @show-outputs="showOutputs"
@@ -954,6 +955,10 @@
     }
 
     const onDuplicate = (event: {id?: string}) => duplicateTaskById(event.id)
+
+    // Triggers are not tasks, so no edge `+` can ever target them; the triggers box is their only
+    // entry point on the canvas.
+    const onAddTrigger = () => taskPicker.openTaskPicker("triggers")
 
     function reorderFocusedTask(direction: "up" | "down") {
         const node = focusOrder.value.find(entry => entry.id === focusedTaskId.value)

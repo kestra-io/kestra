@@ -3,6 +3,7 @@ package io.kestra.core.models.tasks.runners;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -64,6 +65,20 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
     @Builder.Default
     @Getter(AccessLevel.PROTECTED)
     private final AtomicBoolean isKilled = new AtomicBoolean(false);
+
+    /**
+     * Returns a warning message if this runner is known to be unavailable at validation time.
+     * <p>
+     * Subclasses may override this to perform a lightweight, best-effort availability check
+     * (e.g. verifying that the Docker socket exists on the filesystem). The check runs without
+     * a {@link RunContext}, so only static or environment-based checks are possible — templated
+     * user configuration cannot be evaluated.
+     *
+     * @return a human-readable warning message, or {@link Optional#empty()} if no problem is detected.
+     */
+    public Optional<String> unavailabilityWarning() {
+        return Optional.empty();
+    }
 
     /**
      * This method will be called by the script plugin to run a script on a task runner.

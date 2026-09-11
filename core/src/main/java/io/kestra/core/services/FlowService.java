@@ -32,6 +32,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
@@ -648,6 +649,24 @@ public class FlowService {
                 .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg))
         );
 
+        // warn when a task runner reports it is unavailable (e.g. Docker socket not found)
+        flow.allTasksWithChilds().forEach(task ->
+        {
+            try {
+                Method getTaskRunner = task.getClass().getMethod("getTaskRunner");
+                TaskRunner<?> taskRunner = (TaskRunner<?>) getTaskRunner.invoke(task);
+                if (taskRunner != null) {
+                    taskRunner.unavailabilityWarning().ifPresent(
+                        msg -> warnings.add("Task '" + task.getId() + "': " + msg)
+                    );
+                }
+            } catch (NoSuchMethodException ignored) {
+                // Task does not have a taskRunner property — nothing to check
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                // silent failure (we don't compromise the app / response for warnings)
+            }
+        });
+
         if (pebbleExpressionService != null && flow.getSource() != null) {
             Map<String, PebbleFunction> deprecatedFunctions = pebbleExpressionService.functions().stream()
                 .filter(PebbleFunction::deprecated)
@@ -672,6 +691,8 @@ public class FlowService {
                 });
             }
         }
+        return warnings;
+    }
 
         return warnings;
     }
